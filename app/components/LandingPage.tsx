@@ -1981,7 +1981,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             align-self: stretch;
             width: 100%;
             gap: 24px;
-            margin-bottom: 0;
+            margin: 0 0 0 0;
           }
           .wordmark-block {
             order: 3;
@@ -1995,7 +1995,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           .statement {
             align-self: stretch;
             max-width: 100%;
-            margin-top: 0;
+            margin: 0;
             padding-left: 0;
             gap: 32px;
           }
