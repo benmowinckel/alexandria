@@ -11,7 +11,7 @@ import { updateAccountBilling, getBillingSummary } from './accounts.js';
 import { runHealthDigest } from './cron.js';
 import { registerProtocol } from './protocol.js';
 import { registerRoutes } from './routes.js';
-import { registerBillingRoutes, settleMonthlyTabs, recalculateAllKinPricing, getStripe } from './billing.js';
+import { registerBillingRoutes, settleMonthlyTabs, recalculateAllKinPricing, createPatronCheckoutSession } from './billing.js';
 import { registerLibraryRoutes } from './library.js';
 import { getAnalytics, getEventLog, getDashboard, getUserEvents, logEvent, flushEvents } from './analytics.js';
 import { setKV, getKV } from './kv.js';
@@ -358,32 +358,15 @@ app.post('/follow', async (c) => {
   }
 
   try {
-    const stripe = getStripe();
-    const WEBSITE_URL = process.env.WEBSITE_URL || 'https://mowinckel.ai';
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      customer_email: normalizedEmail,
-      line_items: [{
-        price_data: {
-          currency: 'usd',
-          product_data: { name: 'Alexandria — follow along' },
-          unit_amount: amount * 100,
-          recurring: { interval: 'month' },
-        },
-        quantity: 1,
-      }],
-      metadata: { follow_email: normalizedEmail, follow_amount: String(amount) },
-      subscription_data: {
-        metadata: { follow_email: normalizedEmail, follow_amount: String(amount) },
-      },
-      success_url: `${WEBSITE_URL}/follow?thanks=1`,
-      cancel_url: `${WEBSITE_URL}/follow`,
+    const url = await createPatronCheckoutSession({
+      email: normalizedEmail,
+      amountCents: amount * 100,
     });
-
     logEvent('follow_subscription_checkout', { amount: String(amount) });
-    return c.json({ ok: true, url: session.url });
+    return c.json({ ok: true, url });
   } catch (err: any) {
     console.error('Follow subscription checkout error:', err?.message || err);
+    logEvent('follow_subscription_checkout_failed', { reason: err?.message || 'unknown' });
     // Email is already stored; surface partial-success so the UI can still confirm signup
     return c.json({ ok: true, subscription_unavailable: true });
   }

@@ -5,6 +5,7 @@ import { sendEmail, FOUNDER_EMAIL } from './email.js';
 import { formatPT } from './time.js';
 import { publishLibrarySignalSnapshot } from './marketplace.js';
 import { computeLibrarySignalText } from './library-signal.js';
+import { reconcilePatronSubscriptions } from './billing.js';
 
 // ---------------------------------------------------------------------------
 // Health digest — self-heal, only email the founder if he needs to log on
@@ -28,7 +29,7 @@ async function probeD1(escalate: Escalate): Promise<void> {
     await db.prepare('SELECT 1').first();
 
     // Schema verification — expected tables must exist
-    const expectedTables = ['authors', 'shadows', 'quizzes', 'works', 'quiz_results', 'referrals', 'access_log', 'billing_tab', 'waitlist', 'stripe_webhook_events', 'protocol_files', 'protocol_calls'];
+    const expectedTables = ['authors', 'shadows', 'quizzes', 'works', 'quiz_results', 'referrals', 'access_log', 'billing_tab', 'waitlist', 'stripe_webhook_events', 'protocol_files', 'protocol_calls', 'patron_subscriptions'];
     const { results: tables } = await db.prepare(
       `SELECT name FROM sqlite_master WHERE type = 'table'`
     ).all<{ name: string }>();
@@ -92,6 +93,7 @@ export interface EventScanResult {
   deprecatedHits: number;
   staleClientCalls: number;
   setupFailures: number;
+  followCheckoutFailed: number;
   deprecatedByPath: Map<string, number>;
   clientVersions: Map<string, number>;
   setupFailuresByStatus: Map<string, number>;
@@ -110,6 +112,7 @@ export function scanEventsForAlarms(rawLog: string, cutoff: number): EventScanRe
     deprecatedHits: 0,
     staleClientCalls: 0,
     setupFailures: 0,
+    followCheckoutFailed: 0,
     deprecatedByPath: new Map(),
     clientVersions: new Map(),
     setupFailuresByStatus: new Map(),
@@ -139,6 +142,8 @@ export function scanEventsForAlarms(rawLog: string, cutoff: number): EventScanRe
           r.setupFailures++;
           r.setupFailuresByStatus.set(status, (r.setupFailuresByStatus.get(status) || 0) + 1);
         }
+      } else if (ev.e === 'follow_subscription_checkout_failed') {
+        r.followCheckoutFailed++;
       }
     } catch { continue; }
   }
@@ -202,6 +207,9 @@ export async function runHealthDigest(opts: { sendEmailOnAlarm?: boolean } = { s
           const dist = [...scan.setupFailuresByStatus.entries()].sort((a, b) => b[1] - a[1]).map(([s, n]) => `${s}=${n}`).join(', ');
           escalate('stroll', `${scan.setupFailures} setup reports with non-ok status in 24h (${dist})`);
         }
+        if (scan.followCheckoutFailed > 0) {
+          escalate('stroll', `${scan.followCheckoutFailed} patron checkout failures in 24h — Stripe down or misconfigured`);
+        }
       }
     } catch { /* non-fatal */ }
 
@@ -234,6 +242,14 @@ export async function runHealthDigest(opts: { sendEmailOnAlarm?: boolean } = { s
       await publishLibrarySignalSnapshot(text);
     } catch (err) {
       console.error('[cron] library-signal snapshot failed:', err);
+    }
+
+    // Patron subscription reconcile — Stripe is source of truth, patron_subscriptions is index.
+    // Self-healing: drift gets corrected without alarm. Only alarm if reconcile itself fails.
+    try {
+      await reconcilePatronSubscriptions();
+    } catch (err) {
+      escalate('stroll', `patron reconcile failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
     // Cron marker (proves the job ran — includes issue list for debugging)

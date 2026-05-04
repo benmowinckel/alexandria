@@ -15,6 +15,7 @@ import { hashApiKey } from './crypto.js';
 import { requireAuth } from './auth.js';
 import { loadAccounts, getKV } from './kv.js';
 import { getDB } from './db.js';
+import { sendPatronAck } from './email.js';
 
 // ---------------------------------------------------------------------------
 // Stripe client — lazy init (needs env to be populated)
@@ -324,7 +325,7 @@ export async function createCheckoutSession(opts: {
       mode: 'setup',
       currency: 'usd',
       ...customer,
-      metadata: { github_login: opts.githubLogin },
+      metadata: { kind: 'author', github_login: opts.githubLogin },
       custom_text: {
         submit: { message: 'free in beta. we\'ll let you know before billing starts.' },
       },
@@ -341,14 +342,121 @@ export async function createCheckoutSession(opts: {
     ...customer,
     subscription_data: {
       description: 'the examined life',
-      metadata: { github_login: opts.githubLogin },
+      metadata: { kind: 'author', github_login: opts.githubLogin },
     },
-    metadata: { github_login: opts.githubLogin },
+    metadata: { kind: 'author', github_login: opts.githubLogin },
     success_url: `${SERVER_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${WEBSITE_URL}/signup?billing=cancel`,
   });
 
   return session.url || '';
+}
+
+// ---------------------------------------------------------------------------
+// Patron checkout — Door 2 "follow along" subscription. No GitHub auth.
+// Stripe is source of truth; D1 patron_subscriptions is a thin index.
+// ---------------------------------------------------------------------------
+
+export async function createPatronCheckoutSession(opts: {
+  email: string;
+  amountCents: number;
+}): Promise<string> {
+  const stripe = getStripe();
+  const WEBSITE_URL = process.env.WEBSITE_URL || 'https://mowinckel.ai';
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    customer_email: opts.email,
+    line_items: [{
+      price_data: {
+        currency: 'usd',
+        product_data: { name: 'Alexandria — follow along' },
+        unit_amount: opts.amountCents,
+        recurring: { interval: 'month' },
+      },
+      quantity: 1,
+    }],
+    metadata: { kind: 'patron', follow_email: opts.email },
+    subscription_data: {
+      metadata: { kind: 'patron', follow_email: opts.email },
+    },
+    success_url: `${WEBSITE_URL}/follow?thanks=1`,
+    cancel_url: `${WEBSITE_URL}/follow`,
+  });
+  if (!session.url) throw new Error('Stripe did not return a checkout URL');
+  return session.url;
+}
+
+async function upsertPatronSubscription(row: {
+  subscriptionId: string;
+  customerId: string;
+  email: string;
+  status: string;
+}): Promise<void> {
+  const db = getDB();
+  const now = new Date().toISOString();
+  await db.prepare(
+    `INSERT INTO patron_subscriptions (stripe_subscription_id, stripe_customer_id, email, status, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(stripe_subscription_id) DO UPDATE SET
+       stripe_customer_id = excluded.stripe_customer_id,
+       email = excluded.email,
+       status = excluded.status,
+       updated_at = excluded.updated_at`
+  ).bind(row.subscriptionId, row.customerId, row.email.toLowerCase(), row.status, now, now).run();
+}
+
+/** Reconcile patron subscriptions from Stripe (source of truth) into D1 (index). */
+export async function reconcilePatronSubscriptions(): Promise<{ drift: number; checked: number }> {
+  const stripe = getStripe();
+  const db = getDB();
+
+  const stripeMap = new Map<string, { customerId: string; email: string; status: string }>();
+  let cursor: string | undefined;
+  do {
+    const page: Stripe.ApiSearchResult<Stripe.Subscription> = await stripe.subscriptions.search({
+      query: `metadata['kind']:'patron'`,
+      limit: 100,
+      ...(cursor ? { page: cursor } : {}),
+    });
+    for (const sub of page.data) {
+      const email = (sub.metadata?.follow_email || '').toLowerCase();
+      const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+      stripeMap.set(sub.id, { customerId, email, status: sub.status });
+    }
+    cursor = page.has_more ? page.next_page ?? undefined : undefined;
+  } while (cursor);
+
+  const { results } = await db.prepare(
+    `SELECT stripe_subscription_id, stripe_customer_id, email, status FROM patron_subscriptions`
+  ).all<{ stripe_subscription_id: string; stripe_customer_id: string; email: string; status: string }>();
+  const localMap = new Map((results || []).map(r => [r.stripe_subscription_id, r]));
+
+  let drift = 0;
+
+  for (const [subId, sub] of stripeMap) {
+    const local = localMap.get(subId);
+    if (!local
+        || local.status !== sub.status
+        || local.email !== sub.email
+        || local.stripe_customer_id !== sub.customerId) {
+      await upsertPatronSubscription({ subscriptionId: subId, ...sub });
+      drift++;
+    }
+  }
+
+  for (const [subId, local] of localMap) {
+    if (!stripeMap.has(subId) && local.status !== 'canceled') {
+      await db.prepare(
+        `UPDATE patron_subscriptions SET status = ?, updated_at = ? WHERE stripe_subscription_id = ?`
+      ).bind('canceled', new Date().toISOString(), subId).run();
+      drift++;
+    }
+  }
+
+  if (drift > 0) {
+    logEvent('patron_reconcile_drift', { count: String(drift), checked: String(stripeMap.size) });
+  }
+  return { drift, checked: stripeMap.size };
 }
 
 // ---------------------------------------------------------------------------
@@ -463,6 +571,20 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
         case 'checkout.session.completed': {
           const session = event.data.object as Stripe.Checkout.Session;
 
+          // Patron — Door 2 follow-along subscription
+          if (session.metadata?.kind === 'patron') {
+            const email = (session.metadata?.follow_email || session.customer_email || '').toLowerCase();
+            const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id || '';
+            const subscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id || '';
+            if (email && customerId && subscriptionId) {
+              await upsertPatronSubscription({ subscriptionId, customerId, email, status: 'active' });
+              logEvent('follow_subscription_paid', { amount_cents: String(session.amount_total || 0) });
+            } else {
+              console.error('[billing] Patron checkout completed with missing fields:', { email, customerId, subscriptionId });
+            }
+            break;
+          }
+
           // Library one-time purchase (non-Author)
           if (session.metadata?.library_purchase === 'true') {
             const amountCents = session.amount_total || 0;
@@ -525,6 +647,21 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
         case 'customer.subscription.updated': {
           const sub = event.data.object as Stripe.Subscription;
           const customerId = sub.customer as string;
+
+          if (sub.metadata?.kind === 'patron') {
+            const email = (sub.metadata?.follow_email || '').toLowerCase();
+            if (email && customerId) {
+              await upsertPatronSubscription({
+                subscriptionId: sub.id,
+                customerId,
+                email,
+                status: sub.status,
+              });
+            }
+            logEvent('follow_subscription_updated', { status: sub.status });
+            break;
+          }
+
           // Use github_login from metadata (primary), fall back to api_key for legacy subscriptions
           const subLogin = sub.metadata?.github_login || sub.metadata?.api_key;
           if (subLogin) {
@@ -543,6 +680,22 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
 
         case 'customer.subscription.deleted': {
           const sub = event.data.object as Stripe.Subscription;
+
+          if (sub.metadata?.kind === 'patron') {
+            const email = (sub.metadata?.follow_email || '').toLowerCase();
+            const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer?.id || '';
+            if (email && customerId) {
+              await upsertPatronSubscription({
+                subscriptionId: sub.id,
+                customerId,
+                email,
+                status: 'canceled',
+              });
+            }
+            logEvent('follow_subscription_canceled', {});
+            break;
+          }
+
           const subLogin = sub.metadata?.github_login || sub.metadata?.api_key;
           if (subLogin) {
             await onAccountUpdate(subLogin, { subscription_status: 'canceled' });
@@ -580,6 +733,32 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
           if (subId) {
             try {
               const sub = await stripe.subscriptions.retrieve(subId);
+
+              if (sub.metadata?.kind === 'patron') {
+                const email = (sub.metadata?.follow_email || invoice.customer_email || '').toLowerCase();
+                const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer?.id || '';
+                if (email && customerId) {
+                  await upsertPatronSubscription({
+                    subscriptionId: sub.id,
+                    customerId,
+                    email,
+                    status: sub.status,
+                  });
+                  // Acknowledgment only on first invoice — Stripe handles renewal receipts.
+                  if (invoice.billing_reason === 'subscription_create') {
+                    const amountDollars = (invoice.amount_paid || 0) / 100;
+                    try {
+                      const portalUrl = await createPortalSession(customerId);
+                      await sendPatronAck(email, amountDollars, portalUrl);
+                      logEvent('follow_subscription_ack_sent', { amount: String(amountDollars) });
+                    } catch (e) {
+                      console.error('[billing] Patron ack email failed:', e);
+                    }
+                  }
+                }
+                break;
+              }
+
               const subLogin = sub.metadata?.github_login || sub.metadata?.api_key;
               if (subLogin) {
                 // Find account by login (primary) or api_key hash (legacy)
@@ -613,6 +792,23 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
           if (subId) {
             try {
               const sub = await stripe.subscriptions.retrieve(subId);
+
+              if (sub.metadata?.kind === 'patron') {
+                const email = (sub.metadata?.follow_email || '').toLowerCase();
+                const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer?.id || '';
+                if (email && customerId) {
+                  await upsertPatronSubscription({
+                    subscriptionId: sub.id,
+                    customerId,
+                    email,
+                    status: sub.status,
+                  });
+                  paymentFailHandled = true;
+                }
+                logEvent('follow_subscription_payment_failed', { status: sub.status });
+                break;
+              }
+
               const subLogin = sub.metadata?.github_login || sub.metadata?.api_key;
               if (subLogin) {
                 await onAccountUpdate(subLogin, { subscription_status: 'past_due' });

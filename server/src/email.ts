@@ -72,6 +72,19 @@ export async function sendFollowerWelcome(email: string): Promise<{ ok: boolean;
   return await sendEmail(email, 'welcome to alexandria.', html);
 }
 
+export async function sendPatronAck(
+  email: string,
+  amountDollars: number,
+  portalUrl: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 420px; margin: 0 auto; padding: 48px 24px; color: #3d3630; text-align: center; line-height: 1.7;">
+  <p style="margin: 0 0 1.4rem; font-size: 1.05rem;">$${amountDollars.toFixed(0)} / month received.</p>
+  <p style="margin: 0 0 1.8rem; font-style: italic; font-size: 1.05rem;">honourary alexandrian.</p>
+  <p style="margin: 0; font-size: 0.85rem; color: #8a8078;"><a href="${portalUrl}" style="color: #8a8078;">manage subscription</a></p>
+</div>`;
+  return await sendEmail(email, 'honourary alexandrian.', html);
+}
+
 export async function sendWelcomeEmail(email: string): Promise<void> {
   const WEBSITE_URL = process.env.WEBSITE_URL || 'https://mowinckel.ai';
   await sendEmail(email, 'welcome to alexandria.',
