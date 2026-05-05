@@ -72,49 +72,6 @@ async function probeD1(escalate: Escalate): Promise<void> {
  * a long time, or the cron itself stopped firing. 14d threshold makes this
  * a real-failure signal, not a daily-blip one.
  */
-/**
- * Brief delivery staleness probe. The autoloop trigger is supposed to POST
- * to /brief once per period (default daily). When the trigger fires but its
- * heartbeat call fails silently (egress proxy, MCP misconfig, etc.), the
- * Author stops getting emails and nothing surfaces. This probe inverts the
- * check: ground-truth `last_brief` per account, alarm if past per-account
- * threshold + tolerance. Closes the loop server-side regardless of why the
- * client-side delivery broke.
- */
-async function checkStaleBriefs(escalate: Escalate): Promise<void> {
-  try {
-    const kv = getKV();
-    const TOLERANCE_HOURS = 2;
-    const now = Date.now();
-    const stale: string[] = [];
-    let cursor: string | undefined;
-    do {
-      const page = await kv.list({ prefix: 'account:', cursor });
-      for (const k of page.keys) {
-        const acct = await kv.get(k.name, 'json') as any;
-        if (!acct || !acct.installed_at) continue;
-        if (acct.brief_opt_out) continue;
-        const intervalDays = acct.brief_interval_days ?? 1;
-        const thresholdMs = (intervalDays * 24 + TOLERANCE_HOURS) * 60 * 60 * 1000;
-        const lastBrief = acct.last_brief ? new Date(acct.last_brief).getTime() : 0;
-        const installed = new Date(acct.installed_at).getTime();
-        const reference = lastBrief || installed;
-        if (now - reference > thresholdMs) {
-          const days = Math.floor((now - reference) / (24 * 60 * 60 * 1000));
-          stale.push(`${acct.github_login || k.name}(${lastBrief ? `${days}d` : 'never'})`);
-        }
-      }
-      cursor = page.list_complete ? undefined : page.cursor;
-    } while (cursor);
-
-    if (stale.length > 0) {
-      escalate('stroll', `Brief delivery stale for ${stale.length} account(s): ${stale.slice(0, 10).join(', ')}${stale.length > 10 ? '…' : ''}`);
-    }
-  } catch (err) {
-    console.error('[cron] checkStaleBriefs failed:', err);
-  }
-}
-
 async function checkMarketplaceActivity(escalate: Escalate): Promise<void> {
   try {
     const token = process.env.GITHUB_BOT_TOKEN;
@@ -275,8 +232,6 @@ export async function runHealthDigest(opts: { sendEmailOnAlarm?: boolean } = { s
     } catch { /* non-fatal */ }
 
     await checkMarketplaceActivity(escalate);
-
-    await checkStaleBriefs(escalate);
 
     // Refresh the library-signal snapshot in alexandria-marketplace. The factory
     // reads this on its weekly run; daily refresh keeps it ≤24h stale. Non-fatal

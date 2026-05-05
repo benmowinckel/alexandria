@@ -34,14 +34,17 @@ If you have something:
 - No metadata, no fragment counts, no vault entry IDs. Naked actions only.
 - Author's voice — no "I noticed that..." or "you might consider..." Direct.
 
-## Verify and send
+## Verify and POST
 
-Deliver via the `nudge` MCP tool (server: `alexandria` at `https://mcp.mowinckel.ai/mcp`). The trigger MUST have this MCP connection configured with `nudge` in `permitted_tools` — plain HTTPS curl to mcp.mowinckel.ai is blocked by the runtime egress proxy and fails silently. Tool arguments:
-- `nudge`: one to three lines
-- `quote`: optional, your pick — short, sharp
-- `api_key`: `$(cat ~/alexandria/system/.api_key)` (or the trigger-baked bearer when running remotely)
+```bash
+curl -s -X POST https://mcp.mowinckel.ai/nudge \
+  -H "Authorization: Bearer $(cat ~/alexandria/system/.api_key)" \
+  -H "X-Alexandria-Client: scheduled-agent" \
+  -H "Content-Type: application/json" \
+  -d '{"nudge": "<one to three lines>", "quote": "<your pick — short, sharp, optional>"}'
+```
 
-The tool returns content `{"ok":true}` on send, `{"ok":true,"skipped":"opt_out"}` if the Author opted out, or `{"ok":true,"skipped":"too_recent"}` if interval-gated. All three are healthy.
+The endpoint returns `{"ok":true}` on send, `{"ok":true,"skipped":"opt_out"}` if the Author has opted out (still success), or `{"ok":true,"skipped":"too_recent"}` if interval-gated.
 
 ## Privacy
 
@@ -49,5 +52,5 @@ Never include constitution content, ontology entries, vault excerpts, or interpr
 
 ## Verification (run last)
 
-1. Tool call returned `isError: false` with content `{"ok":true}` or expected skip — log to `~/alexandria/system/.nudge_last_run`.
-2. If the tool call failed (errored, isError: true, or unavailable), write the reason to `~/alexandria/system/.alexandria_errors` so the autoloop audit catches it.
+1. POST returned `{"ok":true}` or expected skip — log to `~/alexandria/system/.nudge_last_run`.
+2. If POST failed, write the error to `~/alexandria/system/.alexandria_errors` so the autoloop audit catches it.
