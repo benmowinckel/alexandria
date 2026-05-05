@@ -199,7 +199,7 @@ They want concrete execution and short feedback loops.
 They dislike process theater and default to deletion before addition.
 CONSTITUTION_TEST
 
-# Seed ontology so all five context layers can be verified
+# Seed ontology so the pointer block sees a non-empty directory
 mkdir -p "$HOME/alexandria/files/ontology"
 cat > "$HOME/alexandria/files/ontology/test.md" << 'ONTOLOGY_TEST'
 Early signal: this Author sees software architecture as compressed philosophy.
@@ -212,12 +212,15 @@ SESSION_START_OUTPUT=$(bash "$HOME/alexandria/system/hooks/shim.sh" session-star
 SESSION_START_EXIT=$?
 
 check "session-start ran"                [ "$SESSION_START_EXIT" -eq 0 ]
-check_output "constitution injected"     "AUTHOR CONTEXT"        "$SESSION_START_OUTPUT"
-check_output "test content present"      "first principles"      "$SESSION_START_OUTPUT"
-check_output "ontology injected"         "ONTOLOGY"              "$SESSION_START_OUTPUT"
-check_output "machine injected"          "HOW TO WORK WITH THIS AUTHOR" "$SESSION_START_OUTPUT"
-check_output "notepad injected"          "NOTEPAD"               "$SESSION_START_OUTPUT"
-check_output "feedback injected"         "ENGINE FEEDBACK"       "$SESSION_START_OUTPUT"
+# Author context is a pointer block now (constitution/ontology/machine/notepad/feedback
+# live at ~/alexandria/files/, AI Reads on demand). Inline injection was dropped in
+# 09fe5fa — was 70KB, mostly truncated by harnesses, near-zero net signal.
+check_output "author context block"      "AUTHOR CONTEXT"        "$SESSION_START_OUTPUT"
+check_output "constitution pointer"      "constitution/"         "$SESSION_START_OUTPUT"
+check_output "ontology pointer"          "ontology/"             "$SESSION_START_OUTPUT"
+check_output "machine pointer"           "core/machine.md"       "$SESSION_START_OUTPUT"
+check_output "notepad pointer"           "core/notepad.md"       "$SESSION_START_OUTPUT"
+check_output "feedback pointer"          "core/feedback.md"      "$SESSION_START_OUTPUT"
 check "hooks_payload cached"             [ -f "$HOME/alexandria/system/.hooks_payload" ]
 check "hooks_payload non-empty"          [ -s "$HOME/alexandria/system/.hooks_payload" ]
 check "canon cached"                     [ -f "$HOME/alexandria/system/canon/methodology.md" ]
@@ -259,7 +262,8 @@ SUBAGENT_OUTPUT=$(bash "$HOME/alexandria/system/hooks/shim.sh" subagent 2>&1)
 SUBAGENT_EXIT=$?
 
 check "subagent ran"                     [ "$SUBAGENT_EXIT" -eq 0 ]
-check_output "subagent has constitution" "first principles"      "$SUBAGENT_OUTPUT"
+check_output "subagent context block"    "AUTHOR CONTEXT"        "$SUBAGENT_OUTPUT"
+check_output "subagent constitution ptr" "constitution/"         "$SUBAGENT_OUTPUT"
 
 # ═══════════════════════════════════════════════════════════
 # Summary
