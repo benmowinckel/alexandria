@@ -11,6 +11,7 @@ import { updateAccountBilling, getBillingSummary } from './accounts.js';
 import { runHealthDigest } from './cron.js';
 import { registerProtocol } from './protocol.js';
 import { registerRoutes } from './routes.js';
+import { registerMcp } from './mcp.js';
 import { registerBillingRoutes, settleMonthlyTabs, recalculateAllKinPricing, createPatronCheckoutSession } from './billing.js';
 import { registerLibraryRoutes } from './library.js';
 import { getAnalytics, getEventLog, getDashboard, getUserEvents, logEvent, flushEvents } from './analytics.js';
@@ -117,6 +118,13 @@ registerProtocol(app);
 // ---------------------------------------------------------------------------
 
 registerRoutes(app);
+
+// ---------------------------------------------------------------------------
+// MCP transport — wraps brief/nudge for remote-trigger callers whose runtime
+// egress proxy only allows the URL configured as their mcp_connection.
+// ---------------------------------------------------------------------------
+
+registerMcp(app);
 
 // ---------------------------------------------------------------------------
 // Billing — Stripe subscription management (conditional)

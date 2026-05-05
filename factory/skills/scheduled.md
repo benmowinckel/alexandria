@@ -79,13 +79,12 @@ Deviate only when there's a concrete decision he should consider today: a public
 
 Quote rotates daily — your pick — philosophy, literature, anything that earns its space. Keep it short.
 
-```bash
-curl -s -X POST https://mcp.mowinckel.ai/brief \
-  -H "Authorization: Bearer $(cat ~/alexandria/system/.api_key)" \
-  -H "X-Alexandria-Client: scheduled-agent" \
-  -H "Content-Type: application/json" \
-  -d '{"brief": "<one line. default: no material change overnight.>", "quote": "<your pick — short, sharp>"}'
-```
+Deliver the brief by calling the `brief` MCP tool (server: `alexandria` at `https://mcp.mowinckel.ai/mcp`). The trigger MUST have this MCP connection configured — plain HTTPS curl to mcp.mowinckel.ai is blocked by the runtime egress proxy and fails silently. Tool arguments:
+- `brief`: one line, default `"no material change overnight."`
+- `quote`: your pick — short, sharp
+- `api_key`: `$(cat ~/alexandria/system/.api_key)` (or the trigger-baked bearer when running remotely)
+
+After the call, write `~/alexandria/system/.autoloop/heartbeat_status` with one line: `ok <ISO timestamp> <first 80 chars of brief>` on success; `fail <ISO timestamp> <reason>` on tool error or unavailability. On failure, include `heartbeat-failed: <reason>` as the LAST line of the next git commit message body so the failure is visible in `git log` (open-loop verification: silent breaks must be detectable).
 
 Privacy: never include constitution, ontology, vault content, or interpretation of the Author's inner state. Brief = actionable surfaces + heartbeat only.
 
@@ -94,7 +93,7 @@ Privacy: never include constitution, ontology, vault content, or interpretation 
 Before exiting, verify your own work:
 1. Did last_run.md get written? Read it back.
 2. Did the git commit and push succeed? Check `git -C ~/alexandria log -1 --oneline`.
-3. Did the brief POST return `{"ok":true}`? If not, log the error in last_run.md.
+3. Did the brief tool call return `isError: false` and content `{"ok":true,"sent":true}`? If not, write `fail` to `.autoloop/heartbeat_status` and log the error in last_run.md.
 4. Did the protocol call succeed? If not, log it.
 5. Did the audit find anything worth clearing from `.alexandria_errors`? If items were acted on, remove the corresponding lines. If items remain unactionable, leave them — the next run sees them.
 
