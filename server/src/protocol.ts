@@ -5,6 +5,7 @@ import { requireAuth } from './auth.js';
 import { getDB, getR2 } from './db.js';
 import { logEvent } from './analytics.js';
 import { saveAccount, getKV } from './kv.js';
+import { resolveModule, authorFromModuleId, buildModuleId } from './marketplace-catalog.js';
 
 function r2Key(accountId: string, name: string): string {
   return `protocol/${accountId}/${name}.md`;
@@ -172,18 +173,77 @@ export function registerProtocol(app: Hono) {
   });
 
   // ── Marketplace: browse module usage ───────────────────────────
+  //
+  // Three routes, intentionally distinct:
+  //   GET /marketplace                  — public catalog (enriched listing)
+  //   GET /marketplace/:user/:repo/*    — public module detail (3+ segments)
+  //   GET /marketplace/:module          — auth-required usage history (1 segment)
+  //
+  // No /publish endpoint — modules surface via /call. The act of using is the contribution.
 
   app.get('/marketplace', async (c, next) => {
     if (new URL(c.req.url).pathname !== '/marketplace') return next();
 
-    const auth = await requireAuth(c);
-    if (!auth) return c.text('Unauthorized', 401);
-
     const { results } = await getDB().prepare(
-      'SELECT DISTINCT module_id FROM protocol_calls ORDER BY module_id'
-    ).all<{ module_id: string }>();
+      `SELECT module_id,
+              COUNT(DISTINCT account_id) as usage_count,
+              MAX(time) as last_used,
+              MIN(time) as first_seen
+       FROM protocol_calls
+       WHERE module_id LIKE 'github:%'
+       GROUP BY module_id
+       ORDER BY usage_count DESC, last_used DESC
+       LIMIT 1000`
+    ).all<{ module_id: string; usage_count: number; last_used: string; first_seen: string }>();
 
-    return c.json({ modules: (results || []).map(r => r.module_id) });
+    const rows = results || [];
+    const modules = await Promise.all(rows.map(async (r) => {
+      const meta = await resolveModule(r.module_id);
+      return {
+        id: r.module_id,
+        name: meta?.name || r.module_id,
+        description: meta?.description || '',
+        author_github_login: authorFromModuleId(r.module_id),
+        usage_count: r.usage_count,
+        last_used: r.last_used,
+        first_seen: r.first_seen,
+        status: meta?.status || 'unreachable',
+      };
+    }));
+
+    return c.json({ modules });
+  });
+
+  app.get('/marketplace/:user/:repo/*', async (c) => {
+    const user = c.req.param('user');
+    const repo = c.req.param('repo');
+    const url = new URL(c.req.url);
+    const prefix = `/marketplace/${user}/${repo}/`;
+    const path = url.pathname.startsWith(prefix) ? url.pathname.slice(prefix.length) : '';
+    if (!user || !repo || !path) return c.json({ error: 'Not found' }, 404);
+
+    const id = buildModuleId(user, repo, path);
+    const meta = await resolveModule(id);
+
+    const stats = await getDB().prepare(
+      `SELECT COUNT(DISTINCT account_id) as usage_count,
+              MAX(time) as last_used,
+              MIN(time) as first_seen
+       FROM protocol_calls
+       WHERE module_id = ?`
+    ).bind(id).first<{ usage_count: number; last_used: string | null; first_seen: string | null }>();
+
+    return c.json({
+      id,
+      name: meta?.name || path.split('/').pop() || id,
+      description: meta?.description || '',
+      body: meta?.body || '',
+      author_github_login: user,
+      usage_count: stats?.usage_count || 0,
+      last_used: stats?.last_used,
+      first_seen: stats?.first_seen,
+      status: meta?.status || 'unreachable',
+    });
   });
 
   app.get('/marketplace/:module', async (c, next) => {

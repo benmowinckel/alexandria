@@ -97,12 +97,13 @@ async function main() {
     };
   });
 
-  await test('Protocol marketplace requires auth', async () => {
+  await test('Protocol marketplace listing is public', async () => {
     const res = await fetch(`${BASE}/marketplace`);
+    const body = await res.json().catch(() => null) as { modules?: unknown } | null;
     return {
-      test: 'Protocol marketplace requires auth',
-      passed: res.status === 401,
-      details: `HTTP ${res.status}`,
+      test: 'Protocol marketplace listing is public',
+      passed: res.status === 200 && Array.isArray(body?.modules),
+      details: `HTTP ${res.status}, modules=${Array.isArray(body?.modules) ? 'array' : 'missing'}`,
     };
   });
 

@@ -235,7 +235,9 @@ async function main() {
 
   const stamp = Date.now();
   const fileName = `lifecycle-${stamp}`;
-  const moduleId = `lifecycle-module-${stamp}`;
+  // Use github: format so the public listing (which filters to github:%) reflects this call.
+  // The repo path is fictitious — the listing aggregates protocol_calls, not GitHub reachability.
+  const moduleId = `github:lifecycle-test/repo#mod-${stamp}`;
   const callText = `Lifecycle call verification ${stamp}`;
 
   await test('File obligation write accepted', async () => {
@@ -271,8 +273,8 @@ async function main() {
     };
   });
 
-  await test('Marketplace reflects protocol call', async () => {
-    const res = await fetch(`${BASE}/marketplace/${moduleId}`, { headers });
+  await test('Marketplace reflects protocol call (auth usage history)', async () => {
+    const res = await fetch(`${BASE}/marketplace/${encodeURIComponent(moduleId)}`, { headers });
     const body = await safeJson(res);
     const usage = Array.isArray(body?.usage) ? body.usage as Array<{ text?: string }> : [];
     const found = usage.some((u) => typeof u.text === 'string' && u.text.includes(callText));
@@ -284,16 +286,32 @@ async function main() {
     };
   });
 
-  await test('Marketplace listing includes lifecycle module', async () => {
-    const res = await fetch(`${BASE}/marketplace`, { headers });
+  await test('Marketplace listing (public) includes lifecycle module', async () => {
+    const res = await fetch(`${BASE}/marketplace`);
     const body = await safeJson(res);
-    const modules = Array.isArray(body?.modules) ? body.modules as string[] : [];
-    const found = modules.includes(moduleId);
+    const modules = Array.isArray(body?.modules)
+      ? body.modules as Array<{ id: string; status: string; usage_count: number }>
+      : [];
+    const entry = modules.find((m) => m.id === moduleId);
 
     return {
       test: 'Marketplace listing',
-      passed: res.ok && found,
-      details: `HTTP ${res.status}, found=${found}, module_count=${modules.length}`,
+      passed: res.ok && !!entry && entry.status === 'unreachable' && entry.usage_count >= 1,
+      details: `HTTP ${res.status}, found=${!!entry}, status=${entry?.status}, usage_count=${entry?.usage_count}, module_count=${modules.length}`,
+    };
+  });
+
+  await test('Marketplace public detail returns module shape', async () => {
+    const res = await fetch(`${BASE}/marketplace/lifecycle-test/repo/mod-${stamp}`);
+    const body = await safeJson(res) as { id?: string; status?: string; usage_count?: number; author_github_login?: string } | null;
+    return {
+      test: 'Marketplace public detail',
+      passed: res.ok
+        && body?.id === moduleId
+        && body?.status === 'unreachable'
+        && body?.author_github_login === 'lifecycle-test'
+        && (body?.usage_count ?? 0) >= 1,
+      details: `HTTP ${res.status}, id=${body?.id}, status=${body?.status}, usage_count=${body?.usage_count}`,
     };
   });
 
