@@ -159,17 +159,30 @@ const THEMES: Theme[] = [
 
 export default function LandingPage({ brandClassName = '' }: Props) {
   const [themeIdx, setThemeIdx] = useState(0);
-  const [slideAdam, setSlideAdam] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
   const middleRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
 
-  // ?slideadam=1 — experimental: pin the fresco to the top slide instead of
-  // the viewport, so it peels away with the slide on scroll.
+  // Mobile menu — close on outside click + ESC. Listeners only mount
+  // while the menu is open so we don't leak handlers in steady state.
   useEffect(() => {
-    setSlideAdam(new URLSearchParams(window.location.search).get('slideadam') === '1');
-  }, []);
+    if (!navOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest('.nav')) return;
+      setNavOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setNavOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [navOpen]);
 
   // Peel mechanic — top slide translates up as user scrolls; revealing bottom.
   // Disabled on mobile: slides flow naturally, no peel, no fixed positioning.
@@ -392,7 +405,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     root.setProperty('--theme-border-soft', theme.borderSoft);
   }, [theme]);
   return (
-    <div className="landing-root" data-theme={theme.id} data-adam="1" data-slide-adam={slideAdam ? '1' : undefined}>
+    <div className="landing-root" data-theme={theme.id} data-adam="1">
       {/* ═════ PERSISTENT NAV — fixed over both slides. Colors switch at
              the peel midpoint so it stays readable on top (cream) and on
              any bottom-slide theme. ═════ */}
@@ -455,7 +468,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            carries the "voice inside your head" register. Whitespace
            is the only ornament. */}
       <div className="top-slide" ref={topRef}>
-        {slideAdam && <div className="adam-bg adam-bg-slide" aria-hidden />}
         {/* Stage canvas — pixel-locked 1440×900 frame uniformly scaled to
             the viewport via --stage-scale-top. Inside this wrapper everything
             is absolute pixels, so type, drop-caps, and corner marks never
@@ -526,7 +538,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
 
       {/* Persistent fresco — atmospheric layer across both slides, subtle
           like the watermark. Stays put when the peel runs. */}
-      {!slideAdam && <div className="adam-bg" aria-hidden />}
+      <div className="adam-bg" aria-hidden />
 
       {/* Persistent watermark — sits across both slides like the nav. */}
       <span className="watermark" aria-hidden>
@@ -2197,6 +2209,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
 
           .nav {
             padding: 18px 18px;
+            /* Frosted backdrop — on mobile the slides flow naturally
+               (no peel), so prose scrolls up THROUGH the fixed nav.
+               Without a backdrop the brand text overlaps the body
+               text behind. Slight tint of the active theme bg + blur
+               keeps the nav legible without committing to a hard bar. */
+            background: color-mix(in srgb, var(--theme-bg, #f7f2ec) 78%, transparent);
+            backdrop-filter: blur(10px) saturate(1.05);
+            -webkit-backdrop-filter: blur(10px) saturate(1.05);
           }
           .nav-brand {
             font-size: 22px;
@@ -2392,19 +2412,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              editorial decision: the iconic moment, nothing else. */
           -webkit-mask-image: radial-gradient(ellipse 70% 28% at 50% 32%, #000 0%, rgba(0,0,0,0.92) 40%, rgba(0,0,0,0) 100%);
           mask-image: radial-gradient(ellipse 70% 28% at 50% 32%, #000 0%, rgba(0,0,0,0.92) 40%, rgba(0,0,0,0) 100%);
-        }
-        /* ?slideadam=1 variant — fresco lives inside .top-slide, so it
-           inherits the peel transform and scrolls away with the hero
-           instead of sitting fixed across both slides. Opacity is
-           constant (no peel-progress fade) because the slide itself
-           carries it out of view. z-index sits ABOVE .top-inner (z:1)
-           so Adam paints over the bubble with the same compositing as
-           the live layout (where the fixed .adam-bg was z:22 over the
-           top-slide stack). */
-        .adam-bg.adam-bg-slide {
-          position: absolute;
-          opacity: 0.18;
-          z-index: 2;
         }
         @media (max-width: 899px) {
           /* Mobile: shift the slice to favour Adam — his body fills the
