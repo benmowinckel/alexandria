@@ -253,7 +253,7 @@ export async function getDashboard(): Promise<Record<string, unknown> & { _event
 
 /**
  * Marketplace status — is the cross-Author learning loop working?
- * Signals are relayed to alexandria-marketplace github repo. Liveness =
+ * Signals are relayed to alexandria-signal github repo. Liveness =
  * the repo's pushedAt timestamp (advances on every relay or factory drain).
  */
 async function getMarketplaceStatus(events: Record<string, string>[]): Promise<Record<string, unknown>> {
@@ -266,7 +266,7 @@ async function getMarketplaceStatus(events: Record<string, string>[]): Promise<R
   try {
     const token = process.env.GITHUB_BOT_TOKEN;
     if (token) {
-      const resp = await fetch('https://api.github.com/repos/mowinckelb/alexandria-marketplace', {
+      const resp = await fetch('https://api.github.com/repos/mowinckelb/alexandria-signal', {
         headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'alexandria-server' },
       });
       if (resp.ok) {
@@ -394,5 +394,5 @@ export async function getUserEvents(login: string): Promise<Record<string, unkno
   };
 }
 
-// Signals + feedback are relayed straight to alexandria-marketplace github repo
+// Signals + feedback are relayed straight to alexandria-signal github repo
 // (no KV storage). Factory drains by deleting files in that repo.

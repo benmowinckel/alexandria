@@ -22,9 +22,9 @@ Alexandria decomposes into atomic entities. Each is exactly one thing; together 
 
 **Per-Author Files & System** — The Author's content (vault, constitution, ontology, notepad) plus their personal machine config (which skills installed, which hooks running, SMTP creds, launchd plists). Lives on their stuff: their disk, their git repo (`alexandria-private`), their accounts.
 
-**Marketplace of Systems** — Public, on github (`mowinckelb/alexandria` + future fork ecosystem). Where machine parts circulate. Today: signal-only via the `alexandria-marketplace` repo. Future: a true parts marketplace where Authors publish novel modules for others. Survives Alexandria's death only as long as the github org does — accepted tradeoff.
+**Marketplace of Systems** — Public, on github (`mowinckelb/alexandria` + future fork ecosystem). Where machine parts circulate. Today: signal-only via the `alexandria-signal` repo. Future: a true parts marketplace where Authors publish novel modules for others. Survives Alexandria's death only as long as the github org does — accepted tradeoff.
 
-**Marketplace Signal** — Private, on the Company server. Anonymized cross-Author usage telemetry (file PUTs, calls, setup status). Only the Company sees raw signal; Authors get derivatives via the daily snapshot pushed to `alexandria-marketplace` for the factory to drain.
+**Marketplace Signal** — Private, on the Company server. Anonymized cross-Author usage telemetry (file PUTs, calls, setup status). Only the Company sees raw signal; Authors get derivatives via the daily snapshot pushed to `alexandria-signal` for the factory to drain.
 
 **Library** — Collection of published Author files. Mostly Author-discretion-public; the Company server always holds at least one file per Author (the Protocol's file obligation guarantees this minimum). Browsing surface lives on the Company.
 
@@ -71,17 +71,25 @@ If a proposed change fails either test, the change is wrong.
 - **Server-side cron is for Company work, not Author work.** `runHealthDigest` probes server infra and alarms on Company state. Per-Author processing happens in the per-Author autoloop, on infra the Author controls (or accepts as a vendor — today, claude.ai).
 - **Authors depending on Alexandria ≠ Alexandria depending on Authors.** The first is fine for collective surfaces by design. The second is a bug — server must keep running if every user vanishes.
 
-### The three autonomous loops
+### The six autonomous loops
 
-Three systems that fire on a schedule. Everything else is either an input, an output, or a request-driven surface.
+Six dyads that fire on a schedule. Each is named by *who is acting* → *who is the recipient*. Everything else in the system is either an input to one of these, an output, or a request-driven surface.
 
-| Loop | What it does | Where it runs |
-|---|---|---|
-| **Per-Author autoloop** | Processes the Author's vault → notepad fragments + library drafts. Surfaces forward action via the local brief sender (writing one line to `~/alexandria/system/.brief_outbox`). Never writes to constitution (needs Author's voice + consent). | claude.ai routine in the Author's account (today's runtime — accepted tradeoff). Spec at `factory/skills/scheduled.md`. |
-| **Company health digest** | Probes KV/D1/R2/env vars/Resend/marketplace activity, sends stroll/sprint to FOUNDER_EMAIL on urgency. | Cloudflare Worker scheduled handler, `server/src/cron.ts:runHealthDigest`, daily 15:00 UTC. |
-| **Factory canon iteration** | Drains `alexandria-marketplace` signals + feedback, evolves canon in `mowinckelb/alexandria`. | claude.ai routine. Spec at `factory/skills/factory.md`. Weekly Sundays 16:00 UTC. |
+| # | Dyad | What fires | Where it runs |
+|---|---|---|---|
+| 1 | **machine → machine** | Per-Author Machine processes vault → notepad fragments + library drafts. Writes one line to `~/alexandria/system/.brief_outbox` only when something surfaceable warrants it. Never writes to constitution (needs Author's voice + consent). | claude.ai routine named `machine` in the Author's account. Spec at `factory/skills/machine.md`. Daily 15:00 UTC. |
+| 2 | **machine → user** | Brief delivery — `brief.py` reads `.brief_outbox` (or default heartbeat) and SMTP-sends through the Author's own credentials, against the Author's own email provider. | Local launchd plist on the Author's machine. Daily 8:00 AM local. Setup recipe at `factory/skills/brief-setup.md`. |
+| 3 | **company → founder** | Stroll/sprint health alarm — probes KV/D1/R2/env vars/Resend/marketplace activity, emails FOUNDER_EMAIL when urgency detected. | Cloudflare Worker scheduled handler, `server/src/cron.ts:runHealthDigest`. Daily 15:00 UTC. |
+| 4 | **company → company** | Monthly Stripe billing settlement + kin pricing recalculation. Idempotent on month-end keys. | Cloudflare Worker scheduled handler, same `cron.ts`. Monthly 1st 02:00 UTC. |
+| 5 | **company → factory** | Daily libsignal snapshot push to `alexandria-signal`. Loads the factory's input pile so it has fresh cross-Author library state on its next run. | Cloudflare Worker scheduled handler, same `cron.ts`. Daily 15:00 UTC (in same handler as the health digest). |
+| 6 | **factory → factory** | Drains everything in `alexandria-signal` (signal POSTs + feedback POSTs + libsignal snapshot), evolves canon in `mowinckelb/alexandria`. Most weeks decide "no PR this run." | claude.ai routine named `factory`. Spec at `factory/skills/factory.md`. Weekly Sundays 16:00 UTC. |
 
-The Author's brief email is **not a fourth loop** — it's the delivery surface of the per-Author autoloop. A local launchd plist fires `factory/scripts/brief.py` daily on the Author's machine; default body is a heartbeat ("no material change overnight."); the autoloop overrides with surfaceable content via `.brief_outbox` when something's worth attention. Sender is the Author's own SMTP, against the Author's own email provider — Alexandria has nothing to do with that delivery path. Setup recipe at `factory/skills/brief-setup.md`.
+Why these and not others — every other actor↔recipient combination is either request-driven (Author publishes a file → server stores it; Author opens `/a` → machine processes interactively) or absent by design (company never emails Authors personally; factory never talks to humans directly).
+
+Death-test mapping:
+- Loops 1, 2 survive Alexandria's death (run on Author's stuff: claude.ai routine writing to Author's repo + Author's own launchd + Author's own SMTP).
+- Loops 3, 4, 5 die with the company (they ARE the company).
+- Loop 6 dies with claude.ai routine availability; the canon artifact persists frozen on public github.
 
 ## Code
 
@@ -124,8 +132,8 @@ Operational overhead — OAuth, billing, email, admin:
 | GET | `/account` | Billing portal redirect |
 | DELETE | `/account` | Account deletion (GDPR-ready) |
 | POST | `/brief` | Morning brief (autoloop trigger) |
-| POST | `/marketplace/signal` | Machine signal submission (relayed to alexandria-marketplace github repo) |
-| POST | `/feedback` | User feedback (relayed to alexandria-marketplace github repo) |
+| POST | `/marketplace/signal` | Machine signal submission (relayed to alexandria-signal github repo) |
+| POST | `/feedback` | User feedback (relayed to alexandria-signal github repo) |
 | GET/GET | `/email/less`, `/email/stop` | Email preferences |
 | GET/GET | `/brief/less`, `/brief/stop` | Brief preferences |
 | POST | `/admin/nudge` | Nudge uninstalled users (admin) |

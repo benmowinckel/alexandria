@@ -1,5 +1,5 @@
 {
-  "name": "alexandria-mcp-server",
+  "name": "alexandria-server",
   "version": "0.4.0",
   "private": true,
   "type": "module",

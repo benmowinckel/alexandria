@@ -6,7 +6,7 @@
  *   "auth:{api_key_hash}"  → github_id (lookup index for O(1) auth)
  *   "events:YYYY-MM-DD"    → JSONL string of events for that day
  *   "cron:*"                → cron liveness markers (health digest reads these)
- * (marketplace signals + feedback live in the alexandria-marketplace github repo
+ * (marketplace signals + feedback live in the alexandria-signal github repo
  * now, not in KV — see marketplace.ts for the relay.)
  *
  * Each account is its own KV key — no concurrent write corruption,

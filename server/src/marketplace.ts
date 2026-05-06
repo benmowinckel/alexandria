@@ -13,7 +13,7 @@
  */
 import { logEvent } from './analytics.js';
 
-const REPO = 'mowinckelb/alexandria-marketplace';
+const REPO = 'mowinckelb/alexandria-signal';
 const API = 'https://api.github.com';
 
 function getToken(): string {

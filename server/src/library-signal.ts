@@ -4,7 +4,7 @@
  * The factory autoloop reads this as one of its three inputs (alongside
  * marketplace signals and feedback). It used to be exposed as an HTTP
  * endpoint but the factory agent can't reach mcp.mowinckel.ai/admin/*,
- * so we publish a daily snapshot to alexandria-marketplace github repo
+ * so we publish a daily snapshot to alexandria-signal github repo
  * instead — read-via-gh, drained-on-overwrite (one file, not per-day).
  */
 import { getDB } from './db.js';
