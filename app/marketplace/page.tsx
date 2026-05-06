@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'marketplace — alexandria.',
-  description: 'Reusable Alexandria machinery — skills, scripts, prompts, filters. Use is the contribution.',
+  description: 'Reusable Alexandria machinery — skills, scripts, prompts, filters. Installed from public github.',
 };
 
 interface MarketplaceModule {
@@ -39,11 +39,6 @@ function isCanonical(parsed: ParsedId | null): boolean {
   return !!parsed && parsed.user === 'mowinckelb' && parsed.repo === 'alexandria';
 }
 
-function authorLabel(parsed: ParsedId | null, fallback: string | null): string | null {
-  if (isCanonical(parsed)) return 'alexandria';
-  return fallback;
-}
-
 async function loadModules(): Promise<MarketplaceModule[]> {
   try {
     const res = await fetch(`${SERVER_URL}/marketplace`, { cache: 'no-store' });
@@ -53,12 +48,6 @@ async function loadModules(): Promise<MarketplaceModule[]> {
   } catch {
     return [];
   }
-}
-
-function statusBadge(status: MarketplaceModule['status']): string | null {
-  if (status === 'unreachable') return 'unreachable';
-  if (status === 'parse_error') return 'parse error';
-  return null;
 }
 
 const CANONICAL_BADGE_STYLE: React.CSSProperties = {
@@ -89,7 +78,7 @@ export default async function MarketplacePage() {
             marketplace
           </h1>
           <p style={{ color: 'var(--text-ghost)', fontSize: '0.88rem', lineHeight: 1.5, margin: '0.6rem 0 0' }}>
-            reusable Alexandria machinery — skills, scripts, prompts, filters. modules surface here when Authors use them.
+            reusable Alexandria machinery — skills, scripts, prompts, filters. installed from public github.
           </p>
         </header>
 
@@ -102,33 +91,24 @@ export default async function MarketplacePage() {
             {modules.map((m) => {
               const parsed = parseGithubId(m.id);
               const href = parsed ? `/marketplace/${parsed.user}/${parsed.repo}/${parsed.path}` : null;
-              const badge = statusBadge(m.status);
               const canonical = isCanonical(parsed);
-              const author = authorLabel(parsed, m.author_github_login);
+              // Author shown only for community items — for canonical it would
+              // duplicate the badge ("alexandria" twice on the same card).
+              const author = canonical ? null : m.author_github_login;
               const inner = (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '1rem' }}>
-                    <h2 style={{ fontSize: '1.1rem', fontWeight: 400, color: 'var(--text-primary)', margin: 0 }}>
-                      {m.name}
-                      {canonical && <span style={CANONICAL_BADGE_STYLE}>canonical</span>}
-                      {badge && (
-                        <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', color: 'var(--text-ghost)', fontStyle: 'italic' }}>
-                          ({badge})
-                        </span>
-                      )}
-                    </h2>
-                    <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-                      {m.usage_count} {m.usage_count === 1 ? 'use' : 'uses'}
-                    </span>
-                  </div>
+                  <h2 style={{ fontSize: '1.1rem', fontWeight: 400, color: 'var(--text-primary)', margin: 0 }}>
+                    {m.name}
+                    {canonical && <span style={CANONICAL_BADGE_STYLE}>canonical</span>}
+                    {author && (
+                      <span style={{ marginLeft: '0.6rem', fontSize: '0.82rem', color: 'var(--text-ghost)', fontWeight: 400 }}>
+                        · {author}
+                      </span>
+                    )}
+                  </h2>
                   {m.description && (
                     <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0.6rem 0 0' }}>
                       {m.description}
-                    </p>
-                  )}
-                  {author && (
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-ghost)', margin: '0.6rem 0 0' }}>
-                      {author}
                     </p>
                   )}
                 </>
