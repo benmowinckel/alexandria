@@ -46,7 +46,7 @@ fallthrough = false
 
 [vars]
 BETA_MODE = "true"
-SERVER_URL = "https://mcp.mowinckel.ai"
+SERVER_URL = "https://api.mowinckel.ai"
 FOUNDER_EMAIL = "benjamin@mowinckel.com"
 ADMIN_GITHUB_LOGIN = "mowinckelb"
 WEBSITE_URL = "https://mowinckel.ai"
