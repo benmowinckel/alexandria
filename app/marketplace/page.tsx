@@ -90,10 +90,11 @@ export default async function MarketplacePage() {
           <section style={{ marginTop: '2rem' }}>
             {modules.map((m) => {
               const parsed = parseGithubId(m.id);
-              const href = parsed ? `/marketplace/${parsed.user}/${parsed.repo}/${parsed.path}` : null;
+              // Click-through targets github directly — github is the marketplace
+              // substrate (markdown rendering, forks, comments, history); this
+              // page is the curated cross-repo index.
+              const href = parsed ? `https://github.com/${parsed.user}/${parsed.repo}/blob/HEAD/${parsed.path}.md` : null;
               const canonical = isCanonical(parsed);
-              // Author shown only for community items — for canonical it would
-              // duplicate the badge ("alexandria" twice on the same card).
               const author = canonical ? null : m.author_github_login;
               const inner = (
                 <>
@@ -116,13 +117,15 @@ export default async function MarketplacePage() {
               return (
                 <article key={m.id} style={{ padding: '1.1rem 0', borderTop: '1px solid var(--border-light)' }}>
                   {href ? (
-                    <Link
+                    <a
                       href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       style={{ textDecoration: 'none', color: 'inherit', display: 'block', transition: 'opacity 0.15s' }}
                       className="hover:opacity-60"
                     >
                       {inner}
-                    </Link>
+                    </a>
                   ) : inner}
                 </article>
               );

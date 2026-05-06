@@ -389,43 +389,6 @@ html.app-shell input:focus {
   padding-top: 2rem;
   padding-bottom: 3rem;
 }
-.mdoc-meta {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-light);
-  font-family: var(--font-eb-garamond);
-}
-.mdoc-meta-id {
-  background: var(--bg-tertiary);
-  padding: 0.55rem 0.8rem;
-  border-radius: 3px;
-  font-size: 0.82rem;
-  margin: 0;
-  overflow-x: auto;
-  color: var(--text-muted);
-}
-.mdoc-meta-id code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  background: none;
-  padding: 0;
-  color: inherit;
-}
-.mdoc-meta-row {
-  margin-top: 0.7rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
-  font-size: 0.85rem;
-  color: var(--text-ghost);
-}
-.mdoc-meta-row a {
-  color: var(--text-muted);
-  text-decoration: none;
-}
-.mdoc-meta-row a:hover {
-  color: var(--text-primary);
-}
-
 .mdoc-footnav {
   padding-bottom: 4rem;
 }
