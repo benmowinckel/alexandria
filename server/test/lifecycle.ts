@@ -288,30 +288,38 @@ async function main() {
 
   await test('Marketplace listing (public) includes lifecycle module', async () => {
     const res = await fetch(`${BASE}/marketplace`);
-    const body = await safeJson(res);
-    const modules = Array.isArray(body?.modules)
-      ? body.modules as Array<{ id: string; status: string; usage_count: number }>
-      : [];
+    const body = await safeJson(res) as { modules?: Array<{ id: string; status: string; kind: string }>; total?: number; next_cursor?: string | null } | null;
+    const modules = body?.modules || [];
     const entry = modules.find((m) => m.id === moduleId);
 
+    // Public listing: catalog only — no usage telemetry. The lifecycle module
+    // points at a fake repo so resolveModule correctly returns 'unreachable'
+    // (github fetch fails). Envelope must carry total + next_cursor for the
+    // forward-compat pagination contract.
     return {
       test: 'Marketplace listing',
-      passed: res.ok && !!entry && entry.status === 'unreachable' && entry.usage_count >= 1,
-      details: `HTTP ${res.status}, found=${!!entry}, status=${entry?.status}, usage_count=${entry?.usage_count}, module_count=${modules.length}`,
+      passed: res.ok
+        && !!entry
+        && entry.status === 'unreachable'
+        && typeof entry.kind === 'string'
+        && body?.total !== undefined
+        && body?.next_cursor === null,
+      details: `HTTP ${res.status}, found=${!!entry}, status=${entry?.status}, kind=${entry?.kind}, module_count=${modules.length}, total=${body?.total}, next_cursor=${body?.next_cursor}`,
     };
   });
 
-  await test('Marketplace public detail returns module shape', async () => {
-    const res = await fetch(`${BASE}/marketplace/lifecycle-test/repo/mod-${stamp}`);
-    const body = await safeJson(res) as { id?: string; status?: string; usage_count?: number; author_github_login?: string } | null;
+  await test('Public marketplace strips private signal', async () => {
+    // Confirm the public listing carries no usage_count / last_used / first_seen
+    // / per-call text. Those are private Marketplace Signal exposed only via the
+    // auth-gated /marketplace/:module endpoint.
+    const res = await fetch(`${BASE}/marketplace`);
+    const text = await res.text();
+    const leaks = ['usage_count', 'last_used', 'first_seen']
+      .filter((k) => text.includes(`"${k}"`));
     return {
-      test: 'Marketplace public detail',
-      passed: res.ok
-        && body?.id === moduleId
-        && body?.status === 'unreachable'
-        && body?.author_github_login === 'lifecycle-test'
-        && (body?.usage_count ?? 0) >= 1,
-      details: `HTTP ${res.status}, id=${body?.id}, status=${body?.status}, usage_count=${body?.usage_count}`,
+      test: 'Public marketplace strips private signal',
+      passed: res.ok && leaks.length === 0,
+      details: leaks.length === 0 ? `HTTP ${res.status}, no private fields` : `HTTP ${res.status}, leaks: ${leaks.join(', ')}`,
     };
   });
 
