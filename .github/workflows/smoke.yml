@@ -147,6 +147,11 @@ jobs:
           # Anchor content checks — these two carry the bash + canon contract
           curl -sf "$FACTORY/setup.sh" | head -1 | grep -q "bash" || { echo "::error::setup.sh not valid bash"; exit 1; }
           curl -sf "$FACTORY/canon/methodology.md" | wc -c | xargs test 1000 -lt || { echo "::error::methodology.md too small"; exit 1; }
+          # Bash scripts must parse — beta users running `curl … | bash` will see
+          # any syntax error at install time. Catch it here instead.
+          for sh in setup.sh scripts/publish-fork.sh hooks/shim.sh hooks/payload.sh; do
+            curl -sf "$FACTORY/$sh" | bash -n - || { echo "::error::$sh has bash syntax errors"; exit 1; }
+          done
           echo "✓ factory ($COUNT files, derived from git, content verified)"
 
       - name: Website
