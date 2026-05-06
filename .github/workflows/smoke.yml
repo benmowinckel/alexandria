@@ -98,10 +98,35 @@ jobs:
           BODY=$(curl -sf $SERVER/marketplace -H "Authorization: Bearer $API_KEY")
           echo "$BODY" | grep -q '"brief-setup"' || { echo "::error::Marketplace missing canonical skill (brief-setup)"; exit 1; }
           echo "$BODY" | grep -q '"methodology"' || { echo "::error::Marketplace missing canonical canon doc (methodology) — frontmatter-tolerant parsing regressed"; exit 1; }
+          # Forward-compat envelope: `total` and `next_cursor` keys must be present
+          # so future pagination ships without breaking clients.
+          echo "$BODY" | grep -q '"total"' || { echo "::error::Marketplace missing total field — forward-compat envelope regressed"; exit 1; }
+          echo "$BODY" | grep -q '"next_cursor"' || { echo "::error::Marketplace missing next_cursor field — forward-compat envelope regressed"; exit 1; }
+          # Self-describing catalog: every entry advertises its `kind`.
+          echo "$BODY" | grep -q '"kind":"skill"' || { echo "::error::No skill entries surface kind=skill"; exit 1; }
+          echo "$BODY" | grep -q '"kind":"canon"' || { echo "::error::No canon entries surface kind=canon"; exit 1; }
           # Private signal must NOT appear in the public listing.
           if echo "$BODY" | grep -q '"usage_count"'; then echo "::error::Public marketplace leaks usage_count (private signal)"; exit 1; fi
           if echo "$BODY" | grep -q '"last_used"'; then echo "::error::Public marketplace leaks last_used (private signal)"; exit 1; fi
+          # Cache-Control must be present so CDNs/clients can cache the catalog.
+          curl -sIf $SERVER/marketplace -H "Authorization: Bearer $API_KEY" | grep -qi '^cache-control:.*max-age=300' \
+            || { echo "::error::Marketplace missing Cache-Control max-age=300"; exit 1; }
+          # Filter params work: ?kind=canon should narrow to canon docs only.
+          FILTERED=$(curl -sf "$SERVER/marketplace?kind=canon" -H "Authorization: Bearer $API_KEY")
+          echo "$FILTERED" | grep -q '"kind":"canon"' || { echo "::error::Filter ?kind=canon returns no canon entries"; exit 1; }
+          if echo "$FILTERED" | grep -q '"kind":"skill"'; then echo "::error::Filter ?kind=canon leaks non-canon entries"; exit 1; fi
           echo "✓ marketplace"
+
+      - name: Github webhook reachable
+        run: |
+          # Without a signature header the endpoint should refuse with 401 (not
+          # 404 / 503). Confirms the route is registered and the secret is bound.
+          status=$(curl -s -o /dev/null -w '%{http_code}' -X POST $SERVER/github/webhook -H 'Content-Type: application/json' -d '{}')
+          if [ "$status" != "401" ]; then
+            echo "::error::Github webhook returned $status (expected 401 without signature) — route not registered or GITHUB_WEBHOOK_SECRET unset"
+            exit 1
+          fi
+          echo "✓ github webhook"
 
       - name: Factory (every tracked file resolves on raw)
         run: |

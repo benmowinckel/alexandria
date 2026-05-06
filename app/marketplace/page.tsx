@@ -15,10 +15,14 @@ interface MarketplaceModule {
   name: string;
   description: string;
   author_github_login: string | null;
-  usage_count: number;
-  last_used: string;
-  first_seen: string;
-  status: 'ok' | 'unreachable' | 'parse_error';
+  kind: string;
+  status: 'ok' | 'unreachable';
+}
+
+interface MarketplaceResponse {
+  modules: MarketplaceModule[];
+  total: number;
+  next_cursor: string | null;
 }
 
 interface ParsedId {
@@ -43,7 +47,7 @@ async function loadModules(): Promise<MarketplaceModule[]> {
   try {
     const res = await fetch(`${SERVER_URL}/marketplace`, { cache: 'no-store' });
     if (!res.ok) return [];
-    const data = await res.json() as { modules?: MarketplaceModule[] };
+    const data = await res.json() as Partial<MarketplaceResponse>;
     return data.modules || [];
   } catch {
     return [];

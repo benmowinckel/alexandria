@@ -164,6 +164,41 @@ async function refreshCache(id: string, parsed: ParsedModuleId): Promise<ModuleM
   return meta;
 }
 
+/** Drop a single cached entry — used by the github webhook to invalidate
+ *  on push without waiting for TTL. Idempotent. */
+export async function bustModuleCache(id: string): Promise<void> {
+  await getKV().delete(cacheKey(id));
+}
+
+/**
+ * Process a github push webhook payload and bust cache for any touched
+ * markdown files. Returns the number of cache entries invalidated.
+ *
+ * Payload shape: github sends `{ commits: [{ added, modified, removed }], repository: { name, owner: { login } } }`.
+ */
+export async function handleGithubPushWebhook(payload: {
+  repository?: { name?: string; owner?: { login?: string } };
+  commits?: Array<{ added?: string[]; modified?: string[]; removed?: string[] }>;
+}): Promise<{ busted: number }> {
+  const user = payload?.repository?.owner?.login;
+  const repo = payload?.repository?.name;
+  if (!user || !repo) return { busted: 0 };
+  const touched = new Set<string>();
+  for (const commit of payload.commits || []) {
+    for (const path of commit.added || []) touched.add(path);
+    for (const path of commit.modified || []) touched.add(path);
+    for (const path of commit.removed || []) touched.add(path);
+  }
+  let busted = 0;
+  for (const path of touched) {
+    if (!path.endsWith('.md')) continue;
+    const pathNoExt = path.slice(0, -3);
+    await bustModuleCache(buildModuleId(user, repo, pathNoExt));
+    busted++;
+  }
+  return { busted };
+}
+
 /** Get module metadata. KV TTL handles staleness — miss = refresh. Returns null for non-github IDs. */
 export async function resolveModule(id: string): Promise<ModuleMeta | null> {
   const parsed = parseModuleId(id);
@@ -187,4 +222,21 @@ export async function resolveModule(id: string): Promise<ModuleMeta | null> {
 export function authorFromModuleId(id: string): string | null {
   const p = parseModuleId(id);
   return p.user || null;
+}
+
+/**
+ * Module kind derived from path conventions. Self-describing catalog entries
+ * so agents can filter by `?kind=skill` etc. without parsing paths themselves.
+ * Convention is path-based; non-canonical-style paths fall through to "module".
+ */
+export function deriveKind(id: string): string {
+  const p = parseModuleId(id);
+  if (!p.path) return 'module';
+  if (p.path.startsWith('factory/skills/')) return 'skill';
+  if (p.path.startsWith('factory/canon/')) return 'canon';
+  if (p.path.startsWith('factory/hooks/')) return 'hook';
+  if (p.path.startsWith('factory/scripts/')) return 'script';
+  if (p.path.startsWith('factory/templates/')) return 'template';
+  if (p.path.startsWith('factory/systems/')) return 'system';
+  return 'module';
 }

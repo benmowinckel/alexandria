@@ -5,7 +5,7 @@ import { requireAuth } from './auth.js';
 import { getDB, getR2 } from './db.js';
 import { logEvent } from './analytics.js';
 import { saveAccount, getKV } from './kv.js';
-import { resolveModule, authorFromModuleId, buildModuleId } from './marketplace-catalog.js';
+import { resolveModule, authorFromModuleId, buildModuleId, deriveKind } from './marketplace-catalog.js';
 
 function r2Key(accountId: string, name: string): string {
   return `protocol/${accountId}/${name}.md`;
@@ -185,24 +185,32 @@ export function registerProtocol(app: Hono) {
     if (new URL(c.req.url).pathname !== '/marketplace') return next();
 
     // Public listing is the catalog only — module identity, name, description,
-    // canonical-or-not. Usage telemetry (counts, recency, per-call text) is
-    // private Marketplace Signal exposed only via the auth-gated
+    // canonical-or-not, kind. Usage telemetry (counts, recency, per-call text)
+    // is private Marketplace Signal exposed only via the auth-gated
     // `/marketplace/:module` endpoint.
     const { results } = await getDB().prepare(
       `SELECT DISTINCT module_id FROM protocol_calls WHERE module_id LIKE 'github:%' LIMIT 1000`
     ).all<{ module_id: string }>();
 
     const rows = results || [];
-    const modules = await Promise.all(rows.map(async (r) => {
+    let modules = await Promise.all(rows.map(async (r) => {
       const meta = await resolveModule(r.module_id);
       return {
         id: r.module_id,
         name: meta?.name || r.module_id,
         description: meta?.description || '',
         author_github_login: authorFromModuleId(r.module_id),
+        kind: deriveKind(r.module_id),
         status: meta?.status || 'unreachable',
       };
     }));
+
+    // Optional filters — additive query params, no-op when absent.
+    const kindFilter = c.req.query('kind');
+    if (kindFilter) modules = modules.filter((m) => m.kind === kindFilter);
+    const authorFilter = c.req.query('author');
+    if (authorFilter) modules = modules.filter((m) => m.author_github_login === authorFilter);
+
     // Canonical (mowinckelb/alexandria) first, then alphabetical by name.
     modules.sort((a, b) => {
       const aCanon = a.id.startsWith('github:mowinckelb/alexandria#');
@@ -211,7 +219,13 @@ export function registerProtocol(app: Hono) {
       return a.name.localeCompare(b.name);
     });
 
-    return c.json({ modules });
+    // CDN + client cache. Server-side KV cache still front-runs github fetches;
+    // this layer lets clients/CDNs hold the assembled JSON for 5 min.
+    c.header('Cache-Control', 'public, max-age=300, s-maxage=300');
+    // Envelope shape: forward-compat for pagination. `next_cursor` is null
+    // today; when paginated, clients that already iterate via cursor
+    // continue working unchanged.
+    return c.json({ modules, total: modules.length, next_cursor: null });
   });
 
   app.get('/marketplace/:user/:repo/*', async (c) => {
@@ -227,12 +241,14 @@ export function registerProtocol(app: Hono) {
     const id = buildModuleId(user, repo, path);
     const meta = await resolveModule(id);
 
+    c.header('Cache-Control', 'public, max-age=300, s-maxage=300');
     return c.json({
       id,
       name: meta?.name || path.split('/').pop() || id,
       description: meta?.description || '',
       body: meta?.body || '',
       author_github_login: user,
+      kind: deriveKind(id),
       status: meta?.status || 'unreachable',
     });
   });

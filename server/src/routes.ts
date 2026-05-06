@@ -13,6 +13,7 @@ import { generateApiKey, getAccounts, requireAdmin } from './accounts.js';
 import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL } from './email.js';
 import { runHealthDigest } from './cron.js';
 import { publishSignal, publishFeedback } from './marketplace.js';
+import { handleGithubPushWebhook } from './marketplace-catalog.js';
 
 /**
  * KV-backed rate limit for destructive/expensive admin endpoints.
@@ -140,6 +141,23 @@ export function registerRoutes(app: Hono) {
           call: '/call',
           library: '/library/{id}',
           marketplace: '/marketplace',
+        },
+        marketplace: {
+          list: {
+            path: '/marketplace',
+            response: '{ modules: [{ id, name, description, author_github_login, kind, status }], total, next_cursor }',
+            filters: { kind: 'skill|canon|hook|script|template|system|module', author: 'github_login' },
+            cache: 'public 5 min; KV-backed 24h with github webhook invalidation on push',
+          },
+          detail: {
+            path: '/marketplace/{user}/{repo}/{path}',
+            response: '{ id, name, description, body, author_github_login, kind, status }',
+          },
+          usage_history: {
+            path: '/marketplace/{module_id}',
+            auth: 'required',
+            note: 'private Marketplace Signal — usage timestamps + per-call text',
+          },
         },
         factory: 'https://github.com/mowinckelb/alexandria/tree/main/factory',
         methodology: 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/canon/methodology.md',
@@ -563,6 +581,59 @@ export function registerRoutes(app: Hono) {
   }
 
   app.post('/marketplace/signal', handleSignal);
+
+  // --- Github webhook — instant marketplace cache invalidation on push ---
+  //
+  // Configure on the canonical repo and any other founder-owned repo that
+  // hosts modules. Other Authors' forks rely on the 24h KV TTL until they
+  // configure their own webhook (or until we add per-Author secret support).
+  //
+  // Validates the X-Hub-Signature-256 HMAC against GITHUB_WEBHOOK_SECRET.
+  // Constant-time compare to avoid timing oracles.
+  app.post('/github/webhook', async (c) => {
+    const secret = process.env.GITHUB_WEBHOOK_SECRET;
+    if (!secret) {
+      console.error('[github-webhook] GITHUB_WEBHOOK_SECRET unset');
+      return c.json({ error: 'webhook not configured' }, 503);
+    }
+    const sigHeader = c.req.header('x-hub-signature-256') || '';
+    const expected = sigHeader.startsWith('sha256=') ? sigHeader.slice(7) : '';
+    if (!expected) return c.json({ error: 'missing signature' }, 401);
+
+    const rawBody = await c.req.text();
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      enc.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    );
+    const signed = await crypto.subtle.sign('HMAC', key, enc.encode(rawBody));
+    const got = [...new Uint8Array(signed)].map((b) => b.toString(16).padStart(2, '0')).join('');
+
+    if (expected.length !== got.length) return c.json({ error: 'bad signature' }, 401);
+    let diff = 0;
+    for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ got.charCodeAt(i);
+    if (diff !== 0) return c.json({ error: 'bad signature' }, 401);
+
+    const event = c.req.header('x-github-event') || '';
+    if (event === 'ping') return c.json({ ok: true, pong: true });
+    if (event !== 'push') return c.json({ ok: true, ignored: event });
+
+    let payload: Parameters<typeof handleGithubPushWebhook>[0];
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      return c.json({ error: 'bad payload' }, 400);
+    }
+    const result = await handleGithubPushWebhook(payload);
+    logEvent('github_webhook_push', {
+      repo: `${payload?.repository?.owner?.login || ''}/${payload?.repository?.name || ''}`,
+      busted: String(result.busted),
+    });
+    return c.json({ ok: true, ...result });
+  });
 
   // --- User feedback (end-of-session + direct) ---
 
