@@ -240,5 +240,10 @@ export function deriveKind(id: string): string {
   if (p.path.startsWith('factory/scripts/')) return 'script';
   if (p.path.startsWith('factory/templates/')) return 'template';
   if (p.path.startsWith('factory/systems/')) return 'system';
+  // `<user>/alexandria-systems` is the publish.sh convention: a flat repo
+  // with one .md per skill at the root. Treat its modules as skills so the
+  // marketplace shows them with the right badge instead of falling through
+  // to the generic "module".
+  if (p.repo === 'alexandria-systems') return 'skill';
   return 'module';
 }

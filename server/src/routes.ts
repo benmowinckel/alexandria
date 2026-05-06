@@ -497,6 +497,15 @@ export function registerRoutes(app: Hono) {
       const url = await createPortalSession(account.stripe_customer_id);
       return c.redirect(url);
     } catch (err) {
+      // Stale customer ID (test→live transition leaves orphan IDs from
+      // setup-mode checkouts). Don't 500 — bounce to /signup, where the
+      // next checkout's defensive retry creates a fresh live customer.
+      const e = err as { type?: string; code?: string };
+      if (e?.type === 'StripeInvalidRequestError' && e?.code === 'resource_missing') {
+        const WEBSITE_URL = process.env.WEBSITE_URL || 'https://mowinckel.ai';
+        console.warn(`[account] stale stripe_customer_id ${account.stripe_customer_id} — redirecting to /signup`);
+        return c.redirect(`${WEBSITE_URL}/signup?billing=refresh`);
+      }
       console.error('Portal error:', err);
       return c.text('Failed to create billing portal session.', 500);
     }

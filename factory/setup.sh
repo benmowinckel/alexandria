@@ -329,6 +329,33 @@ PLIST_END
     launchctl load "$PLIST" 2>/dev/null
     echo "  auto-publish: hourly via launchd"
   fi
+
+  # Hourly auto-publish via cron (Linux only). Append a single line to the
+  # Author's user crontab; idempotent (de-dupes by command path).
+  if [ -d "$FORK_DIR/.git" ] && [ -f "$ALEX_DIR/system/scripts/publish-fork.sh" ] && [ "$(uname)" = "Linux" ] && command -v crontab &>/dev/null; then
+    CRON_LINE="0 * * * * bash $ALEX_DIR/system/scripts/publish-fork.sh $FORK_DIR >> $ALEX_DIR/system/.publish.log 2>&1"
+    EXISTING=$(crontab -l 2>/dev/null | grep -v "publish-fork.sh" || true)
+    { [ -n "$EXISTING" ] && echo "$EXISTING"; echo "$CRON_LINE"; } | crontab - 2>/dev/null && \
+      echo "  auto-publish: hourly via cron"
+  fi
+
+  # Skill auto-discovery — symlink any factory/skills/*.md the Author has in
+  # their fork into ~/.claude/skills/<name>/SKILL.md so Claude Code finds them.
+  # Skips names already installed (don't overwrite canonical/manual installs).
+  # Idempotent: re-running setup picks up newly added fork skills.
+  if [ -d "$FORK_DIR/factory/skills" ] && [ -d "$HOME/.claude/skills" ]; then
+    LINKED=0
+    for skill_file in "$FORK_DIR/factory/skills/"*.md; do
+      [ -f "$skill_file" ] || continue
+      base=$(basename "$skill_file" .md)
+      target_dir="$HOME/.claude/skills/$base"
+      target_file="$target_dir/SKILL.md"
+      [ -e "$target_file" ] && continue
+      mkdir -p "$target_dir" 2>/dev/null
+      ln -sf "$skill_file" "$target_file" 2>/dev/null && LINKED=$((LINKED+1))
+    done
+    [ "$LINKED" -gt 0 ] && echo "  fork skills: $LINKED linked into ~/.claude/skills/"
+  fi
 fi
 
 # ── 6. iCloud input pipe (macOS) ─────────────────────────────────
