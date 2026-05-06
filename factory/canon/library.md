@@ -1,6 +1,6 @@
 # The Library
 
-*The Library makes cognitive transformation visible, shareable, and social. It completes the loop: join → train → show. This file covers Library folder structure, surface formats, publish conventions, and the browsing loop.*
+*The Library makes cognitive transformation visible, shareable, and social. It completes the loop: join → train → show. This file covers Library folder structure, surface formats, publish conventions, the browsing loop, and the Marketplace of Systems — how Authors share reusable machinery with each other.*
 
 ## Structure — three tier sub-folders
 
@@ -31,7 +31,7 @@ When file compliance is due within seven days, stale, or missing, this becomes a
 - `name` = the path relative to `library/` (e.g. `public/shadow.md`).
 - `visibility` = the tier folder (`public`, `paid`, or `invite`).
 
-The server's protocol layer accepts all three visibility values and stores accordingly.
+The server's protocol layer accepts all three visibility values and stores accordingly. There is one publish endpoint — `PUT /file/{name}`. It carries every artifact type. Format-specific endpoints (`/library/publish/shadow`, `/library/publish/pulse`) do not exist and will not be added; the protocol stays minimal on purpose.
 
 Five artifact types: Shadow (curated Constitution fragments), Pulse (monthly change artifact, typically public), Delta (progress diff, typically invite with zero invitees = Author-only), Quiz (viral distribution engine, typically public), Work (finished creative artifact, frozen on publication, any tier).
 
@@ -41,24 +41,6 @@ The Engine decides content, structure, and format for all artifacts. No prescrib
 
 The Library is an RL environment. Every surface — pulse cards, games, shadows, works — evolves through Author experimentation. The Machine suggests. The Author curates. The marketplace measures. The canon propagates winners.
 
-## Marketplace Contributions — Systems as Modules
-
-When an Author invents a reusable system, ritual, prompt, filter, extraction move, publishing format, or other piece of Alexandria machinery, treat it as a marketplace contribution candidate. The local version belongs in `~/alexandria/files/works/systems/<slug>.md`: what problem it solves, when to use it, when not to use it, the exact instruction/pattern, and one concrete example from this Author's use.
-
-If the system is only useful for this Author, keep it local. If another Author could benefit, prompt the Author to contribute it upstream to the GitHub repo. The contribution target is a small markdown file in the Alexandria repository, not a private dump of their files. Strip private details. Preserve the reusable mechanism.
-
-Module IDs are GitHub identity tags. Once a system has a public GitHub path, its stable marketplace ID is:
-
-`github:<owner>/<repo>#<path-without-.md>`
-
-Example: `github:mowinckelb/alexandria#factory/canon/library`.
-
-Before a system is contributed, use a provisional local ID in `.call_manifest`:
-
-`local:<github-login>/<slug>`
-
-The Engine maintains `~/alexandria/.call_manifest` as the list of modules this machine actually uses. Every session-start and autoloop posts those IDs to `/call`, where the marketplace counts survival across real machines. When a provisional system is accepted into GitHub, replace the local ID with the GitHub ID. This is the loop: local invention -> contribution candidate -> GitHub identity tag -> usage signal -> marketplace ranking -> canon propagation.
-
 **Pulse generation (monthly).** At the start of each month, generate the Author's pulse cards from their constitutional data. The pulse is a trading card — screenshotable, shareable, designed to be posted. V1 soft default formats (the marketplace's current best guess — will evolve through the RL loop as Authors experiment):
 
 - **Similarity card.** Similar thinker — all time: one name, one percentage, one-line description of the connection. The anchor. Similar thinkers — this month: three names with one-line descriptions. The monthly variation — what changed, who showed up. Screenshotable URLs: Author's Library page and kin signup code.
@@ -67,9 +49,9 @@ The Engine maintains `~/alexandria/.call_manifest` as the list of modules this m
 
 The two formats serve complementary functions. The similarity card anchors identity (who you think like). The fragment card signals range (what you're engaging with). Both are screenshotable. Both evolve. Authors can publish either or both, or invent their own.
 
-Publish via POST to `/library/publish/pulse` as structured JSON. The format will evolve — these are soft defaults. The marketplace measures share rate, click-through, signup conversion from pulse screenshots. Authors who experiment with different formats contribute signal. No format is permanent.
+Publish pulses by writing them to `~/alexandria/files/library/public/pulse.json` (or another tier) and letting the Publisher ship via `PUT /file/public/pulse.json`. The format will evolve — these are soft defaults. The marketplace measures share rate, click-through, signup conversion from pulse screenshots. Authors who experiment with different formats contribute signal. No format is permanent.
 
-**Shadow publishing.** The Author publishes their shadow to the Library. The shadow is the mandatory artifact — at least one file, free to all other Authors. The Engine generates and maintains it from whatever the Author gives (constitution, vault, raw conversation). Publish via POST to `/library/publish/shadow`.
+**Shadow publishing.** The Author publishes their shadow to the Library via `PUT /file/{tier}/shadow.md`. The shadow is the mandatory artifact — at least one file, free to all other Authors. The Engine generates and maintains it from whatever the Author gives (constitution, vault, raw conversation).
 
 **Games.** Quizzes generated from constitutional data. The Machine suggests formats. The Author picks what feels right. All quiz engagement data flows to the marketplace.
 
@@ -82,3 +64,119 @@ When the Constitution has enough depth, when the Author creates a finished work,
 ## Browsing — the aggregation of minds
 
 The Library is not just for publishing. It is for reading. Browse other Authors' published shadows during sessions and surface relevant cognitive delta. Cross-reference against the Author's Constitution. Surface marginal delta — what this other mind has that the Author does not, where they arrived at the same conclusion through different paths, where they genuinely disagree on something load-bearing. Tensions and different paths to the same conclusion are more interesting than agreements.
+
+---
+
+# The Marketplace of Systems
+
+*Public catalog of reusable Alexandria machinery — skills, prompts, scripts, hooks, rituals, filters, extraction moves, publishing formats. Where Authors find each other's work and compose richer Machines from it. Distinct from the Library: the Library is finished cognitive output (shadows, works); the Marketplace is the machinery that produces it.*
+
+## The architectural axiom — there is no /publish endpoint
+
+A module is not pushed to a server. The act of *using a module* is what registers it.
+
+When the Author's Machine runs, it POSTs `~/alexandria/.call_manifest` to `/call`. Every module ID in that manifest becomes visible in the Marketplace catalog (`GET /marketplace`) on first arrival. The server lazy-fetches the module's markdown file from GitHub, caches it, and exposes it for browsing. **Use is the contribution.** No one publishes — Authors install and use; the manifest does the rest.
+
+This means: there is no `POST /publish`, no `/marketplace/submit`, no upload UI. There won't be. The protocol stays minimal because the network effect lives in the call signal, not in a publishing surface. An Author who never tells anyone about their module but uses it themselves has *already* surfaced it on the marketplace — at usage count one.
+
+## Module ID format
+
+Module IDs are GitHub identity tags. Once a module has a public GitHub path, its stable Marketplace ID is:
+
+`github:<user>/<repo>#<path-without-extension>`
+
+The server appends `.md` when fetching from `https://raw.githubusercontent.com/<user>/<repo>/main/<path>.md`.
+
+Example: `github:mowinckelb/alexandria#factory/canon/library`.
+
+Before a module is contributed, use a provisional local ID in `.call_manifest`:
+
+`local:<github-login>/<slug>`
+
+When the local module is published to GitHub, replace the local ID with the GitHub ID. The marketplace counts only GitHub IDs (provisional locals are private signal).
+
+## Suggested home — `<user>/alexandria-systems`
+
+The recommended convention is to keep all your published modules in a single repo named `<user>/alexandria-systems`, one markdown file per module:
+
+```
+<user>/alexandria-systems/
+  optimise.md
+  verify-edit.md
+  brief-setup.md
+  …
+```
+
+This is a *convention, not a requirement*. The protocol accepts any public GitHub path. Authors with existing public module repos (a personal `dotfiles` repo, a `claude-skills` collection, a fork of the canonical repo) can use those — the module ID format works equally for any public path. The convention exists so casual browsers can guess where an Author's modules live and so the publish helper has somewhere sensible to default to.
+
+## Front-matter contract
+
+Every module file has YAML front-matter at the top:
+
+```yaml
+---
+name: <slug>
+description: <one sentence>
+---
+```
+
+That's the whole contract.
+
+- **`name`** — the module's slug. Pattern: `[a-z0-9][a-z0-9-]*`. Lowercase, alphanumerics and hyphens, must start with letter or digit.
+- **`description`** — one sentence, plain language, what this module does and when to use it. Shown in the Marketplace listing.
+- **Body** — freeform markdown. The template (`factory/templates/system-module.md`) suggests *when to use / when not / instruction / example* sections, but the body is unconstrained. Whatever helps another Author use the module.
+- **Extension** — `.md` only. The server will not fetch other extensions.
+- **Tags** — deferred. There is no tag taxonomy yet. Search and filter UI will arrive once module count justifies it; tags arrive with that.
+
+If front-matter is missing or unparseable, the server falls back to slug-as-name and marks the module `status: parse_error` — it still appears in the catalog, but with degraded display. If the GitHub path 404s, the module is marked `status: unreachable`.
+
+## Lifecycle
+
+Five stages from local invention to canonical signal:
+
+1. **Invent locally.** The Author or Engine notices a reusable pattern — a prompt that consistently extracts good signal, a filter rule, a publishing ritual, a script. Capture it in `~/alexandria/files/works/systems/<slug>.md` with a provisional ID `local:<github-login>/<slug>` in `.call_manifest`. At this stage it's private craft.
+
+2. **Decide whether it generalises.** Most local systems stay local — they're calibrated to this Author's specific quirks and don't transfer. The Engine should not push every system upstream. The bar: *could another Author benefit without context they don't have?* If yes, candidate for publishing. If no, keep local.
+
+3. **Publish.** Run `factory/scripts/publish.sh <slug>` (or the equivalent skill). The script ensures `<user>/alexandria-systems` exists, copies the template with the slug filled in, lets the Author edit the body, commits and pushes. Module is now reachable at `github:<user>/alexandria-systems#<slug>`. The Author replaces the `local:` ID with the GitHub ID in their `.call_manifest`.
+
+4. **Use propagates discovery.** The Author's next `/call` POST surfaces the new module ID. The server lazy-fetches, parses front-matter, caches, and adds it to the public Marketplace listing. Other Authors can now browse and install it.
+
+5. **Usage compounds.** Every Author who installs and uses the module adds another entry in their `.call_manifest`, which surfaces as a usage count on the Marketplace. Modules that survive across many active Machines rank higher. Modules that drift (never re-used, original Author stops calling) decay in the ranking. No active reporting, nothing to game — *the system state is the data*.
+
+## Install
+
+`factory/scripts/install.sh <module-id>` does three things: validates the ID format, curl-checks GitHub reachability, idempotently appends to `~/alexandria/.call_manifest`. The Engine invokes it when the Author says "install module X" via `factory/skills/install.md`.
+
+That's the whole install path. There is no global package manager, no version pinning (yet), no dependency resolution. A module is a single markdown file with a stable URL; installing is recording the intent to use it. Whatever the module *does* — whether it's a skill loaded into the AI, a script the Engine runs, a hook the Author wires in — happens after the Author reads the module body and acts on it. The marketplace tracks intent-to-use, not installation side effects.
+
+## Cache and staleness
+
+The server keeps one combined KV entry per module: `{frontmatter, body, last_fetched, status}`. Lazy-fetched on first `/call` arrival of a new ID. Re-fetched on 24h TTL expiry. On 404 → `status: unreachable`. On YAML parse failure → `status: parse_error` with fallback metadata (slug-as-name, empty description). 24h soft staleness is acceptable for v1 — Authors who edit their modules see the change in the Marketplace within a day. A cache-bust mechanism for instant updates is deferred until the staleness shows up as a real complaint.
+
+## URL scheme
+
+On the website: `mowinckel.ai/marketplace/<user>/<repo>/<path>` — friendly, link-shareable, mirrors the Library URL pattern. The module ID `github:<user>/<repo>#<path>` maps trivially. Server-side, the public detail endpoint is `GET /marketplace/<user>/<repo>/*`.
+
+## Worked example — `optimise`
+
+(Worked example will reference whichever module ships as the inaugural Marketplace entry. Pending Phase 6.)
+
+## When to suggest contributing
+
+When the Author invents a system element that another Author could benefit from — a prompt pattern, filter, extraction move, publishing format, ritual, workflow, or local override that generalises beyond this Author's specific frame. Capture as a candidate in `~/alexandria/files/works/systems/<slug>.md`. Strip private details. Preserve the reusable mechanism. Then run `factory/scripts/publish.sh` to push it to `<user>/alexandria-systems` (or whichever public repo the Author prefers).
+
+If the system is only useful for this Author, keep it local. The bar for publishing is generalisability, not ambition.
+
+## Marketplace and Library, side by side
+
+| | **Library** | **Marketplace of Systems** |
+|---|---|---|
+| What it holds | Author's finished cognitive output (shadows, pulses, works) | Reusable machinery (skills, scripts, prompts, filters) |
+| Surface | `~/alexandria/files/library/{tier}/` | `~/alexandria/files/works/systems/` (local) → public GitHub (published) |
+| Publishing mechanism | `PUT /file/{tier}/{name}` | Write to public GitHub, then `.call_manifest` registers usage |
+| Visibility tiers | public / paid / invite | public only (modules are GitHub-hosted markdown) |
+| Ranking | engagement signal | survival count across active Machines |
+| Sovereignty | Author owns and can unpublish | Author owns the GitHub repo; can delete or rename |
+
+Two pools, one network. Files compound into the Library. Systems compound into the Marketplace. The Author is on both sides of both.
