@@ -633,7 +633,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       join the tribe
                     </a>
                     <span className="cta-sub">
-                      free in beta &middot; open source &mdash; works with any ai coding agent
+                      free with kin &middot; open source &mdash; works with any ai coding agent
                     </span>
                   </div>
                   <div className="cta-block">
