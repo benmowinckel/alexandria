@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { SERVER_URL } from '../lib/config';
 
 interface Props {
@@ -159,8 +159,16 @@ const THEMES: Theme[] = [
 
 export default function LandingPage({ brandClassName = '' }: Props) {
   const [themeIdx, setThemeIdx] = useState(0);
+  const [slideAdam, setSlideAdam] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
+  const middleRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
+
+  // ?slideadam=1 — experimental: pin the fresco to the top slide instead of
+  // the viewport, so it peels away with the slide on scroll.
+  useEffect(() => {
+    setSlideAdam(new URLSearchParams(window.location.search).get('slideadam') === '1');
+  }, []);
 
   // Peel mechanic — top slide translates up as user scrolls; revealing bottom.
   // Disabled on mobile: slides flow naturally, no peel, no fixed positioning.
@@ -175,20 +183,30 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       if (frame) cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const peelDistance = window.innerHeight;
-        const y = Math.min(window.scrollY, peelDistance);
-        const progress = y / peelDistance;
+        // Dwell — phantom scroll between slide 2 landing and its peel
+        // starting. Lets the reader settle on the argument before the
+        // surface starts moving again.
+        const dwellDistance = peelDistance * 0.4;
+        const sy = window.scrollY;
+        // Slide 1 peels in [0, peelDistance]. Slide 2 dwells through
+        // [peelDistance, peelDistance + dwellDistance], then peels in
+        // [peelDistance + dwellDistance, 2*peelDistance + dwellDistance].
+        const y1 = Math.min(sy, peelDistance);
+        const y2 = Math.max(0, Math.min(sy - peelDistance - dwellDistance, peelDistance));
+        const progress = y1 / peelDistance;
+        const progress2 = y2 / peelDistance;
         document.documentElement.style.setProperty('--peel-progress', String(progress));
+        document.documentElement.style.setProperty('--peel-progress-2', String(progress2));
         if (mq.matches) return;
         if (topRef.current) {
-          topRef.current.style.transform = `translate3d(0, ${-y}px, 0)`;
-          topRef.current.style.setProperty(
-            '--peel-shadow',
-            `0 ${16 + progress * 60}px ${40 + progress * 60}px -20px rgba(26,19,24,${
-              0.04 + progress * 0.14
-            })`,
-          );
+          topRef.current.style.transform = `translate3d(0, ${-y1}px, 0)`;
         }
-        navRef.current?.classList.toggle('on-bottom', progress > 0.5);
+        if (middleRef.current) {
+          middleRef.current.style.transform = `translate3d(0, ${-y2}px, 0)`;
+        }
+        // on-bottom flips once the FINAL slide is dominant (past midpoint
+        // of the last peel — scrollY past slide-2's peel midpoint).
+        navRef.current?.classList.toggle('on-bottom', progress2 > 0.5);
       });
     };
 
@@ -196,7 +214,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       if (mq.matches) {
         if (topRef.current) {
           topRef.current.style.transform = '';
-          topRef.current.style.removeProperty('--peel-shadow');
+        }
+        if (middleRef.current) {
+          middleRef.current.style.transform = '';
         }
         navRef.current?.classList.remove('on-bottom');
       }
@@ -294,6 +314,69 @@ export default function LandingPage({ brandClassName = '' }: Props) {
 
   const theme = THEMES[themeIdx];
 
+  // Inline CSS-var bag — descendants of a slide inherit these so
+  // var(--theme-*) inside resolves to the slide's own theme. Used in
+  // slides=3 mode where middle and bottom slides carry different themes
+  // simultaneously.
+  const themeVars = (t: Theme): CSSProperties => ({
+    ['--theme-bg' as string]: t.bg,
+    ['--theme-fg' as string]: t.fg,
+    ['--theme-fg-muted' as string]: t.fgMuted,
+    ['--theme-fg-faint' as string]: t.fgFaint,
+    ['--theme-border-soft' as string]: t.borderSoft,
+    backgroundColor: t.bg,
+    color: t.fg,
+  });
+
+  const statementBlock = (
+    <div className="statement">
+      <p>
+        <span className="beat-title">the augmentation</span>
+        ai can&rsquo;t read minds, but it can read words. so if we
+        translate our thoughts into words, our minds can be
+        augmented, not replaced &mdash;{' '}
+        <em>the symbolic layer of our minds transcribed into private
+        files</em>, so the exponential intelligence{' '}
+        <em className="em-strong">thinks with us, not for us</em>.
+      </p>
+      <p>
+        <span className="beat-title">the system</span>
+        but the files don&rsquo;t write themselves, so we need a
+        system &mdash; <em>optimised for each individual</em>.
+        impossible to perfect alone. hence,{' '}
+        <span className="hence-name">alexandria<span className="hence-dot">.</span></span>
+      </p>
+      <p>
+        <span className="beat-title">the protocol</span>
+        we built{' '}
+        <em className="em-strong">the protocol</em>{' '}for aggregating
+        files and systems into a singular collective &mdash; a
+        library of files and marketplace of systems where
+        alexandrians learn from each other and{' '}
+        <em>refine their own</em>.
+      </p>
+      <p>
+        <span className="beat-title">the floor</span>
+        alexandria distills this collective signal into a{' '}
+        <em>canonical system</em>{' '}offered to new members: a{' '}
+        <em className="em-strong">self-personalising floor</em>{' '}&mdash;{' '}
+        <em>rides the exponential, continuously refined</em>. zero
+        maintenance by default, the optimal foundation for
+        your own system when you have time.
+      </p>
+      <p>
+        <span className="beat-title">the republic</span>
+        it seems we are first, but we didn&rsquo;t come to impose.
+        we built the foundation others will build on &mdash; a
+        founding republic modeled on athens, rome, and america:{' '}
+        <em className="em-strong">natural law applied to thought</em>,
+        tilting the pressures of evolution towards{' '}
+        <em>human survival</em>. founded not on land, but on thought.{' '}
+        <em className="republic-coda">the thinking republic.</em>
+      </p>
+    </div>
+  );
+
   // Push theme palette into CSS variables on :root so the static stylesheet
   // can pick them up via var(...). This avoids re-parsing the entire
   // ~1500-line <style> block on theme change — the previous template-string
@@ -308,7 +391,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     root.setProperty('--theme-border-soft', theme.borderSoft);
   }, [theme]);
   return (
-    <div className="landing-root" data-theme={theme.id} data-adam="1">
+    <div className="landing-root" data-theme={theme.id} data-adam="1" data-slide-adam={slideAdam ? '1' : undefined}>
       {/* ═════ PERSISTENT NAV — fixed over both slides. Colors switch at
              the peel midpoint so it stays readable on top (cream) and on
              any bottom-slide theme. ═════ */}
@@ -344,6 +427,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            carries the "voice inside your head" register. Whitespace
            is the only ornament. */}
       <div className="top-slide" ref={topRef}>
+        {slideAdam && <div className="adam-bg adam-bg-slide" aria-hidden />}
         {/* Stage canvas — pixel-locked 1440×900 frame uniformly scaled to
             the viewport via --stage-scale-top. Inside this wrapper everything
             is absolute pixels, so type, drop-caps, and corner marks never
@@ -376,22 +460,26 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             </span>
           </h1>
 
+          {/* Alpha — the opening glyph. Italic Greek α, small and
+              faint, sits between the headline and the manifesto as a
+              section break. Echoes the wordmark's dot-after-letter
+              motif (alexandria.) and signals "this is the start." */}
+          <span className="alpha-glyph" aria-hidden>α.</span>
+
           {/* Manifesto body. Fleuron separates the stance from the
               civilisational closer — an old-book ornament earning its
               place as a rhetorical beat, not a decoration. */}
           <div className="manifesto">
             <p>
-              <span className="drop-cap">t</span>houghts are the root
-              node.{' '}
+              thoughts are the root node.{' '}
               <em className="em-strong">
                 if we stop thinking, we stop deciding.
               </em>{' '}
-              if we stop deciding,{' '}
-              <em className="em-strong">our minds atrophy</em>. and
-              only a thinking mind can choose to think.
-              so&nbsp;if&nbsp;we&nbsp;lose our thoughts, we lose our minds
-              &mdash; and{' '}
-              <em className="em-strong">our species</em>.
+              if&nbsp;we&nbsp;stop&nbsp;deciding,{' '}
+              <em className="em-strong">our minds atrophy</em>.
+              so&nbsp;if&nbsp;we&nbsp;lose our thoughts,
+              we&nbsp;lose&nbsp;our&nbsp;minds &mdash;
+              and&nbsp;<em className="em-strong">our species</em>.
             </p>
             <p className="manifesto-close">
               <span className="close-faint">
@@ -410,7 +498,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
 
       {/* Persistent fresco — atmospheric layer across both slides, subtle
           like the watermark. Stays put when the peel runs. */}
-      <div className="adam-bg" aria-hidden />
+      {!slideAdam && <div className="adam-bg" aria-hidden />}
 
       {/* Persistent watermark — sits across both slides like the nav. */}
       <span className="watermark" aria-hidden>
@@ -419,8 +507,26 @@ export default function LandingPage({ brandClassName = '' }: Props) {
 
 
 
+      {/* ═════ MIDDLE SLIDE — carries the 5 argument beats at full
+             canvas width. Peels in the second 100vh of scroll (with a
+             40vh dwell first), after the top slide has fully peeled. ═════ */}
+      <section
+        className="middle-slide"
+        ref={middleRef}
+        aria-label="Argument"
+        style={themeVars(theme)}
+      >
+        <div className="stage-middle">
+          {statementBlock}
+        </div>
+      </section>
+
       {/* ═════ BOTTOM SLIDE — Fleet colophon, theme rotates ═════ */}
-      <section className="bottom-slide" aria-label="Colophon">
+      <section
+        className="bottom-slide"
+        aria-label="Colophon"
+        style={themeVars(theme)}
+      >
         <div className="stage-bottom">
         {/* For the designers who view source — a small acknowledgment. */}
         <div
@@ -465,58 +571,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           </div>
 
           <div className="right-col">
-              <div className="statement">
-              <p>
-                <span className="beat-title">the augmentation</span>
-                ai can&rsquo;t read minds, but it can read words. so if we
-                translate our thoughts into words, our minds can be
-                augmented, not replaced &mdash;{' '}
-                <em>the symbolic layer of our minds transcribed into private
-                files</em>, so the exponential intelligence{' '}
-                <em className="em-strong">thinks with us, not for us</em>.
-              </p>
-
-              <p>
-                <span className="beat-title">the system</span>
-                but the files don&rsquo;t write themselves, so we need a
-                system &mdash; <em>optimised for each individual</em>.
-                impossible to perfect alone. hence,{' '}
-                <span className="hence-name">alexandria<span className="hence-dot">.</span></span>
-              </p>
-
-              <p>
-                <span className="beat-title">the protocol</span>
-                we built{' '}
-                <em className="em-strong">the protocol</em>{' '}for aggregating
-                files and systems into a singular collective &mdash; a
-                library of files and marketplace of systems where
-                alexandrians learn from each other and{' '}
-                <em>refine their own</em>.
-              </p>
-
-              <p>
-                <span className="beat-title">the floor</span>
-                alexandria distills this collective signal into a{' '}
-                <em>canonical system</em>{' '}offered to new members: a{' '}
-                <em className="em-strong">self-personalising floor</em>{' '}&mdash;{' '}
-                <em>rides the exponential, continuously refined</em>. zero
-                maintenance by default, the optimal foundation for
-                your own system when you have time.
-              </p>
-
-              <p>
-                <span className="beat-title">the republic</span>
-                it seems we are first, but we didn&rsquo;t come to impose.
-                we built the foundation others will build on &mdash; a
-                founding republic modeled on athens, rome, and america:{' '}
-                <em className="em-strong">natural law applied to thought</em>,
-                tilting the pressures of evolution towards{' '}
-                <em>human survival</em>. founded not on land, but on thought.{' '}
-                <em className="republic-coda">the thinking republic.</em>
-              </p>
-
-              </div>
-
               <div className="right-lower">
                 <p className="statement-close">
                   if you believe human thought matters through the
@@ -589,8 +643,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           -webkit-font-smoothing: antialiased;
         }
 
+        /* Runway provides scroll range for two sequential peels (top →
+           middle, then middle → bottom), each a full 100vh, plus a 40vh
+           dwell on slide 2 before its peel starts. Total: 100 (peel1)
+           + 40 (dwell) + 100 (peel2) + 100 (viewport) = 340vh. */
         .runway {
-          height: 200vh;
+          height: 340vh;
         }
 
         /* ─── NAV ─── */
@@ -893,7 +951,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           position: fixed;
           inset: 0;
           z-index: 20;
-          background: #f3eee3;
+          background: #f7f2ec;
           overflow: hidden;
           will-change: transform;
           box-shadow: var(--peel-shadow, 0 0 0 rgba(0, 0, 0, 0));
@@ -959,94 +1017,28 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 29px;
+          gap: 48px;
         }
-        /* Frosted glass bubble — sits behind the entire text block (h1
-           + manifesto + closer). Slight opacity + backdrop blur smooth
-           the paper grain into a translucent surface, with a soft inner
-           highlight on the top edge. The bubble is part of the float —
-           it moves with the text. */
-        .top-inner::before {
-          content: '';
-          position: absolute;
-          inset: -22px 58px;
-          z-index: -1;
-          background: rgba(255, 250, 240, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.32);
-          border-radius: 29px;
-          backdrop-filter: blur(10px) saturate(1.12);
-          -webkit-backdrop-filter: blur(10px) saturate(1.12);
-          transform: translateZ(0);
-          will-change: backdrop-filter;
-          /* Liquid-glass shadow stack: deep drop lifts the bubble; close
-             drop seats it; top inset is the specular highlight where
-             ambient light hits the upper rim; chromatic rims (warm right,
-             cool left) fake the lens-fringe of real refractive glass;
-             soft inner glow simulates light dispersing through the pane. */
-          box-shadow:
-            0 16px 50px rgba(58, 15, 61, 0.12),
-            0 4px 14px rgba(58, 15, 61, 0.06),
-            inset 0 1.5px 0 rgba(255, 255, 255, 0.7),
-            inset 1px 0 0 rgba(255, 220, 200, 0.18),
-            inset -1px 0 0 rgba(210, 220, 255, 0.18),
-            inset 0 0 30px rgba(255, 255, 255, 0.04);
-          pointer-events: none;
+        /* Alpha glyph — italic Greek α as a section break between
+           headline and manifesto. Tiny and faint; the eye registers it
+           as a typographic ornament without it competing with the H1
+           or the prose. */
+        .alpha-glyph {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 28px;
+          color: rgba(58, 15, 61, 0.45);
+          line-height: 1;
+          user-select: none;
+          letter-spacing: -0.02em;
+          margin: -8px 0;
         }
-        /* Adam mode — the bubble sits over the fresco. Cream tint is
-           opaque enough to give text a proper reading surface; the fresco
-           stays present in the margins (top/sides/bottom) where there's
-           no copy. Stronger blur softens any bleed-through. */
-        [data-adam='1'] .top-inner::before {
-          background: rgba(248, 240, 225, 0.62);
-          backdrop-filter: blur(14px) saturate(1.15);
-          -webkit-backdrop-filter: blur(14px) saturate(1.15);
-        }
-        /* Glass breathe — the rim highlight and inner luminance gently
-           pulse, as if ambient light were slowly playing across a real
-           glass pane. No moving overlays; the bubble's own edge does
-           the shimmering. Cycle is offset from the float (13s) so they
-           drift in and out of phase. */
-        @keyframes glassBreathe {
-          0%, 100% {
-            box-shadow:
-              0 16px 50px rgba(58, 15, 61, 0.12),
-              0 4px 14px rgba(58, 15, 61, 0.06),
-              inset 0 1.5px 0 rgba(255, 255, 255, 0.7),
-              inset 1px 0 0 rgba(255, 220, 200, 0.18),
-              inset -1px 0 0 rgba(210, 220, 255, 0.18),
-              inset 0 0 30px rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.32);
-          }
-          50% {
-            box-shadow:
-              0 22px 60px rgba(58, 15, 61, 0.16),
-              0 6px 18px rgba(58, 15, 61, 0.08),
-              inset 0 2px 0 rgba(255, 255, 255, 0.95),
-              inset 1.5px 0 0 rgba(255, 220, 200, 0.32),
-              inset -1.5px 0 0 rgba(210, 220, 255, 0.32),
-              inset 0 0 40px rgba(255, 255, 255, 0.09);
-            border-color: rgba(255, 255, 255, 0.55);
-          }
-        }
-        /* Refraction breathing — backdrop blur and saturation oscillate
-           dramatically, so the fresco behind the glass appears to swim
-           in and out of focus while its colours pulse with life. Real
-           glass under thermal currents, but turned up. 11s cycle stays
-           out of phase with the 7s glass-breathe and 13s float. */
-        @keyframes refractionBreathe {
-          0%, 100% {
-            backdrop-filter: blur(10px) saturate(1.12);
-            -webkit-backdrop-filter: blur(10px) saturate(1.12);
-          }
-          50% {
-            backdrop-filter: blur(18px) saturate(1.24);
-            -webkit-backdrop-filter: blur(18px) saturate(1.24);
-          }
-        }
-        @keyframes topInnerFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-3px); }
-        }
+        /* Bubble removed — the manifesto sits directly on the cream paper
+           with the Adam fresco visible behind. The fresco's radial
+           vignette already focuses above the text area, so the prose
+           rests in clean cream. The vertical margin rule on .stage-top
+           provides the manuscript anchor; the slide reads as one
+           continuous folio rather than a card on a page. */
 
         /* H1 — three lines, three jobs.
            Tribal line: italic, house burgundy, a hair of tracking.
@@ -1134,33 +1126,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           margin: 0;
           font-size: 18px;
           line-height: 1.5;
-        }
-        /* Drop cap — first letter of body. Burgundy italic, oversize,
-           floats left so the prose wraps around it. Old-book initial.
-           A slow vertical bob makes it feel alive, like ink settling. */
-        .manifesto .drop-cap {
-          font-size: 55px;
-          font-style: italic;
-          color: #3a0f3d;
-          float: left;
-          line-height: 0.85;
-          padding: 4px 0 0 0;
-          margin-top: 2px;
-          /* shape-outside pulls the wrapping text into the float box —
-             italic glyphs leave dead space on their right side that float
-             alone can't close. inset(0 6px 0 0) crops 6px off the right
-             of the wrap area so body text starts closer to the glyph. */
-          shape-outside: inset(0 16px 0 0);
-          display: inline-block;
-          animation: dropCapBob 6.5s ease-in-out infinite;
-        }
-        @keyframes dropCapBob {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-3px);
-          }
         }
         /* Plain emphasis — italic burgundy, regular weight. Used for
            lighter accents like 'the lever'. */
@@ -1346,6 +1311,137 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .cta-row a.cta-ghost:hover {
           border-color: rgba(26, 19, 24, 0.55);
           background: rgba(26, 19, 24, 0.03);
+        }
+
+        /* ─── MIDDLE SLIDE (slides=3 mode) ─── */
+        /* Sits between top-slide (z:20) and bottom-slide (z:10). Carries
+           the 5 statement beats at full canvas width. JS translates it
+           upward in the second 100vh of scroll, after top has fully
+           peeled. Theme vars are set via inline style on the section
+           element, so descendants inherit the middle slide's own
+           palette (different from the bottom slide's). */
+        .middle-slide {
+          position: fixed;
+          inset: 0;
+          z-index: 15;
+          overflow: hidden;
+          will-change: transform;
+          box-shadow: var(--peel-shadow, 0 0 0 rgba(0, 0, 0, 0));
+          transition: background-color 400ms ease, color 400ms ease;
+        }
+        .stage-middle {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 1600px;
+          height: 1000px;
+          transform: translate(-50%, -50%) scale(var(--stage-scale-bottom, 1));
+          transform-origin: center center;
+          padding: 56px 120px;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        /* Slide 2 — the argument as a marginalia folio. Each beat is
+           a named argument: the LABEL hangs in the left gutter (italic,
+           faint, with the roman numeral above it), the BODY flows in
+           the main column. Form is content — the gutter structure says
+           "this is a structured argument with five named moves," each
+           one anchored. Easier to read because the eye knows where each
+           beat starts and what it's called before it begins.
+             - Two-column anatomy per beat: ~220px gutter + body column
+             - Numeral hangs above the label, small italic faint
+             - Label is italic, slight tracking, faint — it names the
+               beat, doesn't shout
+             - Body is large serif (20px / 1.6) with generous breath
+             - Hairline rule between beats — section break */
+        .stage-middle .statement {
+          align-self: center;
+          margin: 0;
+          padding: 0;
+          max-width: 1180px;
+          position: relative;
+          gap: 36px;
+          counter-reset: beat;
+        }
+        .stage-middle .statement > p {
+          position: relative;
+          margin: 0;
+          padding: 0 0 36px 280px;
+          font-size: 19px;
+          line-height: 1.62;
+          color: var(--theme-fg);
+          min-height: 86px;
+        }
+        .stage-middle .statement > p:last-child {
+          padding-bottom: 0;
+        }
+        /* Hairline section break between beats — sits in the body's
+           left edge, not under the gutter, so the gutter reads as a
+           continuous register down the page. */
+        .stage-middle .statement > p:not(:last-child)::after {
+          content: '';
+          position: absolute;
+          left: 280px;
+          bottom: 0;
+          width: 64px;
+          height: 1px;
+          background: var(--theme-fg-faint);
+          opacity: 0.55;
+        }
+        /* Numeral — sits at the top of the gutter, small italic
+           LOWERCASE faint, marker-not-bullet. Specificity (0,2,3)
+           beats the bottom-slide rule (0,1,3). */
+        .stage-middle .statement > p:not(.statement-close):not(.continuation)::before {
+          content: counter(beat, lower-roman) '.';
+          position: absolute;
+          left: 0;
+          top: 0;
+          font-size: 13px;
+          font-style: italic;
+          font-weight: 400;
+          letter-spacing: 0.06em;
+          color: var(--theme-fg-faint);
+          line-height: 1;
+          opacity: 1;
+          font-variant-numeric: lining-nums;
+        }
+        /* Label — block-level italic in the gutter, sits below the
+           numeral. Slightly larger than the numeral, body-muted. */
+        .stage-middle .statement .beat-title {
+          position: absolute;
+          left: 0;
+          top: 22px;
+          width: 220px;
+          display: block;
+          margin: 0;
+          font-size: 17px;
+          letter-spacing: 0.04em;
+          color: var(--theme-fg);
+          font-style: italic;
+          font-weight: 500;
+        }
+        .stage-middle .statement .beat-title::after {
+          content: none;
+        }
+        /* In slides=3 mode the bottom-slide's right-col loses its
+           statement block. right-lower (closer + CTAs) anchors at the
+           top, paralleling Fleet's structure where the short copy and
+           footer links sit top-right opposite the ornament, and the
+           huge wordmark fills bottom-left alone. 120px matches the
+           ornament's padding-top so the two columns share a top edge. */
+        .right-col .right-lower {
+          /* Match ornament-wrap's padding-top (120px) + offset the
+             statement-close's own -20px translateY + 14px padding-top
+             so the visible top of the text aligns with the visible top
+             of square ornaments (e.g. other-stone, alabaster). */
+          margin-top: 126px;
+          /* Squeeze the column — narrower text width pushes the left
+             edge inward (right edge unchanged because right-lower is
+             flex-end aligned). The closer + CTAs reflow to more lines
+             but stay anchored to the right gutter. */
+          width: 680px;
         }
 
         /* ─── BOTTOM SLIDE ─── */
@@ -1546,8 +1642,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           padding-top: 14px;
           transform: translateY(-20px);
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 20px;
-          line-height: 1.42;
+          font-size: 23px;
+          line-height: 1.45;
           font-style: normal;
           letter-spacing: 0.003em;
           color: var(--theme-fg);
@@ -1657,8 +1753,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
         .cta-pair a.lr-cta {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 14px;
-          padding: 8px 18px;
+          font-size: 16px;
+          padding: 10px 22px;
           border-radius: 8px;
           text-decoration: none;
           font-weight: 500;
@@ -1699,7 +1795,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            outer edge — caption-from-box, not caption-from-text. */
         .cta-sub {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 11.5px;
+          font-size: 13px;
           font-style: italic;
           color: var(--theme-fg-faint);
           letter-spacing: 0.012em;
@@ -1893,8 +1989,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           body {
             background: linear-gradient(
               to bottom,
-              #f3eee3 0,
-              #f3eee3 100dvh,
+              #f7f2ec 0,
+              #f7f2ec 100dvh,
               var(--theme-bg) 100dvh,
               var(--theme-bg) 100%
             ) !important;
@@ -2130,6 +2226,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              editorial decision: the iconic moment, nothing else. */
           -webkit-mask-image: radial-gradient(ellipse 70% 28% at 50% 32%, #000 0%, rgba(0,0,0,0.92) 40%, rgba(0,0,0,0) 100%);
           mask-image: radial-gradient(ellipse 70% 28% at 50% 32%, #000 0%, rgba(0,0,0,0.92) 40%, rgba(0,0,0,0) 100%);
+        }
+        /* ?slideadam=1 variant — fresco lives inside .top-slide, so it
+           inherits the peel transform and scrolls away with the hero
+           instead of sitting fixed across both slides. Opacity is
+           constant (no peel-progress fade) because the slide itself
+           carries it out of view. z-index sits ABOVE .top-inner (z:1)
+           so Adam paints over the bubble with the same compositing as
+           the live layout (where the fixed .adam-bg was z:22 over the
+           top-slide stack). */
+        .adam-bg.adam-bg-slide {
+          position: absolute;
+          opacity: 0.18;
+          z-index: 2;
         }
         @media (max-width: 899px) {
           /* Mobile: shift the slice to favour Adam — his body fills the
