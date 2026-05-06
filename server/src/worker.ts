@@ -195,10 +195,21 @@ app.get('/health', async (c) => {
   const infraHealthy = Object.values(components).every(v => v === 'ok');
   const digestUrgency = (awareness as { urgency?: string }).urgency;
 
+  // Stripe mode derived from the secret key prefix. Surfaced so we can verify
+  // live-vs-test from /health without ever exposing the key value itself.
+  const stripeKey = process.env.STRIPE_SECRET_KEY || '';
+  const stripe_mode = stripeKey.startsWith('sk_live_')
+    ? 'live'
+    : stripeKey.startsWith('sk_test_')
+      ? 'test'
+      : 'unset';
+
   return c.json({
     status: infraHealthy && digestUrgency !== 'sprint' ? 'ok' : 'degraded',
     components,
     awareness,
+    stripe_mode,
+    beta_mode: process.env.BETA_MODE === 'true',
     server: 'alexandria',
     version: '0.4.0',
   });
