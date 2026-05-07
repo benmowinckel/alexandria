@@ -1,19 +1,17 @@
-'use client';
-
-import { Suspense, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { SERVER_URL } from '../lib/config';
+import SignupCTA from './SignupCTA';
 
-function SignupPageContent() {
-  const searchParams = useSearchParams();
-  const urlRef = searchParams.get('ref');
-  const refSource = searchParams.get('ref_source');
-  const [kinCode, setKinCode] = useState('');
-  const ref = kinCode.trim() || urlRef;
-  const authParams = [ref && `ref=${encodeURIComponent(ref)}`, refSource && `ref_source=${encodeURIComponent(refSource)}`].filter(Boolean).join('&');
-  const authUrl = `${SERVER_URL}/auth/github${authParams ? `?${authParams}` : ''}`;
+export const dynamic = 'force-dynamic';
+
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string; ref_source?: string }>;
+}) {
+  const sp = await searchParams;
+  const urlRef = sp.ref;
+  const refSource = sp.ref_source;
 
   return (
     <div style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh' }}>
@@ -86,24 +84,7 @@ function SignupPageContent() {
           <p>if alexandria disappears tomorrow, you keep everything on your disk.</p>
         </article>
 
-        <section className="cta-section">
-          <a href={authUrl} className="primary-cta">sign up with github</a>
-          <div className="kin-row">
-            {urlRef ? (
-              <p className="kin-via">via {urlRef}</p>
-            ) : (
-              <input
-                type="text"
-                value={kinCode}
-                onChange={(e) => setKinCode(e.target.value)}
-                placeholder="kin code"
-                className="kin-input"
-                autoComplete="off"
-                spellCheck={false}
-              />
-            )}
-          </div>
-        </section>
+        <SignupCTA urlRef={urlRef} refSource={refSource} />
       </main>
 
       <style>{`
@@ -218,13 +199,5 @@ function SignupPageContent() {
         }
       `}</style>
     </div>
-  );
-}
-
-export default function SignupPage() {
-  return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }} />}>
-      <SignupPageContent />
-    </Suspense>
   );
 }
