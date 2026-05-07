@@ -453,7 +453,7 @@ export function registerRoutes(app: Hono) {
         if (stateData.intent === 'library' && stateData.next) {
           return c.redirect(`${WEBSITE_URL}${stateData.next}`);
         }
-        return c.html(callbackPageHtml(apiKey, user.login));
+        return c.html(await callbackPageHtml(apiKey, user.login));
       }
 
       // Redirect to Stripe Checkout (skip in beta — no card friction).
@@ -477,7 +477,7 @@ export function registerRoutes(app: Hono) {
       if (stateData.intent === 'library' && stateData.next) {
         return c.redirect(`${WEBSITE_URL}${stateData.next}`);
       }
-      return c.html(callbackPageHtml(apiKey, user.login));
+      return c.html(await callbackPageHtml(apiKey, user.login));
     } catch (err: any) {
       console.error('GitHub callback error:', err);
       return c.html(authErrorHtml('something broke signing you in. please try again.'), 500);

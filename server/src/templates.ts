@@ -49,12 +49,30 @@ export function authErrorHtml(message: string): string {
 // Callback page — the first brand moment after signup
 // ---------------------------------------------------------------------------
 
-export function callbackPageHtml(apiKey: string, githubLogin = ''): string {
+const BLOCK_URL = 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/block.md';
+const TRUST_URL = 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/public/docs/Trust.md';
+
+async function fetchRawText(url: string): Promise<string> {
+  try {
+    const r = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } } as RequestInit);
+    if (!r.ok) return '';
+    return await r.text();
+  } catch {
+    return '';
+  }
+}
+
+export async function callbackPageHtml(apiKey: string, githubLogin = ''): Promise<string> {
   const WEBSITE_URL = getWebsiteUrl();
   const isReturning = !apiKey;
   const curlCmd = isReturning ? '' : `curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh | bash -s -- ${apiKey}`;
   const kinCode = githubLogin ? escapeHtml(githubLogin) : '';
   const kinLink = githubLogin ? `${WEBSITE_URL}/signup?ref=${encodeURIComponent(githubLogin)}` : '';
+  // Inline block.md + Trust.md so copy buttons can run synchronously inside the click handler.
+  // Async fetch + clipboard.writeText loses user activation and falls back to opening the raw URL.
+  const [blockContent, trustContent] = isReturning
+    ? ['', '']
+    : await Promise.all([fetchRawText(BLOCK_URL), fetchRawText(TRUST_URL)]);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -219,8 +237,14 @@ function copyRemote(url, el) {
   });
 }
 function copyCmd(el) { copyText(${JSON.stringify(curlCmd)}, el); }
-function copyBlock(el) { copyRemote('https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/block.md', el); }
-function copyTrust(el) { copyRemote('https://raw.githubusercontent.com/mowinckelb/alexandria/main/public/docs/Trust.md', el); }
+function copyBlock(el) {
+  var t = ${JSON.stringify(blockContent)};
+  if (t) copyText(t, el); else copyRemote(${JSON.stringify(BLOCK_URL)}, el);
+}
+function copyTrust(el) {
+  var t = ${JSON.stringify(trustContent)};
+  if (t) copyText(t, el); else copyRemote(${JSON.stringify(TRUST_URL)}, el);
+}
 function copyKinCode(el) { copyText(${JSON.stringify(githubLogin)}, el); }
 function copyKinLink(el) { copyText(${JSON.stringify(kinLink)}, el); }
 function toggleTip(el) {

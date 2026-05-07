@@ -548,7 +548,7 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       await onAccountUpdate(login, billingUpdate);
       logEvent('billing_checkout_completed', { mode: session.mode || 'unknown' });
 
-      return c.html(callbackPageHtml(''));
+      return c.html(await callbackPageHtml(''));
     } catch (err) {
       console.error('Billing success page error:', err);
       return c.redirect(`${WEBSITE_URL}/signup`);
