@@ -375,11 +375,6 @@ if [ "$MODE" = "session-end" ]; then
     vault_file="$ALEX_DIR/files/vault/${timestamp}.jsonl"
     mkdir -p "$ALEX_DIR/files/vault" 2>/dev/null
     cp "$transcript_path" "$vault_file"
-    if command -v sha256sum &>/dev/null; then
-      sha256sum "$vault_file" | cut -d' ' -f1 > "${vault_file}.sha256"
-    elif command -v shasum &>/dev/null; then
-      shasum -a 256 "$vault_file" | cut -d' ' -f1 > "${vault_file}.sha256"
-    fi
   fi
 
   # Collect machine signal + feedback (parallel, delete only on 200)
