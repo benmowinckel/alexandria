@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
 import SignupCTA from './SignupCTA';
+import TrustCopy from './TrustCopy';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,8 @@ export default async function SignupPage({
       <main className="primer-main px-6 sm:px-8">
         <article className="primer">
           <h1>alexandria is a folder, not an app.</h1>
+
+          <p className="aside">(sorry &mdash; you have to read this. only takes a couple minutes.)</p>
 
           <p>
             one curl command, a folder appears at <code>~/alexandria/</code>, and your existing ai (claude code, cursor, codex) starts reading it at every session. plain markdown. you can read every file, change every file, delete the whole thing.
@@ -79,9 +82,11 @@ export default async function SignupPage({
 
           <p>after you sign up you&rsquo;ll get a kin link. send it to ten friends straight away. ten because some won&rsquo;t stick &mdash; five active is all you need. do it before you forget.</p>
 
-          <p>we never see your private files. they live on your machine and your github. our server only knows what you publish to it. <Link href="/trust">trust &rarr;</Link> lists every byte that touches it.</p>
+          <p>we never see your private files. they live on your machine and your github. our server only knows what you publish to it. <TrustCopy /> lists every byte that touches it &mdash; copy and paste it into your ai if you want a second opinion.</p>
 
           <p>if alexandria disappears tomorrow, you keep everything on your disk.</p>
+
+          <p className="motto closing">you bring the thoughts. the rest compounds. see you inside.</p>
         </article>
 
         <SignupCTA urlRef={urlRef} refSource={refSource} />
@@ -136,6 +141,40 @@ export default async function SignupPage({
           font-style: italic;
           margin: 1.5rem 0 0.5rem;
           color: var(--text-muted);
+        }
+        .primer .closing {
+          margin-top: 2.25rem;
+          color: var(--text-secondary);
+        }
+        .primer .aside {
+          font-style: italic;
+          font-size: 0.85rem;
+          color: var(--text-muted);
+          margin: -0.75rem 0 1.75rem;
+        }
+        .primer button.trust-copy {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35em;
+          background: transparent;
+          border: none;
+          padding: 0;
+          margin: 0;
+          font: inherit;
+          color: var(--text-primary);
+          cursor: pointer;
+          text-decoration: underline;
+          text-underline-offset: 0.2em;
+          text-decoration-thickness: 1px;
+          transition: opacity 200ms;
+        }
+        .primer button.trust-copy:hover {
+          opacity: 0.6;
+        }
+        .primer .trust-copy-icon {
+          display: inline-flex;
+          align-items: center;
+          opacity: 0.7;
         }
         .primer .deal-line {
           color: var(--text-primary);
