@@ -30,7 +30,7 @@ export default async function SignupPage({
         <article className="primer">
           <h1>alexandria is a folder, not an app.</h1>
 
-          <p className="aside">(yes, you should read all of this... sorry. it&rsquo;s only 5 minutes.)</p>
+          <p className="aside">5 minutes. read before you sign up.</p>
 
           <p>
             one curl command, a folder appears at <code>~/alexandria/</code>, and your existing ai (claude code, cursor, codex) starts reading it at every session. plain markdown. you can read every file, change every file, delete the whole thing.
@@ -61,6 +61,8 @@ export default async function SignupPage({
           <p>want to rip out the infra and rebuild it? fine &mdash; it&rsquo;s all plain markdown, all on your disk.</p>
 
           <p>agency and ownership. technology is leverage &mdash; you provide the input, it multiplies. wait passively and you get average. shape it actively to exactly what you want and you get something specifically yours. the same mindset that makes claude or chatgpt useful is the one that makes alexandria useful.</p>
+
+          <p>a real session &mdash; voice memo, sit-down /a, an artifact you couldn&rsquo;t make anywhere else &mdash; is the ceiling. but a spare minute between meetings spent here beats the algorithm. either way the input compounds. mental gym in the original greek sense; you have to show up.</p>
 
           <h2>the one thing we ask</h2>
 
@@ -96,7 +98,7 @@ export default async function SignupPage({
 
           <p>if alexandria disappears tomorrow, you keep everything on your disk.</p>
 
-          <p className="motto closing">you bring the thoughts. the rest compounds. see you inside.</p>
+          <p className="closing">one click below for github auth. one curl command after. the folder is yours in 5 minutes.</p>
         </article>
 
         <SignupCTA urlRef={urlRef} refSource={refSource} />
