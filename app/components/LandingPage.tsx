@@ -567,8 +567,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   plain files, kept on your own ground, in your
                   own shape; every ai you <em>ever</em> use will
                   read them and think <em>with</em> you, not for
-                  you. your mind, alongside an intelligence that
-                  <em>compounds</em> without end.
+                  you. your mind, alongside an intelligence
+                  that{' '}<em>compounds</em> without end.
                   <br /><br />
                   you belong here. the door stands open &mdash; low agency is the only friction left.
                 </p>
@@ -1943,19 +1943,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           font-style: normal;
           letter-spacing: 0.005em;
           color: var(--theme-fg);
-          /* Book typography — justify the body so line endings align,
-             with the last line left-aligned (standard book convention).
-             Hanging punctuation lets quotes / dashes hang into the
-             margin. Hyphens enable cleaner justification on narrow
-             lines. Font features turn on ligatures, discretionary
-             ligatures (ct, st), and old-style numerals — character-
-             level quality that registers as "elite type" to the eye
-             without showing off. */
-          text-align: justify;
-          text-align-last: left;
+          /* Book-typography subset: hanging punctuation + ligatures
+             + old-style numerals at the character level. Dropped
+             text-align: justify because at this column width (612px)
+             with short lines, justification produced visible gaps
+             between words — the eye reads it as broken spacing,
+             not elite type. Left-aligned with the kerning + features
+             still does the invisible-quality work. */
           hanging-punctuation: first last;
-          hyphens: auto;
-          -webkit-hyphens: auto;
           font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "onum" 1;
         }
         .statement-close::before {
