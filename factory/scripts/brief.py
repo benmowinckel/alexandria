@@ -26,9 +26,13 @@ from typing import List, Optional, Tuple
 REPO = Path.home() / "alexandria"
 ALEX = REPO / "system"
 CREDS = ALEX / ".brief_email"
-OUTBOX = ALEX / ".brief_outbox"
 LOG = ALEX / ".brief_log"
-LAST_RUN = ALEX / ".autoloop" / "last_run.md"
+# Relative paths first, then absolute. The relatives are what git operates on
+# (git -C $REPO log -- $REL); the absolutes are what Python opens. One source.
+OUTBOX_REL = "system/.brief_outbox"
+LAST_RUN_REL = "system/.autoloop/last_run.md"
+OUTBOX = REPO / OUTBOX_REL
+LAST_RUN = REPO / LAST_RUN_REL
 
 DEFAULT_BODY = "no material change overnight."
 # Outbox content from before this threshold is treated as stale (yesterday's
@@ -36,9 +40,11 @@ DEFAULT_BODY = "no material change overnight."
 # — today's outbox is ~50 min old when read. 20h rejects anything older than
 # this morning while leaving slack for autoloop running late.
 OUTBOX_STALE_HOURS = 20
-# Last_run.md older than this triggers the "routine never ran" alarm. Daily
-# routine + buffer for sync lag and DST drift.
-LAST_RUN_STALE_HOURS = 30
+# Last_run.md commit older than this triggers the "routine missed today" alarm.
+# With autoloop daily at 14:00 UTC, yesterday's commit is ~24h 50m old when
+# brief reads at 15:00 UTC the next day. 24h catches the miss; tighter would
+# false-positive on slow autoloops, looser would silently skip a missed day.
+LAST_RUN_STALE_HOURS = 24
 # A claude/* branch counts as a "live strand" only if its tip is this fresh.
 # Older branches are leftover artefacts from successful runs that are now on master.
 STRAND_FRESH_HOURS = 26
@@ -56,6 +62,25 @@ def git(*args: str, timeout: int = 30, check: bool = False) -> subprocess.Comple
         ["git", "-C", str(REPO), *args],
         capture_output=True, text=True, timeout=timeout, check=check,
     )
+
+
+def file_commit_age_h(rel_path: str) -> Optional[float]:
+    """Hours since `rel_path` was last committed on the current ref. None on
+    failure (git missing, file never committed, repo absent).
+
+    Use this instead of file mtime — `git pull` resets mtime to clock time,
+    breaking mtime as a freshness signal. Commit time is the direct ground
+    truth.
+    """
+    try:
+        proc = git("log", "-1", "--format=%ct", "--", rel_path)
+        if proc.returncode != 0 or not proc.stdout.strip():
+            return None
+        commit_time = int(proc.stdout.strip())
+        return (datetime.now(timezone.utc).timestamp() - commit_time) / 3600
+    except Exception as e:
+        log(f"file_commit_age_h({rel_path}) failed: {type(e).__name__}: {e}")
+        return None
 
 
 def sync_repo() -> None:
@@ -91,18 +116,12 @@ def read_fresh_outbox() -> Optional[str]:
     text = OUTBOX.read_text().strip()
     if not text:
         return None
-    try:
-        proc = git("log", "-1", "--format=%ct", "--", "system/.brief_outbox")
-        if proc.returncode != 0 or not proc.stdout.strip():
-            return text  # git inspection failed — fail open, use the content
-        commit_time = int(proc.stdout.strip())
-        age_h = (datetime.now(timezone.utc).timestamp() - commit_time) / 3600
-        if age_h > OUTBOX_STALE_HOURS:
-            return None
-        return text
-    except Exception as e:
-        log(f"read_fresh_outbox failed: {type(e).__name__}: {e}")
-        return text
+    age_h = file_commit_age_h(OUTBOX_REL)
+    if age_h is None:
+        return text  # git inspection failed — fail open, use the content
+    if age_h > OUTBOX_STALE_HOURS:
+        return None
+    return text
 
 
 def detect_stranded() -> Optional[str]:
@@ -153,15 +172,18 @@ def detect_stranded() -> Optional[str]:
     # Try to surface what was on the strand — read its outbox if it has one.
     payload = ""
     try:
-        show = git("show", f"{branch_ref}:system/.brief_outbox", timeout=10)
+        show = git("show", f"{branch_ref}:{OUTBOX_REL}", timeout=10)
         if show.returncode == 0:
             payload = show.stdout.strip()
     except Exception:
         pass
 
+    # Refspec push — branch-agnostic (works regardless of user's current
+    # branch), FF-only by default (rejects if not a fast-forward), updates
+    # remote master directly. Local master syncs naturally on next pull.
     rescue = (
-        f"cd ~/alexandria && git fetch && "
-        f"git cherry-pick {branch_ref} && git push origin master"
+        f"cd ~/alexandria && git fetch origin && "
+        f"git push origin {branch_ref}:master"
     )
     header = f"STRANDED on {short_branch} — autoloop didn't reach master."
     if payload:
@@ -202,9 +224,9 @@ def main() -> int:
         if not LAST_RUN.exists():
             body = "alarm: machine routine has never run — no last_run.md found."
         else:
-            age_h = (datetime.now(timezone.utc).timestamp() - LAST_RUN.stat().st_mtime) / 3600
-            if age_h > LAST_RUN_STALE_HOURS:
-                body = f"alarm: machine routine stale — last_run.md is {age_h:.0f}h old."
+            age_h = file_commit_age_h(LAST_RUN_REL)
+            if age_h is not None and age_h > LAST_RUN_STALE_HOURS:
+                body = f"alarm: machine routine stale — last_run.md last committed {age_h:.0f}h ago."
 
     msg = EmailMessage()
     msg["Subject"] = creds.get("subject", "alexandria.")
