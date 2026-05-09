@@ -1093,7 +1093,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              aspect ratios still reads as the same wall. */
           background-color: #d8ccb6;
           background-image: url(/adam-arch-wide.png);
-          background-position: center center;
+          /* Desktop landscape viewports crop the wide image evenly;
+             62% pulls the niche from right-of-centre to visual middle
+             and brings the tree shadow into view on the left. Mobile
+             gets its own value below — portrait crop is heavier and
+             needs centre-anchored positioning. */
+          background-position: 62% center;
           background-size: cover;
           background-repeat: no-repeat;
           overflow: hidden;
@@ -2356,6 +2361,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           }
           .top-slide {
             padding: 152px clamp(20px, 5vw, 64px) 96px;
+            /* Portrait viewport crops the wide image more aggressively
+               on the sides; centre-anchored cropping keeps the niche
+               in the visual middle. The desktop 62% offset pulled the
+               niche off-frame to the left here. */
+            background-position: center center;
           }
           /* Mobile bypasses the desktop scaled canvases — display:contents
              makes the wrappers invisible to layout so children flow as if
@@ -2550,7 +2560,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             /* Extra breath above so the brand block reads as its
                own closing section, not as the next paragraph after
                the CTAs. Adds to the bottom-inner 64px flex gap. */
-            margin-top: 40px;
+            margin-top: 96px;
           }
           .footer-cols {
             order: 7;
