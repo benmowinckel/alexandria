@@ -1094,11 +1094,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           background-color: #d8ccb6;
           background-image: url(/adam-arch-wide.png);
           /* Desktop landscape viewports crop the wide image evenly;
-             62% pulls the niche from right-of-centre to visual middle
+             75% pulls the niche from right-of-centre to visual middle
              and brings the tree shadow into view on the left. Mobile
              gets its own value below — portrait crop is heavier and
              needs centre-anchored positioning. */
-          background-position: 62% center;
+          background-position: 75% center;
           background-size: cover;
           background-repeat: no-repeat;
           overflow: hidden;
