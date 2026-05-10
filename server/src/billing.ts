@@ -48,6 +48,7 @@ function extractSubscriptionId(invoice: Stripe.Invoice): string | null {
 // ---------------------------------------------------------------------------
 
 const KIN_THRESHOLD = parseInt(process.env.KIN_THRESHOLD || '5', 10);
+const KIN_WINDOW_MS = 30 * 86400 * 1000; // rolling 30-day activity window
 
 let _priceId: string | null = null;
 let _couponId: string | null = null;
@@ -193,13 +194,13 @@ export async function countActiveKin(githubLogin: string): Promise<{ count: numb
   const kinLogins = results.map(r => r.referred_github_login).filter(Boolean);
   if (kinLogins.length === 0) return { count: 0, compliant: 0 };
 
-  // Compliant kin = meets all three obligations within the rolling 30-day window:
+  // Compliant kin = meets all three obligations within the rolling window:
   // 1. Account exists
   // 2. File edited (protocol_files.updated_at within window)
   // 3. Call made (protocol_calls.time within window)
   // Rolling, not calendar-month — no cliff at midnight on the 1st where every
   // kin must reactivate before the next invoice fires a few days later.
-  const cutoff = new Date(Date.now() - 30 * 86400 * 1000).toISOString();
+  const cutoff = new Date(Date.now() - KIN_WINDOW_MS).toISOString();
 
   // Resolve each kin's account in parallel via the login index (O(1) per lookup, no full-account scan)
   const kinResults = await Promise.all(kinLogins.map(login => getAccountByLogin(login)));
@@ -241,14 +242,10 @@ export async function countActiveKin(githubLogin: string): Promise<{ count: numb
 
 export interface KinPricingState {
   email: string | undefined;
-  authorCompliant: boolean;
   authorHasCall: boolean;
   authorHasFile: boolean;
-  kinCount: number;
   kinCompliant: number;
   kinNeeded: number;
-  shouldBeFree: boolean;
-  hadDiscount: boolean;
   nowHasDiscount: boolean;
 }
 
@@ -258,21 +255,19 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
   const user = result?.account as any;
   if (!user?.subscription_id) return null;
 
-  // Author must be compliant themselves (file + call within last 30 days) to get kin discount
-  const cutoff = new Date(Date.now() - 30 * 86400 * 1000).toISOString();
-  let authorHasCall = false;
-  let authorHasFile = false;
-  try {
-    const db = getDB();
-    const callCheck = await db.prepare(
-      `SELECT 1 FROM protocol_calls WHERE account_id = ? AND time > ? LIMIT 1`
-    ).bind(String(user.github_id), cutoff).first();
-    authorHasCall = !!callCheck;
-    const file = await db.prepare(
-      `SELECT MAX(updated_at) as last_edit FROM protocol_files WHERE account_id = ?`
-    ).bind(String(user.github_id)).first<{ last_edit: string | null }>();
-    authorHasFile = !!file?.last_edit && file.last_edit > cutoff;
-  } catch { /* D1 unavailable — treat as non-compliant */ }
+  // Author must be compliant themselves (file + call within rolling window) to get kin discount.
+  // D1 errors propagate — silently treating "no data" as "non-compliant" would quietly revoke
+  // discounts when the database hiccups; let the caller's try/catch keep state unchanged instead.
+  const cutoff = new Date(Date.now() - KIN_WINDOW_MS).toISOString();
+  const db = getDB();
+  const callCheck = await db.prepare(
+    `SELECT 1 FROM protocol_calls WHERE account_id = ? AND time > ? LIMIT 1`
+  ).bind(String(user.github_id), cutoff).first();
+  const authorHasCall = !!callCheck;
+  const file = await db.prepare(
+    `SELECT MAX(updated_at) as last_edit FROM protocol_files WHERE account_id = ?`
+  ).bind(String(user.github_id)).first<{ last_edit: string | null }>();
+  const authorHasFile = !!file?.last_edit && file.last_edit > cutoff;
   const authorCompliant = authorHasCall && authorHasFile;
 
   const kinData = await countActiveKin(githubLogin);
@@ -302,14 +297,10 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
 
   return {
     email: user.email,
-    authorCompliant,
     authorHasCall,
     authorHasFile,
-    kinCount: kinData.count,
     kinCompliant: kinData.compliant,
     kinNeeded: Math.max(0, KIN_THRESHOLD - kinData.compliant),
-    shouldBeFree,
-    hadDiscount,
     nowHasDiscount,
   };
 }
@@ -1063,15 +1054,12 @@ async function sendPreBillWarningEmail(
   const WEBSITE_URL = process.env.WEBSITE_URL || 'https://mowinckel.ai';
   const kinLink = `${WEBSITE_URL}/signup?ref=${encodeURIComponent(githubLogin)}`;
 
+  // Warning only fires when at least one obligation is unmet, so todos is never empty here.
   const todos: string[] = [];
-  if (!state.authorHasFile) todos.push('publish a file');
-  if (!state.authorHasCall) todos.push('make a protocol call');
-  if (state.kinNeeded > 0) {
-    todos.push(`have ${state.kinNeeded} more active kin (you currently have ${state.kinCompliant}/5)`);
-  }
-  const todoLine = todos.length === 0
-    ? 'stay active in the next 30 days to keep it free.'
-    : 'to stay free: ' + todos.join('; ') + '.';
+  if (!state.authorHasFile) todos.push('edit at least one alexandria file');
+  if (!state.authorHasCall) todos.push('use alexandria (any /a or skill call)');
+  if (state.kinNeeded > 0) todos.push(`get ${state.kinNeeded} more active kin (you have ${state.kinCompliant}/5)`);
+  const todoLine = 'to stay free: ' + todos.join('; ') + '.';
 
   const dueLine = dueAt
     ? `your next bill is $${amountDollars.toFixed(0)}, due ${dueAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.`
@@ -1099,9 +1087,11 @@ async function sendPreBillWarningEmail(
       }),
     });
     if (!resp.ok) {
+      logEvent('kin_prebill_warning_failed', { status: String(resp.status) });
       console.error('[billing] Pre-bill warning Resend error:', resp.status, await resp.text());
     }
   } catch (err) {
+    logEvent('kin_prebill_warning_failed', { reason: 'send_threw' });
     console.error('[billing] Pre-bill warning send failed:', err);
   }
 }
