@@ -295,7 +295,7 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
     nowHasDiscount = true;
     logEvent('kin_pricing_free', { github_login: user.github_login, compliant_kin: String(kinData.compliant) });
   } else if (!shouldBeFree && hadDiscount) {
-    await stripe.subscriptions.deleteDiscount(user.subscription_id);
+    await stripe.subscriptions.update(user.subscription_id, { discounts: [] });
     nowHasDiscount = false;
     logEvent('kin_pricing_paid', { github_login: user.github_login, compliant_kin: String(kinData.compliant) });
   }
