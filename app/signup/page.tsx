@@ -408,6 +408,16 @@ export default async function SignupPage({
         .kin-feedback.invalid {
           color: var(--text-muted, rgba(26, 19, 24, 0.5));
         }
+        .webview-notice {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 12px;
+          letter-spacing: 0.04em;
+          text-align: center;
+          margin: 0 0 12px;
+          max-width: 320px;
+          color: var(--text-muted, rgba(26, 19, 24, 0.5));
+        }
 
         /* CODA — destination beat. "welcome to alexandria." closes
            the covenant the way the front slide closes the pitch.

@@ -3,6 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SERVER_URL } from '../lib/config';
 
+// In-app browsers on iOS (Instagram/Facebook/LinkedIn/etc) silently break
+// Apple Pay — sheet fails to authorize, no SetupIntent reaches Stripe, user
+// drops off. UA detection catches the highest-baseline-rate cases and prompts
+// open-in-Safari. Conservative — false positives are tolerable (user can
+// ignore the hint), false negatives lose conversions.
+const WEBVIEW_PATTERN = /Instagram|FBAN|FBAV|FB_IAB|FB4A|TwitterAndroid|LinkedInApp|Snapchat|musical_ly|BytedanceWebview|TikTok\/|Pinterest\/|MicroMessenger|Line\//i;
+
 const ICON_CHECK = (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
     <polyline points="20 6 9 17 4 12" />
@@ -21,7 +28,14 @@ type KinStatus = 'idle' | 'checking' | 'valid' | 'invalid';
 export default function SignupCTA({ urlRef, refSource }: { urlRef?: string; refSource?: string }) {
   const [kinCode, setKinCode] = useState('');
   const [kinStatus, setKinStatus] = useState<KinStatus>('idle');
+  const [inWebview, setInWebview] = useState(false);
   const checkSeq = useRef(0);
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && WEBVIEW_PATTERN.test(navigator.userAgent)) {
+      setInWebview(true);
+    }
+  }, []);
 
   const checkKin = useCallback(async (code: string) => {
     const trimmed = code.trim();
@@ -67,6 +81,11 @@ export default function SignupCTA({ urlRef, refSource }: { urlRef?: string; refS
 
   return (
     <section className="cta-section">
+      {inWebview && (
+        <p className="webview-notice">
+          in-app browsers may break apple pay &mdash; open in safari for full payment options.
+        </p>
+      )}
       <a href={authUrl} className="primary-cta">sign up with github</a>
       <form onSubmit={handleSubmit} className="kin-form">
         {urlRef ? (
