@@ -2193,13 +2193,15 @@ export default function LandingPage({ brandClassName = '', trustContent = '' }: 
           opacity: 0.62;
         }
         /* Trust.md copy button — same surface as footer-col-link, but
-           a button (clipboard write) with the icon next to the label. */
+           a button (clipboard write) with the icon next to the label.
+           Font properties come from .footer-col-link (also on this
+           element); we only reset button-shell defaults here, never
+           override font-* since that would lose the link styling. */
         button.footer-col-trust {
           background: none;
           border: none;
           padding: 0;
           margin: 0;
-          font: inherit;
           cursor: pointer;
           text-align: left;
           display: inline-flex;
