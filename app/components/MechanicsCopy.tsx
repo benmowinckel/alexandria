@@ -39,9 +39,9 @@ export default function MechanicsCopy({
       type="button"
       onClick={handleCopy}
       className={className}
-      aria-label={copied ? 'copied' : 'copy mechanics.md contents'}
+      aria-label={copied ? 'copied' : 'copy mechanics'}
     >
-      <span>mechanics.md</span>
+      <span>mechanics</span>
       <span className="mechanics-copy-icon">{copied ? ICON_CHECK : ICON_COPY}</span>
     </button>
   );

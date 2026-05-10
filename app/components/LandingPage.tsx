@@ -441,8 +441,6 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
           <div className="nav-links">
             <span className="nav-group">
               <a href="/docs/letter.pdf" target="_blank" rel="noopener noreferrer">letter</a>
-              <span className="nav-sep">·</span>
-              <Link href="/whitepaper">whitepaper</Link>
             </span>
           </div>
           {/* Mobile-only hamburger toggle. Three thin lines that morph
@@ -471,7 +469,6 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
           <Link href="/library" className="nav-menu-link" role="menuitem">library</Link>
           <Link href="/marketplace" className="nav-menu-link" role="menuitem">marketplace</Link>
           <a href="/docs/letter.pdf" target="_blank" rel="noopener noreferrer" className="nav-menu-link" role="menuitem">letter</a>
-          <Link href="/whitepaper" className="nav-menu-link" role="menuitem">whitepaper</Link>
         </div>
       </nav>
 
@@ -875,7 +872,7 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
           align-items: center;
           gap: clamp(20px, 2.2vw, 40px);
         }
-        /* Library — shelf entry: serif italic, quieter than letter/whitepaper */
+        /* Library — shelf entry: serif italic, quieter than the letter link */
         .nav-shelf {
           display: inline-flex;
           align-items: center;
@@ -2585,11 +2582,9 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
           .nav-brand {
             font-size: 22px;
           }
-          /* Mobile collapses the inline links into a hamburger menu.
-             Mobile shows the same letter · whitepaper inline as desktop
-             — the desktop nav was already trimmed to 2 links, which fits
-             on a phone without a hamburger. The toggle + menu panel are
-             dropped on mobile entirely. */
+          /* Mobile shows the same single letter link inline as desktop —
+             one link fits on a phone without a hamburger, so the toggle +
+             menu panel are dropped on mobile entirely. */
           .nav-links {
             display: flex;
             font-size: 13px;
@@ -2778,7 +2773,7 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
           pointer-events: none;
           z-index: 22;
           /* Narrow horizontal band at upper portion. Top fades out so the
-             nav sits on clean cream (no figures behind "letter · whitepaper").
+             nav sits on clean cream (no figures behind the letter link).
              Mid is bright so the hands' meeting reads as the focal gesture.
              Lower fades out so the manifesto + closer sit on clean cream
              (no anatomy behind the conversion line). The vignette is the
