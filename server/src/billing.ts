@@ -242,6 +242,7 @@ export async function countActiveKin(githubLogin: string): Promise<{ count: numb
 
 export interface KinPricingState {
   email: string | undefined;
+  subscriptionId: string;
   authorHasCall: boolean;
   authorHasFile: boolean;
   kinCompliant: number;
@@ -297,6 +298,7 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
 
   return {
     email: user.email,
+    subscriptionId: user.subscription_id,
     authorHasCall,
     authorHasFile,
     kinCompliant: kinData.compliant,
@@ -305,17 +307,56 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
   };
 }
 
-/** Recalculate kin pricing for all subscribed users. Called monthly by cron. */
+/**
+ * Send the pre-bill warning email if the user is about to be charged and we
+ * haven't already warned them for this billing cycle. Idempotent on
+ * (subscription, due-date) — webhook and cron paths both call this safely.
+ */
+async function maybeWarnAboutBill(
+  state: KinPricingState,
+  githubLogin: string,
+  amountDollars: number,
+  dueAt: Date,
+): Promise<void> {
+  if (!state.email || state.nowHasDiscount) return;
+
+  const idempotencyKey = `kin:warning:${state.subscriptionId}:${dueAt.toISOString().slice(0, 10)}`;
+  const kv = getKV();
+  if (await kv.get(idempotencyKey)) return;
+
+  await sendPreBillWarningEmail(state.email, githubLogin, state, amountDollars, dueAt);
+  await kv.put(idempotencyKey, '1', { expirationTtl: 60 * 86400 }); // 60d, longer than any cycle
+  logEvent('kin_prebill_warning_sent', { github_login: githubLogin, amount: String(amountDollars) });
+}
+
+/**
+ * Recalculate kin pricing for all subscribed users + fire pre-bill warnings 7
+ * days before each renewal. Runs daily; idempotency key in maybeWarnAboutBill
+ * makes the 7-day window collapse to a single send per cycle. Independent of
+ * Stripe's account-level invoice.upcoming lead time setting.
+ */
 export async function recalculateAllKinPricing(): Promise<void> {
   if (process.env.BETA_MODE === 'true') return; // No billing in beta
   const accounts = await loadAccounts<Record<string, any>>();
+  const sevenDaysFromNow = Date.now() + 7 * 86400 * 1000;
+  // $10 unit price — matches ensurePrice(). Hardcoded to avoid an extra Stripe
+  // call per user per day; update here if pricing changes.
+  const billDollars = 10;
+
   for (const account of Object.values(accounts)) {
-    if ((account as any).subscription_id && (account as any).github_login) {
-      try {
-        await recalculateKinPricing((account as any).github_login);
-      } catch (err) {
-        console.error(`[kin] Recalculation failed for ${(account as any).github_login}:`, err);
+    const a = account as any;
+    if (!a.subscription_id || !a.github_login) continue;
+    try {
+      const state = await recalculateKinPricing(a.github_login);
+      if (state && a.current_period_end) {
+        const dueAt = new Date(a.current_period_end);
+        const dueMs = dueAt.getTime();
+        if (dueMs > Date.now() && dueMs <= sevenDaysFromNow) {
+          await maybeWarnAboutBill(state, a.github_login, billDollars, dueAt);
+        }
       }
+    } catch (err) {
+      console.error(`[kin] Recalculation failed for ${a.github_login}:`, err);
     }
   }
 }
@@ -787,9 +828,10 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
         }
 
         case 'invoice.upcoming': {
-          // Recalculate kin pricing ~3 days before billing, then warn the user
-          // if they're about to be charged. Lead time lets them edit a file,
-          // make a call, or nudge a kin to reactivate before the invoice closes.
+          // Recalculate kin pricing whenever Stripe pre-renders the next invoice,
+          // and let maybeWarnAboutBill decide whether to send the warning email.
+          // The daily cron also fires this 7 days out; idempotency keeps it to
+          // one email per cycle no matter which path runs first.
           const invoice = event.data.object as Stripe.Invoice;
           const subId = extractSubscriptionId(invoice);
           if (subId) {
@@ -798,16 +840,12 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
               const subLogin = sub.metadata?.github_login || sub.metadata?.api_key;
               if (subLogin) {
                 const state = await recalculateKinPricing(subLogin);
-                if (state && !state.nowHasDiscount && state.email && (invoice.amount_due || 0) > 0) {
-                  try {
-                    const amountDollars = (invoice.amount_due || 0) / 100;
-                    const dueAt = invoice.next_payment_attempt
-                      ? new Date(invoice.next_payment_attempt * 1000)
-                      : null;
-                    await sendPreBillWarningEmail(state.email, subLogin, state, amountDollars, dueAt);
-                    logEvent('kin_prebill_warning_sent', { github_login: subLogin, amount: String(amountDollars) });
-                  } catch (e) {
-                    console.error('[billing] Pre-bill warning email failed:', e);
+                if (state && (invoice.amount_due || 0) > 0) {
+                  const dueAt = invoice.next_payment_attempt
+                    ? new Date(invoice.next_payment_attempt * 1000)
+                    : null;
+                  if (dueAt) {
+                    await maybeWarnAboutBill(state, subLogin, (invoice.amount_due || 0) / 100, dueAt);
                   }
                 }
               }
@@ -1057,14 +1095,20 @@ async function sendPreBillWarningEmail(
   // Warning fires only when not-free, so at least one of (kinShort, authorQuiet) is true.
   const kinShort = state.kinNeeded > 0;
   const authorQuiet = !state.authorHasFile || !state.authorHasCall;
+  // "you're nearly there" / "just N more" only when actually nearly there —
+  // saying it at 0/5 reads as gaslighting.
+  const nearlyThere = state.kinCompliant >= 3;
+  const just = nearlyThere ? 'just ' : '';
 
   let affirmationLine: string;
   let actionLine: string | null = null;
   if (kinShort && authorQuiet) {
-    affirmationLine = `${state.kinCompliant} active kin, just ${state.kinNeeded} more &mdash; plus a quick file edit or /a from you &mdash; and it&rsquo;s free.`;
+    affirmationLine = `${state.kinCompliant} active kin, ${just}${state.kinNeeded} more &mdash; plus a quick file edit or /a from you &mdash; and it&rsquo;s free.`;
     actionLine = 'send your link to a couple friends.';
   } else if (kinShort) {
-    affirmationLine = `you&rsquo;re nearly there. ${state.kinCompliant} active kin, just ${state.kinNeeded} more and it&rsquo;s free.`;
+    affirmationLine = nearlyThere
+      ? `you&rsquo;re nearly there. ${state.kinCompliant} active kin, just ${state.kinNeeded} more and it&rsquo;s free.`
+      : `${state.kinCompliant} active kin, ${state.kinNeeded} more and it&rsquo;s free.`;
     actionLine = 'send your link to a couple friends.';
   } else {
     affirmationLine = `${state.kinCompliant} active kin already. one quick file edit or /a from you and it&rsquo;s free.`;
