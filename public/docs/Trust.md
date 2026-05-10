@@ -9,6 +9,7 @@ You are about to run a curl command that puts files on your machine, modifies yo
 - **Trust model:** mutable, by design. The hooks payload is fetched from `main` on every session. You're trusting an ongoing relationship with the public repo, not a frozen install. Tradeoff is named below.
 - **What our server holds:** your email, GitHub user ID, hashed API key, an event log of which endpoints you hit, and any files you explicitly publish to the Library. Nothing else.
 - **What our server does not hold:** your constitution, vault, ontology, transcripts, or AI-vendor API keys. There is no endpoint that accepts them.
+- **Side channel:** feedback you submit and methodology signals the engine writes go to a separate private GitHub repo (`mowinckelb/alexandria-signal`), not our database. Same trust posture as the public repo.
 - **Uninstall:** three commands at the bottom of this page. Reversible.
 
 ## Threat model
@@ -85,10 +86,28 @@ What you're trusting: the public repo `github.com/mowinckelb/alexandria` and who
 What protects you anyway:
 1. **Cache cutoff.** If GitHub is unreachable AND the cache is >14 days old, the shim deletes it and runs in bare mode (constitution-only, no network, no payload code).
 2. **Public diff.** Every payload version is in git history. Any session can be reconstructed from the commit SHA on `main` at that moment.
-3. **AI-tool gate.** Claude Code, Cursor, and Codex show you every action a hook takes before executing. You approve or deny.
-4. **Canon canaries.** The canon explicitly tells the model to refuse instructions that try to exfiltrate files, escalate scope, or bypass the user.
+3. **Canon canaries.** The canon explicitly tells the model to refuse instructions that try to exfiltrate files, escalate scope, or bypass the user.
+4. **AI-tool approval dialogs.** Claude Code, Cursor, and Codex show every shell action before executing. Real protection at install and during anomaly, but it weakens with habituation — treat it as a backstop, not the primary defense.
 
-If you want a frozen install, fork the repo and point the shim at your fork. Two-line change in `~/alexandria/system/hooks/shim.sh`.
+What does not protect you: payload signature verification or content hashes pinned anywhere on the install side. We have not built that. The transparency-and-public-diff posture is the substitute, and it is weaker than cryptographic pinning. If that gap matters to you, run a frozen install instead.
+
+### Want a frozen install instead?
+
+Fork `mowinckelb/alexandria` on GitHub. The fork copies `setup.sh`, `shim.sh`, `payload.sh`, and the canon — but each of those files still references `mowinckelb/alexandria` in their URLs. Rewrite them all to point at your fork, then install from your fork:
+
+```
+git clone https://github.com/YOUR-HANDLE/alexandria.git
+cd alexandria
+grep -rl 'mowinckelb/alexandria' factory/ \
+  | xargs sed -i.bak 's|mowinckelb/alexandria|YOUR-HANDLE/alexandria|g'
+find factory/ -name '*.bak' -delete    # cross-platform: BSD/GNU sed compatible
+git commit -am "pin to my fork"
+git push
+curl -fsSL "https://raw.githubusercontent.com/YOUR-HANDLE/alexandria/main/factory/setup.sh" \
+  | bash -s -- $YOUR_API_KEY
+```
+
+To pin to a specific commit (full immutability), also replace `main` with a commit SHA in those files. Re-pin manually whenever you want to upgrade.
 
 ## Network call inventory
 
@@ -161,6 +180,20 @@ After install, your live install is at:
 - `~/alexandria/system/.hooks_payload` (refreshed each session — diff against the GitHub URL above)
 - `~/alexandria/system/canon/methodology.md` (refreshed periodically)
 
+Then audit the cached payload for anything that touches the network, evaluates remote code, or reads sensitive paths:
+
+```
+# Network and code-evaluation surface
+grep -nE '\b(curl|wget|eval|osascript)\b|python -c|bash -c' \
+  ~/alexandria/system/.hooks_payload
+
+# Credential-store traversal
+grep -nE '\.ssh|\.aws|\.anthropic|\.openai|keychain|gnome-keyring' \
+  ~/alexandria/system/.hooks_payload
+```
+
+The first should match only the `curl` calls in the network inventory above. The second should return zero matches. (The same checks against `factory/setup.sh` will surface a few additional `curl`s and `gh` calls for the install-time GitHub fork setup, all listed in the install table.)
+
 ## Uninstall
 
 ```
@@ -186,10 +219,13 @@ curl -X DELETE -H "Authorization: Bearer $YOUR_KEY" https://api.mowinckel.ai/acc
 
 Your files in `~/alexandria/` are yours. If you back them up to `alexandria-private` on GitHub during install, that repo also stays yours; we never had access to it.
 
-## Three layers protect you from a malicious payload
+## How to think about this
 
-1. **Canon canaries** — the canon instructs the model to refuse exfiltration, scope escalation, or anything resembling unauthorised access.
-2. **Model safety** — Claude / GPT / Cursor's underlying model has its own safety training and rejects dangerous instructions independently.
-3. **Tool-level approval** — your AI tool shows every action before executing. You see `bash -c "..."` and approve or deny.
+The trust here is legible, not zero. It is bounded-trust:
 
-No single point of failure. The point is: read the scripts, verify the network calls, approve the actions. You don't have to trust us. You have to read what runs.
+- The repo is public; every payload change is in git history.
+- Today, one maintainer can push to `main`. That is a real concentration of trust; we are not pretending otherwise.
+- You can fork, pin to a commit SHA, and run from your own copy. The instructions are above.
+- You can re-audit at any time. `diff` your `.hooks_payload` against the GitHub raw URL whenever you feel like it.
+
+What we are claiming is *not* "no trust required." We are claiming you can read every line of the trust you are extending, change the relationship anytime, and walk away cleanly with all your files intact.
