@@ -450,71 +450,6 @@ html.app-shell input:focus {
   margin: 0 0 0.35rem;
   text-align: left;
 }
-/* Soft preamble paragraph beneath the subtitle — the italic note that
-   tells the cold reader what this document is. Small, faint, set to
-   read as colophon text rather than body prose. */
-.pdoc-longform .pdoc-h1 + .pdoc-h2 + .pdoc-p {
-  font-style: italic;
-  font-size: 0.96rem;
-  line-height: 1.55;
-  color: var(--text-faint);
-  letter-spacing: 0.012em;
-  margin: 0 0 4.5rem;
-  max-width: 36em;
-  text-wrap: pretty;
-}
-
-/* Abstract H1 — italic display, set quietly so the abstract prose
-   does the work. Not a section label, not a duplicate title — a
-   threshold mark. The actual punch is in the body that follows. */
-.pdoc-longform .pdoc-h1.pdoc-h1-abstract {
-  font-family: var(--font-eb-garamond);
-  font-style: italic;
-  font-weight: 400;
-  font-size: clamp(1.85rem, 3vw, 2.4rem);
-  line-height: 1.1;
-  letter-spacing: -0.012em;
-  color: var(--text-primary);
-  margin: 0 0 2rem;
-  text-align: left;
-  text-transform: none;
-  font-variant-caps: normal;
-}
-/* The abstract H1 stands on its own — italic display, generous space
-   above and below. No leading rule (it would crash through "the"). */
-
-/* Abstract body — first paragraph after the Abstract heading gets an
-   illuminated initial like a manuscript chapter opening. The drop cap
-   tells the reader THIS IS WHERE TO START in a way no signpost can. */
-.pdoc-longform .pdoc-h1-abstract + .pdoc-p {
-  font-size: 1.18rem;
-  line-height: 1.65;
-  color: var(--text-primary);
-  font-style: italic;
-  margin: 0 0 1.4rem;
-  text-wrap: pretty;
-  /* The lede paragraph is italic across — it's the raised lead that
-     tells the reader this is the abstract's opening note, not body. */
-}
-.pdoc-longform .pdoc-h1-abstract + .pdoc-p::first-letter {
-  font-family: var(--font-eb-garamond);
-  font-style: italic;
-  font-weight: 600;
-  font-size: 4.4em;
-  line-height: 0.82;
-  /* Italic Garamond's lowercase "a" has a curl on the right that
-     crashes into the next character if pulled too tight. Generous
-     positive margin (~0.18em) clears the next letter; no negative
-     letter-spacing on a single glyph. */
-  letter-spacing: 0;
-  vertical-align: -0.36em;
-  margin-right: 0.18em;
-  color: var(--accent);
-  text-shadow:
-    0 1px 0 rgba(255, 250, 240, 0.6),
-    0 2px 6px rgba(91, 31, 71, 0.12);
-}
-
 /* Section H2s — chapter titles. Display-italic, larger, with the chapter
    number set in tabular old-style numerals as quiet marginalia. The
    chapter declares itself; the prefix tells you where you are. */
@@ -605,20 +540,6 @@ html.app-shell input:focus {
   hanging-punctuation: first last;
   font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "calt" 1, "onum" 1;
   font-variant-ligatures: common-ligatures discretionary-ligatures;
-}
-
-/* Suppress the drop cap on the title/subtitle/preamble chain — that
-   leading paragraph reads as colophon text, not a chapter opening. */
-.pdoc-longform .pdoc-h1 + .pdoc-h2 + .pdoc-p::first-letter {
-  font-size: inherit;
-  color: inherit;
-  font-weight: inherit;
-  vertical-align: baseline;
-  margin-right: 0;
-  text-shadow: none;
-  line-height: inherit;
-  letter-spacing: inherit;
-  font-style: inherit;
 }
 
 /* First paragraph after a chapter heading — illuminated initial. The

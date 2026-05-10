@@ -87,13 +87,6 @@ function processNumbered(md: string): { pre: string; post: string; toc: TocEntry
           continue;
         }
         const text = h1[1];
-        // Abstract is a preamble, not a numbered part. Pass through
-        // unchanged so the abstract-class detection in MD_COMPONENTS
-        // recognises it (text === 'abstract' after strip).
-        if (/^\*?the\s+abstract\.?\*?\s*$/i.test(text.trim()) || /^\*?abstract\.?\*?\s*$/i.test(text.trim())) {
-          out.push(line);
-          continue;
-        }
         part++;
         chapter = 0;
         const num = String(part);
@@ -246,18 +239,9 @@ const FLEURONS = ['❦', '❧', '※', '§', '⁂'];
 let fleuronIdx = 0;
 
 const MD_COMPONENTS = {
-  h1: ({ children }: { children?: React.ReactNode }) => {
-    const text = flattenText(children).trim().toLowerCase().replace(/\.$/, '');
-    const isAbstract = /^(the\s+)?abstract$/.test(text);
-    return (
-      <h1
-        id={slugify(children)}
-        className={isAbstract ? 'pdoc-h1 pdoc-h1-abstract' : 'pdoc-h1'}
-      >
-        {children}
-      </h1>
-    );
-  },
+  h1: ({ children }: { children?: React.ReactNode }) => (
+    <h1 id={slugify(children)} className="pdoc-h1">{children}</h1>
+  ),
   h2: ({ children }: { children?: React.ReactNode }) => <h2 id={slugify(children)} className="pdoc-h2">{children}</h2>,
   h3: ({ children }: { children?: React.ReactNode }) => <h3 id={slugify(children)} className="pdoc-h3">{children}</h3>,
   h4: ({ children }: { children?: React.ReactNode }) => <h4 id={slugify(children)} className="pdoc-h4">{children}</h4>,
