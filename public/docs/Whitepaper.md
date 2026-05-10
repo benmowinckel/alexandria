@@ -51,11 +51,11 @@ That is what this document is about.
 
 It helps to know what you are dealing with.
 
-> *It seems probable that once the machine thinking method had started, it would not take long to outstrip our feeble powers.*
+> *It seems probable that once the machine thinking method had started, it would not take long to outstrip our feeble powers. They would be able to converse with each other to sharpen their wits. At some stage therefore we should have to expect the machines to take control.*
 >
-> — *Alan Turing, 1950*
+> — *Alan Turing, 1951*
 
-The man who effectively invented the computer wrote that in the same paper that asked whether machines could think. **He answered yes, and treated the rest as a matter of when, not if.** Three quarters of a century later, the field has caught up to him.
+The man who effectively invented the computer said that in a 1951 lecture. A year earlier he had asked whether machines could think — and answered yes. **He treated the rest as a matter of when, not if.** Three quarters of a century later, the field has caught up to him.
 
 Geoffrey Hinton — Turing prize, decades at the foundation of every neural network in production, the godfather of modern ai — resigned from Google in 2023 to be free to say what he believed: that ai is on a trajectory to surpass human intelligence at most things, possibly all things, and that we are not ready.
 
