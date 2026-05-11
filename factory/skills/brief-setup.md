@@ -1,37 +1,139 @@
 ---
 name: brief-setup
-description: One-time setup for the daily morning brief — local launchd schedule + user-owned SMTP credentials. Sovereign by construction; survives Alexandria the company vanishing.
+description: One-time setup for the daily morning brief — GH Actions cron when available, local launchd fallback. Sovereign by construction; survives Alexandria the company vanishing.
 ---
 
-You are setting up the Author's daily morning brief delivery. This is a ONE-TIME interactive setup. After it completes, the brief sends itself daily from the Author's machine via their own SMTP credentials, with no dependency on alexandria.* infrastructure.
+You are setting up the Author's daily morning brief delivery. ONE-TIME interactive setup. After it completes, the brief sends itself daily, with no dependency on alexandria.* infrastructure.
 
-## What you're building
+## What the brief does
 
-- `~/alexandria/system/.brief_email` — JSON: SMTP creds (host, port, user, password, from, to, subject). Mode 600. Lives only on this machine.
-- `~/alexandria/system/brief.py` — copied from `factory/scripts/brief.py` in the public alexandria repo. The daily sender.
-- `~/Library/LaunchAgents/com.alexandria.brief.plist` — launchd schedule, fires `brief.py` daily at the Author's chosen local time.
+The brief fires once a day, reads `~/alexandria/system/.brief_outbox` (one line — written by the autoloop or any other producer), and SMTP-sends it through the Author's own credentials, against the Author's own email provider. Empty/stale outbox → default `"no material change overnight."`
 
-`brief.py` reads `~/alexandria/system/.brief_outbox` (one line of text — written by the autoloop or any other producer) and SMTP-sends it. Empty / missing outbox → default `"no material change overnight."`
+## Two paths, one outcome
 
-## Steps
+Where the daily fire happens depends on the Author's environment. Detect — don't ask:
+
+- **GH Actions** (preferred) — fires from GitHub's clock. Immune to laptop sleep/off. Requires `gh` CLI authenticated AND a private alexandria-private repo on the Author's GitHub. This is the path the canonical user (mowinckelb) runs on.
+- **launchd** (fallback) — fires from the Author's Mac at a chosen local time. Requires nothing beyond the Author's laptop being awake at brief-time. Failure mode: silent miss if the laptop is sleeping/off.
+
+```bash
+if command -v gh &>/dev/null && \
+   gh auth status &>/dev/null 2>&1 && \
+   [ -d "$HOME/alexandria/.git" ] && \
+   (cd "$HOME/alexandria" && git remote get-url origin 2>/dev/null | grep -q "alexandria-private"); then
+    MODE=ghactions
+else
+    MODE=launchd
+fi
+```
+
+If MODE=launchd, tell the Author: "Your brief will fire from your laptop. If it's off/asleep at brief time, the brief misses. Authenticate `gh` and push your alexandria-private repo to GitHub, then re-run `/brief-setup` to upgrade to GH Actions (no laptop dependency)."
+
+## Common steps (both paths)
 
 ### 1. Email address
-
-Ask the Author what email they want briefs sent to. Default offer: their git config `user.email` or their gh login email. They'll usually want both `from` and `to` to be the same address (sending from themselves to themselves).
+Ask the Author what email they want briefs sent to. Default offer: their git config `user.email` or their gh login email. Usually both `from` and `to` are the same address (sending from themselves to themselves).
 
 ### 2. Provider detection + app password
+Look at the email's domain and produce provider-specific SMTP setup instructions. Don't hardcode a full list — read the domain, name the provider you recognize, and walk through the canonical flow:
 
-Look at the email's domain and produce provider-specific SMTP setup instructions. Don't hardcode a list — read the domain, name the provider you recognize, and walk them through the canonical flow. Common cases:
+- `@icloud.com` / `@me.com` / `@mac.com` / Apple-managed custom domain → `smtp.mail.me.com`, port `587` (STARTTLS). App-specific password at appleid.apple.com → Sign-In and Security → App-Specific Passwords. Name it `alexandria-brief`.
+- `@gmail.com` (or Google Workspace) → `smtp.gmail.com`, port `465` (SSL). App password at myaccount.google.com → Security → App passwords. Requires 2-Step Verification first.
+- `@proton.me` / `@protonmail.com` → SMTP via Proton Bridge (paid plan) or Proton's SMTP submission. `smtp.protonmail.ch`, port `587`. Generate an SMTP token in Proton settings.
+- Fastmail, Zoho, Outlook/Hotmail, custom domains → identify the provider, surface its canonical SMTP + app-password flow.
 
-- `@icloud.com` / `@me.com` / `@mac.com` / Apple-managed custom domain → SMTP host `smtp.mail.me.com`, port `587` (STARTTLS), user is the full email, password is an app-specific password generated at appleid.apple.com → Sign-In and Security → App-Specific Passwords. Walk them through generating one named `alexandria-brief`.
-- `@gmail.com` (or Google Workspace) → SMTP host `smtp.gmail.com`, port `465` (SSL), user is the full email, password is an app password generated at myaccount.google.com → Security → 2-Step Verification → App passwords. Requires 2-step verification enabled first. Walk them through.
-- `@proton.me` / `@protonmail.com` → SMTP via Proton Bridge (paid plan) or Proton's SMTP submission for paid plans. Host `smtp.protonmail.ch`, port `587`. Walk them through generating an SMTP token in their Proton settings.
-- Fastmail, Zoho, Outlook/Hotmail, custom domains, etc. → identify the provider, fetch their canonical SMTP + app-password instructions if you have web access; otherwise tell the Author the parameters you need (host, port, user, password) and let them look up their provider's docs.
+Author pastes the app password back. Treat as sensitive — never echo, never commit raw.
 
-The Author pastes the app password back to you. Treat it as sensitive — never echo it to logs, never put it in commits.
+### 3. Install brief.py
+Copy `factory/scripts/brief.py` from the public alexandria repo to `~/alexandria/system/scripts/brief.py`. Make executable.
 
-### 3. Write credentials file
+```bash
+mkdir -p "$HOME/alexandria/system/scripts"
+curl -sf https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/scripts/brief.py \
+  -o "$HOME/alexandria/system/scripts/brief.py"
+chmod +x "$HOME/alexandria/system/scripts/brief.py"
+```
 
+brief.py reads SMTP creds from env vars (GH Actions) OR from `~/alexandria/system/.brief_email` (launchd). Same script, both modes — the script's path-portable, drop it anywhere in `~/alexandria/system/scripts/`.
+
+---
+
+## Path A: GH Actions
+
+### 4a. Set GH secrets
+Set six secrets via stdin so values never appear in shell argv:
+
+```bash
+REPO=$(cd "$HOME/alexandria" && gh repo view --json nameWithOwner -q .nameWithOwner)
+printf '%s' "<smtp host>"        | gh secret set SMTP_HOST     -R "$REPO"
+printf '%s' "<port: 465 or 587>" | gh secret set SMTP_PORT     -R "$REPO"
+printf '%s' "<email address>"    | gh secret set SMTP_USER     -R "$REPO"
+printf '%s' "<app password>"     | gh secret set SMTP_PASSWORD -R "$REPO"
+printf '%s' "<email address>"    | gh secret set SMTP_FROM     -R "$REPO"
+printf '%s' "<email address>"    | gh secret set SMTP_TO       -R "$REPO"
+```
+
+Verify with `gh secret list -R "$REPO" | grep SMTP` — should show all six.
+
+### 5a. Add the workflow file
+Write `~/alexandria/.github/workflows/brief.yml`:
+
+```yaml
+name: Daily brief
+
+on:
+  schedule:
+    - cron: '0 15 * * *'   # 15:00 UTC. Edit if the Author wants a different time.
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # detect_stranded needs full history + claude/* refs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Send brief
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          SMTP_TO: ${{ secrets.SMTP_TO }}
+        run: python3 system/scripts/brief.py
+```
+
+The cron is in UTC. 15:00 UTC = 8am PDT / 7am PST (DST drift is accepted; consistency beats local-clock fidelity).
+
+### 6a. Commit, push, verify
+```bash
+cd "$HOME/alexandria"
+git add .github/workflows/brief.yml system/scripts/brief.py
+git commit -m "brief: enable via GH Actions cron"
+git push origin HEAD
+gh workflow run brief.yml -R "$REPO"
+sleep 20
+gh run list -R "$REPO" --workflow=brief.yml --limit=1
+```
+
+Conclusion `success` → ask the Author to check their inbox. If the test email landed, the loop is closed. Tell them the next brief fires at 15:00 UTC tomorrow.
+
+### Maintenance (GH Actions)
+- **Change the time**: edit the cron line in `.github/workflows/brief.yml`, commit + push. Cron is UTC.
+- **Pause briefs**: disable the workflow at `https://github.com/<owner>/<repo>/actions` or remove the `schedule:` block and push.
+- **Rotate SMTP password**: regenerate at provider, then `printf '%s' "<new>" | gh secret set SMTP_PASSWORD -R "$REPO"`.
+- **Override tomorrow's body**: write `~/alexandria/system/.brief_outbox` and commit/push (the file is gitignored by default — use `git add -f`).
+- **Failure visibility**: GH auto-emails the workflow author when a scheduled run fails. No silent-miss class.
+
+---
+
+## Path B: launchd (fallback)
+
+### 4b. Write credentials file
 Save to `~/alexandria/system/.brief_email` as JSON:
 
 ```json
@@ -46,20 +148,9 @@ Save to `~/alexandria/system/.brief_email` as JSON:
 }
 ```
 
-`chmod 600` immediately. The password is plaintext on disk — that's the same trust level as their email password, gated by their machine's user account.
+`chmod 600` immediately. Plaintext on disk — same trust level as the Author's email password, gated by their user account.
 
-### 4. Install the daily script
-
-Copy `factory/scripts/brief.py` from the public alexandria repo to `~/alexandria/system/brief.py`. Make executable.
-
-```bash
-curl -sf https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/scripts/brief.py \
-  -o ~/alexandria/system/brief.py
-chmod +x ~/alexandria/system/brief.py
-```
-
-### 5. Schedule via launchd
-
+### 5b. Schedule via launchd
 Ask the Author what local time they want the brief (default 08:00). Write `~/Library/LaunchAgents/com.alexandria.brief.plist`:
 
 ```xml
@@ -71,7 +162,7 @@ Ask the Author what local time they want the brief (default 08:00). Write `~/Lib
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/python3</string>
-    <string>{HOME}/alexandria/system/brief.py</string>
+    <string>{HOME}/alexandria/system/scripts/brief.py</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>
@@ -84,42 +175,37 @@ Ask the Author what local time they want the brief (default 08:00). Write `~/Lib
 </plist>
 ```
 
-Substitute the Author's `$HOME` and chosen time. Then load:
-
+Substitute `$HOME` and chosen time. Then load:
 ```bash
 launchctl unload ~/Library/LaunchAgents/com.alexandria.brief.plist 2>/dev/null
 launchctl load ~/Library/LaunchAgents/com.alexandria.brief.plist
 ```
 
-`StartCalendarInterval` uses the machine's local time and catches up after sleep — closing the laptop overnight is fine.
+`StartCalendarInterval` uses local time and catches up after sleep — closing the laptop overnight is fine. If the laptop is fully off at brief time, the brief misses silently.
 
-### 6. Verify with a test email
-
-Run the script once immediately so the Author sees a test email land within seconds:
-
+### 6b. Verify with a test email
 ```bash
-python3 ~/alexandria/system/brief.py
+python3 ~/alexandria/system/scripts/brief.py
+tail -3 ~/alexandria/system/.brief_log
 ```
 
-Then read `~/alexandria/system/.brief_log` — confirm the last line is `sent: ...` not `fail: ...`. If it's `fail`, surface the error to the Author and walk back through the offending step (usually wrong app password or SMTP host).
+Last line should be `sent: ...`. If `fail: ...`, surface the error (usually wrong app password, wrong SMTP host, or no internet at fire time). If `sent`, ask the Author to check their inbox.
 
-If it's `sent`, ask the Author to check their inbox. If the test email landed, the loop is closed. Tell them the next brief will fire at their scheduled time tomorrow, and that any process can write to `~/alexandria/system/.brief_outbox` (one line) to override the default body.
+### Maintenance (launchd)
+- **Change the time**: edit `Hour`/`Minute` in the plist, `launchctl unload && launchctl load`.
+- **Pause**: `launchctl unload ~/Library/LaunchAgents/com.alexandria.brief.plist`.
+- **Override tomorrow's body**: `echo "<one line>" > ~/alexandria/system/.brief_outbox`.
+- **Failure visibility**: none built in. Silent misses if laptop is asleep/off. Upgrade to GH Actions to remove this failure class.
 
-## Maintenance the Author should know
-
-- **Change the time:** edit the `Hour`/`Minute` integers in `~/Library/LaunchAgents/com.alexandria.brief.plist`, then `launchctl unload <path> && launchctl load <path>`. Takes effect on the next scheduled fire.
-- **Pause briefs without uninstalling:** `launchctl unload ~/Library/LaunchAgents/com.alexandria.brief.plist`. Re-enable with `launchctl load <path>`.
-- **Uninstall completely:** unload + delete the plist + delete `~/alexandria/system/.brief_email` and `~/alexandria/system/brief.py` if desired. Logs at `~/alexandria/system/.brief_log` are append-only — clear them manually if they grow.
-- **Override tomorrow's brief content:** `echo "<one line>" > ~/alexandria/system/.brief_outbox`. The next fire reads + sends + clears.
-- **Update brief.py:** re-fetch from `https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/scripts/brief.py` and overwrite. No automatic updates by design — the Author chooses when to take new versions.
+---
 
 ## Sovereignty test
 
-After setup is complete, every piece of the brief delivery loop lives on the Author's machine:
+After setup, every piece of the brief loop lives on the Author's stuff:
 
-- `~/alexandria/system/.brief_email` (their SMTP creds, against their email provider)
-- `~/alexandria/system/brief.py` (the script)
-- `~/Library/LaunchAgents/com.alexandria.brief.plist` (their launchd schedule)
-- `~/alexandria/system/.brief_outbox` (their content source — written by their own autoloop or whatever)
+- SMTP creds against the Author's email provider (Gmail, iCloud, Proton, etc.)
+- Outbox content from the Author's autoloop, in the Author's repo
+- Scheduler on the Author's GitHub account (Path A) or laptop (Path B)
+- brief.py downloaded from public alexandria but kept frozen in the Author's `~/alexandria/`
 
-If alexandria the company shuts down tomorrow, none of this stops working. The Author's brief keeps arriving in their inbox forever, until they delete the launchd plist themselves.
+If alexandria the company shuts down tomorrow, none of this stops working. The Author's brief keeps arriving forever, until they delete the workflow/plist themselves.

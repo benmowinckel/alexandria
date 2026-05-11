@@ -14,6 +14,7 @@ remote) and SMTP (the Author's own provider).
 """
 
 import json
+import os
 import smtplib
 import ssl
 import subprocess
@@ -23,7 +24,7 @@ from email.message import EmailMessage
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-REPO = Path.home() / "alexandria"
+REPO = Path(__file__).resolve().parent.parent.parent
 ALEX = REPO / "system"
 CREDS = ALEX / ".brief_email"
 LOG = ALEX / ".brief_log"
@@ -191,15 +192,27 @@ def detect_stranded() -> Optional[str]:
     return f"{header}\n\nRescue: {rescue}"
 
 
-def main() -> int:
-    if not CREDS.exists():
-        log(f"abort: creds missing at {CREDS} — run /brief-setup")
-        return 1
+def load_creds() -> dict:
+    """Env vars (CI) win over the local .brief_email file. SMTP_HOST presence
+    is the env-mode trigger — all SMTP_* must be set together."""
+    if os.environ.get("SMTP_HOST"):
+        return {
+            "host": os.environ["SMTP_HOST"],
+            "port": int(os.environ.get("SMTP_PORT", "465")),
+            "user": os.environ["SMTP_USER"],
+            "password": os.environ["SMTP_PASSWORD"],
+            "from": os.environ["SMTP_FROM"],
+            "to": os.environ["SMTP_TO"],
+            "subject": os.environ.get("SMTP_SUBJECT", "alexandria."),
+        }
+    return json.loads(CREDS.read_text())
 
+
+def main() -> int:
     try:
-        creds = json.loads(CREDS.read_text())
+        creds = load_creds()
     except Exception as e:
-        log(f"abort: creds unreadable ({type(e).__name__}: {e})")
+        log(f"abort: creds unavailable ({type(e).__name__}: {e})")
         return 1
 
     # Sync first so OUTBOX and LAST_RUN reflect the latest autoloop push.
