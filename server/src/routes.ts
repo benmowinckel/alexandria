@@ -217,7 +217,7 @@ export function registerRoutes(app: Hono) {
       protocol: 'alexandria',
       version: '1.0',
       account: {
-        status: account.subscription_status || (process.env.BETA_MODE === 'true' ? 'beta' : 'none'),
+        status: account.subscription_status || 'none',
         created: account.created_at,
         installed: account.installed_at || null,
       },
@@ -481,10 +481,8 @@ export function registerRoutes(app: Hono) {
         return c.html(await callbackPageHtml(apiKey, user.login));
       }
 
-      // Redirect to Stripe Checkout (skip in beta — no card friction).
-      // For pure Library login intent we skip billing redirect.
-      const isBeta = process.env.BETA_MODE === 'true';
-      if (stateData.intent !== 'library' && !isBeta && process.env.STRIPE_SECRET_KEY && email) {
+      // Redirect to Stripe Checkout. For pure Library login intent we skip billing redirect.
+      if (stateData.intent !== 'library' && process.env.STRIPE_SECRET_KEY && email) {
         try {
           const checkoutUrl = await createCheckoutSession({
             email,

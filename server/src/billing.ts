@@ -4,7 +4,6 @@
  * Subscription: $10/mo, or free with 5+ active kin. Binary. Slider open above floor.
  * Library: monthly tab billing (micro-transactions settled monthly via Stripe Billing Meters).
  * Non-Author: instant payment via Stripe Checkout.
- * Free during beta — billing infra is ready but not gating.
  */
 
 import Stripe from 'stripe';
@@ -400,7 +399,6 @@ async function maybeWarnAboutBill(
  * Stripe's account-level invoice.upcoming lead time setting.
  */
 export async function recalculateAllKinPricing(): Promise<void> {
-  if (process.env.BETA_MODE === 'true') return; // No billing in beta
   const accounts = await loadAccounts<Record<string, any>>();
   const sevenDaysFromNow = Date.now() + 7 * 86400 * 1000;
   // $10 unit price — matches ensurePrice(). Hardcoded to avoid an extra Stripe
@@ -460,7 +458,6 @@ export async function createCheckoutSession(opts: {
   const stripe = getStripe();
   const SERVER_URL = process.env.SERVER_URL || 'https://api.mowinckel.ai';
   const WEBSITE_URL = process.env.WEBSITE_URL || 'https://mowinckel.ai';
-  const BETA = process.env.BETA_MODE === 'true';
 
   // First attempt uses the stored customer if any; if Stripe rejects it as
   // missing (test→live transition leaves stale IDs behind), retry once with
@@ -470,19 +467,6 @@ export async function createCheckoutSession(opts: {
     const customer = useStored && opts.stripeCustomerId
       ? { customer: opts.stripeCustomerId }
       : { customer_email: opts.email };
-    if (BETA) {
-      return {
-        mode: 'setup' as const,
-        currency: 'usd',
-        ...customer,
-        metadata: { kind: 'author', github_login: opts.githubLogin },
-        custom_text: {
-          submit: { message: 'free in beta. we\'ll let you know before billing starts.' },
-        },
-        success_url: `${SERVER_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${WEBSITE_URL}/signup?billing=cancel`,
-      };
-    }
     return {
       mode: 'subscription' as const,
       line_items: [{ price: '', quantity: 1 }],

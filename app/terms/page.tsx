@@ -15,7 +15,7 @@ export default function Terms() {
       lineHeight: 1.7,
     }}>
       <h1 style={{ fontSize: '1.5rem', marginBottom: '2rem', fontWeight: 400 }}>Terms of Service</h1>
-      <p style={{ marginBottom: '1rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: April 16, 2026</p>
+      <p style={{ marginBottom: '1rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: May 11, 2026</p>
 
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>What this is</h2>
@@ -34,7 +34,7 @@ export default function Terms() {
 
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>The service</h2>
-        <p>Alexandria is provided as-is. The service is in beta. Things may change, break, or be discontinued. We will give reasonable notice before changes that affect your data or access. The product is free during beta. Planned pricing: one tier, $10/month or free with 5 active kin. Slider pricing — pay what it is worth to you, no ceiling.</p>
+        <p>Alexandria is provided as-is. Things may change, break, or be discontinued. We will give reasonable notice before changes that affect your data or access. Pricing: one tier, $10/month or free with 5 active kin. Slider pricing — pay what it is worth to you, no ceiling.</p>
       </section>
 
       <section style={{ marginBottom: '2rem' }}>
