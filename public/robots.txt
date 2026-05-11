@@ -5,6 +5,8 @@ User-agent: Yandex
 Disallow: /confidential
 Disallow: /memo
 Disallow: /pitch
+Disallow: /walkthrough
+Disallow: /demo.mp4
 Disallow: /docs/Memo.md
 Disallow: /docs/confidential.concrete.md
 Disallow: /docs/confidential.alexandria.md
@@ -26,6 +28,8 @@ Allow: /docs/
 Disallow: /confidential
 Disallow: /memo
 Disallow: /pitch
+Disallow: /walkthrough
+Disallow: /demo.mp4
 Disallow: /docs/Memo.md
 Disallow: /signup
 
