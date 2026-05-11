@@ -7,7 +7,7 @@
  */
 
 import { Hono } from 'hono';
-import { getDB, getR2, generateId } from './db.js';
+import { getDB, generateId } from './db.js';
 import { logEvent } from './analytics.js';
 import {
   extractApiKey,
@@ -20,7 +20,15 @@ import {
 import { getAllowedOrigins } from './cors.js';
 import { getStripe } from './billing.js';
 import { getKV, loadAccounts } from './kv.js';
-import { isInternalProtocolFileName, readProtocolFile } from './file-access.js';
+import {
+  isInternalProtocolFileName,
+  readProtocolFile,
+  readQuizDefinition,
+  readPulse,
+  readShadow,
+  readShadowFree,
+  readWork,
+} from './file-access.js';
 
 // ---------------------------------------------------------------------------
 // CORS-safe R2 response
@@ -403,20 +411,12 @@ export function registerLibraryRoutes(app: Hono): void {
   // Public/free shadow
   app.get('/library/:author/shadow/free', async (c) => {
     const authorId = c.req.param('author');
-    const db = getDB();
-    const shadow = await db.prepare(
-      `SELECT * FROM shadows WHERE author_id = ? AND visibility = 'public' LIMIT 1`
-    ).bind(authorId).first<{ id: string; r2_key: string }>();
-    if (!shadow) return c.json({ error: 'No public shadow' }, 404);
-
-    const r2 = getR2();
-    const obj = await r2.get(shadow.r2_key);
-    if (!obj) return c.json({ error: 'Shadow content not found' }, 404);
+    const result = await readShadowFree({ authorId });
+    if (!result.ok) return c.json(result.body, result.status);
 
     logEvent('library_shadow_view', { author: authorId, visibility: 'public' });
-
     // Deliberately more permissive than the CORS middleware — public shadows are open content
-    return new Response(obj.body, {
+    return new Response(result.obj.body, {
       headers: {
         'Content-Type': 'text/markdown; charset=utf-8',
         'Access-Control-Allow-Origin': '*',
@@ -429,72 +429,38 @@ export function registerLibraryRoutes(app: Hono): void {
   app.get('/library/:author/shadow/:shadowId', async (c) => {
     const authorId = c.req.param('author');
     const shadowId = c.req.param('shadowId');
-    const db = getDB();
-    const r2 = getR2();
-
-    const shadow = await db.prepare(
-      'SELECT * FROM shadows WHERE id = ? AND author_id = ?'
-    ).bind(shadowId, authorId).first<{ id: string; r2_key: string; visibility: string; price_cents: number }>();
-    if (!shadow) return c.json({ error: 'Shadow not found' }, 404);
 
     const accessorKey = extractApiKey(c);
     const accessor = accessorKey ? await findByApiKey(accessorKey) : null;
+    const inviteToken = c.req.query('token') || null;
 
-    // Owner always has access
-    if (accessor && accessor.github_login === authorId) {
-      const obj = await r2.get(shadow.r2_key);
-      if (!obj) return c.json({ error: 'Shadow content not found' }, 404);
-      return r2Response(obj.body, 'text/markdown; charset=utf-8', c.req.header('Origin'));
-    }
+    const result = await readShadow({
+      authorId,
+      shadowId,
+      accessorLogin: accessor?.github_login || null,
+      inviteToken,
+    });
+    if (!result.ok) return c.json(result.body, result.status);
 
-    // Public shadows — anyone
-    if (shadow.visibility === 'public') {
-      const obj = await r2.get(shadow.r2_key);
-      if (!obj) return c.json({ error: 'Shadow content not found' }, 404);
-      logEvent('library_shadow_view', { author: authorId, visibility: 'public' });
-      // Deliberately more permissive than the CORS middleware — public shadows are open content
-      return new Response(obj.body, {
+    logEvent('library_shadow_view', {
+      author: authorId,
+      visibility: result.reason === 'owner' ? 'owner' : result.reason,
+      accessor: accessor?.github_login || '',
+    });
+
+    // Public and invite shadows are deliberately open across origins; authors
+    // and owner reads use the origin-checked default.
+    if (result.reason === 'public') {
+      return new Response(result.obj.body, {
         headers: { 'Content-Type': 'text/markdown; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=300' },
       });
     }
-
-    // Authors shadows — any authenticated Author
-    if (shadow.visibility === 'authors') {
-      if (accessor) {
-        const obj = await r2.get(shadow.r2_key);
-        if (!obj) return c.json({ error: 'Shadow content not found' }, 404);
-        logEvent('library_shadow_view', { author: authorId, visibility: 'authors', accessor: accessor.github_login });
-        return r2Response(obj.body, 'text/markdown; charset=utf-8', c.req.header('Origin'));
-      }
-      return c.json({ error: 'Authors only — requires Alexandria API key', visibility: 'authors' }, 401);
+    if (result.reason === 'invite') {
+      return new Response(result.obj.body, {
+        headers: { 'Content-Type': 'text/markdown; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' },
+      });
     }
-
-    // Invite shadows — token only
-    if (shadow.visibility === 'invite') {
-      const token = c.req.query('token');
-      if (token) {
-        const tokenRow = await db.prepare(
-          'SELECT * FROM shadow_tokens WHERE token = ? AND author_id = ? AND revoked_at IS NULL'
-        ).bind(token, authorId).first<{ id: string }>();
-        if (tokenRow) {
-          await db.prepare(
-            'UPDATE shadow_tokens SET access_count = access_count + 1, last_used_at = ? WHERE id = ?'
-          ).bind(new Date().toISOString(), tokenRow.id).run();
-
-          const obj = await r2.get(shadow.r2_key);
-          if (!obj) return c.json({ error: 'Shadow content not found' }, 404);
-          logEvent('library_shadow_view', { author: authorId, visibility: 'invite' });
-          // Deliberately more permissive than the CORS middleware — invite links are shareable
-          return new Response(obj.body, {
-            headers: { 'Content-Type': 'text/markdown; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' },
-          });
-        }
-        return c.json({ error: 'Invalid or revoked token' }, 401);
-      }
-      return c.json({ error: 'Invite only — requires access token', visibility: 'invite' }, 401);
-    }
-
-    return c.json({ error: 'Access denied' }, 403);
+    return r2Response(result.obj.body, 'text/markdown; charset=utf-8', c.req.header('Origin'));
   });
 
   // =========================================================================
@@ -504,23 +470,12 @@ export function registerLibraryRoutes(app: Hono): void {
   app.get('/library/:author/pulse/:month?', async (c) => {
     const authorId = c.req.param('author');
     const month = c.req.param('month');
-    const db = getDB();
-    const r2 = getR2();
 
-    let pulse;
-    if (month) {
-      pulse = await db.prepare('SELECT * FROM pulses WHERE author_id = ? AND month = ?').bind(authorId, month).first<{ r2_key_pulse: string }>();
-    } else {
-      pulse = await db.prepare('SELECT * FROM pulses WHERE author_id = ? ORDER BY month DESC LIMIT 1').bind(authorId).first<{ r2_key_pulse: string }>();
-    }
-    if (!pulse) return c.json({ error: 'No pulse found' }, 404);
-
-    const obj = await r2.get(pulse.r2_key_pulse);
-    if (!obj) return c.json({ error: 'Pulse content not found' }, 404);
+    const result = await readPulse({ authorId, month });
+    if (!result.ok) return c.json(result.body, result.status);
 
     logEvent('library_pulse_view', { author: authorId });
-
-    return r2Response(obj.body, 'text/markdown; charset=utf-8', c.req.header('Origin'), 'public, max-age=300');
+    return r2Response(result.obj.body, 'text/markdown; charset=utf-8', c.req.header('Origin'), 'public, max-age=300');
   });
 
   // =========================================================================
@@ -540,37 +495,24 @@ export function registerLibraryRoutes(app: Hono): void {
 
   app.get('/library/:author/quiz/:id', async (c) => {
     const quizId = c.req.param('id');
-    const db = getDB();
-    const r2 = getR2();
 
-    const quiz = await db.prepare('SELECT * FROM quizzes WHERE id = ? AND active = 1').bind(quizId).first<{ r2_key: string; author_id: string }>();
-    if (!quiz) return c.json({ error: 'Quiz not found' }, 404);
+    const result = await readQuizDefinition({ quizId });
+    if (!result.ok) return c.json(result.body, result.status);
 
-    const obj = await r2.get(quiz.r2_key);
-    if (!obj) return c.json({ error: 'Quiz data not found' }, 404);
-
-    const data = await obj.text();
-    const parsed = JSON.parse(data);
-
-    return c.json({ quiz_id: quizId, author_id: quiz.author_id, ...parsed });
+    return c.json({ quiz_id: quizId, author_id: result.quiz.author_id, ...result.data });
   });
 
   app.post('/library/:author/quiz/:id/submit', async (c) => {
     const quizId = c.req.param('id');
     const authorId = c.req.param('author');
     const db = getDB();
-    const r2 = getR2();
 
     const body = await c.req.json().catch(() => null);
     if (!body || !body.answers) return c.json({ error: 'Provide answers' }, 400);
 
-    const quiz = await db.prepare('SELECT * FROM quizzes WHERE id = ? AND active = 1').bind(quizId).first<{ r2_key: string }>();
-    if (!quiz) return c.json({ error: 'Quiz not found' }, 404);
-
-    const obj = await r2.get(quiz.r2_key);
-    if (!obj) return c.json({ error: 'Quiz data not found' }, 404);
-
-    const data = JSON.parse(await obj.text());
+    const quizResult = await readQuizDefinition({ quizId });
+    if (!quizResult.ok) return c.json(quizResult.body, quizResult.status);
+    const data = quizResult.data as { questions?: Array<{ id?: string; key?: string; correct?: string; answer?: string }>; result_tiers?: Array<{ min_pct: number; label: string; message: string }> };
     const answers = body.answers as Record<string, string>;
 
     // Score
@@ -660,36 +602,24 @@ export function registerLibraryRoutes(app: Hono): void {
   app.get('/library/:author/work/:id', async (c) => {
     const workId = c.req.param('id');
     const authorId = c.req.param('author');
-    const db = getDB();
-    const r2 = getR2();
 
-    const work = await db.prepare('SELECT * FROM works WHERE id = ? AND author_id = ?').bind(workId, authorId).first<{ r2_key: string; tier: string }>();
-    if (!work) return c.json({ error: 'Work not found' }, 404);
+    const accessorKey = extractApiKey(c);
+    const accessor = accessorKey ? await findByApiKey(accessorKey) : null;
 
-    // Paid works require authentication
-    if (work.tier === 'paid') {
-      const accessorKey = extractApiKey(c);
-      if (!accessorKey) return c.json({ error: 'Authentication required for paid works' }, 401);
-      const accessor = await findByApiKey(accessorKey);
-      if (!accessor) return c.json({ error: 'Invalid API key' }, 401);
+    const result = await readWork({ authorId, workId, accessor });
+    if (!result.ok) return c.json(result.body, result.status);
 
-      // Owner or subscriber gets access
-      if (accessor.github_login !== authorId && !accessor.subscription_id) {
-        return c.json({ error: 'Subscription required for paid works' }, 402);
-      }
+    logEvent('library_work_view', {
+      author: authorId,
+      work_id: workId,
+      tier: result.work.tier,
+      accessor: accessor?.github_login || '',
+      access_reason: result.reason,
+    });
 
-      const obj = await r2.get(work.r2_key);
-      if (!obj) return c.json({ error: 'Work content not found' }, 404);
-      logEvent('library_work_view', { author: authorId, work_id: workId, tier: 'paid', accessor: accessor.github_login });
-      return r2Response(obj.body, 'text/markdown; charset=utf-8', c.req.header('Origin'));
-    }
-
-    const obj = await r2.get(work.r2_key);
-    if (!obj) return c.json({ error: 'Work content not found' }, 404);
-
-    logEvent('library_work_view', { author: authorId, work_id: workId, tier: work.tier });
-
-    return r2Response(obj.body, 'text/markdown; charset=utf-8', c.req.header('Origin'), 'public, max-age=300');
+    // Public/free works are CDN-cacheable; paid/owner/subscriber reads aren't.
+    const cache = result.reason === 'public' ? 'public, max-age=300' : undefined;
+    return r2Response(result.obj.body, 'text/markdown; charset=utf-8', c.req.header('Origin'), cache);
   });
 
   // =========================================================================

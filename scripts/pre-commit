@@ -31,22 +31,39 @@ if git diff --cached --name-only | grep -qE '^server/src/.*\.ts$'; then
   fi
 fi
 
-# Structural rule: protocol_files R2 keys may only be constructed in
-#   - server/src/protocol.ts   (writes via the auth-gated PUT handler)
-#   - server/src/file-access.ts (reads via readProtocolFile, which runs the
-#                                 visibility gate before fetching from R2)
-# Any other file that builds a `protocol/${...}` key is reaching the bytes
-# around the gate. This is the mirror loop for the visibility enforcement:
-# no convention to remember — the build fails if drift starts.
+# Structural rule: every R2 content read (`.get(...)`) lives in file-access.ts.
+# That module exports one read* helper per artifact type — each runs the
+# appropriate visibility gate before returning bytes. A new route that does
+# its own getR2().get(...) is reaching the bytes around the gate; this guard
+# fails the commit so drift doesn't ship.
+#
+# Writes (.put), deletes (.delete), and list (.list) are governed by their
+# own auth checks at the route boundary and are not in scope here.
 if git diff --cached --name-only | grep -qE '^server/src/.*\.ts$'; then
-  OFFENDERS=$(grep -lE 'protocol/\$\{' server/src/*.ts 2>/dev/null \
+  # 1. protocol/* R2 key construction — only file-access.ts (reads) and
+  #    protocol.ts (writes via the auth-gated PUT) may build these.
+  KEY_OFFENDERS=$(grep -lE 'protocol/\$\{' server/src/*.ts 2>/dev/null \
     | grep -vE 'server/src/(file-access|protocol)\.ts$' || true)
-  if [ -n "$OFFENDERS" ]; then
+  if [ -n "$KEY_OFFENDERS" ]; then
     echo "BLOCKED: protocol_files R2 keys may only be built in file-access.ts (reads) or protocol.ts (writes)."
     echo "Violations:"
-    echo "$OFFENDERS" | sed 's/^/  /'
+    echo "$KEY_OFFENDERS" | sed 's/^/  /'
     echo ""
     echo "Fix: route the new code through readProtocolFile() in file-access.ts."
+    exit 1
+  fi
+
+  # 2. R2 content reads (`.get(...)`) — only file-access.ts may issue them.
+  #    Routes get content by calling readProtocolFile / readShadow / readPulse
+  #    / readQuizDefinition / readWork — all exported from file-access.ts.
+  READ_OFFENDERS=$(grep -lE '(getR2\(\)|[^a-zA-Z_]r2)\.get\(' server/src/*.ts 2>/dev/null \
+    | grep -vE 'server/src/file-access\.ts$' || true)
+  if [ -n "$READ_OFFENDERS" ]; then
+    echo "BLOCKED: R2 content reads (.get) may only happen in file-access.ts."
+    echo "Violations:"
+    echo "$READ_OFFENDERS" | sed 's/^/  /'
+    echo ""
+    echo "Fix: call one of the read*() helpers in file-access.ts. Do not call getR2().get directly."
     exit 1
   fi
 fi

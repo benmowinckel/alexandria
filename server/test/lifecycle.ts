@@ -234,10 +234,15 @@ async function main() {
   console.log('\nPhase 4: Protocol obligations');
 
   const stamp = Date.now();
-  const fileName = `lifecycle-${stamp}`;
+  // Fixed filename — every run overwrites the same R2 key and the same
+  // protocol_files row (ON CONFLICT in PUT handler), so test residue doesn't
+  // accumulate. Mirrors the ci-smoke pattern. The internal-name filter in
+  // file-access.ts excludes `lifecycle-test` from every public surface.
+  const fileName = 'lifecycle-test';
   // Non-github prefix: the public /marketplace listing filters to github:%, so test
   // residue never appears there. The auth-gated /marketplace/:module endpoint keys
-  // off raw module_id and works regardless of prefix.
+  // off raw module_id and works regardless of prefix. Module ID stays unique per
+  // run because the call obligation log is intentionally append-only.
   const moduleId = `test:lifecycle/mod-${stamp}`;
   const callText = `Lifecycle call verification ${stamp}`;
 

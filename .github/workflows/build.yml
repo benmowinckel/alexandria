@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Protocol R2 key gate (only file-access.ts may read protocol/* bytes)
+      - name: Protocol R2 key gate (only file-access.ts and protocol.ts may build protocol/* keys)
         run: |
           OFFENDERS=$(grep -lE 'protocol/\$\{' server/src/*.ts 2>/dev/null \
             | grep -vE 'server/src/(file-access|protocol)\.ts$' || true)
@@ -27,6 +27,17 @@ jobs:
             echo "::error::protocol_files R2 keys built outside the allowed paths:"
             echo "$OFFENDERS"
             echo "Route the access through readProtocolFile() in server/src/file-access.ts."
+            exit 1
+          fi
+
+      - name: R2 content read gate (only file-access.ts may issue R2 .get calls)
+        run: |
+          OFFENDERS=$(grep -lE '(getR2\(\)|[^a-zA-Z_]r2)\.get\(' server/src/*.ts 2>/dev/null \
+            | grep -vE 'server/src/file-access\.ts$' || true)
+          if [ -n "$OFFENDERS" ]; then
+            echo "::error::R2 content reads (.get) outside file-access.ts:"
+            echo "$OFFENDERS"
+            echo "Use the read*() helpers exported from server/src/file-access.ts. Each runs the appropriate visibility gate."
             exit 1
           fi
 

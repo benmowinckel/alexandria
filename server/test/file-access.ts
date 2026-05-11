@@ -11,10 +11,13 @@
 import assert from 'node:assert';
 import {
   authorizeFileRead,
+  authorizeShadowRead,
+  authorizeWorkRead,
   isInternalProtocolFileName,
   isPutWritableContentType,
   r2ExtensionForContentType,
 } from '../src/file-access.js';
+import type { Account } from '../src/auth.js';
 
 const OWNER = '233047998';
 const STRANGER = '999999999';
@@ -205,9 +208,10 @@ test('similar-looking id is NOT owner', () => {
 // Internal protocol filename filter
 // ---------------------------------------------------------------------------
 
-test('lifecycle-* is internal', () => {
+test('lifecycle-* and lifecycle-test are internal', () => {
   assert.strictEqual(isInternalProtocolFileName('lifecycle-1776360000861'), true);
   assert.strictEqual(isInternalProtocolFileName('lifecycle-0'), true);
+  assert.strictEqual(isInternalProtocolFileName('lifecycle-test'), true);
 });
 
 test('ci-smoke variants are internal', () => {
@@ -256,6 +260,133 @@ test('PUT-writable: rejects non-strings and unknown strings', () => {
   assert.strictEqual(isPutWritableContentType(42), false);
   assert.strictEqual(isPutWritableContentType('text/plain'), false);
   assert.strictEqual(isPutWritableContentType('TEXT/MARKDOWN'), false); // case-sensitive on purpose
+});
+
+// ---------------------------------------------------------------------------
+// Shadow gate
+// ---------------------------------------------------------------------------
+
+const SHADOW_OWNER = 'mowinckelb';
+const SHADOW_STRANGER = 'someone-else';
+
+test('shadow public + unauth → allowed', () => {
+  const d = authorizeShadowRead({ visibility: 'public', ownerLogin: SHADOW_OWNER, accessorLogin: null });
+  assert.strictEqual(d.allowed, true);
+  if (d.allowed) assert.strictEqual(d.reason, 'public');
+});
+
+test('shadow public + stranger → allowed', () => {
+  const d = authorizeShadowRead({ visibility: 'public', ownerLogin: SHADOW_OWNER, accessorLogin: SHADOW_STRANGER });
+  assert.strictEqual(d.allowed, true);
+});
+
+test('shadow authors + unauth → 401', () => {
+  const d = authorizeShadowRead({ visibility: 'authors', ownerLogin: SHADOW_OWNER, accessorLogin: null });
+  assert.strictEqual(d.allowed, false);
+  if (!d.allowed) {
+    assert.strictEqual(d.status, 401);
+    assert.strictEqual(d.reason, 'authors_required');
+  }
+});
+
+test('shadow authors + stranger authed → allowed', () => {
+  const d = authorizeShadowRead({ visibility: 'authors', ownerLogin: SHADOW_OWNER, accessorLogin: SHADOW_STRANGER });
+  assert.strictEqual(d.allowed, true);
+});
+
+test('shadow authors + owner → owner bypass', () => {
+  const d = authorizeShadowRead({ visibility: 'authors', ownerLogin: SHADOW_OWNER, accessorLogin: SHADOW_OWNER });
+  assert.strictEqual(d.allowed, true);
+  if (d.allowed) assert.strictEqual(d.reason, 'owner');
+});
+
+test('shadow invite + stranger without token → 401', () => {
+  const d = authorizeShadowRead({ visibility: 'invite', ownerLogin: SHADOW_OWNER, accessorLogin: SHADOW_STRANGER });
+  assert.strictEqual(d.allowed, false);
+  if (!d.allowed) assert.strictEqual(d.reason, 'invite_required');
+});
+
+test('shadow invite + stranger with valid token → allowed', () => {
+  const d = authorizeShadowRead({ visibility: 'invite', ownerLogin: SHADOW_OWNER, accessorLogin: SHADOW_STRANGER, inviteValid: true });
+  assert.strictEqual(d.allowed, true);
+  if (d.allowed) assert.strictEqual(d.reason, 'invite');
+});
+
+test('shadow invite + owner without token → owner bypass', () => {
+  const d = authorizeShadowRead({ visibility: 'invite', ownerLogin: SHADOW_OWNER, accessorLogin: SHADOW_OWNER });
+  assert.strictEqual(d.allowed, true);
+  if (d.allowed) assert.strictEqual(d.reason, 'owner');
+});
+
+test('shadow unknown visibility + stranger → 403', () => {
+  const d = authorizeShadowRead({ visibility: 'mystery', ownerLogin: SHADOW_OWNER, accessorLogin: SHADOW_STRANGER });
+  assert.strictEqual(d.allowed, false);
+  if (!d.allowed) assert.strictEqual(d.status, 403);
+});
+
+// ---------------------------------------------------------------------------
+// Work gate
+// ---------------------------------------------------------------------------
+
+function makeAccount(login: string, subscription_id?: string): Account {
+  return {
+    github_id: login === SHADOW_OWNER ? 1 : 2,
+    github_login: login,
+    email: `${login}@example.com`,
+    api_key_hash: 'hash',
+    email_token: 'tok',
+    created_at: '2026-01-01',
+    last_session: '2026-01-01',
+    subscription_id,
+  };
+}
+
+test('work free + unauth → allowed (no gate)', () => {
+  const d = authorizeWorkRead({ tier: 'free', ownerLogin: SHADOW_OWNER, accessor: null });
+  assert.strictEqual(d.allowed, true);
+  if (d.allowed) assert.strictEqual(d.reason, 'public');
+});
+
+test('work paid + unauth → 401', () => {
+  const d = authorizeWorkRead({ tier: 'paid', ownerLogin: SHADOW_OWNER, accessor: null });
+  assert.strictEqual(d.allowed, false);
+  if (!d.allowed) {
+    assert.strictEqual(d.status, 401);
+    assert.strictEqual(d.reason, 'auth_required');
+  }
+});
+
+test('work paid + authed without subscription + not owner → 402', () => {
+  const d = authorizeWorkRead({
+    tier: 'paid',
+    ownerLogin: SHADOW_OWNER,
+    accessor: makeAccount(SHADOW_STRANGER),
+  });
+  assert.strictEqual(d.allowed, false);
+  if (!d.allowed) {
+    assert.strictEqual(d.status, 402);
+    assert.strictEqual(d.reason, 'subscription_required');
+  }
+});
+
+test('work paid + authed with subscription → allowed (subscriber)', () => {
+  const d = authorizeWorkRead({
+    tier: 'paid',
+    ownerLogin: SHADOW_OWNER,
+    accessor: makeAccount(SHADOW_STRANGER, 'sub_123'),
+  });
+  assert.strictEqual(d.allowed, true);
+  if (d.allowed) assert.strictEqual(d.reason, 'subscriber');
+});
+
+test('work paid + owner without subscription → owner bypass', () => {
+  const d = authorizeWorkRead({
+    tier: 'paid',
+    ownerLogin: SHADOW_OWNER,
+    accessor: makeAccount(SHADOW_OWNER),
+  });
+  assert.strictEqual(d.allowed, true);
+  if (d.allowed) assert.strictEqual(d.reason, 'owner');
 });
 
 console.log(`\n  ${passed} tests passed`);
