@@ -77,6 +77,9 @@ test('invite + stranger authed, no token → 401 invite_required', () => {
   if (!d.allowed) {
     assert.strictEqual(d.status, 401);
     assert.strictEqual(d.reason, 'invite_required');
+    // The denial reason is also surfaced in the HTTP body so programmatic
+    // clients can switch on it without parsing the status code.
+    assert.strictEqual(d.body.reason, 'invite_required');
   }
 });
 

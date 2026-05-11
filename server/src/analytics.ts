@@ -11,6 +11,7 @@
 import { appendEvent, getAllEvents, getRecentDaysEvents, getKV } from './kv.js';
 import { getDB } from './db.js';
 import { formatPT } from './time.js';
+import { isInternalProtocolFileName } from './file-access.js';
 
 // Metrics epoch — dashboard counts events from this date forward.
 // Set 2026-04-14: clean-slate after fixing all event sources (session_id, event types, test noise).
@@ -314,14 +315,17 @@ async function getLibraryMetrics(events: Record<string, string>[]): Promise<Reco
         (SELECT COUNT(*) FROM quizzes WHERE active = 1) as total_quizzes,
         (SELECT COUNT(*) FROM works) as total_works,
         (SELECT COUNT(*) FROM quiz_results) as total_quiz_completions,
-        (SELECT COUNT(*) FROM referrals) as total_referrals,
-        (SELECT COUNT(*) FROM protocol_files
-           WHERE name NOT GLOB 'lifecycle-*'
-             AND name NOT GLOB 'ci-smoke*'
-             AND name NOT IN ('smoke-test', 'test-check')
-        ) as total_protocol_files
+        (SELECT COUNT(*) FROM referrals) as total_referrals
     `).first();
     if (counts) d1Metrics = counts as Record<string, unknown>;
+
+    // Filter internal/test names with the same shared module as library and
+    // library-signal, so the three surfaces never drift on what counts as
+    // "real". One filter, three consumers.
+    const allFiles = await db.prepare('SELECT name FROM protocol_files').all<{ name: string }>();
+    d1Metrics.total_protocol_files = (allFiles.results || [])
+      .filter((f) => !isInternalProtocolFileName(f.name))
+      .length;
   } catch {
     // D1 not available — ok, just return event-based metrics
   }

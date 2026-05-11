@@ -20,7 +20,7 @@ import {
 import { getAllowedOrigins } from './cors.js';
 import { getStripe } from './billing.js';
 import { getKV, loadAccounts } from './kv.js';
-import { authorizeFileRead, isInternalProtocolFileName } from './file-access.js';
+import { isInternalProtocolFileName, readProtocolFile } from './file-access.js';
 
 // ---------------------------------------------------------------------------
 // CORS-safe R2 response
@@ -330,38 +330,33 @@ export function registerLibraryRoutes(app: Hono): void {
     const authorId = c.req.param('author');
     const name = c.req.param('name');
     if (!isValidFileName(name)) return c.json({ error: 'Invalid file name' }, 400);
-    if (isInternalProtocolFileName(name)) return c.json({ error: 'File not found' }, 404);
 
     const accounts = await loadAccounts<AccountStore>();
     const authorAccount = Object.values(accounts).find((candidate) => candidate.github_login === authorId);
     if (!authorAccount?.github_id) return c.json({ error: 'Author not found' }, 404);
 
-    const db = getDB();
-    const file = await db.prepare(
-      'SELECT account_id, name, text, visibility, updated_at FROM protocol_files WHERE account_id = ? AND name = ?'
-    ).bind(String(authorAccount.github_id), name).first<ProtocolFileRow>();
-    if (!file) return c.json({ error: 'File not found' }, 404);
-
+    // Resolve accessor identity from API key or browser session cookie.
     const accessorKey = extractApiKeyHeaderOnly(c);
     const accessorFromKey = accessorKey ? await findByApiKey(accessorKey) : null;
     const sessionToken = extractLibrarySessionToken(c);
     const accessorFromSession = sessionToken ? await findByLibrarySessionToken(sessionToken) : null;
     const accessor = accessorFromKey || accessorFromSession;
-    const visibility = file.visibility;
+
+    // Token validation — the route owns this (it knows where the query params
+    // and KV/D1 lookups live); the result flows into the gate as a boolean.
     const purchaseSessionId = c.req.query('session_id')?.trim() || null;
     const inviteCode = c.req.query('invite')?.trim() || c.req.query('token')?.trim() || null;
 
-    // Resolve invite + purchase grants outside the gate so the gate stays pure.
     let inviteValid = false;
-    if (visibility === 'invite' && inviteCode) {
-      const accessRow = await db.prepare(
+    if (inviteCode) {
+      const accessRow = await getDB().prepare(
         'SELECT id FROM access_codes WHERE author_id = ? AND code = ? AND revoked_at IS NULL LIMIT 1'
       ).bind(authorId, inviteCode).first<{ id: string }>();
       inviteValid = !!accessRow?.id;
     }
 
     let purchaseValid = false;
-    if (visibility === 'paid' && purchaseSessionId) {
+    if (purchaseSessionId) {
       const raw = await getKV().get(`library:access:${purchaseSessionId}`);
       if (raw) {
         const grant = parseJson<LibraryAccessGrant>(raw, {});
@@ -371,54 +366,34 @@ export function registerLibraryRoutes(app: Hono): void {
       }
     }
 
-    const decision = authorizeFileRead({
-      visibility,
+    const result = await readProtocolFile({
       authorGithubId: authorAccount.github_id,
+      fileName: name,
       accessorGithubId: accessor?.github_id ?? null,
       context: { purchaseValid, inviteValid },
     });
 
-    if (!decision.allowed) {
-      // 402 paid → include checkout URL so callers can launch the purchase flow.
-      if (decision.status === 402 && visibility === 'paid') {
+    if (!result.ok) {
+      // Paid denials get a checkout URL so the website can launch the flow.
+      if (result.status === 402) {
         return c.json({
-          ...decision.body,
+          ...result.body,
           checkout_url: `${process.env.WEBSITE_URL || 'https://mowinckel.ai'}/library/${encodeURIComponent(authorId)}/checkout/file/${encodeURIComponent(name)}`,
         }, 402);
       }
-      return c.json(decision.body, decision.status);
+      return c.json(result.body, result.status);
     }
-
-    const objectCandidates: Array<{ key: string; contentType: string }> = file.name === 'on-love'
-      ? [
-          { key: `protocol/${file.account_id}/${file.name}.pdf`, contentType: 'application/pdf' },
-          { key: `protocol/${file.account_id}/${file.name}.md`, contentType: 'text/markdown; charset=utf-8' },
-        ]
-      : [
-          { key: `protocol/${file.account_id}/${file.name}.md`, contentType: 'text/markdown; charset=utf-8' },
-          { key: `protocol/${file.account_id}/${file.name}.pdf`, contentType: 'application/pdf' },
-        ];
-    let obj: R2ObjectBody | null = null;
-    let contentType = 'text/markdown; charset=utf-8';
-    for (const candidate of objectCandidates) {
-      obj = await getR2().get(candidate.key);
-      if (obj) {
-        contentType = candidate.contentType;
-        break;
-      }
-    }
-    if (!obj) return c.json({ error: 'File content not found' }, 404);
 
     logEvent('library_protocol_file_view', {
       author: authorId,
       name,
-      visibility,
-      accessor: accessor?.github_login || (decision.reason === 'paid' ? 'purchase' : decision.reason === 'invite' ? 'invite' : 'public'),
-      access_reason: decision.reason,
+      visibility: result.file.visibility,
+      accessor: accessor?.github_login || (result.reason === 'paid' ? 'purchase' : result.reason === 'invite' ? 'invite' : 'public'),
+      access_reason: result.reason,
     });
 
-    const cache = visibility === 'public' ? 'public, max-age=300' : 'no-store';
-    return r2Response(obj.body, contentType, c.req.header('Origin'), cache);
+    const cache = result.file.visibility === 'public' ? 'public, max-age=300' : 'no-store';
+    return r2Response(result.obj.body, result.contentType, c.req.header('Origin'), cache);
   });
 
   // =========================================================================
