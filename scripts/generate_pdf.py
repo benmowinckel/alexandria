@@ -41,7 +41,18 @@ GOLD = HexColor("#c4956a")
 pdfmetrics.registerFont(TTFont("Playfair", str(FONT_DIR / "PlayfairDisplay-Regular.ttf")))
 pdfmetrics.registerFont(TTFont("EBGaramond", str(FONT_DIR / "EBGaramond-Regular.ttf")))
 pdfmetrics.registerFont(TTFont("EBGaramond-Bold", str(FONT_DIR / "EBGaramond-Bold.ttf")))
+pdfmetrics.registerFont(TTFont("EBGaramond-Italic", str(FONT_DIR / "EBGaramond-Italic.ttf")))
 pdfmetrics.registerFont(TTFont("EBGaramond-BoldItalic", str(FONT_DIR / "EBGaramond-BoldItalic.ttf")))
+
+# Register font family so <b>, <i>, <bi> map correctly inside paragraphs.
+from reportlab.pdfbase.pdfmetrics import registerFontFamily
+registerFontFamily(
+    "EBGaramond",
+    normal="EBGaramond",
+    bold="EBGaramond-Bold",
+    italic="EBGaramond-Italic",
+    boldItalic="EBGaramond-BoldItalic",
+)
 
 # --- Page dimensions (letter, generous margins per A3: "55mm side margins") ---
 W, H = letter
@@ -117,6 +128,31 @@ S_BULLET = ParagraphStyle(
     leftIndent=16,
     bulletIndent=0,
     spaceAfter=5,
+)
+
+S_NUMBERED = ParagraphStyle(
+    "Numbered",
+    fontName="EBGaramond",
+    fontSize=10.5,
+    leading=18,
+    textColor=SECONDARY,
+    alignment=TA_LEFT,
+    leftIndent=20,
+    bulletIndent=0,
+    spaceAfter=7,
+)
+
+S_QUOTE = ParagraphStyle(
+    "Quote",
+    fontName="EBGaramond",
+    fontSize=13,
+    leading=22,
+    textColor=NEAR_BLACK,
+    alignment=TA_LEFT,
+    leftIndent=28,
+    rightIndent=28,
+    spaceBefore=14,
+    spaceAfter=16,
 )
 
 S_TABLE_HEADER = ParagraphStyle(
@@ -197,7 +233,7 @@ def parse_table(lines):
     rows = []
     for line in lines:
         line = line.strip()
-        if line.startswith("|") and not re.match(r"^\|[\s\-\|]+\|$", line):
+        if line.startswith("|") and not re.match(r"^\|[\s\-\|:]+\|$", line):
             cells = [c.strip() for c in line.split("|")[1:-1]]
             rows.append(cells)
     return rows
@@ -321,6 +357,23 @@ def parse_md(path):
             i += 1
             continue
 
+        # Numbered list (1. text, 2. text, ...)
+        m_num = re.match(r"^(\d+)\.\s+(.+)$", stripped)
+        if m_num:
+            num, item_text = m_num.group(1), m_num.group(2)
+            story.append(Paragraph(
+                f"<b>{num}.</b>  {format_inline(item_text)}", S_NUMBERED
+            ))
+            i += 1
+            continue
+
+        # Blockquote
+        if stripped.startswith("> "):
+            quote_text = stripped[2:].strip()
+            story.append(Paragraph(format_inline(quote_text), S_QUOTE))
+            i += 1
+            continue
+
         # Bold label line (like **Layer 1 — ...**)
         if stripped.startswith("**") and "**" in stripped[2:]:
             story.append(Paragraph(format_inline(stripped), S_BODY))
@@ -369,10 +422,20 @@ def build_pdf(md_path, pdf_path):
     cover_frame = Frame(MARGIN_LEFT, MARGIN_BOTTOM, FRAME_W, FRAME_H, id="cover")
     body_frame = Frame(MARGIN_LEFT, MARGIN_BOTTOM, FRAME_W, FRAME_H, id="body")
 
-    doc.addPageTemplates([
-        PageTemplate(id="cover", frames=[cover_frame], onPage=cover_page),
-        PageTemplate(id="body", frames=[body_frame], onPage=body_page),
-    ])
+    # Compact mode (memo): no dedicated cover or hook pages — body template throughout
+    doc_name_early = md_path.stem.lower()
+    is_compact = doc_name_early == "memo"
+
+    if is_compact:
+        doc.addPageTemplates([
+            PageTemplate(id="body", frames=[body_frame], onPage=body_page),
+            PageTemplate(id="cover", frames=[cover_frame], onPage=cover_page),
+        ])
+    else:
+        doc.addPageTemplates([
+            PageTemplate(id="cover", frames=[cover_frame], onPage=cover_page),
+            PageTemplate(id="body", frames=[body_frame], onPage=body_page),
+        ])
 
     story = []
 
@@ -400,7 +463,7 @@ def build_pdf(md_path, pdf_path):
             found_first_h2 = True
         if not found_first_h2:
             style_name = getattr(f.style, 'name', '') if hasattr(f, 'style') else ''
-            if style_name in ('Body', 'Bullet'):
+            if style_name in ('Body', 'Bullet', 'Numbered', 'Quote'):
                 opening_items.append(f)
             continue
         body_items.append(f)
@@ -417,6 +480,9 @@ def build_pdf(md_path, pdf_path):
     elif doc_name == "memo":
         cover_title = "alexandria."
         cover_subtitle = "investment memo"
+    elif doc_name == "brief":
+        cover_title = "alexandria."
+        cover_subtitle = "investor brief"
     elif doc_name == "vision":
         cover_title = "alexandria."
         cover_subtitle = "the vision"
@@ -442,50 +508,68 @@ def build_pdf(md_path, pdf_path):
         leading=12, textColor=GHOST, alignment=TA_CENTER,
     )
 
-    story.append(Spacer(1, FRAME_H * 0.32))
-    story.append(Paragraph(cover_title, S_COVER_TITLE))
-    story.append(Spacer(1, 10))
-    if cover_subtitle:
-        story.append(Paragraph(cover_subtitle, S_COVER_SUB))
-    story.append(Spacer(1, 24))
-    story.append(GoldRule())
-    story.append(Spacer(1, 20))
-    story.append(Paragraph("Benjamin A. Mowinckel  \u2014  March 2026", S_COVER_META))
+    if is_compact:
+        # Compact branded header at top of page 1 \u2014 no dedicated cover, no hook page
+        S_COMPACT_TITLE = ParagraphStyle(
+            "CompactTitle", fontName="Playfair", fontSize=16,
+            leading=20, textColor=NEAR_BLACK, alignment=TA_LEFT,
+            spaceAfter=2,
+        )
+        S_COMPACT_SUB = ParagraphStyle(
+            "CompactSub", fontName="EBGaramond", fontSize=10,
+            leading=14, textColor=MUTED, alignment=TA_LEFT,
+            spaceAfter=8,
+        )
+        story.append(Paragraph(cover_title, S_COMPACT_TITLE))
+        if cover_subtitle:
+            story.append(Paragraph(cover_subtitle, S_COMPACT_SUB))
+        story.append(GoldRule(width=80))
+        story.append(Spacer(1, 14))
 
-    # Add confidential notice if applicable
-    is_confidential = "confidential" in str(md_path).lower()
-    if is_confidential:
-        story.append(Spacer(1, 40))
-        story.append(Paragraph("Confidential. Not for distribution.", S_COVER_CONF))
-
-    # Add subtitle/tagline if found
-    if subtitle_text:
-        story.append(Spacer(1, 30))
-        story.append(Paragraph(f"<i>{subtitle_text}</i>", S_COVER_SUB))
-
-    # Transition to body
-    story.append(NextPageTemplate("body"))
-    story.append(PageBreak())
-
-    # Opening paragraphs (pre-H2 hook) get their own page with breathing room
-    if opening_items:
-        story.append(Spacer(1, FRAME_H * 0.08))
+        # Inline opening hook quotes (no page break)
         for item in opening_items:
             story.append(item)
+        if opening_items:
+            story.append(Spacer(1, 8))
+
+        for item in body_items:
+            story.append(item)
+    else:
+        # Build cover \u2014 centred, elegant, branded
+        story.append(Spacer(1, FRAME_H * 0.32))
+        story.append(Paragraph(cover_title, S_COVER_TITLE))
+        story.append(Spacer(1, 10))
+        if cover_subtitle:
+            story.append(Paragraph(cover_subtitle, S_COVER_SUB))
+        story.append(Spacer(1, 24))
+        story.append(GoldRule())
+        story.append(Spacer(1, 20))
+        story.append(Paragraph("Benjamin A. Mowinckel  \u2014  March 2026", S_COVER_META))
+
+        # Add confidential notice if applicable
+        is_confidential = "confidential" in str(md_path).lower()
+        if is_confidential:
+            story.append(Spacer(1, 40))
+            story.append(Paragraph("Confidential. Not for distribution.", S_COVER_CONF))
+
+        # Add subtitle/tagline if found
+        if subtitle_text:
+            story.append(Spacer(1, 30))
+            story.append(Paragraph(f"<i>{subtitle_text}</i>", S_COVER_SUB))
+
+        # Transition to body
+        story.append(NextPageTemplate("body"))
         story.append(PageBreak())
 
-    for item in body_items:
-        story.append(item)
+        # Opening paragraphs (pre-H2 hook) get their own page with breathing room
+        if opening_items:
+            story.append(Spacer(1, FRAME_H * 0.08))
+            for item in opening_items:
+                story.append(item)
+            story.append(PageBreak())
 
-    # Closing
-    story.append(Spacer(1, 30))
-    story.append(GoldRule())
-    story.append(Spacer(1, 12))
-    story.append(Paragraph(
-        "<i>mentes aeternae</i>",
-        ParagraphStyle("Closing", fontName="EBGaramond", fontSize=10,
-                        leading=14, textColor=MUTED, alignment=TA_CENTER)
-    ))
+        for item in body_items:
+            story.append(item)
 
     doc.build(story)
     print(f"Generated: {pdf_path} ({pdf_path.stat().st_size // 1024}KB)")

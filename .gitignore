@@ -54,3 +54,6 @@ CLAUDE.md
 .see/
 .factory-archive/
 .audit/
+
+# PDF preview artifacts (build output from generate_pdf.py)
+public/docs/*.preview_p*.png
