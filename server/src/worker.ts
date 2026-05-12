@@ -578,9 +578,23 @@ for (const path of DEPRECATED_ROUTES) {
   });
 }
 
+// PHP/wordpress/admin-panel probes from vuln scanners drown the real 404
+// signal (stale-client links, dropped routes) and pad KV write volume.
+// CF Analytics already shows attack traffic; the app event log only needs
+// real client behavior. Still return 404 — just don't log it.
+function isScraperPath(path: string): boolean {
+  if (/\.(php|asp|aspx|jsp|cgi)$/i.test(path)) return true;
+  if (/^\/wp-/i.test(path)) return true;
+  if (/(^|\/)\.(env|git|aws|ssh|DS_Store)/i.test(path)) return true;
+  if (/^\/+(admin|administrator|phpmyadmin|adminer|setup|webadmin|panel)(\/|$)/i.test(path)) return true;
+  return false;
+}
+
 app.notFound((c) => {
   const path = new URL(c.req.url).pathname;
-  logEvent('server_not_found', { method: c.req.method, path });
+  if (!isScraperPath(path)) {
+    logEvent('server_not_found', { method: c.req.method, path });
+  }
   return c.text('404 Not Found', 404);
 });
 
