@@ -8,7 +8,7 @@ import { authErrorHtml, callbackPageHtml } from './templates.js';
 import { getDB, getR2 } from './db.js';
 import { loadAccounts, loadAccount, saveAccount, setAuthIndex, deleteAccount, getKV, setEmailTokenIndex, getEmailTokenIndex, getAuthIndex } from './kv.js';
 import { hashApiKey, generateToken } from './crypto.js';
-import { Account, AccountStore, extractApiKey, extractApiKeyHeaderOnly, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
+import { Account, AccountStore, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
 import { generateApiKey, getAccounts, getAccountByLogin, requireAdmin } from './accounts.js';
 import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL } from './email.js';
 import { runHealthDigest, runWeekOneCheckIns } from './cron.js';

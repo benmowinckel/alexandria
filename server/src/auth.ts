@@ -56,9 +56,6 @@ export function extractApiKey(c: { req: { header: (name: string) => string | und
   return null;
 }
 
-/** @deprecated kept for call-site compatibility — use extractApiKey */
-export const extractApiKeyHeaderOnly = extractApiKey;
-
 export async function findByApiKey(key: string): Promise<Account | null> {
   const keyHash = hashApiKey(key);
   const githubKey = await getAuthIndex(keyHash);

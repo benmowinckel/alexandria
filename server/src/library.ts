@@ -11,7 +11,6 @@ import { getDB, generateId } from './db.js';
 import { logEvent } from './analytics.js';
 import {
   extractApiKey,
-  extractApiKeyHeaderOnly,
   extractLibrarySessionToken,
   findByApiKey,
   findByLibrarySessionToken,
@@ -172,7 +171,7 @@ export function registerLibraryRoutes(app: Hono): void {
   // =========================================================================
 
   app.get('/library/session', async (c) => {
-    const key = extractApiKeyHeaderOnly(c);
+    const key = extractApiKey(c);
     const byKey = key ? await findByApiKey(key) : null;
     const token = extractLibrarySessionToken(c);
     const bySession = token ? await findByLibrarySessionToken(token) : null;
@@ -369,7 +368,7 @@ export function registerLibraryRoutes(app: Hono): void {
     if (!authorAccount?.github_id) return c.json({ error: 'Author not found' }, 404);
 
     // Resolve accessor identity from API key or browser session cookie.
-    const accessorKey = extractApiKeyHeaderOnly(c);
+    const accessorKey = extractApiKey(c);
     const accessorFromKey = accessorKey ? await findByApiKey(accessorKey) : null;
     const sessionToken = extractLibrarySessionToken(c);
     const accessorFromSession = sessionToken ? await findByLibrarySessionToken(sessionToken) : null;
