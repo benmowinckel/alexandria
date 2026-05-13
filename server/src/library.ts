@@ -177,10 +177,35 @@ export function registerLibraryRoutes(app: Hono): void {
     const token = extractLibrarySessionToken(c);
     const bySession = token ? await findByLibrarySessionToken(token) : null;
     const account = byKey || bySession;
+
+    // Look up subscription state from Stripe when an authed account has a sub.
+    // The /cancel page consumes these to surface the reactivate UI for users
+    // who already scheduled cancellation. Skipped for anon / no-subscription
+    // accounts so the hot path stays cheap.
+    let subscriptionStatus: string | null = null;
+    let cancelAt: string | null = null;
+    if (account?.subscription_id) {
+      try {
+        const stripe = getStripe();
+        const sub = await stripe.subscriptions.retrieve(account.subscription_id);
+        if (sub.cancel_at_period_end) {
+          subscriptionStatus = 'canceled_at_period_end';
+          const periodEnd = sub.cancel_at ?? sub.items?.data?.[0]?.current_period_end ?? null;
+          cancelAt = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
+        } else {
+          subscriptionStatus = sub.status;
+        }
+      } catch (e) {
+        console.error('[library/session] subscription lookup failed:', e);
+      }
+    }
+
     return c.json({
       signed_in: !!account,
       github_login: account?.github_login || null,
       github_name: account?.github_name || null,
+      subscription_status: subscriptionStatus,
+      cancel_at: cancelAt,
     });
   });
 
