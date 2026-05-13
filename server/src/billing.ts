@@ -615,12 +615,49 @@ export async function reconcilePatronSubscriptions(): Promise<{ drift: number; c
 // Portal
 // ---------------------------------------------------------------------------
 
+// KV key for the cached Stripe billing-portal configuration ID. The
+// configuration disables subscription_cancel + subscription_update so users
+// cannot bypass the save-screen by going straight to the Stripe portal. This
+// is structural — the only path to cancellation is POST /account/cancel.
+const PORTAL_CONFIG_KV_KEY = 'stripe_portal_config_id';
+
+/**
+ * Return the portal configuration ID that disables Stripe-side cancellation.
+ * Cached in KV so we don't recreate it on every portal session. If the cached
+ * ID is missing or invalid (e.g. Stripe-side deleted) the next portal call
+ * will repopulate it.
+ *
+ * Save-screen invariant: cancellation only happens via POST /account/cancel.
+ * The portal stays useful for payment method + invoice + email updates.
+ */
+async function ensurePortalConfigurationId(): Promise<string> {
+  const kv = getKV();
+  const cached = await kv.get(PORTAL_CONFIG_KV_KEY);
+  if (cached) return cached;
+
+  const stripe = getStripe();
+  const config = await stripe.billingPortal.configurations.create({
+    features: {
+      subscription_cancel: { enabled: false },
+      subscription_update: { enabled: false },
+      payment_method_update: { enabled: true },
+      invoice_history: { enabled: true },
+      customer_update: { enabled: true, allowed_updates: ['email'] },
+    },
+    business_profile: { headline: 'Manage your billing' },
+  });
+  await kv.put(PORTAL_CONFIG_KV_KEY, config.id);
+  return config.id;
+}
+
 export async function createPortalSession(stripeCustomerId: string): Promise<string> {
   const stripe = getStripe();
   const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
+  const configuration = await ensurePortalConfigurationId();
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
     return_url: `${WEBSITE_URL}/signup`,
+    configuration,
   });
   return session.url;
 }

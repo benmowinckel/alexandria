@@ -8,7 +8,7 @@ import { authErrorHtml, callbackPageHtml } from './templates.js';
 import { getDB, getR2 } from './db.js';
 import { loadAccounts, loadAccount, saveAccount, setAuthIndex, deleteAccount, getKV, setEmailTokenIndex, getEmailTokenIndex, getAuthIndex } from './kv.js';
 import { hashApiKey, generateToken } from './crypto.js';
-import { Account, AccountStore, extractApiKey, findByApiKey, requireAuth } from './auth.js';
+import { Account, AccountStore, extractApiKey, extractApiKeyHeaderOnly, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
 import { generateApiKey, getAccounts, getAccountByLogin, requireAdmin } from './accounts.js';
 import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL } from './email.js';
 import { runHealthDigest, runWeekOneCheckIns } from './cron.js';
@@ -577,6 +577,122 @@ export function registerRoutes(app: Hono) {
 
     logEvent('account_deleted', { github_login: account.github_login });
     return c.json({ ok: true, deleted: account.github_login });
+  });
+
+  // --- Subscription cancel / reactivate (save-screen) ---
+  //
+  // Cookie OR API-key auth — same surfaces as the website + CLI. The save-screen
+  // lives on the website (cookie session); the CLI / scripts can hit these with
+  // Authorization: Bearer alex_…. Cancellation always goes through here, never
+  // straight to Stripe — the portal configuration has subscription_cancel
+  // disabled so the only path to "I want to cancel" is this endpoint + its
+  // save-screen UI. Reactivation flips cancel_at_period_end back off while the
+  // subscription is still in the grace period (not yet truly canceled).
+  //
+  // Access_log telemetry: both events written as rows on access_log so cancel
+  // rate becomes queryable, not a vibe. Event types: subscription_cancel +
+  // subscription_reactivate.
+  async function authorFromRequest(c: any): Promise<Account | null> {
+    const key = extractApiKey(c);
+    if (key) {
+      const byKey = await findByApiKey(key);
+      if (byKey) return byKey;
+    }
+    const token = extractLibrarySessionToken(c);
+    if (token) {
+      const bySession = await findByLibrarySessionToken(token);
+      if (bySession) return bySession;
+    }
+    return null;
+  }
+
+  async function logSubscriptionEvent(
+    event: 'subscription_cancel' | 'subscription_reactivate',
+    authorId: string,
+    meta: Record<string, string> = {},
+  ): Promise<void> {
+    try {
+      const db = getDB();
+      const metaJson = Object.keys(meta).length ? JSON.stringify(meta) : null;
+      await db.prepare(
+        `INSERT INTO access_log (event, author_id, accessor_id, artifact_id, tier, meta, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).bind(event, authorId, authorId, null, null, metaJson, new Date().toISOString()).run();
+    } catch (e) {
+      console.error(`[${event}] access_log insert failed:`, e);
+    }
+    // Also write to the KV event log so the analytics summary picks it up.
+    logEvent(event, { github_login: authorId, ...meta });
+  }
+
+  app.post('/account/cancel', async (c) => {
+    const account = await authorFromRequest(c);
+    if (!account) return c.json({ error: 'Unauthorized' }, 401);
+    if (!account.stripe_customer_id || !account.subscription_id) {
+      return c.json({ ok: false, error: 'No active subscription' }, 400);
+    }
+
+    try {
+      const stripe = getStripe();
+      const current = await stripe.subscriptions.retrieve(account.subscription_id);
+
+      // Idempotent: subscription already canceling — return current cancel_at.
+      if (current.cancel_at_period_end) {
+        const existingPeriodEnd = current.cancel_at ?? current.items?.data?.[0]?.current_period_end ?? null;
+        const cancelAtIso = existingPeriodEnd ? new Date(existingPeriodEnd * 1000).toISOString() : null;
+        return c.json({ ok: true, cancel_at: cancelAtIso, idempotent: true });
+      }
+
+      const updated = await stripe.subscriptions.update(account.subscription_id, {
+        cancel_at_period_end: true,
+        cancellation_details: { comment: 'cancelled via website save-screen' },
+      });
+
+      const periodEnd = updated.cancel_at ?? updated.items?.data?.[0]?.current_period_end ?? null;
+      const cancelAtIso = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
+
+      await logSubscriptionEvent('subscription_cancel', account.github_login, {
+        subscription_id: account.subscription_id,
+        ...(cancelAtIso ? { cancel_at: cancelAtIso } : {}),
+      });
+
+      return c.json({ ok: true, cancel_at: cancelAtIso });
+    } catch (err) {
+      console.error('[account/cancel] Stripe update failed:', err);
+      const message = err instanceof Error ? err.message : 'cancel_failed';
+      return c.json({ ok: false, error: message }, 500);
+    }
+  });
+
+  app.post('/account/reactivate', async (c) => {
+    const account = await authorFromRequest(c);
+    if (!account) return c.json({ error: 'Unauthorized' }, 401);
+    if (!account.stripe_customer_id || !account.subscription_id) {
+      return c.json({ ok: false, error: 'No active subscription' }, 400);
+    }
+
+    try {
+      const stripe = getStripe();
+      const current = await stripe.subscriptions.retrieve(account.subscription_id);
+
+      // Idempotent: subscription already active and not scheduled for cancellation.
+      if (!current.cancel_at_period_end) {
+        return c.json({ ok: true, idempotent: true });
+      }
+
+      await stripe.subscriptions.update(account.subscription_id, {
+        cancel_at_period_end: false,
+      });
+
+      await logSubscriptionEvent('subscription_reactivate', account.github_login, {
+        subscription_id: account.subscription_id,
+      });
+
+      return c.json({ ok: true });
+    } catch (err) {
+      console.error('[account/reactivate] Stripe update failed:', err);
+      const message = err instanceof Error ? err.message : 'reactivate_failed';
+      return c.json({ ok: false, error: message }, 500);
+    }
   });
 
   // --- Admin: remove another account (KV + D1 + R2; same footprint as DELETE /account) ---
