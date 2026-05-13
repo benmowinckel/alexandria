@@ -12,7 +12,8 @@ import { logEvent } from './analytics.js';
 import { callbackPageHtml } from './templates.js';
 import { requireAuth } from './auth.js';
 import { loadAccounts, getKV } from './kv.js';
-import { getAccountByLogin } from './accounts.js';
+import { getAccountByLogin, updateAccountBilling } from './accounts.js';
+import type { Account } from './auth.js';
 import { getDB } from './db.js';
 import { sendEmail } from './email.js';
 
@@ -660,6 +661,104 @@ export async function createPortalSession(stripeCustomerId: string): Promise<str
     configuration,
   });
   return session.url;
+}
+
+// ---------------------------------------------------------------------------
+// Subscription resolution (cached + Stripe fallback with auto-heal)
+// ---------------------------------------------------------------------------
+
+export interface ResolvedSubscription {
+  customerId: string;
+  subscriptionId: string;
+  status: string;
+  cancel_at_period_end: boolean;
+  cancel_at: string | null;
+  current_period_end: string | null;
+  /** True when the cached subscription_id was missing/stale and the
+   *  account was healed from a Stripe email lookup on this call. */
+  healed: boolean;
+}
+
+function shapeResolvedSubscription(sub: Stripe.Subscription, healed: boolean): ResolvedSubscription {
+  const periodEndUnix = sub.cancel_at ?? sub.items?.data?.[0]?.current_period_end ?? null;
+  const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+  const periodEndIso = periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null;
+  return {
+    customerId,
+    subscriptionId: sub.id,
+    status: sub.status,
+    cancel_at_period_end: sub.cancel_at_period_end,
+    cancel_at: sub.cancel_at_period_end ? periodEndIso : null,
+    current_period_end: periodEndIso,
+    healed,
+  };
+}
+
+/**
+ * Resolve an account's active subscription from Stripe.
+ *
+ * Source of truth is Stripe; KV `subscription_id` is the derivative cache.
+ * Fast path: cached subscription_id present → retrieve directly.
+ * Fallback path: cached id missing or stale (e.g. legacy accounts whose
+ * original checkout predated the `github_login` metadata convention) →
+ * look up active/trialing subscription by `account.email` and auto-heal
+ * the KV record so the next call takes the fast path. As legacy accounts
+ * are touched they self-heal; the scaffolding falls away on its own.
+ *
+ * Returns null when no active/trialing subscription exists in Stripe.
+ */
+export async function resolveActiveSubscription(account: Account): Promise<ResolvedSubscription | null> {
+  const stripe = getStripe();
+
+  // Fast path — cached subscription_id is valid.
+  if (account.subscription_id) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(account.subscription_id);
+      return shapeResolvedSubscription(sub, false);
+    } catch (e) {
+      console.warn(
+        `[billing] cached subscription_id ${account.subscription_id} not in Stripe — falling back to email lookup:`,
+        e,
+      );
+    }
+  }
+
+  // Fallback — find active sub by customer email, auto-heal KV.
+  if (!account.email) return null;
+  try {
+    const customers = await stripe.customers.list({ email: account.email, limit: 5 });
+    for (const customer of customers.data) {
+      const subs = await stripe.subscriptions.list({
+        customer: customer.id,
+        status: 'all',
+        limit: 10,
+      });
+      const active = subs.data.find((s) => s.status === 'active' || s.status === 'trialing');
+      if (active) {
+        const periodEndUnix = active.items?.data?.[0]?.current_period_end ?? null;
+        try {
+          await updateAccountBilling(account.github_login, {
+            stripe_customer_id: customer.id,
+            subscription_id: active.id,
+            subscription_status: active.status,
+            ...(periodEndUnix
+              ? { current_period_end: new Date(periodEndUnix * 1000).toISOString() }
+              : {}),
+          });
+          logEvent('subscription_account_healed', {
+            github_login: account.github_login,
+            subscription_id: active.id,
+          });
+        } catch (e) {
+          console.warn(`[billing] auto-heal failed for ${account.github_login}:`, e);
+        }
+        return shapeResolvedSubscription(active, true);
+      }
+    }
+  } catch (e) {
+    console.error(`[billing] subscription lookup for ${account.email} failed:`, e);
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------

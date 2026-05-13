@@ -3,7 +3,7 @@
 import { randomBytes } from 'crypto';
 import type { Hono } from 'hono';
 import { logEvent } from './analytics.js';
-import { countActiveKin, createCheckoutSession, createPortalSession, getStripe, recalculateKinPricing } from './billing.js';
+import { countActiveKin, createCheckoutSession, createPortalSession, getStripe, recalculateKinPricing, resolveActiveSubscription } from './billing.js';
 import { authErrorHtml, callbackPageHtml } from './templates.js';
 import { getDB, getR2 } from './db.js';
 import { loadAccounts, loadAccount, saveAccount, setAuthIndex, deleteAccount, getKV, setEmailTokenIndex, getEmailTokenIndex, getAuthIndex } from './kv.js';
@@ -627,22 +627,23 @@ export function registerRoutes(app: Hono) {
   app.post('/account/cancel', async (c) => {
     const account = await authorFromRequest(c);
     if (!account) return c.json({ error: 'Unauthorized' }, 401);
-    if (!account.stripe_customer_id || !account.subscription_id) {
+
+    // resolveActiveSubscription falls back to a Stripe email lookup when the
+    // KV record is missing subscription_id (legacy accounts) and auto-heals.
+    const sub = await resolveActiveSubscription(account);
+    if (!sub) {
       return c.json({ ok: false, error: 'No active subscription' }, 400);
     }
 
     try {
       const stripe = getStripe();
-      const current = await stripe.subscriptions.retrieve(account.subscription_id);
 
       // Idempotent: subscription already canceling — return current cancel_at.
-      if (current.cancel_at_period_end) {
-        const existingPeriodEnd = current.cancel_at ?? current.items?.data?.[0]?.current_period_end ?? null;
-        const cancelAtIso = existingPeriodEnd ? new Date(existingPeriodEnd * 1000).toISOString() : null;
-        return c.json({ ok: true, cancel_at: cancelAtIso, idempotent: true });
+      if (sub.cancel_at_period_end) {
+        return c.json({ ok: true, cancel_at: sub.cancel_at, idempotent: true });
       }
 
-      const updated = await stripe.subscriptions.update(account.subscription_id, {
+      const updated = await stripe.subscriptions.update(sub.subscriptionId, {
         cancel_at_period_end: true,
         cancellation_details: { comment: 'cancelled via website save-screen' },
       });
@@ -651,7 +652,7 @@ export function registerRoutes(app: Hono) {
       const cancelAtIso = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
 
       await logSubscriptionEvent('subscription_cancel', account.github_login, {
-        subscription_id: account.subscription_id,
+        subscription_id: sub.subscriptionId,
         ...(cancelAtIso ? { cancel_at: cancelAtIso } : {}),
       });
 
@@ -666,25 +667,26 @@ export function registerRoutes(app: Hono) {
   app.post('/account/reactivate', async (c) => {
     const account = await authorFromRequest(c);
     if (!account) return c.json({ error: 'Unauthorized' }, 401);
-    if (!account.stripe_customer_id || !account.subscription_id) {
+
+    const sub = await resolveActiveSubscription(account);
+    if (!sub) {
       return c.json({ ok: false, error: 'No active subscription' }, 400);
     }
 
     try {
       const stripe = getStripe();
-      const current = await stripe.subscriptions.retrieve(account.subscription_id);
 
       // Idempotent: subscription already active and not scheduled for cancellation.
-      if (!current.cancel_at_period_end) {
+      if (!sub.cancel_at_period_end) {
         return c.json({ ok: true, idempotent: true });
       }
 
-      await stripe.subscriptions.update(account.subscription_id, {
+      await stripe.subscriptions.update(sub.subscriptionId, {
         cancel_at_period_end: false,
       });
 
       await logSubscriptionEvent('subscription_reactivate', account.github_login, {
-        subscription_id: account.subscription_id,
+        subscription_id: sub.subscriptionId,
       });
 
       return c.json({ ok: true });
