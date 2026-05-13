@@ -89,7 +89,8 @@ export async function sendWeekOneCheckIn(
   const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; font-size: 1.05rem; line-height: 1.7;">
   <p style="margin: 0 0 1.4rem;">hey :)</p>
   <p style="margin: 0 0 1.4rem;">you signed up to alexandria a week ago &mdash; just dropping in.</p>
-  <p style="margin: 0 0 1.4rem;">if anything's broken, confusing, or you've got thoughts on the thing &mdash; call me: <a href="tel:+14155038178" style="color: #3d3630;">+1 (415) 503-8178</a>. seriously, just call.</p>
+  <p style="margin: 0 0 1.4rem;">it's like the gym &mdash; the more you put in, the more you get out. and the unusual part is it molds to you. so anything you want &mdash; say it. anything you don't &mdash; say it. anything confusing &mdash; just ask.</p>
+  <p style="margin: 0 0 2.2rem;">what's going well, what's not, what you like, what you don't &mdash; reply to this, or call: <a href="tel:+14155038178" style="color: #3d3630;">+1 (415) 503-8178</a>. you're early, so what you tell me actually shapes this. i read all of it. anything annoying &mdash; i'll cut it. anything missing &mdash; i'll add it.</p>
   <p style="margin: 0 0 1.4rem;">if you want to follow along more closely (and support the work), there's <a href="${WEBSITE_URL}/follow?source=week1" style="color: #3d3630;">stay close</a>.</p>
   <p style="margin: 0 0 1.8rem;">ok, that's all for now.</p>
   <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
