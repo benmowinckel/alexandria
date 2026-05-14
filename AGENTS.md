@@ -27,7 +27,7 @@ Everything in Alexandria maps to one of four layers:
 - **Factory:** `factory/` — public, forkable. Canon methodology, hooks, skills, templates, setup, onboarding block.
 - **Static assets:** `public/` (includes `public/docs/` for public artifacts).
 - **In-flight task plans:** `.tasks/<task-name>.md`. Each plan is self-contained (any agent in any tool reads it cold and can execute), references this `AGENTS.md` for architecture, and is deleted (or moved to `.tasks/done/`) when the task ships. Use this for cross-session task hand-off instead of memory entries — memory is for stable patterns, plans are for the next thing to do.
-- **Investor docs:** kept out of this public repo. Live in `~/AlexandriaInc/private/partners/` (private GitHub `alexandria-inc`). Shared directly with partners (email/DM) when needed — no public URL, no `/partners/` route.
+- **Investor docs:** kept out of this public repo. Live in `~/alexandria-inc/private/partners/` (private GitHub `alexandria-inc`). Shared directly with partners (email/DM) when needed — no public URL, no `/partners/` route.
 - **Pre-commit hook:** `scripts/pre-commit` gates server type check + app build (mirrors CI). Activate on fresh clone: `git config core.hooksPath scripts`.
 - **Build:** `cd server && npx wrangler deploy --dry-run --outdir=dist` (server). **Deploy:** `cd server && npx wrangler deploy` then check health. **Push:** `bash scripts/push.sh` (pushes + waits for CI + reports results). Always use `push.sh` instead of raw `git push`.
 - **Server health:** `curl https://api.alexandria-library.com/health`
@@ -171,8 +171,8 @@ See `~/alexandria/files/core/agent.md` for principles, communication style, Thre
 
 Three-way split — keep them separate:
 
-- **This repo** (`~/AlexandriaInc/public/code/` → public GitHub `alexandria`) — product source code. Intentionally open. No secrets (use env vars).
+- **This repo** (`~/alexandria-inc/public/code/` → public GitHub `alexandria`) — product source code. Intentionally open. No secrets (use env vars).
 - **User vault** (`~/alexandria/` → private GitHub `alexandria-private`) — founder-as-user-0 content: agora, ontology, constitution, notepad, personal writing, session captures. Every future user will have a `~/alexandria/`; this is the founder's instance.
-- **Company business** (`~/AlexandriaInc/private/` → private GitHub `alexandria-inc`) — founder-as-CEO materials: investor docs, pitch, brand, early drafts, fundraise tracker. Not part of the product. Not in the public repo.
+- **Company business** (`~/alexandria-inc/private/` → private GitHub `alexandria-inc`) — founder-as-CEO materials: investor docs, pitch, brand, early drafts, fundraise tracker. Not part of the product. Not in the public repo.
 
 **Founder's Constitution** lives at `~/alexandria/files/constitution/` — Core.md, Love.md, Power.md, Mind.md, Taste.md. READ Core.md first for any task. READ Taste.md first for any creative task. `~/alexandria/files/core/design.md` for craft substrate.

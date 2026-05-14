@@ -2,7 +2,7 @@
 
 **Status:** ready to execute. ~4.5 hours of work, 6 commits, CI green between phases.
 
-**For the agent picking this up:** read `~/AlexandriaInc/public/code/CLAUDE.md` *first* (entity model, sovereignty rules, death tests, six-dyad loops, common traps). Don't re-derive any of it. Then read this file. Then execute.
+**For the agent picking this up:** read `~/alexandria-inc/public/code/CLAUDE.md` *first* (entity model, sovereignty rules, death tests, six-dyad loops, common traps). Don't re-derive any of it. Then read this file. Then execute.
 
 When this task ships, delete this file (or move to `.tasks/done/marketplace.md`).
 

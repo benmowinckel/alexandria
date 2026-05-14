@@ -45,7 +45,7 @@ type Theme = {
  * softer descendants of the same family. This makes the wordmark and dict
  * read as part of the same artifact rather than text pasted on top.
  */
-// Order matches `~/AlexandriaInc/public/brand/ornament 1-9.png` — the curated
+// Order matches `~/alexandria-inc/public/brand/ornament 1-9.png` — the curated
 // sequence the founder set. Bottom-slide cycles through these in order, looping.
 const THEMES: Theme[] = [
   {
