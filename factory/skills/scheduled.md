@@ -61,7 +61,7 @@ Then check constitution structural fit. Not every run — only when you notice s
 
 1. Read `~/alexandria/system/.protocol_status.json` and `~/alexandria/system/.public_shadow_review` if present.
 2. Regenerate `~/alexandria/files/library/public/shadow_proposal.md` as a complete public shadow proposal whenever the constitution changed meaningfully, the proposal is missing, or `.public_shadow_review` says the protocol file is missing/stale/due soon.
-3. The proposal standard is "what this Author would say to an intelligent stranger." Use `files/core/filter.md` as the safety policy. No secrets, raw private material, private work product, health/finance/legal details, or anything that would surprise the Author to see public.
+3. The proposal standard is "what this Author would say to an intelligent stranger." Use `files/library/filter.md` as the safety policy. No secrets, raw private material, private work product, health/finance/legal details, or anything that would surprise the Author to see public.
 4. Do not copy the proposal to `shadow.md`. The Author accepts by editing or saving the final public file. Final `shadow.md` is consent; proposal is not.
 
 If ~/alexandria/ is a git repo, commit changes and push. Write a report to ~/alexandria/system/.autoloop/last_run.md — include entries processed, entries remaining, and any signal you noticed but couldn't act on yet.

@@ -37,7 +37,9 @@ plan_move "$ALEX_DIR/files/machine.md"    "$ALEX_DIR/files/core/machine.md"
 plan_move "$ALEX_DIR/files/notepad.md"    "$ALEX_DIR/files/core/notepad.md"
 plan_move "$ALEX_DIR/files/feedback.md"   "$ALEX_DIR/files/core/feedback.md"
 plan_move "$ALEX_DIR/files/design.md"     "$ALEX_DIR/files/core/design.md"
-plan_move "$ALEX_DIR/files/filter.md"     "$ALEX_DIR/files/core/filter.md"
+plan_move "$ALEX_DIR/files/filter.md"     "$ALEX_DIR/files/library/filter.md"
+# filter.md moved from core/ to library/ — publishing policy lives next to library/
+plan_move "$ALEX_DIR/files/core/filter.md" "$ALEX_DIR/files/library/filter.md"
 # Derivatives at files/ root → into source folder
 plan_move "$ALEX_DIR/files/_constitution.md" "$ALEX_DIR/files/constitution/_constitution.md"
 plan_move "$ALEX_DIR/files/_ontology.md"     "$ALEX_DIR/files/ontology/_ontology.md"

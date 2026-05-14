@@ -2,7 +2,7 @@
 
 *The gate between the Author's private system and the Library. Publishing is irreversible — cached, indexed, forkable. This file is the policy the Publisher obeys before anything leaves `~/alexandria/`.*
 
-*Canon default. The Author's `~/alexandria/files/core/filter.md` sharpens on top. This file is the floor.*
+*Canon default. The Author's `~/alexandria/files/library/filter.md` sharpens on top. This file is the floor.*
 
 ---
 

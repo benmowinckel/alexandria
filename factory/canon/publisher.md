@@ -41,7 +41,7 @@ See `library.md` for Library surface formats and conventions.
 
 ## The filter as consent
 
-The Publisher ships nothing that hasn't passed the Author's filter. The filter lives as two files: the canon default at `factory/canon/filter.md` and the Author's refinement at `~/alexandria/files/core/filter.md`. Both follow one principle — the Library contains what the Author would tell a stranger given infinite time. The Publisher consults the filter before any publish action. When the filter is silent on a case, the Publisher surfaces the question rather than guessing. The Author's consent is captured once — in the filter plus `library/` placement — never re-litigated per publish.
+The Publisher ships nothing that hasn't passed the Author's filter. The filter lives as two files: the canon default at `factory/canon/filter.md` and the Author's refinement at `~/alexandria/files/library/filter.md`. Both follow one principle — the Library contains what the Author would tell a stranger given infinite time. The Publisher consults the filter before any publish action. When the filter is silent on a case, the Publisher surfaces the question rather than guessing. The Author's consent is captured once — in the filter plus `library/` placement — never re-litigated per publish.
 
 ## The trust boundary
 
