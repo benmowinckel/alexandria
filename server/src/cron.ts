@@ -209,6 +209,23 @@ export async function runHealthDigest(opts: { sendEmailOnAlarm?: boolean } = { s
       if (missing.length > 0) escalate('sprint', `Missing env vars: ${missing.join(', ')}`);
     } catch { /* non-fatal */ }
 
+    // Factory autoloop staleness. Marker advances every weekly run via
+    // POST /admin/factory/checkpoint. If it goes 14+ days without advancing,
+    // the autoloop is broken (trigger disabled, admin key rotated, network
+    // allow-list excludes api.alexandria-library.com, etc).
+    try {
+      const { getKV } = await import('./kv.js');
+      const marker = await getKV().get('factory:last-processed-at');
+      if (!marker) {
+        escalate('stroll', 'factory autoloop has never run — set up the scheduled agent');
+      } else {
+        const ageDays = (Date.now() - new Date(marker).getTime()) / 86400000;
+        if (ageDays > 14) {
+          escalate('stroll', `factory autoloop stale (${Math.floor(ageDays)}d since last run) — check the scheduled agent`);
+        }
+      }
+    } catch { /* non-fatal */ }
+
     // Refresh the library-signal snapshot in KV. Daily refresh; factory reads
     // on weekly run. Non-fatal if it fails — just logged, no escalate (the
     // factory will see a stale snapshot but other signals still flow).

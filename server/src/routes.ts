@@ -1052,4 +1052,45 @@ ${body.split('\n').map((line: string) => line.trim() ? `<p style="font-size: 1re
   // Dashboard removed 2026-04-14. JSON API at /analytics/dashboard remains
   // for tests and autonomous triggers. Health digest email includes issue list.
   // The HTML dashboard was a human-in-the-loop on a maximisation game.
+
+  // --- Factory autoloop substrate (Loop 3: methodology canon evolution) ---
+  //
+  // The factory autoloop is a scheduled Claude agent that fetches accumulated
+  // machine signals + feedback + library-signal from KV, analyzes for cross-
+  // Author patterns, and drafts canon PRs to mowinckelb/alexandria.
+  //
+  // Two endpoints — read everything since the marker, then checkpoint when done.
+  // Client-side filtering by the agent (intelligence decision); server is the
+  // data layer.
+  app.get('/admin/factory', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    const kv = getKV();
+    const [signalList, feedbackList, librarySignal, marker] = await Promise.all([
+      kv.list({ prefix: 'signal:' }),
+      kv.list({ prefix: 'feedback:' }),
+      kv.get('library-signal'),
+      kv.get('factory:last-processed-at'),
+    ]);
+    const fetchAll = async (keys: { name: string }[]) =>
+      Promise.all(keys.map(async k => ({ key: k.name, value: await kv.get(k.name) })));
+    const [signals, feedback] = await Promise.all([
+      fetchAll(signalList.keys),
+      fetchAll(feedbackList.keys),
+    ]);
+    return c.json({
+      signals,
+      feedback,
+      library_signal: librarySignal,
+      last_processed_at: marker,
+      now: new Date().toISOString(),
+    });
+  });
+
+  app.post('/admin/factory/checkpoint', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    const { t } = await c.req.json<{ t?: string }>();
+    if (!t || isNaN(new Date(t).getTime())) return c.text('missing or invalid t (ISO 8601)', 400);
+    await getKV().put('factory:last-processed-at', t);
+    return c.json({ ok: true, last_processed_at: t });
+  });
 }

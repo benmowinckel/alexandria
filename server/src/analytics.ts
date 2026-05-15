@@ -267,10 +267,28 @@ async function getMarketplaceStatus(events: Record<string, string>[]): Promise<R
     ? signalEvents[signalEvents.length - 1].t
     : null;
 
+  // Factory autoloop liveness — marker advances every weekly run.
+  // > 14d stale = the autoloop is broken (trigger disabled, admin key
+  // rotated, network allow-list excludes api.alexandria-library.com, etc).
+  const { getKV } = await import('./kv.js');
+  let factoryMarker: string | null = null;
+  let factoryStatus = 'no marker yet (autoloop never run)';
+  try {
+    factoryMarker = await getKV().get('factory:last-processed-at');
+    if (factoryMarker) {
+      const ageDays = (Date.now() - new Date(factoryMarker).getTime()) / 86400000;
+      factoryStatus = ageDays > 14
+        ? `stale: ${Math.floor(ageDays)}d since last autoloop run`
+        : 'ok';
+    }
+  } catch { /* non-fatal */ }
+
   return {
     status: signalsThisWeek > 0 ? 'ok' : 'no signal this week',
     signals_this_week: signalsThisWeek,
     last_signal_at: lastSignalAt,
+    factory_autoloop_status: factoryStatus,
+    factory_last_processed_at: factoryMarker,
   };
 }
 
