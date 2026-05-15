@@ -1,10 +1,10 @@
 /**
  * Library RL signal — funnel/engagement aggregate for the factory.
  *
- * The factory autoloop reads this as one of its three inputs (alongside
- * marketplace signals and feedback). Published daily as a single
- * overwriting key (`library-signal`) in the DATA KV namespace — only the
- * latest snapshot matters. See marketplace.ts for the write path.
+ * The founder reads this as one of three inputs (alongside machine signals
+ * and feedback) when reviewing the canon for evolution. Published daily as
+ * a single overwriting key (`library-signal`) in the DATA KV namespace —
+ * only the latest snapshot matters. See marketplace.ts for the write path.
  */
 import { getDB } from './db.js';
 import { isInternalProtocolFileName } from './file-access.js';
