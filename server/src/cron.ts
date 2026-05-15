@@ -66,29 +66,6 @@ async function probeD1(escalate: Escalate): Promise<void> {
   }
 }
 
-/**
- * Marketplace activity check. The daily library-signal snapshot pushes to the
- * marketplace repo every cron run, so pushedAt should never go more than ~24h
- * stale. If it does, either GITHUB_BOT_TOKEN is broken, github is down for
- * a long time, or the cron itself stopped firing. 14d threshold makes this
- * a real-failure signal, not a daily-blip one.
- */
-async function checkMarketplaceActivity(escalate: Escalate): Promise<void> {
-  try {
-    const token = process.env.GITHUB_BOT_TOKEN;
-    if (!token) return; // not configured yet — skip silently during bootstrap
-    const resp = await fetch('https://api.github.com/repos/mowinckelb/alexandria-signal', {
-      headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'alexandria-server' },
-    });
-    if (!resp.ok) return; // non-fatal probe
-    const data = await resp.json() as { pushed_at: string };
-    const ageDays = Math.floor((Date.now() - new Date(data.pushed_at).getTime()) / 86400000);
-    if (ageDays > 14) {
-      escalate('stroll', `alexandria-signal stale (${ageDays}d since last push) — daily snapshot or relay broken`);
-    }
-  } catch { /* non-fatal */ }
-}
-
 export interface EventScanResult {
   serverErrors: number;
   deprecatedHits: number;
@@ -232,12 +209,9 @@ export async function runHealthDigest(opts: { sendEmailOnAlarm?: boolean } = { s
       if (missing.length > 0) escalate('sprint', `Missing env vars: ${missing.join(', ')}`);
     } catch { /* non-fatal */ }
 
-    await checkMarketplaceActivity(escalate);
-
-    // Refresh the library-signal snapshot in alexandria-signal. The factory
-    // reads this on its weekly run; daily refresh keeps it ≤24h stale. Non-fatal
-    // if it fails — just logged, no escalate (the factory will see a stale snapshot
-    // but other signals still flow).
+    // Refresh the library-signal snapshot in KV. Daily refresh; factory reads
+    // on weekly run. Non-fatal if it fails — just logged, no escalate (the
+    // factory will see a stale snapshot but other signals still flow).
     try {
       const text = await computeLibrarySignalText(30);
       await publishLibrarySignalSnapshot(text);

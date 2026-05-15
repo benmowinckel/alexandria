@@ -2,10 +2,9 @@
  * Library RL signal — funnel/engagement aggregate for the factory.
  *
  * The factory autoloop reads this as one of its three inputs (alongside
- * marketplace signals and feedback). It used to be exposed as an HTTP
- * endpoint but the factory agent can't reach api.mowinckel.ai/admin/*,
- * so we publish a daily snapshot to alexandria-signal github repo
- * instead — read-via-gh, drained-on-overwrite (one file, not per-day).
+ * marketplace signals and feedback). Published daily as a single
+ * overwriting key (`library-signal`) in the DATA KV namespace — only the
+ * latest snapshot matters. See marketplace.ts for the write path.
  */
 import { getDB } from './db.js';
 import { isInternalProtocolFileName } from './file-access.js';

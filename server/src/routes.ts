@@ -777,9 +777,9 @@ export function registerRoutes(app: Hono) {
 
   // --- Machine signal (Engine → marketplace) ---
 
-  // Relays anonymized signal to alexandria-signal github repo. Author is
-  // stripped at the boundary — factory reads only signal content. Failure to
-  // relay returns 502 so the Machine retries on its next session (better than
+  // Stores anonymized signal in KV under `signal:` prefix. Author is stripped
+  // at the boundary — factory reads only signal content. Failure to write
+  // returns 502 so the Machine retries on its next session (better than
   // silent loss).
   async function handleSignal(c: any) {
     const auth = await requireAuth(c);
@@ -990,8 +990,9 @@ export function registerRoutes(app: Hono) {
     return c.json({ ok: true, sent, failed, total: recipients.length });
   });
 
-  // (Marketplace read/drain endpoints removed — substrate is now the
-  // alexandria-signal github repo, agent reads via gh.)
+  // (Marketplace read/drain endpoints removed — signals + feedback live in
+  // the DATA KV namespace under `signal:` and `feedback:` prefixes. Inspect
+  // via `wrangler kv:key list --binding=DATA --prefix=signal:`.)
 
   // Manual digest trigger. Scheduled daily at 09:00 UTC, but that's a 24h feedback
   // loop for any digest-logic change. This shortens it: make changes, curl this,

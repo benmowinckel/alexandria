@@ -8,8 +8,9 @@
  *   "emailtoken:{token}"   → github_id (lookup index for O(1) email-token auth)
  *   "events:YYYY-MM-DD:HH-mm-ss-SSS-{rand}" → JSONL batch from one request
  *   "cron:*"                → cron liveness markers (health digest reads these)
- * (marketplace signals + feedback live in the alexandria-signal github repo
- * now, not in KV — see marketplace.ts for the relay.)
+ *   "signal:{t}:{hash}"     → anonymous machine signal (90d TTL)
+ *   "feedback:{t}:{hash}"   → attributed feedback (no TTL)
+ *   "library-signal"        → daily library-signal snapshot (single key)
  *
  * Each account is its own KV key — no concurrent write corruption,
  * no O(N) iteration for auth checks.

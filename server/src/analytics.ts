@@ -254,33 +254,23 @@ export async function getDashboard(): Promise<Record<string, unknown> & { _event
 
 /**
  * Marketplace status — is the cross-Author learning loop working?
- * Signals are relayed to alexandria-signal github repo. Liveness =
- * the repo's pushedAt timestamp (advances on every relay or factory drain).
+ * Signals live in KV (migrated from alexandria-signal repo 2026-05-15).
+ * Liveness reads from the local event log — every successful
+ * /marketplace/signal POST emits a `machine_signal` event.
  */
 async function getMarketplaceStatus(events: Record<string, string>[]): Promise<Record<string, unknown>> {
   const signalEvents = events.filter(e => e.e === 'machine_signal');
   const signalsThisWeek = signalEvents.filter(e =>
     Date.now() - new Date(e.t).getTime() < 7 * 24 * 60 * 60 * 1000
   ).length;
-
-  let lastPushedAt: string | null = null;
-  try {
-    const token = process.env.GITHUB_BOT_TOKEN;
-    if (token) {
-      const resp = await fetch('https://api.github.com/repos/mowinckelb/alexandria-signal', {
-        headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'alexandria-server' },
-      });
-      if (resp.ok) {
-        const data = await resp.json() as { pushed_at: string };
-        lastPushedAt = data.pushed_at;
-      }
-    }
-  } catch { /* non-fatal */ }
+  const lastSignalAt = signalEvents.length > 0
+    ? signalEvents[signalEvents.length - 1].t
+    : null;
 
   return {
     status: signalsThisWeek > 0 ? 'ok' : 'no signal this week',
     signals_this_week: signalsThisWeek,
-    marketplace_repo_last_push: lastPushedAt,
+    last_signal_at: lastSignalAt,
   };
 }
 
@@ -409,5 +399,5 @@ export async function getUserEvents(login: string): Promise<Record<string, unkno
   };
 }
 
-// Signals + feedback are relayed straight to alexandria-signal github repo
-// (no KV storage). Factory drains by deleting files in that repo.
+// Signals + feedback live in the DATA KV namespace under `signal:` and
+// `feedback:` key prefixes. See marketplace.ts.

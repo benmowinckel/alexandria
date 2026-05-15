@@ -613,7 +613,7 @@ export default {
   async scheduled(_event: ScheduledEvent, env: Record<string, unknown>, ctx: ExecutionContext) {
     initEnv(env);
     // Daily 15:00 UTC (health digest, also publishes library-signal snapshot
-    // to alexandria-signal) + monthly 1st @ 02:00 UTC (settlement).
+    // to KV) + monthly 1st @ 02:00 UTC (settlement).
     // settleMonthlyTabs is idempotent — only does work on month-end keys.
     await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing(), runWeekOneCheckIns()]);
     ctx.waitUntil(flushEvents());
