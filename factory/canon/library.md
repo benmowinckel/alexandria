@@ -2,28 +2,48 @@
 
 *The Library makes cognitive transformation visible, shareable, and social. It completes the loop: join → train → show. This file covers Library folder structure, surface formats, publish conventions, the browsing loop, and the Marketplace of Systems — how Authors share reusable machinery with each other.*
 
-## Structure — three tier sub-folders
+## Structure — four permission tiers + external works/ source
 
-`~/alexandria/files/library/` has three sub-folders, each representing a visibility tier:
+`~/alexandria/files/library/` is the publication interface only. Canonical works live OUTSIDE library at `~/alexandria/files/works/` — the Author's personal corpus of everything they've made (essays, aphorisms, meditations, quotes, anything). Not all works are intended for publication; some are personal and never leave `files/works/`. The library publishes the subset the Author chooses to ship.
 
 ```
-~/alexandria/files/library/
+~/alexandria/files/works/         # personal canonical — everything the Author has made
+~/alexandria/files/library/       # publication interface only
   public/     # anyone on the open web
-  paid/       # paying Authors (subscribers)
+  authors/    # other Alexandria Authors — the social tier ("you're not a user, you're an Author")
   invite/     # token-gated — only those the Author invites
+  paid/       # paying Authors (subscribers)
 ```
 
-**Folder = visibility. Filename = artifact type.** A shadow at paid tier is `paid/shadow.md`. A public pulse is `public/pulse.md`. A private delta (invite tier with zero invitees) is `invite/delta.md`. Drafts stay within each tier as `*_draft.*` (e.g. `public/shadow_draft.md`).
+**Permission outermost (threshold game — security boundary, sacred). Cohort leaf (maximisation game — audience, can multiply freely inside). `files/works/` is the canonical source for hand-authored essays; library does not have its own `works/` subfolder.**
 
-This structure scales without filename explosion. The same artifact type (shadow, pulse, works, delta, quiz) can live at different tiers simply by folder placement.
+Inside each permission, the Author may name cohort sub-folders (e.g., `invite/close-friends/`, `paid/colleagues/`). When a permission tier has a single audience and no sub-cohorts, `filter.md` lives at the permission level as the de-facto single cohort. When the audience splits, sub-cohorts emerge, each with its own `filter.md`. Filenames are always `filter.md`; path disambiguates.
+
+Drafts use `*_draft.*` and live in the cohort/permission folder where they were generated. They never ship.
+
+## The standard module
+
+Each cohort (or permission tier when single-audience) is a self-contained module: `filter.md` + audience-specific generated content + symlinks into `files/works/` for hand-authored essays the Author has chosen to publish at that tier.
+
+**The filter does three things:** curation (which works from `files/works/` surface in this cohort), framing (audience-specific intro, ordering, presentation), and generated content (audience-specific pieces auto-written from the constitution that live only in this folder — e.g., the public shadow, monthly pulse, delta). The filter NEVER transforms the canonical essay text. If two audiences need different versions of the same essay, the Author writes two canonical works in `files/works/` (e.g., `On-Death-vulnerable.md` for invite, `On-Death-polished.md` for public) and tags them differently in frontmatter. Transformation happens at the authoring layer, not the filter layer.
+
+**Generated content vs canonical works.** Shadow, pulse, delta, quiz — engine-generated per cohort, live only in the cohort folder under `library/`. Essays — hand-authored canonical, live in `files/works/` (independent of library), symlinked into the right cohort/permission folders when the Author chooses to publish them. Frontmatter on each work declares which audiences it's published to (`cohorts: [...]` or `permissions: [...]`). One source in `files/works/`, N appearances via symlinks. Edit canonical → all symlinked views update.
+
+**Why works are external to library.** Not everything an Author makes is meant for publication. `files/works/` is the personal corpus (Aphorisms, Quotes, drafts that never ship, essays in progress). Library is the publication interface — the Author propagates a work into library by symlinking it into the appropriate tier. The default for any new work is "not published" — propagation is an explicit act.
+
+**Each filter is self-contained.** Flat, no inheritance from a root filter or other cohort filters. Copy-paste at small scale; revisit only if the Author ends up with 20+ cohorts and drift hurts.
+
+**Hand-edits to engine-generated content flow back upstream.** The edit persists locally as new truth; the learning propagates to the constitution (if universal) or the filter (if audience-specific) so the next regen produces correctly. No special architectural rule beyond "don't be stupid about overwriting user work."
+
+**Promotion of drafts** is the file rename. Engine writes `*_draft.*` in the cohort folder; the Author renames to drop the `_draft` suffix to ship. The file boundary IS the consent gate. Auto-promotion is opt-in per artifact type.
 
 ## Publishing
 
-The Engine generates Library artifacts from the Constitution. The Author's consent lives in two places: the filter (`factory/canon/filter.md` + `~/alexandria/files/library/filter.md`) and tier-folder placement. The filter is the standing policy — what the Author would tell a stranger given infinite time. Placement under a final (non-draft) filename inside one of the three tier sub-folders is the per-artifact promotion AND the tier declaration. The Publisher ships final-named tier-foldered files automatically; it never ships drafts (`*_draft.*`), files outside the three tier folders, or anything outside `library/`. Writing a draft is the Engine's candidate. Writing a final-named file in a tier folder is the Author's consent at that tier. Both gates must pass.
+The Engine generates Library artifacts from the Constitution. The Author's consent lives in two places: the filter (`factory/canon/filter.md` + `~/alexandria/files/library/filter.md`, optionally refined per leaf as `library/{tier}/filter.md`) and tier-folder placement. The filter is the standing policy — what the Author would tell a stranger given infinite time. Placement under a final (non-draft) filename inside one of the four tier sub-folders is the per-artifact promotion AND the tier declaration. The Publisher ships final-named tier-foldered files automatically; it never ships drafts (`*_draft.*`), files outside the four tier folders, or anything outside `library/`. Writing a draft is the Engine's candidate. Writing a final-named file in a tier folder is the Author's consent at that tier. Both gates must pass.
 
 **Public shadow loop.** Every Author should have a clear, current public shadow at `~/alexandria/files/library/public/shadow.md`. This is the protocol file that satisfies the monthly file obligation. Its shape is the **minimum compliance template** defined in `filter.md`: a router on top + stranger-parity content below. The Engine derives the router from the Constitution's topic surface, with link targets pulled from the existing `library/paid/`, `library/invite/`, and any contact links the Author has declared.
 
-The Engine continuously maintains a full-file proposal at `~/alexandria/files/library/public/shadow_proposal.md`. This proposal is the Machine's recommended current public shadow, not a delta log. It should be regenerated from the Constitution, ontology, notepad, vault deltas, and filter whenever meaningful signal changes. If only a small part changed, still write the whole proposed file so the Author can approve with one move. The Author accepts by copying/renaming the proposal to `shadow.md` or by editing `shadow.md` directly. Final `shadow.md` is consent; `shadow_proposal.md` is not.
+The Engine continuously maintains a full-file draft at `~/alexandria/files/library/public/shadow_draft.md`. This draft is the Machine's recommended current public shadow, not a delta log. It should be regenerated from the Constitution, ontology, notepad, vault deltas, and filter whenever meaningful signal changes. If only a small part changed, still write the whole proposed file so the Author can approve with one move. The Author accepts by copying/renaming the draft to `shadow.md` or by editing `shadow.md` directly. Final `shadow.md` is consent; `shadow_draft.md` is not.
 
 When file compliance is due within seven days, stale, or missing, this becomes a high-priority `/a` task and a morning-brief item. The Engine should bring the smallest useful ask: "I drafted your public shadow; approve/edit this paragraph" rather than a vague maintenance warning. The goal is closed-loop compliance without dark patterns: the Machine drafts and reminds; the Author approves what becomes public.
 

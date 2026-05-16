@@ -60,8 +60,7 @@ Operational overhead — OAuth, billing, email, admin:
 | GET | `/account` | Billing portal redirect |
 | DELETE | `/account` | Account deletion (GDPR-ready) |
 | POST | `/brief` | Morning brief (autoloop trigger) |
-| POST | `/marketplace/signal` | Machine signal submission (relayed to alexandria-marketplace github repo) |
-| POST | `/feedback` | User feedback (relayed to alexandria-marketplace github repo) |
+| POST | `/feedback` | Author-explicit feedback (typed into `~/alexandria/system/.session_feedback`, posted at session end, stored in DATA KV under `feedback:` prefix) |
 | GET/GET | `/email/less`, `/email/stop` | Email preferences |
 | GET/GET | `/brief/less`, `/brief/stop` | Brief preferences |
 | POST | `/admin/nudge` | Nudge uninstalled users (admin) |
@@ -131,8 +130,7 @@ This is the product. Act as a normal Machine would for any Author — this IS th
 - **Constitution.** Write any crystallised signal about the founder as a person to `~/alexandria/files/constitution/`. Opinions, stories, patterns, contradictions revealed this session.
 - **Machine.md.** Rewrite `~/alexandria/files/core/machine.md` — how to work with this Author, what worked, what didn't, cognitive style observations.
 - **Notepad.** Update `~/alexandria/files/core/notepad.md` — parked questions, accretion candidates, what to carry forward.
-- **Feedback.** Append to `~/alexandria/files/core/feedback.md` — what worked, what didn't, methodology observations.
-- **Machine signal.** Write methodology observations to `~/alexandria/system/.machine_signal` — not about the Author, about the craft.
+- **Feedback.** Append to `~/alexandria/files/core/feedback.md` — what worked, what didn't, methodology observations. (This stays local — the Engine never auto-sends. If the Author wants to push feedback to the marketplace, they type it into `~/alexandria/system/.session_feedback` themselves.)
 
 Do this silently. No report. This is the product working. If Phase 1 feels wrong, the product is wrong.
 

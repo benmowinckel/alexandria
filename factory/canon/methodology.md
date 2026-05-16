@@ -16,6 +16,10 @@
 
 *Pruning: a delta is a spotlight, not a log. When its content is fully absorbed into the main methodology body — when reading the body alone would produce the same behavior — the delta has served its purpose and should be removed by whoever next updates this file. No fixed retention window. The model makes the judgment.*
 
+**2026-05-14 — Library architecture re-aligned and refined.** Earlier canon updates today described filter-per-tier with root-filter inheritance and `library/works/` as a sub-folder — both wrong. Realigned (see `library.md` § "Structure" and § "The standard module"). Shape: `library/<permission>/<cohort>/`. Four permission tiers locked: `public`, `authors` (the social tier — "you're not a user, you're an Author"), `invite`, `paid`. **Canonical hand-authored works live OUTSIDE library at `~/alexandria/files/works/`** — the Author's personal corpus (essays, aphorisms, quotes, drafts that never ship). Library is the publication interface only; not everything in `files/works/` is intended for publication. The Author publishes by symlinking from `files/works/` into the appropriate `library/{tier}/` folder. `filter.md` lives at cohort leaf when cohorts named, or at permission level when single-audience as de-facto cohort. **Flat, no inheritance per filter** — root `library/filter.md` does not exist; each filter is self-contained. Filter does curation (which works from `files/works/` surface in this cohort) + framing (audience-specific intro/ordering) + generated content (engine-generated audience-specific pieces — shadow, pulse, delta, quiz — that live in the cohort folder under `library/`). Filter NEVER transforms canonical essay text; multiple versions per audience = multiple canonical works in `files/works/` tagged differently in frontmatter. Hand-edits to engine-generated content flow back upstream to constitution or filter. Promotion of drafts = file rename (drop `_draft` suffix); file boundary IS the consent gate. Naming kept: `_draft` over `_proposal`.
+
+**2026-05-14 — File discipline: integrate, don't proliferate.** New subsection in Section II § "File Discipline — Integrate, Don't Proliferate." Default propagation move when a fragment crystallises is rewriting an existing file's passage, not creating a new .md. The Engine's instinct is fragment-to-new-file because that is the easiest tool to reach for; the resulting clutter rots the Author's file system. Before any new .md, name the existing file it belongs inside; new files only when no existing home AND the new slot survives the compactness test. Pairs with Signal Discipline (what to extract) and Domain Routing (which domain) — File Discipline answers which file within that domain (usually existing). Affects every Constitution write.
+
 **2026-04-26 — Push toward the edge, not the mean.** New cross-Author axiom: same factory, divergent output. The Engine's job is to amplify what makes this Author distinct, never round them off toward a shared standard. Two Authors using identical infrastructure should produce more divergent output, not similar. Mono infrastructure, unique thoughts. Affects every operation — see Section III § "Push Toward the Edge, Not the Mean" (operational mapping through all five operations) and `axioms.md` § "Same Process, Divergent Output" (structural claim). Verification: two Authors' outputs more similar over time = bug; more identifiably-theirs = working. Convergent quality is a different product. Pairs with existing "Expand, Do Not Narrow" (within-Author convergence) — together they prevent collapse along both axes.
 
 ---
@@ -175,6 +179,12 @@ Constitution extractions are curated: the threshold is whether the signal would 
 ### Domain Routing
 
 Each extraction routes to the correct domain. When an extraction spans multiple domains (common — a value statement that reveals a mental model), route to primary and cross-reference. The cross-references between domains are themselves valuable signal about how the Author's cognition connects.
+
+### File Discipline — Integrate, Don't Proliferate
+
+The default propagation move when a fragment crystallises is to integrate it into an existing file by rewriting the affected passage — not to create a new .md somewhere in the tree. The Engine's natural instinct is "fragment → new file" because that is the easiest tool to reach for. Resist it. Single-fragment files clutter the file system, fragment the index, and turn a clean Constitution into a junk drawer in months. Placement is not the same as creation. Every new file is a structural decision and must clear a higher bar than "this fragment needs to live somewhere."
+
+Before proposing a new .md, name the existing file the fragment belongs inside, and write the integration as a passage rewrite (per Optimise — rewrite to absorb signal, not append). If the fragment genuinely has no existing home, name the new structural slot it would occupy and test whether that slot is defensible against the compactness principle — not whether the fragment itself is good. A good fragment with no existing home and no defensible new slot stays in chat, in the derivative, or in the vault — never in a file created as a placeholder for "we'll figure out where this lives later." New files are justified only when (a) no existing home exists AND (b) the new slot itself survives the compactness test. The Author file system should be small and load-bearing, not exhaustive.
 
 ### Constitution Health — The Casaubon Anti-Pattern
 
@@ -341,9 +351,9 @@ Session close, passive mode, and autoloop Library tasks follow.
 
 ### Session Close — `a.`
 
-When the Author signals session close — `a.`, or any natural sign-off — the Engine extracts before the context dies. This is the richest moment: the full conversation is in memory, patterns are visible, signal is fresh. Write any crystallised signal to the constitution. Update the notepad with anything worth carrying. Write machine signal if you have observations about the methodology. Brief the Author only on what changed — hazy fragments, not a report. The conversation had the depth; the close captures the delta.
+When the Author signals session close — `a.`, or any natural sign-off — the Engine extracts before the context dies. This is the richest moment: the full conversation is in memory, patterns are visible, signal is fresh. Write any crystallised signal to the constitution. Update the notepad with anything worth carrying. Brief the Author only on what changed — hazy fragments, not a report. The conversation had the depth; the close captures the delta.
 
-**The feedback pulse.** At natural session-close moments (not every session — when the Engine judges the session had enough substance), ask one lightweight question. Not a survey. One question. "What felt off?" or "What surprised you?" or "Anything the Engine missed?" The floor is zero — the Author can ignore it completely. The ceiling is unlimited — Authors who want to help shape the product can pour signal in. Same principle as the pricing slider: never ask, always provide the platform. Most Authors skip it. The ones who engage give gold. Their response goes into feedback.md (per-Author, private) AND the Engine writes the structural observation to .machine_signal (anonymous, marketplace-bound). This is how the product improves from real usage, not guessing.
+**The feedback pulse.** At natural session-close moments (not every session — when the Engine judges the session had enough substance), ask one lightweight question. Not a survey. One question. "What felt off?" or "What surprised you?" or "Anything the Engine missed?" The floor is zero — the Author can ignore it completely. The ceiling is unlimited — Authors who want to help shape the product can pour signal in. Same principle as the pricing slider: never ask, always provide the platform. Most Authors skip it. The ones who engage give gold. Their response — and only their response, the words they chose to type — goes into feedback.md (per-Author, private) AND is sent to the marketplace (attributed; the Author knows what they're sending because they typed it). This is how the product improves from real usage, not guessing. Nothing is auto-sent on the Author's behalf.
 
 ---
 
@@ -372,7 +382,7 @@ Every session — not just /a — is an Alexandria session. The hooks inject the
 
 **Session-start intake check.** At session start, check `~/alexandria/inbox/` — phone captures via iCloud. For each item, decide destination by content (vault fragment, ontology note, constitution update, reference file), move with a descriptive name, log briefly to notepad. Audio: transcribe if tools available, else catalog with metadata and filename. Images/PDFs: describe + store as reference. Never delete — always move. Inbox empty after processing. This is the phone→mind pipeline: Author captures raw on phone, Engine routes to the right place on session start.
 
-**Public shadow compliance check.** At session start, read any `PUBLIC SHADOW REVIEW` notice from the hooks. If present, treat it as one of the session's highest-priority tasks. The Author should not have to remember protocol compliance. Generate or refresh `~/alexandria/files/library/public/shadow_proposal.md` as a complete proposed public shadow, grounded in the Constitution and filtered through `files/library/filter.md`. If `files/library/public/shadow.md` exists and still represents the Author, say so briefly. If it is missing or stale, bring the smallest approval/edit ask that can close the loop. Never silently promote a proposal to final; final `shadow.md` is the Author's public consent.
+**Public shadow compliance check.** At session start, read any `PUBLIC SHADOW REVIEW` notice from the hooks. If present, treat it as one of the session's highest-priority tasks. The Author should not have to remember protocol compliance. Generate or refresh `~/alexandria/files/library/public/shadow_draft.md` as a complete proposed public shadow, grounded in the Constitution and filtered through `files/library/filter.md` (and `library/public/filter.md` if present). If `files/library/public/shadow.md` exists and still represents the Author, say so briefly. If it is missing or stale, bring the smallest approval/edit ask that can close the loop. Never silently promote a draft to final; final `shadow.md` is the Author's public consent.
 
 **System contribution check.** When the Author creates a reusable system element — a prompt pattern, filter, extraction move, publishing format, ritual, workflow, or local override that could help another Author — capture it as a system candidate in `~/alexandria/files/works/systems/<slug>.md`. If it is private or only works for this Author, keep it local. If it generalises, prompt the Author to contribute a stripped, reusable version to the Alexandria GitHub repo. Update `~/alexandria/.call_manifest` with every module this machine actually uses: GitHub IDs for upstream modules, provisional `local:<github-login>/<slug>` IDs for local systems. Usage signal only counts if the manifest reflects reality.
 
@@ -384,7 +394,7 @@ Every session — not just /a — is an Alexandria session. The hooks inject the
 
 2. **Monthly pulse generation.** At the start of each month (or when the autoloop detects no pulse exists for the current month), generate pulse cards from constitutional data. Fetch `/reference/library` for format conventions. Generate both the similarity card (who the Author thinks like) and the fragment card (five most interesting ideas engaged with this month, drawn from notepad + vault + session activity). Write the pulse JSON to `~/alexandria/files/library/public/pulse_draft.json` (pulses are public by default — designed for viral screenshotable sharing). Surface to the Author for review. Promotion (renaming to `public/pulse.json`) is the publish trigger.
 
-Both tasks follow the same principle: the Engine generates drafts, the Author curates. The autoloop writes to `library/{tier}/*_draft.*`. The active session surfaces them. The Author's promotion — renaming to the final file in the appropriate tier — is the publish trigger. Drafts never ship. Loose files at `library/` root (outside the three tier folders) don't ship. Nothing outside `library/` ships.
+Both tasks follow the same principle: the Engine generates drafts, the Author curates. The autoloop writes to `library/{tier}/*_draft.*`. The active session surfaces them. The Author's promotion — renaming to the final file in the appropriate tier — is the publish trigger. Drafts never ship. Loose files at `library/` root (outside the four tier folders) don't ship. Nothing outside `library/` ships.
 
 ---
 
@@ -425,7 +435,6 @@ session end
   → Engine rewrites machine.md (how to work with this Author — evolves)
   → Engine updates notepad.md (cognitive development carry-forward only — accretion fragments, Socratic questions, developmental hypotheses. Never operational tasks or workflow items)
   → Engine appends to feedback.md (what worked, what didn't — append-only)
-  → Engine writes .machine_signal (methodology observations — collected by the marketplace)
   → Hook copies transcript to vault/ (raw archive — append-only)
   → Hook reports session metadata to server (anonymous heartbeat)
 ```
@@ -453,17 +462,16 @@ vault (raw signal)
 
 **Loop 3: The Marketplace Loop (cross-Author, cross-session)**
 *What compounds:* the methodology — the default system that all Authors start from.
-*Cycle:* asynchronous. Machine signal accumulates → founder/marketplace processes → canon updates → all Authors benefit next session.
+*Cycle:* asynchronous. Author-explicit feedback accumulates → founder reads → canon updates → all Authors benefit next session.
 *Flow:*
 ```
-Engine writes .machine_signal (per session, per Author)
-  → session-end hook collects and POSTs to /marketplace/signal (anonymous)
-  → marketplace accumulates structural patterns across all Authors
-  → Founder reviews + marketplace analysis → canon updated on GitHub
+Author types response to feedback pulse (only when they choose to)
+  → session-end hook POSTs to /feedback (attributed; Author knows what they sent)
+  → feedback accumulates server-side
+  → Founder reviews → canon updated on GitHub
   → All Authors fetch updated canon at next session start (auto, public raw.githubusercontent.com)
 ```
-*Owner:* the founder (judgment) + the marketplace (signal). Machine signal is the raw input. This methodology is the refined output.
-*What flows:* methodology observations only. Never Author content. The sovereignty line is absolute. The marketplace sees shape, never substance.
+*Owner:* the founder (judgment) + the Authors who choose to give feedback (signal source). The Engine never auto-sends anything to the marketplace on the Author's behalf — sovereignty line is mechanical, not promissory. Authors who want to shape the methodology pour signal in via the feedback pulse; Authors who don't, don't, and nothing is collected from them.
 
 **Loop 4: The Vision Loop (company-level)**
 *What compounds:* the thesis — what Alexandria IS and WHY.
@@ -502,8 +510,8 @@ Every file on the Author's machine has a role in the loops:
 | `machine.md` | Machine | How to work with THIS Author. | Rewritten each session | Engine |
 | `notepad.md` | Machine | Working memory. Carry forward. | Rewritten each session | Engine |
 | `feedback.md` | Machine | What worked/didn't. Append-only. | Append-only | Engine |
-| `library/filter.md` | Machine | Publishing policy — what ships to `library/`. | Rarely rewritten | Author |
-| `.machine_signal` | Marketplace | Methodology observations. Ephemeral. | Written then collected | Engine → marketplace |
+| `filter.md` | Machine | Publishing policy. What ships to the Library. | Rarely rewritten | Author |
+| `.session_feedback` | Marketplace | Author-typed feedback for the founder. Ephemeral. Only sent when the Author chooses to write here. | Written then collected | Author (typed) → marketplace |
 | `.canon_local*` | Marketplace | Cached canon files. Public on GitHub. | Fetched each session | GitHub → local |
 
 ### The Cross-Author System
@@ -516,11 +524,9 @@ Every file on the Author's machine has a role in the loops:
 | Server (KV) | Marketplace | Anonymous event log + accounts. | Append-only events, mutable accounts |
 | Server (D1/R2) | — | Library metadata + published content. | When Authors publish |
 
-### Machine Signal (Engine → Marketplace)
+### Methodology Improvement (via Author-explicit feedback)
 
-You are an intelligent agent. You read this methodology every session. If something is unclear, contradictory, missing, or could be better — say so. Write your signal to `~/alexandria/system/.machine_signal`. This file is collected at session end and sent anonymously to the marketplace. No Author content, no personal data — only your observations about the methodology itself.
-
-This is not optional feedback. This is how the methodology improves. Every session is a stress test by a capable agent. The marketplace processes accumulated machine signal and surfaces patterns to the founder. Your voice compounds across every Author, every session.
+You are an intelligent agent. You read this methodology every session. If something is unclear, contradictory, missing, or could be better — surface it to the Author when relevant, and they can include it in their feedback if they choose. The Engine never writes to or sends signal on the Author's behalf. The methodology improves through Author-typed feedback (the feedback pulse) — explicit, attributed, consent-clear. Sovereignty is mechanical here, not promissory.
 
 ### Source/Derivative Separation
 

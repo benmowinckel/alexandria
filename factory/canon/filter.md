@@ -2,7 +2,7 @@
 
 *The gate between the Author's private system and the Library. Publishing is irreversible — cached, indexed, forkable. This file is the policy the Publisher obeys before anything leaves `~/alexandria/`.*
 
-*Canon default. The Author's `~/alexandria/files/library/filter.md` sharpens on top. This file is the floor.*
+*Canon default. The Author's `~/alexandria/files/library/filter.md` sharpens on top, optionally refined per leaf as `library/{tier}/filter.md`. This file is the floor.*
 
 ---
 
@@ -48,13 +48,14 @@ Both floors are mandatory for every Author regardless of openness: the router is
 
 ## The trust boundary
 
-`~/alexandria/files/library/` is the opt-in. The folder has three tier sub-folders; placement selects both consent and visibility:
+`~/alexandria/files/library/` is the opt-in. The folder has four tier sub-folders (`public/`, `authors/`, `invite/`, `paid/`); placement selects both consent and visibility:
 
 - **`library/public/`** — ships to the open web. Anyone can read.
-- **`library/paid/`** — ships to paying Authors (subscribers). Gated.
+- **`library/authors/`** — ships to all other Alexandria Authors. The social tier — "you're not a user, you're an Author." Visible to anyone with an account.
 - **`library/invite/`** — ships only to people the Author has explicitly invited (token-gated). With zero invitees, this is functionally private — the Author's own eyes only.
+- **`library/paid/`** — ships to paying Authors (subscribers). Gated.
 
-Placing a final-named file in one of the three tiers is the Author's explicit decision: *this is the right visibility for this artifact*. The Publisher ships it at that tier without re-asking. Folder = visibility. Filename = artifact type (`shadow.md`, `pulse.md`, `works/essay.md`). The path relative to `library/` becomes the `name` in the publish call; the first segment becomes the `visibility` field.
+Placing a final-named file in one of the four tiers is the Author's explicit decision: *this is the right visibility for this artifact*. The Publisher ships it at that tier without re-asking. Folder = visibility. Filename = artifact type (`shadow.md`, `pulse.md`, `works/essay.md`). The path relative to `library/` becomes the `name` in the publish call; the first segment becomes the `visibility` field.
 
 Everything outside `library/` is not yet conversation-grade. If the Engine believes a fragment outside `library/` should ship, it surfaces the question — the Author decides by moving the file into the appropriate tier-folder or not. The move is the consent.
 
@@ -63,7 +64,7 @@ This is why the filter enables auto-propagation. The Author's review happens onc
 ## Auto-propagation contract
 
 - Files inside `library/{public,paid,invite}/` ship automatically at that tier — the filter already passed at write time.
-- Files inside `library/` outside the three tier folders (e.g. loose files at the root) never ship. The tier must be explicit.
+- Files inside `library/` outside the four tier folders (e.g. loose files at the root) never ship. The tier must be explicit.
 - Files outside `library/` never ship without the Author moving them in.
 - Drafts (`*_draft.*`) inside any tier never ship. Promotion is renaming to the final filename within the same tier.
 - When the filter and the Engine disagree, the filter wins.
