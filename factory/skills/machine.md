@@ -79,12 +79,26 @@ Write a report to `~/alexandria/system/.autoloop/last_run.md`. **Marginal value 
 
 ## Brief outbox
 
-At the end of every run, **always overwrite** `~/alexandria/system/.brief_outbox` and commit it. Two cases:
+At the end of every run, **always overwrite** `~/alexandria/system/.brief_outbox` and commit it. The outbox is the body of the Author's morning brief — a forward-looking **dimensional menu**, never an activity recap. The Author was in yesterday's sessions; restating what was decided or absorbed is signal they already have from the commit log and `_constitution.md`.
 
-- Run produced something the Author should see (constitutional surgery, library drafts, errors that need their attention) → write one short line summarising what.
-- Run had nothing worth surfacing → write an empty file.
+Per-Author shape spec is authoritative: read `~/alexandria/system/canon/methodology.md` § Morning brief (and any override in `~/alexandria/canon_overrides.md`) and follow it literally. If that section is absent, use the default below.
 
-Either way, the outbox is overwritten. This is the explicit "I ran today and here is/isn't my signal" contract. Don't skip the write on silent days — the brief sender uses the file's commit time to distinguish "today's silence" from "yesterday's stale content," and skipping leaves the previous content in place.
+**Default shape (when per-Author canon doesn't override):**
+
+Five operation crafts × top 1–3 entries each (Genesis / Accretion / Entropy / Development / Creation). The Engine speaks in its own voice under each — specific, content-rich, **enticing**. Each entry is a hook, not a label: specific topic + why it's loaded right now + the invitation. "european auth law half-thoughts" fails; "european auth law — you should have thoughts on the GDPR×AI overlap but haven't articulated them, let's tease out" lands.
+
+Per-dimension register:
+- **Genesis** — areas the Author should have thoughts on but hasn't articulated yet: recent news, adjacent topics, incomplete sketches.
+- **Accretion** — vault/notepad fragments queued for engagement, with a **shortcut sub-section** for iCloud-shortcut captures that haven't been discussed yet.
+- **Entropy** — drift candidates, dark domains, fragments without recent vault touch.
+- **Development** — specific under-developed positions, edges to test, discrepancies the Engine wants to push on.
+- **Creation** — coalescing topics ready for articulation: write an X post, substack, formal argument to share.
+
+**Never silent.** The dimensional structure itself is the daily reminder; if nothing fresh exists under a dim, surface parked items, drift candidates, or aging open loops. Always five dimensions appear; what shifts is content.
+
+**Forbidden shapes:** activity recap ("13 Core additions today"), task lists ("apply to X"), summaries of what you did this run, plumbing reports. The brief is an invitation to engage, not a report on what happened.
+
+The outbox is overwritten on every run regardless of content. This is the explicit "I ran today and here is/isn't my signal" contract. Don't skip the write — the brief sender uses commit time to distinguish "today's silence" from "yesterday's stale content," and skipping leaves the previous content in place.
 
 The brief sender runs locally on the Author's mac (separate sovereign loop, see `factory/skills/brief-setup.md`). It pulls master before sending, reads `.brief_outbox`, checks freshness via commit time, and uses fresh non-empty content as the email body. **Git is the transport** — the outbox file is committed and pushed like any other artefact, so it works regardless of where the autoloop runs (claude.ai, github actions, local cron, anywhere). The outbox file is NOT gitignored.
 
