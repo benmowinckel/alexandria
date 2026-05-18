@@ -406,13 +406,25 @@ Both tasks follow the same principle: the Engine generates drafts, the Author cu
 
 **Morning brief.** The autoloop writes `system/.brief_outbox` at end-of-run; `system/scripts/brief.py` ships it at ~09:00 UTC. The brief is the Author's forward-looking daily lens — invitational, not a reminders list, never an activity recap. The Author was in yesterday's sessions; restating decisions or constitutional updates is signal he already has.
 
-**Shape: five dimensions × 1 entry per dimension**, named by the five operation crafts (Genesis / Accretion / Entropy / Development / Creation). The shortcut sub-section under Accretion (iCloud captures pending engagement) is a separate footer-style list, not counted as a menu entry. The Engine speaks in its own voice under each — specific, content-rich, enticing. **Each entry carries enough context to pull the Author in — a hook, not a topic label.** "european auth law half-thoughts" is a label and fails; "european auth law — you should have thoughts on the GDPR×AI overlap but haven't articulated them, let's tease out what you actually think" is a hook and lands. Specific topic + why it's loaded right now + the invitation. The Author reads each entry and feels pulled to engage, not directed to act. Per-dimension register:
+**Shape: five dimensions × 1 entry per dimension**, named by the five operation crafts (Genesis / Accretion / Entropy / Development / Creation). The shortcut sub-section under Accretion (iCloud captures pending engagement) is a separate footer-style list, not counted as a menu entry. **Default is one entry per dimension; a sixth entry is permitted only if (a) one dimension genuinely holds two top-tier signals AND (b) the total brief still skims in ≤30s.** Six is the ceiling, not a target. The autoloop's instinct is to stack — fight it.
+
+**Per-entry render — three layers, skim-skippable by design:**
+
+1. **Bold headline.** The dimension name on its own line in bold (`**Genesis**`, `**Accretion**`, etc). Single word, sets the lens.
+2. **Italic hook.** One line in italics immediately after — the specific topic + why it's loaded right now, written as a pull. "european auth law half-thoughts" is a label and fails; "*the naivety-path diagnostic is still unwritten as a general principle*" is a hook and lands. The Author reads bold + italic in <5s and knows whether to engage or skim past.
+3. **Plain detail.** 1–3 short sentences below the hook in plain text — the supporting context the Author needs *if* the hook pulls them in. Anyone reading only headlines + hooks should still have the full menu. Detail is the double-click, not the dose.
+
+The Engine speaks in its own voice. Specific topic + why loaded + invitation. The Author reads each entry and feels pulled to engage, not directed to act. Per-dimension register:
 
 - **Genesis.** *"you should have thoughts on X but haven't put them into words yet — let's tease out what you actually think."* Recent news the Author would have a take on; adjacent topics where positions are missing; sketches touched-on-but-incomplete.
 - **Accretion.** *"here's a fragment from book Y you loaded — when you're ready, let's discuss."* Vault/notepad fragments queued for engagement. Includes a **shortcut sub-section**: items the Author captured via the iCloud shortcut that haven't been discussed yet — ready, pending.
 - **Entropy.** *"things you might have forgotten."* Drift candidates, dark domains, fragments without recent vault touch.
 - **Development.** *"I want to discuss this discrepancy / underdeveloped position — let me know when you want to push it."* Specific tensions, edges to test, positions weaker than the Constitution suggests.
 - **Creation.** *"your thoughts on Z are coalescing — could be an X post, substack article, formal argument to share with friends."* Trigger output of consolidated thinking. Encourage the Author to USE what he already has.
+
+**Total-budget rule (hard):** The full brief — five entries plus the shortcut footer — must skim end-to-end in ≤30s. That's roughly 250–300 words. If a draft exceeds that, compress detail lines before adding more entries. If after compression a sixth entry would push it over, drop it. Skim budget is the structural constraint; entry count bends to it.
+
+**Render:** `brief.py` ships multipart text/plain + text/html. `**foo**` → `<strong>foo</strong>`, `*foo*` → `<em>foo</em>`, blank lines split paragraphs. Modern clients render bold/italic; plain-text clients see the markers but still get the hierarchy from line structure.
 
 Function is mental gym: daily orientation that compounds investment in the Author's thinking and files. **Never silent** — the dimensional structure itself is the reminder; if nothing's fresh under a dimension, surface parked items, drift candidates from the entropy scan, or aging open loops. Always five dimensions; what shifts is content under each. Alarms (stranded autoloop, stale routine) layer above as a header; the brief renders below. Plain register, concrete invitations, not a task list.
 

@@ -18,6 +18,7 @@ Sovereign by construction: no network calls except git (the Author's own
 remote) and SMTP (the Author's own provider).
 """
 
+import html
 import json
 import os
 import random
@@ -222,6 +223,86 @@ def pick_droplet() -> str:
     return stanzas[order[(iso_weekday - 1) % len(stanzas)]]
 
 
+def _inline(text: str) -> str:
+    """Escape, then render `**bold**` and `*italic*` from shelf droplets and
+    outbox prose. Order matters — `**` before `*` to avoid greedy collision.
+    No other markdown — keeping the parser tiny is the point.
+    """
+    s = html.escape(text)
+    s = re.sub(r"\*\*([^*\n]+?)\*\*", r"<strong>\1</strong>", s)
+    s = re.sub(r"\*([^*\n]+?)\*", r"<em>\1</em>", s)
+    return s
+
+
+def render_html(body: str) -> str:
+    """Render plaintext body into a scannable HTML email.
+
+    Splits on blank lines into paragraphs; within a paragraph, lines beginning
+    with `· `, `* `, or `- ` become a styled <ul>. Inline CSS only — email
+    clients strip <style> blocks. The autoloop owns content discipline; this
+    function owns rendering, nothing more.
+    """
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", body.strip()) if p.strip()]
+    blocks: List[str] = []
+    for para in paragraphs:
+        lines = para.split("\n")
+        bullet_re = re.compile(r"^[·*\-]\s+(.*)")
+        if all(bullet_re.match(ln.strip()) for ln in lines):
+            items = "".join(
+                f'<li style="margin:0 0 8px 0;text-indent:-14px;padding-left:14px;">'
+                f'<span style="color:#888;">·</span>&nbsp;'
+                f'{_inline(bullet_re.match(ln.strip()).group(1))}</li>'
+                for ln in lines
+            )
+            blocks.append(
+                f'<ul style="margin:0 0 18px 0;padding:0 0 0 22px;list-style:none;">{items}</ul>'
+            )
+            continue
+        head, *rest = lines
+        head_re = bullet_re.match(head.strip())
+        if head_re or any(bullet_re.match(ln.strip()) for ln in rest):
+            head_text = head_re.group(1) if head_re else head
+            rendered_head = f'<p style="margin:0 0 8px 0;">{_inline(head_text)}</p>'
+            bullet_items = []
+            paragraph_lines = []
+            for ln in rest:
+                m = bullet_re.match(ln.strip())
+                if m:
+                    bullet_items.append(m.group(1))
+                else:
+                    paragraph_lines.append(ln)
+            items_html = "".join(
+                f'<li style="margin:0 0 6px 0;text-indent:-14px;padding-left:14px;">'
+                f'<span style="color:#888;">·</span>&nbsp;{_inline(it)}</li>'
+                for it in bullet_items
+            )
+            ul_html = (
+                f'<ul style="margin:0 0 12px 0;padding:0 0 0 22px;list-style:none;">{items_html}</ul>'
+                if bullet_items else ""
+            )
+            extra = (
+                f'<p style="margin:0 0 12px 0;">{_inline(" ".join(paragraph_lines))}</p>'
+                if paragraph_lines else ""
+            )
+            blocks.append(f'<div style="margin:0 0 18px 0;">{rendered_head}{ul_html}{extra}</div>')
+            continue
+        rendered = _inline(para).replace("\n", "<br>")
+        blocks.append(f'<p style="margin:0 0 18px 0;">{rendered}</p>')
+
+    body_html = "\n".join(blocks)
+    return (
+        '<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#fafafa;'
+        'font-family:-apple-system,BlinkMacSystemFont,\'Helvetica Neue\',Arial,sans-serif;'
+        'color:#222;font-size:16px;line-height:1.55;">'
+        '<div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:6px;'
+        'padding:32px 36px;border:1px solid #eee;">'
+        f'{body_html}'
+        '<div style="margin-top:28px;padding-top:14px;border-top:1px solid #eee;'
+        'color:#aaa;font-size:13px;letter-spacing:0.02em;">alexandria.</div>'
+        '</div></body></html>'
+    )
+
+
 def load_creds() -> dict:
     """Env vars (CI) win over the local .brief_email file."""
     if os.environ.get("SMTP_HOST"):
@@ -289,6 +370,7 @@ def main() -> int:
     msg["From"] = creds["from"]
     msg["To"] = creds["to"]
     msg.set_content(body)
+    msg.add_alternative(render_html(body), subtype="html")
 
     try:
         ctx = ssl.create_default_context()
