@@ -24,6 +24,9 @@ export interface Account {
   current_period_end?: string;
   constitution_size?: number;
   week_one_email_sent_at?: string;
+  install_nudge_last_sent_at?: string;
+  install_nudge_count?: number;
+  installed_after_nudge?: boolean;
 }
 
 export type AccountStore = Record<string, Account>;

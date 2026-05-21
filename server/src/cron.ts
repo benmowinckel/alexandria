@@ -1,7 +1,7 @@
 /** Cron jobs — health digest. Called by worker scheduled handler. */
 
 import { getKV, getRecentDaysEvents, loadAccounts, saveAccount } from './kv.js';
-import { sendEmail, sendEmailsBatched, sendWeekOneCheckIn, FOUNDER_EMAIL } from './email.js';
+import { sendEmail, sendEmailsBatched, sendWeekOneCheckIn, sendInstallNudge, FOUNDER_EMAIL } from './email.js';
 import { formatPT } from './time.js';
 import { publishLibrarySignalSnapshot } from './marketplace.js';
 import { computeLibrarySignalText } from './library-signal.js';
@@ -304,6 +304,59 @@ export async function runWeekOneCheckIns(
     return { candidates: recipients.length, sent, failed, dry: false };
   } catch (err) {
     console.error('[cron] week-1 check-in failed:', err);
+    return { candidates: 0, sent: 0, failed: 0, dry };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Install nudge — daily reminder to mobile-only signups (no installed_at) to
+// finish setup on a computer. Stops once they install or after 7d. Symmetric
+// to the week-one check-in: that one runs AFTER install, this runs BEFORE.
+// Mirror: install_nudge_count tracks how many they got; installed_after_nudge
+// gets set in protocol.ts when /call fires, enabling conversion-rate query.
+// ---------------------------------------------------------------------------
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export async function runInstallNudges(
+  opts: { dry?: boolean } = {},
+): Promise<{ candidates: number; sent: number; failed: number; dry: boolean }> {
+  const dry = opts.dry === true;
+  try {
+    const accounts = await loadAccounts<AccountStore>();
+    const now = Date.now();
+    const today = new Date().toISOString().slice(0, 10);
+    const recipients: { key: string; account: Account }[] = [];
+    for (const [key, acct] of Object.entries(accounts)) {
+      if (!acct.email) continue;
+      if (acct.engagement_opt_out) continue;
+      if (acct.installed_at) continue;
+      if (acct.subscription_status !== 'active' && acct.subscription_status !== 'beta' && acct.subscription_status !== 'trialing') continue;
+      if (!acct.created_at) continue;
+      const age = now - new Date(acct.created_at).getTime();
+      if (age < DAY_MS) continue;
+      if (age > 7 * DAY_MS) continue;
+      if (acct.install_nudge_last_sent_at?.slice(0, 10) === today) continue;
+      recipients.push({ key, account: acct });
+    }
+
+    if (dry) return { candidates: recipients.length, sent: 0, failed: 0, dry: true };
+    if (recipients.length === 0) return { candidates: 0, sent: 0, failed: 0, dry: false };
+
+    const { sent, failed } = await sendEmailsBatched(recipients, async ({ key, account }) => {
+      const result = await sendInstallNudge(account.email, account.email_token);
+      if (result.ok) {
+        account.install_nudge_last_sent_at = new Date().toISOString();
+        account.install_nudge_count = (account.install_nudge_count || 0) + 1;
+        await saveAccount(key, account as unknown as Record<string, unknown>);
+      }
+      return result;
+    });
+
+    console.log(`[cron] install nudges: sent=${sent} failed=${failed} total=${recipients.length}`);
+    return { candidates: recipients.length, sent, failed, dry: false };
+  } catch (err) {
+    console.error('[cron] install nudges failed:', err);
     return { candidates: 0, sent: 0, failed: 0, dry };
   }
 }

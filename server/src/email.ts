@@ -146,6 +146,26 @@ export async function sendWeekOneCheckIn(
   });
 }
 
+export async function sendInstallNudge(
+  email: string,
+  emailToken: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
+  const SERVER_URL = process.env.SERVER_URL || 'https://api.alexandria-library.com';
+  const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; font-size: 1.05rem; line-height: 1.7;">
+  <p style="margin: 0 0 1.4rem;">hey :)</p>
+  <p style="margin: 0 0 1.4rem;">you signed up to alexandria but haven't installed on your computer yet &mdash; the part that processes what you've been saving.</p>
+  <p style="margin: 0 0 1.4rem;">when you're at your computer, <a href="${WEBSITE_URL}/signup" style="color: #3d3630;">sign in</a> to grab the setup command and finish.</p>
+  <p style="margin: 0 0 2.2rem;">keep adding via the shortcut in the meantime &mdash; the more you save, the richer your first session will be.</p>
+  <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
+  <p style="margin: 0; font-style: italic; color: #8a8078;">a.</p>
+  <p style="margin: 1.5rem 0 0; font-size: 0.72rem; color: #bbb4aa;"><a href="${SERVER_URL}/email/stop?t=${emailToken}" style="color: #8a8078;">stop these emails</a></p>
+</div>`;
+  return await sendEmail(email, 'alexandria. — finish setup.', html, {
+    unsubscribeUrl: `${SERVER_URL}/email/stop?t=${emailToken}`,
+  });
+}
+
 // sendMorningBrief / sendMorningNudge removed: morning brief + nudge are now
 // fully sovereign on each Author's machine (factory/scripts/brief.py + their
 // own SMTP creds + their own launchd schedule). Email-on-behalf-of-users is

@@ -164,13 +164,16 @@ export function registerProtocol(app: Hono) {
     // waitUntil so the KV write doesn't add latency to the /call response.
     if (!auth.account.installed_at) {
       auth.account.installed_at = new Date().toISOString();
+      if ((auth.account.install_nudge_count || 0) > 0) {
+        auth.account.installed_after_nudge = true;
+      }
       const login = auth.account.github_login;
       const accountKey = `github_${auth.account.github_id}`;
       const payload = auth.account as unknown as Record<string, unknown>;
       c.executionCtx.waitUntil(
         saveAccount(accountKey, payload).catch(err => console.error('[install_completed] saveAccount failed:', err))
       );
-      logEvent('install_completed', { author: login });
+      logEvent('install_completed', { author: login, after_nudge: auth.account.installed_after_nudge === true ? 'true' : 'false' });
     }
 
     const body = await c.req.json().catch(() => null);

@@ -11,7 +11,7 @@ import { hashApiKey, generateToken } from './crypto.js';
 import { Account, AccountStore, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
 import { generateApiKey, getAccounts, getAccountByLogin, requireAdmin } from './accounts.js';
 import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL } from './email.js';
-import { runHealthDigest, runWeekOneCheckIns } from './cron.js';
+import { runHealthDigest, runWeekOneCheckIns, runInstallNudges } from './cron.js';
 import { publishFeedback } from './marketplace.js';
 import { handleGithubPushWebhook } from './marketplace-catalog.js';
 
@@ -995,6 +995,41 @@ export function registerRoutes(app: Hono) {
     const dry = c.req.query('dry') === 'true';
     const result = await runWeekOneCheckIns({ dry });
     return c.json({ ok: true, ...result });
+  });
+
+  // Manual trigger for install nudges. ?dry=true returns eligible-recipient
+  // count without sending or stamping the idempotency flag.
+  app.post('/admin/cron/install-nudges', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    if (await checkAdminRateLimit('install-nudges', 10, 60)) return c.json({ error: 'Rate limited (10/min)' }, 429);
+    const dry = c.req.query('dry') === 'true';
+    const result = await runInstallNudges({ dry });
+    return c.json({ ok: true, ...result });
+  });
+
+  // Mirror loop for install nudges — how many of the last 30d signups got a
+  // nudge, how many of those installed after it. Tells us if the email is
+  // actually converting. If conversion stays low for 2+ weeks, kill or rewrite.
+  app.get('/admin/nudge-conversion', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    const accounts = await loadAccounts<AccountStore>();
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+    let nudged = 0;
+    let converted = 0;
+    for (const acct of Object.values(accounts)) {
+      if (!acct.created_at) continue;
+      if (new Date(acct.created_at).getTime() < thirtyDaysAgo) continue;
+      if ((acct.install_nudge_count || 0) === 0) continue;
+      nudged++;
+      if (acct.installed_after_nudge) converted++;
+    }
+    return c.json({
+      window_days: 30,
+      nudged,
+      converted,
+      conversion_rate: nudged > 0 ? Number((converted / nudged).toFixed(3)) : 0,
+    });
   });
 
 

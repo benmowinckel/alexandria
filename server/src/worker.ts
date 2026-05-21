@@ -8,7 +8,7 @@
 import { Hono } from 'hono';
 import { extractApiKey, findByApiKey } from './auth.js';
 import { updateAccountBilling, getBillingSummary } from './accounts.js';
-import { runHealthDigest, runWeekOneCheckIns } from './cron.js';
+import { runHealthDigest, runWeekOneCheckIns, runInstallNudges } from './cron.js';
 import { registerProtocol } from './protocol.js';
 import { registerRoutes } from './routes.js';
 import { registerBillingRoutes, settleMonthlyTabs, recalculateAllKinPricing, createPatronCheckoutSession } from './billing.js';
@@ -615,7 +615,7 @@ export default {
     // Daily 15:00 UTC (health digest, also publishes library-signal snapshot
     // to KV) + monthly 1st @ 02:00 UTC (settlement).
     // settleMonthlyTabs is idempotent — only does work on month-end keys.
-    await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing(), runWeekOneCheckIns()]);
+    await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing(), runWeekOneCheckIns(), runInstallNudges()]);
     ctx.waitUntil(flushEvents());
   },
 };

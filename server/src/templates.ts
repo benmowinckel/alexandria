@@ -102,6 +102,7 @@ export async function callbackPageHtml(apiKey: string, githubLogin = ''): Promis
   .welcome { font-size: 1.5rem; font-weight: 400; line-height: 1.4; }
   .line { font-size: 1.1rem; line-height: 1.9; }
   .mechanics { font-size: 0.85rem; line-height: 1.9; color: #bbb4aa; margin-top: 2.5rem; }
+  .aside { font-size: 0.85rem; line-height: 1.9; color: #bbb4aa; margin-top: 1.5rem; }
   .mechanics-row { display: block; }
   .mechanics-hint { color: #bbb4aa; }
   .mechanics .action { color: #8a8078; }
@@ -198,7 +199,8 @@ ${isReturning ? `<a class="brand-corner" href="${WEBSITE_URL}/">alexandria.</a>`
     <p class="line"><button type="button" class="action" onclick="copyCmd(this)" aria-label="copy install command">1. install <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> &mdash; everything local, nothing sent anywhere <button type="button" class="info" onclick="toggleTip(this)" aria-label="what this does">${ICON_INFO}<span class="tooltip">paste into your coding agent. creates ~/alexandria/, installs hooks and the /a skill, configures cursor / claude code / codex. under 10 seconds.</span></button></p>
     <p class="line"><button type="button" class="action" onclick="copyBlock(this)" aria-label="copy begin block">2. begin <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> &mdash; drafts a constitution from your files <button type="button" class="info" onclick="toggleTip(this)" aria-label="what this does">${ICON_INFO}<span class="tooltip">paste into a new chat. also syncs from your existing ai memory (claude, chatgpt) and loads your notepad with accretion fragments from the web. takes up to an hour.</span></button></p>
     <p class="line"><a class="action" href="${SHORTCUT_URL}" target="_blank" rel="noopener">3. shortcut <span class="icon">${ICON_EXTERNAL}</span></a> &mdash; save anything worth thinking about <button type="button" class="info" onclick="toggleTip(this)" aria-label="what this does">${ICON_INFO}<span class="tooltip">anything you don't capture, you lose. saved fragments get processed and woven into your context &mdash; surfaced by the engine when relevant, or asked about directly.</span></button></p>
-  </div>`}
+  </div>
+  <p class="aside">no agent on hand? add the shortcut and start saving &mdash; what you save becomes your first session, we'll email the rest.</p>`}
   ${kinCode ? `<div class="kin">
     <span class="kin-row">your kin code: <button type="button" class="action" onclick="copyKinCode(this)" aria-label="copy kin code"><code>${kinCode}</code> <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button></span>
     <span class="kin-row"><button type="button" class="action" onclick="copyKinLink(this)" aria-label="copy invite link">copy invite link <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> <button type="button" class="info" onclick="toggleTip(this)" aria-label="how kin works">${ICON_INFO}<span class="tooltip">share the link or just the code. when five kin become active, alexandria is free.</span></button></span>
