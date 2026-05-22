@@ -354,6 +354,18 @@ export async function runInstallNudges(
     });
 
     console.log(`[cron] install nudges: sent=${sent} failed=${failed} total=${recipients.length}`);
+
+    // Cron marker (proves the job ran). Awareness axiom — without this a
+    // silent failure stays silent. 30d TTL matches health-digest pattern.
+    try {
+      await getKV().put('cron:install_nudges', JSON.stringify({
+        t: new Date().toISOString(),
+        candidates: recipients.length,
+        sent,
+        failed,
+      }), { expirationTtl: 30 * 24 * 60 * 60 });
+    } catch { /* non-fatal */ }
+
     return { candidates: recipients.length, sent, failed, dry: false };
   } catch (err) {
     console.error('[cron] install nudges failed:', err);
