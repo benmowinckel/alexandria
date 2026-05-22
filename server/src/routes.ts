@@ -1016,11 +1016,31 @@ export function registerRoutes(app: Hono) {
     if (!auth) return c.text('Unauthorized', 403);
     if (await checkAdminRateLimit('test-nudge', 5, 60)) return c.json({ error: 'Rate limited (5/min)' }, 429);
     if (!auth.account.email) return c.text('admin account has no email', 404);
-    // Test path uses a placeholder key — don't regen the admin's real key
-    // (would invalidate their working install). Email shows the template;
-    // the curl in it is not runnable.
-    const result = await sendInstallNudge(auth.account.email, auth.account.email_token, 'TEST_KEY_NOT_RUNNABLE', auth.account.github_login);
+    // Test path: store a short-lived install token with placeholder key so the
+    // email's link works (renders the install page) without regenerating the
+    // admin's real key. 10-min TTL keeps the KV clean.
+    const testToken = generateToken();
+    await getKV().put(
+      `install:${testToken}`,
+      JSON.stringify({ api_key: 'TEST_KEY_NOT_RUNNABLE', github_login: auth.account.github_login }),
+      { expirationTtl: 600 },
+    );
+    const result = await sendInstallNudge(auth.account.email, auth.account.email_token, testToken, auth.account.github_login);
     return c.json({ ok: result.ok, error: result.error, to: auth.account.email });
+  });
+
+  // Magic-link install — email nudges link here so the user gets the actual
+  // onboarding page (copy buttons + shortcut link), no OAuth needed. Token
+  // is generated per-nudge with a 14d TTL; expired tokens fall back to
+  // /signup (clean OAuth flow).
+  app.get('/install/:token', async (c) => {
+    const token = c.req.param('token');
+    if (!token) return c.text('missing token', 400);
+    const stored = await getKV().get(`install:${token}`);
+    if (!stored) return c.redirect(`${getWebsiteUrl()}/signup`, 302);
+    const { api_key, github_login } = JSON.parse(stored) as { api_key: string; github_login: string };
+    const html = await callbackPageHtml(api_key, github_login);
+    return c.html(html);
   });
 
   // Test render — returns the onboarding callback HTML with dummy values so
