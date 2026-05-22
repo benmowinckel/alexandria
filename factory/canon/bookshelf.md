@@ -7,7 +7,7 @@
 ## Discipline
 
 - **Section A (loaded substrate):** capped at 5–7 items. Processed in depth, so cost matters. Adding an 8th means removing one.
-- **Section B (bookshelf catalog):** ~20–25 items, hard target. Each slot must clear one bar: *would the Engine fail to reach this work when relevant if it weren't listed?* If the model deploys adequately from training alone, the slot isn't earned. Pure-optimal beats canon-by-default.
+- **Section B (bookshelf catalog):** 22 items, hard target. Each slot must clear one bar: *would the Engine fail to reach this work when relevant if it weren't listed?* If the model deploys adequately from training alone, the slot isn't earned.
 - **Cost:** scan cheap (titles only), deep-extract per item on demand. Never eager-process the full corpus.
 - **Curator:** the founder. Same as the rest of canon. Marketplace input may inform; doesn't override.
 
@@ -49,7 +49,7 @@
 
 ## Section B — Bookshelf catalog
 
-*Pure-optimal canon. ~22 items. Each one defended as either the Engine wouldn't reach for it adequately from training alone, or load-bearing in the founder's constitution. Items the model heavily weights from training and would deploy without prompting are excluded — the bookshelf is not a "list of great works," it is a deploy-on-thread reference catalog. The Iliad, Kant, Darwin, Marx, the Federalist Papers, and most of the standard Western canon are deployed by the Engine when threads activate, with or without a slot here.*
+*The bookshelf is a deploy-on-thread reference catalog, not a "great works" list. Each slot was defended against the deployment test: would the Engine fail to reach this work when relevant if it weren't listed? Where the model defaults from training alone, no slot — the founder's constitution centred in the curator's actual thinking earned the rest.*
 
 ### Foundational anchors
 - Meditations — Marcus Aurelius
@@ -72,12 +72,10 @@
 - Against Interpretation — Susan Sontag
 - Discipline and Punish — Michel Foucault
 
-### Political philosophy
+### Political philosophy & history
 - The Prince — Niccolò Machiavelli
 - Leviathan — Thomas Hobbes
 - Democracy in America — Alexis de Tocqueville
-
-### History
 - Muqaddimah — Ibn Khaldun
 
 ### Literature
