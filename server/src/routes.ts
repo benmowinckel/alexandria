@@ -1019,7 +1019,7 @@ export function registerRoutes(app: Hono) {
     // Test path uses a placeholder key — don't regen the admin's real key
     // (would invalidate their working install). Email shows the template;
     // the curl in it is not runnable.
-    const result = await sendInstallNudge(auth.account.email, auth.account.email_token, 'TEST_KEY_NOT_RUNNABLE');
+    const result = await sendInstallNudge(auth.account.email, auth.account.email_token, 'TEST_KEY_NOT_RUNNABLE', auth.account.github_login);
     return c.json({ ok: result.ok, error: result.error, to: auth.account.email });
   });
 

@@ -355,7 +355,7 @@ export async function runInstallNudges(
       const apiKey = generateApiKey();
       const apiKeyHash = hashApiKey(apiKey);
       account.api_key_hash = apiKeyHash;
-      const result = await sendInstallNudge(account.email, account.email_token, apiKey);
+      const result = await sendInstallNudge(account.email, account.email_token, apiKey, account.github_login);
       if (result.ok) {
         await setAuthIndex(apiKeyHash, key);
         account.install_nudge_last_sent_at = new Date().toISOString();

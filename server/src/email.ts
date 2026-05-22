@@ -150,14 +150,34 @@ export async function sendInstallNudge(
   email: string,
   emailToken: string,
   apiKey: string,
+  githubLogin: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
   const SERVER_URL = process.env.SERVER_URL || 'https://api.alexandria-library.com';
+  const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337';
+  const BLOCK_URL = 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/block.md';
+  const MECHANICS_URL = `${WEBSITE_URL}/Mechanics.md`;
   const curl = `curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh | bash -s -- ${apiKey}`;
+  const kinLink = `${WEBSITE_URL}/signup?ref=${encodeURIComponent(githubLogin)}`;
   const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 520px; margin: 0 auto; padding: 48px 24px; color: #3d3630; font-size: 1.05rem; line-height: 1.7;">
   <p style="margin: 0 0 1.4rem;">hey :)</p>
-  <p style="margin: 0 0 1rem;">paste into your coding agent to finish setup:</p>
-  <pre style="margin: 0 0 1.4rem; padding: 14px 16px; background: #f5f0e8; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; word-break: break-all; color: #3d3630;">${curl}</pre>
-  <p style="margin: 0 0 2.2rem;">keep adding via the shortcut meanwhile &mdash; what you save becomes your first session.</p>
+  <p style="margin: 0 0 1.8rem; color: #8a8078;">haven't installed yet. setup, ready when you are:</p>
+
+  <p style="margin: 0 0 0.5rem;">1. install &mdash; everything local, nothing sent anywhere</p>
+  <pre style="margin: 0 0 1.6rem; padding: 14px 16px; background: #f5f0e8; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.78rem; line-height: 1.5; white-space: pre-wrap; word-break: break-all; color: #3d3630;">${curl}</pre>
+
+  <p style="margin: 0 0 0.5rem;">2. begin &mdash; drafts a constitution from your files</p>
+  <p style="margin: 0 0 1.6rem; font-size: 0.95rem; color: #8a8078;"><a href="${BLOCK_URL}" style="color: #3d3630;">paste this block</a> into a new chat after install</p>
+
+  <p style="margin: 0 0 0.5rem;">3. shortcut &mdash; save anything worth thinking about</p>
+  <p style="margin: 0 0 2rem; font-size: 0.95rem; color: #8a8078;"><a href="${SHORTCUT_URL}" style="color: #3d3630;">add the shortcut</a></p>
+
+  <p style="margin: 0 0 1.6rem; color: #8a8078; font-size: 0.95rem;">keep adding via the shortcut meanwhile &mdash; what you save becomes your first session.</p>
+
+  <p style="margin: 0 0 0.4rem; font-size: 0.9rem; color: #8a8078;">your kin code: <code style="font-family: ui-monospace, monospace; font-size: 0.85em; padding: 1px 6px; background: rgba(61,54,48,0.05); border-radius: 3px; color: #3d3630;">${githubLogin}</code> &mdash; <a href="${kinLink}" style="color: #8a8078;">invite link</a></p>
+
+  <p style="margin: 1rem 0 1.6rem; font-size: 0.85rem; color: #bbb4aa;">we never see your data &mdash; <a href="${MECHANICS_URL}" style="color: #8a8078;">Mechanics.md</a></p>
+
   <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
   <p style="margin: 0; font-style: italic; color: #8a8078;">a.</p>
   <p style="margin: 1.5rem 0 0; font-size: 0.72rem; color: #bbb4aa;"><a href="${SERVER_URL}/email/stop?t=${emailToken}" style="color: #8a8078;">stop these emails</a></p>
