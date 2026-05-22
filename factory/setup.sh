@@ -79,6 +79,16 @@ fetch_factory "hooks/shim.sh" "$ALEX_DIR/system/hooks/shim.sh" "hooks/shim.sh" y
 chmod +x "$ALEX_DIR/system/hooks/shim.sh"
 fetch_factory "hooks/payload.sh" "$ALEX_DIR/system/.hooks_payload" "hooks/payload.sh" yes
 
+# Allowed signers — the trust root for payload signature verification.
+# Embedded here rather than fetched separately so the public key arrives in the
+# same atomic install step as the shim that uses it. To rotate, replace the
+# line below and ship a new setup.sh release.
+# Fingerprint: SHA256:kAas5fUUnV/XcfKoH3Ysm7IZrqY2HcQSuhSaMoAMqnA
+cat > "$ALEX_DIR/system/allowed_signers" <<'EOF'
+alexandria-payload-signing ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHv5jBpDuEg2Nae7QrtNQ9ycclulY8+G4iZOjd2Kdw+9 alexandria-payload-signing
+EOF
+chmod 644 "$ALEX_DIR/system/allowed_signers"
+
 # Canon (cache locally — one module)
 fetch_factory "canon/methodology.md" "$ALEX_DIR/system/canon/methodology.md" "canon/methodology.md" yes
 
