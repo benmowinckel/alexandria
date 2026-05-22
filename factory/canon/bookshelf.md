@@ -23,27 +23,41 @@
 
 ## Section A — Loaded substrate
 
-*Deep-extract on cold-start. Capped at 5–7 items.*
+*Deep-extract on cold-start. Capped at 5–7 items. Mix of universal public-domain canonical texts (work for every Author from training knowledge alone) and founder-curated specifics (curation signal; some sources founder-local — fork the slot to your own equivalent on install).*
 
-### 1. Princeton ENG 203 — *The Essay* (Jeff Nunokawa, Fall 2019)
+### 1. Meditations — Marcus Aurelius
 
-**Source:** `~/alexandria/files/vault/english/eng203_nunokawa_coursepack.md` (194 pages, OCR via macOS Vision). Pre-extracted candidates archive at `~/alexandria/files/vault/english/eng203_nunokawa_candidates.md` (founder's reference; Engine should re-extract per-Author against their own constitution).
+**Source:** Public domain — the Engine knows the text from training. Canonical English reference at [Project Gutenberg](https://www.gutenberg.org/ebooks/2680).
 
-**What it is:** A Princeton coursepack assembled by Professor Jeff Nunokawa — segments of essays, fiction, criticism, and poetry he loved enough to teach. Wilde / Chandler / Goffman / Nabokov / Pater / Emerson / Hazlitt / Hume / Johnson / Trilling / Kennan / Keynes / McCarthy / Woolf. The Author took this class at Princeton and rates Jeff highly enough to seed Alexandria with the coursepack.
+**What it is:** A Roman emperor's private philosophical journal — the Stoic operating manual, written by Aurelius for himself. Compact paragraphs, each a candidate fragment. Cross-applies to any Author's constitutional threads on self-conduct, duty, mortality, equanimity, and the imperfect-as-acceptable. Eager cold-start extraction surfaces high-density candidates for any thinker.
 
 ---
 
-### 2. Founder's YouTube curation
+### 2. Tao Te Ching — Laozi
+
+**Source:** Public domain — the Engine knows the text from training. Canonical English reference at [Project Gutenberg](https://www.gutenberg.org/ebooks/216).
+
+**What it is:** The foundational Daoist text — 81 chapters of compressed paradoxical wisdom on power, leadership, action through non-action, and the Way. ~5k words; maximum density. Universally applicable across any Author's constitutional threads.
+
+---
+
+### 3. Founder's YouTube curation
 
 **Source:** [https://youtube.com/playlist?list=PLOP9v1FPBYePbN3BduyTI_mw7s6HGJqXV](https://youtube.com/playlist?list=PLOP9v1FPBYePbN3BduyTI_mw7s6HGJqXV)
 
-**Local transcripts:** `~/alexandria/files/vault/youtube_transcripts/` (already-processed subset; the playlist is the canonical source and may contain newer additions not yet transcribed).
-
-**What it is:** The founder's curated playlist of videos / podcasts worth processing — external thinkers whose register, mechanisms, or compressions tend to land for him. The Engine should treat the playlist URL as canonical (newer additions take priority) and use the transcripts folder as a processed cache.
+**What it is:** The founder's curated playlist of videos / podcasts worth processing — external thinkers whose register, mechanisms, or compressions tend to land for him. Engine treats the playlist URL as canonical (newer additions take priority); per-Author transcript extraction depends on the host platform's tooling.
 
 ---
 
-*Slots 3–7 open.*
+### 4. Princeton ENG 203 — *The Essay* (Jeff Nunokawa, Fall 2019)
+
+**Source:** `~/alexandria/files/vault/english/eng203_nunokawa_coursepack.md` on the founder's machine (194 pages, OCR via macOS Vision). Not shipped with factory; on other Authors' machines this path won't resolve. The slot is founder-curation signal — the *kind* of source material that earns Section A — plus an invitation to fork to your own dense corpus (coursepack, archived class, deep technical book, hand-curated essay collection).
+
+**What it is:** A Princeton coursepack assembled by Professor Jeff Nunokawa — segments of essays, fiction, criticism, and poetry he loved enough to teach. Wilde / Chandler / Goffman / Nabokov / Pater / Emerson / Hazlitt / Hume / Johnson / Trilling / Kennan / Keynes / McCarthy / Woolf. The founder took this class at Princeton and rates Jeff highly enough to seed Alexandria with the coursepack.
+
+---
+
+*Slots 5–7 open.*
 
 ---
 
