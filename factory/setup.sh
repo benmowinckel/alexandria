@@ -25,6 +25,15 @@ fetch_factory() {
   return 1
 }
 
+# Existing-install fallback: if no key was passed but one is already stored
+# locally from a prior install, use it. Makes reinstall a one-liner for
+# existing Authors — `curl … | bash` instead of having to find their key again.
+# Passing a key explicitly still overrides (for rotations).
+if [ -z "$API_KEY" ] && [ -f "$ALEX_DIR/system/.api_key" ]; then
+  API_KEY=$(tr -d '[:space:]' < "$ALEX_DIR/system/.api_key" 2>/dev/null)
+  [ -n "$API_KEY" ] && echo "Reusing existing API key from $ALEX_DIR/system/.api_key"
+fi
+
 if [ -z "$API_KEY" ]; then
   echo "Usage: bash setup.sh <API_KEY>"
   echo "Get your key at https://mowinckel.ai/signup"
