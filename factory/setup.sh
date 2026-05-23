@@ -271,22 +271,29 @@ GITIGNORE
 
   SIGNING_OK=""
   SIGNING_REASON=""
+  KEY_REGISTERED=""
   if [ -z "$SSH_PUBKEY" ]; then
     SIGNING_REASON="no SSH key at ~/.ssh/*.pub — run 'ssh-keygen -t ed25519' then re-run setup"
   elif ! command -v gh &>/dev/null || ! gh auth status &>/dev/null 2>&1; then
     SIGNING_REASON="gh CLI not authenticated — run 'gh auth login' then re-run setup"
   else
-    # Register this machine's SSH key as a GitHub signing key. Idempotent —
-    # GitHub returns 422 on duplicates which we swallow. Multi-machine: each
-    # machine's key gets registered separately. Requires admin:ssh_signing_key
-    # scope (baked into Alexandria's OAuth request at signup); pre-scope users
-    # see a re-authorize prompt at next web login.
-    gh ssh-key add "$SSH_PUBKEY" --type signing \
-      --title "Alexandria ($(hostname -s 2>/dev/null || echo machine))" \
-      &>/dev/null || true
+    # Try to register this machine's SSH key as a GitHub signing key.
+    # Exit 0 = newly registered. Non-zero output containing "already" =
+    # duplicate (was already registered — also success from our POV).
+    # Non-zero with scope mention = gh CLI auth missing
+    # admin:ssh_signing_key scope (independent from Alexandria's OAuth
+    # scope; gh CLI has its own token). Fall through to local-signing-only
+    # and tell the user how to fix.
+    KEY_ADD_OUT="$(gh ssh-key add "$SSH_PUBKEY" --type signing \
+      --title "Alexandria ($(hostname -s 2>/dev/null || echo machine))" 2>&1)"
+    if [ $? -eq 0 ] || echo "$KEY_ADD_OUT" | grep -qi "already"; then
+      KEY_REGISTERED=1
+    fi
 
     # Configure Git for SSH signing — REPO-LOCAL. No --global.
     # User's other repos (work GPG, etc.) are untouched.
+    # Local signing works regardless of whether GitHub knows the key —
+    # `git verify-commit` against allowed_signers is fully local.
     git -C "$ALEX_DIR" config gpg.format ssh 2>/dev/null
     git -C "$ALEX_DIR" config user.signingkey "$SSH_PUBKEY" 2>/dev/null
     git -C "$ALEX_DIR" config commit.gpgsign true 2>/dev/null
@@ -297,7 +304,10 @@ GITIGNORE
     ALLOWED="$HOME/.config/git/allowed_signers"
     touch "$ALLOWED" 2>/dev/null
     SIGN_EMAIL="$(gh api user --jq .email 2>/dev/null)"
-    [ -z "$SIGN_EMAIL" ] || [ "$SIGN_EMAIL" = "null" ] && SIGN_EMAIL="$(gh api user --jq .login 2>/dev/null)@users.noreply.github.com"
+    if [ -z "$SIGN_EMAIL" ] || [ "$SIGN_EMAIL" = "null" ]; then
+      SIGN_LOGIN="$(gh api user --jq .login 2>/dev/null)"
+      SIGN_EMAIL="${SIGN_LOGIN}@users.noreply.github.com"
+    fi
     PUBKEY_CONTENTS="$(cat "$SSH_PUBKEY" 2>/dev/null)"
     ENTRY="$SIGN_EMAIL $PUBKEY_CONTENTS"
     grep -qxF "$ENTRY" "$ALLOWED" 2>/dev/null || echo "$ENTRY" >> "$ALLOWED"
@@ -322,8 +332,10 @@ GITIGNORE
     gh repo create alexandria-private --private --source="$ALEX_DIR" --push --yes &>/dev/null || true
   fi
 
-  if [ -n "$SIGNING_OK" ]; then
+  if [ -n "$KEY_REGISTERED" ]; then
     echo "  signing: enabled (commits signed with $(basename "$SSH_PUBKEY"); GitHub verified badge active)"
+  elif [ -n "$SIGNING_OK" ]; then
+    echo "  signing: enabled locally (commits signed; verifiable via 'git verify-commit'). GitHub verified badge not yet active — register $SSH_PUBKEY at https://github.com/settings/ssh/new?type=signing OR run 'gh auth refresh -s admin:ssh_signing_key' and re-run setup"
   else
     echo "  signing: skipped ($SIGNING_REASON)"
   fi
