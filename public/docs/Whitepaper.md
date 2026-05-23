@@ -577,6 +577,24 @@ The reference-frame argument is the philosophical foundation. The strategic moat
 
 *This is not an accident.* **Technical moats dissolve as intelligence becomes a commodity. Social and cultural moats become more valuable as intelligence becomes a commodity** — because they are the things intelligence cannot manufacture. *You cannot synthesise a populated network. You cannot manufacture a recognised cultural convention overnight. You cannot compress years of brand association into a model release.*
 
+---
+
+*The structural argument compresses to a derivation.* Anything that resists infinite intelligence + energy + labor reduces to four primitives — **three stocks of irreplaceable substance** plus **one binding force on stocks**. The stocks: *natural stock* (the universe gave a fixed endowment — land, minerals, spectrum); *built capital* (atoms must move through spacetime, even with infinite intelligence — fabs, datacenters, edge compute); *living matter* (this-particular-causal-instance is uncopiable — finite humans, brands, originals). The binding force: *coordinated incumbency* (multi-agent equilibrium that requires synchronous switching across actors to break — Visa, GitHub, every default habitat).
+
+The asymmetry is structural. *Three stocks are static and can exist alone as conservation — a mineral in the ground, a fab in operation, a person alive. The binding force is relational and cannot exist alone at all, because it IS a relation among entities, not a substance. Without stocks and agents to relate, there is no equilibrium.* **The rope; the stocks are what it holds.**
+
+**Alexandria sits on one stock + the binding force on it.** *Living matter — each Author finite, unique, unsynthesizable; the type-setter, not the holder.* Held by *coordinated incumbency — the network and default habitat only Alexandria operates; the rope that keeps the Author in place.* Natural stock is absent (no geographic, spectrum, or extraction anchor); built capital is forfeited by design (sovereignty cannot coexist with data lock-in). *One pillar + the rope holding it. The rope does real work but is not a second pillar.*
+
+---
+
+**Biographer-shape, not Wikipedia-shape.** *A Wikipedia profile is shallow third-party summary — public-information depth, a blank someone populates without ever meeting the subject. A biography is the opposite: a biographer sits with the subject for months, observes passively, engages actively, builds the high-fidelity compression that only sustained intimate engagement produces, then writes the book that reveals it.*
+
+**Alexandria is biographer-shape.** *The Engine is the biographer (sustained Socratic engagement, accumulated context across sessions). The Author is the subject. The Library is where the biographies live — each `/library/{author}` page is the equivalent of a biographical work, not a Wikipedia profile.* **That is why we call them Authors. That is why the Library exists. That is the point.**
+
+*The fidelity Wikipedia structurally cannot produce, Alexandria produces by construction* — and is the inverse of the platform-stack observation play (third-party profile assembled from behaviour at scale). **Alexandria assembles a first-person biography through structured extraction with the subject's collaboration.** *The fidelity gap compounds with every session and is unrecoverable from observation alone.*
+
+---
+
 **One. The convention slot.** Once "Alexandrian = the substrate where serious minds gather" is the recognised cultural type, *displacement is near-impossible.* Same shape as WordPress dominance ("build it on WordPress" as the default sentence) or GitHub dominance ("push it to GitHub"). The slot is winner-takes-most. *The architectural compression: schelling point for writing and reading personal thought — the canonical place humans publish first-person articulation and the canonical place readers go to find it.* The slot holds even when readers are mostly ai-mediated: *ai parallelises compute trivially, but selection does not — even infinite intelligence must choose where to look first.* Canonical corpora make ai selection cheap.
 
 **Two. The network of populated minds.** Every Author with a populated Constitution and Library page contributes to the discovery surface for every other Author. *Each new Author adds value continuously — a fork has empty shelves; recruiting equivalents is years of work.* Selection of the founding cohort is about *seed quality*, not threshold.
@@ -600,6 +618,12 @@ Why the labs do not — and structurally cannot — do this themselves. *Four re
 **Four. Brand mismatch.** *"ai lab" and "neutral user-side hub" are different brand promises with different reader expectations.*
 
 By the time a lab considers it, the convention slot is already held, the network is populated, the integration sprawl exists, the signal asymmetry compounds. **Catching up is uneconomic by then.**
+
+---
+
+*Two primitives, depth-mitigated.* **SpaceX moats compose four primitives. Religion composes four. Alexandria deliberately composes two — sovereignty forces it.** Sparseness is *forced* (correct strategic decision; sovereignty is non-negotiable), not aesthetic. The structural cost is honest: *single-primitive failure collapses the whole.* If "Alexandrian" never achieves cultural-slot recognition, the unique cognition stays unique-in-private-filesystems with no defensibility. If the founding cohort fails to develop deep, unique frames worth networking around, the binding force has nothing to bind.
+
+**The mitigation is depth in each primitive, not breadth across primitives.** *Living matter being uniquely deep — biographer-shape extraction produces frames competitors cannot replicate by observation.* *Coordinated incumbency being uniquely strong — Alexandria as the only habitat with this specific shape (sovereignty + cross-LLM + signed-provenance) is structurally hostile to lab-stack competition.* **Sparse-and-deep beats broad-and-shallow when sovereignty is the constraint.**
 
 ---
 
