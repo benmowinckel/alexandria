@@ -84,9 +84,12 @@ export default async function SignupPage({
           <section className="primer-section">
             <p className="primer-label">the sovereignty.</p>
             <p>
-              your files live on your own machine and your
-              github. we never see what you do not publish. if
-              alexandria disappears tomorrow, you keep everything.{' '}
+              your worldline lives in a signed git repo on your
+              machine, anchored to your own key. github is the
+              default host; any git host works. if alexandria
+              disappears tomorrow, you keep everything. if github
+              disappears, the ledger ports. we never see what you
+              do not publish.{' '}
               <MechanicsCopy content={mechanicsContent} /> lists every byte that touches our server.
             </p>
           </section>
@@ -96,8 +99,10 @@ export default async function SignupPage({
             <p>
               one click below for github. one curl command in your
               terminal after. the folder appears at <code>~/alexandria/</code>,
-              your ai picks it up at the next session, and you are
-              in. five minutes to your first session.
+              initialised as a git repo with commit signing
+              configured to your ssh key. your ai picks it up at
+              the next session, and you are in. five minutes to
+              your first session.
             </p>
           </section>
         </article>

@@ -293,7 +293,11 @@ export function registerRoutes(app: Hono) {
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: `${getServerUrl()}/auth/github/callback`,
-      scope: 'read:user user:email',
+      // admin:ssh_signing_key lets setup.sh register the Author's SSH key as a GitHub signing
+      // key on each machine (idempotent), so commits to ~/alexandria/ are cryptographically
+      // signed and surface GitHub's "verified" badge. Existing users see a one-time scope-upgrade
+      // prompt at next login. See .tasks/git-protocol-mandate.md.
+      scope: 'read:user user:email admin:ssh_signing_key',
       state,
     });
 

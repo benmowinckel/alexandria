@@ -40,13 +40,13 @@ fi
 # ── Prerequisites ─────────────────────────────────────────────────
 
 echo "Checking prerequisites..."
-command -v git &>/dev/null && echo "  git: ok" || echo "  git: missing — install from https://git-scm.com (optional, enables backup)"
+command -v git &>/dev/null && echo "  git: ok" || echo "  git: missing — install from https://git-scm.com (required — your worldline is a Git repo)"
 command -v node &>/dev/null && echo "  node: ok" || echo "  node: missing — install from https://nodejs.org (required for Claude Code)"
 command -v python3 &>/dev/null && echo "  python3: ok" || echo "  python3: missing — install Python 3 (required for Cursor hooks)"
 if command -v gh &>/dev/null; then
-  gh auth status &>/dev/null 2>&1 && echo "  github cli: ok" || echo "  github cli: not logged in — run 'gh auth login' (optional, enables cloud backup)"
+  gh auth status &>/dev/null 2>&1 && echo "  github cli: ok" || echo "  github cli: not logged in — run 'gh auth login' (recommended — enables commit signing and GitHub backup)"
 else
-  echo "  github cli: not installed — https://cli.github.com (optional)"
+  echo "  github cli: not installed — https://cli.github.com (recommended — enables commit signing and GitHub backup)"
 fi
 echo ""
 echo "Setting up Alexandria..."
@@ -230,13 +230,24 @@ if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   echo "  Codex: configured"
 fi
 
-# ── 4. Git backup (nice to have) ─────────────────────────────────
+# ── 4. Git substrate — your worldline as cryptographic ledger ─────
+#
+# ~/alexandria/ is initialised as a local Git repo. Every Constitution edit,
+# marginalia drain, vault drop you preserve becomes a commit. Commits are
+# signed with your own SSH key (registered with GitHub as a signing key);
+# the repo IS the substrate format. Git is the protocol; GitHub is the
+# default host. The signing config is repo-local — does NOT touch your
+# global Git config or existing signing setup for other repos.
+#
+# Idempotent on re-run: signing config and key upload run unconditionally
+# so existing installs gain signing on simple re-run of this setup script.
 
 if command -v git &>/dev/null; then
-  (
-    cd "$ALEX_DIR"
-    if [ ! -d ".git" ]; then
-      cat > .gitignore << 'GITIGNORE'
+  # git -C "$ALEX_DIR" runs git commands in that dir without cd'ing the parent shell.
+  # Status echoes outside any silenced subshell so the user sees them.
+
+  if [ ! -d "$ALEX_DIR/.git" ]; then
+    cat > "$ALEX_DIR/.gitignore" << 'GITIGNORE'
 # Server-managed (regenerated)
 system/canon/
 system/hooks/
@@ -248,14 +259,74 @@ files/library/
 **/node_modules/
 **/package-lock.json
 GITIGNORE
-      git init -q
-      git add -A
-      git commit -q -m "alexandria: genesis" --no-gpg-sign
+    git -C "$ALEX_DIR" init -q 2>/dev/null || true
+  fi
+
+  # Detect an existing SSH public key (any type — works for ed25519, rsa, ecdsa).
+  # No hard-coded path list — ls *.pub, take the first one.
+  SSH_PUBKEY=""
+  for pubkey in "$HOME"/.ssh/*.pub; do
+    [ -f "$pubkey" ] && SSH_PUBKEY="$pubkey" && break
+  done
+
+  SIGNING_OK=""
+  SIGNING_REASON=""
+  if [ -z "$SSH_PUBKEY" ]; then
+    SIGNING_REASON="no SSH key at ~/.ssh/*.pub — run 'ssh-keygen -t ed25519' then re-run setup"
+  elif ! command -v gh &>/dev/null || ! gh auth status &>/dev/null 2>&1; then
+    SIGNING_REASON="gh CLI not authenticated — run 'gh auth login' then re-run setup"
+  else
+    # Register this machine's SSH key as a GitHub signing key. Idempotent —
+    # GitHub returns 422 on duplicates which we swallow. Multi-machine: each
+    # machine's key gets registered separately. Requires admin:ssh_signing_key
+    # scope (baked into Alexandria's OAuth request at signup); pre-scope users
+    # see a re-authorize prompt at next web login.
+    gh ssh-key add "$SSH_PUBKEY" --type signing \
+      --title "Alexandria ($(hostname -s 2>/dev/null || echo machine))" \
+      &>/dev/null || true
+
+    # Configure Git for SSH signing — REPO-LOCAL. No --global.
+    # User's other repos (work GPG, etc.) are untouched.
+    git -C "$ALEX_DIR" config gpg.format ssh 2>/dev/null
+    git -C "$ALEX_DIR" config user.signingkey "$SSH_PUBKEY" 2>/dev/null
+    git -C "$ALEX_DIR" config commit.gpgsign true 2>/dev/null
+
+    # allowed_signers for local `git verify-commit` / `git log --show-signature`.
+    # Standard git location. Append idempotently.
+    mkdir -p "$HOME/.config/git" 2>/dev/null
+    ALLOWED="$HOME/.config/git/allowed_signers"
+    touch "$ALLOWED" 2>/dev/null
+    SIGN_EMAIL="$(gh api user --jq .email 2>/dev/null)"
+    [ -z "$SIGN_EMAIL" ] || [ "$SIGN_EMAIL" = "null" ] && SIGN_EMAIL="$(gh api user --jq .login 2>/dev/null)@users.noreply.github.com"
+    PUBKEY_CONTENTS="$(cat "$SSH_PUBKEY" 2>/dev/null)"
+    ENTRY="$SIGN_EMAIL $PUBKEY_CONTENTS"
+    grep -qxF "$ENTRY" "$ALLOWED" 2>/dev/null || echo "$ENTRY" >> "$ALLOWED"
+    git -C "$ALEX_DIR" config gpg.ssh.allowedSignersFile "$ALLOWED" 2>/dev/null
+
+    SIGNING_OK=1
+  fi
+
+  # Genesis commit — signed if signing was configured, unsigned otherwise.
+  # Soft fallback throughout.
+  if [ -z "$(git -C "$ALEX_DIR" log -1 --format=%H 2>/dev/null)" ]; then
+    git -C "$ALEX_DIR" add -A 2>/dev/null
+    if [ -n "$SIGNING_OK" ]; then
+      git -C "$ALEX_DIR" commit -q -m "alexandria: genesis" 2>/dev/null \
+        || git -C "$ALEX_DIR" commit -q -m "alexandria: genesis" --no-gpg-sign 2>/dev/null
+    else
+      git -C "$ALEX_DIR" commit -q -m "alexandria: genesis" --no-gpg-sign 2>/dev/null
     fi
-    if command -v gh &>/dev/null && gh auth status &>/dev/null; then
-      gh repo create alexandria-private --private --source=. --push --yes 2>/dev/null || true
-    fi
-  ) &>/dev/null || true
+  fi
+
+  if command -v gh &>/dev/null && gh auth status &>/dev/null 2>&1; then
+    gh repo create alexandria-private --private --source="$ALEX_DIR" --push --yes &>/dev/null || true
+  fi
+
+  if [ -n "$SIGNING_OK" ]; then
+    echo "  signing: enabled (commits signed with $(basename "$SSH_PUBKEY"); GitHub verified badge active)"
+  else
+    echo "  signing: skipped ($SIGNING_REASON)"
+  fi
 fi
 
 # ── 5. Public fork (where Author additions surface in the marketplace) ──

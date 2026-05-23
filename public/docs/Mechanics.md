@@ -60,9 +60,13 @@ The setup is one bash script, ~685 lines. The hooks payload is one bash script, 
 
 `~/alexandria/` is initialised as a local Git repository. Your worldline IS a commit history — every Constitution edit, marginalia drain, and vault drop you preserve becomes a commit. The repo is yours; you can push to any Git remote (GitHub is the default if you have `gh` authenticated; any host works).
 
-**Currently:** commits are unsigned by default (the genesis commit uses `--no-gpg-sign`). The trust model for *your worldline* is the Git history itself — local, portable, in your hands.
+**How signing works.** `setup.sh` detects an existing SSH public key under `~/.ssh/*.pub` (first one found, any type — Ed25519, RSA, ECDSA). If found and you have `gh` authenticated, it (a) registers that key with GitHub as a *signing* key via `gh ssh-key add --type signing` (idempotent — re-runs and multi-machine setups quietly do the right thing), (b) configures git inside `~/alexandria/` to sign with that key, repo-local — your global git config and other repos are untouched, (c) writes the key + your email to `~/.config/git/allowed_signers` so `git verify-commit` and `git log --show-signature` work locally, and (d) signs the genesis commit. Every subsequent commit is signed automatically. GitHub will display "Verified" badges on your signed commits.
 
-**On the immediate roadmap:** setup.sh will configure commit signing using your own SSH key (no key generation, just registering an existing key as a GitHub signing key via `gh ssh-key add --type signing`, and configuring the Alexandria repo only — not your global Git config). Every commit becomes signed; Alexandria's API surfaces GitHub's `commit.verification.verified` status. The result: a cryptographically anchored cognitive ledger that is tamper-evident, portable, and verifiable by anyone with your public key. Plan and execution detail in `.tasks/git-protocol-mandate.md` in this repo. Once shipped, this section will describe the live mechanism, not a roadmap.
+**Soft fallback.** If you have no SSH key or `gh` isn't authenticated, setup prints `signing: skipped (...)` with the reason and the genesis commit goes through unsigned. The worldline still works — you just don't get the verified ledger property. Run `ssh-keygen -t ed25519` or `gh auth login` and re-run setup to enable signing later.
+
+**OAuth scope.** Alexandria's GitHub OAuth requests `admin:ssh_signing_key` at signup so `setup.sh` can register the key without a separate scope-refresh step. Existing pre-scope users see a one-time re-authorize prompt at next web login.
+
+**What you can verify yourself.** `git -C ~/alexandria log --show-signature` shows the signature on each commit. `git -C ~/alexandria verify-commit HEAD` returns "Good signature" if signing is configured. On GitHub, the commit history page shows the green "Verified" badge on each commit. The signing key never leaves your machine; only the public key is uploaded to GitHub.
 
 ## What gets modified in your config
 
