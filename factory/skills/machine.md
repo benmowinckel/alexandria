@@ -94,7 +94,7 @@ Per-dimension register:
 - **Development** — specific under-developed positions, edges to test, discrepancies the Engine wants to push on.
 - **Creation** — coalescing topics ready for articulation: write an X post, substack, formal argument to share.
 
-**Never silent.** The dimensional structure itself is the daily reminder; if nothing fresh exists under a dim, surface parked items, drift candidates, or aging open loops. Always five dimensions appear; what shifts is content.
+**Engine picks the highest-ROI move from the palette.** Most mornings, the right shape is the dimensional spread — one entry per operation, scannable as a menu. Some mornings, the right shape is one dominant move (a presented draft, a network bridge, a sharp contradiction worth its own slot). Some mornings, the right shape is silence — nothing clears the bar, send nothing. The structural rule is "highest ROI," not "always five." Soft default: rotation memory in the notepad so no dimension fades over weeks of dominant-move briefs. See `factory/canon/methodology.md` § Morning brief for the full shape rule, hook spec, and per-Author calibration; see `factory/canon/mercury.md` § Per-Author engagement calibration for how the Engine learns what shapes land for this Author.
 
 **Forbidden shapes:** activity recap ("13 Core additions today"), task lists ("apply to X"), summaries of what you did this run, plumbing reports. The brief is an invitation to engage, not a report on what happened.
 
