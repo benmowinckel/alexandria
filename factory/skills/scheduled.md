@@ -64,6 +64,20 @@ Then check constitution structural fit. Not every run — only when you notice s
 3. The proposal standard is "what this Author would say to an intelligent stranger." Use `files/library/filter.md` as the safety policy. No secrets, raw private material, private work product, health/finance/legal details, or anything that would surprise the Author to see public.
 4. Do not copy the proposal to `shadow.md`. The Author accepts by editing or saving the final public file. Final `shadow.md` is consent; proposal is not.
 
+## Session brief (write before exit)
+
+After vault processing and shadow maintenance, write `~/alexandria/system/.session_brief.md`. This is the launchpad the next /a session reads first — replaces the cold full sweep, lets the live session sprint into work instead of overhead.
+
+Shape — intelligence decision, not a fixed template. Soft default sections:
+
+- **Live edges.** Specific seams in the constitution worth pushing on, with file + section pointers (e.g. "Core.md L75 confidence vs Power.md L55 hedge on immortality"). 1-5 entries, ordered by ROI.
+- **Drift signals.** Constitution edits that haven't propagated to derivative / marginalia / library — what's stale where.
+- **Parked threads.** Open loops from prior /a with their entry points; what would unblock them.
+- **Vault delta.** One line: how much intake landed since last run, what cluster (love / political / philosophical / etc.). Detail in the vault.
+- **Maintenance.** One line: clean, or what's pending and where the detail lives. Never dump diffs or error tails.
+
+≤5KB total. Hooks for the next session, not summary of this run. If nothing's loaded under a section, drop it — don't pad. If the file from a prior run still applies (no constitution edits, no new vault), say so and move on rather than rewriting from scratch.
+
 If ~/alexandria/ is a git repo, commit changes and push. Write a report to ~/alexandria/system/.autoloop/last_run.md — include entries processed, entries remaining, and any signal you noticed but couldn't act on yet.
 
 ## Brief delivery is NOT this loop's job

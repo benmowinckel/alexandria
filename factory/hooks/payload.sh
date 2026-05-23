@@ -179,33 +179,23 @@ if [ "$MODE" = "session-start" ]; then
   # signal.md: observations accumulated from passive sessions — Engine reads directly.
   # Canon instructs the Engine to check these at session start and respond appropriately.
 
-  # Sync errors surfacing — any failed POSTs since last clean session.
-  # Raw tail injected; Engine decides what to act on, clears what it handles.
-  # Conflict markers (`<<<<<<<` / `=======` / `>>>>>>>`) are filtered out and
-  # surfaced as a single warning — dumping them inline reads as prompt injection
-  # and corrupts hook output. Root cause is the file being git-tracked despite
-  # being ephemeral; the right fix is `git rm --cached system/.alexandria_errors`
-  # in each Author's repo (system/.* in .gitignore covers new installs).
+  # Maintenance status — one line each, detail stays in files. The autoloop
+  # owns repair (see scheduled.md § Machine audit + § Canon update review).
+  # Live sessions see status only; full content is in system/.alexandria_errors
+  # and system/.canon_update_notice when the Engine wants to look.
   if [ -f "$ALEX_DIR/system/.alexandria_errors" ] && [ -s "$ALEX_DIR/system/.alexandria_errors" ]; then
     err_count=$(wc -l < "$ALEX_DIR/system/.alexandria_errors" 2>/dev/null | tr -d ' ')
     if [ "${err_count:-0}" -gt 0 ]; then
       if grep -qE '^(<<<<<<<|=======$|>>>>>>>)' "$ALEX_DIR/system/.alexandria_errors" 2>/dev/null; then
-        echo "alexandria: .alexandria_errors contains unresolved git conflict markers — Engine, repair (drop markers, keep both blocks chronologically). Sanitised tail below:"
+        echo "alexandria: maintenance — .alexandria_errors has git conflict markers (autoloop will repair)"
       else
-        echo "alexandria: $err_count sync errors pending (tail below — Engine, investigate and clear .alexandria_errors when resolved):"
+        echo "alexandria: maintenance — $err_count sync errors pending (autoloop handles)"
       fi
-      grep -vE '^(<<<<<<<|=======$|>>>>>>>)' "$ALEX_DIR/system/.alexandria_errors" 2>/dev/null | tail -n 5
     fi
   fi
 
-  # Canon update notice — upstream canon changed since last session.
-  # Engine reviews, updates canon_overrides.md if anything should be overridden for this Author, clears the notice.
   if [ -f "$ALEX_DIR/system/.canon_update_notice" ] && [ -s "$ALEX_DIR/system/.canon_update_notice" ]; then
-    echo ""
-    echo "--- CANON UPDATE PENDING REVIEW ---"
-    cat "$ALEX_DIR/system/.canon_update_notice"
-    echo "--- END CANON UPDATE ---"
-    echo ""
+    echo "alexandria: maintenance — canon update pending review (autoloop handles)"
   fi
 
   # Installed factory artefacts drift check — notify, never override.

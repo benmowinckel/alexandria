@@ -382,6 +382,8 @@ Restructure preserves all signal — no content is lost, only reorganised. The f
 
 The marginalia layer (`~/alexandria/files/marginalia/`) is the working layer between vault (raw) and constitution (crystallised). Shared scratch space — Author's developing thoughts AND Engine's synthesis candidates AND extracted tensions live here, one namespace. Sync populates it. Standard sessions read it. The constitution is the curated output. The vault is the raw archive. Marginalia aims to drain — loaded clip metaphor: content enters, gets fired through conversation, exits either by promotion to constitution (with epistemic status assigned, including negative positions like `examined-not-adopted`) or pruning. Persistent fill is a bug; approaching empty is the system working. All three layers must be kept in proportion — vault growth without marginalia drain and constitution promotion means signal is rotting in staging.
 
+**Write-time stale-flagging.** When a constitution edit lands on a topic that marginalia already carries an entry for, the writer flags the marginalia entry stale in the same write — append `(STALE — superseded by [file]:[anchor] [YYYY-MM-DD])` to the entry. Cheap grep at write time; catches the failure mode where marginalia carries a CHALLENGE that the constitution has already resolved (today's Hinton mortal-computation case lived in marginalia 18 days after Power.md L55 reconciled it). Applies to Engine writes during /a and autoloop writes equally — both are constitution writers, both read this canon. Drain on next pass.
+
 ---
 
 ## IV. Engine Functions
