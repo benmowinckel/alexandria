@@ -30,11 +30,6 @@ Everything in Alexandria maps to one of four layers:
 - **Investor docs:** kept out of this public repo. Live in `~/alexandria-inc/private/partners/` (private GitHub `alexandria-inc`). Shared directly with partners (email/DM) when needed — no public URL, no `/partners/` route.
 - **Pre-commit hook:** `scripts/pre-commit` gates server type check + app build (mirrors CI). Activate on fresh clone: `git config core.hooksPath scripts`.
 - **Build:** `cd server && npx wrangler deploy --dry-run --outdir=dist` (server). **Deploy:** `cd server && npx wrangler deploy` then check health. **Push:** `bash scripts/push.sh` (pushes + waits for CI + reports results). Always use `push.sh` instead of raw `git push`.
-- **Pull before deploy.** Wrangler ships whatever is on disk. Before `npx wrangler deploy`, run `git fetch && git log origin/main ^HEAD` (or equivalent) to verify local isn't behind origin. If origin is ahead, rebase + redeploy — deploying off stale local clobbers production back to that base. Don't trust "main" by name; verify divergence.
-- **"ship" keyword.** When the founder says **"ship"** / "ship it" / "ship this", run the full publish chain without asking again: stage relevant files → commit → `bash scripts/push.sh` (waits for CI) → confirm Vercel/Worker deploy as applicable to the repo. For server-side changes in this repo: also `cd server && npx wrangler deploy` and confirm `curl https://api.alexandria-library.com/health`. Before staging, still classify any dirty diffs by feature and ship only the orthogonal pieces in this commit.
-- **Smoke-test conversion CTAs end-to-end before declaring shipped.** Visual screenshots don't catch broken auth flows, stale OAuth redirect URIs, or dead links. For any page with conversion-critical CTAs (join, signup, checkout, OAuth init), list every CTA on the page and confirm each flow lands on its expected user-visible success state. `curl -I` the auth init endpoint to confirm the redirect target; complete the consent flow yourself in a browser session or hand the founder a checklist with the exact CTA URLs to click. "I screenshotted the page" ≠ verification when the page's job is to send users somewhere.
-- **Stripe `metadata.kind` discriminator.** Every Stripe checkout session and subscription Alexandria creates carries `metadata.kind` set to one of `author` (Examined Life subscription), `patron` (Door 2 follow-along), `library` (one-time file purchase, currently still keyed on legacy `library_purchase: 'true'` — unify when library WIP lands). Webhook switch in `billing.ts` checks `kind` first; legacy `github_login` / `api_key` lookups remain as fallback. Any new Stripe-creating path must set `metadata.kind` (and `subscription_data.metadata.kind` for subscriptions). Default-fallthrough should be paired with a `logEvent` for surfacing drift.
-- **Frontend robustness needs Lighthouse, not just Playwright.** Playwright (`npm run audit`, `scripts/see.mjs`) catches tap targets, horizontal overflow, autoplay, console errors, broken CTAs — behavior. Lighthouse catches LCP, page weight, color contrast at WCAG scale, landmark structure, image-optimization regressions — performance + a11y. Different domains, both essential. Before declaring a robustness or quality sweep done, run `npx lighthouse <url> --form-factor=mobile --throttling-method=simulate` alongside the Playwright matrix. If either is below threshold, the sweep isn't done.
 - **Server health:** `curl https://api.alexandria-library.com/health`
 - **Stack:** Vercel (website), Cloudflare (DNS + server + KV + D1 + R2), Resend (email), GitHub (code + OAuth), Stripe (billing), Mercury (banking, API), Claude (intelligence). All hybrid (CLI or API-controllable). Zero external dependencies.
 - **Storage architecture:** Stateless server, sovereign local files (`~/alexandria/` — local + private GitHub; `iCloud/alexandria/` is Apple-native input only), thin persistence for collective Library (D1 for metadata/discovery, R2 for published content, KV for accounts/events).
@@ -167,41 +162,6 @@ Before committing any server code change:
 5. **Bitter lesson compliance:** No structured parameters, fixed schemas, or hand-crafted rules. Unstructured text/JSONL. Soft defaults that thin as models improve.
 6. **Statelessness:** Server stores nothing user-specific. Encrypted refresh token IS the access token.
 7. **Deployment:** After deploying (`cd server && npx wrangler deploy`), check health: `curl https://api.alexandria-library.com/health`.
-
-## Framework Quirks and Footguns
-
-Reference when symptoms match. Add new quirks here, not as separate files.
-
-### React / Next
-
-- **`new window.Image()` bypasses Next/Image WebP optimizer.** Eager preload via the Image constructor loads raw PNG, not WebP. Caused 15MB of page weight on the landing 2026-05-10.
-- **React `muted` doesn't reflect as attribute → Safari blocks autoplay.** Set `v.muted` / `defaultMuted` via ref + call `.play()` in `useEffect`.
-- **CSS animations with `forwards` fill override static transforms.** If a static transform has no visible effect, grep for `animation:` and check the keyframes — they win.
-- **styled-jsx in Next 16 client components is fragile.** SSR HTML has zero `<style>` tags; depends on JS hydration. If JS stalls, page renders fully unstyled. Prefer plain `<style>` for critical render paths.
-- **`useSearchParams` in `'use client'` page bails entire SSR.** Top-level `'use client'` + `useSearchParams` + Suspense ships only the fallback as SSR HTML. Carve out a Client island instead. Verify with `curl -L | grep "known content"`.
-- **WebKit driver, not Chromium emulation, for iOS work.** Use Playwright WebKit (`webkit.launch()`, same engine as iOS Safari) — not Chromium with `isMobile: true` (different rendering pipeline; misses real Safari issues). Mobile sweep harness at `scripts/snap-mobile.cjs` is already WebKit-wired. Use it (or its pattern) by default for any iOS-bound layout work.
-- **A/B variant compares via URL toggle on single build.** Don't try parallel server orchestration (Turbopack symlink rejections, node_modules duplication, macOS firewall blocking the second port). Add `useState(false)` + `useEffect` reading `URLSearchParams` for the toggle; render `data-{name}={state ? '1' : undefined}` on the root container; override styles via `.draft-root[data-{name}="1"] .target { ... }`. Once the founder picks a direction, strip the toggle infrastructure cleanly.
-
-### Stripe
-
-- **`constructEvent` fails on Cloudflare Workers.** Webhook sig verification must use `constructEventAsync`; sync throws SubtleCryptoProvider error.
-- **AMP is Intent-only, not Checkout Session.** `automatic_payment_methods` rejected by SDK v21 on Checkout Session create. Use `payment_method_configuration` or omit `payment_method_types` instead. Checkout in subscription / USD typically resolves to `['card']` with wallets on top — don't "fix" that.
-- **CLI webhook update — `--enabled-events` flag required.** `-d "enabled_events[]=X"` silently sets wildcard `["*"]`. Always retrieve after a write to verify. Stripe CLI updates emit empty stdout on success.
-- **Restricted-key permission elevation is dashboard-only.** No API/CLI path to edit a `rk_live_...` key's scope. Stripe deliberately blocks this (otherwise "restricted" would be meaningless). To elevate: dashboard.stripe.com/apikeys → click the key → Edit permissions. `stripe login` issues different defaults per mode (live is stricter). Key expires 90 days from creation, stored at `~/.config/stripe/config.toml` (0600 perms).
-
-### Cloudflare Workers / Wrangler / R2 / Email
-
-- **CF Workers `process.env` empty at module load.** `const X = process.env.X || 'fallback'` at top-level uses the fallback, not `[vars]`. `initEnv` populates per-request only.
-- **`wrangler r2 object` defaults to local emulator.** `wrangler r2 object get/put/delete` returns "key does not exist" silently against the empty local bucket unless `--remote` is passed.
-- **`wrangler d1 migrations apply` 7403 fallback.** When `migrations apply` rejects with auth error despite valid OAuth, use `d1 execute --file` instead.
-- **Cloudflare Email Routing — two gotchas.** Wizard overwrites apex SPF with Cloudflare-only entry; preserve existing SPF when enabling. Gmail dedupes self-forwards in tests — use a different inbox to verify.
-- **Verify plan tier before recommending a vendor switch.** Check Account → Billing → Subscriptions (or equivalent) before any "switch to product X" recommendation on Cloudflare / AWS / Vercel. The Cloudflare free tier expands over time — "if they're using D1, they must be paid" is unreliable. When pricing pages say "Available only on the Paid plan," treat as a hard gate.
-- **Verify vendor toggle before deleting a parallel code path.** "Vendor X handles this natively" ≠ "vendor X's toggle is configured to handle this." Stripe customer-emails (Dashboard → Settings → Business → Customer emails → `Successful payments`, etc.) are toggle-based and OFF by default. Resend deliverability requires domain verification + DKIM/SPF/DMARC alignment. GitHub webhook delivery requires URL set + secret matches + events subscribed. Cloudflare route binding requires custom domain bound to the right Worker.
-
-### claude.ai runtime
-
-- **`RemoteTrigger.update` events is broken.** v1→v2 translator bug; updates to trigger prompts go through the dashboard or via the bootstrap-from-github pattern.
-- **claude.ai runtime 403s master pushes.** Strands are routine. GitHub Action FFs `claude/*` to master via `merge-autoloop.yml`; `brief.py` detects if the Action fails. Runtime policy change 2026-05-09.
 
 ## Working With the Founder
 
