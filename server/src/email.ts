@@ -99,8 +99,11 @@ export async function sendFollowerWelcome(email: string, unsubscribeToken?: stri
     when we come out with new products or its available for new users then you will also be the first to know.
   </p>
   <p style="margin: 0 0 1.4rem;">
+    if you want to read what's come before, <a href="${WEBSITE_URL}/updates" style="color: #3d3630;">alexandria-library.com/updates</a> has the whole archive.
+  </p>
+  <p style="margin: 0 0 1.4rem;">
     feel free to reply whenever you want. i'll read all of them!<br>
-    and also if there are others you know who might be interested in following then just send them <a href="${WEBSITE_URL}" style="color: #3d3630;">the website link</a>.
+    and also if there are others you know who might be interested in following then just send them <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a>.
   </p>
   <p style="margin: 0 0 1.8rem;">ok, that's all. bye for now :)</p>
   <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>

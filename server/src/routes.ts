@@ -1122,6 +1122,58 @@ ${body.split('\n').map((line: string) => line.trim() ? `<p style="font-size: 1re
     return c.json({ ok: true, sent_to: recipientEmail });
   });
 
+  // --- Patron updates broadcast ---
+  // scripts/send-update.mjs renders the markdown letter to email HTML locally,
+  // then POSTs it here. Server holds the subscriber list (D1 waitlist, type='follow',
+  // not opted_out) and the Resend key. Preview mode sends only to FOUNDER_EMAIL —
+  // the verification loop before broadcast.
+  app.post('/admin/update/send', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    if (await checkAdminRateLimit('update-send', 5, 60)) return c.json({ error: 'Rate limited (5/min)' }, 429);
+
+    const { slug, subject, html, preview } = await c.req.json<{
+      slug?: string;
+      subject?: string;
+      html?: string;
+      preview?: boolean;
+    }>();
+    if (!slug || !subject || !html) return c.json({ error: 'missing slug, subject, or html' }, 400);
+
+    const db = (globalThis as any).__d1 as D1Database;
+    if (!db) return c.json({ error: 'Database not available.' }, 503);
+
+    if (preview) {
+      const result = await sendEmail(FOUNDER_EMAIL, subject, html);
+      logEvent('update_preview_sent', { slug });
+      return c.json({ ok: result.ok, preview: true, sent_to: FOUNDER_EMAIL, error: result.error });
+    }
+
+    const rows = await db
+      .prepare(`SELECT email, unsubscribe_token FROM waitlist WHERE type = 'follow' AND opted_out_at IS NULL`)
+      .all<{ email: string; unsubscribe_token: string | null }>();
+    const recipients = rows.results || [];
+    if (recipients.length === 0) {
+      return c.json({ ok: true, sent: 0, failed: 0, note: 'no subscribers' });
+    }
+
+    const serverUrl = getServerUrl();
+    const { sent, failed } = await sendEmailsBatched(recipients, (r) => {
+      const unsub = r.unsubscribe_token
+        ? `${serverUrl}/email/stop?t=${r.unsubscribe_token}`
+        : undefined;
+      const personalisedHtml = unsub
+        ? html.replace(
+            '<!--UNSUBSCRIBE-->',
+            `<p style="margin: 1.5rem 0 0; font-size: 0.72rem; color: #bbb4aa;"><a href="${unsub}" style="color: #8a8078;">stop these emails</a></p>`,
+          )
+        : html.replace('<!--UNSUBSCRIBE-->', '');
+      return sendEmail(r.email, subject, personalisedHtml, unsub ? { unsubscribeUrl: unsub } : undefined);
+    });
+
+    logEvent('update_broadcast', { slug, sent: String(sent), failed: String(failed), total: String(recipients.length) });
+    return c.json({ ok: true, slug, sent, failed, total: recipients.length });
+  });
+
   // Dashboard removed 2026-04-14. JSON API at /analytics/dashboard remains
   // for tests and autonomous triggers. Health digest email includes issue list.
   // The HTML dashboard was a human-in-the-loop on a maximisation game.
