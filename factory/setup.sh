@@ -62,7 +62,7 @@ echo "Setting up Alexandria..."
 
 # ── 1. Directory structure ────────────────────────────────────────
 
-mkdir -p "$ALEX_DIR/files/vault" "$ALEX_DIR/system/hooks" "$ALEX_DIR/files/constitution" "$ALEX_DIR/files/marginalia" "$ALEX_DIR/files/library/public" "$ALEX_DIR/files/library/paid" "$ALEX_DIR/files/library/invite" "$ALEX_DIR/files/works/systems" "$ALEX_DIR/files/core" "$ALEX_DIR/files/vault/input" "$ALEX_DIR/files/vault/_input" "$ALEX_DIR/system/.autoloop"
+mkdir -p "$ALEX_DIR/files/vault" "$ALEX_DIR/system/hooks" "$ALEX_DIR/files/constitution" "$ALEX_DIR/files/marginalia" "$ALEX_DIR/files/library/public" "$ALEX_DIR/files/library/paid" "$ALEX_DIR/files/library/invite" "$ALEX_DIR/files/library/authors" "$ALEX_DIR/files/works" "$ALEX_DIR/files/core" "$ALEX_DIR/files/vault/input" "$ALEX_DIR/files/vault/_input" "$ALEX_DIR/system/.autoloop"
 echo "$API_KEY" > "$ALEX_DIR/system/.api_key"
 chmod 600 "$ALEX_DIR/system/.api_key"
 touch "$ALEX_DIR/system/.last_processed"
@@ -72,12 +72,8 @@ date +%s > "$ALEX_DIR/system/.last_maintenance"
 
 # Templates → files/ (don't overwrite existing)
 # Core operating docs
-for f in agent.md machine.md notepad.md feedback.md shelf.md README.md; do
+for f in agent.md machine.md notepad.md feedback.md shelf.md; do
   fetch_factory "templates/core/$f" "$ALEX_DIR/files/core/$f" "core/$f"
-done
-# Folder READMEs (vault, constitution, marginalia, library, works)
-for d in vault constitution marginalia library works; do
-  fetch_factory "templates/$d/README.md" "$ALEX_DIR/files/$d/README.md" "$d/README.md"
 done
 # Filter — publishing policy, lives next to library/
 fetch_factory "templates/library/filter.md" "$ALEX_DIR/files/library/filter.md" "library/filter.md"
@@ -668,9 +664,7 @@ MISSING=""
 [ "$STATUS_HOOKS" != "ok" ] && MISSING="$MISSING hooks"
 [ "$STATUS_CORE" != "ok" ] && MISSING="$MISSING${CORE_MISSING}"
 [ ! -f "$ALEX_DIR/system/.block" ] && MISSING="$MISSING block"
-for f in constitution/README.md marginalia/README.md vault/README.md library/README.md library/filter.md works/README.md; do
-  [ ! -f "$ALEX_DIR/files/$f" ] && MISSING="$MISSING $f"
-done
+[ ! -f "$ALEX_DIR/files/library/filter.md" ] && MISSING="$MISSING library/filter.md"
 
 SETUP_STATUS="ok"
 [ -n "$MISSING" ] && SETUP_STATUS="missing_files"
