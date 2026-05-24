@@ -100,7 +100,7 @@ export async function sendFollowerWelcome(email: string, unsubscribeToken?: stri
   </p>
   <p style="margin: 0 0 1.4rem;">
     feel free to reply whenever you want. i'll read all of them!<br>
-    and if there are others you think might want to follow along, send them to <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a> and tell them to press stay close.
+    and if there are others you think might want to follow along, send them to <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a> &mdash; they can join the tribe, or just stay close.
   </p>
   <p style="margin: 0 0 1.8rem;">ok, that's all. bye for now :)</p>
   <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
