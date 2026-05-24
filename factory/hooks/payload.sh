@@ -373,18 +373,46 @@ if [ "$MODE" = "session-start" ]; then
           }
         }
 
+        // First sentence from a string: up to the first ./!/? boundary, capped.
+        function firstSentence(raw) {
+          if (!raw) return null;
+          const s = raw.replace(/\s+/g, " ").trim();
+          if (!s) return null;
+          const m = s.match(/^.+?[.!?](?=\s|$)/);
+          return (m ? m[0] : s).slice(0, 280);
+        }
+
+        // Description sources, in order:
+        // 1. Sidecar <name>.txt next to the file (works for PDFs + overrides md).
+        // 2. First *italic* block after any leading H1/H2 in markdown.
+        // 3. null. Author can add a sidecar or italic line to fix.
+        function deriveText(absPath, contentType) {
+          const sidecar = absPath.replace(/\.[^.]+$/, ".txt");
+          try {
+            if (fs.existsSync(sidecar)) {
+              return firstSentence(fs.readFileSync(sidecar, "utf8"));
+            }
+          } catch {}
+          if (contentType === "text/markdown; charset=utf-8") {
+            try {
+              const md = fs.readFileSync(absPath, "utf8");
+              const italic = md.match(/^\s*(?:#[^\n]*\n+)*\*([^*\n][\s\S]*?)\*/m);
+              if (italic) return firstSentence(italic[1]);
+            } catch {}
+          }
+          return null;
+        }
+
         async function putOne(name, meta) {
           const buf = fs.readFileSync(meta.abs);
           const isText = meta.contentType.startsWith("text/");
-          const body = { visibility: meta.tier, content_type: meta.contentType };
-          if (isText) {
-            const s = buf.toString("utf8");
-            body.content = s;
-            body.text = s.replace(/\s+/g, " ").trim().slice(0, 500) || null;
-          } else {
-            body.content_b64 = buf.toString("base64");
-            body.text = null;
-          }
+          const body = {
+            visibility: meta.tier,
+            content_type: meta.contentType,
+            text: deriveText(meta.abs, meta.contentType),
+          };
+          if (isText) body.content = buf.toString("utf8");
+          else body.content_b64 = buf.toString("base64");
           const res = await fetch(SERVER + "/file/" + encodeURIComponent(name), {
             method: "PUT",
             headers: {
