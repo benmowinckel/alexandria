@@ -2,7 +2,7 @@
 
 ## *the library of human minds.*
 
-## *the ninety seconds.*
+## *in brief.*
 
 *why.*
 

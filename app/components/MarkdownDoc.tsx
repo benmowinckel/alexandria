@@ -86,14 +86,14 @@ function processNumbered(md: string): { pre: string; frontispiece: string; abstr
         }
       }
 
-      // Frontispiece section — `## *the ninety seconds.*` (the elevator
-      // pitch above the abstract). Capture content until the next H1/H2.
+      // Frontispiece section — `## *in brief.*` (the elevator pitch
+      // above the abstract). Capture content until the next H1/H2.
       // The H2 itself stays in the captured content so it renders inside
       // the frontispiece section (unlike the abstract, whose label is
       // reconstructed in JSX). This sits BEFORE the abstract detection
       // because both are H2 — order matters for the close-on-next-heading
       // logic. Detected only on entry, not as a closing trigger for itself.
-      if (/^##\s+\*?the ninety seconds\.?\*?\s*$/i.test(line)) {
+      if (/^##\s+\*?in brief\.?\*?\s*$/i.test(line)) {
         if (!frontispieceInserted) {
           out.push(FRONTISPIECE_MARKER);
           frontispieceInserted = true;
@@ -427,7 +427,7 @@ export default function MarkdownDoc({ src, header, homeHref = '/', numbered = fa
                 {parsed.pre}
               </ReactMarkdown>
               {parsed.frontispiece && (
-                <section className="pdoc-frontispiece" aria-label="In ninety seconds">
+                <section className="pdoc-frontispiece" aria-label="In brief">
                   <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
                     {parsed.frontispiece}
                   </ReactMarkdown>
