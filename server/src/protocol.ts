@@ -28,8 +28,11 @@ export function registerProtocol(app: Hono) {
       return c.json({ error: 'Invalid name (lowercase alphanumeric + hyphens, max 64)' }, 400);
 
     const body = await c.req.json().catch(() => null);
-    if (!body?.content || typeof body.content !== 'string')
-      return c.json({ error: 'content required' }, 400);
+    const hasText = typeof body?.content === 'string';
+    const hasB64 = typeof body?.content_b64 === 'string';
+    if (!body || (hasText === hasB64)) {
+      return c.json({ error: 'exactly one of content (UTF-8) or content_b64 (base64) required' }, 400);
+    }
 
     const id = String(auth.account.github_id);
     const now = new Date().toISOString();
@@ -47,28 +50,112 @@ export function registerProtocol(app: Hono) {
       contentType = body.content_type;
     } else {
       return c.json({
-        error: `content_type ${JSON.stringify(body.content_type)} is not writable via JSON PUT (binary uploads not supported yet)`,
+        error: `content_type ${JSON.stringify(body.content_type)} is not writable via JSON PUT`,
         writable: [...PUT_WRITABLE_CONTENT_TYPES],
       }, 400);
     }
     const ext = r2ExtensionForContentType(contentType);
 
-    await getR2().put(`protocol/${id}/${name}.${ext}`, body.content);
+    // Decode payload to raw bytes for R2 + hashing. Concrete ArrayBuffer
+    // (not SharedArrayBuffer) so Web Crypto + R2 accept the Uint8Array
+    // directly without a BufferSource cast.
+    let bodyBytes: Uint8Array<ArrayBuffer>;
+    if (hasB64) {
+      try {
+        const bin = atob(body.content_b64);
+        bodyBytes = new Uint8Array(new ArrayBuffer(bin.length));
+        for (let i = 0; i < bin.length; i++) bodyBytes[i] = bin.charCodeAt(i);
+      } catch {
+        return c.json({ error: 'content_b64 is not valid base64' }, 400);
+      }
+    } else {
+      const encoded = new TextEncoder().encode(body.content);
+      bodyBytes = new Uint8Array(new ArrayBuffer(encoded.byteLength));
+      bodyBytes.set(encoded);
+    }
+
+    // The factory hook reconciles the full Library every session-start by
+    // PUT-ing every local file. Hash-compare against the stored row so we
+    // skip R2 write, updated_at bump, and analytics event when nothing
+    // actually changed — keeps reconciliation cheap and the event log clean.
+    const hashBuf = await crypto.subtle.digest('SHA-256', bodyBytes);
+    const contentHash = [...new Uint8Array(hashBuf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+
+    const existing = await getDB().prepare(
+      'SELECT text, visibility, content_type, content_hash FROM protocol_files WHERE account_id = ? AND name = ?'
+    ).bind(id, name).first<{ text: string | null; visibility: string; content_type: string; content_hash: string | null }>();
+
+    if (
+      existing
+      && existing.content_hash === contentHash
+      && existing.visibility === visibility
+      && existing.content_type === contentType
+      && (existing.text ?? null) === (text ?? null)
+    ) {
+      return c.json({ ok: true, unchanged: true });
+    }
+
+    await getR2().put(`protocol/${id}/${name}.${ext}`, bodyBytes);
     await getDB().prepare(
-      `INSERT INTO protocol_files (account_id, name, text, visibility, updated_at, content_type)
-       VALUES (?, ?, ?, ?, ?, ?)
+      `INSERT INTO protocol_files (account_id, name, text, visibility, updated_at, content_type, content_hash)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(account_id, name) DO UPDATE SET
          text = COALESCE(excluded.text, protocol_files.text),
          visibility = excluded.visibility,
          updated_at = excluded.updated_at,
-         content_type = excluded.content_type`
-    ).bind(id, name, text, visibility, now, contentType).run();
+         content_type = excluded.content_type,
+         content_hash = excluded.content_hash`
+    ).bind(id, name, text, visibility, now, contentType, contentHash).run();
 
     logEvent('protocol_file_published', {
       author: auth.account.github_login,
       name,
       visibility,
       content_type: contentType,
+    });
+
+    return c.json({ ok: true });
+  });
+
+  app.delete('/file/:name', async (c) => {
+    const auth = await requireAuth(c);
+    if (!auth) return c.text('Unauthorized', 401);
+    if (!auth.account.github_id) return c.json({ error: 'Account missing github_id' }, 400);
+
+    const name = c.req.param('name');
+    if (!name || !/^[a-z0-9][a-z0-9-]*$/.test(name) || name.length > 64)
+      return c.json({ error: 'Invalid name' }, 400);
+
+    const id = String(auth.account.github_id);
+
+    // R2 keys carry the content-type extension. We don't know which one the
+    // file was stored under without consulting D1 first — delete the row,
+    // then drop every extension we might have used. Cheap; missing keys are
+    // a no-op in R2.
+    const existing = await getDB().prepare(
+      'SELECT content_type FROM protocol_files WHERE account_id = ? AND name = ?'
+    ).bind(id, name).first<{ content_type: string }>();
+
+    if (!existing) return c.json({ ok: true, missing: true });
+
+    await getDB().prepare(
+      'DELETE FROM protocol_files WHERE account_id = ? AND name = ?'
+    ).bind(id, name).run();
+
+    const r2 = getR2();
+    const ext = r2ExtensionForContentType(existing.content_type);
+    await r2.delete(`protocol/${id}/${name}.${ext}`);
+    // Defensive: if content_type ever drifted vs. R2 key, sweep the other
+    // writable extensions too. Idempotent — missing keys cost nothing.
+    for (const otherType of PUT_WRITABLE_CONTENT_TYPES) {
+      const otherExt = r2ExtensionForContentType(otherType);
+      if (otherExt !== ext) await r2.delete(`protocol/${id}/${name}.${otherExt}`);
+    }
+
+    logEvent('protocol_file_deleted', {
+      author: auth.account.github_login,
+      name,
+      content_type: existing.content_type,
     });
 
     return c.json({ ok: true });

@@ -30,21 +30,15 @@ interface AuthorData {
   files?: ProtocolFile[];
 }
 
-const FILE_DISPLAY_NAMES: Record<string, string> = {
-  shadow: 'Shadow',
-  design: 'Design',
-  'droplets-of-grace': 'Droplets of Grace',
-  'on-love': 'On Love',
-  'on-power': 'On Power',
-};
-
 function normalizePreviewText(value: string | null | undefined): string | null {
   if (!value) return null;
   return value.replace(/\uFFFD/g, '-');
 }
 
 function fileDisplayName(name: string): string {
-  return FILE_DISPLAY_NAMES[name] || name.replace(/-/g, ' ');
+  return name
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function visibilityLabel(value: string): string {
@@ -166,13 +160,10 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     );
 
     if (file.visibility === 'public') {
-      const isLetterPdf = file.name === 'droplets-of-grace';
       return (
         <a
           key={file.name}
-          href={isLetterPdf ? '/docs/letter.pdf' : `/api/library/${encodeURIComponent(authorId)}/file/${encodeURIComponent(file.name)}`}
-          target={isLetterPdf ? '_blank' : undefined}
-          rel={isLetterPdf ? 'noopener noreferrer' : undefined}
+          href={`/api/library/${encodeURIComponent(authorId)}/file/${encodeURIComponent(file.name)}`}
           style={{ display: 'block', textDecoration: 'none', color: 'inherit', margin: '0 0 0.9rem', transition: 'opacity 0.15s' }}
           className="hover:opacity-60"
         >

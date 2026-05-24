@@ -160,12 +160,13 @@ const EXTENSION_BY_CONTENT_TYPE: Record<string, string> = {
   'application/pdf': 'pdf',
 };
 
-// Subset of the above that the JSON PUT endpoint can faithfully write —
-// `body.content` is a UTF-8 string, so binary formats (application/pdf,
-// image/*, …) are read-only via this server today and must be uploaded
-// out-of-band. A future multipart PUT will extend this set.
+// Subset of the above the JSON PUT endpoint accepts. Markdown via the plain
+// `body.content` (UTF-8 string). Binary formats (application/pdf, image/*)
+// via `body.content_b64` (base64-encoded bytes) — extends to anything we
+// can name a content_type for without needing multipart.
 const PUT_WRITABLE_CONTENT_TYPES = new Set<string>([
   'text/markdown; charset=utf-8',
+  'application/pdf',
 ]);
 
 const DEFAULT_CONTENT_TYPE = 'text/markdown; charset=utf-8';

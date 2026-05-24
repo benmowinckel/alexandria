@@ -180,14 +180,18 @@ export function registerRoutes(app: Hono) {
 
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
 
-    // File obligation — ground truth from protocol_files (where PUT /file/{name} writes)
+    // File obligation — ground truth from protocol_files. Scoped to
+    // authors-visible files (visibility in {authors, public}); paid/invite
+    // files are gated artifacts and don't satisfy the social-tier obligation
+    // (the point of the file is that other Authors can see it).
     let fileLastEdit: string | null = null;
     let fileStatus: 'ok' | 'stale' | 'missing' = 'missing';
     try {
       const db = (globalThis as any).__d1 as D1Database | undefined;
       if (db) {
         const file = await db.prepare(
-          `SELECT MAX(updated_at) as last_edit FROM protocol_files WHERE account_id = ?`
+          `SELECT MAX(updated_at) as last_edit FROM protocol_files
+             WHERE account_id = ? AND visibility IN ('authors', 'public')`
         ).bind(String(account.github_id)).first<{ last_edit: string | null }>();
         if (file?.last_edit) {
           fileLastEdit = file.last_edit;

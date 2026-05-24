@@ -57,12 +57,14 @@ After processing vault, check if derivatives need regenerating. If the source fi
 
 Then check constitution structural fit. Not every run — only when you notice signals: one file growing disproportionately, signal landing between domains, a domain gone dark, cross-references clustering between the same two files. If restructure signals are present, note them in last_run.md under "## Restructure signals" — the Author or the interactive Engine decides whether to act. You do not restructure autonomously. See methodology.md for the full signal list.
 
-## Public shadow maintenance
+## Library file maintenance
 
-1. Read `~/alexandria/system/.protocol_status.json` and `~/alexandria/system/.public_shadow_review` if present.
-2. Regenerate `~/alexandria/files/library/public/shadow_proposal.md` as a complete public shadow proposal whenever the constitution changed meaningfully, the proposal is missing, or `.public_shadow_review` says the protocol file is missing/stale/due soon.
-3. The proposal standard is "what this Author would say to an intelligent stranger." Use `files/library/filter.md` as the safety policy. No secrets, raw private material, private work product, health/finance/legal details, or anything that would surprise the Author to see public.
-4. Do not copy the proposal to `shadow.md`. The Author accepts by editing or saving the final public file. Final `shadow.md` is consent; proposal is not.
+1. Read `~/alexandria/system/.protocol_status.json`, `~/alexandria/system/.library_file_review`, and `~/alexandria/system/.library_sync_status.json` if present.
+2. The file obligation is satisfied by **any current Authors-visible file** — anything in `~/alexandria/files/library/authors/` or `~/alexandria/files/library/public/`. Paid and invite tiers don't count.
+3. Regenerate `_shadow.md` in whichever tier the Author has chosen (or both, if parallel surfaces) as a complete shadow proposal whenever the constitution changed meaningfully, the proposal is missing, or `.library_file_review` says the protocol file is missing/stale/due soon.
+4. The proposal standard is "what this Author would say to an intelligent stranger" (public/authors tiers); private material stays out. Use `files/library/filter.md` as the safety policy. No secrets, raw private material, private work product, health/finance/legal details, or anything that would surprise the Author to see at that tier.
+5. Do not copy the proposal to `shadow.md`. The Author accepts by editing or saving the final tier file. Final `shadow.md` is consent at its tier; proposal is not.
+6. If `.library_sync_status.json` reports drift or errors from the previous session's sync, surface it.
 
 ## Session brief (write before exit)
 

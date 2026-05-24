@@ -327,42 +327,134 @@ if [ "$MODE" = "session-start" ]; then
   # The .call_manifest file is written by the Engine during /a sessions.
   # Default: methodology (the factory default). The Engine evolves this.
   if [ -n "$API_KEY" ]; then
-    mkdir -p "$ALEX_DIR/files/library/public" 2>/dev/null
+    mkdir -p "$ALEX_DIR/files/library" 2>/dev/null
 
     # ── The File (protocol obligation) ──
-    # Only final shadow.md is consent. shadow_proposal.md is machine draft and
-    # is never published automatically. Publishing the final file keeps the
-    # server-side monthly file obligation current without making the Author
-    # remember API details.
-    shadow_file="$ALEX_DIR/files/library/public/shadow.md"
-    if [ -f "$shadow_file" ] && [ -s "$shadow_file" ]; then
-      shadow_sha=""
-      if command -v sha256sum &>/dev/null; then
-        shadow_sha=$(sha256sum "$shadow_file" | cut -d' ' -f1)
-      elif command -v shasum &>/dev/null; then
-        shadow_sha=$(shasum -a 256 "$shadow_file" | cut -d' ' -f1)
-      fi
-      last_shadow_sha=$(cat "$ALEX_DIR/system/.shadow_published_sha" 2>/dev/null)
-      if [ -z "$shadow_sha" ] || [ "$shadow_sha" != "$last_shadow_sha" ]; then
-        (
-          content_json=$(node -e "process.stdout.write(JSON.stringify(require('fs').readFileSync(process.argv[1],'utf8')))" "$shadow_file" 2>/dev/null)
-          text_json=$(node -e "const fs=require('fs'); const s=fs.readFileSync(process.argv[1],'utf8').replace(/\\s+/g,' ').trim().slice(0,500); process.stdout.write(JSON.stringify(s));" "$shadow_file" 2>/dev/null)
-          if [ -n "$content_json" ]; then
-            status=$(curl -s --max-time 4 -o /dev/null -w '%{http_code}' -X PUT "$SERVER/file/shadow" \
-              -H "Authorization: Bearer $API_KEY" \
-              -H "X-Alexandria-Client: $CLIENT_VERSION" \
-              -H "Content-Type: application/json" \
-              -d "{\"content\":$content_json,\"text\":${text_json:-null},\"visibility\":\"public\"}" 2>/dev/null || echo "000")
-            if [ "$status" = "200" ]; then
-              [ -n "$shadow_sha" ] && echo "$shadow_sha" > "$ALEX_DIR/system/.shadow_published_sha"
-              date -u +%Y-%m-%dT%H:%M:%SZ > "$ALEX_DIR/system/.shadow_published_at"
-            else
-              echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) file PUT failed status=$status" >> "$ALEX_DIR/system/.alexandria_errors"
-            fi
-          fi
-        ) &
-      fi
-    fi
+    # Full Library reconciliation. Local is source of truth: walk
+    # library/{tier}/ for any file that isn't a draft (underscore prefix),
+    # filter (filter.md), or readme (README.md). PUT each one; the server
+    # hash-skips unchanged content. Then GET the server's set and DELETE
+    # anything it has that local doesn't. Idempotent — every session.
+    # Backgrounded so session-start stays fast.
+    (
+      ALEX_DIR="$ALEX_DIR" \
+      SERVER="$SERVER" \
+      API_KEY="$API_KEY" \
+      CLIENT_VERSION="$CLIENT_VERSION" \
+      SYNC_LOG="$ALEX_DIR/system/.library_sync_status.json" \
+      GH_LOGIN="${ALEXANDRIA_GH_LOGIN:-mowinckelb}" \
+      node -e '
+        const fs = require("fs"), path = require("path");
+        const root = path.join(process.env.ALEX_DIR, "files/library");
+        const SERVER = process.env.SERVER, KEY = process.env.API_KEY, CV = process.env.CLIENT_VERSION;
+        const TYPE_BY_EXT = { ".md": "text/markdown; charset=utf-8", ".pdf": "application/pdf" };
+        const skipFile = (n) => n === "filter.md" || n === "README.md" || n.startsWith("_") || n.startsWith(".");
+
+        const local = new Map(); // name -> {tier, abs, contentType}
+        let tiers = [];
+        try { tiers = fs.readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name); } catch {}
+        for (const tier of tiers) {
+          const dir = path.join(root, tier);
+          let entries = [];
+          try { entries = fs.readdirSync(dir); } catch { continue; }
+          for (const f of entries) {
+            if (skipFile(f)) continue;
+            const ext = path.extname(f).toLowerCase();
+            const ct = TYPE_BY_EXT[ext];
+            if (!ct) continue;
+            const stem = f.slice(0, f.length - ext.length).toLowerCase();
+            if (!/^[a-z0-9][a-z0-9-]*$/.test(stem) || stem.length > 64) continue;
+            // Resolve symlinks; skip dangling.
+            let abs = path.join(dir, f), st;
+            try { st = fs.statSync(abs); } catch { continue; }
+            if (!st.isFile() || st.size === 0) continue;
+            // Last write wins if the same stem appears in multiple tiers.
+            local.set(stem, { tier, abs, contentType: ct });
+          }
+        }
+
+        async function putOne(name, meta) {
+          const buf = fs.readFileSync(meta.abs);
+          const isText = meta.contentType.startsWith("text/");
+          const body = { visibility: meta.tier, content_type: meta.contentType };
+          if (isText) {
+            const s = buf.toString("utf8");
+            body.content = s;
+            body.text = s.replace(/\s+/g, " ").trim().slice(0, 500) || null;
+          } else {
+            body.content_b64 = buf.toString("base64");
+            body.text = null;
+          }
+          const res = await fetch(SERVER + "/file/" + encodeURIComponent(name), {
+            method: "PUT",
+            headers: {
+              "Authorization": "Bearer " + KEY,
+              "X-Alexandria-Client": CV,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+          });
+          return { name, ok: res.ok, status: res.status };
+        }
+
+        async function deleteOne(name) {
+          const res = await fetch(SERVER + "/file/" + encodeURIComponent(name), {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + KEY, "X-Alexandria-Client": CV },
+          });
+          return { name, ok: res.ok, status: res.status };
+        }
+
+        (async () => {
+          const status = { published: [], deleted: [], errors: [], drift: [], ran_at: new Date().toISOString() };
+
+          // Fetch current server state via the company route by login. Public
+          // endpoint, no auth header needed; same payload shape as the
+          // protocol /library/{id} route but addressable by github_login.
+          let serverNames = new Set();
+          try {
+            const r = await fetch(SERVER + "/library/" + process.env.GH_LOGIN);
+            if (r.ok) {
+              const j = await r.json();
+              for (const f of (j.files || [])) serverNames.add(f.name);
+            }
+          } catch (e) { status.errors.push("get_library:" + e.message); }
+
+          for (const [name, meta] of local) {
+            try {
+              const r = await putOne(name, meta);
+              if (r.ok) status.published.push({ name, tier: meta.tier });
+              else status.errors.push("put " + name + " status=" + r.status);
+            } catch (e) { status.errors.push("put " + name + ":" + e.message); }
+          }
+
+          for (const name of serverNames) {
+            if (local.has(name)) continue;
+            try {
+              const r = await deleteOne(name);
+              if (r.ok) status.deleted.push(name);
+              else status.errors.push("delete " + name + " status=" + r.status);
+            } catch (e) { status.errors.push("delete " + name + ":" + e.message); }
+          }
+
+          // Verification loop: re-fetch server state, diff against local.
+          try {
+            const r = await fetch(SERVER + "/library/" + process.env.GH_LOGIN);
+            if (r.ok) {
+              const j = await r.json();
+              const serverAfter = new Set((j.files || []).map(f => f.name));
+              for (const n of local.keys()) if (!serverAfter.has(n)) status.drift.push("missing_on_server:" + n);
+              for (const n of serverAfter) if (!local.has(n)) status.drift.push("extra_on_server:" + n);
+            }
+          } catch (e) { status.errors.push("verify:" + e.message); }
+
+          fs.writeFileSync(process.env.SYNC_LOG, JSON.stringify(status, null, 2));
+        })().catch(e => {
+          fs.appendFileSync(process.env.ALEX_DIR + "/system/.alexandria_errors",
+            new Date().toISOString() + " library sync crashed: " + (e.stack || e.message) + "\n");
+        });
+      ' 2>>"$ALEX_DIR/system/.alexandria_errors"
+    ) &
 
     # Server status drives reminders. The Engine drafts; the Author approves.
     status_json=$(curl -s --max-time 4 -H "Authorization: Bearer $API_KEY" "$SERVER/alexandria" 2>/dev/null)
@@ -373,22 +465,35 @@ if [ "$MODE" = "session-start" ]; then
       due_days=$(printf '%s' "$file_due" | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{let t=Date.parse(s.trim()); if(!Number.isFinite(t)) return; console.log(Math.ceil((t-Date.now())/86400000));})" 2>/dev/null)
       if [ "$file_status" = "missing" ] || [ "$file_status" = "stale" ] || { [ -n "$due_days" ] && [ "$due_days" -le 7 ]; }; then
         {
-          echo "PUBLIC SHADOW REVIEW — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "LIBRARY FILE REVIEW — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           echo "file_status: ${file_status:-unknown}"
           [ -n "$file_due" ] && echo "file_due: $file_due"
           [ -n "$due_days" ] && echo "days_until_due: $due_days"
           echo ""
-          echo "High priority: refresh ~/alexandria/files/library/public/shadow_proposal.md as a complete public shadow draft. The standard is what the Author would say to an intelligent stranger. Do not publish private material. Ask the Author to approve/edit by saving the final version as ~/alexandria/files/library/public/shadow.md. The hook publishes only final shadow.md."
-        } > "$ALEX_DIR/system/.public_shadow_review"
+          echo "The file obligation requires at least one current Authors-visible file (authors-tier or public-tier). Refresh or publish a file in ~/alexandria/files/library/authors/ or ~/alexandria/files/library/public/. The hook publishes whatever final files (no underscore prefix) are present in those folders. Drafts (_*.md) and filters never ship."
+        } > "$ALEX_DIR/system/.library_file_review"
       fi
     fi
 
-    if [ -f "$ALEX_DIR/system/.public_shadow_review" ] && [ -s "$ALEX_DIR/system/.public_shadow_review" ]; then
+    if [ -f "$ALEX_DIR/system/.library_file_review" ] && [ -s "$ALEX_DIR/system/.library_file_review" ]; then
       echo ""
-      echo "--- PUBLIC SHADOW REVIEW ---"
-      cat "$ALEX_DIR/system/.public_shadow_review"
-      echo "--- END PUBLIC SHADOW REVIEW ---"
+      echo "--- LIBRARY FILE REVIEW ---"
+      cat "$ALEX_DIR/system/.library_file_review"
+      echo "--- END LIBRARY FILE REVIEW ---"
       echo ""
+    fi
+
+    # Surface drift from the last sync run (one previous session's tail).
+    # Drift means local != server after sync — a bug, not a workflow gap.
+    if [ -f "$ALEX_DIR/system/.library_sync_status.json" ]; then
+      drift_summary=$(node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{try{const j=JSON.parse(s); const d=(j.drift||[]); const e=(j.errors||[]); if(d.length||e.length){process.stdout.write('drift='+d.length+' errors='+e.length+'\n'); for(const x of d) process.stdout.write('  '+x+'\n'); for(const x of e) process.stdout.write('  err: '+x+'\n');}}catch{}})" < "$ALEX_DIR/system/.library_sync_status.json" 2>/dev/null)
+      if [ -n "$drift_summary" ]; then
+        echo ""
+        echo "--- LIBRARY SYNC DRIFT (previous session) ---"
+        printf '%s' "$drift_summary"
+        echo "--- END LIBRARY SYNC DRIFT ---"
+        echo ""
+      fi
     fi
 
     call_payload='{"modules":[{"id":"github:mowinckelb/alexandria#factory/canon/axioms","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/methodology","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/editor","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/mercury","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/publisher","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/library","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/filter","text":"default canon module"}]}'
