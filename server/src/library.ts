@@ -126,36 +126,6 @@ function alexandriaId(account: Account, profile: CompanyAuthorRow | null, fallba
   return stringSlot(settings, 'library_id') || stringSlot(settings, 'alexandria_id') || `a.${fallbackIndex}`;
 }
 
-/**
- * Whether the GitHub Author has any SSH signing keys registered.
- * Public GitHub endpoint — no auth required, no Alexandria OAuth scope needed.
- * Used by the Library UI to display the "signed worldline" indicator when an
- * Author has set up commit signing (typically via setup.sh on their machine).
- * Cached 24h in KV — Authors who rotate keys see a 24h propagation delay.
- * Soft fallback: any error returns false (no badge, no harm).
- */
-async function hasGitHubSigningKeys(login: string): Promise<boolean> {
-  const kv = getKV();
-  const cacheKey = `signing_keys:${login}`;
-  const cached = await kv.get(cacheKey);
-  if (cached !== null) return cached === '1';
-  try {
-    const resp = await fetch(`https://api.github.com/users/${login}/ssh_signing_keys`, {
-      headers: { 'User-Agent': 'Alexandria', 'Accept': 'application/vnd.github+json' },
-    });
-    if (!resp.ok) {
-      await kv.put(cacheKey, '0', { expirationTtl: 86400 });
-      return false;
-    }
-    const keys = await resp.json() as Array<{ key: string }>;
-    const hasKeys = Array.isArray(keys) && keys.length > 0;
-    await kv.put(cacheKey, hasKeys ? '1' : '0', { expirationTtl: 86400 });
-    return hasKeys;
-  } catch {
-    return false;
-  }
-}
-
 function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fallbackIndex: number) {
   const settings = librarySettings(profile);
   const location = stringSlot(settings, 'location');
@@ -306,13 +276,8 @@ export function registerLibraryRoutes(app: Hono): void {
       .first<CompanyAuthorRow>()
       .catch(() => null);
 
-    const hasSigningKeys = await hasGitHubSigningKeys(authorId);
-
     return c.json({
-      author: {
-        ...directoryAuthor(account!, legacyAuthor, fallbackIndex),
-        has_signing_keys: hasSigningKeys,
-      },
+      author: directoryAuthor(account!, legacyAuthor, fallbackIndex),
       files: protocolFiles.map(file => ({
         name: file.name,
         text: file.text,

@@ -25,7 +25,6 @@ interface AuthorData {
     contact: string | null;
     website: string | null;
     text: string | null;
-    has_signing_keys?: boolean;
   };
   files?: ProtocolFile[];
 }
@@ -210,21 +209,6 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: 0, lineHeight: 1.45 }}>
             {author.alexandria_id}
-            {author.has_signing_keys && (
-              <span
-                title="this Author signs their cognitive worldline with their own SSH key — their worldline is a cryptographically anchored ledger"
-                style={{
-                  marginLeft: '0.6em',
-                  fontStyle: 'italic',
-                  fontSize: '0.85em',
-                  letterSpacing: '0.04em',
-                  color: 'var(--accent, #6b3a4a)',
-                  opacity: 0.85,
-                }}
-              >
-                · signed worldline
-              </span>
-            )}
           </p>
           {(author.location || author.contact) && (
             <div
