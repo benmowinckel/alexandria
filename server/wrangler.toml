@@ -40,8 +40,10 @@ zone_id = "7a1952631048380db0df21b5daa1e88e"
 
 # Cron triggers — UTC. Daily digest at 15:00 UTC = 8am PDT (7am PST in winter,
 # Cloudflare cron has no IANA zone support). Monthly settlement 1st @ 02:00 UTC.
+# Audit mirror every 10 min — minimises the window during which a tampered
+# event could be invisible (dispatch by event.cron in worker.ts).
 [triggers]
-crons = ["0 15 * * *", "0 2 1 * *"]
+crons = ["0 15 * * *", "0 2 1 * *", "*/10 * * * *"]
 
 # Import .md files as text modules (source of truth for canon modules)
 [[rules]]

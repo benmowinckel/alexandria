@@ -9,6 +9,7 @@ import { Hono } from 'hono';
 import { extractApiKey, findByApiKey } from './auth.js';
 import { updateAccountBilling, getBillingSummary } from './accounts.js';
 import { runHealthDigest, runWeekOneCheckIns, runInstallNudges } from './cron.js';
+import { mirrorPendingAuditBatch, getAuditHead } from './audit.js';
 import { registerProtocol } from './protocol.js';
 import { registerRoutes } from './routes.js';
 import { registerBillingRoutes, settleMonthlyTabs, recalculateAllKinPricing, createPatronCheckoutSession } from './billing.js';
@@ -236,6 +237,33 @@ app.get('/health', async (c) => {
     server: 'alexandria',
     version: '0.4.0',
   });
+});
+
+// ---------------------------------------------------------------------------
+// Audit head — public observability of the access-log hash chain
+// ---------------------------------------------------------------------------
+//
+// Returns the latest chain head + cron liveness timestamps. Anyone can poll
+// this and record the head_hash; any future deletion or rewriting of historic
+// audit entries (in the alexandria-audit GitHub repo) would produce a
+// different head_hash than the values external observers already recorded.
+// This is what makes the audit tamper-evident rather than just "stored."
+//
+// Returns no entries — only the cryptographic summary. Per-author entries
+// live on /library/:author/access-log (author-auth required), full history
+// lives in the audit repo.
+
+app.get('/audit/head', async (c) => {
+  try {
+    const head = await getAuditHead();
+    return c.json({
+      ...head,
+      audit_repo: 'mowinckelb/alexandria-audit',
+      verify: 'Walk the hash chain in the audit_repo from genesis; the final entry hash must equal head_hash.',
+    }, 200, { 'Cache-Control': 'no-store' });
+  } catch (err) {
+    return c.json({ error: 'audit head unavailable', detail: String(err).slice(0, 200) }, 500);
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -609,12 +637,29 @@ app.notFound((c) => {
 export default {
   fetch: app.fetch,
 
-  // Cron Triggers — daily health digest + monthly settlement
-  async scheduled(_event: ScheduledEvent, env: Record<string, unknown>, ctx: ExecutionContext) {
+  // Cron Triggers — dispatch by event.cron so each schedule runs only its job.
+  async scheduled(event: ScheduledEvent, env: Record<string, unknown>, ctx: ExecutionContext) {
     initEnv(env);
-    // Daily 15:00 UTC (health digest, also publishes library-signal snapshot
-    // to KV) + monthly 1st @ 02:00 UTC (settlement).
-    // settleMonthlyTabs is idempotent — only does work on month-end keys.
+
+    // Audit mirror — every 10 minutes. Tight window to keep the tampering
+    // surface small. Runs alone (other crons skipped) to keep latency low
+    // and avoid burning GitHub API rate limit on no-op scans.
+    if (event.cron === '*/10 * * * *') {
+      try {
+        await mirrorPendingAuditBatch();
+      } catch (err) {
+        // Log and re-throw so Cloudflare records the failure — silent audit
+        // mirror failure is the exact thing the smoke health check catches.
+        logEvent('audit_mirror_failed', { error: String(err).slice(0, 200) });
+        throw err;
+      }
+      ctx.waitUntil(flushEvents());
+      return;
+    }
+
+    // Daily 15:00 UTC (health digest, library-signal snapshot) + monthly 1st
+    // @ 02:00 UTC (settlement). settleMonthlyTabs is idempotent — only does
+    // work on month-end keys.
     await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing(), runWeekOneCheckIns(), runInstallNudges()]);
     ctx.waitUntil(flushEvents());
   },

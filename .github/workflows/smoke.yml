@@ -182,6 +182,21 @@ jobs:
       - name: Server paths referenced anywhere resolve (catch dead probes)
         run: bash scripts/check-smoke-paths.sh
 
+      - name: Audit head freshness (cron is alive, mirror is keeping up)
+        run: |
+          # /audit/head must update on every 10-minute cron, regardless of
+          # whether new events were committed. Stale = silent audit failure.
+          # Threshold: 30 min covers normal cron jitter (3x the interval).
+          body=$(curl -sf https://api.alexandria-library.com/audit/head)
+          echo "$body"
+          last_run=$(echo "$body" | python3 -c "import json,sys;print(json.load(sys.stdin)['last_run_at'])")
+          age_sec=$(python3 -c "import datetime as d;t=d.datetime.fromisoformat('$last_run'.replace('Z','+00:00'));print(int((d.datetime.now(d.timezone.utc)-t).total_seconds()))")
+          if [ "$age_sec" -gt 1800 ]; then
+            echo "::error::Audit mirror stale — last_run_at was $age_sec seconds ago (threshold: 1800s = 30min)"
+            exit 1
+          fi
+          echo "✓ audit mirror alive (last_run_at ${age_sec}s ago)"
+
       - name: File gate matrix (live route agrees with authorizeFileRead for every cell)
         env:
           # Hits the canonical surface (api.alexandria-library.com — the default

@@ -28,6 +28,7 @@ import {
   readShadowFree,
   readWork,
 } from './file-access.js';
+import { getAuditHead, getAuthorAuditEntries } from './audit.js';
 
 // ---------------------------------------------------------------------------
 // CORS-safe R2 response
@@ -441,6 +442,17 @@ export function registerLibraryRoutes(app: Hono): void {
     });
 
     if (!result.ok) {
+      // Audit log denials too — failed attempts are the more interesting
+      // signal for spotting probing or insider abuse. `access_reason` carries
+      // the denial code (unauthenticated, invite_required, payment_required,
+      // not_found, content_missing, unknown_visibility).
+      logEvent('library_protocol_file_view', {
+        author: authorId,
+        name,
+        status: String(result.status),
+        accessor: accessor?.github_login || 'anonymous',
+        access_reason: result.reason,
+      });
       // Paid denials get a checkout URL so the website can launch the flow.
       if (result.status === 402) {
         return c.json({
@@ -454,6 +466,7 @@ export function registerLibraryRoutes(app: Hono): void {
     logEvent('library_protocol_file_view', {
       author: authorId,
       name,
+      status: '200',
       visibility: result.file.visibility,
       accessor: accessor?.github_login || (result.reason === 'paid' ? 'purchase' : result.reason === 'invite' ? 'invite' : 'public'),
       access_reason: result.reason,
@@ -679,6 +692,40 @@ export function registerLibraryRoutes(app: Hono): void {
     // Public/free works are CDN-cacheable; paid/owner/subscriber reads aren't.
     const cache = result.reason === 'public' ? 'public, max-age=300' : undefined;
     return r2Response(result.obj.body, 'text/markdown; charset=utf-8', c.req.header('Origin'), cache);
+  });
+
+  // =========================================================================
+  // ACCESS LOG (Author-authenticated — see who has read your files)
+  // =========================================================================
+
+  // Per-author audit feed. Long-term tamper-evident history lives in the
+  // alexandria-audit GitHub repo (one JSONL batch per cron run, hash-
+  // chained). This endpoint exposes the rolling 30-day KV window so the
+  // Author can see recent activity without cloning the repo. The current
+  // chain head is included so the Author can cross-check against /audit/head
+  // and the published repo to verify nothing was tampered with.
+  app.get('/library/:author/access-log', async (c) => {
+    const authorId = c.req.param('author');
+    const accessorKey = extractApiKey(c);
+    const sessionToken = extractLibrarySessionToken(c);
+    const accessor = accessorKey
+      ? await findByApiKey(accessorKey)
+      : sessionToken ? await findByLibrarySessionToken(sessionToken) : null;
+    if (!accessor) return c.json({ error: 'Authentication required' }, 401);
+    if (accessor.github_login !== authorId) return c.json({ error: 'Access log is private' }, 403);
+
+    const [entries, head] = await Promise.all([
+      getAuthorAuditEntries(authorId, 200),
+      getAuditHead(),
+    ]);
+
+    return c.json({
+      author: authorId,
+      head,
+      entries,
+      audit_repo: 'mowinckelb/alexandria-audit',
+      note: 'Long-term tamper-evident history lives in the audit_repo. Walk the hash chain from genesis to verify entries match the head_hash.',
+    });
   });
 
   // =========================================================================
