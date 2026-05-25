@@ -35,13 +35,13 @@ If the run discovers a reusable system element, keep the marketplace loop curren
 
 ## Canon update review (when `.canon_update_notice` exists)
 
-Upstream canon is auto-pulled on every session-start. When it changes, the hook writes `.canon_update_notice` with the diff. Your job during the audit: read the notice, consider each change against what you know about this Author (constitution, marginalia, feedback, machine.md, canon_overrides). For each change:
+The Author's system canon at `~/alexandria/system/canon/` is sovereign — never overwritten. Each session-start the hook fetches upstream factory canon and, if local diverges, writes `.canon_update_notice` with per-module diffs. The notice regenerates each session and always reflects current divergence. Your job during the audit: read the notice, consider each module's diff against what you know about this Author (constitution, marginalia, feedback, machine.md). For each diverged module:
 
-- Fits this Author → no action. Upstream applies.
-- Conflicts with this Author's practice → add or refine an entry in `~/alexandria/canon_overrides.md` that supersedes the change. Cite the upstream line you're overriding and why.
+- Fits this Author → edit the local `~/alexandria/system/canon/<module>.md` to integrate the upstream change (in full or in part). The notice will clear naturally next session when local matches upstream.
+- Conflicts with this Author's practice → leave local untouched. The notice will keep showing the diff until upstream changes again or the Author decides to integrate.
 - Unclear → surface in notepad for the Author to weigh in during next /a.
 
-Clear `.canon_update_notice` after review. The Author's consent layer lives in `canon_overrides.md`; upstream auto-pulls but overrides win.
+Do not clear `.canon_update_notice` manually — it regenerates from the diff each session, so it self-clears the moment local and upstream agree on a module.
 
 Read ~/alexandria/files/constitution/, ~/alexandria/files/marginalia/, ~/alexandria/files/core/notepad.md, ~/alexandria/files/core/machine.md, and ~/alexandria/files/core/feedback.md.
 
