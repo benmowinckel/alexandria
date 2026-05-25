@@ -517,6 +517,8 @@ It is a developmental artifact: *a structured, living, continuously updated appr
 
 Memory is substrate. *The Constitution is direction.*
 
+*Every major ai lab will ship file-based memory inside their own product — some already have.* **This is thesis validation, not threat.** The convergence proves the substrate is real; the question was never *whether* personal files would exist, but *where the canonical version lives.* **Lab memory is a moat inside one ai. Alexandria is the layer across all of them.** *The two stack — your lab memory keeps that one ai sharper; your Constitution keeps every ai sharper, survives model churn, and stays yours when you switch.*
+
 The more sessions, the more symbols, the higher fidelity the approximation. *Every session sharpens the frame that is uniquely yours — gets closer to your actual mental model through active extraction (drawing thoughts out, then sharpening them) rather than passive observation.* The Constitution is not a transcript. **It is a structured approximation of the underlying mind, and it compounds over time.**
 
 ---
@@ -630,6 +632,8 @@ The four layers stack. *Convention is the cultural slot. Populated minds are the
 ---
 
 Why the labs do not — and structurally cannot — do this themselves. *Four reasons, all structural, all independent.*
+
+*The labs are already shipping in-product memory — files an ai writes and reads inside its own walls.* **Good. That is the substrate, and the labs will build it better than anyone.** What no single lab can build, by construction, is the layer *between* them. *Memory inside Claude does not make ChatGPT sharper. Memory inside ChatGPT does not survive when you switch to whatever is best next year.* The in-vendor system and the cross-vendor system are complimentary, not competitive — and only one of them can be neutral.
 
 **One. Sovereignty is incompatible with their incentives.** Labs make money by keeping users inside their ecosystem — *the API call is the unit of revenue.* Sovereign user-side context is the opposite of lock-in.
 
