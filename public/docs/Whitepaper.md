@@ -10,7 +10,7 @@ To get through this new era, humans need to keep thinking — not let ai do it f
 
 *what.*
 
-Alexandria gives every ai personal context about you — writes who you are to private files on your own computer, so every ai thinks with you, not for you.
+alexandria gives every ai personal context about you — writes who you are to private files on your own computer, so every ai thinks with you, not for you.
 
 *how.*
 
