@@ -20,7 +20,9 @@ type SessionResponse = {
 
 type ApiErrorResponse = {
   error?: string;
+  reason?: string;
   visibility?: string;
+  checkout_url?: string;
 };
 
 const FILE_DISPLAY_NAMES: Record<string, string> = {
@@ -39,13 +41,6 @@ function fileDisplayName(name: string): string {
   return FILE_DISPLAY_NAMES[name] || name.replace(/-/g, ' ');
 }
 
-function gateText(visibility: Visibility): string {
-  if (visibility === 'paid') return 'buy access to open this file';
-  if (visibility === 'invite') return 'enter invite code or sign in as the author';
-  if (visibility === 'authors') return 'sign in as an author to open this file';
-  return 'open this file';
-}
-
 export default function OpenProtocolFileGatePage({
   params,
 }: {
@@ -60,10 +55,17 @@ export default function OpenProtocolFileGatePage({
   const [loading, setLoading] = useState(false);
   const [copying, setCopying] = useState(false);
   const [error, setError] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
+  // Invite code is pre-populated from URL `?invite=` so share links auto-fill.
+  // If absent, the user types it. Either way it flows into the fetch's query.
+  const [inviteCode, setInviteCode] = useState(() => (searchParams.get('invite') || '').trim());
   const [signedIn, setSignedIn] = useState(false);
   const [sessionLogin, setSessionLogin] = useState<string | null>(null);
-  const [guestMode, setGuestMode] = useState(false);
+  const [autoAttempted, setAutoAttempted] = useState(false);
+  // Owner share-link state — held only after a fresh mint; not persisted.
+  const [shareUrl, setShareUrl] = useState('');
+  const [shareLabel, setShareLabel] = useState('');
+  const [shareCopying, setShareCopying] = useState(false);
+  const [mintingShare, setMintingShare] = useState(false);
 
   useEffect(() => {
     params.then(async ({ author, name }) => {
@@ -115,23 +117,53 @@ export default function OpenProtocolFileGatePage({
   const fileExtension = FILE_EXTENSIONS[fileName] || 'md';
   const displayName = fileDisplayName(fileName);
 
+  const canOwnerOpen = signedIn && sessionLogin === authorId;
+
   const apiFileUrl = (query?: string) => {
     const path = `/api/library/${encodeURIComponent(authorId)}/file/${encodeURIComponent(fileName)}`;
     return query ? `${path}?${query}` : path;
   };
 
-  const openViaApi = async (query?: string) => {
-    const path = apiFileUrl(query);
-    const res = await fetch(path, { credentials: 'include' });
-    if (!res.ok) {
-      const text = await res.text();
-      let parsed: ApiErrorResponse = {};
-      try { parsed = JSON.parse(text) as ApiErrorResponse; } catch {}
-      setError(parsed.error || 'could not open this file.');
-      return false;
+  const buildFileQuery = (): string => {
+    const params = new URLSearchParams();
+    const code = inviteCode.trim();
+    if (code) params.set('invite', code);
+    if (purchaseSessionId) params.set('session_id', purchaseSessionId);
+    return params.toString();
+  };
+
+  // ---------------------------------------------------------------------------
+  // Open / copy — attempt + reflect.
+  //
+  // The server (authorizeFileRead) is the single source of truth for whether
+  // an access is allowed. The UI no longer duplicates that decision; it sends
+  // whatever credentials are available (cookie + optional invite + optional
+  // session_id) and reacts to the server's response. Eliminates the whole
+  // class of "UI thinks one thing while the server enforces another" bugs.
+  //
+  // One pragmatic exception: when the visitor is unauthenticated and the file
+  // is paid, route them straight to Stripe checkout rather than wait for the
+  // server's 401. Auth is the floor for the file endpoint but the checkout
+  // flow accepts unauth — collecting the buyer's identity through Stripe.
+  // ---------------------------------------------------------------------------
+
+  const startUnauthCheckout = async (): Promise<boolean> => {
+    const checkout = await fetch(
+      `/api/library/${encodeURIComponent(authorId)}/checkout/file/${encodeURIComponent(fileName)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ return_origin: window.location.origin }),
+      },
+    );
+    const body = await checkout.json() as { url?: string; error?: string };
+    if (body.url) {
+      window.location.href = body.url;
+      return true;
     }
-    window.location.href = path;
-    return true;
+    setError(body.error || 'checkout failed.');
+    return false;
   };
 
   const openNow = async () => {
@@ -139,54 +171,26 @@ export default function OpenProtocolFileGatePage({
     setLoading(true);
     setError('');
     try {
-      if (visibility === 'public') {
-        await openViaApi();
+      // Pragmatic shortcut: unauth on a paid file goes straight to Stripe.
+      if (visibility === 'paid' && !signedIn && !purchaseSessionId && !canOwnerOpen) {
+        await startUnauthCheckout();
         return;
       }
-      if (visibility === 'paid') {
-        if (canOwnerOpen || purchaseSessionId) {
-          const query = purchaseSessionId ? `session_id=${encodeURIComponent(purchaseSessionId)}` : undefined;
-          await openViaApi(query);
-          return;
-        }
-        const checkout = await fetch(
-          `/api/library/${encodeURIComponent(authorId)}/checkout/file/${encodeURIComponent(fileName)}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ return_origin: window.location.origin }),
-          },
-        );
-        const body = await checkout.json() as { url?: string; error?: string };
-        if (body.url) {
-          window.location.href = body.url;
-          return;
-        }
-        setError(body.error || 'checkout failed.');
+
+      const query = buildFileQuery();
+      const path = apiFileUrl(query || undefined);
+      const res = await fetch(path, { credentials: 'include' });
+      if (res.ok) {
+        window.location.href = path;
         return;
       }
-      if (visibility === 'invite') {
-        // Owner bypass — the server's authorizeFileRead lets the file's
-        // owner through regardless of visibility, so the UI must let the
-        // owner attempt the fetch without typing an invite code. Without
-        // this, the owner is forced through an invite-code prompt for
-        // their own files (the prompt short-circuits with an error before
-        // ever reaching the server).
-        const codeFromInput = inviteCode.trim();
-        if (canOwnerOpen) {
-          await openViaApi(codeFromInput ? `invite=${encodeURIComponent(codeFromInput)}` : undefined);
-          return;
-        }
-        if (!codeFromInput) {
-          setError('enter invite code first.');
-          return;
-        }
-        await openViaApi(`invite=${encodeURIComponent(codeFromInput)}`);
+      const body = await res.json().catch(() => ({})) as ApiErrorResponse;
+      // 402 + checkout_url → server tells us where to send the buyer.
+      if (res.status === 402 && body.checkout_url) {
+        window.location.href = body.checkout_url;
         return;
       }
-      // authors visibility
-      await openViaApi();
+      setError(body.error || 'could not open this file.');
     } catch {
       setError('could not continue.');
     } finally {
@@ -199,37 +203,11 @@ export default function OpenProtocolFileGatePage({
     setCopying(true);
     setError('');
     try {
-      let query: string | undefined;
-      if (visibility === 'paid') {
-        if (!canOwnerOpen && !purchaseSessionId) {
-          setError('buy access first, then copy.');
-          return;
-        }
-        query = purchaseSessionId ? `session_id=${encodeURIComponent(purchaseSessionId)}` : undefined;
-      } else if (visibility === 'invite') {
-        // Mirror the openNow owner-bypass: the owner can copy their own
-        // invite-gated file via cookie auth alone; no invite code required.
-        const codeFromInput = inviteCode.trim();
-        if (canOwnerOpen) {
-          query = codeFromInput ? `invite=${encodeURIComponent(codeFromInput)}` : undefined;
-        } else {
-          if (!codeFromInput) {
-            setError('enter invite code first.');
-            return;
-          }
-          query = `invite=${encodeURIComponent(codeFromInput)}`;
-        }
-      } else if (visibility === 'authors' && !canAuthorOpen && !canOwnerOpen) {
-        setError('sign in as an author first.');
-        return;
-      }
-
-      const res = await fetch(apiFileUrl(query), { credentials: 'include' });
+      const query = buildFileQuery();
+      const res = await fetch(apiFileUrl(query || undefined), { credentials: 'include' });
       if (!res.ok) {
-        const text = await res.text();
-        let parsed: ApiErrorResponse = {};
-        try { parsed = JSON.parse(text) as ApiErrorResponse; } catch {}
-        setError(parsed.error || 'could not copy this file.');
+        const body = await res.json().catch(() => ({})) as ApiErrorResponse;
+        setError(body.error || 'could not copy this file.');
         return;
       }
       const text = await res.text();
@@ -241,39 +219,77 @@ export default function OpenProtocolFileGatePage({
     }
   };
 
-  const canOwnerOpen = signedIn && sessionLogin === authorId;
-  const canAuthorOpen = signedIn && visibility === 'authors';
-  const inviteCodeEntered = inviteCode.trim().length > 0;
-  const showGuestOption = !signedIn && visibility === 'paid';
-  const canPaidProceed = visibility !== 'paid'
-    || canOwnerOpen
-    || signedIn
-    || guestMode
-    || !!purchaseSessionId;
-  const canInviteProceed = visibility !== 'invite' || canOwnerOpen || inviteCodeEntered;
-  const showOpenButton = visibility === 'public'
-    || visibility === 'invite'
-    || canAuthorOpen
-    || canOwnerOpen
-    || (visibility === 'paid' && (signedIn || guestMode || !!purchaseSessionId));
-  const showCopyButton = fileExtension === 'md' && (
-    visibility === 'public'
-      || visibility === 'invite'
-      || canAuthorOpen
-      || canOwnerOpen
-      || (visibility === 'paid' && (canOwnerOpen || !!purchaseSessionId))
-  );
-  // Message reflects the viewer's actual access, not just the file's policy.
-  // The bare `gateText(visibility)` reads as an imperative ("sign in as an
-  // author") and was being shown even to the owner who was already signed in
-  // — confusing UX that also reads as a security failure when the file then
-  // opens. Owner-aware first, then any signed-in author for `authors` files,
-  // then the policy description as the unsigned fallback.
+  // Auto-attempt when the URL carried an invite code — share links should
+  // "just work" without the recipient needing to press a button.
+  useEffect(() => {
+    if (!ready || autoAttempted) return;
+    if (visibility !== 'invite') return;
+    const urlInvite = (searchParams.get('invite') || '').trim();
+    if (!urlInvite) return;
+    setAutoAttempted(true);
+    void openNow();
+    // openNow uses inviteCode state, which was initialised from the URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, autoAttempted, visibility, searchParams]);
+
+  // ---------------------------------------------------------------------------
+  // Owner share-link — mint a new access code and display the URL.
+  // ---------------------------------------------------------------------------
+
+  const createShareLink = async () => {
+    if (mintingShare) return;
+    setMintingShare(true);
+    setError('');
+    try {
+      const res = await fetch(
+        `/api/library/${encodeURIComponent(authorId)}/access-code`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ label: shareLabel.trim() || undefined }),
+        },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as ApiErrorResponse;
+        setError(body.error || 'could not create share link.');
+        return;
+      }
+      const minted = await res.json() as { code: string; label: string | null };
+      const url = `${window.location.origin}${nextPath}?invite=${encodeURIComponent(minted.code)}`;
+      setShareUrl(url);
+    } catch {
+      setError('could not create share link.');
+    } finally {
+      setMintingShare(false);
+    }
+  };
+
+  const copyShareUrl = async () => {
+    if (!shareUrl || shareCopying) return;
+    setShareCopying(true);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      // Clipboard failure is rare; surface only if it happens.
+      setError('clipboard blocked — copy the link manually.');
+    } finally {
+      setShareCopying(false);
+    }
+  };
+
+  // Message reflects the viewer's actual state, not just the file's policy.
   const gateMessage = canOwnerOpen
     ? 'you are signed in as the author. open directly or copy.'
-    : visibility === 'authors' && canAuthorOpen
+    : visibility === 'authors' && signedIn
       ? 'signed in. open this file.'
-      : gateText(visibility);
+      : visibility === 'paid'
+        ? 'buy access to open this file'
+        : visibility === 'invite'
+          ? 'enter invite code or sign in as the author'
+          : visibility === 'authors'
+            ? 'sign in as an author to open this file'
+            : 'open this file';
 
   if (!ready) {
     return (
@@ -282,6 +298,11 @@ export default function OpenProtocolFileGatePage({
       </main>
     );
   }
+
+  const showCopyButton = fileExtension === 'md';
+  const openLabel = visibility === 'paid' && !canOwnerOpen && !purchaseSessionId
+    ? `buy ${displayName}.${fileExtension}`
+    : `open ${displayName}.${fileExtension}`;
 
   return (
     <>
@@ -307,16 +328,6 @@ export default function OpenProtocolFileGatePage({
             <a href={signUpUrl} style={{ color: 'var(--text-primary)', textDecoration: 'none', fontSize: '0.92rem' }} className="hover:opacity-60">
               sign up
             </a>
-            {showGuestOption && (
-              <button
-                type="button"
-                onClick={() => setGuestMode(true)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: '0.92rem', padding: 0, cursor: 'pointer' }}
-                className="hover:opacity-60"
-              >
-                continue as guest
-              </button>
-            )}
           </div>
         )}
 
@@ -331,7 +342,7 @@ export default function OpenProtocolFileGatePage({
           </p>
         )}
 
-        {visibility === 'invite' && (
+        {visibility === 'invite' && !canOwnerOpen && (
           <div style={{ margin: '0 0 1.2rem' }}>
             <input
               type="text"
@@ -353,62 +364,137 @@ export default function OpenProtocolFileGatePage({
           </div>
         )}
 
-        {(showOpenButton || showCopyButton) && (
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            {showOpenButton && (
-              <button
-                type="button"
-                onClick={() => void openNow()}
-                disabled={loading || copying || !canPaidProceed || !canInviteProceed || (visibility === 'authors' && !canAuthorOpen && !canOwnerOpen)}
-                style={{
-                  fontSize: '0.95rem',
-                  color: 'var(--text-primary)',
-                  cursor: loading || copying ? 'default' : 'pointer',
-                  opacity: loading || copying ? 0.45 : 1,
-                  transition: 'opacity 0.15s',
-                  border: 'none',
-                  background: 'none',
-                  padding: 0,
-                  fontFamily: 'inherit',
-                }}
-                className="hover:opacity-60"
-              >
-                {loading ? '...' : (
-                  visibility === 'paid' && !canOwnerOpen && !purchaseSessionId
-                    ? `buy ${displayName}.${fileExtension}`
-                    : `open ${displayName}.${fileExtension}`
-                )}
-              </button>
-            )}
-            {showCopyButton && (
-              <button
-                type="button"
-                onClick={() => void copyNow()}
-                disabled={loading || copying || !canInviteProceed || (visibility === 'authors' && !canAuthorOpen && !canOwnerOpen)}
-                style={{
-                  fontSize: '0.92rem',
-                  color: 'var(--text-muted)',
-                  cursor: loading || copying ? 'default' : 'pointer',
-                  opacity: loading || copying ? 0.45 : 1,
-                  transition: 'opacity 0.15s',
-                  border: 'none',
-                  background: 'none',
-                  padding: 0,
-                  fontFamily: 'inherit',
-                }}
-                className="hover:opacity-60"
-              >
-                {copying ? 'copying...' : 'copy'}
-              </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => void openNow()}
+            disabled={loading || copying}
+            style={{
+              fontSize: '0.95rem',
+              color: 'var(--text-primary)',
+              cursor: loading || copying ? 'default' : 'pointer',
+              opacity: loading || copying ? 0.45 : 1,
+              transition: 'opacity 0.15s',
+              border: 'none',
+              background: 'none',
+              padding: 0,
+              fontFamily: 'inherit',
+            }}
+            className="hover:opacity-60"
+          >
+            {loading ? '...' : openLabel}
+          </button>
+          {showCopyButton && (
+            <button
+              type="button"
+              onClick={() => void copyNow()}
+              disabled={loading || copying}
+              style={{
+                fontSize: '0.92rem',
+                color: 'var(--text-muted)',
+                cursor: loading || copying ? 'default' : 'pointer',
+                opacity: loading || copying ? 0.45 : 1,
+                transition: 'opacity 0.15s',
+                border: 'none',
+                background: 'none',
+                padding: 0,
+                fontFamily: 'inherit',
+              }}
+              className="hover:opacity-60"
+            >
+              {copying ? 'copying...' : 'copy'}
+            </button>
+          )}
+        </div>
+
+        {/* Owner-only: create share link for invite-visibility files. */}
+        {canOwnerOpen && visibility === 'invite' && (
+          <div style={{ margin: '1.8rem 0 0', paddingTop: '1.2rem', borderTop: '1px solid var(--border-light)' }}>
+            {!shareUrl ? (
+              <>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-ghost)', margin: '0 0 0.6rem' }}>
+                  share this file with someone — give them a link.
+                </p>
+                <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={shareLabel}
+                    onChange={(e) => setShareLabel(e.target.value)}
+                    placeholder="label (optional)"
+                    style={{
+                      flex: '1 1 auto',
+                      border: 'none',
+                      borderBottom: '1px solid var(--border-light)',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontFamily: 'var(--font-eb-garamond)',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                      padding: '0 0 0.35rem',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void createShareLink()}
+                    disabled={mintingShare}
+                    style={{
+                      fontSize: '0.85rem',
+                      color: 'var(--text-primary)',
+                      cursor: mintingShare ? 'default' : 'pointer',
+                      opacity: mintingShare ? 0.45 : 1,
+                      border: 'none',
+                      background: 'none',
+                      padding: 0,
+                      fontFamily: 'inherit',
+                    }}
+                    className="hover:opacity-60"
+                  >
+                    {mintingShare ? '...' : 'create link'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-ghost)', margin: '0 0 0.6rem' }}>
+                  share this link with whoever you want to invite:
+                </p>
+                <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                  <code style={{
+                    flex: '1 1 auto',
+                    fontSize: '0.8rem',
+                    color: 'var(--text-primary)',
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {shareUrl}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => void copyShareUrl()}
+                    disabled={shareCopying}
+                    style={{
+                      fontSize: '0.85rem',
+                      color: 'var(--text-muted)',
+                      cursor: shareCopying ? 'default' : 'pointer',
+                      opacity: shareCopying ? 0.45 : 1,
+                      border: 'none',
+                      background: 'none',
+                      padding: 0,
+                      fontFamily: 'inherit',
+                    }}
+                    className="hover:opacity-60"
+                  >
+                    {shareCopying ? '...' : 'copy'}
+                  </button>
+                </div>
+              </>
             )}
           </div>
         )}
 
-        {visibility === 'authors' && !canAuthorOpen && !canOwnerOpen && signedIn && (
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-ghost)', margin: '0.8rem 0 0' }}>
-            this file is for authors. sign in with the account that owns the file, or use machine auth.
-          </p>
-        )}
         {error && <p style={{ fontSize: '0.8rem', color: 'var(--text-whisper)', margin: '0.8rem 0 0' }}>{error}</p>}
 
         <div style={{ margin: '3rem 0 0', display: 'flex', gap: '1.4rem' }}>

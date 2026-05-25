@@ -145,6 +145,86 @@ async function main() {
     }
   }
 
+  // -------------------------------------------------------------------------
+  // Positive invite path — verifies the full mint → access → revoke cycle.
+  // Requires OWNER_KEY (to mint and revoke) and an invite-visibility file in
+  // the library. STRANGER_KEY enables the stranger-with-valid-invite cell.
+  // -------------------------------------------------------------------------
+
+  const inviteFile = byVisibility.get('invite');
+  if (OWNER_KEY && inviteFile) {
+    console.log(`\n--- positive invite path (${inviteFile.name}) ---`);
+
+    const mintRes = await fetch(`${BASE}/library/${encodeURIComponent(AUTHOR)}/access-code`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${OWNER_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: 'gate-matrix-test' }),
+    });
+
+    if (!mintRes.ok) {
+      // If the endpoint doesn't exist yet (older deploy in the rolling
+      // window), don't fail the whole run — just note and skip.
+      const label = `mint access-code (POST /library/${AUTHOR}/access-code)`;
+      if (mintRes.status === 404) {
+        console.log(`  ↷ ${label} → 404 (endpoint not deployed yet — skipping)`);
+      } else {
+        console.log(`  ✗ ${label} → ${mintRes.status}`);
+        failures.push(`${label}: ${mintRes.status}`);
+        failed++;
+      }
+    } else {
+      const minted = await mintRes.json() as { id: string; code: string };
+      console.log(`  ✓ mint → id=${minted.id} code=${minted.code.slice(0, 8)}…`);
+      passed++;
+
+      // Stranger with valid invite → expects 200 (the positive path).
+      if (STRANGER_KEY) {
+        const goodAccessRes = await fetch(
+          `${BASE}/library/${encodeURIComponent(AUTHOR)}/file/${encodeURIComponent(inviteFile.name)}?invite=${encodeURIComponent(minted.code)}`,
+          { headers: { Authorization: `Bearer ${STRANGER_KEY}` } },
+        );
+        if (goodAccessRes.status === 200) {
+          console.log(`  ✓ stranger + valid invite → 200`);
+          passed++;
+        } else {
+          console.log(`  ✗ stranger + valid invite → ${goodAccessRes.status}, expected 200`);
+          failures.push(`stranger + valid invite: ${goodAccessRes.status}`);
+          failed++;
+        }
+      }
+
+      // Owner can still revoke. Validates the DELETE endpoint.
+      const revokeRes = await fetch(
+        `${BASE}/library/${encodeURIComponent(AUTHOR)}/access-code/${encodeURIComponent(minted.id)}`,
+        { method: 'DELETE', headers: { Authorization: `Bearer ${OWNER_KEY}` } },
+      );
+      if (revokeRes.ok) {
+        console.log(`  ✓ revoke`);
+        passed++;
+      } else {
+        console.log(`  ✗ revoke → ${revokeRes.status}`);
+        failures.push(`revoke: ${revokeRes.status}`);
+        failed++;
+      }
+
+      // Revoked code must now deny. inviteValid=false → 401 invite_required.
+      if (STRANGER_KEY) {
+        const denyRes = await fetch(
+          `${BASE}/library/${encodeURIComponent(AUTHOR)}/file/${encodeURIComponent(inviteFile.name)}?invite=${encodeURIComponent(minted.code)}`,
+          { headers: { Authorization: `Bearer ${STRANGER_KEY}` } },
+        );
+        if (denyRes.status === 401) {
+          console.log(`  ✓ stranger + revoked invite → 401`);
+          passed++;
+        } else {
+          console.log(`  ✗ stranger + revoked invite → ${denyRes.status}, expected 401`);
+          failures.push(`stranger + revoked invite: ${denyRes.status}`);
+          failed++;
+        }
+      }
+    }
+  }
+
   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed > 0) {
     console.log('\nFailures:');

@@ -6,7 +6,7 @@
  * This file serves the website's read endpoints only.
  */
 
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { getDB, generateId } from './db.js';
 import { logEvent } from './analytics.js';
 import {
@@ -29,6 +29,7 @@ import {
   readWork,
 } from './file-access.js';
 import { getAuditHead, getAuthorAuditEntries } from './audit.js';
+import { generateToken } from './crypto.js';
 
 // ---------------------------------------------------------------------------
 // CORS-safe R2 response
@@ -726,6 +727,83 @@ export function registerLibraryRoutes(app: Hono): void {
       audit_repo: 'mowinckelb/alexandria-audit',
       note: 'Long-term tamper-evident history lives in the audit_repo. Walk the hash chain from genesis to verify entries match the head_hash.',
     });
+  });
+
+  // =========================================================================
+  // ACCESS CODES — owner mints/lists/revokes invite codes for their files
+  // =========================================================================
+  //
+  // An access_code is author-scoped, not file-scoped. One code unlocks every
+  // invite-visibility file the author has published. The owner mints a code
+  // and shares the URL `…/library/{author}/open/{name}?invite={code}` with
+  // a recipient; the gate page auto-attempts on URL load.
+  //
+  // Schema (migrations/0002_private_tier.sql):
+  //   access_codes(id, author_id, code UNIQUE, label?, created_at, revoked_at?)
+  //
+  // Validation happens at the file route (library.ts above): code must exist
+  // for that author_id AND revoked_at IS NULL. Revocation is soft — kept in
+  // the row so the audit chain can resolve historic accessor='invite' entries.
+
+  async function resolveOwnerOnly(c: Context, authorId: string): Promise<Account | { error: Response }> {
+    const accessorKey = extractApiKey(c);
+    const sessionToken = extractLibrarySessionToken(c);
+    const accessor = accessorKey
+      ? await findByApiKey(accessorKey)
+      : sessionToken ? await findByLibrarySessionToken(sessionToken) : null;
+    if (!accessor) return { error: c.json({ error: 'Authentication required' }, 401) };
+    if (accessor.github_login !== authorId) return { error: c.json({ error: 'Only the file owner can manage access codes' }, 403) };
+    return accessor;
+  }
+
+  app.post('/library/:author/access-code', async (c) => {
+    const authorId = c.req.param('author');
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
+
+    const body = await c.req.json<{ label?: string }>().catch(() => ({} as { label?: string }));
+    const label = typeof body.label === 'string' && body.label.trim() ? body.label.trim().slice(0, 80) : null;
+
+    // 12 bytes = 24 hex chars. UNIQUE index on code; retry on the astronomical
+    // collision case rather than hand-coding "if exists" pre-check.
+    const id = generateId();
+    const code = generateToken(12);
+    const now = new Date().toISOString();
+    await getDB().prepare(
+      'INSERT INTO access_codes (id, author_id, code, label, created_at) VALUES (?, ?, ?, ?, ?)'
+    ).bind(id, authorId, code, label, now).run();
+
+    logEvent('access_code_minted', { author: authorId, ...(label ? { label } : {}) });
+    return c.json({ id, code, label, created_at: now }, 201);
+  });
+
+  app.get('/library/:author/access-codes', async (c) => {
+    const authorId = c.req.param('author');
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
+
+    const result = await getDB().prepare(
+      'SELECT id, code, label, created_at, revoked_at FROM access_codes WHERE author_id = ? ORDER BY created_at DESC LIMIT 200'
+    ).bind(authorId).all<{ id: string; code: string; label: string | null; created_at: string; revoked_at: string | null }>();
+    return c.json({ codes: result.results || [] });
+  });
+
+  app.delete('/library/:author/access-code/:id', async (c) => {
+    const authorId = c.req.param('author');
+    const id = c.req.param('id');
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
+
+    const now = new Date().toISOString();
+    const result = await getDB().prepare(
+      'UPDATE access_codes SET revoked_at = ? WHERE id = ? AND author_id = ? AND revoked_at IS NULL'
+    ).bind(now, id, authorId).run();
+
+    if (!result.meta.changes) {
+      return c.json({ error: 'Code not found or already revoked' }, 404);
+    }
+    logEvent('access_code_revoked', { author: authorId, id });
+    return c.json({ ok: true, id, revoked_at: now });
   });
 
   // =========================================================================
