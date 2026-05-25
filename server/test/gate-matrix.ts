@@ -39,7 +39,20 @@ function loadKey(envName: string, fallbackPath?: string): string | null {
 }
 
 const OWNER_KEY = loadKey('OWNER_API_KEY', join(HOME, 'alexandria', 'system', '.api_key'));
-const STRANGER_KEY = loadKey('ALEXANDRIA_TEST_KEY');
+let STRANGER_KEY = loadKey('ALEXANDRIA_TEST_KEY');
+
+/** Resolve who an API key represents on the live server. Used to detect the
+ *  case where the configured "stranger" key actually authenticates as the
+ *  owner — common in single-account dev/CI setups — so we can skip stranger
+ *  cells rather than silently flip them all to owner-bypass 200s. */
+async function resolveKeyLogin(key: string): Promise<string | null> {
+  try {
+    const res = await fetch(`${BASE}/library/session`, { headers: { Authorization: `Bearer ${key}` } });
+    if (!res.ok) return null;
+    const body = await res.json() as { signed_in?: boolean; github_login?: string | null };
+    return body.signed_in && body.github_login ? body.github_login : null;
+  } catch { return null; }
+}
 
 interface FileEntry { name: string; visibility: string; }
 type Accessor = 'unauth' | 'owner' | 'stranger';
@@ -100,7 +113,25 @@ function cellsFor(file: FileEntry): Cell[] {
 async function main() {
   console.log(`=== Gate matrix vs ${BASE} (author=${AUTHOR}) ===\n`);
   console.log(`  owner key:    ${OWNER_KEY ? 'present' : 'missing — owner cells will be skipped'}`);
-  console.log(`  stranger key: ${STRANGER_KEY ? 'present' : 'missing — stranger cells will be skipped'}\n`);
+
+  // Validate that STRANGER_KEY is actually a different account. Single-account
+  // CI setups can leave both env vars pointing at the same key, which would
+  // make every "stranger" cell silently flip to owner-bypass 200.
+  if (STRANGER_KEY) {
+    const strangerLogin = await resolveKeyLogin(STRANGER_KEY);
+    if (!strangerLogin) {
+      console.log(`  stranger key: present but did not resolve to a signed-in account — skipping stranger cells`);
+      STRANGER_KEY = null;
+    } else if (strangerLogin === AUTHOR) {
+      console.log(`  stranger key: present but resolves to the owner (${AUTHOR}) — skipping stranger cells`);
+      STRANGER_KEY = null;
+    } else {
+      console.log(`  stranger key: present (${strangerLogin})`);
+    }
+  } else {
+    console.log(`  stranger key: missing — stranger cells will be skipped`);
+  }
+  console.log('');
 
   const listRes = await fetch(`${BASE}/library/${encodeURIComponent(AUTHOR)}`);
   if (!listRes.ok) {
