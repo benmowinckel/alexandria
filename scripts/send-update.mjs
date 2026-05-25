@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Render a patron update markdown letter to email HTML and broadcast it
+// Render a patron update from markdown to email HTML and broadcast it
 // (or preview to founder only) via the /admin/update/send server endpoint.
 //
 // Usage:
@@ -30,7 +30,7 @@ if (!slug) {
 
 const sourceFile = path.join(CONTENT_DIR, `${slug}.md`);
 if (!fs.existsSync(sourceFile)) {
-  console.error(`✗ no letter at ${sourceFile}`);
+  console.error(`✗ no update at ${sourceFile}`);
   process.exit(1);
 }
 
@@ -77,7 +77,7 @@ if (!preview) {
   const r = await fetch(permalink, { method: 'HEAD' });
   if (!r.ok) {
     console.error(`✗ HTTP ${r.status}`);
-    console.error('  push the letter to git first; wait for Vercel deploy; then retry.');
+    console.error('  push the update to git first; wait for Vercel deploy; then retry.');
     process.exit(1);
   }
   console.log('ok');

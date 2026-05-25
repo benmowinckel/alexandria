@@ -11,7 +11,7 @@ const INK_MUTED = 'rgba(26, 19, 24, 0.55)';
 const INK_FAINT = 'rgba(26, 19, 24, 0.32)';
 const RULE = 'rgba(26, 19, 24, 0.20)';
 
-export default function UpdateLetter({
+export default function UpdatePage({
   update,
   chronological,
 }: {
@@ -19,42 +19,42 @@ export default function UpdateLetter({
   chronological: UpdateMeta[];
 }) {
   return (
-    <main className="letter-root">
+    <main className="update-root">
       <Link href="/" className="nav-brand" aria-label="alexandria">
         <em>alexandria</em>
         <span className="nav-dot">.</span>
       </Link>
 
-      <article className="letter">
-        <header className="letter-head">
-          <p className="letter-meta">
-            <Link href="/updates" className="letter-meta-link">updates</Link>
-            <span className="letter-meta-sep"> · </span>
-            <span className="letter-slug">{update.slug}</span>
+      <article className="update">
+        <header className="update-head">
+          <p className="update-meta">
+            <Link href="/updates" className="update-meta-link">updates</Link>
+            <span className="update-meta-sep"> · </span>
+            <span className="update-slug">{update.slug}</span>
             {update.date ? (
               <>
-                <span className="letter-meta-sep"> · </span>
-                <span className="letter-date">{update.date}</span>
+                <span className="update-meta-sep"> · </span>
+                <span className="update-date">{update.date}</span>
               </>
             ) : null}
           </p>
-          <h1 className="letter-title">{update.subject}</h1>
+          <h1 className="update-title">{update.subject}</h1>
         </header>
 
-        <div className="letter-body">
+        <div className="update-body">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{update.body}</ReactMarkdown>
         </div>
 
         {chronological.length > 1 ? (
-          <nav className="letter-nav" aria-label="other updates">
+          <nav className="update-nav" aria-label="other updates">
             {chronological.map((u, i) => (
-              <span key={u.slug} className="letter-nav-item">
+              <span key={u.slug} className="update-nav-item">
                 {u.slug === update.slug ? (
                   <strong>{u.slug}</strong>
                 ) : (
                   <Link href={`/updates/${u.slug}`}>{u.slug}</Link>
                 )}
-                {i < chronological.length - 1 ? <span className="letter-nav-sep"> · </span> : null}
+                {i < chronological.length - 1 ? <span className="update-nav-sep"> · </span> : null}
               </span>
             ))}
           </nav>
@@ -65,7 +65,7 @@ export default function UpdateLetter({
 
       <style jsx>{`
         :global(html), :global(body) { background: ${PAPER}; }
-        .letter-root {
+        .update-root {
           position: relative;
           min-height: 100vh;
           min-height: 100dvh;
@@ -101,65 +101,65 @@ export default function UpdateLetter({
           0%, 100% { opacity: 1; }
           50%      { opacity: 0.42; }
         }
-        .letter {
+        .update {
           max-width: 600px;
           margin: 0 auto;
           padding: 128px clamp(24px, 6vw, 80px) 96px;
         }
-        .letter-head {
+        .update-head {
           margin-bottom: 40px;
         }
-        .letter-meta {
+        .update-meta {
           margin: 0 0 14px;
           font-size: 13px;
           color: ${INK_MUTED};
           letter-spacing: 0.02em;
           font-style: italic;
         }
-        .letter-meta-link {
+        .update-meta-link {
           color: ${INK_MUTED};
           text-decoration: none;
           border-bottom: 1px solid ${INK_FAINT};
           padding-bottom: 1px;
         }
-        .letter-meta-link:hover { color: ${INK}; }
-        .letter-meta-sep { color: ${INK_FAINT}; font-style: normal; }
-        .letter-slug { font-variant-numeric: tabular-nums; }
-        .letter-date { font-variant-numeric: tabular-nums; }
-        .letter-title {
+        .update-meta-link:hover { color: ${INK}; }
+        .update-meta-sep { color: ${INK_FAINT}; font-style: normal; }
+        .update-slug { font-variant-numeric: tabular-nums; }
+        .update-date { font-variant-numeric: tabular-nums; }
+        .update-title {
           font-size: 32px;
           font-weight: 400;
           letter-spacing: -0.015em;
           line-height: 1.2;
           margin: 0;
         }
-        .letter-body {
+        .update-body {
           font-size: 19px;
           line-height: 1.7;
           color: ${INK};
         }
-        .letter-body :global(p) { margin: 0 0 1.4em; }
-        .letter-body :global(em) { font-style: italic; }
-        .letter-body :global(strong) { font-weight: 600; }
-        .letter-body :global(a) {
+        .update-body :global(p) { margin: 0 0 1.4em; }
+        .update-body :global(em) { font-style: italic; }
+        .update-body :global(strong) { font-weight: 600; }
+        .update-body :global(a) {
           color: ${INK};
           text-decoration: none;
           border-bottom: 1px solid ${RULE};
         }
-        .letter-body :global(a:hover) { border-bottom-color: ${INK}; }
-        .letter-body :global(hr) {
+        .update-body :global(a:hover) { border-bottom-color: ${INK}; }
+        .update-body :global(hr) {
           border: none;
           border-top: 1px solid ${RULE};
           margin: 2.2em 0;
         }
-        .letter-body :global(blockquote) {
+        .update-body :global(blockquote) {
           margin: 1.4em 0;
           padding-left: 18px;
           border-left: 2px solid ${RULE};
           color: ${INK_MUTED};
           font-style: italic;
         }
-        .letter-nav {
+        .update-nav {
           margin-top: 56px;
           padding-top: 24px;
           border-top: 1px solid ${RULE};
@@ -168,17 +168,17 @@ export default function UpdateLetter({
           letter-spacing: 0.02em;
           font-variant-numeric: tabular-nums;
         }
-        .letter-nav :global(a) {
+        .update-nav :global(a) {
           color: ${INK_MUTED};
           text-decoration: none;
           transition: color 200ms ease;
         }
-        .letter-nav :global(a:hover) { color: ${INK}; }
-        .letter-nav :global(strong) {
+        .update-nav :global(a:hover) { color: ${INK}; }
+        .update-nav :global(strong) {
           color: ${INK};
           font-weight: 500;
         }
-        .letter-nav-sep { color: ${INK_FAINT}; }
+        .update-nav-sep { color: ${INK_FAINT}; }
         .watermark {
           position: fixed;
           bottom: 22px;
@@ -193,9 +193,9 @@ export default function UpdateLetter({
         @media (max-width: 600px) {
           .nav-brand { font-size: 24px; top: 8px; left: 14px; }
           .watermark { font-size: 20px; bottom: 18px; right: 22px; }
-          .letter { padding: 104px 24px 80px; }
-          .letter-title { font-size: 26px; }
-          .letter-body { font-size: 17px; }
+          .update { padding: 104px 24px 80px; }
+          .update-title { font-size: 26px; }
+          .update-body { font-size: 17px; }
         }
       `}</style>
     </main>

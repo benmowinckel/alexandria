@@ -1,6 +1,6 @@
 # patron updates — content directory
 
-Each letter is one markdown file. Filename = slug = footer-nav label (e.g. `u1.md` → `/updates/u1`).
+Each update is one markdown file. Filename = slug = footer-nav label (e.g. `u1.md` → `/updates/u1`).
 
 ## format
 

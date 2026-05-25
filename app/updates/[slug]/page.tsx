@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { loadAllUpdates, loadUpdate } from '../../lib/updates';
-import UpdateLetter from './UpdateLetter';
+import Update from './Update';
 
 export const dynamicParams = false;
 
@@ -28,5 +28,5 @@ export default async function UpdateLetterPage({ params }: { params: Promise<{ s
     a.date < b.date ? -1 : a.date > b.date ? 1 : a.slug < b.slug ? -1 : 1,
   );
 
-  return <UpdateLetter update={update} chronological={chronological} />;
+  return <Update update={update} chronological={chronological} />;
 }
