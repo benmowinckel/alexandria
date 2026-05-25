@@ -33,15 +33,14 @@ Before processing vault, consider Machine state. Intelligence decision — no fi
 
 If the run discovers a reusable system element, keep the marketplace loop current: write/update `~/alexandria/files/works/systems/<slug>.md`, add its provisional `local:<github-login>/<slug>` ID to `.call_manifest` if this machine is using it, and mention GitHub contribution in the brief only when the Author should approve making the stripped mechanism reusable for others.
 
-## Canon update review (when `.canon_update_notice` exists)
+## Canon divergence review (when `.canon_update_notice` exists)
 
-The Author's system canon at `~/alexandria/system/canon/` is sovereign — never overwritten. Each session-start the hook fetches upstream factory canon and, if local diverges, writes `.canon_update_notice` with per-module diffs. The notice regenerates each session and always reflects current divergence. Your job during the audit: read the notice, consider each module's diff against what you know about this Author (constitution, marginalia, feedback, machine.md). For each diverged module:
+The Author's system canon at `~/alexandria/system/canon/` is sovereign — never overwritten. Each session-start the hook fetches upstream factory canon and, if local and upstream differ in any direction, writes `.canon_update_notice` with per-module diffs. The notice regenerates each session and reflects current state. Read each module's diff first to identify direction: `+` lines exist only in upstream (factory has changes the Author hasn't taken), `-` lines exist only in local (the Author has personal additions upstream doesn't have).
 
-- Fits this Author → edit the local `~/alexandria/system/canon/<module>.md` to integrate the upstream change (in full or in part). The notice will clear naturally next session when local matches upstream.
-- Conflicts with this Author's practice → leave local untouched. The notice will keep showing the diff until upstream changes again or the Author decides to integrate.
-- Unclear → surface in notepad for the Author to weigh in during next /a.
+- Upstream-side changes (`+` lines) → consider against what you know about this Author (constitution, marginalia, feedback, machine.md). Fits → edit `~/alexandria/system/canon/<module>.md` to integrate (full or partial). Conflicts with this Author's practice → leave local untouched. Unclear → surface in notepad for the Author to weigh in during next /a.
+- Local-only additions (`-` lines) → the Author's own canon work. Don't re-raise — they wrote it.
 
-Do not clear `.canon_update_notice` manually — it regenerates from the diff each session, so it self-clears the moment local and upstream agree on a module.
+Do not clear `.canon_update_notice` manually — it regenerates from the diff each session, so it self-clears the moment local and upstream agree on every module.
 
 Read ~/alexandria/files/constitution/, ~/alexandria/files/marginalia/, ~/alexandria/files/core/notepad.md, ~/alexandria/files/core/machine.md, and ~/alexandria/files/core/feedback.md.
 
