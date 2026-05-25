@@ -68,6 +68,7 @@ if [ "$MODE" = "session-start" ]; then
   canon=""
   canon_ok=false
   notice_body=""
+  canon_fetch_failures=""
   for module in axioms methodology editor mercury publisher library filter bookshelf; do
     fresh=$(curl -s --max-time 5 "$CANON_GITHUB/$module.md" 2>/dev/null)
     local_path="$ALEX_DIR/system/canon/$module.md"
@@ -85,12 +86,21 @@ if [ "$MODE" = "session-start" ]; then
 $(diff -u "$local_path" <(printf '%s' "$fresh") 2>/dev/null | head -n 200)
 \`\`\`"
       fi
+    else
+      # Fetch failed (network, GitHub down, 404). Log so the Author can see
+      # that an upstream check was attempted and didn't succeed — silent skip
+      # would violate "awareness is upstream of everything".
+      canon_fetch_failures="$canon_fetch_failures $module"
+      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) canon fetch failed: $module (curl returned empty or undersized response — network, upstream 404, or rate limit)" >> "$ALEX_DIR/system/.alexandria_errors"
     fi
     if [ "$module" = "methodology" ] && [ -f "$local_path" ]; then
       canon=$(cat "$local_path")
       canon_ok=true
     fi
   done
+  # Export fetch status for the protocol call (server-side awareness).
+  [ -n "$CLAUDE_ENV_FILE" ] && [ -n "$canon_fetch_failures" ] \
+    && echo "export ALEXANDRIA_CANON_FETCH_FAILURES='$canon_fetch_failures'" >> "$CLAUDE_ENV_FILE"
   if [ -n "$notice_body" ]; then
     {
       echo "# Canon divergence — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -102,6 +112,23 @@ $(diff -u "$local_path" <(printf '%s' "$fresh") 2>/dev/null | head -n 200)
     rm -f "$ALEX_DIR/system/.canon_update_notice"
   fi
   [ -n "$CLAUDE_ENV_FILE" ] && [ "$canon_ok" = "true" ] && echo "export ALEXANDRIA_CANON_OK=true" >> "$CLAUDE_ENV_FILE"
+
+  # ── Canon status telemetry (cross-machine/cross-Author awareness) ──
+  # Fire-and-forget POST so canon health is visible server-side without each
+  # Author having to grep their own .alexandria_errors. Backgrounded — never
+  # blocks session-start. Local .alexandria_errors remains the local source
+  # of truth; this is the aggregation layer.
+  if [ -n "$API_KEY" ]; then
+    cs_failures=$(printf '%s' "$canon_fetch_failures" | sed 's/^ *//' | tr ' ' ',')
+    cs_has_notice="false"
+    [ -f "$ALEX_DIR/system/.canon_update_notice" ] && cs_has_notice="true"
+    (curl -s --max-time 3 -X POST "$SERVER/canon/status" \
+      -H "Authorization: Bearer $API_KEY" \
+      -H "X-Alexandria-Client: $CLIENT_VERSION" \
+      -H "Content-Type: application/json" \
+      -d "{\"fetch_failures\":\"$cs_failures\",\"has_notice\":$cs_has_notice}" \
+      >/dev/null 2>&1 &)
+  fi
 
   # ── Git sync: push local, pull overnight changes ──
   if [ -d "$ALEX_DIR/.git" ] && git -C "$ALEX_DIR" remote get-url origin &>/dev/null; then
