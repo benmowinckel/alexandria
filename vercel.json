@@ -1,3 +1,4 @@
 {
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- app/ public/ package.json next.config.ts vercel.json"
+  "_comment": "Diff against the last actually-built commit ($VERCEL_GIT_PREVIOUS_SHA) rather than HEAD^. Otherwise, a push that batches a frontend commit BEFORE a backend-only commit lets the backend commit be HEAD and the diff against HEAD^ misses the frontend change entirely — Vercel skips the build and the bundle drifts behind main. Fallback to building when the env var is unset (first deploy of a branch).",
+  "ignoreCommand": "if [ -z \"$VERCEL_GIT_PREVIOUS_SHA\" ]; then exit 1; fi; git diff --quiet $VERCEL_GIT_PREVIOUS_SHA HEAD -- app/ public/ package.json next.config.ts vercel.json"
 }
