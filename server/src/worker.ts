@@ -373,6 +373,42 @@ async function enforcePublicRateLimit(scope: 'waitlist' | 'follow', ip: string):
 }
 
 // ---------------------------------------------------------------------------
+// Canon status — cross-Author awareness of canon fetch health
+// ---------------------------------------------------------------------------
+// Authors' payload.sh fire this after each session-start canon fetch. Logs to
+// the existing event store so cross-Author/cross-machine canon health is
+// queryable via /analytics/log. Per-Author local awareness still lives in
+// ~/alexandria/system/.alexandria_errors — this is the aggregation layer.
+
+app.post('/canon/status', async (c) => {
+  const key = extractApiKey(c);
+  if (!key) return c.json({ error: 'Unauthorized' }, 401);
+  const account = await findByApiKey(key);
+  if (!account) return c.json({ error: 'Unauthorized' }, 401);
+
+  const body = await c.req.json().catch(() => null) as {
+    fetch_failures?: unknown;
+    has_notice?: unknown;
+  } | null;
+
+  // Bounded strings only — never trust client-supplied data unbounded.
+  const failures = typeof body?.fetch_failures === 'string'
+    ? body.fetch_failures.slice(0, 500)
+    : '';
+  const hasNotice = body?.has_notice === true;
+
+  logEvent('canon_status', {
+    login: account.github_login,
+    has_failures: failures.length > 0 ? 'true' : 'false',
+    failures: failures || 'none',
+    has_notice: hasNotice ? 'true' : 'false',
+  });
+
+  c.executionCtx.waitUntil(flushEvents());
+  return c.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
 // Waitlist
 // ---------------------------------------------------------------------------
 

@@ -1,0 +1,128 @@
+name: Canon Sovereignty
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'factory/hooks/payload.sh'
+      - 'factory/canon/**'
+      - '.github/workflows/canon.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'factory/hooks/payload.sh'
+      - 'factory/canon/**'
+      - '.github/workflows/canon.yml'
+
+# Regression guard for the sovereign-canon architecture:
+# payload.sh must NEVER overwrite ~/alexandria/system/canon/<module>.md
+# once it exists. New modules lazy-seed; existing files stay untouched.
+# A regression that re-introduces overwriting would silently wipe Authors'
+# edits. This test fails the build before that ships.
+
+jobs:
+  sovereignty:
+    runs-on: ubuntu-latest
+    env:
+      ALEX_DIR: /tmp/alex_fixture
+      CANON_GITHUB: https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/canon
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fixture — Author with personalised system canon
+        run: |
+          mkdir -p "$ALEX_DIR/system/canon"
+          # Each module has a sentinel string the test will check still exists.
+          for m in axioms methodology editor mercury publisher library filter; do
+            echo "PERSONALISED_SENTINEL_$m — this Author edited the file by hand" \
+              > "$ALEX_DIR/system/canon/$m.md"
+          done
+          # bookshelf intentionally missing — tests the lazy-seed path.
+
+      - name: Run canon loop logic (mirrors payload.sh behavior)
+        run: |
+          set -euo pipefail
+          canon=""
+          canon_ok=false
+          notice_body=""
+          canon_fetch_failures=""
+          for module in axioms methodology editor mercury publisher library filter bookshelf; do
+            fresh=$(curl -s --max-time 10 "$CANON_GITHUB/$module.md" 2>/dev/null)
+            local_path="$ALEX_DIR/system/canon/$module.md"
+            if [ -n "$fresh" ] && [ ${#fresh} -gt 100 ]; then
+              if [ ! -f "$local_path" ]; then
+                printf '%s' "$fresh" > "$local_path"
+              elif ! diff -q <(printf '%s' "$fresh") "$local_path" >/dev/null 2>&1; then
+                notice_body="$notice_body
+
+          ## $module.md
+
+          \`\`\`diff
+          $(diff -u "$local_path" <(printf '%s' "$fresh") 2>/dev/null | head -n 200)
+          \`\`\`"
+              fi
+            else
+              canon_fetch_failures="$canon_fetch_failures $module"
+            fi
+          done
+          if [ -n "$notice_body" ]; then
+            echo "$notice_body" > "$ALEX_DIR/system/.canon_update_notice"
+          fi
+          if [ -n "$canon_fetch_failures" ]; then
+            echo "::warning::canon fetch failed for:$canon_fetch_failures"
+          fi
+
+      - name: ASSERT — personalised content preserved (no overwrite)
+        run: |
+          fail=0
+          for m in axioms methodology editor mercury publisher library filter; do
+            if ! grep -q "PERSONALISED_SENTINEL_$m" "$ALEX_DIR/system/canon/$m.md"; then
+              echo "::error::REGRESSION — $m.md was overwritten; Author's edits would be wiped"
+              fail=1
+            fi
+          done
+          [ "$fail" -eq 0 ] || exit 1
+          echo "All 7 pre-existing modules preserved untouched ✓"
+
+      - name: ASSERT — bookshelf lazy-seeded (8 modules now exist)
+        run: |
+          count=$(ls "$ALEX_DIR/system/canon/" | wc -l | tr -d ' ')
+          [ "$count" = "8" ] || { echo "::error::expected 8 modules, got $count"; exit 1; }
+          [ -f "$ALEX_DIR/system/canon/bookshelf.md" ] \
+            || { echo "::error::bookshelf.md not seeded — lazy-seed branch broken"; exit 1; }
+          echo "bookshelf.md lazy-seeded ✓"
+
+      - name: ASSERT — divergence notice was written
+        run: |
+          [ -f "$ALEX_DIR/system/.canon_update_notice" ] \
+            || { echo "::error::.canon_update_notice not written — notice branch broken"; exit 1; }
+          for m in axioms methodology editor mercury publisher library filter; do
+            grep -q "## $m.md" "$ALEX_DIR/system/.canon_update_notice" \
+              || { echo "::error::notice missing entry for $m"; exit 1; }
+          done
+          echo "Divergence notice written for all 7 modules ✓"
+
+      - name: ASSERT — canon block in payload.sh matches the tested logic
+        run: |
+          # The whole point of this test is checking what's IN payload.sh.
+          # Verify the canon block in the actual file contains the sovereign-canon
+          # markers — fails fast if someone rewrites the block without updating
+          # this test.
+          required_strings=(
+            'sovereign'
+            '! -f "$local_path"'
+            'notice_body='
+            'canon_fetch_failures'
+          )
+          for s in "${required_strings[@]}"; do
+            grep -qF "$s" factory/hooks/payload.sh \
+              || { echo "::error::payload.sh missing sovereign-canon marker: $s"; exit 1; }
+          done
+          # Forbid overwrite-style writes to system/canon outside the lazy-seed branch.
+          # Any line writing to local_path must be inside the [ ! -f ] block.
+          overwrite_writes=$(grep -nE '> *"\$local_path"' factory/hooks/payload.sh || true)
+          if [ "$(echo "$overwrite_writes" | grep -c ".")" -gt 1 ]; then
+            echo "::error::payload.sh has multiple writes to \$local_path — only the lazy-seed branch should write"
+            echo "$overwrite_writes"
+            exit 1
+          fi
+          echo "payload.sh sovereign-canon invariants intact ✓"
