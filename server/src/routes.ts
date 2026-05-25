@@ -1058,11 +1058,11 @@ export function registerRoutes(app: Hono) {
     return c.html(html);
   });
 
-  // Test render — returns the onboarding callback HTML with dummy values so
-  // the page can be screenshotted without going through OAuth. ?returning=true
-  // for the welcome-back variant.
-  app.get('/admin/test/onboarding', async (c) => {
-    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+  // Public preview — renders the onboarding callback HTML with hardcoded dummy
+  // values so the page can be shown in demos / screenshotted without OAuth.
+  // ?returning=true for the welcome-back variant. No side effects, no real
+  // data — keep the values dummy and this stays safe to expose.
+  app.get('/preview/onboarding', async (c) => {
     const returning = c.req.query('returning') === 'true';
     const apiKey = returning ? '' : 'sk_test_dummy_for_visual_verification';
     const html = await callbackPageHtml(apiKey, 'mowinckelb');
