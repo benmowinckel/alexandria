@@ -61,10 +61,6 @@ A small layer of instructions you give your existing ai, pointing it at private 
 9. *sovereignty.* — local markdown; multiple readers as immune system
 10. *the protocol.* — three constants; two pools; seven endpoints
 
-*coda.*
-
-11. *the four sentences.* — the position, compressed
-
 ---
 
 # *why.*
@@ -1037,66 +1033,6 @@ The subscription stands on its own as a business. *The Library — for Labs, for
 ---
 
 > *The protocol is the bare minimum the company cannot remove without ceasing to exist.*
-
----
-
-# *coda.*
-
----
-
-## the four sentences.
-
-*The product is the changed person — and the changed world that person creates. Four sentences hold the whole. The protocol fits in five lines. The future has three branches. Persistence is a choice.*
-
----
-
-The product is not the technology.
-
-**The product is the changed person — and the changed world that person creates.**
-
-*Alexandria is the cathedral, not the transformation.* The protocol is the stone, the glass, the organ. **The product is the glint in the eyes of someone walking out — a new mind, a new frame, a new architecture for their own cognition.**
-
----
-
-Four sentences hold the whole.
-
-> *Keep thinking* — the motto. *What to do every day.*
->
-> *Transcribe your inner theatre* — the literary register. *What the practice feels like from inside.*
->
-> *Human minds must survive the singularity* — the WHY. *What is at stake.*
->
-> *Alexandria is a tribe of humans who put their minds into writing, so AI thinks with them, not for them* — the product. *What it is.*
-
-*Different sub-registers. One position.*
-
----
-
-The protocol, in five lines.
-
-1. *Open methodology, gated network.* The canon is public on GitHub. The account gates the collective layers — Library, Marketplace, the call.
-2. *Three constants.* Account, file, call. Everything else is canon or company, removable without ceasing to exist.
-3. *Sovereignty by design.* Local markdown. No private database. No proprietary format. Switching cost is zero.
-4. *Ride the exponential.* Better models extract more from the same living frame. Every capability advance compounds the practice.
-5. *The practice is the product.* Set the angels free. Absorb the abundance. Die empty. *The changed Author is the metric.*
-
----
-
-The path has three turns.
-
-The protocol has three constants.
-
-*The future has three branches — extinction, dissolution, persistence.*
-
-**Persistence is a choice.**
-
-*Alexandria is the architecture for the people who choose it.*
-
----
-
-*If this is the uneasiness you have been carrying — if these are the words for the thing you couldn't quite say — if this resonates, even maybe — then this is your tribe.*
-
-*Everyone is invited. Not everyone will come.*
 
 ---
 
