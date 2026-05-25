@@ -3,7 +3,7 @@ import UpdatesIndex from './UpdatesIndex';
 
 export const metadata = {
   title: 'updates — alexandria',
-  description: 'patron updates from alexandria. four beats — delta, moment, miss, next.',
+  description: 'patron updates from alexandria.',
 };
 
 export default function UpdatesIndexPage() {

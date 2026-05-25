@@ -10,9 +10,7 @@ subject: first update.
 date: 2026-05-24
 ---
 
-four-beat body in markdown — delta, moment, miss, next.
-
-reply if anything lands or grates. i read all of them.
+body in markdown — whatever shape fits the week.
 
 Benjamin a. Mowinckel
 *a.*
