@@ -39,8 +39,8 @@ export const metadata: Metadata = {
   title: "alexandria — the library of human minds",
   description: SEO_DESCRIPTION,
   applicationName: "alexandria",
-  authors: [{ name: "Benjamin Mowinckel", url: "https://x.com/benmowinckel" }],
-  creator: "Benjamin Mowinckel",
+  authors: [{ name: "Benjamin a. Mowinckel", url: "https://x.com/benmowinckel" }],
+  creator: "Benjamin a. Mowinckel",
   publisher: "alexandria",
   keywords: [
     "alexandria",
@@ -124,7 +124,7 @@ const ORGANIZATION_JSONLD = {
   description: SEO_DESCRIPTION,
   founder: {
     "@type": "Person",
-    name: "Benjamin Mowinckel",
+    name: "Benjamin a. Mowinckel",
     url: "https://x.com/benmowinckel",
   },
   foundingDate: "2026",
