@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "../lib/config";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — alexandria.",
+  ...pageMetadata({
+    path: "/privacy",
+    title: "Privacy Policy — alexandria.",
+    description: "alexandria privacy policy.",
+  }),
 };
 
 export default function Privacy() {

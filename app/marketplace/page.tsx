@@ -1,13 +1,18 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { SERVER_URL } from '../lib/config';
+import { SERVER_URL, pageMetadata } from '../lib/config';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'marketplace — alexandria.',
   description: "each Author's system decomposes into modules — pooled here so others can learn, share signal, and refine their own.",
+  ...pageMetadata({
+    path: '/marketplace',
+    title: 'marketplace — alexandria.',
+    description: "each Author's system decomposes into modules — pooled here so others can learn, share signal, and refine their own.",
+  }),
 };
 
 interface MarketplaceModule {
