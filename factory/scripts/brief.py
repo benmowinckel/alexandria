@@ -67,6 +67,16 @@ SECTION_LABEL_RE = re.compile(
     r"^\*\*(?:Genesis|Accretion|Entropy|Development|Creation|Network)\*\*\s*$",
     re.IGNORECASE,
 )
+# Canon (scheduled.md § Brief delivery): outbox is for decisions parked OR
+# alarms — NEVER daily work summaries. Tension over recap, invitation over
+# status report. The autoloop drifts to recap shape; this is the content
+# wall. An outbox passes only if it has a question mark OR an action-trigger
+# keyword. Otherwise it's a recap — drop it, let the droplet floor ship.
+ACTION_TRIGGER_RE = re.compile(
+    r"\b(decide|hold|fire|drop|publish|post|refine|ship|open|review|"
+    r"rescue|alarm|/a)\b",
+    re.IGNORECASE,
+)
 
 
 def log(line: str) -> None:
@@ -142,6 +152,27 @@ def parse_outbox(raw: str) -> Tuple[Optional[str], str]:
         subject = first_line.split(":", 1)[1].strip()
         return subject, rest.lstrip("\n")
     return None, raw
+
+
+def looks_like_recap(body: str) -> bool:
+    """Canon (scheduled.md): outbox is for decisions parked or alarms only;
+    daily work summaries are forbidden. Heuristic detector: if the body has
+    neither a question mark nor an action-trigger keyword, treat it as a
+    recap. Caller falls through to the droplet floor.
+
+    False positives (rejecting a statement-shaped legitimate brief) are
+    cheap — the droplet floor is curated. False negatives (passing a recap
+    that happens to contain "open" or "?") are cheaper than today's status
+    quo. Drift protection beats edge-case fidelity.
+    """
+    stripped = body.strip()
+    if not stripped:
+        return False
+    if "?" in stripped:
+        return False
+    if ACTION_TRIGGER_RE.search(stripped):
+        return False
+    return True
 
 
 def enforce_brief_shape(body: str, max_chars: int = BRIEF_MAX_CHARS) -> str:
@@ -385,7 +416,7 @@ def assemble(creds: dict) -> Tuple[str, str]:
     if fresh:
         parsed_subject, parsed_body = parse_outbox(fresh)
         shaped = enforce_brief_shape(parsed_body)
-        if shaped:
+        if shaped and not looks_like_recap(shaped):
             body = shaped
             subject = parsed_subject
 

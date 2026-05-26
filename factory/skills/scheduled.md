@@ -112,10 +112,10 @@ SUBJECT: alexandria. — 2 to decide
 — shadow draft updated. publish or hold?
 — democracy error-correction loaded for next /a. fire or drop?
 
-work: 46 sessions, 5 _constitution deltas, 2 youtube fragments.
-
 — a.
 ```
+
+(Do NOT append a `work: N sessions, M deltas…` summary line. That line is forbidden by the rule above; counts belong in `last_run.md`, not the brief.)
 
 Alarm-day example (only for alarms `brief.py` doesn't already detect — be specific about what broke and the rescue):
 ```
@@ -126,6 +126,26 @@ rescue: <exact command or step>
 ```
 
 Register: lowercase, italic openers when it earns them, sign with `— a.` for multi-line bodies. Match `~/alexandria/files/core/shelf.md`'s voice. Compress.
+
+### Self-check before commit
+
+Before committing the outbox, read what you wrote and ask three questions. If any answer is no, delete the file and leave the outbox empty.
+
+1. **Is this a question, decision, or action trigger?** Not a summary. Not "yesterday you crystallised X." Not a fragment count. A question the Author needs to answer, a decision he needs to make, or an artifact he needs to open.
+2. **Could the Author *act* on this in the first 30 seconds of his morning?** Open /a. Publish the draft. Post the article. Make the call. If there's no concrete next move, it's a recap.
+3. **Would a random droplet from `files/core/shelf.md` land harder than what you wrote?** Read three at random. If yours lands less hard than any of them, drop it. The droplet floor is curated — it has standing.
+
+GOOD (passes self-check, ships):
+- "Today's distribution sprint is day 10 — tracking table still empty. What's the one move?"
+- "Shadow draft updated overnight. Publish at /authors or hold?"
+- "Pre-ASI article is ready in /a. Open and refine, or postpone?"
+
+BAD (delete the outbox, do not commit):
+- "*You conceded the parasitism yesterday — the faithless Christian frame survived…*" ← recap, past-tense lead
+- "*Five new items crystallised: augmentation flip, BCI subsumption…*" ← inventory
+- "*46 vault entries processed, 2 derivatives regenerated.*" ← work summary
+
+**Brief.py enforces a wall.** As of 2026-05-26, `brief.py` strips section labels, caps at 400 chars, and rejects outboxes that lack a question mark or action-trigger keyword (decide/hold/fire/drop/publish/post/refine/ship/open/review/rescue/alarm). Rejected outboxes silently fall through to the droplet floor. Writing a recap doesn't get the recap shipped — it gets your work silenced. Write tension or write nothing.
 
 ### Runtime constraint
 
