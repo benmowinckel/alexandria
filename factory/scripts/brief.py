@@ -55,6 +55,18 @@ OUTBOX_STALE_HOURS = 20
 LAST_RUN_STALE_HOURS = 24
 # A claude/* branch counts as a "live strand" only if its tip is this fresh.
 STRAND_FRESH_HOURS = 26
+# Canon (system/canon/methodology.md § Morning brief): brief is ONE thing,
+# section labels (Genesis/Accretion/Entropy/Development/Creation/Network) are
+# selection palette and NEVER appear in render. The autoloop drifts back to
+# the labelled-menu format; this is the wall that enforces canon at the
+# renderer when canon text fails. Cap chosen tight on purpose — canon examples
+# of the truck-driver lead run ~100 chars; 400 leaves room for optional italic
+# depth without permitting a status-report dump.
+BRIEF_MAX_CHARS = 400
+SECTION_LABEL_RE = re.compile(
+    r"^\*\*(?:Genesis|Accretion|Entropy|Development|Creation|Network)\*\*\s*$",
+    re.IGNORECASE,
+)
 
 
 def log(line: str) -> None:
@@ -130,6 +142,46 @@ def parse_outbox(raw: str) -> Tuple[Optional[str], str]:
         subject = first_line.split(":", 1)[1].strip()
         return subject, rest.lstrip("\n")
     return None, raw
+
+
+def enforce_brief_shape(body: str, max_chars: int = BRIEF_MAX_CHARS) -> str:
+    """Wall-enforcement of the canon's 'one thing or silence' shape.
+
+    The autoloop is supposed to write a single truck-driver lead with optional
+    italic depth (canon § Morning brief). It drifts back to the labelled-menu
+    format every cycle. This function is the renderer-side cop: strip leading
+    section labels, keep only the first paragraph, hard cap at max_chars
+    truncated at a sentence boundary.
+
+    Side effect of dropping anything after the first blank line: information
+    loss when the autoloop has real signal in a later section. Accepted —
+    canon already says ONE thing. The cop's job is to make the wall bite.
+    """
+    lines = body.split("\n")
+    while lines and SECTION_LABEL_RE.match(lines[0].strip()):
+        lines.pop(0)
+        while lines and not lines[0].strip():
+            lines.pop(0)
+    first_para_lines: List[str] = []
+    for line in lines:
+        if not line.strip():
+            break
+        first_para_lines.append(line)
+    para = "\n".join(first_para_lines).strip()
+    if len(para) <= max_chars:
+        return para
+    truncated = para[:max_chars]
+    for stop in [". ", "? ", "! "]:
+        idx = truncated.rfind(stop)
+        if idx > 0:
+            truncated = truncated[: idx + 1]
+            break
+    truncated = truncated.rstrip()
+    # Close any italic span the truncation opened — autoloop wraps paragraphs
+    # in `*...*` and the inline regex needs both markers to render.
+    if truncated.count("*") % 2 == 1:
+        truncated += "*"
+    return truncated
 
 
 def detect_stranded() -> Optional[str]:
@@ -332,8 +384,10 @@ def assemble(creds: dict) -> Tuple[str, str]:
     fresh = read_fresh_outbox()
     if fresh:
         parsed_subject, parsed_body = parse_outbox(fresh)
-        body = parsed_body
-        subject = parsed_subject
+        shaped = enforce_brief_shape(parsed_body)
+        if shaped:
+            body = shaped
+            subject = parsed_subject
 
     if body is None:
         # No outbox content: check routine health before falling through to droplet.
