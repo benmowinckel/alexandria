@@ -977,10 +977,12 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
           font-size: 11px;
           font-weight: 700;
           color: var(--accent);
+          opacity: 0.7;
           text-decoration: none;
         }
         .nav-group .nav-demo:hover {
           color: var(--accent-hover);
+          opacity: 1;
           text-decoration: none;
         }
         .nav.on-bottom .nav-group .nav-demo {
