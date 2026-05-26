@@ -16,6 +16,7 @@ import { getAccountByLogin, updateAccountBilling } from './accounts.js';
 import type { Account } from './auth.js';
 import { getDB } from './db.js';
 import { sendEmail } from './email.js';
+import { safeEqual } from './crypto.js';
 
 // ---------------------------------------------------------------------------
 // Stripe client — lazy init (needs env to be populated)
@@ -737,11 +738,14 @@ const MANAGEABLE_STATUSES: Stripe.Subscription.Status[] = [
   'active', 'trialing', 'past_due', 'unpaid', 'paused', 'incomplete',
 ];
 
-function subMatchesAccount(sub: Stripe.Subscription, account: Account): boolean {
+export function subMatchesAccount(sub: Stripe.Subscription, account: Account): boolean {
   if (!MANAGEABLE_STATUSES.includes(sub.status)) return false;
   const md = sub.metadata || {};
   if (md.github_login && md.github_login === account.github_login) return true;
-  if (md.api_key && account.api_key && md.api_key === account.api_key) return true;
+  // Constant-time compare — md.api_key is attacker-controllable (Stripe sub
+  // metadata). Plain === would leak account.api_key prefix byte-by-byte via
+  // timing oracle. See server/src/crypto.ts: safeEqual.
+  if (md.api_key && account.api_key && safeEqual(md.api_key, account.api_key)) return true;
   if (md.follow_email && account.email && md.follow_email.toLowerCase() === account.email.toLowerCase()) return true;
   return false;
 }

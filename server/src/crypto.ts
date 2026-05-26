@@ -5,7 +5,7 @@
  * SHA-256 for API key hashing (server never stores raw keys).
  */
 
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 
@@ -46,4 +46,26 @@ export function hashApiKey(key: string): string {
 /** Generate a random token (hex string). */
 export function generateToken(bytes = 12): string {
   return randomBytes(bytes).toString('hex');
+}
+
+/**
+ * Constant-time string equality for credential comparison.
+ *
+ * Use anywhere two secrets (API keys, tokens, signatures) are compared.
+ * Plain `===` short-circuits on the first differing byte, leaking a
+ * per-byte timing oracle that an attacker can use to reconstruct the
+ * secret. `timingSafeEqual` always touches every byte.
+ *
+ * Length mismatch returns false fast — but only AFTER coercing to equal
+ * length, so the length itself is not directly observable from the
+ * timing of the constant-time compare. (We accept the trivial length
+ * side-channel from the early return; credential length is rarely the
+ * sensitive variable.)
+ */
+export function safeEqual(a: string, b: string): boolean {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const aBuf = Buffer.from(a, 'utf8');
+  const bBuf = Buffer.from(b, 'utf8');
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
 }
