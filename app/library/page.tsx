@@ -6,9 +6,32 @@ import { LibraryDirectory, type DirectoryAuthor } from './LibraryDirectory';
 
 export const dynamic = 'force-dynamic';
 
+// Page-specific metadata. Without explicit openGraph / twitter overrides
+// here, Next.js falls back to the root layout's homepage values and the
+// social preview for /library is indistinguishable from /. Setting them
+// at page level (with url omitted so PR #8's canonical/og:url work is
+// untouched) makes shared /library links render this page's own copy.
+const LIBRARY_TITLE = 'the library of human minds — alexandria.';
+const LIBRARY_DESCRIPTION =
+  'browse the library of human minds — every Author publishes how they think as plain files, so any ai can think with them, not for them.';
+
 export const metadata: Metadata = {
-  title: 'library — alexandria.',
-  description: 'Alexandria protocol files.',
+  title: LIBRARY_TITLE,
+  description: LIBRARY_DESCRIPTION,
+  openGraph: {
+    title: LIBRARY_TITLE,
+    description: LIBRARY_DESCRIPTION,
+    siteName: 'alexandria',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: LIBRARY_TITLE,
+    description: LIBRARY_DESCRIPTION,
+    site: '@benmowinckel',
+    creator: '@benmowinckel',
+  },
 };
 
 async function loadAuthors(): Promise<DirectoryAuthor[]> {
