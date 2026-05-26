@@ -20,7 +20,7 @@ export default function DemoPage() {
           preload="metadata"
           className="demo-video"
         >
-          <source src="/demo.mp4" type="video/mp4" />
+          <source src="/demo.mp4?v=2" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       </main>
