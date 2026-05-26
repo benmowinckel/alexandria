@@ -73,15 +73,20 @@ jobs:
 
       - name: Protocol call (per-module feedback)
         run: |
+          # `local:` prefix: passes parseModuleId validation at /call ingress, stays
+          # off the public /marketplace listing (filters to github:%). The auth-gated
+          # /marketplace/:module endpoint keys off raw module_id and works regardless.
+          MODULE_ID="local:smoke/methodology"
+          MODULE_ID_ENC="local%3Asmoke%2Fmethodology"
           curl -sf -X POST $SERVER/call \
             -H "Authorization: Bearer $API_KEY" \
             -H "X-Alexandria-Client: ci-smoke" \
             -H "Content-Type: application/json" \
-            -d '{"modules":[{"id":"methodology","text":"ci smoke verification"}]}' \
+            -d "{\"modules\":[{\"id\":\"$MODULE_ID\",\"text\":\"ci smoke verification\"}]}" \
             | grep -q '"ok":true' || { echo "::error::Call failed"; exit 1; }
 
           # Verify call landed in marketplace
-          MARKET=$(curl -sf $SERVER/marketplace/methodology -H "Authorization: Bearer $API_KEY")
+          MARKET=$(curl -sf $SERVER/marketplace/$MODULE_ID_ENC -H "Authorization: Bearer $API_KEY")
           echo "$MARKET" | grep -q '"ci smoke verification"' || { echo "::error::Call not in marketplace"; exit 1; }
 
           # Handshake must reflect the call we just made. Symmetry with the
