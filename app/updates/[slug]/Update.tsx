@@ -4,12 +4,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Update, UpdateMeta } from '../../lib/updates';
-
-const INK = '#1a1318';
-const PAPER = '#f7f2ec';
-const INK_MUTED = 'rgba(26, 19, 24, 0.55)';
-const INK_FAINT = 'rgba(26, 19, 24, 0.32)';
-const RULE = 'rgba(26, 19, 24, 0.20)';
+import { INK, PAPER, INK_MUTED, INK_FAINT, RULE } from '../../lib/palette';
 
 export default function UpdatePage({
   update,

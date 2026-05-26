@@ -3,16 +3,11 @@
 import { useState, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
 import { SERVER_URL } from '../lib/config';
+import { INK, PAPER, INK_MUTED, INK_FAINT, RULE } from '../lib/palette';
 
 const AMOUNT_MIN = 0;
 const AMOUNT_MAX = 200;
 const AMOUNT_DEFAULT = 15;
-
-const INK = '#1a1318';
-const PAPER = '#f7f2ec';
-const INK_MUTED = 'rgba(26, 19, 24, 0.55)';
-const INK_FAINT = 'rgba(26, 19, 24, 0.32)';
-const RULE = 'rgba(26, 19, 24, 0.20)';
 
 export default function FollowForm({ initialDone }: { initialDone: boolean }) {
   const [email, setEmail] = useState('');

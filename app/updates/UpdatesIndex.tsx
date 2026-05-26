@@ -2,12 +2,7 @@
 
 import Link from 'next/link';
 import type { UpdateMeta } from '../lib/updates';
-
-const INK = '#1a1318';
-const PAPER = '#f7f2ec';
-const INK_MUTED = 'rgba(26, 19, 24, 0.55)';
-const INK_FAINT = 'rgba(26, 19, 24, 0.32)';
-const RULE = 'rgba(26, 19, 24, 0.20)';
+import { INK, PAPER, INK_MUTED, INK_FAINT, RULE } from '../lib/palette';
 
 export default function UpdatesIndex({ updates }: { updates: UpdateMeta[] }) {
   return (
