@@ -85,7 +85,3 @@ export function loadUpdate(slug: string): Update | null {
     body: body.trim(),
   };
 }
-
-export function listSlugsSorted(): string[] {
-  return loadAllUpdates().map((u) => u.slug);
-}
