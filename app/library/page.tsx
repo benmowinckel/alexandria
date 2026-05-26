@@ -6,9 +6,28 @@ import { LibraryDirectory, type DirectoryAuthor } from './LibraryDirectory';
 
 export const dynamic = 'force-dynamic';
 
+const PAGE_TITLE = 'library — the directory of alexandria Authors.';
+const PAGE_DESCRIPTION =
+  "Browse the directory of alexandria Authors. Each page is a published view of one Author's mind — how they think, write, and what they've made.";
+
 export const metadata: Metadata = {
-  title: 'library — alexandria.',
-  description: 'Alexandria protocol files.',
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
+  // Next.js metadata is shallow-merged: setting `openGraph` at all replaces
+  // the root layout's block entirely. Re-declare siteName/locale/type so
+  // they don't vanish when we override og:title and og:description.
+  openGraph: {
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    siteName: 'alexandria',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+  },
 };
 
 async function loadAuthors(): Promise<DirectoryAuthor[]> {
