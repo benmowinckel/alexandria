@@ -450,6 +450,8 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
           </div>
           <div className="nav-links">
             <span className="nav-group">
+              <a href="/demo" className="nav-demo">demo</a>
+              <span className="nav-sep" aria-hidden>·</span>
               <a href="/docs/letter.pdf" target="_blank" rel="noopener noreferrer">letter</a>
             </span>
           </div>
@@ -928,7 +930,7 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
         .nav-group {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 18px;
           font-family: inherit;
           font-size: 15px;
           font-weight: 400;
@@ -959,6 +961,33 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
         .nav-group a:hover {
           color: #1a1318;
           text-decoration-color: rgba(26, 19, 24, 0.6);
+        }
+        /* demo — uppercase in wax-seal accent. No underline (color +
+           letterform carry the link affordance). Reads as a label against
+           the italic letter (the work). Uppercase instead of small-caps
+           because the smcp OpenType feature only activates after EB
+           Garamond loads, which caused a visible reflow on first paint
+           (lowercase fallback → small-caps). Plain uppercase renders
+           identically in fallback and webfont, no flicker. */
+        .nav-group .nav-demo {
+          font-style: normal;
+          font-feature-settings: "kern" 1;
+          text-transform: uppercase;
+          letter-spacing: 0.14em;
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--accent);
+          text-decoration: none;
+        }
+        .nav-group .nav-demo:hover {
+          color: var(--accent-hover);
+          text-decoration: none;
+        }
+        .nav.on-bottom .nav-group .nav-demo {
+          color: var(--accent);
+        }
+        .nav.on-bottom .nav-group .nav-demo:hover {
+          color: var(--accent-hover);
         }
         .nav-copy {
           background: none;
