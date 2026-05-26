@@ -12,7 +12,7 @@ export type Update = UpdateMeta & {
   body: string;
 };
 
-export function extractYouTubeId(input: string | undefined): string | null {
+function extractYouTubeId(input: string | undefined): string | null {
   if (!input) return null;
   const s = input.trim();
   if (/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
