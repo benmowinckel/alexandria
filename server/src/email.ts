@@ -102,7 +102,7 @@ export async function sendPatronWelcome(
   const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; font-size: 1.05rem; line-height: 1.7;">
   <p style="margin: 0 0 1.4rem;">thank you for backing alexandria. :)</p>
   <p style="margin: 0 0 1.4rem;">
-    ${dollars}/month means real things &mdash; server, dev time, the long road. it matters more than you&rsquo;d think when you&rsquo;re solo.
+    ${dollars}/month goes straight back into the work &mdash; infrastructure, time, the slow build.
   </p>
   <p style="margin: 0 0 1.4rem;">
     every week or so i&rsquo;ll send an email with updates on the project; stories, photos, vlogs, etc. keeping you in the loop both ways &mdash; good and bad.
@@ -142,12 +142,19 @@ export async function sendFollowerWelcome(email: string, unsubscribeToken?: stri
     unsubscribeToken ? { unsubscribeUrl: `${SERVER_URL}/email/stop?t=${unsubscribeToken}` } : undefined);
 }
 
-export async function sendWelcomeEmail(email: string, emailToken?: string): Promise<void> {
+export async function sendWelcomeEmail(email: string, githubLogin: string, emailToken?: string): Promise<void> {
+  const websiteHost = WEBSITE_URL.replace(/^https?:\/\//, '');
+  const kinLink = `${WEBSITE_URL}/signup?ref=${encodeURIComponent(githubLogin)}`;
+  const kinLinkDisplay = `${websiteHost}/signup?ref=${githubLogin}`;
   await sendEmail(email, 'welcome to alexandria.',
     `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; text-align: left; line-height: 1.7;">
-  <p style="font-size: 1.1rem; margin: 0 0 1.75rem;">welcome to alexandria.</p>
-  <p style="font-size: 1rem; color: #8a8078; margin: 0 0 1.75rem;">your data lives on your machine. your kin code is your GitHub username. share it with new authors, or send them your invite link.</p>
-  <p style="font-size: 0.95rem; margin: 0;"><a href="${WEBSITE_URL}/signup" style="color: #3d3630; text-decoration: none;">open alexandria</a></p>
+  <p style="font-size: 1.1rem; margin: 0 0 1.5rem;">welcome to alexandria.</p>
+  <p style="font-size: 1rem; color: #8a8078; margin: 0 0 1.5rem;">your data lives on your machine. free with five active kin &mdash; otherwise $10/month after your 30-day trial.</p>
+  <p style="font-size: 1rem; color: #8a8078; margin: 0 0 1.75rem;">your kin link: <a href="${kinLink}" style="color: #3d3630;">${kinLinkDisplay}</a> &mdash; send it to ten people, knowing some will not stick.</p>
+  <p style="font-size: 0.95rem; margin: 0 0 1.8rem;"><a href="${WEBSITE_URL}/signup" style="color: #3d3630; text-decoration: none;">open alexandria</a></p>
+  <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
+  <p style="margin: 0; font-style: italic; color: #8a8078;">a.</p>${emailToken ? `
+  <p style="margin: 1.5rem 0 0; font-size: 0.72rem; color: #bbb4aa;"><a href="${SERVER_URL}/email/stop?t=${emailToken}" style="color: #8a8078;">stop these emails</a></p>` : ''}
 </div>`,
     emailToken ? { unsubscribeUrl: `${SERVER_URL}/email/stop?t=${emailToken}` } : undefined);
 }
