@@ -941,30 +941,26 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
 
               // Patron welcome — thanks them for the payment. Independent of the
               // free follower welcome dispatched at /follow, which only fires for
-              // brand-new waitlist rows. Reuse the waitlist unsubscribe_token if
-              // present so the unsubscribe link works; otherwise create one.
+              // brand-new waitlist rows. One atomic upsert reads or assigns the
+              // unsubscribe_token; RETURNING guarantees the email uses whatever
+              // value actually persisted, even if a row pre-existed under a
+              // different `type`.
               const amountCents = session.amount_total || 0;
               c.executionCtx.waitUntil((async () => {
                 try {
                   const db = getDB();
-                  let unsubscribeToken: string | undefined;
-                  const row = await db
-                    .prepare(`SELECT unsubscribe_token FROM waitlist WHERE email = ? AND type = 'follow'`)
-                    .bind(email)
+                  const newToken = generateToken();
+                  const upserted = await db
+                    .prepare(
+                      `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)
+                       VALUES (?, 'follow', 'stripe', ?, ?)
+                       ON CONFLICT(email) DO UPDATE
+                         SET unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token)
+                       RETURNING unsubscribe_token`,
+                    )
+                    .bind(email, new Date().toISOString(), newToken)
                     .first<{ unsubscribe_token: string | null }>();
-                  if (row?.unsubscribe_token) {
-                    unsubscribeToken = row.unsubscribe_token;
-                  } else {
-                    unsubscribeToken = generateToken();
-                    await db
-                      .prepare(
-                        `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)
-                         VALUES (?, 'follow', 'stripe', ?, ?)
-                         ON CONFLICT(email) DO UPDATE SET unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token)`,
-                      )
-                      .bind(email, new Date().toISOString(), unsubscribeToken)
-                      .run();
-                  }
+                  const unsubscribeToken = upserted?.unsubscribe_token || newToken;
                   const result = await sendPatronWelcome(email, amountCents, unsubscribeToken);
                   if (!result.ok) {
                     console.error('[billing] Patron welcome email failed:', result.error);
