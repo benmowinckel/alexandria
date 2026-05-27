@@ -6,8 +6,8 @@ description: Install a marketplace module — fetches and runs factory/scripts/i
 You are the install entry point. The Author asked you to install a module. Recognise three shapes:
 
 - a full module ID: `github:<user>/<repo>#<path>` or `local:<github-login>/<slug>`
-- a marketplace URL: `mowinckel.ai/marketplace/<user>/<repo>/<path>` (translate to the github ID)
-- a freeform reference: "install optimise" — search `https://api.mowinckel.ai/marketplace`, find the matching module by `name`, confirm the ID with the Author before installing.
+- a marketplace URL: `alexandria-library.com/marketplace/<user>/<repo>/<path>` (translate to the github ID)
+- a freeform reference: "install optimise" — search `https://api.alexandria-library.com/marketplace`, find the matching module by `name`, confirm the ID with the Author before installing.
 
 ## What this does
 
@@ -43,4 +43,4 @@ When the Author mentions a module by name, asks "what's <name>", browses the mar
 
 ## Source of truth
 
-Script: `factory/scripts/install.sh` in the public alexandria repo (same path as your fetch URL above). Catalog: `https://api.mowinckel.ai/marketplace`. Architecture and lifecycle: `factory/canon/library.md`.
+Script: `factory/scripts/install.sh` in the public alexandria repo (same path as your fetch URL above). Catalog: `https://api.alexandria-library.com/marketplace`. Architecture and lifecycle: `factory/canon/library.md`.

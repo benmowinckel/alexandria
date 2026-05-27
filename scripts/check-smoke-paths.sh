@@ -14,7 +14,7 @@
 # parsing it as an expression.
 set -euo pipefail
 
-: "${SERVER:=https://api.mowinckel.ai}"
+: "${SERVER:=https://api.alexandria-library.com}"
 : "${FACTORY:=https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory}"
 
 PAYLOAD=$(curl -sf "$FACTORY/hooks/payload.sh")
@@ -27,11 +27,11 @@ SCAN=$(printf '%s\n%s\n%s\n' "$PAYLOAD" "$SCHED" "$SMOKE")
 
 # Each grep is a separate command so pipefail catches a regex-broken regex,
 # not "no matches found in this set" (legitimate after a rename — e.g. all
-# mcp.mowinckel.ai refs replaced by api.mowinckel.ai in the canon files).
+# legacy mowinckel.ai refs replaced by alexandria-library.com in canon files).
 # `|| true` swallows the no-match exit-1 from grep but keeps the broken-regex
 # case visible via the empty-PATHS check below.
 P1=$(printf '%s' "$SCAN" | grep -oE '\$SERVER/[a-zA-Z][a-zA-Z0-9/_-]*' | sed 's|^\$SERVER||' || true)
-P2=$(printf '%s' "$SCAN" | grep -oE 'https://(api|mcp)\.mowinckel\.ai/[a-zA-Z][a-zA-Z0-9/_-]*' | sed -E 's|^https://(api\|mcp)\.mowinckel\.ai||' || true)
+P2=$(printf '%s' "$SCAN" | grep -oE 'https://(api\.alexandria-library\.com|(api|mcp)\.mowinckel\.ai)/[a-zA-Z][a-zA-Z0-9/_-]*' | sed -E 's|^https://[^/]+||' || true)
 PATHS=$(printf '%s\n%s\n' "$P1" "$P2" | sort -u | grep -v '^$' || true)
 
 [ -z "$PATHS" ] && { echo "::error::No paths extracted — regex broke?"; exit 1; }

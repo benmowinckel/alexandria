@@ -9,7 +9,7 @@
 # Note: do NOT export MSYS_NO_PATHCONV=1 globally — it breaks curl -D in child processes.
 # Set it per-command where needed (e.g. MSYS_NO_PATHCONV=1 curl ...)
 
-BASE_URL="${BASE_URL:-https://api.mowinckel.ai}"
+BASE_URL="${BASE_URL:-https://api.alexandria-library.com}"
 REAL_HOME="$HOME"
 PASSED=0
 FAILED=0

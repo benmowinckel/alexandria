@@ -7,8 +7,8 @@
  *   cd server && npx tsx test/billing-stress.ts
  *
  * Env:
- *   TEST_URL          — default https://api.mowinckel.ai
- *   TEST_ORIGIN       — CORS Origin header; default https://mowinckel.ai
+ *   TEST_URL          — default https://api.alexandria-library.com
+ *   TEST_ORIGIN       — CORS Origin header; default https://alexandria-library.com
  *   FOLLOW_BURST      — concurrent /follow requests (default 40)
  *   SKIP_FOLLOW_STRESS=1 — skip burst/sequential/invalid-email (e.g. isolate Stripe patron probe)
  *   ASSERT_STRICT_RATE_LIMIT=1 — fail if burst allows >5 successes in a 60s window
@@ -19,8 +19,8 @@
  * still consumes one of the five slots per minute.
  */
 
-const BASE = process.env.TEST_URL || 'https://api.mowinckel.ai';
-const ORIGIN = process.env.TEST_ORIGIN || 'https://mowinckel.ai';
+const BASE = process.env.TEST_URL || 'https://api.alexandria-library.com';
+const ORIGIN = process.env.TEST_ORIGIN || 'https://alexandria-library.com';
 const BURST = Math.max(1, parseInt(process.env.FOLLOW_BURST || '40', 10));
 const PATRON_CHECKOUT = process.env.BILLING_STRESS_PATRON_CHECKOUT === '1';
 const SKIP_FOLLOW_STRESS = process.env.SKIP_FOLLOW_STRESS === '1';
@@ -74,7 +74,7 @@ async function main() {
   const tribeOAuthOk =
     (ghStart.status === 301 || ghStart.status === 302)
     && ghLoc.includes('github.com/login/oauth/authorize')
-    && ghLoc.includes('api.mowinckel.ai')
+    && ghLoc.includes('api.alexandria-library.com')
     && ghLoc.includes('auth%2Fgithub%2Fcallback');
   console.log(
     `[tribe] GET /auth/github → ${ghStart.status}; redirect_uri host=api: ${tribeOAuthOk ? 'PASS' : 'CHECK'}`,
@@ -82,7 +82,7 @@ async function main() {
   if (!tribeOAuthOk) {
     console.log(`  location (truncated): ${ghLoc.slice(0, 220)}${ghLoc.length > 220 ? '…' : ''}`);
   }
-  if (!tribeOAuthOk) hardFailures.push(`/auth/github redirect_uri did not validate against api.mowinckel.ai`);
+  if (!tribeOAuthOk) hardFailures.push(`/auth/github redirect_uri did not validate against api.alexandria-library.com`);
 
   // --- 1c) Webhook rejects unsigned bodies (Stripe path surface) ---
   const wh = await fetch(`${BASE}/billing/webhook`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });

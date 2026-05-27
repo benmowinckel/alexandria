@@ -4,7 +4,7 @@
 
 export MSYS_NO_PATHCONV=1
 
-BASE="https://api.mowinckel.ai"
+BASE="https://api.alexandria-library.com"
 API_KEY_FILE="$HOME/alexandria/system/.api_key"
 PASSED=0
 FAILED=0

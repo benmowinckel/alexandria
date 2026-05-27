@@ -172,7 +172,7 @@ DECAY_PULL = "But if your mind gets weak, the thing that would decide to fix it 
 CLOSING_STRIPS = {
     "Freedom. Authenticity. Purpose. Own it, develop it, use it.",
     "Five minutes. Five dollars. Start now.",
-    "mowinckel.ai/join",
+    "alexandria-library.com/join",
 }
 
 
@@ -377,7 +377,7 @@ def build_flowables(sections):
     story.append(Paragraph("Five minutes. Five dollars. Start now.", S_CTA))
     story.append(Spacer(1, 12))
     story.append(Paragraph(
-        '<link href="https://mowinckel.ai/join" color="#8a8078">mowinckel.ai/join</link>',
+        '<link href="https://alexandria-library.com/join" color="#8a8078">alexandria-library.com/join</link>',
         S_CTA_LINK
     ))
 

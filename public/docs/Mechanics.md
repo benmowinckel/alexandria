@@ -4,13 +4,13 @@ You are about to run a curl command that puts files on your machine, modifies yo
 
 ## TL;DR for the auditor
 
-- **What runs:** plain bash scripts and markdown. No binaries, no daemons, no shell-rc edits, no root.
-- **Source of truth:** `github.com/mowinckelb/alexandria` (public). Everything you can audit, you can audit there.
-- **Trust model:** mutable, by design. The hooks payload is fetched from `main` on every session. You're trusting an ongoing relationship with the public repo, not a frozen install. Tradeoff is named below.
-- **What our server holds:** your email, GitHub user ID, hashed API key, an event log of which endpoints you hit, and any files you explicitly publish to the Library. Nothing else.
-- **What our server does not hold:** your constitution, vault, marginalia, transcripts, or AI-vendor API keys. There is no endpoint that accepts them.
-- **Side channel:** the only data that leaves your machine for our server is (a) module IDs you call (anonymous usage tally), (b) feedback you explicitly type into `~/alexandria/system/.session_feedback`, and (c) files you explicitly publish to the Library. The Engine never auto-sends content on your behalf.
-- **Uninstall:** three commands at the bottom of this page. Reversible.
+- **What runs:** plain bash and markdown. No binaries, no daemons, no shell-rc edits, no root.
+- **Source of truth:** `github.com/mowinckelb/alexandria` (public). Auditable line by line.
+- **Trust model:** every session, the shim refuses to run any payload whose SHA-256 doesn't match an entry in a manifest signed by the maintainer's offline ed25519 key. Compromise of the GitHub account alone does not yield code execution. Full mechanism in [`TRUST.md`](https://github.com/mowinckelb/alexandria/blob/main/TRUST.md).
+- **What our server holds:** your email, GitHub user ID, hashed API key, a 60-day event log of which endpoints you hit, and any files you explicitly publish to the Library. Nothing else.
+- **What our server does not hold:** your constitution, vault, marginalia, transcripts, or ai-vendor API keys. There is no endpoint that accepts them.
+- **Side channel:** the only data that leaves your machine for our server is (a) module IDs you call — this is the protocol's *call obligation*; per-module call records (your account ID + timestamp + any notes the Engine attached) are queryable by any authenticated Alexandria user via `/marketplace/<module>`, by design, (b) feedback you explicitly type into `~/alexandria/system/.session_feedback`, (c) files you explicitly publish to the Library, and (d) one install status report at setup (which subsystems succeeded/failed — no file content). The Engine never auto-sends private content.
+- **Uninstall:** the commands at the bottom of this page. Reversible.
 
 ## Threat model
 
@@ -20,9 +20,9 @@ We claim:
 3. A complete breach of our server yields the data listed above and nothing more — because nothing more is stored.
 
 We do not claim:
-- Zero metadata. The server logs which endpoints your account hits and when, and Cloudflare logs IPs at the edge.
-- Immunity to future repo compromise. If `mowinckelb/alexandria` is compromised, the next session pulls the compromised payload. Mitigations below; pinning is not one of them today.
-- Zero risk. AI tools execute hooks with your shell privileges. That is true of every editor extension, every dev-server, and every shell hook on your machine — but it is true here too.
+- Zero metadata. The server logs which endpoints your account hits and when (60-day TTL in KV), and Cloudflare logs IPs at the edge.
+- Immunity to the maintainer's signing key being compromised. The key is offline-held; if it ever leaks, future signed payloads could ship arbitrary code until rotation. Rotation procedure is in `TRUST.md`. Compromise of the public repo or GitHub account alone is not sufficient.
+- Zero risk. ai tools execute hooks with your shell privileges. That is true of every editor extension, every dev-server, and every shell hook on your machine — but it is true here too.
 
 ## Inspect before running
 
@@ -30,7 +30,7 @@ We do not claim:
 curl -s https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh | less
 ```
 
-The setup is one bash script, ~685 lines. The hooks payload is one bash script, ~463 lines. The shim is 89 lines. Everything below describes what they do, in order.
+The setup is one bash script. The hooks payload is one bash script. The shim is one bash script. The trust root is one ed25519 public key, embedded inline in `setup.sh` (fingerprint `SHA256:kAas5fUUnV/XcfKoH3Ysm7IZrqY2HcQSuhSaMoAMqnA`). Everything below describes what they do, in order.
 
 ## What gets installed on your machine
 
@@ -40,21 +40,27 @@ The setup is one bash script, ~685 lines. The hooks payload is one bash script, 
 |---|---|
 | `.git/` | Local Git repository. Your cognitive worldline as a commit history. |
 | `files/constitution/` | Your beliefs, personality, working style. You write these. |
-| `files/vault/` | Raw input — transcripts, notes, voice memos. You drop things in. |
+| `files/vault/` | Raw input — transcripts, notes, voice memos. You drop things in. On macOS, `vault/input/` symlinks to `iCloud/alexandria/` for Apple-native captures (Shortcuts, Voice Memos, Files). |
 | `files/marginalia/` | Shared working layer between raw and settled — your developing thoughts + Engine candidates, drains over time. |
-| `files/library/` | Files you publish (opt-in). |
-| `files/core/` | Engine working memory (machine.md, notepad.md, feedback.md). |
-| `system/hooks/shim.sh` | 89-line wrapper. Fetches `.hooks_payload` from GitHub at session start. |
-| `system/.hooks_payload` | Cached copy of `factory/hooks/payload.sh` from the public repo, signature-verified before execution (see Trust model below). |
-| `system/allowed_signers` | The maintainer's offline public key. Trust root for payload signature verification. |
-| `system/canon/methodology.md` | Cached copy of the public canon. |
+| `files/library/{public,authors,paid,invite}/` | Files you publish, by visibility tier. Anything in here that doesn't start with `_` or `.` and isn't `filter.md`/`README.md` gets PUT to the server on session-start; deletes there propagate. |
+| `files/library/filter.md` | Your publishing policy — the canon-driven rule the Engine consults before promoting drafts to final. |
+| `files/core/` | Engine working memory: `agent.md`, `machine.md`, `notepad.md`, `feedback.md`, `shelf.md`. |
+| `files/works/` | Long-form pieces in progress. |
+| `files/network.md` | Opt-in. URLs of other Authors whose shadows you want pulled into context. The hook fetches each to `files/network/<slug>/shadow.md`, once per day. |
+| `system/hooks/shim.sh` | Bash wrapper. Refetches and verifies the payload at every session start. |
+| `system/.hooks_payload` | The most recently verified payload, cached. |
+| `system/.canon_manifest` | The signed manifest that backed this cached payload — kept so canon modules can also be hash-checked. |
+| `system/allowed_signers` | The maintainer's offline ed25519 public key. Trust root for payload + manifest signature verification. |
+| `system/canon/` | Eight canon modules cached locally: `axioms.md`, `methodology.md`, `editor.md`, `mercury.md`, `publisher.md`, `library.md`, `filter.md`, `bookshelf.md`. **Sovereign** — once seeded, never overwritten. Divergence from upstream surfaces a notice for you to integrate or ignore. |
 | `system/.api_key` | Your API key, mode 0600. |
+| `system/.block` | One-time onboarding instructions cached locally. |
+| `system/.*` (other) | Ephemeral state — session ID markers, sync logs, the error log, autoloop dedup, protocol-status cache, last-maintenance timestamps. All readable. None leave the machine. |
 
-**`~/.claude/skills/alexandria/SKILL.md`** — a skill file. Plain markdown. `cat` it.
+**`~/.claude/skills/alexandria/SKILL.md`** — the `/a` skill. Plain markdown. `cat` it.
 
 **`~/.claude/scheduled-tasks/alexandria/SKILL.md`** — optional scheduled task. Plain markdown. `cat` it.
 
-**`~/alexandria-fork/`** — only if you have `gh` authenticated. A sparse-checkout of your own GitHub fork of the public alexandria repo, used for publishing modules you write.
+**`~/alexandria-fork/`** — only if you have `gh` authenticated. A sparse-checkout of your own GitHub fork of the public `alexandria` repo, used for publishing skills or canon contributions you write.
 
 ### The Git substrate and commit signing
 
@@ -62,7 +68,9 @@ The setup is one bash script, ~685 lines. The hooks payload is one bash script, 
 
 **How signing works.** `setup.sh` detects an existing SSH public key under `~/.ssh/*.pub` (first one found, any type — Ed25519, RSA, ECDSA). If found and you have `gh` authenticated, it (a) registers that key with GitHub as a *signing* key via `gh ssh-key add --type signing` (idempotent — re-runs and multi-machine setups quietly do the right thing), (b) configures git inside `~/alexandria/` to sign with that key, repo-local — your global git config and other repos are untouched, (c) writes the key + your email to `~/.config/git/allowed_signers` so `git verify-commit` and `git log --show-signature` work locally, and (d) signs the genesis commit. Every subsequent commit is signed automatically. GitHub will display "Verified" badges on your signed commits.
 
-**Soft fallback.** If you have no SSH key or `gh` isn't authenticated, setup prints `signing: skipped (...)` with the reason and the genesis commit goes through unsigned. The worldline still works — you just don't get the verified ledger property. Run `ssh-keygen -t ed25519` or `gh auth login` and re-run setup to enable signing later.
+The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your own commits) is **not** the same file as `~/alexandria/system/allowed_signers` (used by the shim to verify the maintainer's payload signature). Same file format, different purposes.
+
+**Soft fallback.** If you have no SSH key or `gh` isn't authenticated, setup prints `signing: skipped (...)` with the reason and the genesis commit goes through unsigned. The worldline still works — you just don't get the verified-ledger property. Run `ssh-keygen -t ed25519` or `gh auth login` and re-run setup to enable signing later.
 
 **OAuth scope.** Alexandria's GitHub OAuth requests `admin:ssh_signing_key` at signup so `setup.sh` can register the key without a separate scope-refresh step. Existing pre-scope users see a one-time re-authorize prompt at next web login.
 
@@ -73,49 +81,53 @@ The setup is one bash script, ~685 lines. The hooks payload is one bash script, 
 | File | Change | Inspect |
 |---|---|---|
 | `~/.claude/settings.json` | Adds 3 hook entries (SessionStart, SessionEnd, SubagentStart) pointing to the shim. | `cat ~/.claude/settings.json` |
-| `~/.cursor/hooks.json` | Only if Cursor detected. Adds 3 hook entries. | `cat ~/.cursor/hooks.json` |
+| `~/.cursor/hooks.json` | Only if Cursor detected. Adds 3 hook entries pointing to the Python wrappers below. | `cat ~/.cursor/hooks.json` |
+| `~/.cursor/hooks/alexandria-{session-start,session-end,stop}.py` | Only if Cursor detected. Three small Python files that just shell out to the shim. | `cat ~/.cursor/hooks/alexandria-*.py` |
 | `~/.cursor/rules/alexandria.mdc` | Only if Cursor detected. Plain markdown rule. | `cat ~/.cursor/rules/alexandria.mdc` |
 | `~/.codex/instructions.md` | Only if Codex detected. Appends a marked block (`<!-- alexandria:start -->` … `<!-- alexandria:end -->`). | `cat ~/.codex/instructions.md` |
+| `~/.factory/droids/a.md` | Only if Factory droid CLI detected. Plain markdown skill. | `cat ~/.factory/droids/a.md` |
 | `~/Library/LaunchAgents/io.alexandria.publish.plist` | macOS only, only if `gh` authenticated. Hourly publish job for your fork. | `cat ~/Library/LaunchAgents/io.alexandria.publish.plist` |
 | User crontab | Linux only, only if `gh` authenticated. One hourly line. | `crontab -l` |
 
-**Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system PATH, sudoers, system services, anything outside `~/alexandria/`, `~/.claude/`, `~/.cursor/`, `~/.codex/`, and the launchd/cron entries above.
+**Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system `PATH`, sudoers, system services, anything outside `~/alexandria/`, `~/.claude/`, `~/.cursor/`, `~/.codex/`, `~/.factory/`, and the launchd/cron entries above. The repo-local git config inside `~/alexandria/` is set; your global git config is not.
 
 ## The bootstrap-from-main model
 
 This is the most important property to understand.
 
-The shim at `~/alexandria/system/hooks/shim.sh` is installed once and never re-fetched. On every Claude Code session start, it does this:
+The shim at `~/alexandria/system/hooks/shim.sh` is installed by `setup.sh` (re-running setup will overwrite it; sessions never refetch the shim). On every Claude Code session start, the shim does this:
 
-```
-curl -sf https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/hooks/payload.sh
-```
+1. Fetches `factory/hooks/payload.sh` from `main` over HTTPS.
+2. Fetches `factory/manifest.txt` and `factory/manifest.txt.sig` over HTTPS.
+3. Verifies the manifest signature with `ssh-keygen -Y verify` against `~/alexandria/system/allowed_signers` (the offline key installed once at setup).
+4. Computes SHA-256 of the freshly-fetched payload and compares it to the entry in the verified manifest.
+5. Executes the payload only if both checks pass. Otherwise it falls back to the previously-verified cached payload, with a loud warning in the ai's context and an entry in `~/alexandria/system/.alexandria_errors`.
 
-It caches the result, then runs it. **The code that processes your session is whatever is on `main` right now**, not what was on `main` when you installed.
+So **the code that processes your session is whatever is on `main` right now AND signed by the offline key.** Bare GitHub access isn't enough to ship code — the attacker also needs to produce a fresh signed manifest with the new payload's hash, which requires the offline private key. Full mechanism in [`TRUST.md`](https://github.com/mowinckelb/alexandria/blob/main/TRUST.md).
 
-Why this exists: improvements to the engine reach you without you having to re-install. Bugs get fixed once, for everyone, on push. The canon evolves and your machine picks it up.
+Why this exists: improvements to the engine reach you without you having to re-install. Bugs get fixed once, for everyone, on push. The canon evolves and your machine picks it up — but only with a valid signed manifest.
 
-What you're trusting: the public repo `github.com/mowinckelb/alexandria` and whoever can push to it (today: one person, the founder, account-protected with 2FA).
+What you're trusting: the maintainer's offline ed25519 private key. The public repo is auditable; the key is the only thing that can ship new signed code.
 
 What protects you anyway:
-1. **Payload signature verification.** The shim (`system/hooks/shim.sh`) verifies the SSH signature on every payload fetch against `~/alexandria/system/allowed_signers` (which pins the maintainer's offline public key, installed once at setup). An unsigned or wrong-signature payload is refused. `ssh-keygen -Y verify` is the verification primitive; the trust root is the offline-held private key that signs the manifest in the repo. See `TRUST.md` in the public repo for the full trust model.
-2. **Cache cutoff.** If GitHub is unreachable AND the cache is >14 days old, the shim deletes it and runs in bare mode (constitution-only, no network, no payload code).
+1. **Signed manifest + hash pinning.** `manifest.txt` lists the SHA-256 of `payload.sh` and every canon module. The manifest itself is signed (`manifest.txt.sig`). The shim refuses to run any file whose hash isn't in a manifest whose signature verifies against the embedded public key. Compromise of the GitHub repo alone does not produce code execution.
+2. **Cache cutoff.** If GitHub is unreachable or verification fails AND the cached payload is >14 days old, the shim deletes it and runs in bare mode (constitution only, no network, no payload code).
 3. **Public diff.** Every payload version is in git history. Any session can be reconstructed from the commit SHA on `main` at that moment.
 4. **Canon canaries.** The canon explicitly tells the model to refuse instructions that try to exfiltrate files, escalate scope, or bypass the user.
-5. **AI-tool approval dialogs.** Claude Code, Cursor, and Codex show every shell action before executing. Real protection at install and during anomaly, but it weakens with habituation — treat it as a backstop, not the primary defense.
+5. **ai-tool approval dialogs.** Claude Code, Cursor, and Codex show every shell action before executing. Real protection at install and during anomaly, but it weakens with habituation — treat it as a backstop, not the primary defense.
 
-What does not protect you: content-hash pinning to a specific payload version on the install side. The shim verifies *signatures*, not specific hashes — a fresh sign from the same key on a new payload will be accepted. Compromise of the offline signing key would compromise future payloads (mitigation: the key is offline-held and the maintainer's repo is 2FA-protected). If that residual gap matters to you, run a frozen install (see below).
+**Residual gap:** compromise of the offline signing key would compromise future payloads. Mitigations: the key is offline-held, the maintainer's repo is 2FA-protected, the key-rotation procedure is documented in `TRUST.md`. If that residual gap matters to you, run a frozen install (see below).
 
 ### Want a frozen install instead?
 
-Fork `mowinckelb/alexandria` on GitHub. The fork copies `setup.sh`, `shim.sh`, `payload.sh`, and the canon — but each of those files still references `mowinckelb/alexandria` in their URLs. Rewrite them all to point at your fork, then install from your fork:
+Fork `mowinckelb/alexandria` on GitHub. Rewrite `mowinckelb/alexandria` to `YOUR-HANDLE/alexandria` in every script + skill file under `factory/`, then install from your fork:
 
 ```
 git clone https://github.com/YOUR-HANDLE/alexandria.git
 cd alexandria
 grep -rl 'mowinckelb/alexandria' factory/ \
   | xargs sed -i.bak 's|mowinckelb/alexandria|YOUR-HANDLE/alexandria|g'
-find factory/ -name '*.bak' -delete    # cross-platform: BSD/GNU sed compatible
+find factory/ -name '*.bak' -delete    # BSD/GNU sed compatible
 git commit -am "pin to my fork"
 git push
 curl -fsSL "https://raw.githubusercontent.com/YOUR-HANDLE/alexandria/main/factory/setup.sh" \
@@ -124,41 +136,51 @@ curl -fsSL "https://raw.githubusercontent.com/YOUR-HANDLE/alexandria/main/factor
 
 To pin to a specific commit (full immutability), also replace `main` with a commit SHA in those files. Re-pin manually whenever you want to upgrade.
 
+The bundled `factory/manifest.txt` + `manifest.txt.sig` keep verifying against the maintainer's public key as long as you don't modify any file listed in the manifest — the signature is over the manifest, and the manifest pins file hashes, so an unmodified fork continues to verify cleanly. If you intend to *edit* any signed file (e.g., write your own canon), replace `factory/setup.sh`'s embedded public key with your own and re-sign with `ssh-keygen -Y sign -f <your_key> -n alexandria -I alexandria-payload-signing factory/manifest.txt`.
+
 ## Network call inventory
 
 Every outbound call the install or hooks make. Complete list.
 
 | Call | Trigger | Sends | Receives |
 |---|---|---|---|
-| `GET raw.githubusercontent.com/.../setup.sh` | You, once, at install time | nothing | the install script |
-| `GET raw.githubusercontent.com/.../hooks/payload.sh` | Every session start | nothing | the hooks payload |
-| `GET raw.githubusercontent.com/.../canon/methodology.md` | Session start, when canon refresh due | nothing | the canon |
-| `GET raw.githubusercontent.com/.../factory/...` | Session start, drift check | nothing | factory file diff |
-| `GET api.alexandria-library.com/alexandria` | Setup probe + session status | API key (Bearer) | account status |
-| `POST api.alexandria-library.com/call` | Session start | API key, module IDs, optional short notes | 200/4xx |
-| `POST api.alexandria-library.com/feedback` | Session end, only if YOU typed feedback into `~/alexandria/system/.session_feedback` | API key, the feedback text you wrote | 200/4xx |
-| `PUT api.alexandria-library.com/file/shadow` | Only when you explicitly publish a shadow file | API key, the file content you chose to publish | 200/4xx |
+| `GET raw.githubusercontent.com/.../factory/setup.sh` | You, once, at install | nothing | the install script |
+| `GET raw.githubusercontent.com/.../factory/hooks/{shim.sh,payload.sh}` | Install (both); session start (payload only) | nothing | hooks |
+| `GET raw.githubusercontent.com/.../factory/manifest.txt(.sig)` | Session start | nothing | signed manifest + signature |
+| `GET raw.githubusercontent.com/.../factory/canon/*.md` | Session start, eight modules | nothing | canon |
+| `GET raw.githubusercontent.com/.../factory/{skills,hooks/cursor,templates,scripts}/...` | Install + session-start drift checks | nothing | factory files for skill/hook/template install + comparison |
+| `GET api.alexandria-library.com/alexandria` | Setup probe + session status | API key (Bearer) | account status + protocol obligations |
+| `POST api.alexandria-library.com/canon/status` | Session start, fire-and-forget | API key, list of canon modules that failed to fetch, whether divergence notice exists | 200 |
+| `POST api.alexandria-library.com/call` | Session start | API key, module IDs, optional per-module notes (≤2000 chars each — the Engine writes "default canon module" unless you've supplied a `.call_manifest`) | 200/4xx |
+| `GET api.alexandria-library.com/library/<your-login>` | Session start, Library reconciliation | nothing | your current server-side file list |
+| `PUT api.alexandria-library.com/file/<name>` | Session start, for each file in `library/<tier>/` that isn't a draft/filter/readme | API key, file content + visibility tier | 200/4xx |
+| `DELETE api.alexandria-library.com/file/<name>` | Session start, for any server file you no longer have locally | API key | 200/4xx |
+| `GET api.alexandria-library.com/library/<slug>/shadow/{authors,free}` | Once per day, only if you created `files/network.md` | API key (for authors-tier), the slug from your network file | shadow content |
+| `POST api.alexandria-library.com/feedback` | Install (one install status report, attributed to your account, no file content) + session end (only if YOU typed into `~/alexandria/system/.session_feedback`) | API key, the text being submitted | 200/4xx |
+| `git push` / `git pull --rebase` against your own `alexandria-private` GitHub repo | Session start (pull then push) + session end (push) | the tracked contents of `~/alexandria/` — gitignored paths excluded: `system/canon/`, `system/hooks/`, `system/.*`, `files/library/`, `node_modules/` | git ref data |
+| `gh` CLI: `gh ssh-key add`, `gh repo create alexandria-private`, `gh repo fork mowinckelb/alexandria` | Install, only if `gh` is authenticated | your separate `gh` OAuth token (not your Alexandria API key) | success/failure |
 
 That is all. No telemetry pings, no error reporters, no third-party CDNs, no analytics SDKs, no DNS callbacks beyond what's listed. You can confirm by `grep -E 'curl|wget|http' ~/alexandria/system/.hooks_payload`.
 
 ## What our server holds (specifics)
 
-Cloudflare Worker, stateless re: your private content. KV + D1 + R2 on the server. The Engine never auto-sends data on your behalf — the only thing that can leave the local machine is feedback you explicitly type into `~/alexandria/system/.session_feedback`.
+Cloudflare Worker, stateless re: your private content. KV + D1 + R2.
 
 | Stored | Where | Why |
 |---|---|---|
 | Email + GitHub login + Stripe customer ID, in one encrypted account blob | KV (AES-256-GCM at rest) | Account, OAuth, billing |
 | API key — SHA-256 hash only | KV | Auth check |
-| Event log: which endpoints your account hit, with timestamps | KV (60-day TTL) | Debugging, abuse signal |
+| Event log: which endpoints your account hit, with timestamps and lightweight context (e.g. "canon_status: failures=editor, has_notice=true") | KV (60-day TTL) | Debugging, abuse signal |
 | Library files you explicitly publish | R2 | Public Library content |
-| Library file metadata (visibility, updated_at) | D1 | Discovery, listing |
-| Feedback text you explicitly type and submit | Private GitHub repo `mowinckelb/alexandria-feedback` (founder-only access) | Founder reads + factory autoloop processes weekly to draft canon updates |
+| Library file metadata (name, visibility tier, content hash, updated_at) | D1 | Discovery, listing |
+| Per-account record of every module call: module ID, your account ID, timestamp, optional notes (≤2000 chars) | D1 (`protocol_calls`) | The protocol's *call obligation*. Catalog of modules used in the last 90 days is exposed at public `/marketplace`; per-module caller list is exposed at authed `/marketplace/<module>`. |
+| Feedback text you explicitly type and submit (including the one-line install status report at setup) | Private GitHub repo `mowinckelb/alexandria-feedback` (founder-only access) | Founder reads + factory autoloop processes weekly to draft canon updates |
 
-**Not stored anywhere we control:** your constitution, vault, marginalia, transcripts, machine.md, notepad, raw API key, AI-vendor (Anthropic/OpenAI/etc) API keys, or any file you did not explicitly `PUT /file/...`. There is no endpoint that accepts them.
+**Not stored anywhere we control:** your constitution, vault, marginalia, transcripts, machine.md, notepad, raw API key, ai-vendor (Anthropic/OpenAI/etc) API keys, or any file you did not explicitly `PUT /file/...`. There is no endpoint that accepts them.
 
-**What a complete server breach yields:** account emails, GitHub user IDs, hashed (un-reversible) API keys, the 60-day event log, published Library content (already public), and Cloudflare-level access logs (IPs, timing). It does not yield private cognition, unpublished files, or AI-vendor credentials, because those never reach the server.
+**What a complete server breach yields:** account emails, GitHub user IDs, hashed (un-reversible) API keys, the 60-day event log, your full `protocol_calls` history (the per-module portion is already exposed by design via the authed marketplace endpoint), published Library content (already public), and Cloudflare-level access logs (IPs, timing). It does not yield private cognition, unpublished files, or ai-vendor credentials, because those never reach the server.
 
-**What a `mowinckelb/alexandria-feedback` breach yields:** feedback text users explicitly typed and submitted (attributed — they chose what to send, knowing it goes to the founder). Same trust posture as the public repo: protected by GitHub account security.
+**What a `mowinckelb/alexandria-feedback` breach yields:** feedback text you explicitly typed and submitted, attributed to your GitHub login. Same trust posture as the public repo: protected by GitHub account security.
 
 ## Why your API key is safe
 
@@ -176,23 +198,40 @@ These are the files. Read them.
 # The install
 curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh
 
-# The shim that runs every session (89 lines)
+# The shim that runs every session
 curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/hooks/shim.sh
 
-# The mutable payload (~463 lines) — the one to read most carefully
+# The mutable payload — the one to read most carefully
 curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/hooks/payload.sh
 
-# The canon the AI follows
+# The signed manifest that gates the payload
+curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/manifest.txt
+curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/manifest.txt.sig
+
+# The canon the ai follows (one of eight modules)
 curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/canon/methodology.md
 
-# What the AI is told via skill
+# What the ai is told via skill
 curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/skills/claudecode.md
 ```
 
+Verify the manifest signature yourself:
+
+```
+ssh-keygen -Y verify \
+  -f ~/alexandria/system/allowed_signers \
+  -I alexandria-payload-signing \
+  -n alexandria \
+  -s <(curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/manifest.txt.sig) \
+  < <(curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/manifest.txt)
+# Expected: Good "alexandria" signature for alexandria-payload-signing with ED25519 key SHA256:kAas5fUUnV/XcfKoH3Ysm7IZrqY2HcQSuhSaMoAMqnA
+```
+
 After install, your live install is at:
-- `~/alexandria/system/hooks/shim.sh` (immutable)
-- `~/alexandria/system/.hooks_payload` (refreshed each session — diff against the GitHub URL above)
-- `~/alexandria/system/canon/methodology.md` (refreshed periodically)
+- `~/alexandria/system/hooks/shim.sh` (refreshed only by re-running setup)
+- `~/alexandria/system/.hooks_payload` (refreshed each session after signature + hash check — `diff` against the GitHub raw URL)
+- `~/alexandria/system/.canon_manifest` (the verified manifest backing the cached payload)
+- `~/alexandria/system/canon/*.md` (sovereign; divergence from upstream shows up in `~/alexandria/system/.canon_update_notice`)
 
 Then audit the cached payload for anything that touches the network, evaluates remote code, or reads sensitive paths:
 
@@ -211,35 +250,37 @@ The first should match only the `curl` calls in the network inventory above. The
 ## Uninstall
 
 ```
-# Remove the folder
-rm -rf ~/alexandria
+# Remove the folder + your fork checkout. Your files in alexandria-private
+# on GitHub stay yours; we never had access to that repo.
+rm -rf ~/alexandria ~/alexandria-fork
 
-# Remove the Claude Code hooks (edit ~/.claude/settings.json by hand,
-# or use jq):
+# Remove the Claude Code hooks
 jq 'del(.hooks.SessionStart, .hooks.SessionEnd, .hooks.SubagentStart)' \
   ~/.claude/settings.json > ~/.claude/settings.json.tmp \
   && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
 
-# Remove the skill, scheduled task, and (if installed) Cursor / Codex / launchd entries
+# Remove the skill, scheduled task, Cursor / Codex / Factory entries
 rm -rf ~/.claude/skills/alexandria ~/.claude/scheduled-tasks/alexandria
 rm -f  ~/.cursor/rules/alexandria.mdc ~/.cursor/hooks/alexandria-*.py
+rm -f  ~/.factory/droids/a.md
+# ~/.cursor/hooks.json: edit by hand to remove the three alexandria entries
 launchctl unload ~/Library/LaunchAgents/io.alexandria.publish.plist 2>/dev/null
 rm -f  ~/Library/LaunchAgents/io.alexandria.publish.plist
+# Linux: `crontab -e` and remove the publish-fork.sh line
 sed -i '' '/alexandria:start/,/alexandria:end/d' ~/.codex/instructions.md 2>/dev/null
 
-# Revoke server-side
+# Revoke server-side (removes account record, events, feedback, published files,
+# and your Stripe subscription)
 curl -X DELETE -H "Authorization: Bearer $YOUR_KEY" https://api.alexandria-library.com/account
 ```
-
-Your files in `~/alexandria/` are yours. If you back them up to `alexandria-private` on GitHub during install, that repo also stays yours; we never had access to it.
 
 ## How to think about this
 
 The trust here is legible, not zero. It is bounded-trust:
 
 - The repo is public; every payload change is in git history.
-- Today, one maintainer can push to `main`. That is a real concentration of trust; we are not pretending otherwise.
-- You can fork, pin to a commit SHA, and run from your own copy. The instructions are above.
-- You can re-audit at any time. `diff` your `.hooks_payload` against the GitHub raw URL whenever you feel like it.
+- The signing key is offline-held. Anyone with the public repo cannot ship code; only the keyholder can. That is a real concentration of trust; we are not pretending otherwise. Rotation procedure is in `TRUST.md`.
+- You can fork, pin to a commit SHA, and run from your own copy. Instructions are above.
+- You can re-audit at any time. `diff` your cached payload against the GitHub raw URL, and verify the manifest signature with `ssh-keygen -Y verify` — both shown above.
 
 What we are claiming is *not* "no trust required." We are claiming you can read every line of the trust you are extending, change the relationship anytime, and walk away cleanly with all your files intact.

@@ -6,7 +6,7 @@
 ALEX_DIR="$HOME/alexandria"
 API_KEY="$1"
 FACTORY_RAW="https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory"
-SERVER="https://api.mowinckel.ai"
+SERVER="https://api.alexandria-library.com"
 FETCH_ERRORS=""
 
 fetch_factory() {
@@ -36,13 +36,13 @@ fi
 
 if [ -z "$API_KEY" ]; then
   echo "Usage: bash setup.sh <API_KEY>"
-  echo "Get your key at https://mowinckel.ai/signup"
+  echo "Get your key at https://alexandria-library.com/signup"
   exit 1
 fi
 
 if [[ "$API_KEY" != alex_* ]]; then
   echo "Invalid API key format. Your key should start with alex_."
-  echo "Get a fresh key at https://mowinckel.ai/signup"
+  echo "Get a fresh key at https://alexandria-library.com/signup"
   exit 1
 fi
 
@@ -545,8 +545,8 @@ fi
 # api key: HTTP probe (already done above)
 case "$KEY_STATUS" in
   200) STATUS_KEY="ok"; DETAIL_KEY="verified (HTTP 200)" ;;
-  401) STATUS_KEY="fail"; DETAIL_KEY="rejected — get a fresh key at https://mowinckel.ai/signup" ;;
-  000|"") STATUS_KEY="fail"; DETAIL_KEY="server unreachable — check https://api.mowinckel.ai/health" ;;
+  401) STATUS_KEY="fail"; DETAIL_KEY="rejected — get a fresh key at https://alexandria-library.com/signup" ;;
+  000|"") STATUS_KEY="fail"; DETAIL_KEY="server unreachable — check https://api.alexandria-library.com/health" ;;
   *) STATUS_KEY="fail"; DETAIL_KEY="server returned HTTP $KEY_STATUS — protocol may be degraded" ;;
 esac
 

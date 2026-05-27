@@ -93,7 +93,7 @@ app.use('*', async (c, next) => {
 
 // Allowed CORS origins — imported from cors.ts (single source of truth)
 
-// CORS for kin code validation (website /signup calls api.mowinckel.ai/check-kin)
+// CORS for kin code validation (website /signup calls api.alexandria-library.com/check-kin)
 app.use('/check-kin', async (c, next) => {
   const allowed = getAllowedOrigins();
   const reqOrigin = c.req.header('Origin') || '';
@@ -109,7 +109,7 @@ app.use('/check-kin', async (c, next) => {
   await next();
 });
 
-// CORS for Library API (website at mowinckel.ai calls server at api.mowinckel.ai)
+// CORS for Library API (website at alexandria-library.com calls server at api.alexandria-library.com)
 app.use('/library/*', async (c, next) => {
   const allowed = getAllowedOrigins();
   const reqOrigin = c.req.header('Origin') || '';

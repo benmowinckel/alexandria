@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SERVER_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-SERVER_URL="https://api.mowinckel.ai"
+SERVER_URL="https://api.alexandria-library.com"
 
 cd "$SERVER_DIR"
 

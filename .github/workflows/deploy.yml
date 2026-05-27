@@ -32,7 +32,7 @@ jobs:
       - name: Verify health
         run: |
           sleep 5
-          body=$(curl -sf https://mcp.mowinckel.ai/health)
+          body=$(curl -sf https://api.alexandria-library.com/health)
           echo "$body"
           # Top-level status can be 'degraded' when the awareness digest flags
           # stale clients / deprecated hits — signal, not an infra failure.

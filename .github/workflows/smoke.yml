@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       API_KEY: ${{ secrets.ALEXANDRIA_API_KEY }}
-      SERVER: https://mcp.mowinckel.ai
+      SERVER: https://api.alexandria-library.com
       FACTORY: https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory
     steps:
       - name: Checkout

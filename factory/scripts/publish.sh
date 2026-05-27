@@ -41,7 +41,7 @@ setup() {
   if ! gh repo view "$repo" >/dev/null 2>&1; then
     echo "publish: $repo doesn't exist — creating" >&2
     gh repo create "$repo" --public \
-      --description "Alexandria modules — see https://mowinckel.ai/marketplace" \
+      --description "Alexandria modules — see https://alexandria-library.com/marketplace" \
       --add-readme >&2
   fi
 

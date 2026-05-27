@@ -12,4 +12,4 @@ Before committing any server code change:
 4. **No regressions:** Review recent commits for anything the change might break.
 5. **Bitter lesson compliance:** No structured parameters, fixed schemas, or hand-crafted rules. Unstructured text/JSONL. Soft defaults that thin as models improve.
 6. **Statelessness:** Server stores nothing user-specific. Encrypted refresh token IS the access token.
-7. **Deployment:** After deploying (`cd server && npx wrangler deploy`), check health: `curl https://api.mowinckel.ai/health`.
+7. **Deployment:** After deploying (`cd server && npx wrangler deploy`), check health: `curl https://api.alexandria-library.com/health`.

@@ -7,13 +7,13 @@
  *
  * Usage: npx tsx test/lifecycle.ts
  * Requires: ~/alexandria/system/.api_key (a real account)
- * Set TEST_URL to override (default: https://api.mowinckel.ai)
+ * Set TEST_URL to override (default: https://api.alexandria-library.com)
  */
 
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
-const BASE = process.env.TEST_URL || 'https://api.mowinckel.ai';
+const BASE = process.env.TEST_URL || 'https://api.alexandria-library.com';
 const HOME = process.env.HOME || process.env.USERPROFILE || '';
 const ALEX_DIR = join(HOME, 'alexandria');
 const FILES_DIR = join(ALEX_DIR, 'files');
