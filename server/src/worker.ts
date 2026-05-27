@@ -505,8 +505,10 @@ app.post('/follow', async (c) => {
     const isNewSignup = ((insertResult as unknown as { meta?: { changes?: number } }).meta?.changes || 0) > 0;
     logEvent('follow_signup', { amount: String(amount), new: isNewSignup ? 'true' : 'false' });
 
-    if (isNewSignup) {
-      // Fire-and-forget welcome — don't block Stripe checkout on email send
+    if (isNewSignup && amount <= 0) {
+      // Free path — send the follower welcome now. Paying signups skip this and
+      // get the patron welcome from the Stripe webhook instead, so a single
+      // signup event produces a single email.
       c.executionCtx.waitUntil(
         sendFollowerWelcome(normalizedEmail, unsubscribeToken).catch((err) => {
           console.error('Follower welcome email failed:', err);
