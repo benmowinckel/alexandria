@@ -134,10 +134,10 @@ Every outbound call the install or hooks make. Complete list.
 | `GET raw.githubusercontent.com/.../hooks/payload.sh` | Every session start | nothing | the hooks payload |
 | `GET raw.githubusercontent.com/.../canon/methodology.md` | Session start, when canon refresh due | nothing | the canon |
 | `GET raw.githubusercontent.com/.../factory/...` | Session start, drift check | nothing | factory file diff |
-| `GET api.mowinckel.ai/alexandria` | Setup probe + session status | API key (Bearer) | account status |
-| `POST api.mowinckel.ai/call` | Session start | API key, module IDs, optional short notes | 200/4xx |
-| `POST api.mowinckel.ai/feedback` | Session end, only if YOU typed feedback into `~/alexandria/system/.session_feedback` | API key, the feedback text you wrote | 200/4xx |
-| `PUT api.mowinckel.ai/file/shadow` | Only when you explicitly publish a shadow file | API key, the file content you chose to publish | 200/4xx |
+| `GET api.alexandria-library.com/alexandria` | Setup probe + session status | API key (Bearer) | account status |
+| `POST api.alexandria-library.com/call` | Session start | API key, module IDs, optional short notes | 200/4xx |
+| `POST api.alexandria-library.com/feedback` | Session end, only if YOU typed feedback into `~/alexandria/system/.session_feedback` | API key, the feedback text you wrote | 200/4xx |
+| `PUT api.alexandria-library.com/file/shadow` | Only when you explicitly publish a shadow file | API key, the file content you chose to publish | 200/4xx |
 
 That is all. No telemetry pings, no error reporters, no third-party CDNs, no analytics SDKs, no DNS callbacks beyond what's listed. You can confirm by `grep -E 'curl|wget|http' ~/alexandria/system/.hooks_payload`.
 
@@ -228,7 +228,7 @@ rm -f  ~/Library/LaunchAgents/io.alexandria.publish.plist
 sed -i '' '/alexandria:start/,/alexandria:end/d' ~/.codex/instructions.md 2>/dev/null
 
 # Revoke server-side
-curl -X DELETE -H "Authorization: Bearer $YOUR_KEY" https://api.mowinckel.ai/account
+curl -X DELETE -H "Authorization: Bearer $YOUR_KEY" https://api.alexandria-library.com/account
 ```
 
 Your files in `~/alexandria/` are yours. If you back them up to `alexandria-private` on GitHub during install, that repo also stays yours; we never had access to it.
