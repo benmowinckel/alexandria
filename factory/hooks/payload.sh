@@ -651,9 +651,13 @@ if [ "$MODE" = "session-end" ]; then
     fi
   fi
 
-  # Git sync
+  # Git sync — same guard as session-start: never commit over a stuck rebase/merge or conflict markers.
   if [ -d "$ALEX_DIR/.git" ] && git -C "$ALEX_DIR" remote get-url origin &>/dev/null; then
-    (cd "$ALEX_DIR" && git add -A && { git diff --cached --quiet || git commit -q -m "session: $(date +%Y-%m-%d_%H-%M)"; } && git push -q) &>/dev/null &
+    if [ -d "$ALEX_DIR/.git/rebase-merge" ] || [ -d "$ALEX_DIR/.git/rebase-apply" ] || [ -f "$ALEX_DIR/.git/MERGE_HEAD" ] || git -C "$ALEX_DIR" grep -lE '^(<<<<<<<|>>>>>>>)' -- 'files/core/' 'files/constitution/' 'system/canon/' >/dev/null 2>&1; then
+      echo "alexandria: SYNC PAUSED at session end — unresolved rebase/merge or conflict markers in canon; not committing. Resolve: cd ~/alexandria && git status"
+    else
+      (cd "$ALEX_DIR" && git add -A && { git diff --cached --quiet || git commit -q -m "session: $(date +%Y-%m-%d_%H-%M)"; } && git push -q) &>/dev/null &
+    fi
   fi
 
 fi
