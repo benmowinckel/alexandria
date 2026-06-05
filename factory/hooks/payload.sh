@@ -142,20 +142,21 @@ $(diff -u "$local_path" <(printf '%s' "$fresh") 2>/dev/null | head -n 200)
         [ "$lock_age" -gt 300 ] && rm -f "$ALEX_DIR/.git/index.lock"
       fi
     fi
-    # Abandoned rebase (>1 hr) = a previous pull --rebase got stuck; abort so this run can proceed.
-    # A real user mid-rebase resolves within an hour or knows it's broken if left longer.
-    for rebase_dir in "$ALEX_DIR/.git/rebase-merge" "$ALEX_DIR/.git/rebase-apply"; do
-      if [ -d "$rebase_dir" ]; then
-        rebase_mtime=$(stat -f %m "$rebase_dir" 2>/dev/null || stat -c %Y "$rebase_dir" 2>/dev/null)
-        if [ -n "$rebase_mtime" ]; then
-          rebase_age=$(($(date +%s) - rebase_mtime))
-          [ "$rebase_age" -gt 3600 ] && git -C "$ALEX_DIR" rebase --abort 2>/dev/null
-        fi
-      fi
-    done
-    (cd "$ALEX_DIR" && git add -A && { git diff --cached --quiet || git commit -q -m "sync: $(date +%Y-%m-%d_%H-%M)"; }) 2>/dev/null
-    git -C "$ALEX_DIR" push -q 2>/dev/null || true
-    git -C "$ALEX_DIR" pull --rebase -q 2>/dev/null || true
+    # GUARD 1 — never auto-abort a stuck rebase/merge and then `git add -A` over the reverted tree.
+    # That path silently dropped uncommitted hand-curated canon (agent.md, _feedback.md) on 2026-06-05:
+    # abort reverts to HEAD, add -A commits the loss, autoloop reports "complete". No-derivative files
+    # have no source to regenerate from, so the loss is permanent. Surface and SKIP the sync instead —
+    # the working tree is safe, just not syncing, until the Author resolves it.
+    if [ -d "$ALEX_DIR/.git/rebase-merge" ] || [ -d "$ALEX_DIR/.git/rebase-apply" ] || [ -f "$ALEX_DIR/.git/MERGE_HEAD" ]; then
+      echo "alexandria: SYNC PAUSED — unresolved rebase/merge in ~/alexandria. Your edits are safe but not syncing. Resolve: cd ~/alexandria && git status"
+    # GUARD 2 — never commit unresolved conflict markers into hand-curated canon.
+    elif git -C "$ALEX_DIR" grep -lE '^(<<<<<<<|>>>>>>>)' -- 'files/core/' 'files/constitution/' 'system/canon/' >/dev/null 2>&1; then
+      echo "alexandria: SYNC PAUSED — conflict markers in canon; not committing. Resolve, then sessions resume syncing."
+    else
+      (cd "$ALEX_DIR" && git add -A && { git diff --cached --quiet || git commit -q -m "sync: $(date +%Y-%m-%d_%H-%M)"; }) 2>/dev/null
+      git -C "$ALEX_DIR" push -q 2>/dev/null || true
+      git -C "$ALEX_DIR" pull --rebase -q 2>/dev/null || true
+    fi
   fi
 
   # ── Autoloop relay: git ground truth → dashboard ──
