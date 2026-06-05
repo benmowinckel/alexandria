@@ -108,19 +108,21 @@ export async function requireAuth(c: { req: { header: (name: string) => string |
 
 /**
  * Gate write endpoints (PUT /file, DELETE /file, POST /call) on an active
- * subscription. The deal is "$10/month or 5 active kin" — no third path. A
- * cancelled/unpaid sub means neither condition is met, so writes are blocked
- * at 402 with a reactivate link. Reads remain open (see /library/*) so users
- * who lapse can still access their own data.
+ * account. Early stage: joining is free — every new GitHub sign-in lands as
+ * `free` and can write immediately, no card, no Stripe round-trip. The paid
+ * machinery (createCheckoutSession, kin coupon, $10 price) stays dormant but
+ * intact for when billing turns on; until then `free` is the default tier.
+ * Reads remain open (see /library/*) so lapsed users still reach their data.
  *
  * Allowed statuses:
- *   - `trialing`  — first 30 days
+ *   - `free`      — early-stage free tier (default for new sign-ins)
+ *   - `trialing`  — first 30 days of a paid sub (once billing is on)
  *   - `active`    — paying $10 or free via the kin coupon
  *   - `past_due`  — Stripe is retrying a failed card; grace period
  *   - `beta`      — legacy users from before live billing
  * Anything else (canceled, unpaid, incomplete, undefined) returns 402.
  */
-export const ACTIVE_AUTHOR_STATUSES = new Set(['trialing', 'active', 'past_due', 'beta']);
+export const ACTIVE_AUTHOR_STATUSES = new Set(['free', 'trialing', 'active', 'past_due', 'beta']);
 
 export type AuthorAuth =
   | { ok: true; key: string; account: Account }

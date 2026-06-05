@@ -149,7 +149,7 @@ export async function sendWelcomeEmail(email: string, githubLogin: string, email
   await sendEmail(email, 'welcome to alexandria.',
     `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; text-align: left; line-height: 1.7;">
   <p style="font-size: 1.1rem; margin: 0 0 1.5rem;">welcome to alexandria.</p>
-  <p style="font-size: 1rem; color: #8a8078; margin: 0 0 1.5rem;">your data lives on your machine. free with five active kin &mdash; otherwise $10/month after your 30-day trial.</p>
+  <p style="font-size: 1rem; color: #8a8078; margin: 0 0 1.5rem;">your data lives on your machine. it's free &mdash; you're early.</p>
   <p style="font-size: 1rem; color: #8a8078; margin: 0 0 1.75rem;">your kin link: <a href="${kinLink}" style="color: #3d3630;">${kinLinkDisplay}</a> &mdash; send it to ten people, knowing some will not stick.</p>
   <p style="font-size: 0.95rem; margin: 0 0 1.8rem;"><a href="${WEBSITE_URL}/signup" style="color: #3d3630; text-decoration: none;">open alexandria</a></p>
   <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>

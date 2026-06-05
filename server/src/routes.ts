@@ -3,12 +3,12 @@
 import { randomBytes } from 'crypto';
 import type { Hono } from 'hono';
 import { logEvent } from './analytics.js';
-import { countActiveKin, createCheckoutSession, createPortalSession, getStripe, recalculateKinPricing, resolveActiveSubscription } from './billing.js';
+import { countActiveKin, createPortalSession, getStripe, recalculateKinPricing, resolveActiveSubscription } from './billing.js';
 import { authErrorHtml, callbackPageHtml } from './templates.js';
 import { getDB, getR2 } from './db.js';
 import { loadAccounts, loadAccount, saveAccount, setAuthIndex, deleteAccount, getKV, setEmailTokenIndex, getEmailTokenIndex, getAuthIndex } from './kv.js';
 import { hashApiKey, generateToken } from './crypto.js';
-import { Account, AccountStore, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
+import { ACTIVE_AUTHOR_STATUSES, Account, AccountStore, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
 import { generateApiKey, getAccounts, getAccountByLogin, requireAdmin } from './accounts.js';
 import { sendEmail, sendEmailsBatched, sendWelcomeEmail, sendInstallNudge, FOUNDER_EMAIL } from './email.js';
 import { runHealthDigest, runWeekOneCheckIns, runInstallNudges } from './cron.js';
@@ -424,6 +424,12 @@ export function registerRoutes(app: Hono) {
         email_token: emailToken,
         created_at: existing?.created_at || new Date().toISOString(),
         last_session: new Date().toISOString(),
+        // Early stage: every account is a free Author. Joining costs nothing —
+        // no card, no Stripe round-trip. Preserve a real paid/legacy status if
+        // one already exists; otherwise default to `free` so writes work now.
+        subscription_status: ACTIVE_AUTHOR_STATUSES.has(existing?.subscription_status || '')
+          ? existing!.subscription_status
+          : 'free',
       };
       delete updatedAccount.api_key;
       await saveAccount(key, updatedAccount as unknown as Record<string, unknown>);
@@ -512,30 +518,10 @@ export function registerRoutes(app: Hono) {
         await sendWelcomeEmail(email, user.login, emailToken);
       }
 
-      // Skip Stripe if user already has payment info
-      if (updatedAccount.stripe_customer_id) {
-        if (stateData.intent === 'library' && stateData.next) {
-          return c.redirect(`${getWebsiteUrl()}${stateData.next}`);
-        }
-        return c.html(await callbackPageHtml(apiKey, user.login));
-      }
-
-      // Redirect to Stripe Checkout. For pure Library login intent we skip billing redirect.
-      if (stateData.intent !== 'library' && process.env.STRIPE_SECRET_KEY && email) {
-        try {
-          const checkoutUrl = await createCheckoutSession({
-            email,
-            githubLogin: user.login,
-            stripeCustomerId: updatedAccount.stripe_customer_id,
-          });
-          if (checkoutUrl) {
-            return c.redirect(checkoutUrl);
-          }
-        } catch (err) {
-          console.error('Stripe checkout redirect failed, falling back:', err);
-        }
-      }
-
+      // Early stage: joining is free, so there's no Stripe round-trip. The
+      // account was saved above as `free` and can write immediately. The paid
+      // checkout machinery stays dormant in billing.ts for when pricing turns
+      // on. Library-login intent returns the user to where they came from.
       if (stateData.intent === 'library' && stateData.next) {
         return c.redirect(`${getWebsiteUrl()}${stateData.next}`);
       }

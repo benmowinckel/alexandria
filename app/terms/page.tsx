@@ -34,7 +34,7 @@ export default function Terms() {
 
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>The service</h2>
-        <p>Alexandria is provided as-is. Things may change, break, or be discontinued. We will give reasonable notice before changes that affect your data or access. Pricing: one tier, $10/month or free with 5 active kin. Slider pricing — pay what it is worth to you, no ceiling.</p>
+        <p>Alexandria is provided as-is. Things may change, break, or be discontinued. We will give reasonable notice before changes that affect your data or access. Pricing: free while Alexandria is in its early stage. When paid plans begin we will give reasonable notice; the intended model is one tier, slider pricing — pay what it is worth to you, no ceiling.</p>
       </section>
 
       <section style={{ marginBottom: '2rem' }}>

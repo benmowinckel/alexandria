@@ -71,13 +71,11 @@ export default async function SignupPage({
           <section className="primer-section">
             <p className="primer-label">the deal.</p>
             <p>
-              free if five friends sign up through you and stay
-              active &mdash; we call them your kin. after signup
+              free. that&rsquo;s the whole deal right now &mdash;
+              alexandria is early, and so are you. after signup
               you will get a kin link; send it to ten people
-              straight away, knowing some will not stick. any
-              month with fewer than five active kin is $10 &mdash;
-              the fee waives automatically the moment you have
-              five again.
+              straight away, knowing some will not stick. the more
+              minds reach across, the more the library compounds.
             </p>
           </section>
 
