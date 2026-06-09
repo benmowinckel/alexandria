@@ -33,4 +33,4 @@ Disallow: /demo.mp4
 Disallow: /docs/Memo.md
 Disallow: /signup
 
-Sitemap: https://mowinckel.ai/sitemap.xml
+Sitemap: https://alexandria-library.com/sitemap.xml
