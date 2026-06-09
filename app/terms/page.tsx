@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "../lib/config";
 
 export const metadata: Metadata = {
   title: "Terms of Service — alexandria.",
+  ...pageMetadata({
+    path: "/terms",
+    title: "Terms of Service — alexandria.",
+    description: "alexandria terms of service.",
+  }),
 };
 
 export default function Terms() {
