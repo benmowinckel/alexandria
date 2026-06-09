@@ -10,10 +10,11 @@
     "test": "tsx test/server.ts",
     "test:lifecycle": "tsx test/lifecycle.ts",
     "test:library": "tsx test/library.ts",
-    "test:secret-fingerprint": "tsx test/secret-fingerprint.ts"
+    "test:secret-fingerprint": "tsx test/secret-fingerprint.ts",
+    "test:cors": "tsx test/cors-preflight.ts"
   },
   "dependencies": {
-    "hono": "4.12.24",
+    "hono": "4.12.25",
     "stripe": "21.0.1"
   },
   "devDependencies": {
