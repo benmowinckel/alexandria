@@ -327,6 +327,9 @@ export async function countActiveKin(githubLogin: string): Promise<{ count: numb
 export interface KinPricingState {
   email: string | undefined;
   subscriptionId: string;
+  /** Stripe customer id from the retrieved subscription — lets the warning
+   *  path resolve an email from Stripe when the KV account has none. */
+  customerId: string | null;
   authorHasCall: boolean;
   authorHasFile: boolean;
   kinCompliant: number;
@@ -389,6 +392,7 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
   return {
     email: user.email,
     subscriptionId: user.subscription_id,
+    customerId: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id ?? null,
     authorHasCall,
     authorHasFile,
     kinCompliant: kinData.compliant,
@@ -409,13 +413,37 @@ async function maybeWarnAboutBill(
   amountDollars: number,
   dueAt: Date,
 ): Promise<void> {
-  if (!state.email || state.nowHasDiscount) return;
+  // Discount = expected $0 invoice — nothing to warn about.
+  if (state.nowHasDiscount) return;
+
+  // Accounts created before the 2026-05-26 OAuth email gate can have no email
+  // in KV while Stripe holds a perfectly good one (checkout always collects
+  // it). That exact combination is how ayo-kaizen was charged $10 on
+  // 2026-06-09 with the warning silently skipped by 8 straight cron runs.
+  // Fall back to the Stripe customer email and backfill the account so every
+  // later send has it too.
+  let email = state.email;
+  if (!email && state.customerId) {
+    try {
+      const customer = await getStripe().customers.retrieve(state.customerId);
+      if (!customer.deleted) email = customer.email || undefined;
+      if (email) await updateAccountBilling(githubLogin, { email });
+    } catch (e) {
+      console.error('[billing] Stripe customer email fallback failed:', e);
+    }
+  }
+  if (!email) {
+    // Loud skip — the silent return is what kept the gap invisible until the
+    // paid-without-warning mirror fired after the money had already moved.
+    logEvent('kin_prebill_warning_skipped', { github_login: githubLogin, reason: 'no_email' });
+    return;
+  }
 
   const idempotencyKey = `kin:warning:${state.subscriptionId}:${dueAt.toISOString().slice(0, 10)}`;
   const kv = getKV();
   if (await kv.get(idempotencyKey)) return;
 
-  await sendPreBillWarningEmail(state.email, githubLogin, state, amountDollars, dueAt);
+  await sendPreBillWarningEmail(email, githubLogin, state, amountDollars, dueAt);
   await kv.put(idempotencyKey, '1', { expirationTtl: 60 * 86400 }); // 60d, longer than any cycle
   logEvent('kin_prebill_warning_sent', { github_login: githubLogin, amount: String(amountDollars) });
 }
@@ -1192,6 +1220,9 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
               logEvent('billing_invoice_paid', {
                 github_login: subLogin,
                 amount_cents: String(invoice.amount_paid || 0),
+                // Lets the daily mirror tell a renewal (warning was owed) from
+                // a first checkout invoice (user consciously paying right now).
+                billing_reason: invoice.billing_reason || 'unknown',
               });
             } catch (e) {
               console.error('[billing] invoice.paid handler failed:', e);

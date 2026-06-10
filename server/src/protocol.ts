@@ -74,6 +74,14 @@ export function registerProtocol(app: Hono) {
       bodyBytes.set(encoded);
     }
 
+    // Abuse floor, not a product limit: signup is free (GitHub OAuth only),
+    // so without a cap one scripted account could pump unbounded bytes into
+    // R2/D1. 25MB clears any real markdown or PDF by 10x+.
+    const MAX_FILE_BYTES = 25 * 1024 * 1024;
+    if (bodyBytes.byteLength > MAX_FILE_BYTES) {
+      return c.json({ error: `File exceeds ${MAX_FILE_BYTES / (1024 * 1024)}MB limit` }, 413);
+    }
+
     // The factory hook reconciles the full Library every session-start by
     // PUT-ing every local file. Hash-compare against the stored row so we
     // skip R2 write, updated_at bump, and analytics event when nothing
@@ -93,6 +101,19 @@ export function registerProtocol(app: Hono) {
       && (existing.text ?? null) === (text ?? null)
     ) {
       return c.json({ ok: true, unchanged: true });
+    }
+
+    // Same abuse floor for file count — only gates NEW names, so a full
+    // account can always update what it already has. 1000 names is ~20x the
+    // largest real library; one indexed COUNT per new-name PUT.
+    if (!existing) {
+      const MAX_FILES_PER_ACCOUNT = 1000;
+      const countRow = await getDB().prepare(
+        'SELECT COUNT(*) AS n FROM protocol_files WHERE account_id = ?'
+      ).bind(id).first<{ n: number }>();
+      if ((countRow?.n ?? 0) >= MAX_FILES_PER_ACCOUNT) {
+        return c.json({ error: `Account file limit reached (${MAX_FILES_PER_ACCOUNT})` }, 403);
+      }
     }
 
     await getR2().put(`protocol/${id}/${name}.${ext}`, bodyBytes);
@@ -344,11 +365,19 @@ export function registerProtocol(app: Hono) {
     //
     // 90-day recency window — the catalog must be able to forget. Survival
     // ranking only works if dormant modules drop out. Soft default; revisit
-    // once the catalog has scale.
+    // once the catalog has scale. Dormancy is a view-filter, not removal:
+    // `?all=1` lifts the window so dormant modules stay queryable (a2
+    // catalog-hardening decision, 2026-06-09). Zero new state either way —
+    // both views derive from the same call log.
+    const showAll = c.req.query('all') === '1';
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-    const { results } = await getDB().prepare(
-      `SELECT DISTINCT module_id FROM protocol_calls WHERE module_id LIKE 'github:%' AND time > ? LIMIT 1000`
-    ).bind(ninetyDaysAgo).all<{ module_id: string }>();
+    const { results } = showAll
+      ? await getDB().prepare(
+          `SELECT DISTINCT module_id FROM protocol_calls WHERE module_id LIKE 'github:%' LIMIT 1000`
+        ).all<{ module_id: string }>()
+      : await getDB().prepare(
+          `SELECT DISTINCT module_id FROM protocol_calls WHERE module_id LIKE 'github:%' AND time > ? LIMIT 1000`
+        ).bind(ninetyDaysAgo).all<{ module_id: string }>();
 
     const rows = results || [];
     let modules = await Promise.all(rows.map(async (r) => {

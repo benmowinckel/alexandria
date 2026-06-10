@@ -82,7 +82,7 @@ export interface EventScanResult {
    *  "user got charged without warning" is a silent failure (the user just
    *  emails support). Cutoff drives "last 24h"; the 14-day lookback is fixed
    *  because the warning is structurally a 7-day-ahead notice. */
-  paidWithoutWarning: { github_login: string; amount_cents: number }[];
+  paidWithoutWarning: { github_login: string; amount_cents: number; note?: string }[];
 }
 
 /**
@@ -111,6 +111,7 @@ export function scanEventsForAlarms(rawLog: string, cutoff: number): EventScanRe
   // Buckets for the paid-without-warning correlation. Collect across the
   // whole log (no cutoff), then filter at the end.
   const warningTimes = new Map<string, number[]>(); // github_login → timestamps
+  const warningSkips = new Map<string, string>(); // github_login → skip reason
   const recentPaidCharges: { github_login: string; t: number; amount_cents: number }[] = [];
 
   for (const line of rawLog.split('\n')) {
@@ -130,7 +131,20 @@ export function scanEventsForAlarms(rawLog: string, cutoff: number): EventScanRe
         }
         continue;
       }
+      if (ev.e === 'kin_prebill_warning_skipped') {
+        // Warning path declined with a reason (e.g. no_email). Carried into
+        // the alarm line so an unwarned charge names its cause instead of
+        // reading as a mystery.
+        const login = (ev.github_login as string) || '';
+        if (login) warningSkips.set(login, (ev.reason as string) || 'unknown');
+        continue;
+      }
       if (ev.e === 'billing_invoice_paid' && tEv >= cutoff) {
+        // First checkout invoices (billing_reason=subscription_create) are the
+        // user consciously paying right now — no warning owed. Renewals and
+        // trial conversions (subscription_cycle) stay alarmed. Events from
+        // before billing_reason was logged have it undefined → stay alarmed.
+        if ((ev.billing_reason as string) === 'subscription_create') continue;
         const amount = parseInt((ev.amount_cents as string) || '0', 10);
         if (amount > 0) {
           recentPaidCharges.push({
@@ -177,7 +191,12 @@ export function scanEventsForAlarms(rawLog: string, cutoff: number): EventScanRe
     const warns = warningTimes.get(charge.github_login) || [];
     const warned = warns.some(wt => wt < charge.t && wt >= charge.t - fourteenDaysMs);
     if (!warned) {
-      r.paidWithoutWarning.push({ github_login: charge.github_login, amount_cents: charge.amount_cents });
+      const note = warningSkips.get(charge.github_login);
+      r.paidWithoutWarning.push({
+        github_login: charge.github_login,
+        amount_cents: charge.amount_cents,
+        ...(note ? { note: `warning skipped: ${note}` } : {}),
+      });
     }
   }
 
@@ -249,7 +268,7 @@ export async function runHealthDigest(opts: { sendEmailOnAlarm?: boolean } = { s
         }
         if (scan.paidWithoutWarning.length > 0) {
           const summary = scan.paidWithoutWarning
-            .map(p => `${p.github_login || '<unknown>'}=$${(p.amount_cents / 100).toFixed(2)}`)
+            .map(p => `${p.github_login || '<unknown>'}=$${(p.amount_cents / 100).toFixed(2)}${p.note ? ` (${p.note})` : ''}`)
             .join(', ');
           escalate('sprint', `${scan.paidWithoutWarning.length} author charge(s) in 24h with no prior 7-day warning: ${summary}`);
         }

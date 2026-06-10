@@ -653,6 +653,74 @@ export function registerLibraryRoutes(app: Hono): void {
     return c.json({ works: results });
   });
 
+  // One-time checkout for paid works — server half of the existing website
+  // page at /library/:author/checkout/work (which POSTs { work_id,
+  // amount_cents }). Fulfillment is the generic kind=library webhook branch
+  // in billing.ts: it writes the `library:access:{session_id}` grant and the
+  // billing_tab ledger row from metadata, so artifact_type=work needs no new
+  // webhook code. promo_code is accepted but not yet honored (no promo
+  // primitive exists server-side; the page degrades gracefully).
+  app.post('/library/:author/checkout/work', async (c) => {
+    const authorId = c.req.param('author');
+    const body = await c.req.json().catch(() => ({})) as {
+      work_id?: unknown; amount_cents?: unknown; return_origin?: unknown;
+    };
+    const workId = typeof body.work_id === 'string' ? body.work_id.trim() : '';
+    if (!workId) return c.json({ error: 'work_id required' }, 400);
+
+    const db = getDB();
+    const work = await db.prepare(
+      'SELECT id, title, tier FROM works WHERE id = ? AND author_id = ?'
+    ).bind(workId, authorId).first<{ id: string; title: string; tier: string }>();
+    if (!work) return c.json({ error: 'Work not found' }, 404);
+    if (work.tier !== 'paid') return c.json({ error: 'Only paid works can be checked out' }, 400);
+
+    // The checkout page's slider runs $20–$200; clamp to that range so a
+    // tampered request can't create a $0.50 session.
+    const requestedAmount = typeof body.amount_cents === 'number' && Number.isFinite(body.amount_cents)
+      ? Math.round(body.amount_cents)
+      : 2000;
+    const amountCents = Math.max(2000, Math.min(20000, requestedAmount));
+
+    const accessorKey = extractApiKey(c);
+    const accessor = accessorKey ? await findByApiKey(accessorKey) : null;
+    const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
+    const SERVER_URL = process.env.SERVER_URL || 'https://api.alexandria-library.com';
+    const requestedOrigin = typeof body.return_origin === 'string' ? body.return_origin.trim() : '';
+    const allowedOrigins = new Set(getAllowedOrigins());
+    const returnOrigin = requestedOrigin && allowedOrigins.has(requestedOrigin) ? requestedOrigin : WEBSITE_URL;
+
+    const session = await getStripe().checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          unit_amount: amountCents,
+          product_data: {
+            name: work.title,
+            description: `Alexandria Library work by ${authorId}`,
+          },
+        },
+        quantity: 1,
+      }],
+      metadata: {
+        kind: 'library',
+        library_purchase: 'true',
+        author_id: authorId,
+        artifact_type: 'work',
+        artifact_id: workId,
+        ...(accessor?.github_login ? { github_login: accessor.github_login } : {}),
+      },
+      // Success lands directly on the work content with the session grant —
+      // works have no gate page; the markdown is the destination.
+      success_url: `${SERVER_URL}/library/${encodeURIComponent(authorId)}/work/${encodeURIComponent(workId)}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${returnOrigin}/library/${encodeURIComponent(authorId)}/checkout/work?work_id=${encodeURIComponent(workId)}&cancel=1`,
+    });
+
+    if (!session.url) return c.json({ error: 'Failed to create checkout session' }, 500);
+    return c.json({ url: session.url });
+  });
+
   app.get('/library/:author/work/:id', async (c) => {
     const workId = c.req.param('id');
     const authorId = c.req.param('author');
@@ -660,8 +728,33 @@ export function registerLibraryRoutes(app: Hono): void {
     const accessorKey = extractApiKey(c);
     const accessor = accessorKey ? await findByApiKey(accessorKey) : null;
 
-    const result = await readWork({ authorId, workId, accessor });
-    if (!result.ok) return c.json(result.body, result.status);
+    // One-time purchase grant — same KV grant the paid-file path uses,
+    // written by the Stripe webhook on checkout completion (kind=library,
+    // artifact_type=work).
+    const purchaseSessionId = c.req.query('session_id')?.trim() || null;
+    let purchaseValid = false;
+    if (purchaseSessionId) {
+      const raw = await getKV().get(`library:access:${purchaseSessionId}`);
+      if (raw) {
+        const grant = parseJson<LibraryAccessGrant>(raw, {});
+        purchaseValid = grant.author_id === authorId
+          && grant.artifact_id === workId
+          && grant.artifact_type === 'work';
+      }
+    }
+
+    const result = await readWork({ authorId, workId, accessor, purchaseValid });
+    if (!result.ok) {
+      // Paid denials carry the checkout page URL so the website can launch
+      // the flow — mirror of the paid-file 402 contract.
+      if (result.status === 402) {
+        return c.json({
+          ...result.body,
+          checkout_url: `${process.env.WEBSITE_URL || 'https://alexandria-library.com'}/library/${encodeURIComponent(authorId)}/checkout/work?work_id=${encodeURIComponent(workId)}`,
+        }, 402);
+      }
+      return c.json(result.body, result.status);
+    }
 
     logEvent('library_work_view', {
       author: authorId,

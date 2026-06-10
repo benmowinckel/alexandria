@@ -389,4 +389,26 @@ test('work paid + owner without subscription → owner bypass', () => {
   if (d.allowed) assert.strictEqual(d.reason, 'owner');
 });
 
+test('work paid + unauth with validated purchase → allowed (purchase)', () => {
+  const d = authorizeWorkRead({
+    tier: 'paid',
+    ownerLogin: SHADOW_OWNER,
+    accessor: null,
+    purchaseValid: true,
+  });
+  assert.strictEqual(d.allowed, true);
+  if (d.allowed) assert.strictEqual(d.reason, 'purchase');
+});
+
+test('work paid + invalid purchase + unauth → still 401 (grant must validate)', () => {
+  const d = authorizeWorkRead({
+    tier: 'paid',
+    ownerLogin: SHADOW_OWNER,
+    accessor: null,
+    purchaseValid: false,
+  });
+  assert.strictEqual(d.allowed, false);
+  if (!d.allowed) assert.strictEqual(d.status, 401);
+});
+
 console.log(`\n  ${passed} tests passed`);

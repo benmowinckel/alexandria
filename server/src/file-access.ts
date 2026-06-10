@@ -442,7 +442,7 @@ export async function readQuizDefinition(opts: { quizId: string; authorId: strin
 // Work access
 // ---------------------------------------------------------------------------
 
-export type WorkAllowedReason = 'public' | 'owner' | 'subscriber';
+export type WorkAllowedReason = 'public' | 'owner' | 'subscriber' | 'purchase';
 export type WorkDeniedReason = 'auth_required' | 'subscription_required';
 
 export type WorkDecision =
@@ -451,14 +451,21 @@ export type WorkDecision =
 
 /**
  * Pure access decision for works. Non-paid tier is open; paid requires
- * either ownership or an active subscription.
+ * ownership, an active subscription, or a validated one-time purchase
+ * (the route validates the Stripe session grant — same pattern as paid
+ * protocol files).
  */
 export function authorizeWorkRead(opts: {
   tier: string;
   ownerLogin: string;
   accessor: Account | null;
+  /** Caller has validated a Stripe checkout session that grants access to THIS work. */
+  purchaseValid?: boolean;
 }): WorkDecision {
   if (opts.tier !== 'paid') return { allowed: true, reason: 'public' };
+  // Purchase grant first — the session_id is the credential, no auth needed
+  // (the buyer's identity was collected by Stripe at checkout).
+  if (opts.purchaseValid) return { allowed: true, reason: 'purchase' };
   if (!opts.accessor) {
     return {
       allowed: false,
@@ -473,7 +480,7 @@ export function authorizeWorkRead(opts: {
     allowed: false,
     status: 402,
     reason: 'subscription_required',
-    body: { error: 'Subscription required for paid works', tier: 'paid', reason: 'subscription_required' },
+    body: { error: 'Subscription or one-time purchase required for paid works', tier: 'paid', reason: 'subscription_required' },
   };
 }
 
@@ -492,6 +499,7 @@ export async function readWork(opts: {
   authorId: string;
   workId: string;
   accessor: Account | null;
+  purchaseValid?: boolean;
 }): Promise<WorkReadResult> {
   const db = getDB();
   const work = await db.prepare(
@@ -503,6 +511,7 @@ export async function readWork(opts: {
     tier: work.tier,
     ownerLogin: opts.authorId,
     accessor: opts.accessor,
+    purchaseValid: opts.purchaseValid,
   });
   if (!decision.allowed) {
     return { ok: false, status: decision.status, reason: decision.reason, body: decision.body };

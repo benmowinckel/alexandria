@@ -1043,7 +1043,9 @@ export function registerRoutes(app: Hono) {
   // data — keep the values dummy and this stays safe to expose.
   app.get('/preview/onboarding', async (c) => {
     const returning = c.req.query('returning') === 'true';
-    const apiKey = returning ? '' : 'sk_test_dummy_for_visual_verification';
+    // Dummy must not be credential-shaped (`sk_test_` reads as a Stripe key
+    // to scanners and to anyone who copies the rendered curl command).
+    const apiKey = returning ? '' : 'PREVIEW-NOT-A-REAL-KEY';
     const html = await callbackPageHtml(apiKey, 'mowinckelb');
     return c.html(html);
   });

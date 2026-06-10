@@ -188,4 +188,20 @@ test('paid charge outside cutoff window: not flagged', () => {
   assert.strictEqual(r.paidWithoutWarning.length, 0);
 });
 
-console.log(`\n${passed}/16 scanner tests passed.`);
+test('first checkout invoice (subscription_create): not flagged — user is consciously paying', () => {
+  const log = JSON.stringify({ t: inWindow, e: 'billing_invoice_paid', github_login: 'frank', amount_cents: '1000', billing_reason: 'subscription_create' });
+  const r = scanEventsForAlarms(log, cutoff);
+  assert.strictEqual(r.paidWithoutWarning.length, 0);
+});
+
+test('unwarned charge with a logged warning-skip: flagged with the skip reason as note', () => {
+  const log = [
+    JSON.stringify({ t: sixDaysAgo, e: 'kin_prebill_warning_skipped', github_login: 'grace', reason: 'no_email' }),
+    JSON.stringify({ t: inWindow, e: 'billing_invoice_paid', github_login: 'grace', amount_cents: '1000', billing_reason: 'subscription_cycle' }),
+  ].join('\n');
+  const r = scanEventsForAlarms(log, cutoff);
+  assert.strictEqual(r.paidWithoutWarning.length, 1);
+  assert.strictEqual(r.paidWithoutWarning[0].note, 'warning skipped: no_email');
+});
+
+console.log(`\n${passed}/18 scanner tests passed.`);
