@@ -100,12 +100,14 @@ export default async function SignupPage({
           <section className="primer-section">
             <p className="primer-label">the security.</p>
             <p>
-              alexandria is text files on your own computer
-              &mdash; no app, no binaries. the ai you already use
-              reads them, with the access you already gave it.
-              your thinking cannot be sent to us: our server has
-              no way to receive it. the little that does leave is
-              one short list:{' '}
+              in a few minutes you will paste a command into your
+              terminal, text will scroll, and some part of you
+              will ask: <em>am i being hacked?</em> no. alexandria
+              is text files on your own computer &mdash; no app,
+              no binaries. the ai you already use reads them, with
+              the access you already gave it. your thinking cannot
+              be sent to us: our server has no way to receive it.
+              the little that does leave is one short list:{' '}
               <MechanicsCopy content={mechanicsContent} />.
             </p>
           </section>
