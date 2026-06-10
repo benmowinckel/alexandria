@@ -512,8 +512,8 @@ export function registerRoutes(app: Hono) {
         logEvent('library_signup_referral_self', { attempted_ref: ref, referred: user.login });
       }
 
-      // Welcome email — carries the deal (30d trial, $10/free with 5 kin) and the
-      // user's kin link so they have a portable reference before any pre-bill prompt.
+      // Welcome email — carries the deal (free in the seeding stage) and the
+      // user's kin link so they have a portable reference.
       if (email && isNewAccount) {
         await sendWelcomeEmail(email, user.login, emailToken);
       }

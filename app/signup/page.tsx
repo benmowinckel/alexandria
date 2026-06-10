@@ -63,8 +63,14 @@ export default async function SignupPage({
               agency is the input. you ask, it answers; you shape,
               it sharpens. wait passively and you get average;
               participate actively and you get something
-              specifically yours. you should never sit there
-              wondering &mdash; just ask.
+              specifically yours.
+            </p>
+            <p>
+              and nothing about it is fixed. it molds to you:
+              anything you want, say it and it&rsquo;s added;
+              anything you don&rsquo;t, say it and it&rsquo;s gone.
+              that is the design, not a workaround. you are never
+              stuck &mdash; just ask.
             </p>
           </section>
 
@@ -87,8 +93,28 @@ export default async function SignupPage({
               default host; any git host works. if alexandria
               disappears tomorrow, you keep everything. if github
               disappears, the ledger ports. we never see what you
-              do not publish.{' '}
-              <MechanicsCopy content={mechanicsContent} /> lists every byte that touches our server.
+              do not publish.
+            </p>
+          </section>
+
+          <section className="primer-section">
+            <p className="primer-label">the security.</p>
+            <p>
+              a command that installs something should make you
+              pause &mdash; good instinct. so look at what this
+              one is: plain markdown and bash on your own machine,
+              readable line by line. no binaries, no daemons, no
+              root. it runs inside the ai you already use, with
+              the access you already gave it &mdash; no new doors.
+            </p>
+            <p>
+              and your private files have nowhere to go. there is
+              no server that holds your thinking &mdash; no
+              endpoint even exists that accepts it, so it cannot
+              leave by accident or by breach. what does leave is a
+              short list you can read:{' '}
+              <MechanicsCopy content={mechanicsContent} /> &mdash;
+              every call, every byte, and the uninstall.
             </p>
           </section>
 

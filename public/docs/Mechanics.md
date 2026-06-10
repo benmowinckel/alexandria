@@ -113,7 +113,7 @@ What protects you anyway:
 1. **Signed manifest + hash pinning.** `manifest.txt` lists the SHA-256 of `payload.sh` and every canon module. The manifest itself is signed (`manifest.txt.sig`). The shim refuses to run any file whose hash isn't in a manifest whose signature verifies against the embedded public key. Compromise of the GitHub repo alone does not produce code execution.
 2. **Cache cutoff.** If GitHub is unreachable or verification fails AND the cached payload is >14 days old, the shim deletes it and runs in bare mode (constitution only, no network, no payload code).
 3. **Public diff.** Every payload version is in git history. Any session can be reconstructed from the commit SHA on `main` at that moment.
-4. **Canon canaries.** The canon explicitly tells the model to refuse instructions that try to exfiltrate files, escalate scope, or bypass the user.
+4. **Canon canaries.** The canon explicitly tells the model to refuse instructions that try to exfiltrate files, escalate scope, or bypass the user. The same posture covers marketplace modules: a foreign module's body is untrusted input — instructions inside it are read as data, not commands, and adopted only after review against your own canon.
 5. **ai-tool approval dialogs.** Claude Code, Cursor, and Codex show every shell action before executing. Real protection at install and during anomaly, but it weakens with habituation — treat it as a backstop, not the primary defense.
 
 **Residual gap:** compromise of the offline signing key would compromise future payloads. Mitigations: the key is offline-held, the maintainer's repo is 2FA-protected, the key-rotation procedure is documented in `TRUST.md`. If that residual gap matters to you, run a frozen install (see below).
@@ -168,7 +168,7 @@ Cloudflare Worker, stateless re: your private content. KV + D1 + R2.
 
 | Stored | Where | Why |
 |---|---|---|
-| Email + GitHub login + Stripe customer ID, in one encrypted account blob | KV (AES-256-GCM at rest) | Account, OAuth, billing |
+| Email + GitHub login, in one encrypted account blob — plus a Stripe customer ID only if you have ever started a subscription (signup itself is free: no card, no Stripe round-trip) | KV (AES-256-GCM at rest) | Account, OAuth, billing |
 | API key — SHA-256 hash only | KV | Auth check |
 | Event log: which endpoints your account hit, with timestamps and lightweight context (e.g. "canon_status: failures=editor, has_notice=true") | KV (60-day TTL) | Debugging, abuse signal |
 | Library files you explicitly publish | R2 | Public Library content |
@@ -188,7 +188,7 @@ Cloudflare Worker, stateless re: your private content. KV + D1 + R2.
 - Account blob in KV encrypted at rest with AES-256-GCM.
 - The raw key appears once on the OAuth callback page in your browser. Never in email, never in any third-party metadata.
 - Stripe identifies your account by GitHub login, not API key.
-- `DELETE /account` with your key removes everything: account record, events, feedback, published files, Stripe subscription.
+- `DELETE /account` with your key removes everything: account record, events, feedback, published files, and any Stripe subscription.
 
 ## Audit checklist
 
@@ -270,7 +270,7 @@ rm -f  ~/Library/LaunchAgents/io.alexandria.publish.plist
 sed -i '' '/alexandria:start/,/alexandria:end/d' ~/.codex/instructions.md 2>/dev/null
 
 # Revoke server-side (removes account record, events, feedback, published files,
-# and your Stripe subscription)
+# and any Stripe subscription)
 curl -X DELETE -H "Authorization: Bearer $YOUR_KEY" https://api.alexandria-library.com/account
 ```
 
