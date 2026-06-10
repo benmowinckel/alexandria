@@ -100,21 +100,13 @@ export default async function SignupPage({
           <section className="primer-section">
             <p className="primer-label">the security.</p>
             <p>
-              a command that installs something should make you
-              pause &mdash; good instinct. so look at what this
-              one is: plain markdown and bash on your own machine,
-              readable line by line. no binaries, no daemons, no
-              root. it runs inside the ai you already use, with
-              the access you already gave it &mdash; no new doors.
-            </p>
-            <p>
-              and your private files have nowhere to go. there is
-              no server that holds your thinking &mdash; no
-              endpoint even exists that accepts it, so it cannot
-              leave by accident or by breach. what does leave is a
-              short list you can read:{' '}
-              <MechanicsCopy content={mechanicsContent} /> &mdash;
-              every call, every byte, and the uninstall.
+              alexandria is text files on your own computer
+              &mdash; no app, no binaries. the ai you already use
+              reads them, with the access you already gave it.
+              your thinking cannot be sent to us: our server has
+              no way to receive it. the little that does leave is
+              one short list:{' '}
+              <MechanicsCopy content={mechanicsContent} />.
             </p>
           </section>
 
