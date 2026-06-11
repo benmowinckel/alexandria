@@ -17,7 +17,7 @@ import type { Account } from './auth.js';
 import { getDB } from './db.js';
 import { sendEmail, sendPatronWelcome } from './email.js';
 import { generateToken } from './crypto.js';
-import { safeEqual } from './crypto.js';
+import { safeEqual, hashApiKey } from './crypto.js';
 
 // ---------------------------------------------------------------------------
 // Stripe client — lazy init (needs env to be populated)
@@ -403,6 +403,18 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
 }
 
 /**
+ * Subscription identifiers from legacy Stripe metadata can be a raw API key
+ * (`sub.metadata.api_key` fallback — pre-github_login convention). Never let
+ * that credential reach the events log: log a short hash instead. Applied at
+ * every event site that records the subscription identifier, so the digest's
+ * warning↔charge correlation (cron.ts) matches on the same transformed value
+ * on both sides.
+ */
+function subLoginForLog(identifier: string): string {
+  return identifier.startsWith('alex_') ? `key:${hashApiKey(identifier).slice(0, 8)}` : identifier;
+}
+
+/**
  * Send the pre-bill warning email if the user is about to be charged and we
  * haven't already warned them for this billing cycle. Idempotent on
  * (subscription, due-date) — webhook and cron paths both call this safely.
@@ -435,7 +447,7 @@ async function maybeWarnAboutBill(
   if (!email) {
     // Loud skip — the silent return is what kept the gap invisible until the
     // paid-without-warning mirror fired after the money had already moved.
-    logEvent('kin_prebill_warning_skipped', { github_login: githubLogin, reason: 'no_email' });
+    logEvent('kin_prebill_warning_skipped', { github_login: subLoginForLog(githubLogin), reason: 'no_email' });
     return;
   }
 
@@ -445,7 +457,7 @@ async function maybeWarnAboutBill(
 
   await sendPreBillWarningEmail(email, githubLogin, state, amountDollars, dueAt);
   await kv.put(idempotencyKey, '1', { expirationTtl: 60 * 86400 }); // 60d, longer than any cycle
-  logEvent('kin_prebill_warning_sent', { github_login: githubLogin, amount: String(amountDollars) });
+  logEvent('kin_prebill_warning_sent', { github_login: subLoginForLog(githubLogin), amount: String(amountDollars) });
 }
 
 /**
@@ -1218,7 +1230,7 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
               // pre-bill warnings — the slider is opt-in).
               const subLogin = sub.metadata?.github_login || sub.metadata?.api_key || '';
               logEvent('billing_invoice_paid', {
-                github_login: subLogin,
+                github_login: subLoginForLog(subLogin),
                 amount_cents: String(invoice.amount_paid || 0),
                 // Lets the daily mirror tell a renewal (warning was owed) from
                 // a first checkout invoice (user consciously paying right now).
