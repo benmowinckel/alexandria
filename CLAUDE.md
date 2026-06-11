@@ -141,7 +141,7 @@ Triggered by: "close", "end", or any sign-off that is NOT "a." — used for codi
 No Machine loop. No constitution writes. This is company work, not product:
 
 - **Delta.** What changed about Alexandria the company. Not what you did — what's different now. Hazy fragments only.
-- **Open threads.** What's unresolved. What the next session should pick up. Ordered by priority.
+- **Open threads.** What's unresolved. What the next session should pick up. Ordered by priority. Then close them optimally without being asked: execute the drafted or obvious resolution for every thread that doesn't genuinely need the founder (every line revertible via git), commit-protect orphaned work, park the rest with a pre-drafted resolution. Ask the founder only what truly needs his verdict — one line per question — else ask nothing. (Claude Code: the `/close` skill re-injects this protocol fresh at end-of-session.)
 - **Meta loop.** Product learnings → factory canon (`factory/canon/methodology.md`).
 - **Founder loop.** Route how-to-work-with-the-founder signal (communication patterns, preferences, anti-patterns) to `~/alexandria/files/core/machine.md` / `feedback.md` — canon, never agent memory.
 
