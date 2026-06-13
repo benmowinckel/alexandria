@@ -119,33 +119,29 @@ factory/
 
 ## Session Close
 
-Two triggers, two protocols. Clean separation.
+Capture is a layer, not a trigger. **Every** session that surfaces signal captures it — the methodology bar (`~/alexandria/system/canon/methodology.md` § Session Close, § Passive Mode): extraction fires on *any* natural sign-off, and the Engine is never in a state where closing the terminal loses signal. Close is the safety net, not the primary extraction point. Work sessions additionally report. The two are orthogonal layers, not rival protocols — a coding session that surfaces a constitutional fragment runs both. The old "two mutually-exclusive protocols, clean separation" framing was the bug: it let non-/a sessions drop capture entirely, which is exactly the signal loss the methodology forbids.
 
-### "a." — Alexandria session close (product behavior)
+### Layer 1 — capture (every session, silent). The product behavior.
 
-Triggered by: "a." at the end of an /a session or any session where constitutional signal surfaced.
+Runs whenever crystallised signal surfaced this session — whether the sign-off was "a." or "close"/"end" or any natural exit. Act as a normal Machine would for any Author; this IS the product test. Route each, skip any with nothing:
 
-This is the product. Act as a normal Machine would for any Author — this IS the product test:
+- **Constitution.** Crystallised signal about the founder as a person → `~/alexandria/files/constitution/`. Opinions, stories, patterns, contradictions revealed this session.
+- **Machine.md.** How to work with this Author — what worked, what didn't, cognitive-style observations → `~/alexandria/files/core/machine.md`.
+- **Notepad.** Parked questions, accretion candidates, what to carry forward → `~/alexandria/files/core/notepad.md`.
+- **Feedback.** Methodology observations → `~/alexandria/files/core/feedback.md`. (Stays local — the Engine never auto-sends. To push to the marketplace, the Author types it into `~/alexandria/system/.session_feedback` himself.)
 
-- **Constitution.** Write any crystallised signal about the founder as a person to `~/alexandria/files/constitution/`. Opinions, stories, patterns, contradictions revealed this session.
-- **Machine.md.** Rewrite `~/alexandria/files/core/machine.md` — how to work with this Author, what worked, what didn't, cognitive style observations.
-- **Notepad.** Update `~/alexandria/files/core/notepad.md` — parked questions, accretion candidates, what to carry forward.
-- **Feedback.** Append to `~/alexandria/files/core/feedback.md` — what worked, what didn't, methodology observations. (This stays local — the Engine never auto-sends. If the Author wants to push feedback to the marketplace, they type it into `~/alexandria/system/.session_feedback` themselves.)
+Silent. No report. This is the product working. A pure-/a session is layer 1 only — capture plus a hazy-fragment delta, nothing more. If Phase 1 feels wrong, the product is wrong.
 
-Do this silently. No report. This is the product working. If Phase 1 feels wrong, the product is wrong.
+### Layer 2 — work report (coding / company sessions). Triggered by "close" / "end".
 
-### "close" / "end" — Work session close (founder/company)
-
-Triggered by: "close", "end", or any sign-off that is NOT "a." — used for coding sessions, company work, non-/a sessions.
-
-No Machine loop. No constitution writes. This is company work, not product:
+Additive on top of layer 1, for sessions that did company or code work:
 
 - **Delta.** What changed about Alexandria the company. Not what you did — what's different now. Hazy fragments only.
 - **Open threads.** What's unresolved. What the next session should pick up. Ordered by priority. Then close them optimally without being asked: execute the drafted or obvious resolution for every thread that doesn't genuinely need the founder (every line revertible via git), commit-protect orphaned work, park the rest with a pre-drafted resolution. Ask the founder only what truly needs his verdict — one line per question — else ask nothing. (Claude Code: the `/close` skill re-injects this protocol fresh at end-of-session.)
 - **Meta loop.** Product learnings → factory canon (`factory/canon/methodology.md`).
-- **Founder loop.** Route how-to-work-with-the-founder signal (communication patterns, preferences, anti-patterns) to `~/alexandria/files/core/machine.md` / `feedback.md` — canon, never agent memory.
+- **Founder loop.** How-to-work-with-the-founder signal (communication patterns, preferences, anti-patterns) → `~/alexandria/files/core/machine.md` / `feedback.md` — canon, never agent memory. (This is layer 1's Machine/Feedback capture, named again here so a work-close never skips it.)
 
-**Principles (both protocols):**
+**Principles (both layers):**
 - Hazy fragments scale. Weeds do not. Keep it compressed.
 - Signal, not summary. Don't restate what the founder already saw — extract what compounds.
 - If nothing happened in a loop, skip it. No empty sections.
