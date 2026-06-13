@@ -129,6 +129,7 @@ Runs whenever crystallised signal surfaced this session — whether the sign-off
 - **Machine.md.** How to work with this Author — what worked, what didn't, cognitive-style observations → `~/alexandria/files/core/machine.md`.
 - **Notepad.** Parked questions, accretion candidates, what to carry forward → `~/alexandria/files/core/notepad.md`.
 - **Feedback.** Methodology observations → `~/alexandria/files/core/feedback.md`. (Stays local — the Engine never auto-sends. To push to the marketplace, the Author types it into `~/alexandria/system/.session_feedback` himself.)
+- **Verify it landed.** A write call is not a saved file — confirm each canon write is actually on disk (read it back, or `git status`) before counting it captured. The in-memory-write-never-flushed failure is real (autoloop 2026-06-12: ~70 claimed integrations, zero on disk). "It wrote" is the floor; "it's on disk" is the bar. The Capture Mirror (`factory/canon/methodology.md` § The Capture Mirror) is the independent check that catches whatever this floor misses.
 
 Silent. No report. This is the product working. A pure-/a session is capture only — that plus a hazy-fragment delta, nothing more. If this capture feels wrong, the product is wrong.
 
