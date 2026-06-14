@@ -3,11 +3,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import MechanicsCopy from './MechanicsCopy';
 
 interface Props {
   brandClassName?: string;
-  mechanicsContent?: string;
 }
 
 /*
@@ -158,7 +156,7 @@ const THEMES: Theme[] = [
   },
 ];
 
-export default function LandingPage({ brandClassName = '', mechanicsContent = '' }: Props) {
+export default function LandingPage({ brandClassName = '' }: Props) {
   const [themeIdx, setThemeIdx] = useState(0);
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
   // Default (no param) keeps the existing CSS-built window. Read on
@@ -631,22 +629,6 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
                   </div>
                 </div>
 
-                {/* Postscript — the capture front-door (/shortcut). The
-                    letter form earns a p.s.: the classical slot for the
-                    practical aside, and the recency position makes the
-                    lowest-friction door the last thing the reader holds.
-                    Deliberately a different register from the two doors
-                    above — quiet prose, one underlined link — so it
-                    surfaces capture without becoming a third CTA. */}
-                <p className="statement-ps">
-                  <em className="ps-mark">p.s.</em> the practice fits in
-                  your pocket.{' '}
-                  <Link href="/shortcut" className="ps-link">add the
-                  iphone shortcut</Link>{' '}and anything you share
-                  &mdash; a voice memo, an article, an idea &mdash; lands
-                  in your vault.
-                </p>
-
                 {/* Closing footer-cols — Fleet-style 3-column directory.
                     Rounds off the right column with the tribe (library /
                     marketplace / github), the company (x / careers), and
@@ -678,7 +660,7 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
                   <div className="footer-col">
                     <span className="footer-col-head">about</span>
                     <Link href="/whitepaper" className="footer-col-link">whitepaper</Link>
-                    <MechanicsCopy content={mechanicsContent} className="footer-col-link footer-col-mechanics" />
+                    <Link href="/questions" className="footer-col-link">questions</Link>
                   </div>
                 </div>
               </div>
@@ -2104,43 +2086,6 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
           align-items: flex-start;
           gap: 7px;
         }
-        /* Postscript — the capture door as a letter p.s. The quietest
-           prose register in the lower band: muted, smaller than
-           statement-close, italic p.s. mark, one underlined link.
-           Grouped with the letter (40px from the doors) and far from
-           the directory (163px) so proximity reads it as the letter's
-           last line, not navigation. */
-        .statement-ps {
-          margin: 22px 0 0;
-          padding: 0;
-          max-width: 54ch;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 15px;
-          line-height: 1.6;
-          letter-spacing: 0.005em;
-          color: var(--theme-fg-muted);
-          hanging-punctuation: first last;
-          font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
-        }
-        .statement-ps .ps-mark {
-          font-style: italic;
-          letter-spacing: 0.08em;
-          /* Explicit gap after the mark — the tracked italic visually
-             swallows the word space. */
-          margin-right: 0.45em;
-        }
-        .ps-link {
-          color: var(--theme-fg);
-          text-decoration: underline;
-          text-decoration-thickness: 1px;
-          text-underline-offset: 3px;
-          text-decoration-color: var(--theme-border-soft);
-          transition: opacity 180ms ease, text-decoration-color 180ms ease;
-        }
-        .ps-link:hover {
-          opacity: 0.62;
-          text-decoration-color: currentColor;
-        }
         /* Footer-cols — supplementary nav grouped by intent. Sits below
            the CTAs as a quiet link directory. Italic small-caps column
            heads, plain link text. Mirrors the back-slide register Fleet
@@ -2190,30 +2135,6 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
         }
         .footer-col-link:hover {
           opacity: 0.62;
-        }
-        /* Mechanics.md copy button — same surface as footer-col-link, but
-           a button (clipboard write) with the icon next to the label.
-           Font properties come from .footer-col-link (also on this
-           element); we only reset button-shell defaults here, never
-           override font-* since that would lose the link styling. */
-        button.footer-col-mechanics {
-          background: none;
-          border: none;
-          /* Inherit tap padding from .footer-col-link instead of zeroing
-             it — same hit-rect as the surrounding links. */
-          padding: 6px 4px;
-          margin: -6px -4px;
-          cursor: pointer;
-          text-align: left;
-          display: inline-flex;
-          align-items: baseline;
-          gap: 0.4em;
-        }
-        .footer-col-mechanics .mechanics-copy-icon {
-          display: inline-flex;
-          align-items: center;
-          opacity: 0.55;
-          transform: translateY(2px);
         }
         .cta-pair a.lr-cta {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -2684,16 +2605,6 @@ export default function LandingPage({ brandClassName = '', mechanicsContent = ''
           }
           .cta-pair {
             order: 5;
-          }
-          /* p.s. follows the doors (same order value — source order
-             breaks the tie). display:contents on right-lower makes it
-             a flex item, so without an explicit order it would jump to
-             the front of the column. Desktop margin collapses into the
-             64px section gap. */
-          .statement-ps {
-            order: 5;
-            margin-top: 0;
-            font-size: 14px;
           }
           .wordmark-block {
             order: 6;

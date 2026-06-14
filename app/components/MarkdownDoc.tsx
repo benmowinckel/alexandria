@@ -331,6 +331,23 @@ const MD_COMPONENTS = {
     );
   },
   p: ({ children }: { children?: React.ReactNode }) => <p className="pdoc-p">{children}</p>,
+  // Markdown links carry no class by default, so the .pdoc-a brand style
+  // (quiet underline) never landed — links read as plain text and didn't
+  // look clickable. Apply pdoc-a here so every link in every doc (letter,
+  // mechanics, shortcut, the FAQ's cross-links) is visibly clickable.
+  // External (http) links open in a new tab; internal/mailto stay in place.
+  a: ({ href, children }: { href?: string; children?: React.ReactNode }) => {
+    const external = !!href && /^https?:\/\//.test(href);
+    return (
+      <a
+        href={href}
+        className="pdoc-a"
+        {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      >
+        {children}
+      </a>
+    );
+  },
   strong: ({ children }: { children?: React.ReactNode }) => <strong className="pdoc-strong">{children}</strong>,
   table: ({ children }: { children?: React.ReactNode }) => <table className="pdoc-table">{children}</table>,
   blockquote: ({ children }: { children?: React.ReactNode }) => <blockquote className="pdoc-bq">{children}</blockquote>,
