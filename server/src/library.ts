@@ -122,12 +122,18 @@ function textSlot(settings: Record<string, unknown>, profile?: CompanyAuthorRow 
   return value.length > 160 ? `${value.slice(0, 157).trimEnd()}...` : value;
 }
 
-function alexandriaId(account: Account, profile: CompanyAuthorRow | null, fallbackIndex: number): string {
+// The directory exposes only these three account-derived fields; everything
+// else in directoryAuthor comes from the D1 profile or settings. Narrowing to
+// this subset lets the cached, secret-free directory entries (below) be passed
+// without decrypting full account blobs on the public browse hot path.
+type DirectoryAccount = Pick<Account, 'github_login' | 'github_id' | 'github_name'>;
+
+function alexandriaId(account: DirectoryAccount, profile: CompanyAuthorRow | null, fallbackIndex: number): string {
   const settings = librarySettings(profile);
   return stringSlot(settings, 'library_id') || stringSlot(settings, 'alexandria_id') || `a.${fallbackIndex}`;
 }
 
-function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fallbackIndex: number) {
+function directoryAuthor(account: DirectoryAccount, profile: CompanyAuthorRow | null, fallbackIndex: number) {
   const settings = librarySettings(profile);
   const location = stringSlot(settings, 'location');
   const displayName =
@@ -150,6 +156,56 @@ function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fal
 
 function fileAccessUrl(authorId: string, name: string): string {
   return `/library/${authorId}/file/${name}`;
+}
+
+// ---------------------------------------------------------------------------
+// Directory cache — DoS floor for the public browse surfaces
+// ---------------------------------------------------------------------------
+//
+// `GET /library` and `GET /library/:author` are unauthenticated and both need
+// the full set of authors in creation order (the directory listing; and the
+// signup-ordinal fallback for alexandria_id). The source of that ordering is
+// the encrypted account store, so building it naively means an O(N) load +
+// AES-256-GCM decrypt of EVERY account on EVERY public request — an amplifier
+// that grows with every signup, with no auth, cache, or rate limit in front of
+// it (same class as the /check-kin floor fixed earlier).
+//
+// Fix: cache the derived, already-public projection (exactly the fields the
+// directory exposes — never email/stripe/key-hash) in KV with a short TTL.
+// Amplification drops from one decrypt-all per request to at most one per TTL
+// window across both endpoints, regardless of request volume. Staleness is
+// bounded to the TTL (acceptable for a browse directory; per-author file reads
+// stay O(1) and live, so a just-deleted author still 404s on their page).
+type DirectoryEntry = { github_login: string; github_id: number; github_name: string | null; created_at: string };
+
+const DIRECTORY_CACHE_KEY = 'cache:library_directory_v1';
+const DIRECTORY_CACHE_TTL_SECONDS = 60;
+
+async function getDirectoryEntries(): Promise<DirectoryEntry[]> {
+  const kv = getKV();
+  try {
+    const cached = await kv.get(DIRECTORY_CACHE_KEY);
+    if (cached) return JSON.parse(cached) as DirectoryEntry[];
+  } catch { /* corrupt/unavailable cache → rebuild below */ }
+
+  const accounts = await loadAccounts<AccountStore>();
+  const entries: DirectoryEntry[] = Object.values(accounts)
+    .filter((account) => !!account?.github_id && !!account.github_login)
+    .map((account) => ({
+      github_login: account.github_login,
+      github_id: account.github_id,
+      github_name: account.github_name ?? null,
+      created_at: account.created_at || '',
+    }))
+    .sort((a, b) => {
+      if (a.created_at !== b.created_at) return a.created_at.localeCompare(b.created_at);
+      return String(a.github_id).localeCompare(String(b.github_id));
+    });
+
+  try {
+    await kv.put(DIRECTORY_CACHE_KEY, JSON.stringify(entries), { expirationTtl: DIRECTORY_CACHE_TTL_SECONDS });
+  } catch { /* cache write is best-effort — fresh data still returned */ }
+  return entries;
 }
 
 // ---------------------------------------------------------------------------
@@ -214,27 +270,17 @@ export function registerLibraryRoutes(app: Hono): void {
   // Company directory over accounts. Protocol files remain on author pages.
   app.get('/library', async (c) => {
     const db = getDB();
-    const accounts = await loadAccounts<AccountStore>();
+    const entries = await getDirectoryEntries();
     const authorRows = await db.prepare('SELECT id, display_name, settings, bio FROM authors')
       .all<CompanyAuthorRow>()
       .catch(() => ({ results: [] as CompanyAuthorRow[] }));
     const profilesById = new Map<string, CompanyAuthorRow>();
     for (const profile of authorRows.results || []) profilesById.set(profile.id, profile);
 
-    const accountList = Object.values(accounts)
-      .filter((account) => !!account?.github_id && !!account.github_login)
-      .sort((a, b) => {
-        const ta = a.created_at || '';
-        const tb = b.created_at || '';
-        if (ta !== tb) return ta.localeCompare(tb);
-        return String(a.github_id).localeCompare(String(b.github_id));
-      });
-
-    const authors = accountList
-      .map((account, index) => {
-        if (!account?.github_id || !account.github_login) return null;
-        return directoryAuthor(account, profilesById.get(account.github_login) || null, index);
-      })
+    // `entries` is already filtered + sorted by creation order, so `index` is
+    // the same signup ordinal the previous decrypt-all pass produced.
+    const authors = entries
+      .map((entry, index) => directoryAuthor(entry, profilesById.get(entry.github_login) || null, index))
       .filter((author): author is NonNullable<typeof author> => !!author?.id)
       .sort((a, b) => b.id.localeCompare(a.id, undefined, { sensitivity: 'base' }));
 
@@ -262,19 +308,12 @@ export function registerLibraryRoutes(app: Hono): void {
 
     logEvent('library_author_view', { author: authorId });
 
-    // fallback index for directoryAuthor still needs the full account ordering
-    // (alexandria_id assigns by creation order). Single decrypt pass; the lookup
-    // above already cost O(1).
-    const accounts = await loadAccounts<AccountStore>();
-    const accountList = Object.values(accounts)
-      .filter((candidate) => !!candidate?.github_id && !!candidate.github_login)
-      .sort((a, b) => {
-        const ta = a.created_at || '';
-        const tb = b.created_at || '';
-        if (ta !== tb) return ta.localeCompare(tb);
-        return String(a.github_id).localeCompare(String(b.github_id));
-      });
-    const fallbackIndex = Math.max(0, accountList.findIndex(candidate => candidate.github_login === authorId));
+    // fallback index for directoryAuthor needs the signup ordinal across all
+    // authors (alexandria_id assigns by creation order). Served from the cached
+    // directory projection — no per-request decrypt-all (the lookup above is
+    // already O(1)).
+    const entries = await getDirectoryEntries();
+    const fallbackIndex = Math.max(0, entries.findIndex(entry => entry.github_login === authorId));
 
     const legacyAuthor = await db.prepare('SELECT id, display_name, settings, bio FROM authors WHERE id = ?')
       .bind(authorId)
