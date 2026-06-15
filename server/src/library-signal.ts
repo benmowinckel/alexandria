@@ -13,7 +13,7 @@ export async function computeLibrarySignalText(days = 30): Promise<string> {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
   const db = getDB();
 
-  const [publishEvents, engagementEvents, quizOutcomes, referrals, protocolFiles, moduleUsage, funnelCounts] = await Promise.all([
+  const [publishEvents, engagementEvents, quizOutcomes, referrals, protocolFiles, moduleUsage, funnelCounts, authorCount] = await Promise.all([
     db.prepare(
       `SELECT author_id, event, meta, created_at FROM access_log
        WHERE event LIKE 'publish_%' AND created_at > ? ORDER BY created_at`
@@ -49,10 +49,37 @@ export async function computeLibrarySignalText(days = 30): Promise<string> {
        FROM access_log WHERE created_at > ?
        GROUP BY event ORDER BY count DESC`
     ).bind(since).all(),
+    // Total signups = one authors row per OAuth signup (routes.ts seeds it in
+    // the callback). The gate denominator. Proven-safe query — analytics.ts
+    // reads the same count.
+    db.prepare(`SELECT COUNT(*) AS n FROM authors`).first<{ n: number }>(),
   ]);
+
+  // Gate Progress — the limiting factor, stated. The 100-lover gate is "100
+  // daily-returning Alexandrians, each library-contributing in the last 30
+  // days" (partners/schedule.md). The contribution leg is ground-truth from
+  // protocol_files (the file obligation = a row here); count it directly so
+  // the founder's daily instrument shows the gate number without computing it
+  // by hand off /library. Same internal-name filter as below + the public
+  // Library, so the three surfaces never drift on what counts as real.
+  // account_id (github_id) and authors.id (login) are different identity
+  // representations — never value-matched, only counted: every contributor
+  // necessarily signed up, so distinct contributors ≤ total signups holds and
+  // the ratio is apples-to-apples as account counts. The daily-return leg is
+  // NOT measured here (no per-day activity rollup) — flagged, never implied.
+  const contributedFiles = ((protocolFiles.results || []) as Array<{ account_id: string; name: string; visibility: string; updated_at: string }>)
+    .filter((f) => !isInternalProtocolFileName(f.name));
+  const contributors = new Set(contributedFiles.map((f) => f.account_id)).size;
+  const signups = (authorCount as { n: number } | null)?.n ?? 0;
 
   const lines: string[] = [
     `# Library RL Signal — last ${days} days (since ${since.slice(0, 10)})`,
+    '',
+    '## Gate Progress',
+    `- 100-lover gate (contribution leg): ${contributors} / 100 accounts contributed a non-internal file in the last ${days} days`,
+    `- Signups (library authors): ${signups} · Contributors (${days}d): ${contributors} · Activation: ${contributors}/${signups}`,
+    `- Non-internal files contributed (${days}d): ${contributedFiles.length}`,
+    `- NOTE: the daily-returning leg of the gate is not measured here — this tracks contribution only.`,
     '',
     '## Funnel Overview',
   ];
@@ -96,11 +123,10 @@ export async function computeLibrarySignalText(days = 30): Promise<string> {
     }
   }
 
-  // Same internal-name filter the public Library route applies — lifecycle /
-  // smoke / CI artifacts are infrastructure noise and must never reach the
-  // factory's signal pile.
-  const pfiles = ((protocolFiles.results || []) as Array<{ account_id: string; name: string; visibility: string; updated_at: string }>)
-    .filter((f) => !isInternalProtocolFileName(f.name));
+  // Reuses `contributedFiles` (computed for Gate Progress) — same internal-name
+  // filter the public Library route applies: lifecycle / smoke / CI artifacts
+  // are infrastructure noise and must never reach the factory's signal pile.
+  const pfiles = contributedFiles;
   if (pfiles.length > 0) {
     lines.push('', '## Protocol Files Published');
     for (const f of pfiles.slice(-200)) {
