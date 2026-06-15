@@ -493,6 +493,15 @@ app.post('/follow', async (c) => {
   const amount = isFinite(amountRaw) ? Math.max(0, Math.min(500, Math.floor(amountRaw))) : 0;
   const normalizedEmail = email.toLowerCase().trim();
 
+  // Reject reserved / test-only domains (RFC 2606 / 6761) — they can never receive
+  // mail and only enter via load-tests or abuse, polluting the broadcast list with
+  // guaranteed bounces that wreck sender reputation (the 2026-06-14 stress-test that
+  // put 10 @example.invalid rows into prod). Same generic error as other rejections.
+  const emailDomain = normalizedEmail.split('@')[1] || '';
+  if (/(^|\.)(invalid|test|example|localhost)$/.test(emailDomain) || /^example\.(com|net|org)$/.test(emailDomain)) {
+    return c.json({ error: 'Valid email required.' }, 400);
+  }
+
   try {
     const db = (globalThis as any).__d1 as D1Database;
     if (!db) {

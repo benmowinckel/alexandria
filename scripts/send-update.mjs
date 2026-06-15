@@ -74,17 +74,29 @@ ${bodyHtml}
 <!--UNSUBSCRIBE-->
 </div>`;
 
-// Liveness check — refuse to broadcast if the public page 404s.
-// Preview path skips this (founder can preview a draft before pushing).
+// Liveness check — refuse to broadcast if the public page isn't live yet.
+// RETRIES with backoff: a Vercel deploy + CDN propagation takes a minute, and a
+// single stale edge can 404 even when the page is up. A one-shot check therefore
+// silently no-ops the whole send while looking like success (the 2026-06-15 u2
+// failure — hours lost). Poll until reliably live; if it never comes up, fail
+// LOUDLY. Preview path skips this (founder can preview a draft before pushing).
 if (!preview) {
-  process.stdout.write(`checking ${permalink} ... `);
-  const r = await fetch(permalink, { method: 'HEAD' });
-  if (!r.ok) {
-    console.error(`✗ HTTP ${r.status}`);
-    console.error('  push the update to git first; wait for Vercel deploy; then retry.');
+  const ATTEMPTS = 24;        // ~4 min at 10s — generous for Vercel propagation
+  const INTERVAL_MS = 10_000;
+  let live = false;
+  for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
+    process.stdout.write(`checking ${permalink} (${attempt}/${ATTEMPTS}) ... `);
+    let status = 0;
+    try { status = (await fetch(permalink, { method: 'HEAD' })).status; } catch { /* network blip — treat as not-live, retry */ }
+    if (status === 200) { console.log('live ✓'); live = true; break; }
+    console.log(`not live yet (${status || 'no response'})`);
+    if (attempt < ATTEMPTS) await new Promise((r) => setTimeout(r, INTERVAL_MS));
+  }
+  if (!live) {
+    console.error(`\n❌ NOT SENT — ${permalink} never went live after ~4 min.`);
+    console.error('   Confirm the push deployed on Vercel, then re-run. Nothing was broadcast.');
     process.exit(1);
   }
-  console.log('ok');
 }
 
 process.stdout.write(`${preview ? 'previewing' : 'broadcasting'} ${slug} (subject: "${subject}") ... `);
@@ -99,10 +111,15 @@ const res = await fetch(`${SERVER_URL}/admin/update/send`, {
 const out = await res.json().catch(() => ({}));
 if (!res.ok || out.ok === false) {
   console.log('✗');
-  console.error(`  HTTP ${res.status}:`, JSON.stringify(out));
+  console.error(`\n❌ NOT SENT — HTTP ${res.status}: ${JSON.stringify(out)}`);
   process.exit(1);
 }
 console.log('ok');
+console.log(
+  preview
+    ? `\n✅ PREVIEW sent to ${out.sent_to || 'founder inbox'}.`
+    : `\n✅ BROADCAST SENT — ${out.sent} accepted by Resend, ${out.failed} failed (of ${out.total}).`,
+);
 console.log(JSON.stringify(out, null, 2));
 
 // ---------- helpers ----------
