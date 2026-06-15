@@ -8,7 +8,7 @@
 import { Hono } from 'hono';
 import { extractApiKey, findByApiKey } from './auth.js';
 import { updateAccountBilling, getBillingSummary } from './accounts.js';
-import { runHealthDigest, runWeekOneCheckIns, runInstallNudges } from './cron.js';
+import { runHealthDigest } from './cron.js';
 import { mirrorPendingAuditBatch, getAuditHead } from './audit.js';
 import { registerProtocol } from './protocol.js';
 import { registerRoutes } from './routes.js';
@@ -719,7 +719,12 @@ export default {
     // Daily 15:00 UTC (health digest, library-signal snapshot) + monthly 1st
     // @ 02:00 UTC (settlement). settleMonthlyTabs is idempotent — only does
     // work on month-end keys.
-    await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing(), runWeekOneCheckIns(), runInstallNudges()]);
+    // No automatic server→user push. Week-one check-in + install-nudge emails were
+    // removed from the cron: any output from the server to a user must be the user's
+    // own active decision, so a corrupted server can never push content at them.
+    // Founder-internal ops (health digest, billing settlement) stay — those don't
+    // touch users. Manual founder admin email tools remain (founder-triggered).
+    await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing()]);
     ctx.waitUntil(flushEvents());
   },
 };

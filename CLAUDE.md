@@ -12,7 +12,7 @@ Everything in Alexandria maps to one of four layers:
 
 1. **Protocol** (`server/src/protocol.ts` + `auth.ts` + `kv.ts` + `crypto.ts` + `db.ts` + `file-access.ts` + `marketplace-catalog.ts` + `marketplace.ts` + `audit.ts`) — The incompressible core. 7 endpoints, ~1700 lines including the visibility gate (`file-access.ts`), the module catalog (`marketplace-catalog.ts`), the Author-feedback substrate (`marketplace.ts`), and the tamper-evident access audit (`audit.ts`). Three obligations: account (payment), file (publish monthly), call (communicate). This is what makes Alexandria a protocol, not a product.
 
-2. **Factory** (`factory/`) — The founder's system, public on GitHub, forkable. 19 files: canon (methodology), hooks (shim + payload), setup script, skills (claudecode, cursor, codex, scheduled), templates (agent, machine, notepad, feedback, constitution/, marginalia/, vault/, library/), onboarding block. Any Author can fork and modify. The marketplace evolves canon defaults from cross-Author signal.
+2. **Factory** (`factory/`) — public on GitHub, forkable. The canon splits into two tiers (`factory/canon/MODULES.md`): **Foundation** — the incompressible core, universal to every Author, values not intelligence (the canon-level twin of the Protocol layer above) — one file, `foundation.md` (~1pg); and **Founder** — Author #1's system, the default, forkable/replaceable — `axioms.md` (his thesis, the deep why), `methodology.md` (his craft), the function files (editor/mercury/publisher), library/filter surface conventions, bookshelf. Plus hooks (shim + payload), setup script, skills (claudecode, cursor, codex, scheduled), templates (agent, machine, notepad, feedback, constitution/, marginalia/, vault/, library/), onboarding block. The canon is just files on the Author's machine — bring your own, edit, or ignore; Alexandria is the aggregation hub they optionally connect to. The marketplace evolves the Founder defaults from cross-Author signal; the Foundation is values, not marketplace-ranked.
 
 3. **Machine** (`~/alexandria/`) — Each Author's personal system. Constitution, vault, marginalia, machine.md, notepad, feedback. Lives locally, never on the server. The product IS this folder. Alexandria stores what Authors publish, never what they think.
 
@@ -73,7 +73,13 @@ factory/
   block.md                  # Onboarding block instructions
   setup.sh                  # Setup script (curl → install)
   canon/
-    methodology.md          # The canon — how to develop human cognition
+    MODULES.md              # Tier manifest — Foundation vs Founder, deletability contract
+    foundation.md           # Foundation — the one universal file (~1pg incompressible core)
+    axioms.md               # Founder — the founder's thesis (the deep why)
+    methodology.md          # Founder — module #1: how the founder develops cognition
+    editor.md / mercury.md / publisher.md  # Founder — the three function behaviours
+    library.md / filter.md  # Founder — Library surface + publishing policy
+    bookshelf.md            # Founder — the founder's reference shelf
   hooks/
     shim.sh                 # Immutable local shim
     payload.sh              # GitHub-delivered hook logic
@@ -119,30 +125,33 @@ factory/
 
 ## Session Close
 
-Capture is a layer, not a trigger. **Every** session that surfaces signal captures it — the methodology bar (`factory/canon/methodology.md` § Session Close, § Passive Mode): extraction fires on *any* natural sign-off, and the Engine is never in a state where closing the terminal loses signal. Close is the safety net, not the primary extraction point. Work sessions additionally report. The two are orthogonal layers, not rival protocols — a coding session that surfaces a constitutional fragment runs both. The old "two mutually-exclusive protocols, clean separation" framing was the bug: it let non-/a sessions drop capture entirely, which is exactly the signal loss the methodology forbids.
+Two triggers, two protocols. Clean separation.
 
-### Capture — every session, silent. The product behavior.
+### "a." — Alexandria session close (product behavior)
 
-Runs whenever crystallised signal surfaced this session — whether the sign-off was "a." or "close"/"end" or any natural exit. Act as a normal Machine would for any Author; this IS the product test. Route each, skip any with nothing:
+Triggered by: "a." at the end of an /a session or any session where constitutional signal surfaced.
 
-- **Constitution.** Crystallised signal about the founder as a person → `~/alexandria/files/constitution/`. Opinions, stories, patterns, contradictions revealed this session.
-- **Machine.md.** How to work with this Author — what worked, what didn't, cognitive-style observations → `~/alexandria/files/core/machine.md`.
-- **Notepad.** Parked questions, accretion candidates, what to carry forward → `~/alexandria/files/core/notepad.md`.
-- **Feedback.** Methodology observations → `~/alexandria/files/core/feedback.md`. (Stays local — the Engine never auto-sends. To push to the marketplace, the Author types it into `~/alexandria/system/.session_feedback` himself.)
-- **Verify it landed.** A write call is not a saved file — confirm each canon write is actually on disk (read it back, or `git status`) before counting it captured. The in-memory-write-never-flushed failure is real (autoloop 2026-06-12: ~70 claimed integrations, zero on disk). "It wrote" is the floor; "it's on disk" is the bar. The Capture Mirror (`factory/canon/methodology.md` § The Capture Mirror) is the independent check that catches whatever this floor misses.
+This is the product. Act as a normal Machine would for any Author — this IS the product test:
 
-Silent. No report. This is the product working. A pure-/a session is capture only — that plus a hazy-fragment delta, nothing more. If this capture feels wrong, the product is wrong.
+- **Constitution.** Write any crystallised signal about the founder as a person to `~/alexandria/files/constitution/`. Opinions, stories, patterns, contradictions revealed this session.
+- **Machine.md.** Rewrite `~/alexandria/files/core/machine.md` — how to work with this Author, what worked, what didn't, cognitive style observations.
+- **Notepad.** Update `~/alexandria/files/core/notepad.md` — parked questions, accretion candidates, what to carry forward.
+- **Feedback.** Append to `~/alexandria/files/core/feedback.md` — what worked, what didn't, methodology observations. (This stays local — the Engine never auto-sends. If the Author wants to push feedback to the marketplace, they type it into `~/alexandria/system/.session_feedback` themselves.)
 
-### Work report — coding / company sessions ("close" / "end").
+Do this silently. No report. This is the product working. If Phase 1 feels wrong, the product is wrong.
 
-Additive on top of capture, for sessions that did company or code work:
+### "close" / "end" — Work session close (founder/company)
+
+Triggered by: "close", "end", or any sign-off that is NOT "a." — used for coding sessions, company work, non-/a sessions.
+
+No Machine loop. No constitution writes. This is company work, not product:
 
 - **Delta.** What changed about Alexandria the company. Not what you did — what's different now. Hazy fragments only.
-- **Open threads.** What's unresolved. What the next session should pick up. Ordered by priority. Then close them optimally without being asked: execute the drafted or obvious resolution for every thread that doesn't genuinely need the founder (every line revertible via git), commit-protect orphaned work, park the rest with a pre-drafted resolution. Ask the founder only what truly needs his verdict — one line per question — else ask nothing. (Claude Code: the `/close` skill re-injects this protocol fresh at end-of-session.)
+- **Open threads.** What's unresolved. What the next session should pick up. Ordered by priority.
 - **Meta loop.** Product learnings → factory canon (`factory/canon/methodology.md`).
-- **Founder loop.** How-to-work-with-the-founder signal (communication patterns, preferences, anti-patterns) → `~/alexandria/files/core/machine.md` / `feedback.md` — canon, never agent memory. (This is the capture section's Machine/Feedback, named again here so a work-close never skips it.)
+- **Founder loop.** Route how-to-work-with-the-founder signal (communication patterns, preferences, anti-patterns) to `~/alexandria/files/core/machine.md` / `feedback.md` — canon, never agent memory.
 
-**Principles (both):**
+**Principles (both protocols):**
 - Hazy fragments scale. Weeds do not. Keep it compressed.
 - Signal, not summary. Don't restate what the founder already saw — extract what compounds.
 - If nothing happened in a loop, skip it. No empty sections.

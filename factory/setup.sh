@@ -94,8 +94,16 @@ alexandria-payload-signing ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHv5jBpDuEg2Nae7Q
 EOF
 chmod 644 "$ALEX_DIR/system/allowed_signers"
 
-# Canon (cache locally — one module)
-fetch_factory "canon/methodology.md" "$ALEX_DIR/system/canon/methodology.md" "canon/methodology.md" yes
+# Canon — the full default, seeded at install (the Author's active adoption via
+# `curl | bash`): Foundation (the universal core) + the Founder module (Author #1's
+# system). Seed-if-missing only (no overwrite) — never clobber the Author's edits.
+# After install the payload NEVER auto-writes canon; it only notifies of updates and
+# the Author pulls (verified). So this install seed is the one automatic write, and
+# it is the Author's own decision to run setup.
+for module in foundation axioms methodology editor mercury publisher library filter bookshelf; do
+  fetch_factory "canon/$module.md" "$ALEX_DIR/system/canon/$module.md" "canon/$module.md"
+done
+fetch_factory "canon/MODULES.md" "$ALEX_DIR/system/canon/MODULES.md" "canon/MODULES.md"
 
 # Block (cache locally for easy access — system, not user content)
 fetch_factory "block.md" "$ALEX_DIR/system/.block" "block.md" yes
@@ -514,12 +522,13 @@ else
   STATUS_FILES="fail"; DETAIL_FILES="$ALEX_DIR/ not writable — check permissions and re-run"
 fi
 
-# canon: present and non-empty
-if [ -s "$ALEX_DIR/system/canon/methodology.md" ]; then
-  CANON_BYTES=$(wc -c < "$ALEX_DIR/system/canon/methodology.md" | tr -d ' ')
-  STATUS_CANON="ok"; DETAIL_CANON="methodology.md (${CANON_BYTES}b)"
+# canon: Foundation core + founder module #1 present and non-empty
+if [ -s "$ALEX_DIR/system/canon/foundation.md" ] && [ -s "$ALEX_DIR/system/canon/methodology.md" ]; then
+  F_BYTES=$(wc -c < "$ALEX_DIR/system/canon/foundation.md" | tr -d ' ')
+  M_BYTES=$(wc -c < "$ALEX_DIR/system/canon/methodology.md" | tr -d ' ')
+  STATUS_CANON="ok"; DETAIL_CANON="foundation.md (${F_BYTES}b) + methodology.md (${M_BYTES}b)"
 else
-  STATUS_CANON="fail"; DETAIL_CANON="methodology.md missing — re-run setup (network?)"
+  STATUS_CANON="fail"; DETAIL_CANON="foundation.md/methodology.md missing — re-run setup (network?)"
 fi
 
 # hooks: executable shim that parses + non-empty payload

@@ -24,6 +24,7 @@ fi
 # what the signer signs and what the shim verifies.
 SIGNED_FILES=(
   factory/hooks/payload.sh
+  factory/canon/foundation.md
   factory/canon/axioms.md
   factory/canon/methodology.md
   factory/canon/editor.md
@@ -32,6 +33,7 @@ SIGNED_FILES=(
   factory/canon/library.md
   factory/canon/filter.md
   factory/canon/bookshelf.md
+  factory/canon/MODULES.md
 )
 
 # Build manifest: one line per file, "sha256  relative/path".
