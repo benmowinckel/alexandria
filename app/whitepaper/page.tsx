@@ -10,7 +10,7 @@ import { pageMetadata } from '../lib/config';
 // still get paid → the practice that develops the part that wins).
 const TITLE = 'whitepaper — alexandria. the path through the singularity';
 const DESCRIPTION =
-  'the full argument: what ai leaves for humans, where humans still get paid, and the practice that develops the part that wins — so every ai thinks with you, not for you.';
+  'the full argument, from first principles: what ai leaves for humans, where humans still get paid, and the practice that develops the part that wins — your mind in a file you own, so every ai thinks with you, not for you.';
 
 const PAGE_META = pageMetadata({
   path: '/whitepaper',
