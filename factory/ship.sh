@@ -34,7 +34,28 @@ SIGNED_FILES=(
   factory/canon/filter.md
   factory/canon/bookshelf.md
   factory/canon/MODULES.md
+  factory/skills/scheduled.md
 )
+
+# ── Coverage enforcement (permanent fix: no executable/steering file ships unsigned) ──
+# Anything that EXECUTES or STEERS the model on a user machine must be signed,
+# or an attacker who swaps it on GitHub/MITM gets code execution around the
+# signature (the scheduled.md class). Hard-fail on the known must-sign set;
+# warn loudly on any other executable so a newly-added one can't silently bypass.
+MUST_SIGN=( factory/hooks/payload.sh factory/skills/scheduled.md )
+for f in "${MUST_SIGN[@]}"; do
+  printf '%s\n' "${SIGNED_FILES[@]}" | grep -qxF "$f" || {
+    echo "error: $f executes on user machines but is NOT in SIGNED_FILES — refusing to ship" >&2
+    exit 1
+  }
+done
+# Immutable bootstraps are installed once (not re-fetched), so they are trust
+# roots, not signed payloads — same status as shim.sh.
+UNSIGNED_OK=( factory/hooks/shim.sh factory/setup.sh factory/ship.sh )
+while IFS= read -r f; do
+  printf '%s\n' "${SIGNED_FILES[@]}" "${UNSIGNED_OK[@]}" | grep -qxF "$f" || \
+    echo "⚠️  $f looks executable but is unsigned — add to SIGNED_FILES (or UNSIGNED_OK if it's an install-once root)" >&2
+done < <(cd "$REPO_ROOT" && find factory -type f \( -name '*.sh' -o -name '*.py' \) | sort)
 
 # Build manifest: one line per file, "sha256  relative/path".
 # Stable order (literal list above) so the manifest is reproducible.
