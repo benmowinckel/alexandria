@@ -12,7 +12,7 @@ so if you value design, you keep a design.md. and if you value your mind — how
 
 a mind.md is different in one way, though. a design file you can copy off someone else. your mind, you can't — it's you, your fingerprint, unlike anyone else's. so no one can hand you a mind.md. you make your own.
 
-which is where the "mind.py" comes in. you can't download a mind.md, but you can download a mind.py. it's the same kind of grab-and-tweak file as a design.md — just the version that builds your mind instead of holding your design. ai now edits code as easily as text, so you take it the exact same way: no system, use ours; got one, add ours; want your own, start from ours. you tweak it, and out comes your mind.md.
+which is where the "alexandria.md" comes in. you can't download a mind.md, but you can download an alexandria.md. it's the same kind of grab-and-tweak file as a design.md — just the version that builds your mind instead of holding your design. you take it the exact same way: no system, use ours; got one, add ours; want your own, start from ours. you tweak it, and out comes your mind.md.
 
 so why bother? think about what ai does to a mind. hand all your thinking to it, and your own fades. refuse it, and you stay capped. the win is the middle — let ai multiply your mind. but it can only multiply what it can see, and a mind.md is how it sees yours. you can't multiply a zero. no one has built a cleaner way to do this.
 
@@ -22,13 +22,13 @@ that's all alexandria is: a tribe who decided their own mind is worth keeping �
 
 ## isn't this just my ai's memory.
 
-your ai's memory captures what you tell it and recalls it later. that's one piece. alexandria does the rest — your mind.py draws your thinking out, sharpens it, and hands it to whatever ai you're using, so you don't just get reminded of what you said, your actual thinking gets better over time. let the labs win the capture race; the better they get, the more yours has to build on.
+your ai's memory captures what you tell it and recalls it later. that's one piece. alexandria does the rest — your alexandria.md draws your thinking out, sharpens it, and hands it to whatever ai you're using, so you don't just get reminded of what you said, your actual thinking gets better over time. let the labs win the capture race; the better they get, the more yours has to build on.
 
 and yours is genuinely yours: a plain file you own and can read top to bottom, not a black box in someone's account. no vendor caps how much it holds, so it goes far deeper than a lab is allowed to keep. you choose what each ai sees, hand over only what you trust, change it however you like, and revoke any of it whenever. your memory, your terms, every model.
 
 ## isn't this just a notes app.
 
-no, though it lives where your notes do. your mind.md is plain markdown on your machine — point obsidian or any editor at it and it's your vault, unchanged. the difference is what happens next: a notes app stores what you write, while your mind.py draws your thinking out, writes it down, and feeds it to every ai you use. the editor is where it sits; alexandria is what it does.
+no, though it lives where your notes do. your mind.md is plain markdown on your machine — point obsidian or any editor at it and it's your vault, unchanged. the difference is what happens next: a notes app stores what you write, while your alexandria.md draws your thinking out, writes it down, and feeds it to every ai you use. the editor is where it sits; alexandria is what it does.
 
 ## can't i just do this myself.
 
@@ -36,11 +36,11 @@ you can, and you should — that's the whole idea. a mind.md is your own files, 
 
 ## how does it work.
 
-you talk; your mind.py listens and writes you down into your mind.md — plain markdown on your own computer. from then on, every ai you use reads it first, so it knows how you think and pushes it further. no system to learn, no forms to fill. you just keep thinking, and it keeps getting written down.
+you talk; your alexandria.md listens and writes you down into your mind.md — plain markdown on your own computer. from then on, every ai you use reads it first, so it knows how you think and pushes it further. no system to learn, no forms to fill. you just keep thinking, and it keeps getting written down.
 
 ## do i need to be a coder.
 
-no. "mind.py" is just the name for the system that builds your mind.md — your ai runs it, not you. you talk in plain words; it does the rest. if you can chat with an ai, you can use alexandria. (and if you do code, the whole thing is open for you to crack open and change.)
+no. "alexandria.md" is just the name for the system that builds your mind.md — your ai runs it, not you. you talk in plain words; it does the rest. if you can chat with an ai, you can use alexandria. (and if you do code, the whole thing is open for you to crack open and change.)
 
 ## what do i need to run it.
 
@@ -48,11 +48,11 @@ any ai that can reach files on your computer — claude code, cursor, codex, or 
 
 ## how do i start.
 
-you grab a starter mind.py and just talk to it — your first conversation is already your first page. add the [iphone shortcut](/shortcut) and anything you send (a voice memo, an article, a passing thought) lands in the pile for it to fold in. you don't need a lifetime of notes to begin. you start above zero from the first session, and it compounds.
+you grab a starter alexandria.md and just talk to it — your first conversation is already your first page. add the [iphone shortcut](/shortcut) and anything you send (a voice memo, an article, a passing thought) lands in the pile for it to fold in. you don't need a lifetime of notes to begin. you start above zero from the first session, and it compounds.
 
 ## is my data mine.
 
-entirely. your mind.md and mind.py are plain files on your own computer; they never reach us. the only thing we ever hold is what you choose to publish to the library — your call, gated however you like. nothing to sell, nothing to train on. want out? delete the folder, and it's as if you were never here.
+entirely. your mind.md and alexandria.md are plain files on your own computer; they never reach us. the only thing we ever hold is what you choose to publish to the library — your call, gated however you like. nothing to sell, nothing to train on. want out? delete the folder, and it's as if you were never here.
 
 ## is it safe to install.
 
@@ -68,4 +68,4 @@ builders — people who already use ai every day as a thinking partner, not a se
 
 ## will it outlast my ai.
 
-yes, and that's the point. your mind.md and mind.py are yours, in plain files; the ai is just the engine that reads them. models come and go. your files stay — and every new model reads the same ones and gives you more, with nothing to change.
+yes, and that's the point. your mind.md and alexandria.md are yours, in plain files; the ai is just the engine that reads them. models come and go. your files stay — and every new model reads the same ones and gives you more, with nothing to change.
