@@ -121,7 +121,12 @@ fi
 
 msg="${1:-ship: $(date -u +%Y-%m-%dT%H:%MZ)}"
 git commit -m "$msg"
-git push
+# Canon publishes to main (that's what every Author's machine pulls), regardless
+# of the local working branch. A plain `git push` silently no-ops/​fails when the
+# current branch has no upstream (e.g. a local feature branch) — leaving the
+# signed manifest committed but never live. Push HEAD→main explicitly so the
+# ship always reaches users. (Non-fast-forward still fails safely, no --force.)
+git push origin HEAD:main
 
 # Awareness: ship.sh signs + pushes ONLY the gated files above. If other factory
 # changes (skills, templates) are sitting in the working tree, say so loudly —
