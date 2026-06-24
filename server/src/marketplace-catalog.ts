@@ -32,9 +32,13 @@ const TTL_OK = 24 * 60 * 60;        // 24h on success
 const TTL_UNREACHABLE = 60 * 60;    // 1h on 404 — retry sooner
 
 export function parseModuleId(id: string): ParsedModuleId {
-  const gh = id.match(/^github:([^\/]+)\/([^#]+)#(.+)$/);
-  if (gh) return { kind: 'github', user: gh[1], repo: gh[2], path: gh[3] };
-  const local = id.match(/^local:([^\/]+)\/(.+)$/);
+  // Constrain each group to GitHub-legal charsets so a malicious module ID from
+  // /call can't inject `..`, CRLF, or query chars into the raw.githubusercontent
+  // fetch URL (host is hardcoded, but this blocks cross-path/cache-key abuse).
+  // (security-audit-2026-06-23 L2)
+  const gh = id.match(/^github:([A-Za-z0-9-]+)\/([A-Za-z0-9._-]+)#([A-Za-z0-9._/-]+)$/);
+  if (gh && !/(^|\/)\.\.(\/|$)/.test(gh[3])) return { kind: 'github', user: gh[1], repo: gh[2], path: gh[3] };
+  const local = id.match(/^local:([A-Za-z0-9-]+)\/([a-z0-9][a-z0-9._-]*)$/);
   if (local) return { kind: 'local', user: local[1], slug: local[2] };
   return { kind: null };
 }

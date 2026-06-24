@@ -571,12 +571,16 @@ app.get('/favicon.png', (c) => c.redirect('https://alexandria-library.com/favico
 // Analytics endpoints
 // ---------------------------------------------------------------------------
 
-// Auth gate for analytics
+// Auth gate for analytics — ADMIN ONLY. These endpoints expose cross-account
+// billing summaries and the raw event log (other users' login/IP/UA/country),
+// so any authenticated account must NOT reach them — only the founder. (audit M10)
 async function analyticsAuth(c: any, next: any) {
   const key = extractApiKey(c);
   if (!key) return c.json({ error: 'Unauthorized' }, 401);
   const account = await findByApiKey(key);
   if (!account) return c.json({ error: 'Unauthorized' }, 401);
+  const adminLogin = process.env.ADMIN_GITHUB_LOGIN || 'mowinckelb';
+  if (account.github_login !== adminLogin) return c.json({ error: 'Forbidden' }, 403);
   c.set('account', account);
   await next();
 }

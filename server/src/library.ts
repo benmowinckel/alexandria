@@ -285,7 +285,12 @@ export function registerLibraryRoutes(app: Hono): void {
       author: directoryAuthor(account!, legacyAuthor, fallbackIndex),
       files: protocolFiles.map(file => ({
         name: file.name,
-        text: file.text,
+        // This route is unauthenticated (public directory). Don't leak the
+        // author's private preview blurb for non-public files: public = open,
+        // paid = sales listing (preview is the teaser), authors/invite =
+        // private → suppress the preview text. Names stay (discovery + the
+        // open page enforces content access). (audit M1)
+        text: (file.visibility === 'public' || file.visibility === 'paid') ? file.text : null,
         visibility: file.visibility,
         updated_at: file.updated_at,
         url: fileAccessUrl(authorId, file.name),

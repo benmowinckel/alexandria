@@ -70,6 +70,12 @@ async function purgeAuthorAccount(account: Account, storeKey: string | null, aut
       db.prepare('DELETE FROM promo_codes WHERE author_id = ?').bind(login),
       db.prepare('DELETE FROM access_codes WHERE author_id = ?').bind(login),
       db.prepare('DELETE FROM authors WHERE id = ?').bind(login),
+      // Protocol content is keyed by account_id = String(github_id), NOT login.
+      // Omitting these left every published file + its preview text in D1 after
+      // a "GDPR" delete (readable via /library/{id}), and re-registering the
+      // same github_id re-inherited them. (security-audit-2026-06-23 H1)
+      db.prepare('DELETE FROM protocol_files WHERE account_id = ?').bind(String(account.github_id)),
+      db.prepare('DELETE FROM protocol_calls WHERE account_id = ?').bind(String(account.github_id)),
     ]);
   } catch (e) {
     console.error('[account] D1 cleanup failed:', e);
@@ -78,7 +84,8 @@ async function purgeAuthorAccount(account: Account, storeKey: string | null, aut
   try {
     const r2 = getR2();
     const login = account.github_login;
-    for (const prefix of [`shadows/${login}/`, `pulses/${login}/`, `quizzes/${login}/`, `works/${login}/`]) {
+    // protocol/* is keyed by github_id, the rest by login. (audit H1)
+    for (const prefix of [`protocol/${account.github_id}/`, `shadows/${login}/`, `pulses/${login}/`, `quizzes/${login}/`, `works/${login}/`]) {
       let cursor: string | undefined;
       do {
         const listed = await r2.list({ prefix, cursor });

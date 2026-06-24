@@ -196,7 +196,14 @@ export function registerProtocol(app: Hono) {
     ).bind(id).all<{ name: string; text: string | null; visibility: string; updated_at: string }>();
 
     if (!results || results.length === 0) return c.json({ error: 'Not found' }, 404);
-    return c.json({ account_id: id, files: results });
+    // Owner sees all their own previews; other authors don't get the private
+    // preview blurb of authors/invite files (names stay for discovery). (audit M1)
+    const isOwner = String(auth.account.github_id) === id;
+    const files = isOwner ? results : results.map(f => ({
+      ...f,
+      text: (f.visibility === 'public' || f.visibility === 'paid') ? f.text : null,
+    }));
+    return c.json({ account_id: id, files });
   });
 
   app.get('/library/:id/:name', async (c, next) => {
