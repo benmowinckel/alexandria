@@ -49,9 +49,25 @@ for f in "${MUST_SIGN[@]}"; do
     exit 1
   }
 done
-# Immutable bootstraps are installed once (not re-fetched), so they are trust
-# roots, not signed payloads — same status as shim.sh.
-UNSIGNED_OK=( factory/hooks/shim.sh factory/setup.sh factory/ship.sh )
+# Immutable bootstraps + install-once roots: fetched ONCE at setup, then run from
+# the local copy (never re-fetched), so their trust is the install-time TOFU
+# (same class as shim.sh), not a per-run signature. Their residual risk is the
+# setup.sh bootstrap anchor (audit H5), not per-run tampering.
+#   - shim.sh / setup.sh / ship.sh        — the bootstrap/signer roots
+#   - hooks/cursor/*.py                    — installed to ~/.cursor/hooks once (setup.sh:159)
+#   - scripts/publish-fork.sh             — installed once, run hourly from local copy (setup.sh:405)
+# NOTE: the warn below STILL fires (correctly) for the FETCHED-AND-RUN scripts
+# (scripts/brief.py, install.sh, publish.sh, migrate.sh) — those are curl'd from
+# GitHub then executed, so they genuinely need a verify gate (audit M5/M6). They
+# are user-initiated + lower-frequency than the nightly scheduled.md (already
+# gated), so the proper fix is a reusable verify-fetch helper, tracked separately.
+UNSIGNED_OK=(
+  factory/hooks/shim.sh factory/setup.sh factory/ship.sh
+  factory/hooks/cursor/alexandria-session-start.py
+  factory/hooks/cursor/alexandria-session-end.py
+  factory/hooks/cursor/alexandria-stop.py
+  factory/scripts/publish-fork.sh
+)
 while IFS= read -r f; do
   printf '%s\n' "${SIGNED_FILES[@]}" "${UNSIGNED_OK[@]}" | grep -qxF "$f" || \
     echo "⚠️  $f looks executable but is unsigned — add to SIGNED_FILES (or UNSIGNED_OK if it's an install-once root)" >&2

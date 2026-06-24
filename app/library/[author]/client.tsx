@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { FETCH_TIMEOUT_MS, SERVER_URL } from '../../lib/config';
+import { safeUrl } from '../../lib/url';
 
 interface ProtocolFile {
   name: string;
@@ -48,13 +49,13 @@ function visibilityLabel(value: string): string {
 }
 
 function contactHref(contact: string): string {
-  return contact.includes('@') && !contact.startsWith('mailto:') ? `mailto:${contact}` : contact;
+  return contact.includes('@') && !contact.startsWith('mailto:') ? `mailto:${contact}` : safeUrl(contact);
 }
 
 function websiteHref(raw: string): string {
   const t = raw.trim();
   if (!t) return t;
-  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+  return safeUrl(/^https?:\/\//i.test(t) ? t : `https://${t}`);
 }
 
 function websiteLabel(raw: string): string {

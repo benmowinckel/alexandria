@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
+import { safeUrl } from '../lib/url';
 
 export interface DirectoryAuthor {
   id: string;
@@ -40,7 +41,7 @@ function normalize(value: string | null | undefined): string {
 }
 
 function contactHref(contact: string): string {
-  return contact.includes('@') && !contact.startsWith('mailto:') ? `mailto:${contact}` : contact;
+  return contact.includes('@') && !contact.startsWith('mailto:') ? `mailto:${contact}` : safeUrl(contact);
 }
 
 export function LibraryDirectory({
