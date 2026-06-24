@@ -68,6 +68,7 @@ type LibraryAccessGrant = {
   author_id?: string;
   artifact_type?: string;
   artifact_id?: string;
+  buyer_github_login?: string | null;
 };
 
 function clampPaidAmount(amountCents: number): number {
@@ -406,9 +407,16 @@ export function registerLibraryRoutes(app: Hono): void {
       const raw = await getKV().get(`library:access:${purchaseSessionId}`);
       if (raw) {
         const grant = parseJson<LibraryAccessGrant>(raw, {});
-        purchaseValid = grant.author_id === authorId
+        const artifactMatch = grant.author_id === authorId
           && grant.artifact_id === name
           && grant.artifact_type === 'protocol_file';
+        // If the grant was bound to a buyer (signed-in purchase), the viewer
+        // must BE that buyer — a leaked ?session_id= URL is useless to anyone
+        // else. Legacy/anonymous grants (no buyer) stay bearer-validated by the
+        // high-entropy session_id (now short-TTL). (audit M2)
+        const buyerOk = !grant.buyer_github_login
+          || accessor?.github_login === grant.buyer_github_login;
+        purchaseValid = artifactMatch && buyerOk;
       }
     }
 

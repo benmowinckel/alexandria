@@ -1078,14 +1078,21 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
               console.error('[billing] Library purchase tab entry failed:', e);
             }
 
-            // Store access grant in KV (TTL 30 days)
+            // Store access grant in KV. Bind to the buyer's github_login when
+            // the purchase was made signed-in, so a leaked ?session_id= success
+            // URL is useless to anyone else (the viewer must BE the buyer).
+            // Anonymous purchases stay bearer-validated by the high-entropy
+            // session_id, but with a much shorter TTL (7d vs 30d) to shrink the
+            // leak window. (audit M2)
+            const buyerLogin = session.metadata?.github_login || null;
             try {
               await getKV().put(`library:access:${session.id}`, JSON.stringify({
                 author_id: authorId,
                 artifact_type: artifactType,
                 artifact_id: session.metadata?.artifact_id || '',
+                buyer_github_login: buyerLogin,
                 granted_at: new Date().toISOString(),
-              }), { expirationTtl: 30 * 24 * 60 * 60 });
+              }), { expirationTtl: (buyerLogin ? 30 : 7) * 24 * 60 * 60 });
             } catch (e) {
               console.error('[billing] Library access grant failed:', e);
             }

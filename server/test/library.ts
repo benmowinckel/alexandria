@@ -240,18 +240,8 @@ async function main() {
     };
   });
 
-  await test('Marketplace signal rejects no auth', async () => {
-    const res = await fetch(`${BASE}/marketplace/signal`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ signal: 'test' }),
-    });
-    return {
-      test: 'Signal no auth',
-      passed: res.status === 401,
-      details: `HTTP ${res.status}`,
-    };
-  });
+  // (Removed stale test for POST /marketplace/signal — that route was deleted
+  // 2026-05-15; anonymous machine signal now flows through authed POST /call.)
 
   await test('Feedback rejects no auth', async () => {
     const res = await fetch(`${BASE}/feedback`, {
