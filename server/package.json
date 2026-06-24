@@ -21,7 +21,7 @@
     "@types/node": "^22",
     "tsx": "^4.19.0",
     "typescript": "^5.8.0",
-    "wrangler": "4.99.0"
+    "wrangler": "4.104.0"
   },
   "engines": {
     "node": ">=20"
