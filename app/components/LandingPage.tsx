@@ -610,7 +610,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 <div className="cta-pair">
                   <div className="cta-block">
                     <Link
-                      href="/signup?ref_source=landing"
+                      href="/start"
                       className="lr-cta lr-cta-primary"
                     >
                       join the tribe
