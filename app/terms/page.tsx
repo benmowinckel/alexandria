@@ -45,7 +45,7 @@ export default function Terms() {
 
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>Accounts</h2>
-        <p>Accounts are created via GitHub OAuth. One account per person. Your API key authenticates access to the protocol and Library. Do not share your API key.</p>
+        <p>Accounts are created via GitHub OAuth. One account per person. Your API key authenticates access to Alexandria and the Library. Do not share your API key.</p>
       </section>
 
       <section style={{ marginBottom: '2rem' }}>

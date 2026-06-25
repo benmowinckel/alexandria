@@ -18,7 +18,7 @@ Most AI products are transition assets — value decays into the model with each
 
 A structured record of who each user is — whatever they choose to put in it: worldview, values, mental models, taste, personal thoughts, decisions, blind spots, anything. **The product is the framework; the practice is theirs** (daily Socratic sessions, journals, decision logs, any system works). Local files the user owns. Portable across every AI provider. *The record cannot be back-filled: inbox-scraping reaches what the user does, never what they mean.* **The compounding is the years.**
 
-*Engineering is done. One curl command. $10/month floor, free with five referred friends, users choose what they pay above that.* The only open question is whether enough people want it.
+*Engineering is done. One curl command. The tool is free and yours; $10/month joins the collective as a founding member — your own number — free with three active friends, slider open above.* The only open question is whether enough people want it.
 
 ---
 
@@ -36,13 +36,13 @@ A structured record of who each user is — whatever they choose to put in it: w
 
 ## the business.
 
-**Subscription.** *$10/month floor; users choose what they pay above that, no cap.* Stands alone. Break-even at 10 paid users.
+**Membership.** *The tool and methodology are free; $10/month joins the collective as a founding member, slider open above, no cap.* Stands alone. Break-even at 10 paying members.
 
-**Platform.** *Users grant other services permissioned access to their Alexandria record — opt-in, revocable.* AI labs pay for alignment and personalisation data. Consumer apps pay to know users who want to be known (meditation, therapy, dating, productivity). **The user monetises their own frame; Alexandria captures a clearing fee.** *Independent of subscription count.*
+**Platform.** *Users grant other services permissioned access to their Alexandria record — opt-in, revocable.* AI labs pay for alignment and personalisation data. Consumer apps pay to know users who want to be known (meditation, therapy, dating, productivity). **The user monetises their own frame; Alexandria captures a clearing fee.** *Independent of membership count.*
 
 | If | Then |
 |---|---:|
-| ~100K paying users × $50/m settled | ~$60M ARR |
+| ~100K paying members × $50/m settled | ~$60M ARR |
 | Platform / integration revenue | ~$40M+ ARR |
 | Combined at standard 10× SaaS multiple | **$1B+ valuation** |
 

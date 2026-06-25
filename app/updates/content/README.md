@@ -1,4 +1,4 @@
-# patron updates — content directory
+# member updates — content directory
 
 Each update is one markdown file. Filename = slug = footer-nav label (e.g. `u1.md` → `/updates/u1`).
 

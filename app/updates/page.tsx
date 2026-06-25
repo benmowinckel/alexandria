@@ -3,7 +3,7 @@ import UpdatesIndex from './UpdatesIndex';
 
 export const metadata = {
   title: 'updates — alexandria',
-  description: 'patron updates from alexandria.',
+  description: 'member updates from alexandria.',
 };
 
 export default function UpdatesIndexPage() {

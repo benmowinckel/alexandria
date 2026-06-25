@@ -6,15 +6,17 @@ Founder: Benjamin Mowinckel. Solo founder + ai agents. Relocating to SF April 20
 
 **Canonical surfaces:** `https://alexandria-library.com` (website, Vercel) and `https://api.alexandria-library.com` (API, Cloudflare Worker — protocol, OAuth, billing, Library, cron). `mowinckel.ai` + `www.mowinckel.ai` 308-redirect to the canonical apex. `api.mowinckel.ai` stays bound to the same Worker so legacy CLI/skill installs that cached the old URL keep working; treat it as deprecated. `mcp.mowinckel.ai` is the older alias on the same retire path. Override only via `SERVER_URL` / `NEXT_PUBLIC_SERVER_URL` when intentional.
 
-## Architecture — Four Layers
+## Architecture — Two Things, Four Code Layers
 
-Everything in Alexandria maps to one of four layers:
+The product is **two felt things**, not a protocol. (1) **What we give you** — a free, sovereign tool running on your own files, plus the methodology (the gear). Real value the day you start; it can never be taken back. (2) **The collective** — the library, the marketplace, and the tribe: the owned hub where Alexandrians are seen and connect, the one thing being built and where the moat lives. **Sovereignty** is the *principle* that runs through the first thing (plain files, yours, portable, leave anytime) — a promise, not a technical standard. There is no "protocol" in the story; "protocol" survives only as the **internal code name** for the publish/call/library plumbing below.
 
-1. **Protocol** (`server/src/protocol.ts` + `auth.ts` + `kv.ts` + `crypto.ts` + `db.ts` + `file-access.ts` + `marketplace-catalog.ts` + `marketplace.ts` + `audit.ts`) — The incompressible core. 7 endpoints, ~1700 lines including the visibility gate (`file-access.ts`), the module catalog (`marketplace-catalog.ts`), the Author-feedback substrate (`marketplace.ts`), and the tamper-evident access audit (`audit.ts`). Three obligations: account (payment), file (publish monthly), call (communicate). This is what makes Alexandria a protocol, not a product.
+The code maps to four layers:
 
-2. **Factory** (`factory/`) — The founder's system, public on GitHub, forkable. 19 files: canon (methodology), hooks (shim + payload), setup script, skills (claudecode, cursor, codex, scheduled), templates (agent, machine, notepad, feedback, constitution/, marginalia/, vault/, library/), onboarding block. Any Author can fork and modify. The marketplace evolves canon defaults from cross-Author signal.
+1. **The collective plumbing** (`server/src/protocol.ts` + `auth.ts` + `kv.ts` + `crypto.ts` + `db.ts` + `file-access.ts` + `marketplace-catalog.ts` + `marketplace.ts` + `audit.ts`) — the incompressible core that makes the library/marketplace/tribe work. 7 endpoints, ~1700 lines including the visibility gate (`file-access.ts`), the module catalog (`marketplace-catalog.ts`), the Author-feedback substrate (`marketplace.ts`), and the tamper-evident access audit (`audit.ts`). Three obligations: account (membership), file (publish monthly), call (communicate). Internally still named `protocol.ts` — a code label for the plumbing, never the public framing.
 
-3. **Machine** (`~/alexandria/`) — Each Author's personal system. Constitution, vault, marginalia, machine.md, notepad, feedback. Lives locally, never on the server. The product IS this folder. Alexandria stores what Authors publish, never what they think.
+2. **Factory** (`factory/`) — The founder's system, public on GitHub, forkable. 19 files: canon (methodology), hooks (shim + payload), setup script, skills (claudecode, cursor, codex, scheduled), templates (agent, machine, notepad, feedback, constitution/, marginalia/, vault/, library/), onboarding block. This is the gear — shipped default-on but deletable, forkable, replaceable. Any Author can fork and modify. The marketplace evolves canon defaults from cross-Author signal.
+
+3. **Machine** (`~/alexandria/`) — Each Author's personal system. Constitution, vault, marginalia, machine.md, notepad, feedback. Lives locally, never on the server — the sovereign tool running on the Author's own files. The product IS this folder. Alexandria stores what Authors publish, never what they think.
 
 4. **Company** (`server/src/` everything else + `app/`) — Operational overhead. OAuth, billing, email, analytics, cron, Library CRUD, admin endpoints. This layer should shrink over time.
 
@@ -22,7 +24,7 @@ Everything in Alexandria maps to one of four layers:
 
 - **Website:** `app/` (Next.js, Vercel). Landing page: `app/components/LandingPage.tsx`.
 - **Server:** `server/src/` (Hono, Cloudflare Workers). One file per concern:
-  - `worker.ts` (entry + middleware), `protocol.ts` (the protocol — file, call, library, marketplace), `routes.ts` (company HTTP handlers), `auth.ts` (accounts + API keys), `accounts.ts` (account management + admin), `email.ts` (Resend + all templates), `cron.ts` (health digest + followup + engagement), `analytics.ts` (event log + dashboard), `billing.ts` (Stripe), `library.ts` (Library CRUD), `kv.ts` (KV persistence), `templates.ts` (HTML), `cors.ts` (CORS), `crypto.ts` (encryption), `db.ts` (D1/R2 accessor), `file-access.ts` (visibility gate — the only path that reads protocol/shadow/work bytes from R2), `marketplace-catalog.ts` (GitHub module catalog + push-webhook cache busting), `marketplace.ts` (Author-feedback substrate, writes to private GitHub repo), `audit.ts` (tamper-evident access audit mirrored to a hash-chained GitHub repo), `library-signal.ts` (daily funnel/engagement snapshot consumed by the founder), `time.ts` (PT formatter).
+  - `worker.ts` (entry + middleware), `protocol.ts` (the collective plumbing — file, call, library, marketplace; "protocol" is the internal code name), `routes.ts` (company HTTP handlers), `auth.ts` (accounts + API keys), `accounts.ts` (account management + admin), `email.ts` (Resend + all templates), `cron.ts` (health digest + followup + engagement), `analytics.ts` (event log + dashboard), `billing.ts` (Stripe), `library.ts` (Library CRUD), `kv.ts` (KV persistence), `templates.ts` (HTML), `cors.ts` (CORS), `crypto.ts` (encryption), `db.ts` (D1/R2 accessor), `file-access.ts` (visibility gate — the only path that reads protocol/shadow/work bytes from R2), `marketplace-catalog.ts` (GitHub module catalog + push-webhook cache busting), `marketplace.ts` (Author-feedback substrate, writes to private GitHub repo), `audit.ts` (tamper-evident access audit mirrored to a hash-chained GitHub repo), `library-signal.ts` (daily funnel/engagement snapshot consumed by the founder), `time.ts` (PT formatter).
   - Stateless server. No private user data stored. KV for accounts/events, D1 for Library metadata + protocol data, R2 for published content.
 - **Factory:** `factory/` — public, forkable. Canon methodology, hooks, skills, templates, setup, onboarding block.
 - **Static assets:** `public/` (includes `public/docs/` for public artifacts).
@@ -36,7 +38,7 @@ Everything in Alexandria maps to one of four layers:
 
 ### Protocol Endpoints
 
-Seven endpoints. The protocol core:
+Seven endpoints. The collective's plumbing — internally named "protocol" in code (`protocol.ts`); never the public framing:
 
 | Method | Path | Purpose |
 |--------|------|---------|

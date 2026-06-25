@@ -43,7 +43,7 @@ export default function Privacy() {
 
       <section style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>Authentication</h2>
-        <p>Account creation uses GitHub OAuth. Ongoing authentication uses an API key issued at signup. Only a SHA-256 hash of your API key is stored on the server; the raw key lives only on your machine at <code>~/alexandria/system/.api_key</code>. The key authenticates your access to the protocol and Library APIs.</p>
+        <p>Account creation uses GitHub OAuth. Ongoing authentication uses an API key issued at signup. Only a SHA-256 hash of your API key is stored on the server; the raw key lives only on your machine at <code>~/alexandria/system/.api_key</code>. The key authenticates your access to Alexandria and the Library APIs.</p>
       </section>
 
       <section style={{ marginBottom: '2rem' }}>

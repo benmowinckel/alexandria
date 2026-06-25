@@ -123,13 +123,58 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
 
   if (error || !data) return (
     <main style={{ maxWidth: '560px', margin: '0 auto', padding: '40vh 2rem', fontFamily: 'var(--font-eb-garamond)', textAlign: 'center' }}>
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>{error === 'unreachable' ? 'could not reach Alexandria.' : 'this Author has no protocol files yet.'}</p>
+      <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>{error === 'unreachable' ? 'could not reach Alexandria.' : 'this Author has nothing published yet.'}</p>
       <p style={{ marginTop: '2rem' }}><Link href="/library" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.95rem' }}>library</Link></p>
     </main>
   );
 
   const { author } = data;
   const files = data.files || [];
+  // The profile is a set of sections, each just hosted text + links — every one
+  // rides the existing publish mechanism (a public file the Author names), so
+  // there is no backend for any of them. `works` / `projects` / `other` are open
+  // text sections rendered inline with clickable URLs; `other` is the freeform
+  // catch-all (invisible until the Author publishes it). Everything else is a
+  // shadow — rendered as gated rows that carry their own permission tier.
+  const sectionFile = (name: string): ProtocolFile | null =>
+    files.find((f) => f.name === name && f.visibility === 'public') || null;
+  const worksFile = sectionFile('works');
+  const projectsFile = sectionFile('projects');
+  const otherFile = sectionFile('other');
+  const openFiles = [worksFile, projectsFile, otherFile].filter((f): f is ProtocolFile => f !== null);
+  const shadowFiles = files.filter((f) => !openFiles.includes(f));
+  const renderLinkedText = (text: string) =>
+    text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+      /^https?:\/\//.test(part) ? (
+        <a
+          key={i}
+          href={safeUrl(part)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:opacity-60"
+          style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}
+        >
+          {part}
+        </a>
+      ) : (
+        <span key={i}>{part}</span>
+      ),
+    );
+  const sectionLabelStyle: CSSProperties = {
+    color: 'var(--text-ghost)',
+    fontSize: '0.78rem',
+    letterSpacing: '0.08em',
+    margin: '0 0 0.7rem',
+  };
+  const textSection = (label: string, file: ProtocolFile | null) =>
+    file ? (
+      <div key={label} style={{ borderTop: '1px solid var(--border-light)', marginTop: '1.6rem', paddingTop: '1.1rem' }}>
+        <p style={sectionLabelStyle}>{label}</p>
+        <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
+          {renderLinkedText(normalizePreviewText(file.text) || '')}
+        </div>
+      </div>
+    ) : null;
   const profileText = normalizePreviewText(author.text);
   const tagStyle: CSSProperties = {
     display: 'inline-flex',
@@ -263,14 +308,22 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
         </header>
 
         <section>
-          {files.length === 0 ? (
+          {shadowFiles.length === 0 && openFiles.length === 0 ? (
             <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>
-              no protocol files published yet.
+              nothing published yet.
             </p>
           ) : (
-            <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '1.1rem' }}>
-              {files.map(fileRow)}
-            </div>
+            <>
+              {textSection('works', worksFile)}
+              {shadowFiles.length > 0 && (
+                <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '1.6rem', paddingTop: '1.1rem' }}>
+                  <p style={sectionLabelStyle}>shadows</p>
+                  {shadowFiles.map(fileRow)}
+                </div>
+              )}
+              {textSection('projects', projectsFile)}
+              {textSection('other', otherFile)}
+            </>
           )}
         </section>
       </main>

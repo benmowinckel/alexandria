@@ -26,7 +26,7 @@ A structured, machine-readable record of who each user is — whatever they choo
 
 *The record cannot be back-filled.* Inbox-scraping reaches what the user does, never what they mean. Five years of capture cannot be compressed into a six-month rush. **The compounding is the years.**
 
-Engineering is done. *One curl command, local files on the user's own machine, two integration points fire whenever the user talks to an AI — capture and inject. Ten dollars a month, free with five referred friends.* The only open question is whether enough people want it.
+Engineering is done. *One curl command, local files on the user's own machine, two integration points fire whenever the user talks to an AI — capture and inject. The tool is free; ten dollars a month joins the collective as a founding member, free with three active friends.* The only open question is whether enough people want it.
 
 ---
 
@@ -38,7 +38,7 @@ Most AI products degrade — coding assistants, productivity wrappers, content g
 
 Alexandria gets better. *Each user's record is private, accumulating, unsynthesizable from public sources. Better models extract deeper signal from the same record.* Every release is a tailwind.
 
-In April 2026 Andrej Karpathy publicly described this architecture — raw data compiled into structured markdown, incrementally enhanced, queries that compound back into the knowledge base — and said *"there is room here for an incredible new product."* **Alexandria had already shipped it.** The category will exist. The open question is who owns the protocol.
+In April 2026 Andrej Karpathy publicly described this architecture — raw data compiled into structured markdown, incrementally enhanced, queries that compound back into the knowledge base — and said *"there is room here for an incredible new product."* **Alexandria had already shipped it.** The category will exist. The open question is who owns the convention.
 
 ---
 
@@ -50,7 +50,7 @@ AI commoditises capability — strength, intelligence, empathy in sequence. *The
 
 The deeper risk is decay. *AI removes the demand on cognition; cognition only develops to the level of demand placed on it; the faculty that would notice the loss is the faculty that has weakened.* WALL-E for the body is science fiction. **WALL-E for the mind is the default trajectory.**
 
-**Keep thinking.** *That is the rally and the practice. Alexandria is the gym.*
+**Keep thinking.** *That is the rally and the practice. The gym is yours; Alexandria is what's built around it.*
 
 ---
 
@@ -64,7 +64,7 @@ The deeper risk is decay. *AI removes the demand on cognition; cognition only de
 
 *Three reinforcing forms of that coordination:*
 
-**1. Convention.** *The canonical place where thoughtful people host their cognitive records — "build it on WordPress," "push it to GitHub," "host your mind on Alexandria."* Once the convention settles, individual exits don't shift it. **Apple can build the tool; Apple cannot build the cathedral.** *Winner-takes-most. The 12–36 month window is now.*
+**1. Convention.** *The canonical place where thoughtful people host their cognitive records — "build it on WordPress," "push it to GitHub," "host your mind on Alexandria" ("Strava for thought" is the pitch line, not the product name; "open and forkable, like GitHub" is a throwaway aside, never the frame).* Once the convention settles, individual exits don't shift it; until it settles, there is nothing to defend. **Apple can build the tool; Apple cannot build the cathedral.** *Winner-takes-most once held — and the 12–36 month race to hold it is now.*
 
 **2. Network.** *Your circle being on Alexandria means your AI can read their frames when planning with or about them; their AI reads yours.* The friend's-mind primitive makes recruitment a self-interested act — *invite your circle for your own benefit.* A clone can host identical files but starts with no population.
 
@@ -84,17 +84,17 @@ The deeper risk is decay. *AI removes the demand on cognition; cognition only de
 
 *Two revenue streams compound on the same users.*
 
-**Subscription.** *$10/month floor — and users choose what they pay above that, no cap.* Prosumer comparables (Cursor, ChatGPT Pro, Notion AI) show that people willingly pay $20–$60/month for tools they actually value. Stands alone. **Break-even at 10 paid users.**
+**Membership.** *The tool and methodology are free; $10/month joins the collective as a founding member — and members choose what they pay above that, no cap.* Prosumer comparables (Cursor, ChatGPT Pro, Notion AI) show that people willingly pay $20–$60/month for tools they actually value. Stands alone. **Break-even at 10 paying members.**
 
-**Platform.** *Users grant other services permissioned access to their Alexandria record — opt-in, revocable per service.* AI labs pay for alignment and personalisation research data. Consumer apps pay to know users who knowingly want to be known (meditation, therapy, dating, productivity, healthcare). **The user monetises their own frame; Alexandria captures a clearing fee on every transaction.** *Independent of subscription count.*
+**Platform.** *Users grant other services permissioned access to their Alexandria record — opt-in, revocable per service.* AI labs pay for alignment and personalisation research data. Consumer apps pay to know users who knowingly want to be known (meditation, therapy, dating, productivity, healthcare). **The user monetises their own frame; Alexandria captures a clearing fee on every transaction.** *Independent of membership count.*
 
 | If | Then |
 |---|---:|
-| ~100K paying users × $50/m settled | ~$60M ARR |
+| ~100K paying members × $50/m settled | ~$60M ARR |
 | Platform / integration revenue | ~$40M+ ARR |
 | Combined at standard 10× SaaS multiple | **$1B+ valuation** |
 
-*If subscription saturates short of 100K, platform carries the upside. If platform stays narrow, subscription scales on its own. Single-mode failure risk drops.*
+*If membership saturates short of 100K, platform carries the upside. If platform stays narrow, membership scales on its own. Single-mode failure risk drops.*
 
 ---
 
@@ -154,7 +154,7 @@ Three rungs. *Investor chooses where to enter. No fixed round size.*
 
 Returns are the long call option. Legacy is the more certain payoff.
 
-*Every protocol that mattered had a first funder. HTTP had CERN. Ethereum had Joe Lubin. The early internet had DARPA.* Alexandria is the cognitive layer of AI — the protocol that makes AI think *with* you, not *for* you — and right now it is open. *The firm whose name attaches becomes the firm that goes on the page about how humans preserved thinking through the AI transition. In thirty years that page exists. The question is who is on it.*
+*Every standard that mattered had a first funder. HTTP had CERN. Ethereum had Joe Lubin. The early internet had DARPA.* Alexandria is the cognitive layer of AI — the standard that makes AI think *with* you, not *for* you — and right now it is open. *The firm whose name attaches becomes the firm that goes on the page about how humans preserved thinking through the AI transition. In thirty years that page exists. The question is who is on it.*
 
 *Athens, Rome, America, Alexandria.* **America protects the right to think. Alexandria protects the ability.**
 
@@ -163,7 +163,7 @@ Returns are the long call option. Legacy is the more certain payoff.
 ---
 
 **Benjamin a. Mowinckel**
-mowinckel.b@gmail.com · +1 415 503 8178 · mowinckel.ai
+mowinckel.b@gmail.com · alexandria-library.com
 
 | | |
 |---|---|
