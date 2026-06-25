@@ -1,46 +1,58 @@
 'use client';
 
 import { ThemeToggle } from '../components/ThemeToggle';
-import Link from 'next/link';
+
+const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337';
+
+function DownloadIcon() {
+  return (
+    <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 3.5 v11" />
+      <path d="M7.5 10.5 L12 15 L16.5 10.5" />
+      <path d="M4.5 20 h15" />
+    </svg>
+  );
+}
 
 export default function ShortcutPage() {
   return (
     <div style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh' }}>
       <ThemeToggle />
 
-      <section className="flex flex-col items-center justify-center px-8 min-h-screen">
-        <div className="max-w-[420px] flex flex-col items-center text-center">
+      <section className="flex items-center justify-center min-h-screen px-6">
+        <div className="flex flex-col items-center sm:flex-row sm:items-start justify-center">
 
-          <Link href="/" className="no-underline">
-            <p className="text-[1.3rem] sm:text-[1.5rem] font-normal leading-none tracking-tight" style={{ color: 'var(--text-primary)' }}>
-              alexandria.
-            </p>
-          </Link>
-
-          <div className="mt-14 sm:mt-16 space-y-10">
-
-            <div className="space-y-5">
-              <p className="text-[0.9rem] sm:text-[0.95rem] tracking-wide leading-[1.9]" style={{ color: 'var(--text-secondary)' }}>
-                voice memos, journals, articles, videos, podcasts
-              </p>
-              <p className="text-[0.85rem] sm:text-[0.9rem] tracking-wide leading-[1.9]" style={{ color: 'var(--text-muted)' }}>
-                tap share, tap alexandria. &mdash; it lands in your vault
-              </p>
+          {/* Mac — click to add */}
+          <a
+            href={SHORTCUT_URL}
+            className="flex flex-col items-center gap-7 px-10 sm:px-24 no-underline transition-opacity hover:opacity-60"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            <span className="text-[1.05rem] sm:text-[1.2rem] tracking-wide font-medium">Mac</span>
+            {/* Box matches the QR card height so the icon centers on the QR's midline. */}
+            <div className="flex items-center justify-center" style={{ height: '158px' }}>
+              <DownloadIcon />
             </div>
+          </a>
 
-            <a
-              href="https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337"
-              className="inline-block text-[1.05rem] sm:text-[1.15rem] tracking-wide font-medium no-underline transition-opacity hover:opacity-60"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              add shortcut
-            </a>
+          {/* Divider */}
+          <div className="hidden sm:block self-stretch w-px" style={{ background: 'var(--border-light)' }} />
+          <div className="sm:hidden h-px w-20 my-12" style={{ background: 'var(--border-light)' }} />
 
-            <p className="text-[0.85rem] sm:text-[0.9rem] tracking-wide leading-[1.9]" style={{ color: 'var(--text-muted)' }}>
-              /a handles the rest
-            </p>
-
+          {/* iPhone — scan the code */}
+          <div className="flex flex-col items-center gap-7 px-10 sm:px-24" style={{ color: 'var(--text-primary)' }}>
+            <span className="text-[1.05rem] sm:text-[1.2rem] tracking-wide font-medium">iPhone</span>
+            <div style={{ background: '#fff', padding: '14px', borderRadius: '14px', lineHeight: 0 }}>
+              <img
+                src="/shortcut-qr.svg"
+                alt="Scan with your iPhone camera to add the shortcut"
+                width={130}
+                height={130}
+                style={{ display: 'block' }}
+              />
+            </div>
           </div>
+
         </div>
       </section>
     </div>
