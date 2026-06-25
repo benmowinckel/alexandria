@@ -193,7 +193,7 @@ function HomeInstall() {
         </span>
       </button>
       <span className="cta-sub install-cta-sub">
-        {copied ? 'copied — paste into your agent.' : 'paste into your agent.'}
+        paste into your agent.
       </span>
     </div>
   );
