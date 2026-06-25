@@ -156,6 +156,49 @@ const THEMES: Theme[] = [
   },
 ];
 
+// The homepage primary action: the "join the tribe" button copies the install
+// command to the clipboard (no nav to a second page) — the label stays the
+// pretty words, the copy icon + caption ("paste into your agent") say what it
+// does. The agent does the "is it safe" job once they paste it in.
+const INSTALL_CMD = 'curl -fsSL alexandria-library.com/a | bash';
+
+function HomeInstall() {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(INSTALL_CMD);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = INSTALL_CMD;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch { /* noop */ }
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div className="cta-block">
+      <button type="button" className="install-cta" onClick={copy} aria-label="copy the install command">
+        join the tribe
+        <span className="install-cta-icon" aria-hidden>
+          {copied ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+          )}
+        </span>
+      </button>
+      <span className="cta-sub">
+        {copied ? 'copied — paste into your agent.' : 'paste into your agent.'}
+      </span>
+    </div>
+  );
+}
+
 export default function LandingPage({ brandClassName = '' }: Props) {
   const [themeIdx, setThemeIdx] = useState(0);
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
@@ -608,17 +651,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 </p>
 
                 <div className="cta-pair">
-                  <div className="cta-block">
-                    <Link
-                      href="/start"
-                      className="lr-cta lr-cta-primary"
-                    >
-                      join the tribe
-                    </Link>
-                    <span className="cta-sub">
-                      free with kin &middot; open source &middot; works with every ai
-                    </span>
-                  </div>
+                  <HomeInstall />
                   <div className="cta-block">
                     <Link href="/follow" className="lr-cta lr-cta-ghost">
                       stay close
@@ -2175,6 +2208,33 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           box-shadow: inset 0 0 0 1px var(--theme-fg-muted);
           background: rgba(0, 0, 0, 0.02);
         }
+        /* Homepage primary CTA — looks exactly like the old "join the tribe"
+           filled button (same fill, just a touch bigger), but copies the install
+           command to the clipboard instead of navigating. The label stays the
+           pretty words; the copy icon + caption say what it does. */
+        .cta-pair button.install-cta {
+          display: inline-flex;
+          align-items: center;
+          gap: 9px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 17px;
+          padding: 12px 26px;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 500;
+          font-style: normal;
+          letter-spacing: 0.003em;
+          background: var(--theme-fg);
+          color: var(--theme-bg);
+          transition: opacity 180ms ease;
+        }
+        .cta-pair button.install-cta:hover { opacity: 0.86; }
+        .install-cta-icon {
+          display: inline-flex;
+          align-items: center;
+        }
+        .install-cta-icon svg { display: block; }
         /* Subtitle — does the explanatory work so the buttons stay
            terse. Italic, faint. Hangs flush left from the button's
            outer edge — caption-from-box, not caption-from-text. */
