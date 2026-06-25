@@ -57,9 +57,9 @@ export default async function JoinPage({
         <h1 className="primer-h1">become a founding member.</h1>
 
         <p className="join-pitch">
-          the tool is free. this is the collective around it &mdash; where people
-          share their work and find each other. you join as a founding member,
-          with your own number.
+          the tool is free and always will be. joining the collective is the part
+          you pay for &mdash; your own founding-member number, a place in the
+          shared library, and the people building it alongside you.
         </p>
 
         <a className="join-btn" href={joinUrl}>
