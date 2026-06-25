@@ -31,7 +31,6 @@ function jsLiteral(value: string): string {
 const ICON_COPY = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
 const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 const ICON_INFO = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
-const ICON_EXTERNAL = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
 
 // ---------------------------------------------------------------------------
 // Auth error page — shown when OAuth callback can't complete
@@ -60,20 +59,6 @@ export function authErrorHtml(message: string): string {
 // Callback page — the first brand moment after signup
 // ---------------------------------------------------------------------------
 
-const MECHANICS_URL = 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/public/docs/Mechanics.md';
-// Keep in sync with app/shortcut/page.tsx — the iCloud Shortcuts install URL.
-const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337';
-
-async function fetchRawText(url: string): Promise<string> {
-  try {
-    const r = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } } as RequestInit);
-    if (!r.ok) return '';
-    return await r.text();
-  } catch {
-    return '';
-  }
-}
-
 export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToken = false, authorNumber = 0): Promise<string> {
   const WEBSITE_URL = getWebsiteUrl();
   const host = WEBSITE_URL.replace(/^https?:\/\//, '');
@@ -99,7 +84,6 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   // Async fetch + clipboard.writeText loses user activation and falls back to opening the raw URL.
   // (block.md is no longer copied here — the agent reads the locally-cached .block after install
   // and continues into the constitution draft itself; see factory/setup.sh tail.)
-  const mechanicsContent = isReturning ? '' : await fetchRawText(MECHANICS_URL);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -125,13 +109,8 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   .container { max-width: 420px; text-align: center; }
   .welcome { font-size: 1.5rem; font-weight: 400; line-height: 1.4; }
   .line { font-size: 1.1rem; line-height: 1.9; }
-  .mechanics { font-size: 0.85rem; line-height: 1.9; color: #bbb4aa; margin-top: 2.5rem; }
-  .aside { font-size: 0.85rem; line-height: 1.9; color: #bbb4aa; margin-top: 1.5rem; }
   .deal { font-size: 0.9rem; line-height: 1.8; color: #8a8078; margin-top: 2rem; }
   .deal .free { color: #3d3630; }
-  .mechanics-row { display: block; }
-  .mechanics-hint { color: #bbb4aa; }
-  .mechanics .action { color: #8a8078; }
   .welcome-back { color: #8a8078; margin-top: 1.5rem; }
   .signout { font-size: 0.78rem; line-height: 1.7; color: #bbb4aa; margin-top: 2.5rem; }
   .signout a { color: inherit; text-decoration: none; border-bottom: 1px dotted #bbb4aa; transition: color 0.15s, border-color 0.15s; }
@@ -218,16 +197,10 @@ ${isReturning ? `<a class="brand-corner" href="${WEBSITE_URL}/">alexandria.</a>`
 <div class="container">
   <h1 class="welcome">${isReturning ? `welcome back.` : (numberLabel ? `welcome, ${numberLabel}.` : `welcome to alexandria.`)}</h1>
   ${isReturning ? `<p class="line welcome-back">call /alexandria in your coding agent.</p>` : `<div class="steps">
-    ${curlCmd ? `<p class="line"><button type="button" class="action" onclick="copyCmd(this)" aria-label="copy connect command">copy your connect command <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> &mdash; paste it into your coding agent (claude code, cursor, codex&hellip;) and hit enter. <button type="button" class="info" onclick="toggleTip(this)" aria-label="what this does">${ICON_INFO}<span class="tooltip">links your install to your founding membership, so you can publish to the library and be seen. your thinking stays on your machine &mdash; only what you publish is ever sent.</span></button></p>` : `<p class="line">you're in. call /alexandria in your coding agent.</p>`}
-    ${inviteUrl ? `<p class="line"><button type="button" class="action" onclick="copyInvite(this)" aria-label="copy your invite link">copy your invite link <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> &mdash; send it to the people you want thinking for themselves too. <button type="button" class="info" onclick="toggleTip(this)" aria-label="what this does">${ICON_INFO}<span class="tooltip">${escapeHtml(inviteDisplay)} &mdash; it carries your code, so anyone who joins through it is credited to you. three active friends and your membership is free for good.</span></button></p>` : ''}
-    <p class="line"><a class="action" href="${SHORTCUT_URL}" target="_blank" rel="noopener">shortcut <span class="icon">${ICON_EXTERNAL}</span></a> &mdash; add it on iphone or mac to save anything worth thinking about <button type="button" class="info" onclick="toggleTip(this)" aria-label="what this does">${ICON_INFO}<span class="tooltip">tap share on a voice memo, podcast, article or tweet and pick alexandria. lands in your folder; bring it up with your agent whenever, or it surfaces when relevant.</span></button></p>
+    ${curlCmd ? `<p class="line"><button type="button" class="action" onclick="copyCmd(this)" aria-label="copy connect command">copy your connect command <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> &mdash; run it in your coding agent. <button type="button" class="info" onclick="toggleTip(this)" aria-label="what this does">${ICON_INFO}<span class="tooltip">links your install to your membership so you can publish to the library. your thinking stays on your machine &mdash; only what you publish is ever sent.</span></button></p>` : `<p class="line">you're in. call /alexandria in your coding agent.</p>`}
+    ${inviteUrl ? `<p class="line"><button type="button" class="action" onclick="copyInvite(this)" aria-label="copy your invite link">copy your invite link <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> &mdash; three friends join through it and you&rsquo;re free. <button type="button" class="info" onclick="toggleTip(this)" aria-label="what this does">${ICON_INFO}<span class="tooltip">${escapeHtml(inviteDisplay)} &mdash; it carries your code, so anyone who joins through it is credited to you.</span></button></p>` : ''}
   </div>
-  <p class="deal"><span class="free">first month free</span>, then $10/month &mdash; or <span class="free">free for good</span> when three friends join through you. if that's a stretch, just email and it's waived. you're joining the collective, never paying to use the tool.</p>${viaToken ? '' : `
-  <p class="aside">no agent on hand? add the shortcut and start saving &mdash; what you save becomes your first session, we'll email the rest.</p>`}`}
-  ${isReturning ? '' : `<div class="mechanics">
-    <span class="mechanics-row">we never see your data &mdash; <button type="button" class="action" onclick="copyMechanics(this)" aria-label="copy Mechanics.md">Mechanics.md <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button></span>
-    <span class="mechanics-row mechanics-hint">paste into your ai chat to verify.</span>
-  </div>`}
+  <p class="deal"><span class="free">first month free</span>, then $10/month &mdash; or free with three friends, or email to waive.</p>`}
   <p class="signout">wrong account? <a href="https://github.com/logout" target="_blank" rel="noopener noreferrer">sign out of github</a></p>
 </div>
 <script>
@@ -254,20 +227,8 @@ function manualCopy(text, el) {
     window.prompt('copy this:', text);
   }
 }
-function copyRemote(url, el) {
-  return fetch(url).then(function(r) {
-    if (!r.ok) throw new Error('fetch ' + r.status);
-    return r.text();
-  }).then(function(text) { return copyText(text, el); }).catch(function() {
-    window.open(url, '_blank', 'noopener');
-  });
-}
 function copyCmd(el) { copyText(${jsLiteral(curlCmd)}, el); }
 function copyInvite(el) { copyText(${jsLiteral(inviteUrl)}, el); }
-function copyMechanics(el) {
-  var t = ${jsLiteral(mechanicsContent)};
-  if (t) copyText(t, el); else copyRemote(${jsLiteral(MECHANICS_URL)}, el);
-}
 function toggleTip(el) {
   var wasActive = el.classList.contains('active');
   document.querySelectorAll('.info.active').forEach(function(e) { e.classList.remove('active'); });
