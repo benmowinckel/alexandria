@@ -846,13 +846,33 @@ emit_row "$STATUS_FORK" "public fork" "$DETAIL_FORK"
 [ "$ICLOUD_APPLICABLE" = "yes" ] && emit_row "$STATUS_ICLOUD" "iCloud" "$DETAIL_ICLOUD"
 
 echo ""
-if [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
+# Core health gate. files/canon/hooks/core are the must-haves; the rest (repo,
+# fork, iCloud, account) degrade gracefully and are fine to skip. If a CORE piece
+# didn't land the install didn't really land — say so plainly and stop the agent,
+# rather than handing a half-built base to the block (the one real disaster).
+CORE_OK=true
+for s in "$STATUS_FILES" "$STATUS_CANON" "$STATUS_HOOKS" "$STATUS_CORE"; do
+  [ "$s" = "ok" ] || CORE_OK=false
+done
+
+if [ "$CORE_OK" != "true" ]; then
+  echo "Install incomplete — a core piece didn't land (see the ✗ rows above)."
+  echo "Re-run the one line; it's safe and never overwrites your files:"
+  if [ "$KEYLESS" = "true" ]; then
+    echo "  curl -fsSL alexandria-library.com/a | bash"
+  else
+    echo "  curl -fsSL alexandria-library.com/a | bash -s -- \$API_KEY"
+  fi
+  echo ""
+  echo "AGENT: core install failed — do NOT read the block, start setup, or draft anything."
+  echo "Tell the Author which row above is ✗ and to re-run the line above; then stop."
+elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
   echo "Installed — you're set up. Nothing else to copy or click."
   echo ""
-  echo "AGENT: continue now — read ~/alexandria/system/.block and follow it to draft this"
-  echo "Author's constitution from what's already on their machine, then make the in-flow"
-  echo "founding-member JOIN ask at the end (it's the last step of the block). First tell"
-  echo "them you're starting and that they can stop anytime; then begin. Don't wait to be asked."
+  echo "AGENT: continue now — read ~/alexandria/system/.block and follow it. It verifies"
+  echo "this install, drafts the Author's constitution from what's already on their machine,"
+  echo "and ends with the in-flow founding-member JOIN. First tell them you're starting and"
+  echo "that they can step away or stop anytime; then begin. Don't wait to be asked."
   echo "(Author: if it doesn't start on its own, just say \"begin\".)"
   if [ "$KEYLESS" = "true" ]; then
     echo ""
