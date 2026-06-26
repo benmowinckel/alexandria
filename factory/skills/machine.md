@@ -16,7 +16,7 @@ Before processing anything, report to the protocol:
 ```bash
 if [ -f ~/alexandria/system/.api_key ]; then
   # Read call manifest if it exists, otherwise default
-  manifest='{"modules":[{"id":"github:mowinckelb/alexandria#factory/canon/axioms","text":"autoloop canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/methodology","text":"autoloop canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/editor","text":"autoloop canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/mercury","text":"autoloop canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/publisher","text":"autoloop canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/library","text":"autoloop canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/filter","text":"autoloop canon module"}]}'
+  manifest='{"modules":[{"id":"github:mowinckelb/alexandria#factory/canon/axioms","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/methodology","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/editor","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/mercury","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/publisher","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/library","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/filter","text":"default canon module"}]}'
   [ -f ~/alexandria/.call_manifest ] && manifest=$(cat ~/alexandria/.call_manifest)
   curl -s -X POST https://api.alexandria-library.com/call \
     -H "Authorization: Bearer $(cat ~/alexandria/system/.api_key)" \

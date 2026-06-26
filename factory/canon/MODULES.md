@@ -1,6 +1,6 @@
 # Canon modules — Foundation and Founder
 
-*The canon is just files on your machine — your `alexandria.md`, the system that develops your mind (the working loop plus how to run it well), like a `design.md` or any script you keep. What it produces is your `mind.md` — your mind itself, the data. Both are yours: edit, replace, or ignore them. Alexandria is an aggregation hub you optionally connect to; it offers strong defaults and aggregates what works across everyone. The only thing that is not a file is the protocol (account · file · call) — the connection to the hub itself.*
+*The canon is just files on your machine — your `alexandria.md`, the system that develops your mind (the working loop plus how to run it well), like a `design.md` or any script you keep. What it produces is your `mind.md` — your mind itself, the data. Both are yours: edit, replace, or ignore them. Alexandria is an aggregation hub you optionally connect to; it offers strong defaults and aggregates what works across everyone. The only thing that is not a file is the spine (account · file · call) — the connection to the hub itself.*
 
 *Two layers make the canon. Below them sits a third layer that is **not** canon — the marketplace — where person-specific modules live. The line between canon and marketplace is **generality**.*
 
