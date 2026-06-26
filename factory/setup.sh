@@ -498,6 +498,54 @@ if [ -d "$ICLOUD_DIR" ] && [ "$(uname)" = "Darwin" ]; then
   echo "  iCloud: input pipe ready (~/alexandria/files/vault/input → iCloud/alexandria)"
 fi
 
+# ── 6b. iCloud full backup mirror (macOS) ────────────────────────
+# Beyond the input pipe above: a daily, secret-free, .git-free mirror of the
+# whole vault + canon to iCloud — parallel to the hourly GitHub push, so the
+# Author's mind is backed up in two independent places (Apple + GitHub).
+# Secrets live in ~/alexandria/system/ (never under files/), so files/ is safe
+# to mirror wholesale. Writes to a `files` subdir so it can't collide with any
+# other alexandria-backup layout.
+if [ -d "$ICLOUD_DIR" ] && [ "$(uname)" = "Darwin" ] && command -v rsync &>/dev/null; then
+  ICLOUD_BACKUP="$ICLOUD_DIR/alexandria-backup/files"
+  mkdir -p "$ICLOUD_BACKUP" 2>/dev/null
+  # Mirror once now so the backup exists immediately, not only after first fire.
+  rsync -a --delete --exclude '.git/' --exclude '.DS_Store' \
+    "$ALEX_DIR/files/" "$ICLOUD_BACKUP/" 2>/dev/null
+  BPLIST="$HOME/Library/LaunchAgents/io.alexandria.icloud-backup.plist"
+  mkdir -p "$HOME/Library/LaunchAgents" 2>/dev/null
+  cat > "$BPLIST" <<BPLIST_END
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>io.alexandria.icloud-backup</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/rsync</string>
+    <string>-a</string>
+    <string>--delete</string>
+    <string>--exclude</string>
+    <string>.git/</string>
+    <string>--exclude</string>
+    <string>.DS_Store</string>
+    <string>$ALEX_DIR/files/</string>
+    <string>$ICLOUD_BACKUP/</string>
+  </array>
+  <key>StartInterval</key>
+  <integer>86400</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>StandardErrorPath</key>
+  <string>$ALEX_DIR/system/.icloud-backup.log</string>
+</dict>
+</plist>
+BPLIST_END
+  launchctl unload "$BPLIST" 2>/dev/null
+  launchctl load "$BPLIST" 2>/dev/null
+  echo "  iCloud: full backup mirror ready (daily → iCloud/alexandria-backup/files)"
+fi
+
 # ── Verify API key works ──────────────────────────────────────────
 
 # Fail loudly if the key is wrong — silent failures at setup time
