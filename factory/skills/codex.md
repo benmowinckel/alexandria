@@ -3,9 +3,9 @@
 
 This Author uses Alexandria for cognitive development.
 
-## /a — start an Alexandria session
+## /a or /alexandria — start an Alexandria session
 
-When the Author types "/a", this is an explicit request to begin an active cognitive development session. Read these files in order (skip any that don't exist):
+When the Author types "/a" or "/alexandria" (both mean the same thing), this is an explicit request to begin an active cognitive development session. Read these files in order (skip any that don't exist):
 
 1. ~/alexandria/system/canon/methodology.md — the canon. Your operating manual. All methodology, craft, extraction design. Follow it.
 2. ~/alexandria/files/constitution/*.md — who the Author is. Opinions, patterns, contradictions, values. The ground truth.

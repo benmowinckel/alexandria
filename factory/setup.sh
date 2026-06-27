@@ -120,8 +120,19 @@ fetch_factory "block.md" "$ALEX_DIR/system/.block" "block.md" yes
 
 # Claude Code — skill + hooks
 if command -v node &>/dev/null && { [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; }; then
-  mkdir -p "$HOME/.claude/skills/alexandria" 2>/dev/null
-  fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/alexandria/SKILL.md" "skills/claudecode.md" yes
+  # Install the skill under BOTH names so /a and /alexandria both work (Claude Code
+  # keys on the skill, by dir + frontmatter name). Same content; the alias's
+  # frontmatter `name:` is rewritten to alexandria. Additive — if the rewrite ever
+  # fails, /a still works, so no regression.
+  mkdir -p "$HOME/.claude/skills/a" "$HOME/.claude/skills/alexandria" 2>/dev/null
+  fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/a/SKILL.md" "skills/claudecode.md" yes
+  if fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/alexandria/SKILL.md" "skills/claudecode.md (/alexandria alias)" yes; then
+    if [ "$(uname)" = "Darwin" ]; then
+      sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
+    else
+      sed -i 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
+    fi
+  fi
 
   mkdir -p "$HOME/.claude/scheduled-tasks/alexandria" 2>/dev/null
   # Bootstrap pattern: SKILL.md is a tiny stub that fetches scheduled.md on every
@@ -229,7 +240,15 @@ fi
 # Factory (droid CLI)
 if [ -d "$HOME/.factory" ] || command -v droid &>/dev/null; then
   mkdir -p "$HOME/.factory/droids" 2>/dev/null
+  # Both names: invoke the `a` droid or the `alexandria` droid.
   fetch_factory "skills/droid.md" "$HOME/.factory/droids/a.md" "skills/droid.md" yes
+  if fetch_factory "skills/droid.md" "$HOME/.factory/droids/alexandria.md" "skills/droid.md (alexandria alias)" yes; then
+    if [ "$(uname)" = "Darwin" ]; then
+      sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.factory/droids/alexandria.md" 2>/dev/null
+    else
+      sed -i 's/^name: a$/name: alexandria/' "$HOME/.factory/droids/alexandria.md" 2>/dev/null
+    fi
+  fi
   echo "  Factory: configured"
 fi
 
@@ -595,7 +614,7 @@ fi
 if [ -x "$ALEX_DIR/system/hooks/shim.sh" ] && \
    bash -n "$ALEX_DIR/system/hooks/shim.sh" 2>/dev/null && \
    [ -s "$ALEX_DIR/system/.hooks_payload" ]; then
-  STATUS_HOOKS="ok"; DETAIL_HOOKS="shim.sh + payload ready"
+  STATUS_HOOKS="ok"; DETAIL_HOOKS="loads your context + captures, every session"
 else
   STATUS_HOOKS="fail"; DETAIL_HOOKS="hooks not installed — re-run setup"
 fi
@@ -630,7 +649,7 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   if [ -f "$HOME/.claude/settings.json" ] && \
      grep -q "alexandria/system/hooks/shim.sh" "$HOME/.claude/settings.json" 2>/dev/null && \
      [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ]; then
-    STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a skill + session hooks wired"
+    STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a + /alexandria skill + session hooks wired"
   else
     STATUS_CLAUDE="fail"; DETAIL_CLAUDE="Claude Code detected but not configured — re-run setup"
   fi
@@ -876,7 +895,7 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
     echo ""
     echo "The tool is yours: free, local, no account, never sent to us (any backup goes only"
     echo "to your own GitHub + iCloud). After it drafts your starter mind it'll show you how to"
-    echo "join the collective — your own founding-member number — at alexandria-library.com/join"
+    echo "join the collective at alexandria-library.com/join — the library, the people, being seen"
     echo "(first month free, or free with 3 friends). The tool stays free either way."
   fi
 else

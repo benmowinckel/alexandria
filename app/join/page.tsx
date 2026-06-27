@@ -58,8 +58,8 @@ export default async function JoinPage({
 
         <p className="join-pitch">
           the tool is free and always will be. joining the collective is the part
-          you pay for &mdash; your own founding-member number, a place in the
-          shared library, and the people building it alongside you.
+          you pay for &mdash; a place in the shared library, the people building
+          it alongside you, and being seen among them.
         </p>
 
         <a className="join-btn" href={joinUrl}>

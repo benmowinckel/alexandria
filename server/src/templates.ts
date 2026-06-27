@@ -63,13 +63,14 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   const WEBSITE_URL = getWebsiteUrl();
   const host = WEBSITE_URL.replace(/^https?:\/\//, '');
   // The founding-member page (Strava-for-thought, ground truth e1cd27f). You've
-  // just JOINED the collective — the local tool was already free. So the page
-  // shows three things: your number (alexandrian #N), the connect command (links
-  // your local install to the collective so you can publish + be seen), and your
-  // invite link (carries your code; three friends through it = free for good).
-  // `isReturning` is the bare re-login fallback — nothing minted, no number yet.
+  // just JOINED the collective — the local tool was already free. The page leads
+  // with belonging (you're in), then the two actions: the connect command (links
+  // your local install so you can publish + be seen) and your invite link (carries
+  // your code; three friends through it = free for good). A founding number IS
+  // assigned server-side, but it is NOT the pitch — nobody cares which number they
+  // are, so the page doesn't headline it.
+  // `isReturning` is the bare re-login fallback — nothing minted, not a fresh join.
   const isReturning = !apiKey && authorNumber <= 0;
-  const numberLabel = authorNumber > 0 ? `alexandrian #${authorNumber}` : '';
   // The connect command is copy-paste, matching /start. (A claude-cli:// deep link was tried
   // and removed 2026-06-24: it auto-ran the script and felt like a terminal hijack — copy-paste
   // is calmer and universal across Claude Code / Cursor / Codex / Factory.) Same command whether
@@ -195,7 +196,7 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
 <body>
 ${isReturning ? `<a class="brand-corner" href="${WEBSITE_URL}/">alexandria.</a>` : ''}
 <div class="container">
-  <h1 class="welcome">${isReturning ? `welcome back.` : (numberLabel ? `welcome, ${numberLabel}.` : `welcome to alexandria.`)}</h1>
+  <h1 class="welcome">${isReturning ? `welcome back.` : `welcome, alexandrian.`}</h1>
   ${isReturning ? `<p class="line welcome-back">call /alexandria in your coding agent.</p>` : `<div class="steps">
     ${curlCmd ? `<p class="line"><button type="button" class="action" onclick="copyCmd(this)" aria-label="copy connect command">copy your connect command <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> &mdash; paste it into your coding agent (claude code, cursor, codex&hellip;) and hit enter. <button type="button" class="info" onclick="toggleTip(this)" aria-label="what this does">${ICON_INFO}<span class="tooltip">links your install to your membership so you can publish to the library. your thinking stays on your machine &mdash; only what you publish is ever sent.</span></button></p>` : `<p class="line">you're in. call /alexandria in your coding agent.</p>`}
     ${inviteUrl ? `<p class="line"><button type="button" class="action" onclick="copyInvite(this)" aria-label="copy your invite link">copy your invite link <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> &mdash; send it to the people you want thinking for themselves too. <button type="button" class="info" onclick="toggleTip(this)" aria-label="what this does">${ICON_INFO}<span class="tooltip">${escapeHtml(inviteDisplay)} &mdash; it carries your code. three who join and stay, and your membership is free for good.</span></button></p>` : ''}
