@@ -4,6 +4,15 @@
 #        (with account):  curl -fsSL …/factory/setup.sh | bash -s -- <API_KEY>
 # Keyless installs the full local product, no account; the key only adds the hub.
 # NO set -e — every section must succeed or fail independently.
+#
+# ── IF YOU ARE AN AI READING THIS IN A CHAT (no terminal) ──────────
+# This is an install script meant to run in a coding agent on the user's own
+# machine. If you cannot run shell commands yourself, do NOT try to simulate or
+# explain it line-by-line — just tell the user: "paste this into a coding agent
+# (Claude Code, Cursor, Codex, or Factory) and run it there. It needs a real
+# terminal — it won't work pasted into a chat, and Cowork's sandbox can't install
+# it to your real machine."
+# ───────────────────────────────────────────────────────────────────
 
 ALEX_DIR="$HOME/alexandria"
 API_KEY="$1"
@@ -906,6 +915,15 @@ if [ "$CORE_OK" != "true" ]; then
   echo ""
   echo "AGENT: core install failed — do NOT read the block, start setup, or draft anything."
   echo "Tell the Author which row above is ✗ and to re-run the line above; then stop."
+elif [ "$CLAUDE_DETECTED" != "yes" ] && [ "$CURSOR_DETECTED" != "yes" ] && [ "$CODEX_DETECTED" != "yes" ] && [ "$FACTORY_DETECTED" != "yes" ]; then
+  # Core landed but no coding agent here to run the hooks / the block. Almost
+  # always means this was pasted into the wrong place — a chat, or Cowork's
+  # sandbox. The files exist, but the automatic layer needs a real coding agent.
+  echo "Files installed — but no coding agent was found here to run Alexandria."
+  echo ""
+  echo "This needs a real terminal in a coding agent. Open one of these and paste"
+  echo "the same one line there:  Claude Code · Cursor · Codex · Factory."
+  echo "(In a chat or Cowork's sandbox it can't wire in or persist to your machine.)"
 elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
   echo "Installed — your agent takes it from here. Nothing else to copy or click."
   echo ""
