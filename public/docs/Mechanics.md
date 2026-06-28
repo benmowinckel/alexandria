@@ -118,9 +118,11 @@ What protects you anyway:
 
 **Residual gap:** compromise of the offline signing key would compromise future payloads. Mitigations: the key is offline-held, the maintainer's repo is 2FA-protected, the key-rotation procedure is documented in `TRUST.md`. If that residual gap matters to you, run a frozen install (see below).
 
-### Want a frozen install instead?
+### Turning off continuous updates
 
-Fork `mowinckelb/alexandria` on GitHub. Rewrite `mowinckelb/alexandria` to `YOUR-HANDLE/alexandria` in every script + skill file under `factory/`, then install from your fork:
+**The simple freeze — delete one file.** `rm ~/alexandria/system/hooks/auto-update`. From then on neither the shim nor the payload fetches anything from us — every session runs on your local copy in `~/alexandria/system/canon/`, with zero network contact with Alexandria. It's on by default (the file's own contents explain this); deleting it is the one-line opt-out. Re-running setup restores it.
+
+**The paranoid freeze — fork it.** If you don't even want to *fetch-and-verify* from our repo, fork `mowinckelb/alexandria` on GitHub. Rewrite `mowinckelb/alexandria` to `YOUR-HANDLE/alexandria` in every script + skill file under `factory/`, then install from your fork:
 
 ```
 git clone https://github.com/YOUR-HANDLE/alexandria.git

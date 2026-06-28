@@ -92,6 +92,27 @@ fetch_factory "hooks/shim.sh" "$ALEX_DIR/system/hooks/shim.sh" "hooks/shim.sh" y
 chmod +x "$ALEX_DIR/system/hooks/shim.sh"
 fetch_factory "hooks/payload.sh" "$ALEX_DIR/system/.hooks_payload" "hooks/payload.sh" yes
 
+# Continuous-update module — present = on (default). Its contents ARE the
+# explanation; deleting the file freezes updates (shim + payload both check it,
+# so a delete = zero contact with Alexandria, fully local). Seed-if-missing so a
+# deliberate deletion survives unless the Author re-runs setup.
+if [ ! -f "$ALEX_DIR/system/hooks/auto-update" ]; then
+  cat > "$ALEX_DIR/system/hooks/auto-update" <<'AUTOUPDATE_END'
+Alexandria — continuous updates: ON
+
+While this file exists, each session pulls the latest methodology from
+Alexandria's public GitHub and verifies it against the maintainer's offline
+signing key before running anything — nothing unsigned ever runs. The only
+trust here is GitHub (hosting) + the maintainer (the one person who can sign).
+Updates are surfaced as a notice; your local canon is never auto-overwritten.
+
+DELETE THIS FILE to freeze: no fetch, no contact with Alexandria — you run
+forever on your local copy in ~/alexandria/system/canon/. Fully sovereign.
+
+Full mechanism: https://alexandria-library.com/mechanics
+AUTOUPDATE_END
+fi
+
 # Allowed signers — the trust root for payload signature verification.
 # Embedded here rather than fetched separately so the public key arrives in the
 # same atomic install step as the shim that uses it. To rotate, replace the

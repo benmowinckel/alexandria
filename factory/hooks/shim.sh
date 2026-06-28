@@ -90,7 +90,11 @@ if [ "$MODE" = "session-start" ]; then
   fresh=false
   payload_tmp=$(mktemp 2>/dev/null)
 
-  if [ -n "$payload_tmp" ] && curl -sf --max-time 5 "$PAYLOAD_URL" -o "$payload_tmp" 2>/dev/null; then
+  # Continuous-update module (default on). If the Author deleted
+  # ~/alexandria/system/hooks/auto-update, don't fetch a fresh payload — run the
+  # cached one (which makes the same check and skips its canon fetch too). Net:
+  # deleting that one file = zero contact with Alexandria, runs fully local.
+  if [ -f "$ALEX_DIR/system/hooks/auto-update" ] && [ -n "$payload_tmp" ] && curl -sf --max-time 5 "$PAYLOAD_URL" -o "$payload_tmp" 2>/dev/null; then
     fetch_status=0
     # Defensive: HTML 404 pages could satisfy a naive size check
     if [ -s "$payload_tmp" ] && [ "$(wc -c < "$payload_tmp")" -gt 100 ]; then
