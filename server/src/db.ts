@@ -25,3 +25,24 @@ export function generateId(): string {
 export function currentMonth(): string {
   return new Date().toISOString().slice(0, 7);
 }
+
+// Lazy-add the per-file paid price column (additive, nullable). Mirrors the
+// ensureCounterSchema pattern — works on deploy with no separate migration
+// apply. Memoized per isolate; the ALTER throws "duplicate column" once the
+// column exists, which we ignore.
+// Paid-item price clamp — $1 to $1000 (cents). Single source of truth for the
+// valid price range, used both at write (PUT /file) and at checkout.
+export function clampPaidAmount(amountCents: number): number {
+  return Math.max(100, Math.min(100000, amountCents));
+}
+
+let _filePriceColReady = false;
+export async function ensureFilePriceColumn(): Promise<void> {
+  if (_filePriceColReady) return;
+  try {
+    await getDB().prepare('ALTER TABLE protocol_files ADD COLUMN price_cents INTEGER').run();
+  } catch {
+    /* column already exists */
+  }
+  _filePriceColReady = true;
+}

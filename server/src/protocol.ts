@@ -2,7 +2,7 @@
 
 import type { Hono } from 'hono';
 import { requireAuth, requireAuthor } from './auth.js';
-import { getDB, getR2 } from './db.js';
+import { getDB, getR2, ensureFilePriceColumn, clampPaidAmount } from './db.js';
 import { logEvent } from './analytics.js';
 import { saveAccount, getKV } from './kv.js';
 import { resolveModule, authorFromModuleId, deriveKind, parseModuleId } from './marketplace-catalog.js';
@@ -44,6 +44,15 @@ export function registerProtocol(app: Hono) {
     // POST /account/connect); the hard backstop is the fail-closed 409 at
     // purchase. Invisible until this moment — never at install.
     const payoutsRequired = visibility === 'paid' && !auth.account.connect_payouts_enabled;
+
+    // Per-file paid price (cents), author-set — this is the "set your price" path
+    // (agent-native; no UI). Clamp to $1–$1000 (matches the checkout clamp).
+    // Absent → null = don't change a stored price (so the session-start
+    // reconciliation re-PUT, which omits it, never wipes it); checkout then
+    // falls back to the per-author default, then $2.
+    const priceCents = (typeof body.price_cents === 'number' && Number.isFinite(body.price_cents))
+      ? clampPaidAmount(Math.round(body.price_cents))
+      : null;
 
     // content_type: absent → markdown default; present → must be one of the
     // types JSON PUT can faithfully carry. Rejecting unsupported types here
@@ -95,9 +104,10 @@ export function registerProtocol(app: Hono) {
     const hashBuf = await crypto.subtle.digest('SHA-256', bodyBytes);
     const contentHash = [...new Uint8Array(hashBuf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 
+    await ensureFilePriceColumn();
     const existing = await getDB().prepare(
-      'SELECT text, visibility, content_type, content_hash FROM protocol_files WHERE account_id = ? AND name = ?'
-    ).bind(id, name).first<{ text: string | null; visibility: string; content_type: string; content_hash: string | null }>();
+      'SELECT text, visibility, content_type, content_hash, price_cents FROM protocol_files WHERE account_id = ? AND name = ?'
+    ).bind(id, name).first<{ text: string | null; visibility: string; content_type: string; content_hash: string | null; price_cents: number | null }>();
 
     if (
       existing
@@ -105,6 +115,7 @@ export function registerProtocol(app: Hono) {
       && existing.visibility === visibility
       && existing.content_type === contentType
       && (existing.text ?? null) === (text ?? null)
+      && (priceCents === null || priceCents === (existing.price_cents ?? null))
     ) {
       return c.json({ ok: true, unchanged: true, ...(payoutsRequired ? { payouts_required: true } : {}) });
     }
@@ -124,15 +135,16 @@ export function registerProtocol(app: Hono) {
 
     await getR2().put(`protocol/${id}/${name}.${ext}`, bodyBytes);
     await getDB().prepare(
-      `INSERT INTO protocol_files (account_id, name, text, visibility, updated_at, content_type, content_hash)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO protocol_files (account_id, name, text, visibility, updated_at, content_type, content_hash, price_cents)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(account_id, name) DO UPDATE SET
          text = COALESCE(excluded.text, protocol_files.text),
          visibility = excluded.visibility,
          updated_at = excluded.updated_at,
          content_type = excluded.content_type,
-         content_hash = excluded.content_hash`
-    ).bind(id, name, text, visibility, now, contentType, contentHash).run();
+         content_hash = excluded.content_hash,
+         price_cents = COALESCE(excluded.price_cents, protocol_files.price_cents)`
+    ).bind(id, name, text, visibility, now, contentType, contentHash, priceCents).run();
 
     logEvent('protocol_file_published', {
       author: auth.account.github_login,

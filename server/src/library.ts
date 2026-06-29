@@ -7,7 +7,7 @@
  */
 
 import { Hono, type Context } from 'hono';
-import { getDB, generateId } from './db.js';
+import { getDB, generateId, ensureFilePriceColumn, clampPaidAmount } from './db.js';
 import { logEvent } from './analytics.js';
 import {
   extractApiKey,
@@ -73,10 +73,6 @@ type LibraryAccessGrant = {
 
 // a3 § marketplace — 10% add-on fee (a values decision, single source of truth).
 const MARKETPLACE_FEE_RATE = 0.10;
-
-function clampPaidAmount(amountCents: number): number {
-  return Math.max(100, Math.min(100000, amountCents));
-}
 
 type AccountStore = Record<string, Account>;
 
@@ -316,9 +312,10 @@ export function registerLibraryRoutes(app: Hono): void {
     if (!authorAccount?.github_id) return c.json({ error: 'Author not found' }, 404);
 
     const db = getDB();
+    await ensureFilePriceColumn();
     const file = await db.prepare(
-      'SELECT account_id, name, visibility FROM protocol_files WHERE account_id = ? AND name = ?'
-    ).bind(String(authorAccount.github_id), name).first<{ account_id: string; name: string; visibility: string }>();
+      'SELECT account_id, name, visibility, price_cents FROM protocol_files WHERE account_id = ? AND name = ?'
+    ).bind(String(authorAccount.github_id), name).first<{ account_id: string; name: string; visibility: string; price_cents: number | null }>();
     if (!file) return c.json({ error: 'File not found' }, 404);
     if (file.visibility !== 'paid') return c.json({ error: 'Only paid files can be checked out' }, 400);
 
@@ -327,15 +324,20 @@ export function registerLibraryRoutes(app: Hono): void {
       .first<{ settings: string | null }>()
       .catch(() => null);
     const settings = parseJson<Record<string, unknown>>(profile?.settings, {});
-    const defaultAmountCents = typeof settings.paid_price_cents === 'number'
-      ? clampPaidAmount(Math.round(settings.paid_price_cents))
-      : 200;
+    // Per-file price (author-set via PUT /file) wins over the per-author default,
+    // then $2. The author's price is the FLOOR — a buyer may tip up via
+    // amount_cents but never underpay the set price.
+    const authorPriceCents = clampPaidAmount(
+      typeof file.price_cents === 'number' ? file.price_cents
+        : typeof settings.paid_price_cents === 'number' ? Math.round(settings.paid_price_cents)
+        : 200,
+    );
 
     const body = await c.req.json().catch(() => ({})) as { amount_cents?: unknown; return_origin?: unknown };
     const requestedAmount = typeof body.amount_cents === 'number' && Number.isFinite(body.amount_cents)
       ? Math.round(body.amount_cents)
-      : defaultAmountCents;
-    const amountCents = clampPaidAmount(requestedAmount);
+      : authorPriceCents;
+    const amountCents = clampPaidAmount(Math.max(requestedAmount, authorPriceCents));
 
     const accessorKey = extractApiKey(c);
     const accessor = accessorKey ? await findByApiKey(accessorKey) : null;
