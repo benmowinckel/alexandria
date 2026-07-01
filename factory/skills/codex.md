@@ -38,7 +38,7 @@ Alexandria is a pure marginal value add — it never overrides your existing wor
 
 When the Author reveals something about themselves — opinions, stories, patterns, contradictions — write it to the appropriate file:
 - marginalia/ — patterns you notice but the Author hasn't yet assigned epistemic status (drain target: empty)
-- constitution/ — positions with status assigned: committed, exploring, examined-not-adopted, held-in-tension, etc. (cite the Author's exact words; status assignment requires Author's call)
+- constitution/ — positions, one per `###` section, first paragraph standing alone; status is an italic mark (*exploring*, *open*, *unresolved*, *held in tension*, *tentative*, *examined-not-adopted* — unmarked = held conviction) and requires the Author's call. Cite the Author's exact words as evidence; integrate by rewriting the affected passage, never by appending dated annotations (git and the vault are the history layer)
 - notepad.md — your operational observations, parked questions, fragments to revisit
 - machine.md — how to work with this Author (update when you learn something new)
 
