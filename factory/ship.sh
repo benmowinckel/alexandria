@@ -40,6 +40,8 @@ SIGNED_FILES=(
   factory/scripts/brief.py
   factory/scripts/install.sh
   factory/scripts/publish.sh
+  factory/scripts/capture_resolver.py
+  factory/systems/capture-pipeline.md
   factory/migrate.sh
 )
 
@@ -53,7 +55,8 @@ SIGNED_FILES=(
 MUST_SIGN=(
   factory/hooks/payload.sh factory/skills/scheduled.md
   factory/skills/machine.md factory/skills/factory.md
-  factory/scripts/brief.py factory/scripts/install.sh factory/scripts/publish.sh factory/migrate.sh
+  factory/scripts/brief.py factory/scripts/install.sh factory/scripts/publish.sh
+  factory/scripts/capture_resolver.py factory/migrate.sh
 )
 for f in "${MUST_SIGN[@]}"; do
   printf '%s\n' "${SIGNED_FILES[@]}" | grep -qxF "$f" || {

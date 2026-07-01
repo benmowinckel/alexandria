@@ -100,6 +100,7 @@ mkdir -p "$ALEX_DIR/system/canon"
 fetch_factory "hooks/shim.sh" "$ALEX_DIR/system/hooks/shim.sh" "hooks/shim.sh" yes
 chmod +x "$ALEX_DIR/system/hooks/shim.sh"
 fetch_factory "hooks/payload.sh" "$ALEX_DIR/system/.hooks_payload" "hooks/payload.sh" yes
+fetch_factory "scripts/capture_resolver.py" "$ALEX_DIR/system/scripts/capture_resolver.py" "scripts/capture_resolver.py" yes
 
 # Continuous-update module — present = on (default). Its contents ARE the
 # explanation; deleting the file freezes updates (shim + payload both check it,
@@ -177,16 +178,20 @@ if command -v node &>/dev/null && { [ -d "$HOME/.claude" ] || command -v claude 
     let settings = {};
     try { settings = JSON.parse(fs.readFileSync(f, 'utf-8')); } catch {}
     if (!settings.hooks) settings.hooks = {};
-    // Match any prior shim registration regardless of path form (~ vs \$HOME,
-    // /system/hooks/shim vs /hooks/shim) — substring on 'alexandria' AND 'shim.sh'
-    // de-dupes across naming variants so reinstalls replace rather than append.
+    // Match any prior shim/resolver registration regardless of path form (~ vs
+    // \$HOME, /system/hooks/shim vs /hooks/shim) — substring on 'alexandria' AND
+    // the script name de-dupes across naming variants so reinstalls replace
+    // rather than append.
     const filter = arr => (arr || []).filter(h => {
       const s = JSON.stringify(h).toLowerCase();
-      return !(s.includes('alexandria') && s.includes('shim.sh'));
+      return !(s.includes('alexandria') && (s.includes('shim.sh') || s.includes('capture_resolver')));
     });
     settings.hooks.SessionStart = filter(settings.hooks.SessionStart);
     settings.hooks.SessionStart.push({
       hooks: [{ type: 'command', command: 'bash \$HOME/alexandria/system/hooks/shim.sh session-start', timeout: 10 }]
+    });
+    settings.hooks.SessionStart.push({
+      hooks: [{ type: 'command', command: 'python3 \$HOME/alexandria/system/scripts/capture_resolver.py 2>/dev/null || true', timeout: 10 }]
     });
     settings.hooks.SessionEnd = filter(settings.hooks.SessionEnd);
     settings.hooks.SessionEnd.push({
