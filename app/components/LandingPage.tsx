@@ -219,10 +219,11 @@ function FrontFilm() {
         onClick={() => setOpen(true)}
         aria-label={`play ${film.label}`}
       >
-        <span className="film-title" aria-hidden>{film.label}</span>
-        <span className="film-length" aria-hidden>{film.length}</span>
-        <span className="film-play" aria-hidden>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        {/* One line: the title with a quiet play mark beside it — the
+            whole card is the button, the glyph just names the gesture. */}
+        <span className="film-title" aria-hidden>
+          {film.label}
+          <svg className="film-play-glyph" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
             <path d="M8 5.5v13l11-6.5z" />
           </svg>
         </span>
@@ -1324,38 +1325,26 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             0 42px 76px -26px rgba(59, 47, 47, 0.2);
         }
         .film-title {
+          display: inline-flex;
+          align-items: center;
+          gap: 15px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
           font-size: 30px;
           letter-spacing: 0.01em;
           color: #1a1318;
         }
-        .film-length {
-          margin-top: -14px;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 13px;
-          letter-spacing: 0.05em;
-          color: rgba(26, 19, 24, 0.48);
+        .film-play-glyph {
+          margin-top: 2px;
+          color: rgba(26, 19, 24, 0.5);
+          transition: color 200ms ease, transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .film-play {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 58px;
-          height: 58px;
-          border-radius: 50%;
-          background: rgba(23, 19, 16, 0.82);
-          color: #f5f0e8;
-          transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), background 200ms ease;
+        .film-canvas:hover .film-play-glyph {
+          color: #1a1318;
+          transform: translateX(2px);
         }
-        .film-play svg { margin-left: 3px; }
-        .film-canvas:hover .film-play {
-          transform: scale(1.06);
-          background: rgba(23, 19, 16, 1);
-        }
-        .film-canvas:active .film-play {
-          transform: scale(0.98);
+        .film-canvas:active .film-play-glyph {
+          transform: translateX(1px) scale(0.96);
         }
         /* Lightbox — the film lifts out and plays over a dimmed room.
            Backdrop or × or Esc closes. Portalled to <body>. */
