@@ -182,7 +182,11 @@ function HomeInstall() {
   };
   return (
     <div className="cta-block">
-      <button type="button" className="install-cta" onClick={copy} aria-label="copy the install command">
+      {/* Two renders, switched on input method (hover/pointer media query,
+          same pattern as /start): pointer-fine devices copy the command in
+          place; touch devices have no terminal, so the same button walks
+          them to /start (shortcut + send-it-to-my-computer flow). */}
+      <button type="button" className="install-cta home-cta-desktop" onClick={copy} aria-label="copy the install command">
         join the tribe
         <span className="install-cta-icon" aria-hidden>
           {copied ? (
@@ -192,10 +196,81 @@ function HomeInstall() {
           )}
         </span>
       </button>
-      <span className="cta-sub install-cta-sub">
+      <span className="cta-sub install-cta-sub home-cta-desktop">
         paste into your agent.
       </span>
+      <Link href="/start" className="install-cta home-cta-touch">
+        join the tribe
+      </Link>
+      <span className="cta-sub install-cta-sub home-cta-touch">
+        two minutes, from your phone.
+      </span>
     </div>
+  );
+}
+
+// The films — front-slide rotation. The demo leads until the launch film
+// ships; add entries here and the plate arrows appear automatically.
+// Click-to-play only (an autoplaying screen recording would wreck the
+// tableau; explainers are click-to-play, never autoplay-with-sound).
+const FILMS = [
+  {
+    src: '/demo-public.mp4',
+    label: 'the demo',
+    length: 'ten minutes',
+    aspect: '1660 / 1080',
+  },
+];
+
+function FrontFilm() {
+  const [idx, setIdx] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const film = FILMS[idx];
+  const step = (d: number) => {
+    setIdx((idx + d + FILMS.length) % FILMS.length);
+    setPlaying(false);
+  };
+  return (
+    <figure className="film-frame">
+      <div className="film-canvas" style={{ aspectRatio: film.aspect }}>
+        {playing ? (
+          <video
+            key={film.src}
+            src={film.src}
+            controls
+            autoPlay
+            playsInline
+            className="film-video"
+          />
+        ) : (
+          /* The screen at rest — a designed dark plate, not a raw
+             screen-recording frame (browser chrome on the wall killed
+             the tableau). One glyph, one action. */
+          <button
+            type="button"
+            className="film-poster"
+            onClick={() => setPlaying(true)}
+            aria-label={`play ${film.label}`}
+          >
+            <span className="film-play" aria-hidden>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M8 5.5v13l11-6.5z" />
+              </svg>
+            </span>
+          </button>
+        )}
+      </div>
+      {/* Museum plate under the frame — label, not chrome. */}
+      <figcaption className="film-plate">
+        {FILMS.length > 1 && (
+          <button type="button" className="film-arrow" onClick={() => step(-1)} aria-label="previous film">&larr;</button>
+        )}
+        <span className="film-label"><em>{film.label}</em> &middot; {film.length}</span>
+        {FILMS.length > 1 && (
+          <button type="button" className="film-arrow" onClick={() => step(1)} aria-label="next film">&rarr;</button>
+        )}
+      </figcaption>
+    </figure>
   );
 }
 
@@ -490,8 +565,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             <span className="nav-subtitle nav-subtitle-back" aria-hidden>mentes aeternae</span>
           </div>
           <div className="nav-links">
+            {/* The two depth documents — the demo now lives on the front
+                slide itself (the film frame), so the header carries only
+                the reading: whitepaper (the argument) + letter (the soul). */}
             <span className="nav-group">
-              <a href="/demo" className="nav-demo">demo</a>
+              {/* Both are reading documents now, so both take the letter's
+                  register — the uppercase accent .nav-demo style was the
+                  demo's "act" hierarchy, retired with the link. */}
+              <a href="/whitepaper">whitepaper</a>
               <span className="nav-sep" aria-hidden>·</span>
               <a href="/docs/letter.pdf" target="_blank" rel="noopener noreferrer">letter</a>
             </span>
@@ -550,12 +631,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             display:contents so the existing flow layout takes over. */}
         <div className="stage-top">
         <span className="alpha-mark">san francisco · mmxxvi</span>
-        {/* Frontispiece composition. The wall + niche + fresco + tree
-            shadow ARE the slide (background on .top-slide). The title
-            block sits in the top-left nav (wordmark + small-caps
-            subtitle). Imprint marginalia in the corners. Nothing
-            covers the painting. The reader sees a museum tableau:
-            illuminated scene, title plaque beside it, breathing room. */}
+        {/* Frontispiece composition — the wall scene is the slide; the
+            film frame hangs where the fresco niche sits, a screen in a
+            museum tableau. Poster + plate at rest (the painting's
+            silence, kept); click plays in place. The FILMS rotation
+            grows sideways as the launch film + ads ship. */}
+        <FrontFilm />
         <div className="top-inner" />
         </div>
       </div>
@@ -640,26 +721,29 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 </p>
 
                 <p className="statement-close">
-                  alexandria is for those few. an <em>agents.md</em> tells your
-                  ai how you build; an <em>&ldquo;alexandria.md&rdquo;</em>{' '}
-                  tells it how you think, so it works{' '}<em>with</em>{' '}you,
-                  not for you. the concept is the point &mdash; the shape is
-                  yours.
+                  alexandria is for those few. ai can&rsquo;t read your mind,
+                  but it can read words &mdash; put your thoughts into words,
+                  and it can think{' '}<em>with</em>{' '}you, not for you.
+                  adding an <em>&ldquo;alexandria.md&rdquo;</em>{' '}to your ai
+                  makes that automatic &mdash; it becomes a thought partner,
+                  channelling its intelligence to improve yours, not replace
+                  it.
                   <br /><br />
                   a working first version is the hard part, so take the
-                  founder&rsquo;s, free. like being handed an agents.md, it
-                  doesn&rsquo;t matter if you have one, meant to build one, or
-                  wouldn&rsquo;t know how &mdash; you grab it, make it your own,
-                  and join the others already building theirs. not a system to
-                  download &mdash; a culture to join.
+                  founder&rsquo;s &mdash; his whole system, open-sourced, free.
+                  treat it like a good agents.md &mdash; it doesn&rsquo;t
+                  matter if you have one, planned your own, or wouldn&rsquo;t
+                  know where to start. five minutes, and it&rsquo;s yours to
+                  reshape into any answer you like. not a system to download
+                  &mdash; a culture to join.
                   <br /><br />
                   <span className="way-num">1</span>{' '}
-                  <em className="way-label">the product</em> &mdash; one line,
-                  and you&rsquo;re an author.
+                  <em className="way-label">the product</em>{' '}&mdash; the
+                  founder&rsquo;s system, but make it your own.
                   <br />
                   <span className="way-num">2</span>{' '}
-                  <em className="way-label">the company</em> &mdash; not yet?
-                  stay close.
+                  <em className="way-label">the company</em>{' '}&mdash; follow
+                  along as we build it.
                 </p>
 
                 <div className="cta-pair">
@@ -674,40 +758,31 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   </div>
                 </div>
 
-                {/* Closing footer-cols — Fleet-style 3-column directory.
-                    Rounds off the right column with the tribe (library /
-                    marketplace / github), the company (x / careers), and
-                    legal (privacy / terms). Italic small-caps heads, plain
-                    link text. */}
-                <div className="footer-cols">
-                  <div className="footer-col">
-                    <span className="footer-col-head">tribe</span>
-                    <Link href="/library" className="footer-col-link">library</Link>
-                    <Link href="/marketplace" className="footer-col-link">marketplace</Link>
-                  </div>
-                  <div className="footer-col">
-                    <span className="footer-col-head">company</span>
-                    <a
-                      href="mailto:mowinckel.b@gmail.com?subject=Careers"
-                      className="footer-col-link"
-                    >
-                      careers
-                    </a>
-                    <a
-                      href="https://x.com/benmowinckel"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="footer-col-link"
-                    >
-                      x
-                    </a>
-                  </div>
-                  <div className="footer-col">
-                    <span className="footer-col-head">about</span>
-                    <Link href="/whitepaper" className="footer-col-link">whitepaper</Link>
-                    <Link href="/questions" className="footer-col-link">questions</Link>
-                  </div>
-                </div>
+                {/* Where the command goes — the one wrong-context case the
+                    script can't catch itself (pasted into a chat it never
+                    runs). Quiet, below the CTAs, desktop only (the touch
+                    CTA navigates instead of pasting). */}
+                <p className="cta-where">
+                  claude code &middot; cursor &middot; codex &middot; factory
+                  &mdash; paste in the terminal, not a chat.
+                </p>
+
+                {/* The letter's true last line. */}
+                <p className="low-agency">
+                  <em>low agency is the only friction left.</em>
+                </p>
+
+                {/* One faint line instead of the old 3-column directory
+                    (tried and rejected as noise — truth/website.md). The
+                    library is the collective made visible; questions is the
+                    objection-handler at the decision point. */}
+                <p className="quiet-links">
+                  <Link href="/library">library</Link>
+                  <span className="quiet-sep" aria-hidden>&middot;</span>
+                  <Link href="/marketplace">marketplace</Link>
+                  <span className="quiet-sep" aria-hidden>&middot;</span>
+                  <Link href="/questions">questions</Link>
+                </p>
               </div>
           </div>
 
@@ -1203,6 +1278,105 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           pointer-events: none;
           z-index: 1;
         }
+        /* FILM FRAME — the screen hung on the wall where the fresco niche
+           sits. Sized past the arch (~440×400 at stage scale) so it covers
+           it at every reasonable crop; warm-tinted layered shadow so it
+           reads as an object in the scene, not a UI card. */
+        .film-frame {
+          position: absolute;
+          left: 50%;
+          /* Canvas must fully cover the arch baked into the wall image
+             (stage y 190–590): 680px wide at 1660/1080 = 442px tall,
+             column centre 398 → canvas spans 161–603. */
+          top: 398px;
+          transform: translate(-50%, -50%);
+          width: 680px;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 15px;
+          z-index: 2;
+        }
+        .film-canvas {
+          width: 100%;
+          background: #171310;
+          border: 1px solid rgba(26, 19, 24, 0.16);
+          border-radius: 4px;
+          overflow: hidden;
+          box-shadow:
+            0 1px 4px rgba(59, 47, 47, 0.12),
+            0 12px 28px -10px rgba(59, 47, 47, 0.22),
+            0 34px 64px -26px rgba(59, 47, 47, 0.18);
+        }
+        .film-poster {
+          position: relative;
+          display: block;
+          width: 100%;
+          height: 100%;
+          padding: 0;
+          border: none;
+          cursor: pointer;
+          /* The screen at rest shows the fresco — the same scene the frame
+             replaced, cropped from the wall image itself (continuity: the
+             painting became a film; the launch film re-authors the same
+             gap). A raw demo frame (browser chrome) and a dark plate were
+             both tried — one broke the tableau, the other drowned it. */
+          background: #ece5d8 url('/film-poster-fresco.jpg') center / cover no-repeat;
+        }
+        .film-play {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          background: rgba(23, 19, 16, 0.55);
+          backdrop-filter: blur(6px);
+          color: #f5f0e8;
+          transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), background 200ms ease;
+        }
+        .film-play svg { margin-left: 3px; }
+        .film-poster:hover .film-play {
+          transform: translate(-50%, -50%) scale(1.06);
+          background: rgba(23, 19, 16, 0.72);
+        }
+        .film-poster:active .film-play {
+          transform: translate(-50%, -50%) scale(0.98);
+        }
+        .film-video {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+        /* Museum plate under the frame — label + (when the rotation has
+           more than one film) the side arrows. */
+        .film-plate {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 13.5px;
+          letter-spacing: 0.04em;
+          color: rgba(26, 19, 24, 0.55);
+          user-select: none;
+        }
+        .film-label em { font-style: italic; }
+        .film-arrow {
+          padding: 4px 8px;
+          margin: -4px -8px;
+          border: none;
+          background: none;
+          font: inherit;
+          color: rgba(26, 19, 24, 0.45);
+          cursor: pointer;
+          transition: color 180ms ease;
+        }
+        .film-arrow:hover { color: rgba(26, 19, 24, 0.85); }
         /* Stage — pixel-locked 1440×900 canvas, centred, uniformly scaled.
            Everything inside is absolute pixels at this design size, so
            layout never reflows. JS sets --stage-scale-top from viewport. */
@@ -2149,52 +2323,49 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            the CTAs as a quiet link directory. Italic small-caps column
            heads, plain link text. Mirrors the back-slide register Fleet
            uses but tuned to the warm cream / burgundy palette. */
-        .footer-cols {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, auto));
-          gap: 56px;
-          margin-top: 44px;
-          padding-top: 28px;
-          border-top: 1px solid rgba(26, 19, 24, 0.12);
-        }
-        .footer-col {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-        .footer-col-head {
+        /* Where the command goes — quiet italic line under the CTA pair.
+           Hidden on touch (the touch CTA navigates instead of pasting). */
+        .cta-where {
+          margin: 16px 0 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
-          font-weight: 400;
-          font-size: 11px;
-          letter-spacing: 0.18em;
-          text-transform: lowercase;
-          /* Was rgba(...,0.5) which fell to 3.34:1 contrast on cream.
-             fg-muted is the canonical mid-tone with WCAG-passing
-             contrast across every theme. */
-          color: var(--theme-fg-muted);
-          margin-bottom: 4px;
-          user-select: none;
+          font-size: 12.5px;
+          letter-spacing: 0.03em;
+          color: var(--theme-fg-faint);
         }
-        .footer-col-link {
+        @media (hover: none) and (pointer: coarse) {
+          .cta-where { display: none; }
+        }
+        /* The letter's last line — the post-CTA nudge, one line, its own
+           beat. Slightly larger than the captions so it reads as prose,
+           not chrome. */
+        .low-agency {
+          margin: 22px 0 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 13.5px;
-          font-weight: 400;
-          color: var(--theme-fg);
+          font-size: 15px;
+          letter-spacing: 0.01em;
+          color: var(--theme-fg-muted);
+        }
+        /* One faint link line — replaces the 3-column footer directory
+           (rejected as noise, truth/website.md § tried-and-rejected). */
+        .quiet-links {
+          margin: 18px 0 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 12.5px;
+          letter-spacing: 0.02em;
+          color: var(--theme-fg-faint);
+        }
+        .quiet-links a {
+          color: var(--theme-fg-muted);
           text-decoration: none;
-          line-height: 1.5;
-          letter-spacing: 0.005em;
-          transition: color 180ms ease, opacity 180ms ease;
-          /* Tap target extension — visual unchanged (display:inline-block
-             keeps text flow inside flex column), padding+negative margin
-             pushes hit-rect to ~32px without shifting the column rhythm. */
+          transition: opacity 180ms ease;
+          /* Tap-target extension without shifting the line. */
           display: inline-block;
-          padding: 6px 4px;
-          margin: -6px -4px;
+          padding: 6px 2px;
+          margin: -6px -2px;
         }
-        .footer-col-link:hover {
-          opacity: 0.62;
-        }
+        .quiet-links a:hover { opacity: 0.62; }
+        .quiet-sep { padding: 0 9px; user-select: none; }
         .cta-pair a.lr-cta {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           /* Matches button.install-cta exactly (font-size + padding) so the
@@ -2241,7 +2412,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            filled button (same fill, just a touch bigger), but copies the install
            command to the clipboard instead of navigating. The label stays the
            pretty words; the copy icon + caption say what it does. */
-        .cta-pair button.install-cta {
+        .cta-pair .install-cta {
           display: inline-flex;
           align-items: center;
           gap: 9px;
@@ -2256,9 +2427,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           letter-spacing: 0.003em;
           background: var(--theme-fg);
           color: var(--theme-bg);
+          text-decoration: none;
           transition: opacity 180ms ease;
         }
-        .cta-pair button.install-cta:hover { opacity: 0.86; }
+        .cta-pair .install-cta:hover { opacity: 0.86; }
+        /* Input-method switch for the primary CTA — copy in place on
+           pointer-fine devices, navigate to /start on touch. */
+        .home-cta-touch { display: none !important; }
+        @media (hover: none) and (pointer: coarse) {
+          .home-cta-desktop { display: none !important; }
+          a.home-cta-touch { display: inline-flex !important; }
+          span.home-cta-touch { display: inline !important; }
+        }
         .install-cta-icon {
           display: inline-flex;
           align-items: center;
@@ -2504,18 +2684,27 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             box-shadow: none !important;
           }
           .top-slide {
-            padding: 152px clamp(20px, 5vw, 64px) 96px;
-            /* Portrait viewport crops the wide image more aggressively
-               on the sides; centre-anchored cropping keeps the niche
-               in the visual middle. The desktop 62% offset pulled the
-               niche off-frame to the left here. */
-            background-position: center center;
-            /* Portrait crop fills the viewport with the dark niche +
-               painting (less cream wall visible than at desktop), so
-               the scene reads as a yellow-heavy dark cream. Subtle
-               lift + desaturation pulls it back toward the desktop
-               read. Affects PNG poster and breeze video together. */
+            /* Compact hero — the film frame is the slide on mobile; no
+               dead cream below it. min-height overrides the desktop-flow
+               100svh set above. */
+            min-height: auto;
+            padding: 148px clamp(20px, 5vw, 64px) 72px;
+            /* The baked-in arch would double-image behind the film frame
+               here (on portrait it fills the whole width), so zoom the
+               wall image past it: a clean wall-and-tree-shadow slice from
+               left of the niche. 390% renders the image ~3.9× element
+               width — window ends left of the arch (x≈0.35) at any
+               phone width. */
+            background-size: 390% auto;
+            background-position: 2% 42%;
             filter: brightness(1.06) saturate(0.92);
+          }
+          /* Breeze video + its watermark mask are cut on mobile — the
+             zoomed still IS the backdrop (no double image, no ~1MB
+             download on cellular). */
+          .adam-video,
+          .veo-mask {
+            display: none;
           }
           /* Breeze video sits on top of the PNG; same mobile recentre
              so the niche stays in the visual middle. Without this the
@@ -2699,6 +2888,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           .cta-pair {
             order: 5;
           }
+          .cta-where {
+            order: 5;
+          }
+          .low-agency {
+            order: 5;
+            margin-top: 4px;
+          }
           .wordmark-block {
             order: 6;
             margin-left: 0;
@@ -2708,9 +2904,20 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                the CTAs. Adds to the bottom-inner 64px flex gap. */
             margin-top: 96px;
           }
-          .footer-cols {
+          .quiet-links {
             order: 7;
             margin-top: 0;
+          }
+
+          /* Film frame flows in the top-slide (the stage is
+             display: contents here); full-width plate, generous
+             breathing room inside the 152px/96px slide padding. */
+          .film-frame {
+            position: static;
+            transform: none;
+            width: 100%;
+            max-width: 560px;
+            margin: 0 auto;
           }
 
           /* Statement — drop the absolute roman numerals (they hang in
