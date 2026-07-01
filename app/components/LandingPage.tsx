@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 
 interface Props {
   brandClassName?: string;
@@ -157,53 +158,19 @@ const THEMES: Theme[] = [
 ];
 
 // The homepage primary action: the "join the tribe" button copies the install
-// command to the clipboard (no nav to a second page) — the label stays the
-// pretty words, the copy icon + caption ("paste into your agent") say what it
-// does. The agent does the "is it safe" job once they paste it in.
-const INSTALL_CMD = 'curl -fsSL alexandria-library.com/a | bash';
-
+// "join the tribe" navigates to /start on every device (the action page:
+// open-in-claude-code + copy-command on desktop, shortcut + email on
+// mobile). One scalable door instead of an inline copy that couldn't say
+// where the command goes — new agents, deep links, and flows land on
+// /start without ever touching this button again.
 function HomeInstall() {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(INSTALL_CMD);
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = INSTALL_CMD;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand('copy'); } catch { /* noop */ }
-      document.body.removeChild(ta);
-    }
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
   return (
     <div className="cta-block">
-      {/* Two renders, switched on input method (hover/pointer media query,
-          same pattern as /start): pointer-fine devices copy the command in
-          place; touch devices have no terminal, so the same button walks
-          them to /start (shortcut + send-it-to-my-computer flow). */}
-      <button type="button" className="install-cta home-cta-desktop" onClick={copy} aria-label="copy the install command">
-        join the tribe
-        <span className="install-cta-icon" aria-hidden>
-          {copied ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
-          )}
-        </span>
-      </button>
-      <span className="cta-sub install-cta-sub home-cta-desktop">
-        paste into your agent.
-      </span>
-      <Link href="/start" className="install-cta home-cta-touch">
+      <Link href="/start" className="install-cta">
         join the tribe
       </Link>
-      <span className="cta-sub install-cta-sub home-cta-touch">
-        two minutes, from your phone.
+      <span className="cta-sub install-cta-sub">
+        free, five minutes.
       </span>
     </div>
   );
@@ -211,65 +178,88 @@ function HomeInstall() {
 
 // The films — front-slide rotation. The demo leads until the launch film
 // ships; add entries here and the plate arrows appear automatically.
-// Click-to-play only (an autoplaying screen recording would wreck the
-// tableau; explainers are click-to-play, never autoplay-with-sound).
+// The frame at rest is a title card (the fresco crop was tried and cut —
+// Creation-of-Adam is borderline cliché across ai/tech now); pressing
+// play lifts the film out into a lightbox (x / Esc / backdrop closes).
 const FILMS = [
   {
     src: '/demo-public.mp4',
     label: 'the demo',
     length: 'ten minutes',
-    aspect: '1660 / 1080',
   },
 ];
 
 function FrontFilm() {
   const [idx, setIdx] = useState(0);
-  const [playing, setPlaying] = useState(false);
+  const [open, setOpen] = useState(false);
   const film = FILMS[idx];
   const step = (d: number) => {
     setIdx((idx + d + FILMS.length) % FILMS.length);
-    setPlaying(false);
+    setOpen(false);
   };
+  // Lightbox plumbing — Esc closes, page scroll locks while open.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    const prev = document.documentElement.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.documentElement.style.overflow = prev;
+    };
+  }, [open]);
   return (
     <figure className="film-frame">
-      <div className="film-canvas" style={{ aspectRatio: film.aspect }}>
-        {playing ? (
+      {/* Constant 16:9 canvas so the frame never resizes as the rotation
+          swipes; each film plays at its own aspect inside the lightbox. */}
+      <button
+        type="button"
+        className="film-canvas film-poster"
+        onClick={() => setOpen(true)}
+        aria-label={`play ${film.label}`}
+      >
+        <span className="film-title" aria-hidden>{film.label}</span>
+        <span className="film-length" aria-hidden>{film.length}</span>
+        <span className="film-play" aria-hidden>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M8 5.5v13l11-6.5z" />
+          </svg>
+        </span>
+      </button>
+      {/* Rotation plate — only exists once there's something to rotate;
+          the card itself carries title + length. */}
+      {FILMS.length > 1 && (
+        <figcaption className="film-plate">
+          <button type="button" className="film-arrow" onClick={() => step(-1)} aria-label="previous film">&larr;</button>
+          <span className="film-label"><em>{film.label}</em></span>
+          <button type="button" className="film-arrow" onClick={() => step(1)} aria-label="next film">&rarr;</button>
+        </figcaption>
+      )}
+      {/* The lightbox portals to <body> — .stage-top is transform-scaled,
+          which would make position:fixed resolve against the stage. */}
+      {open && typeof document !== 'undefined' && createPortal(
+        <div className="film-lightbox" onClick={() => setOpen(false)} role="dialog" aria-label={film.label}>
+          <button
+            type="button"
+            className="film-lightbox-close"
+            onClick={() => setOpen(false)}
+            aria-label="close"
+          >
+            &times;
+          </button>
           <video
             key={film.src}
             src={film.src}
             controls
             autoPlay
             playsInline
-            className="film-video"
+            className="film-lightbox-video"
+            onClick={(e) => e.stopPropagation()}
           />
-        ) : (
-          /* The screen at rest — a designed dark plate, not a raw
-             screen-recording frame (browser chrome on the wall killed
-             the tableau). One glyph, one action. */
-          <button
-            type="button"
-            className="film-poster"
-            onClick={() => setPlaying(true)}
-            aria-label={`play ${film.label}`}
-          >
-            <span className="film-play" aria-hidden>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M8 5.5v13l11-6.5z" />
-              </svg>
-            </span>
-          </button>
-        )}
-      </div>
-      {/* Museum plate under the frame — label, not chrome. */}
-      <figcaption className="film-plate">
-        {FILMS.length > 1 && (
-          <button type="button" className="film-arrow" onClick={() => step(-1)} aria-label="previous film">&larr;</button>
-        )}
-        <span className="film-label"><em>{film.label}</em> &middot; {film.length}</span>
-        {FILMS.length > 1 && (
-          <button type="button" className="film-arrow" onClick={() => step(1)} aria-label="next film">&rarr;</button>
-        )}
-      </figcaption>
+        </div>,
+        document.body,
+      )}
     </figure>
   );
 }
@@ -569,12 +559,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 slide itself (the film frame), so the header carries only
                 the reading: whitepaper (the argument) + letter (the soul). */}
             <span className="nav-group">
-              {/* Both are reading documents now, so both take the letter's
-                  register — the uppercase accent .nav-demo style was the
-                  demo's "act" hierarchy, retired with the link. */}
+              {/* Two reading documents, differentiated by register:
+                  whitepaper roman (the argument), founder's letter italic
+                  (the author's hand). "founder's letter" over "letter" —
+                  a genre everyone recognises, so the click decision is
+                  legible; "manifesto" rejected (the connotations). */}
               <a href="/whitepaper">whitepaper</a>
               <span className="nav-sep" aria-hidden>·</span>
-              <a href="/docs/letter.pdf" target="_blank" rel="noopener noreferrer">letter</a>
+              <a href="/docs/letter.pdf" className="nav-letter" target="_blank" rel="noopener noreferrer">founder&rsquo;s letter</a>
             </span>
           </div>
         </div>
@@ -749,23 +741,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 <div className="cta-pair">
                   <HomeInstall />
                   <div className="cta-block">
+                    {/* Label echoes line 2 verbatim ("follow along as we
+                        build it") — the scanner reads the numbered line,
+                        sees the same words on the button, zero friction.
+                        "stay close" was lovelier but opaque. */}
                     <Link href="/follow" className="lr-cta lr-cta-ghost">
-                      stay close
+                      follow along
                     </Link>
                     <span className="cta-sub">
                       friends, family, the curious
                     </span>
                   </div>
                 </div>
-
-                {/* Where the command goes — the one wrong-context case the
-                    script can't catch itself (pasted into a chat it never
-                    runs). Quiet, below the CTAs, desktop only (the touch
-                    CTA navigates instead of pasting). */}
-                <p className="cta-where">
-                  claude code &middot; cursor &middot; codex &middot; factory
-                  &mdash; paste in the terminal, not a chat.
-                </p>
 
                 {/* The letter's true last line. */}
                 <p className="low-agency">
@@ -868,6 +855,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
         .nav-links a:hover {
           color: #1a1318;
+        }
+        /* The founder's letter in italic — the author's hand against the
+           whitepaper's roman argument. Same size, different voice. */
+        .nav-links a.nav-letter {
+          font-style: italic;
         }
         .nav-links a sup {
           color: rgba(26, 19, 24, 0.38);
@@ -1286,11 +1278,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           position: absolute;
           left: 50%;
           /* Canvas must fully cover the arch baked into the wall image
-             (stage y 190–590): 680px wide at 1660/1080 = 442px tall,
-             column centre 398 → canvas spans 161–603. */
+             (stage y 190–590): 760px wide at 16:9 = 427px tall, column
+             centre 398 → canvas spans ~161–588 with the plate below. */
           top: 398px;
           transform: translate(-50%, -50%);
-          width: 680px;
+          width: 760px;
           margin: 0;
           display: flex;
           flex-direction: column;
@@ -1298,9 +1290,24 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           gap: 15px;
           z-index: 2;
         }
+        /* The canvas at rest is a title card — mounted print, not a
+           screenshot (a raw demo frame read as a floating browser; the
+           fresco crop read as the one image every ai company reaches
+           for). Constant 16:9 so the frame holds still as the rotation
+           swipes; films play at their own aspect in the lightbox. */
         .film-canvas {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 22px;
           width: 100%;
-          background: #171310;
+          aspect-ratio: 16 / 9;
+          padding: 0;
+          cursor: pointer;
+          background:
+            radial-gradient(ellipse 120% 90% at 50% 30%, rgba(255, 252, 245, 0.55) 0%, transparent 60%),
+            #efe8da;
           border: 1px solid rgba(26, 19, 24, 0.16);
           border-radius: 4px;
           overflow: hidden;
@@ -1308,50 +1315,96 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             0 1px 4px rgba(59, 47, 47, 0.12),
             0 12px 28px -10px rgba(59, 47, 47, 0.22),
             0 34px 64px -26px rgba(59, 47, 47, 0.18);
+          transition: box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .film-poster {
-          position: relative;
-          display: block;
-          width: 100%;
-          height: 100%;
-          padding: 0;
-          border: none;
-          cursor: pointer;
-          /* The screen at rest shows the fresco — the same scene the frame
-             replaced, cropped from the wall image itself (continuity: the
-             painting became a film; the launch film re-authors the same
-             gap). A raw demo frame (browser chrome) and a dark plate were
-             both tried — one broke the tableau, the other drowned it. */
-          background: #ece5d8 url('/film-poster-fresco.jpg') center / cover no-repeat;
+        .film-canvas:hover {
+          box-shadow:
+            0 2px 5px rgba(59, 47, 47, 0.14),
+            0 16px 34px -10px rgba(59, 47, 47, 0.26),
+            0 42px 76px -26px rgba(59, 47, 47, 0.2);
+        }
+        .film-title {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 30px;
+          letter-spacing: 0.01em;
+          color: #1a1318;
+        }
+        .film-length {
+          margin-top: -14px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 13px;
+          letter-spacing: 0.05em;
+          color: rgba(26, 19, 24, 0.48);
         }
         .film-play {
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%);
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 64px;
-          height: 64px;
+          width: 58px;
+          height: 58px;
           border-radius: 50%;
-          background: rgba(23, 19, 16, 0.55);
-          backdrop-filter: blur(6px);
+          background: rgba(23, 19, 16, 0.82);
           color: #f5f0e8;
           transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), background 200ms ease;
         }
         .film-play svg { margin-left: 3px; }
-        .film-poster:hover .film-play {
-          transform: translate(-50%, -50%) scale(1.06);
-          background: rgba(23, 19, 16, 0.72);
+        .film-canvas:hover .film-play {
+          transform: scale(1.06);
+          background: rgba(23, 19, 16, 1);
         }
-        .film-poster:active .film-play {
-          transform: translate(-50%, -50%) scale(0.98);
+        .film-canvas:active .film-play {
+          transform: scale(0.98);
         }
-        .film-video {
+        /* Lightbox — the film lifts out and plays over a dimmed room.
+           Backdrop or × or Esc closes. Portalled to <body>. */
+        .film-lightbox {
+          position: fixed;
+          inset: 0;
+          z-index: 900;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: clamp(16px, 4vw, 56px);
+          background: rgba(20, 16, 12, 0.7);
+          backdrop-filter: blur(10px);
+          animation: filmLightboxIn 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes filmLightboxIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .film-lightbox-video {
           display: block;
-          width: 100%;
-          height: 100%;
+          max-width: min(1180px, 100%);
+          max-height: 100%;
+          border-radius: 6px;
+          box-shadow: 0 40px 120px -20px rgba(0, 0, 0, 0.55);
+          animation: filmVideoIn 300ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes filmVideoIn {
+          from { opacity: 0; transform: scale(0.96) translateY(8px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .film-lightbox-close {
+          position: absolute;
+          top: 18px;
+          right: 26px;
+          padding: 6px 12px;
+          border: none;
+          background: none;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 34px;
+          line-height: 1;
+          color: rgba(245, 240, 232, 0.75);
+          cursor: pointer;
+          transition: color 180ms ease;
+        }
+        .film-lightbox-close:hover { color: #f5f0e8; }
+        @media (prefers-reduced-motion: reduce) {
+          .film-lightbox,
+          .film-lightbox-video { animation: none; }
         }
         /* Museum plate under the frame — label + (when the rotation has
            more than one film) the side arrows. */
@@ -2323,24 +2376,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            the CTAs as a quiet link directory. Italic small-caps column
            heads, plain link text. Mirrors the back-slide register Fleet
            uses but tuned to the warm cream / burgundy palette. */
-        /* Where the command goes — quiet italic line under the CTA pair.
-           Hidden on touch (the touch CTA navigates instead of pasting). */
-        .cta-where {
-          margin: 16px 0 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 12.5px;
-          letter-spacing: 0.03em;
-          color: var(--theme-fg-faint);
-        }
-        @media (hover: none) and (pointer: coarse) {
-          .cta-where { display: none; }
-        }
         /* The letter's last line — the post-CTA nudge, one line, its own
            beat. Slightly larger than the captions so it reads as prose,
            not chrome. */
         .low-agency {
-          margin: 22px 0 0;
+          margin: 26px 0 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 15px;
           letter-spacing: 0.01em;
@@ -2431,14 +2471,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           transition: opacity 180ms ease;
         }
         .cta-pair .install-cta:hover { opacity: 0.86; }
-        /* Input-method switch for the primary CTA — copy in place on
-           pointer-fine devices, navigate to /start on touch. */
-        .home-cta-touch { display: none !important; }
-        @media (hover: none) and (pointer: coarse) {
-          .home-cta-desktop { display: none !important; }
-          a.home-cta-touch { display: inline-flex !important; }
-          span.home-cta-touch { display: inline !important; }
-        }
         .install-cta-icon {
           display: inline-flex;
           align-items: center;
@@ -2886,9 +2918,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             order: 4;
           }
           .cta-pair {
-            order: 5;
-          }
-          .cta-where {
             order: 5;
           }
           .low-agency {

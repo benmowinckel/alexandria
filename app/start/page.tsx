@@ -108,8 +108,25 @@ export default function StartPage() {
         }
         .primer-trust a:hover { text-decoration-color: var(--text-primary); color: var(--text-primary); }
 
-        /* CTA — the install copy-block, the one action on the page. */
+        /* CTA — one-click claude code first, the copy-block as the
+           universal fallback beneath. */
         .cta-section { display: flex; flex-direction: column; align-items: center; gap: 0; margin: 0; }
+        .cc-cta {
+          display: inline-flex; align-items: center; justify-content: center;
+          min-height: 52px; padding: 14px 34px; border-radius: 9px;
+          background: var(--text-primary); color: var(--bg-primary);
+          font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 17.5px;
+          letter-spacing: 0.01em; text-decoration: none; cursor: pointer;
+          transition: opacity 200ms, transform 120ms;
+        }
+        .cc-cta:hover { opacity: 0.85; }
+        .cc-cta:active { transform: scale(0.99); }
+        .cc-hint { margin-top: 14px; }
+        .cta-or {
+          margin: 34px 0 14px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 12.5px; letter-spacing: 0.06em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.45)); user-select: none;
+        }
         .install-block {
           display: flex; align-items: center; justify-content: space-between; gap: 16px;
           width: 100%; max-width: 440px; background: var(--bg-secondary);
