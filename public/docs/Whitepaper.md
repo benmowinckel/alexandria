@@ -18,13 +18,13 @@ This paper answers that from the ground up. It is one argument, start to finish 
 
 Start with the part that isn’t really in dispute anymore.
 
-In 1951, Alan Turing — one of the founders of modern computing — said that once machines could think, we should “expect the machines to take control.” He treated it as a question of when, not if. The field has largely caught up to him. In 2023, Geoffrey Hinton, whose work underlies nearly every ai system running today, left Google so he could say plainly that ai is on track to beat humans at most things, perhaps everything, and that we are not ready for it.
+In 1951, Alan Turing — one of the founders of modern computing — said that once machines could think, we should “expect the machines to take control.” He treated it as a question of when, not if. The field has largely caught up to him. In 2023, Geoffrey Hinton, whose work underlies nearly every AI system running today, left Google so he could say plainly that AI is on track to beat humans at most things, perhaps everything, and that we are not ready for it.
 
-This isn’t hype. ai runs on the same basic principle as the brain: networks of artificial neurons that strengthen their connections through experience, the way the neurons in your head do. We didn’t stumble onto that — we copied it from biology on purpose, and it worked. And once you take a principle out of biology and rebuild it in silicon, it stops obeying biology’s limits. A bird is remarkable, but no bird flies at three times the speed of sound. A jet isn’t a better bird; it’s a different thing with a higher ceiling. ai is that move applied to thinking, and robotics is that move applied to the body. The ceiling rises with every release, and no law of physics says it stops anywhere near you.
+This isn’t hype. AI runs on the same basic principle as the brain: networks of artificial neurons that strengthen their connections through experience, the way the neurons in your head do. We didn’t stumble onto that — we copied it from biology on purpose, and it worked. And once you take a principle out of biology and rebuild it in silicon, it stops obeying biology’s limits. A bird is remarkable, but no bird flies at three times the speed of sound. A jet isn’t a better bird; it’s a different thing with a higher ceiling. AI is that move applied to thinking, and robotics is that move applied to the body. The ceiling rises with every release, and no law of physics says it stops anywhere near you.
 
 You’re free to bet against this. Just know what you’re betting against: more or less every government, every large company, and most of the smartest people alive, all pushing the same way with all their money. There is no wall between here and there — no missing piece, no law of nature that stops it. It’s simply where almost all the effort is pointed.
 
-So take the strong version, because that’s where it gets interesting: **ai and robots will match or beat humans at everything humans do.** Everything from here is about what’s left when that’s true.
+So take the strong version, because that’s where it gets interesting: **AI and robots will match or beat humans at everything humans do.** Everything from here is about what’s left when that’s true.
 
 ## what you are.
 
@@ -66,7 +66,7 @@ Now be honest about that premium, because it’s smaller than you’d like to th
 
 The premium has a lever, and it’s closeness. A stranger’s blanket is worth barely more than a machine’s; your grandmother’s is worth almost anything. The tighter the bond between maker and receiver, the higher the premium — which means you don’t have to be good enough for the whole world. Not good enough to compete in your field? Be good enough for your town. Not your town? Your family. Not your family? Yourself. Right at the centre — just you — you always clear the bar, because the audience is you.
 
-The cost difference has a lever too, and it’s the move to walk away with. The alien has been your rival this whole time. But the alien is the ai — and the same ai is also a tool in your hand. As your rival it competes for the job; as your tool you aim it at the work and take the credit, the way every tool has always worked. The chef didn’t grow the wheat; the writer didn’t make the pen. So in every tied game the winning play is the same: use the ai to clear the bar cheaply, then collect the premium for being the human who did. Just mind the direction of the arrow. *You give the intent, it does the work.* The moment it gives the intent and you do the work, you’ve swapped places — and you’re the tool.
+The cost difference has a lever too, and it’s the move to walk away with. The alien has been your rival this whole time. But the alien is the AI — and the same AI is also a tool in your hand. As your rival it competes for the job; as your tool you aim it at the work and take the credit, the way every tool has always worked. The chef didn’t grow the wheat; the writer didn’t make the pen. So in every tied game the winning play is the same: use the AI to clear the bar cheaply, then collect the premium for being the human who did. Just mind the direction of the arrow. *You give the intent, it does the work.* The moment it gives the intent and you do the work, you’ve swapped places — and you’re the tool.
 
 # develop and own it.
 
@@ -78,11 +78,11 @@ Look again at how you actually win a game. You choose which games to play. You a
 
 A vague, borrowed, half-formed version of you gives vague instructions and gets mediocre work back. A sharp, developed version gives precise direction and can tell when the work is actually right. The tool is the same in both hands. The person holding it is not.
 
-This isn’t new, only moved up a level. The printing press automated the scribe and made the author matter more, not less — once copies were cheap, the scarce thing was having something to say. ai does the same thing one rung higher: it automates the work and leaves the direction — the choosing, the judging, the taste — entirely to you. The quill is back, because the press now runs itself.
+This isn’t new, only moved up a level. The printing press automated the scribe and made the author matter more, not less — once copies were cheap, the scarce thing was having something to say. AI does the same thing one rung higher: it automates the work and leaves the direction — the choosing, the judging, the taste — entirely to you. The quill is back, because the press now runs itself.
 
 So now we can name the thing precisely. Out of everything you are, the part that does the choosing and the judging — the part you can actually *develop* — is how you think, put into words: your reasoning, your positions, your taste, the way you weigh one thing against another. It isn’t all of you. Your warmth, your presence, your gut instincts are real and they matter. But it’s the root, because it’s the part you can deliberately work on, and working on it lifts everything else. Think more clearly and you direct the tool better, so you clear more bars. Think more clearly and you read people better, so your warmth lands truer.
 
-Which sets up the trap. The one part of you that still counts is the part that has to be *developed* to count — and developing it has always depended on one thing: being made to use it. That pressure is exactly what ai is about to remove.
+Which sets up the trap. The one part of you that still counts is the part that has to be *developed* to count — and developing it has always depended on one thing: being made to use it. That pressure is exactly what AI is about to remove.
 
 ## the decay.
 
@@ -92,9 +92,9 @@ The mind has no such floor. When its work disappears, nothing forces it to do an
 
 The brain keeps what you use and discards what you don’t. It’s expensive to run, so it’s efficient: “use it or lose it” isn’t a slogan, it’s how the tissue works. London taxi drivers spend years memorising every street in the city — they call it the Knowledge — and they physically grow the part of the brain that handles it. Drivers who simply follow satellite navigation don’t. The brain reshapes around what you demand of it. Stop demanding, and it reclaims the space.
 
-You can already watch this happen, one skill at a time. The calculator took mental arithmetic; few adults today can do long division by hand. Phones took the map in your head; many people can no longer find their way around their own city. Each loss is small, and on its own, fine. Now point that same force at *all* of thinking — decisions, judgment, planning, working out what you actually believe — because that’s what ai now does. Not just the hard parts. The everyday work of being a person who thinks for themselves.
+You can already watch this happen, one skill at a time. The calculator took mental arithmetic; few adults today can do long division by hand. Phones took the map in your head; many people can no longer find their way around their own city. Each loss is small, and on its own, fine. Now point that same force at *all* of thinking — decisions, judgment, planning, working out what you actually believe — because that’s what AI now does. Not just the hard parts. The everyday work of being a person who thinks for themselves.
 
-The dangerous part is that the thing that would notice the loss is the thing that’s weakening. You drift, and you don’t feel yourself drifting. You cannot tell that you’ve lost the ability to think, because thinking is what you’d need in order to tell. By the time you’d want it back, the part that could miss it is already gone. For children growing up with ai it’s worse: the ability never forms in the first place.
+The dangerous part is that the thing that would notice the loss is the thing that’s weakening. You drift, and you don’t feel yourself drifting. You cannot tell that you’ve lost the ability to think, because thinking is what you’d need in order to tell. By the time you’d want it back, the part that could miss it is already gone. For children growing up with AI it’s worse: the ability never forms in the first place.
 
 So here’s the bind, stated plainly. The one thing the alien can’t take is the fact that it was you. That fact is only worth anything if there’s a developed you behind it. And the developed you is the one thing nothing is maintaining. The body got its gym a century ago. The mind needs one now — and unlike the body, nothing will force you through the door.
 
@@ -104,25 +104,25 @@ What develops a mind, more than anything, is putting yourself into words. That i
 
 And it has to be done on purpose, which is the part most tools miss. What you *do* — the email you send, the post you publish — is only the surface: the finished thing, after you’ve cleaned it up. What you *mean* — why you chose it, what you almost said instead, the belief sitting underneath — is the part that actually makes you you, and it never appears in the output. A machine watching everything you do sees only the surface. The rest has to be drawn out and written down deliberately. That deliberate work is the practice, and nothing watching from the outside can stand in for it.
 
-There are three ways to face ai with your mind, and only one of them works.
+There are three ways to face AI with your mind, and only one of them works.
 
 You can **reject it** — refuse the tool, think only with your own head. That keeps your mind in use, but it caps you at your own raw limit while everyone using the tool races past. You lose, slowly, with your principles intact.
 
-You can **outsource to it** — let it do your thinking, take the answers, move on. That’s the comfortable one, and it’s the trap from the last section: your mind goes unused, and quietly wears down.
+You can **outsource to it** — let it do your thinking, take the answers, move on. That’s the comfortable one, and it’s the trap from the last chapter: your mind goes unused, and quietly wears down.
 
-Or you can **augment** — keep doing the thinking, but use the tool to push your own mind further than it could go alone. Your reasoning stays in your hands; the ai sharpens it, stress-tests it, and carries the parts that don’t need you. This is the only one of the three where you keep your mind *and* keep up.
+Or you can **augment** — keep doing the thinking, but use the tool to push your own mind further than it could go alone. Your reasoning stays in your hands; the AI sharpens it, stress-tests it, and carries the parts that don’t need you. This is the only one of the three where you keep your mind *and* keep up.
 
-That’s where Alexandria comes in. The gym is yours — the practice, the work of thinking, the mind that gets stronger. What Alexandria gives you is everything *around* it: the gear, the trainer, and the tribe. The trainer is any ai you already talk to, pointed at *you* — at making your own thinking stronger instead of thinking in your place. **Alexandria isn’t the gym; it’s what turns the ai you already have into a trainer for the mind you’re building.** Not another ai, and not a replacement for the ones you use.
+That’s where Alexandria comes in. The gym is yours — the practice, the work of thinking, the mind that gets stronger. What Alexandria gives you is everything *around* it: the gear, the trainer, and the tribe. The trainer is any AI you already talk to, pointed at *you* — at making your own thinking stronger instead of thinking in your place. **Alexandria isn’t the gym; it’s what turns the AI you already have into a trainer for the mind you’re building.** Not another AI, and not a replacement for the ones you use.
 
-It’s worth being precise about what this is *not*, because every platform is racing to give its ai a better memory of you, and they’ll get there. A memory is a locker: it stores what you did so the machine can serve you better. A gym is where *you* get stronger. Better lockers are coming either way. The training is the part you have to choose — and it’s the part that develops the only thing that’s still yours.
+It’s worth being precise about what this is *not*, because every platform is racing to give its AI a better memory of you, and they’ll get there. A memory is a locker: it stores what you did so the machine can serve you better. A gym is where *you* get stronger. Better lockers are coming either way. The training is the part you have to choose — and it’s the part that develops the only thing that’s still yours.
 
 ## the file.
 
 Put your mind into words, and the words have to live somewhere. Follow that simple need and the right shape falls out on its own.
 
-It can’t live inside one ai’s memory, because then it isn’t yours — you can’t read it, move it, or take it to the next tool, and you’re locked to whichever company holds it. It can’t be locked in a format only a machine reads, because you need to open it, check it, and change your mind in it yourself. What you want is the plainest, most durable thing there is: **a file. Plain text, that you own and keep, that you can read and edit — and that any ai can read and write to as well.** A written record of how you think — your views, your taste, your contradictions, the reasons behind them — kept current as you change.
+It can’t live inside one AI’s memory, because then it isn’t yours — you can’t read it, move it, or take it to the next tool, and you’re locked to whichever company holds it. It can’t be locked in a format only a machine reads, because you need to open it, check it, and change your mind in it yourself. What you want is the plainest, most durable thing there is: **a file. Plain text, that you own and keep, that you can read and edit — and that any AI can read and write to as well.** A written record of how you think — your views, your taste, your contradictions, the reasons behind them — kept current as you change.
 
-The half that’s easy to miss is the writing. The ai doesn’t just *read* the file to know you better; it *writes* to it too — so your thinking develops on the page itself, in words you can see and correct, instead of inside a machine where you can’t reach it. The record and the developing are the same act.
+The half that’s easy to miss is the writing. The AI doesn’t just *read* the file to know you better; it *writes* to it too — so your thinking develops on the page itself, in words you can see and correct, instead of inside a machine where you can’t reach it. The record and the developing are the same act.
 
 We call it your **`mind.md`** — *mind*, because that’s what’s in it; *.md* because it’s just a plain text file, the kind anything can open. One file to start. It grows into more as there’s more of you to hold, but it never stops being plain text you own.
 
@@ -130,7 +130,7 @@ And the fact that it’s *yours* isn’t a detail. It’s what makes a tool like
 
 It’s yours so you can’t be locked in. The file is plain text you keep, not a record held on someone’s server. You stay because it’s useful, not because leaving is hard. Delete it and it’s as if it never happened. A tool that touches your actual mind is only safe to use if you can walk away from it completely.
 
-It’s yours so no single ai can quietly shape you. Because the file is plain and portable, you can run several different ais over the same record, and where they pull you in different directions, you can see it. One model’s slant is invisible. Three models’ slants, side by side, show you where you’re being nudged.
+It’s yours so no single AI can quietly shape you. Because the file is plain and portable, you can run several different AIs over the same record, and where they pull you in different directions, you can see it. One model’s slant is invisible. Three models’ slants, side by side, show you where you’re being nudged.
 
 And it’s yours because it’s the one part worth owning. The models will keep changing — a better one keeps arriving, and you’ll switch to it the way you switch phones. All of that is rented, and renting it is exactly the right move. But the record of how you think isn’t something a model can hand you; no amount of intelligence reconstructs the inside of your head. Ten years of sleep data is noise. Ten years of how your thinking actually evolved is the most valuable thing you’ll ever own. **Rent the intelligence. Own the part that’s you.**
 
@@ -138,13 +138,13 @@ And it’s yours because it’s the one part worth owning. The models will keep 
 
 A file on its own has a problem: it goes stale. You change every day — you read, you argue, you change your mind — and a record you have to sit down and update by hand will always lag behind the real you, then get abandoned, the way every journal and notes app eventually does.
 
-But notice what’s already in your hands. The same ai you think with can tend the record of your thinking. It listens as you work, asks the right questions, writes down what’s new, and prunes what’s gone stale — so the record stays alive without you ever filing it.
+But notice what’s already in your hands. The same AI you think with can tend the record of your thinking. It listens as you work, asks the right questions, writes down what’s new, and prunes what’s gone stale — so the record stays alive without you ever filing it.
 
-That second piece — the part that tends the file — we call your **`alexandria.md`**. It’s the same kind of thing as your `mind.md` — plain text, yours to read and change — except it holds instructions instead of content: how your ai draws you out, what it writes down, what it keeps current. Your `mind.md` is the record of your mind; your `alexandria.md` is the small, owned system that keeps that record true. Same principle, two parts.
+That second piece — the part that tends the file — we call your **`alexandria.md`**. It’s the same kind of thing as your `mind.md` — plain text, yours to read and change — except it holds instructions instead of content: how your AI draws you out, what it writes down, what it keeps current. Your `mind.md` is the record of your mind; your `alexandria.md` is the small, owned system that keeps that record true. Same principle, two parts.
 
 It belongs to you the same way the file does, and for one more reason: you can change how it works. It starts as a shared default that suits almost anyone, and as you use it you bend it to fit you — and because it’s plain and open, it stays yours even as it becomes specific to you. You don’t get locked into Alexandria any more than you get locked into a model. The whole thing is built to be walked away from, which is the only reason it’s safe to let this far in.
 
-This is the loop the whole thing turns on: **you use the technology to build the file the technology then uses to develop you.** The ai helps you write down how you think; that written record makes the ai far better at developing how you think; which gives it more to write down; which makes it better still. It’s a wheel that, once pushed, speeds up on its own.
+This is the loop the whole thing turns on: **you use the technology to build the file the technology then uses to develop you.** The AI helps you write down how you think; that written record makes the AI far better at developing how you think; which gives it more to write down; which makes it better still. It’s a wheel that, once pushed, speeds up on its own.
 
 And because it compounds, the thing that matters most is *when you start*. Earlier is worth more than anything else you can get right; every later gain rides on the record you already have. There’s no shortcut to a year of your own thinking written down — but it pays you from the very first session, not only at the end. Start small, start rough, start now.
 
@@ -158,7 +158,7 @@ Everything so far is about one person. But the moment there are many — each wi
 
 A single mind, written down, develops its owner. A thousand minds, written down and opened to each other, become more than a thousand private files. They become a place. You can learn from how someone else actually reasons, not just what they concluded. You can find the people who think in ways that sharpen yours. Your own thinking, offered into the open, reaches further than it ever could trapped in your head. One scholar is worth something; a university is worth far more. The value of a mind goes up when it sits beside other minds, and the extra belongs to everyone in it.
 
-That’s the second half of Alexandria: not just a gym for one mind, but a **library of human minds** — every record readable by people and by ai alike, so the thinking compounds across people the way it already compounds within a person.
+That’s the second half of Alexandria: not just a gym for one mind, but a **library of human minds** — every record readable by people and by AI alike, so the thinking compounds across people the way it already compounds within a person.
 
 What sits on the shelf is worth being precise about, because it isn’t a profile. A profile is what a stranger could assemble about you from the outside — a summary, a list of facts, the surface again. What the library holds is closer to a biography: the deep, patient record a biographer builds by sitting with someone for a long time — except here the subject builds it themselves, and it never stops growing. That’s why the people in the library are called its **Authors**, and why a record there reaches a depth no profile does. The biography used to be the rarest thing there was, written only for the famous and the powerful. A library of minds hands that form to everyone, alive and still being written.
 
@@ -174,7 +174,7 @@ This isn’t a new idea. It’s the oldest good one we have, and it’s worth bu
 
 Nature runs on it: variation across many, the good kept, the rest let go. Athens built the agora, where free minds tested their ideas against each other in the open. Rome built the institutions that let what worked outlast the people who found it. America wrote down a way for many self-governing individuals to compound into something none could be alone.
 
-The pattern under all of them is the same two steps. Protect the individual; then connect the individuals — so the whole becomes greater than the sum without grinding the parts down into it. A library of minds is that pattern, rebuilt for the age of ai. Each person keeps their own mind, fully theirs. Together they become something larger. Nobody disappears into the crowd.
+The pattern under all of them is the same two steps. Protect the individual; then connect the individuals — so the whole becomes greater than the sum without grinding the parts down into it. A library of minds is that pattern, rebuilt for the age of AI. Each person keeps their own mind, fully theirs. Together they become something larger. Nobody disappears into the crowd.
 
 And there’s a reason it can be built now and never could before. The practice at the heart of it — having your thinking drawn out, questioned, and sharpened by something that gives you its full attention — has always existed, and was always rationed. Athens had it in the agora, but only for the handful with the leisure to stand and argue all day. A few lucky people, across all of history, had a great teacher or a circle sharp enough to do the same. Everyone else simply never got it. For the first time, the thing that develops a mind can be handed to anyone, at any hour, for almost nothing. That is the piece that was always missing — not a faster tool, but the oldest good practice finally within everyone’s reach.
 

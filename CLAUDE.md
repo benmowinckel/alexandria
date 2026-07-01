@@ -105,7 +105,7 @@ factory/
 
 ## Style
 
-- "ai" is always lowercase unless at the start of a sentence or in a proper noun (e.g. "Apple Intelligence"). This is a brand and taste decision.
+- Prose uses proper grammar — "AI" is capitalised (founder rescinded the lowercase-everything rule, 2026-07-01). Lowercase remains ONLY where it is the brand mark, not grammar: the wordmark ("alexandria."), the sigil ("a."), and lowercase-with-period titles/headings on cathedral surfaces (matching the letter's convention: lowercase titles, proper-grammar prose). Older site copy may still carry lowercase "ai" — update on touch, no bulk sweep yet.
 
 ## Design Constraints
 
