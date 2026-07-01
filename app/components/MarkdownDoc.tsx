@@ -358,6 +358,40 @@ const MD_COMPONENTS = {
   blockquote: ({ children }: { children?: React.ReactNode }) => <blockquote className="pdoc-bq">{children}</blockquote>,
 };
 
+// Numbered-doc headings — split the injected "1.2 " prefix so the numeral
+// can hang in the margin as quiet marginalia while the title stays flush
+// with the text block. The id keeps the full "1.2 title" slug so TOC and
+// rail anchors are unchanged. An h1 with no numeral is the document title.
+function NumberedHeading({ level, children }: { level: 1 | 2; children?: React.ReactNode }) {
+  const id = slugify(children);
+  const text = flattenText(children);
+  const m = /^(\d+(?:\.\d+)?)\s+(.*)$/.exec(text);
+  const Tag = level === 1 ? 'h1' : 'h2';
+  const base = level === 1 ? 'pdoc-h1' : 'pdoc-h2';
+  if (!m) {
+    return <Tag id={id} className={`${base}${level === 1 ? ' pdoc-title' : ''}`}>{children}</Tag>;
+  }
+  return (
+    <Tag id={id} className={base}>
+      <span className="pdoc-hnum" aria-hidden>{m[1]}</span>
+      {m[2]}
+    </Tag>
+  );
+}
+
+// Numbered docs (the whitepaper): headings hang their numerals; everything
+// else renders as standard. The pre map additionally marks the preamble
+// paragraphs (between title and contents) as the lede.
+const MD_COMPONENTS_NUMBERED = {
+  ...MD_COMPONENTS,
+  h1: ({ children }: { children?: React.ReactNode }) => <NumberedHeading level={1}>{children}</NumberedHeading>,
+  h2: ({ children }: { children?: React.ReactNode }) => <NumberedHeading level={2}>{children}</NumberedHeading>,
+};
+const MD_COMPONENTS_NUMBERED_PRE = {
+  ...MD_COMPONENTS_NUMBERED,
+  p: ({ children }: { children?: React.ReactNode }) => <p className="pdoc-p pdoc-lede">{children}</p>,
+};
+
 // Abstract paragraphs follow a named-beat structure: each paragraph leads
 // with a bolded beat name (`**the augmentation.**`), then prose. We split
 // that into a hanging gutter label + body column, echoing the marginalia
@@ -482,12 +516,12 @@ export default function MarkdownDoc({ src, header, homeHref = '/', numbered = fa
       <main className="mdoc">
         {header && <div className="mdoc-frame mdoc-header">{header}</div>}
 
-        <article className={`mdoc-frame mdoc-article pdoc pdoc-longform${plain ? ' pdoc-plain' : ''}`}>
+        <article className={`mdoc-frame mdoc-article pdoc pdoc-longform${plain ? ' pdoc-plain' : ''}${numbered ? ' pdoc-numbered' : ''}`}>
           {content === null ? (
             <p className="pdoc-p" style={{ color: 'var(--text-ghost)', fontSize: '0.85rem', letterSpacing: '0.08em' }}>...</p>
           ) : parsed ? (
             <>
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS_NUMBERED_PRE}>
                 {parsed.pre}
               </ReactMarkdown>
               {parsed.frontispiece && (
@@ -508,7 +542,7 @@ export default function MarkdownDoc({ src, header, homeHref = '/', numbered = fa
                 </section>
               )}
               {parsed.toc.length > 0 && <TocBlock entries={parsed.toc} />}
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS_NUMBERED}>
                 {parsed.post}
               </ReactMarkdown>
             </>
