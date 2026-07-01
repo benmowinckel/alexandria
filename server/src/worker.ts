@@ -8,7 +8,7 @@
 import { Hono } from 'hono';
 import { extractApiKey, findByApiKey } from './auth.js';
 import { updateAccountBilling, getBillingSummary } from './accounts.js';
-import { runHealthDigest } from './cron.js';
+import { runHealthDigest, runOnboardFollowups } from './cron.js';
 import { mirrorPendingAuditBatch, getAuditHead } from './audit.js';
 import { registerProtocol } from './protocol.js';
 import { registerRoutes } from './routes.js';
@@ -17,7 +17,7 @@ import { registerLibraryRoutes } from './library.js';
 import { getAnalytics, getEventLog, getDashboard, getUserEvents, logEvent, flushEvents } from './analytics.js';
 import { setKV, getKV } from './kv.js';
 import { getDB } from './db.js';
-import { sendFollowerWelcome } from './email.js';
+import { sendFollowerWelcome, sendOnboardCommand } from './email.js';
 import { generateToken } from './crypto.js';
 import { getAllowedOrigins } from './cors.js';
 import { formatPT } from './time.js';
@@ -326,7 +326,7 @@ async function ensureRateLimitSchema(db: D1Database): Promise<void> {
   await rateLimitSchemaInit;
 }
 
-async function enforcePublicRateLimit(scope: 'waitlist' | 'follow', ip: string): Promise<boolean> {
+async function enforcePublicRateLimit(scope: 'waitlist' | 'follow' | 'onboard', ip: string): Promise<boolean> {
   const windowSeconds = PUBLIC_RATE_LIMIT_WINDOW_SECONDS;
   const limit = PUBLIC_RATE_LIMIT_MAX;
 
@@ -561,6 +561,141 @@ app.options('/follow', (c) => {
 });
 
 // ---------------------------------------------------------------------------
+// Mobile onboarding — "send it to my computer". Phones have no terminal, so
+// the mobile /start flow captures an email and delivers the install command
+// for later. Keyless (no account, no OAuth — this is the free tool). The
+// emailed command carries an install token in its path so the setup-script
+// fetch (GET /a/:token) marks the capture as installed; the public web
+// command stays clean and tokenless.
+// ---------------------------------------------------------------------------
+
+const SETUP_SH_URL = 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh';
+const ONBOARD_TTL_SECONDS = 90 * 24 * 60 * 60;
+
+export interface OnboardRecord {
+  email: string;
+  unsubscribe_token: string;
+  created_at: string;
+  installed_at?: string;
+  followups?: number;
+  followup_last_sent_at?: string;
+}
+
+app.post('/onboard', async (c) => {
+  const reqOrigin = c.req.header('Origin') || '';
+  const allowed = getAllowedOrigins();
+  if (allowed.includes(reqOrigin)) {
+    c.header('Access-Control-Allow-Origin', reqOrigin);
+  }
+
+  const ip = c.req.header('cf-connecting-ip') || 'unknown';
+  if (!await enforcePublicRateLimit('onboard', ip)) {
+    return c.json({ error: 'Too many requests.' }, 429);
+  }
+
+  const body = await c.req.json().catch(() => null);
+  const email = body?.email;
+  if (!email || typeof email !== 'string' || !email.includes('@') || email.length > 320) {
+    return c.json({ error: 'Valid email required.' }, 400);
+  }
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Reserved / test-only domains — same guard as /follow (sender reputation).
+  const emailDomain = normalizedEmail.split('@')[1] || '';
+  if (/(^|\.)(invalid|test|example|localhost)$/.test(emailDomain) || /^example\.(com|net|org)$/.test(emailDomain)) {
+    return c.json({ error: 'Valid email required.' }, 400);
+  }
+
+  try {
+    const kv = getKV();
+    const db = (globalThis as any).__d1 as D1Database;
+    if (!db) return c.json({ error: 'Database not available.' }, 503);
+
+    // One record per email — resubmits resend the same tokenized command
+    // instead of forking a second follow-up thread.
+    const emailIndexKey = `onboard_email:${normalizedEmail}`;
+    let installToken = await kv.get(emailIndexKey);
+    let record: OnboardRecord | null = null;
+    if (installToken) {
+      const raw = await kv.get(`onboard:${installToken}`);
+      if (raw) record = JSON.parse(raw) as OnboardRecord;
+    }
+
+    if (!record) {
+      // Unsubscribe rides the existing waitlist substrate (/email/stop already
+      // resolves waitlist unsubscribe_tokens). COALESCE keeps whatever token
+      // the email already has (e.g. from a /follow signup) and never touches
+      // its existing type.
+      const newToken = generateToken();
+      const upserted = await db.prepare(
+        `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)
+         VALUES (?, 'onboard', 'public', ?, ?)
+         ON CONFLICT(email) DO UPDATE
+           SET unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token)
+         RETURNING unsubscribe_token`,
+      ).bind(normalizedEmail, new Date().toISOString(), newToken)
+        .first<{ unsubscribe_token: string | null }>();
+
+      installToken = generateToken();
+      record = {
+        email: normalizedEmail,
+        unsubscribe_token: upserted?.unsubscribe_token || newToken,
+        created_at: new Date().toISOString(),
+        followups: 0,
+      };
+      await kv.put(`onboard:${installToken}`, JSON.stringify(record), { expirationTtl: ONBOARD_TTL_SECONDS });
+      await kv.put(emailIndexKey, installToken, { expirationTtl: ONBOARD_TTL_SECONDS });
+    }
+
+    // Await the send — this email IS what the user asked for; a silent
+    // failure here would read as "sent" in the UI.
+    const result = await sendOnboardCommand(normalizedEmail, installToken!, record.unsubscribe_token);
+    logEvent('onboard_email_captured', { new: record.followups === 0 && !record.installed_at ? 'true' : 'false', sent: result.ok ? 'true' : 'false' });
+    if (!result.ok) return c.json({ error: 'Could not send just now — try again.' }, 502);
+    return c.json({ ok: true });
+  } catch (err: any) {
+    console.error('Onboard capture error:', err?.message || err);
+    return c.json({ error: 'Failed to send.' }, 500);
+  }
+});
+
+app.options('/onboard', (c) => {
+  const reqOrigin = c.req.header('Origin') || '';
+  const allowed = getAllowedOrigins();
+  if (allowed.includes(reqOrigin)) {
+    c.header('Access-Control-Allow-Origin', reqOrigin);
+    c.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    c.header('Access-Control-Allow-Headers', 'Content-Type');
+  }
+  return c.body(null, 204);
+});
+
+// Tokenized setup fetch — the emailed command curls this (via the website's
+// /a/:token redirect). Marks the capture installed, then hands off to the
+// same raw setup.sh the public command uses. Any failure still redirects:
+// never break an install for tracking.
+app.get('/a/:token', async (c) => {
+  const token = c.req.param('token');
+  try {
+    const kv = getKV();
+    const raw = token ? await kv.get(`onboard:${token}`) : null;
+    if (raw) {
+      const record = JSON.parse(raw) as OnboardRecord;
+      if (!record.installed_at) {
+        record.installed_at = new Date().toISOString();
+        await kv.put(`onboard:${token}`, JSON.stringify(record), { expirationTtl: ONBOARD_TTL_SECONDS });
+        logEvent('onboard_install', {});
+      }
+    } else {
+      logEvent('onboard_token_unknown', { token_prefix: (token || '').slice(0, 8) });
+    }
+  } catch (err) {
+    console.error('Onboard install mark failed:', err);
+  }
+  return c.redirect(SETUP_SH_URL, 302);
+});
+
+// ---------------------------------------------------------------------------
 // Favicon
 // ---------------------------------------------------------------------------
 
@@ -728,7 +863,11 @@ export default {
     // own active decision, so a corrupted server can never push content at them.
     // Founder-internal ops (health digest, billing settlement) stay — those don't
     // touch users. Manual founder admin email tools remain (founder-triggered).
-    await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing()]);
+    // Onboard follow-ups are the one carve-out: the user typed their email into
+    // "send it to my computer" — an active request for exactly this delivery.
+    // The sequence is finishing that delivery, hard-capped at 2, stops on
+    // install or unsubscribe. Not marketing push; a completion of a user pull.
+    await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing(), runOnboardFollowups()]);
     ctx.waitUntil(flushEvents());
   },
 };

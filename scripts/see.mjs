@@ -82,10 +82,13 @@ try {
 } catch { /* ignore cleanup errors */ }
 
 // Breakpoints
+// mobile/tablet emulate touch (hasTouch) so input-method media queries —
+// (hover: none) and (pointer: coarse) — match like a real device, not just a
+// narrow window. Detect input method, not screen size (design.md).
 const allViewports = [
   { name: 'desktop', width: 1440, height: 900 },
-  { name: 'tablet', width: 768, height: 1024 },
-  { name: 'mobile', width: 390, height: 844 },
+  { name: 'tablet', width: 768, height: 1024, touch: true },
+  { name: 'mobile', width: 390, height: 844, touch: true },
 ];
 const viewports = flags.only
   ? allViewports.filter(v => v.name === flags.only)
@@ -128,6 +131,8 @@ async function capture() {
       viewport: { width: vp.width, height: vp.height },
       deviceScaleFactor: 2,
       colorScheme: flags.dark ? 'dark' : 'light',
+      hasTouch: Boolean(vp.touch),
+      isMobile: Boolean(vp.touch),
     };
 
     // Enable video recording

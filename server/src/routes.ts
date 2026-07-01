@@ -12,7 +12,7 @@ import { hashApiKey, generateToken } from './crypto.js';
 import { ACTIVE_AUTHOR_STATUSES, Account, AccountStore, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
 import { assignAuthorNumber, generateApiKey, getAccounts, getAccountByLogin, requireAdmin, updateAccountBilling } from './accounts.js';
 import { sendEmail, sendEmailsBatched, sendWelcomeEmail, sendInstallNudge, FOUNDER_EMAIL } from './email.js';
-import { runHealthDigest, runWeekOneCheckIns, runInstallNudges } from './cron.js';
+import { runHealthDigest, runWeekOneCheckIns, runInstallNudges, runOnboardFollowups } from './cron.js';
 import { publishFeedback } from './marketplace.js';
 import { handleGithubPushWebhook } from './marketplace-catalog.js';
 
@@ -52,6 +52,20 @@ async function purgeAuthorAccount(account: Account, storeKey: string | null, aut
   }
   if (storeKey && authKeyHash) await deleteAccount(storeKey, authKeyHash);
   else if (storeKey) await getKV().delete(`account:${storeKey}`);
+
+  // Mobile-onboarding capture (keyless — keyed by email, not account). The
+  // records carry a 90d TTL either way; this just makes the delete immediate.
+  try {
+    if (account.email) {
+      const kv = getKV();
+      const emailIndexKey = `onboard_email:${account.email.toLowerCase().trim()}`;
+      const installToken = await kv.get(emailIndexKey);
+      if (installToken) await kv.delete(`onboard:${installToken}`);
+      await kv.delete(emailIndexKey);
+    }
+  } catch (e) {
+    console.error('[account] onboard KV cleanup failed:', e);
+  }
 
   try {
     const db = getDB();
@@ -1077,6 +1091,49 @@ export function registerRoutes(app: Hono) {
     const dry = c.req.query('dry') === 'true';
     const result = await runInstallNudges({ dry });
     return c.json({ ok: true, ...result });
+  });
+
+  // Manual trigger for mobile-onboarding follow-ups (keyless email captures,
+  // KV `onboard:` records). ?dry=true returns eligible count without sending.
+  app.post('/admin/cron/onboard-followups', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    if (await checkAdminRateLimit('onboard-followups', 10, 60)) return c.json({ error: 'Rate limited (10/min)' }, 429);
+    const dry = c.req.query('dry') === 'true';
+    const result = await runOnboardFollowups({ dry });
+    return c.json({ ok: true, ...result });
+  });
+
+  // Mirror loop for the mobile onboarding funnel — captured → installed →
+  // follow-up counts, so "is the emailed command converting" is queryable,
+  // not a vibe.
+  app.get('/admin/onboard-conversion', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    const kv = getKV();
+    let captured = 0;
+    let installed = 0;
+    let followupsSent = 0;
+    let cursor: string | undefined;
+    do {
+      const page = await kv.list({ prefix: 'onboard:', cursor });
+      for (const key of page.keys) {
+        const raw = await kv.get(key.name);
+        if (!raw) continue;
+        try {
+          const rec = JSON.parse(raw) as { installed_at?: string; followups?: number };
+          captured++;
+          if (rec.installed_at) installed++;
+          followupsSent += rec.followups || 0;
+        } catch { continue; }
+      }
+      cursor = page.list_complete ? undefined : page.cursor;
+    } while (cursor);
+    return c.json({
+      window: 'live records (90d KV TTL)',
+      captured,
+      installed,
+      followups_sent: followupsSent,
+      conversion_rate: captured > 0 ? Number((installed / captured).toFixed(3)) : 0,
+    });
   });
 
   // Test send — fires one install nudge to the founder, using real template +

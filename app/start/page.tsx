@@ -1,11 +1,16 @@
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
 import StartCTA from './StartCTA';
+import MobileStart from './MobileStart';
 
 // The front door for someone who already clicked "join the tribe" — bought in,
 // here to act. One job: get the command into their agent. So: brand header, the
 // command, and one quiet line that dissolves the curl|bash hesitation (their own
 // ai reads the open script). No product pitch — the homepage/video did that.
+//
+// Two CTAs, switched on input method, not width (a narrow desktop window still
+// has a terminal; a wide iPad doesn't): pointer-fine devices get the copy-paste
+// command, touch devices get the Shortcut + send-it-to-my-computer flow.
 export default function StartPage() {
   return (
     <div className="primer-page">
@@ -20,21 +25,27 @@ export default function StartPage() {
       <main className="primer-main">
         <h1 className="primer-h1">becoming alexandrian</h1>
 
-        <StartCTA />
+        <div className="start-desktop">
+          <StartCTA />
 
-        <p className="primer-trust">
-          it just adds a folder and a thin layer to the ai you already use
-          &mdash; nothing&rsquo;s ever sent to us. not sure? paste it in and ask what
-          it does first; your agent reads every line of the{' '}
-          <a
-            href="https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            open script
-          </a>
-          .
-        </p>
+          <p className="primer-trust">
+            it just adds a folder and a thin layer to the ai you already use
+            &mdash; nothing&rsquo;s ever sent to us. not sure? paste it in and ask what
+            it does first; your agent reads every line of the{' '}
+            <a
+              href="https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              open script
+            </a>
+            .
+          </p>
+        </div>
+
+        <div className="start-mobile">
+          <MobileStart />
+        </div>
 
         <p className="primer-coda"><em>keep thinking.</em></p>
       </main>
@@ -135,6 +146,81 @@ export default function StartPage() {
           margin: 60px 0 0; text-align: center; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 20px; font-style: italic; color: var(--text-primary);
           letter-spacing: 0.005em; opacity: 0.72;
+        }
+
+        /* Input-method switch: touch devices have no terminal, so they get the
+           Shortcut + email flow; everything else keeps the copy-paste command. */
+        .start-desktop { display: contents; }
+        .start-mobile { display: none; }
+        @media (hover: none) and (pointer: coarse) {
+          .start-desktop { display: none; }
+          .start-mobile { display: contents; }
+        }
+
+        /* Mobile CTA — the Shortcut is the one action (filled, calm, generous
+           touch target); the email delivery sits quiet underneath. */
+        .mobile-cta {
+          display: flex; flex-direction: column; align-items: center;
+          width: 100%; max-width: 380px;
+        }
+        .mobile-shortcut-btn {
+          display: inline-flex; align-items: center; justify-content: center;
+          width: 100%; min-height: 54px; padding: 14px 30px; border-radius: 9px;
+          background: var(--text-primary); color: var(--bg-primary);
+          font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 18px;
+          letter-spacing: 0.01em; text-decoration: none; cursor: pointer;
+          transition: opacity 200ms, transform 120ms;
+        }
+        .mobile-shortcut-btn:active { transform: scale(0.99); opacity: 0.85; }
+        .mobile-shortcut-hint {
+          margin: 16px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 13.5px; line-height: 1.6; letter-spacing: 0.02em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55)); text-align: center;
+          max-width: 320px;
+        }
+
+        .mobile-email {
+          display: flex; flex-direction: column; align-items: center;
+          width: 100%; margin-top: 52px;
+        }
+        .mobile-email-lead {
+          margin: 0 0 14px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 14px; letter-spacing: 0.01em;
+          color: var(--text-secondary, rgba(26, 19, 24, 0.8)); text-align: center;
+        }
+        .mobile-email-row {
+          display: flex; gap: 8px; width: 100%;
+        }
+        .mobile-email-row input {
+          flex: 1; min-width: 0; min-height: 48px; padding: 10px 16px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.14));
+          border-radius: 9px; color: var(--text-primary);
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 16px; /* >=16px — prevents iOS zoom-on-focus */
+          outline: none; transition: border-color 200ms;
+        }
+        .mobile-email-row input:focus { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
+        .mobile-email-row input::placeholder { color: var(--text-muted, rgba(26, 19, 24, 0.4)); }
+        .mobile-email-row button {
+          min-height: 48px; padding: 10px 20px; border-radius: 9px;
+          background: transparent; color: var(--text-primary);
+          border: 1px solid var(--text-muted, rgba(26, 19, 24, 0.35));
+          font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 16px;
+          letter-spacing: 0.01em; cursor: pointer;
+          transition: opacity 200ms, transform 120ms;
+        }
+        .mobile-email-row button:active { transform: scale(0.98); }
+        .mobile-email-row button:disabled { opacity: 0.5; }
+        .mobile-email-hint {
+          margin: 12px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 12.5px; letter-spacing: 0.02em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.5)); text-align: center;
+        }
+        .mobile-email-done {
+          margin: 6px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 15px; letter-spacing: 0.01em;
+          color: var(--text-secondary, rgba(26, 19, 24, 0.8)); text-align: center;
         }
 
         @media (max-width: 640px) {

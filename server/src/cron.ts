@@ -1,7 +1,8 @@
 /** Cron jobs — health digest. Called by worker scheduled handler. */
 
 import { getKV, getRecentDaysEvents, loadAccounts, saveAccount, setAuthIndex } from './kv.js';
-import { sendEmail, sendEmailsBatched, sendWeekOneCheckIn, sendInstallNudge, FOUNDER_EMAIL } from './email.js';
+import { getDB } from './db.js';
+import { sendEmail, sendEmailsBatched, sendWeekOneCheckIn, sendInstallNudge, sendOnboardFollowup, FOUNDER_EMAIL } from './email.js';
 import { generateApiKey } from './accounts.js';
 import { hashApiKey, generateToken } from './crypto.js';
 import { formatPT } from './time.js';
@@ -471,6 +472,107 @@ export async function runInstallNudges(
     return { candidates: recipients.length, sent, failed, dry: false };
   } catch (err) {
     console.error('[cron] install nudges failed:', err);
+    return { candidates: 0, sent: 0, failed: 0, dry };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Onboard follow-ups — for mobile "send it to my computer" captures (keyless,
+// no account; KV `onboard:` records written by POST /onboard). The user
+// explicitly asked us to email them the install command; this finishes that
+// delivery: first nudge at 2d, second and last at 5d, then silence. Stops the
+// moment the tokenized command is run (GET /a/:token sets installed_at) or
+// the waitlist unsubscribe fires.
+// ---------------------------------------------------------------------------
+
+interface OnboardCandidate {
+  token: string;
+  record: {
+    email: string;
+    unsubscribe_token: string;
+    created_at: string;
+    installed_at?: string;
+    followups?: number;
+    followup_last_sent_at?: string;
+  };
+}
+
+const ONBOARD_FOLLOWUP_TTL = 90 * 24 * 60 * 60;
+
+export async function runOnboardFollowups(
+  opts: { dry?: boolean } = {},
+): Promise<{ candidates: number; sent: number; failed: number; dry: boolean }> {
+  const dry = opts.dry === true;
+  try {
+    const kv = getKV();
+    const now = Date.now();
+
+    // Full scan of onboard records (prefix excludes the onboard_email: index —
+    // underscore ≠ colon). Volume is capture-scale, not account-scale.
+    const candidates: OnboardCandidate[] = [];
+    let cursor: string | undefined;
+    do {
+      const page = await kv.list({ prefix: 'onboard:', cursor });
+      for (const key of page.keys) {
+        const raw = await kv.get(key.name);
+        if (!raw) continue;
+        let record: OnboardCandidate['record'];
+        try { record = JSON.parse(raw); } catch { continue; }
+        if (!record.email || record.installed_at) continue;
+        const followups = record.followups || 0;
+        if (followups >= 2) continue;
+        const age = now - new Date(record.created_at).getTime();
+        // First nudge at 2d, second at 5d; nothing past 14d (a capture that
+        // old is a decision, not a lapse).
+        const due = followups === 0 ? 2 * DAY_MS : 5 * DAY_MS;
+        if (age < due || age > 14 * DAY_MS) continue;
+        // At least 2d between the two nudges even if the cron lagged.
+        if (record.followup_last_sent_at && now - new Date(record.followup_last_sent_at).getTime() < 2 * DAY_MS) continue;
+        candidates.push({ token: key.name.slice('onboard:'.length), record });
+      }
+      cursor = page.list_complete ? undefined : page.cursor;
+    } while (cursor);
+
+    // Honor /email/stop — opted-out waitlist rows kill the sequence.
+    const eligible: OnboardCandidate[] = [];
+    for (const cand of candidates) {
+      try {
+        const row = await getDB().prepare(
+          'SELECT opted_out_at FROM waitlist WHERE email = ? LIMIT 1'
+        ).bind(cand.record.email).first<{ opted_out_at: string | null }>();
+        if (row?.opted_out_at) continue;
+      } catch { /* if the check fails, err on not sending */ continue; }
+      eligible.push(cand);
+    }
+
+    if (dry) return { candidates: eligible.length, sent: 0, failed: 0, dry: true };
+    if (eligible.length === 0) return { candidates: 0, sent: 0, failed: 0, dry: false };
+
+    const { sent, failed } = await sendEmailsBatched(eligible, async ({ token, record }) => {
+      const nth = (record.followups || 0) + 1;
+      const result = await sendOnboardFollowup(record.email, token, record.unsubscribe_token, nth);
+      if (result.ok) {
+        record.followups = nth;
+        record.followup_last_sent_at = new Date().toISOString();
+        await kv.put(`onboard:${token}`, JSON.stringify(record), { expirationTtl: ONBOARD_FOLLOWUP_TTL });
+      }
+      return result;
+    });
+
+    console.log(`[cron] onboard follow-ups: sent=${sent} failed=${failed} total=${eligible.length}`);
+
+    try {
+      await kv.put('cron:onboard_followups', JSON.stringify({
+        t: new Date().toISOString(),
+        candidates: eligible.length,
+        sent,
+        failed,
+      }), { expirationTtl: 30 * 24 * 60 * 60 });
+    } catch { /* non-fatal */ }
+
+    return { candidates: eligible.length, sent, failed, dry: false };
+  } catch (err) {
+    console.error('[cron] onboard follow-ups failed:', err);
     return { candidates: 0, sent: 0, failed: 0, dry };
   }
 }

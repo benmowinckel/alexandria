@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
         destination: 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh',
         permanent: false,
       },
+      // Tokenized install — the command emailed by the mobile "send it to my
+      // computer" flow: `curl -fsSL alexandria-library.com/a/TOKEN | bash`.
+      // Routes through the API so the fetch marks that email as installed
+      // (follow-ups stop), then the API 302s to the same raw setup.sh above.
+      // The public copy-paste command stays the clean, tokenless /a.
+      {
+        source: '/a/:token',
+        destination: 'https://api.alexandria-library.com/a/:token',
+        permanent: false,
+      },
       // Two doors, by intent. /start is the keyless primer (the FREE tool — one
       // copy-paste, no account). /join is the founding-member JOIN (the paid
       // collective: GitHub sign-in → Stripe trial → alexandrian #N). Homepage +

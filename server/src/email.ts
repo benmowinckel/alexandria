@@ -3,6 +3,7 @@
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'mowinckel.b@gmail.com';
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
 const SERVER_URL = process.env.SERVER_URL || 'https://api.alexandria-library.com';
+const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337';
 
 /**
  * Run up to `concurrency` email sends in parallel, draining the task list in
@@ -185,7 +186,6 @@ export async function sendInstallNudge(
   installToken: string,
   githubLogin: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337';
   const MECHANICS_URL = `${WEBSITE_URL}/Mechanics.md`;
   const installUrl = `${SERVER_URL}/install/${installToken}`;
   const kinLink = `${WEBSITE_URL}/join?ref=${encodeURIComponent(githubLogin)}`;
@@ -209,6 +209,63 @@ export async function sendInstallNudge(
   return await sendEmail(email, 'alexandria. — finish setup.', html, {
     unsubscribeUrl: `${SERVER_URL}/email/stop?t=${emailToken}`,
   });
+}
+
+// --- Mobile onboarding — command delivery + follow-ups ---
+// The mobile /start flow captures an email and delivers the install command
+// for later (phones have no terminal). The command carries the install token
+// in its path (alexandria-library.com/a/TOKEN) so the setup-script fetch
+// marks the capture as installed — the public web command stays tokenless.
+
+function onboardCommandBlock(installToken: string): string {
+  const cmd = `curl -fsSL alexandria-library.com/a/${installToken} | bash`;
+  return `<p style="margin: 0 0 1.4rem; background: rgba(61,54,48,0.05); border-radius: 6px; padding: 14px 16px;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; color: #3d3630;">${cmd}</code></p>`;
+}
+
+export async function sendOnboardCommand(
+  email: string,
+  installToken: string,
+  unsubscribeToken: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; font-size: 1.05rem; line-height: 1.7;">
+  <p style="margin: 0 0 1.4rem;">here it is. when you&rsquo;re at your computer, paste this into a terminal:</p>
+  ${onboardCommandBlock(installToken)}
+  <p style="margin: 0 0 1.4rem; color: #8a8078;">it links up everything you&rsquo;ve been saving.</p>
+  <p style="margin: 0 0 1.8rem;">until then &mdash; <a href="${SHORTCUT_URL}" style="color: #3d3630;">add the shortcut</a>: save anything you read, hear, or think, straight from your phone.</p>
+  <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
+  <p style="margin: 0; font-style: italic; color: #8a8078;">a.</p>
+  <p style="margin: 1.5rem 0 0; font-size: 0.72rem; color: #bbb4aa;"><a href="${SERVER_URL}/email/stop?t=${unsubscribeToken}" style="color: #8a8078;">stop these emails</a></p>
+</div>`;
+  return await sendEmail(email, 'alexandria. — your install command', html, {
+    unsubscribeUrl: `${SERVER_URL}/email/stop?t=${unsubscribeToken}`,
+  });
+}
+
+export async function sendOnboardFollowup(
+  email: string,
+  installToken: string,
+  unsubscribeToken: string,
+  nth: number,
+): Promise<{ ok: boolean; error?: string }> {
+  const first = nth <= 1;
+  const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; font-size: 1.05rem; line-height: 1.7;">
+  <p style="margin: 0 0 1.4rem;">${first
+    ? 'still here when you are &mdash; paste this into a terminal at your computer:'
+    : 'last one from me. the command:'}</p>
+  ${onboardCommandBlock(installToken)}
+  <p style="margin: 0 0 1.8rem; color: #8a8078;">${first
+    ? 'everything you&rsquo;ve saved on your phone gets picked up the moment you run it.'
+    : 'no rush &mdash; it&rsquo;ll keep. everything you&rsquo;ve saved stays yours.'}</p>
+  <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
+  <p style="margin: 0; font-style: italic; color: #8a8078;">a.</p>
+  <p style="margin: 1.5rem 0 0; font-size: 0.72rem; color: #bbb4aa;"><a href="${SERVER_URL}/email/stop?t=${unsubscribeToken}" style="color: #8a8078;">stop these emails</a></p>
+</div>`;
+  return await sendEmail(
+    email,
+    first ? 'alexandria. — ready when you are' : 'alexandria. — last nudge',
+    html,
+    { unsubscribeUrl: `${SERVER_URL}/email/stop?t=${unsubscribeToken}` },
+  );
 }
 
 // sendMorningBrief / sendMorningNudge removed: morning brief + nudge are now

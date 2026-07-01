@@ -2,6 +2,62 @@
 
 Make signup work end-to-end on a phone. Most signups today bounce at the curl command on the onboarding page because they're not at a computer. Fix: single page with honest copy + daily reminder email + verified /a opener surfaces what they captured via the shortcut.
 
+---
+
+## BUILT 2026-07-01 — keyless mobile flow on /start (armed for ship)
+
+The founder's newer mobile spec (keyless — no account, no OAuth) is built,
+verified locally (types, both builds, live wrangler probe of the full loop,
+regression suite, touch-emulated screenshots), committed. Not deployed, not
+pushed — founder fires.
+
+**What it is.** Desktop /start untouched. Touch devices — switched on
+`(hover: none) and (pointer: coarse)`, input method not width — get:
+(1) **"add the shortcut"** (filled primary, `app/start/MobileStart.tsx`) →
+the iCloud Shortcut (`SHORTCUT_URL` single-sourced in `app/lib/config.ts`);
+(2) quiet underneath, **"send it to my computer"** — email field → `POST
+api…/onboard` → emails the install command. Delivery framing, nothing else.
+
+**Tracking.** The emailed command is tokenized:
+`curl -fsSL alexandria-library.com/a/TOKEN | bash`. Website redirects
+`/a/:token` → API (next.config.ts); API marks the capture installed in KV
+(`onboard:{token}`, 90d TTL) and 302s to the same raw setup.sh. The public
+web command stays clean `/a`. Unsubscribe rides the waitlist substrate (row
+type='onboard', existing `/email/stop`). GDPR: account purge also clears the
+onboard KV records.
+
+**Follow-ups.** `runOnboardFollowups` (`server/src/cron.ts`): first at 2d,
+second/last at 5d, nothing past 14d, stops on install or unsubscribe. Admin:
+`POST /admin/cron/onboard-followups?dry=true`, `GET /admin/onboard-conversion`
+(captured/installed mirror loop).
+
+**⚠ One decision to ratify before deploy.** `worker.ts` scheduled() carried a
+deliberate rule: no automatic server→user email push (week-one + install
+nudges were removed from cron for it). The spec's follow-up sequence conflicts.
+I wired `runOnboardFollowups()` into the daily cron with a carve-out rationale
+(the user actively requested this exact delivery; cap 2; stops on
+install/unsub) — see the comment there. If the carve-out is wrong, delete it
+from the `Promise.all` in scheduled(); the manual admin trigger remains.
+
+**Fire checklist (≤5 min).**
+1. `cd server && npx wrangler deploy` → `curl https://api.alexandria-library.com/health`
+2. `bash scripts/push.sh` (no factory/canon touched — push.sh, not ship.sh).
+   Working tree also holds unrelated factory/whitepaper edits from other
+   sessions; the commit is already scoped, don't sweep those in.
+3. Vercel auto-deploys the website on push (redirect + mobile UI).
+4. Real-device pass: phone → alexandria-library.com/start → add shortcut →
+   send yourself the email → run the command on the laptop →
+   `GET /admin/onboard-conversion` shows installed=1.
+
+**Status of the older plan below** (account-based flow): items 3+4 were built
+earlier as `runInstallNudges` + `/admin/nudge-conversion` (then removed from
+cron by the no-push decision; admin triggers remain). The keyless flow above
+supersedes their job for mobile visitors who never OAuth. Items 1 (copy pass
+on `callbackPageHtml`), 2 (folder rename), 5 (fresh-account /a smoke) remain
+open and untouched.
+
+---
+
 ## Verified architecture (no changes needed)
 
 - iOS Shortcut writes to user's own `iCloud Drive/Alexandria/[Date]/` — per-user via iCloud being device-scoped.

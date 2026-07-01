@@ -1,8 +1,7 @@
 'use client';
 
 import { ThemeToggle } from '../components/ThemeToggle';
-
-const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337';
+import { SHORTCUT_URL } from '../lib/config';
 
 function DownloadIcon() {
   return (

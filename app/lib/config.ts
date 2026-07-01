@@ -37,3 +37,8 @@ export function pageMetadata(opts: {
 // human at the other end (mailto / tel). Kept here so a single edit
 // propagates to every surface and the value stays out of component code.
 export const FOUNDER_PHONE = '+14155038178';
+
+// The iCloud Shortcut — phone-side capture. Single source for every surface
+// that links it (/shortcut, mobile /start; the server's email templates carry
+// their own copy in server/src/email.ts).
+export const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337';
