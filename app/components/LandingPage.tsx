@@ -1295,14 +1295,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            Anchored to the WALL's cover geometry, not the stage:
            --wall-w/--wall-h reproduce background-size: cover for the
            1498×843 image (AR 1.7771); x sits on the arch's centre
-           (image-fraction 0.5245 with the 75% crop position) and y just
-           below the arch's foot (bottom fraction 0.6556 + margin) at
-           every aspect ratio. Type scales gently with the scene. */
+           (image-fraction 0.505, measured off the arch's apex and inner
+           side edges, with the 75% crop position) and y just below the
+           arch's foot (bottom fraction 0.6556 + margin) at every aspect
+           ratio. Type scales gently with the scene. */
         .film-invite {
           position: absolute;
           --wall-w: max(100vw, 177.71vh);
           --wall-h: max(100vh, 56.27vw);
-          left: calc(75vw - 0.2255 * var(--wall-w));
+          left: calc(75vw - 0.245 * var(--wall-w));
           top: calc(50vh + 0.187 * var(--wall-h));
           transform: translate(-50%, -50%);
           margin: 0;
