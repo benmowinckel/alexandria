@@ -151,9 +151,13 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
       fi
     else
       # Fetch failed (network, GitHub down, 404). Log — silent skip would violate
-      # "awareness is upstream of everything".
-      canon_fetch_failures="$canon_fetch_failures $module"
-      echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) canon fetch failed: $module (curl returned empty or undersized response — network, upstream 404, or rate limit)" >> "$ALEX_DIR/system/.alexandria_errors"
+      # "awareness is upstream of everything". Only when a fetch was actually
+      # attempted: AUTO_UPDATE=false means no fetch happened, which is the
+      # Author's choice, not a failure.
+      if [ "$AUTO_UPDATE" = true ]; then
+        canon_fetch_failures="$canon_fetch_failures $module"
+        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) canon fetch failed: $module (curl returned empty or undersized response — network, upstream 404, or rate limit)" >> "$ALEX_DIR/system/.alexandria_errors"
+      fi
     fi
     rm -f "$fresh_tmp"
     if [ "$module" = "foundation" ] && [ -f "$local_path" ]; then
@@ -292,23 +296,23 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
   # signal.md: observations accumulated from passive sessions — Engine reads directly.
   # Canon instructs the Engine to check these at session start and respond appropriately.
 
-  # Maintenance status — one line each, detail stays in files. The autoloop
-  # owns repair (see scheduled.md § Machine audit + § Canon update review).
+  # Maintenance status — one line each, detail stays in files. Repair happens
+  # in an active session — the Engine drains these when the Author engages.
   # Live sessions see status only; full content is in system/.alexandria_errors
   # and system/.canon_update_notice when the Engine wants to look.
   if [ -f "$ALEX_DIR/system/.alexandria_errors" ] && [ -s "$ALEX_DIR/system/.alexandria_errors" ]; then
     err_count=$(wc -l < "$ALEX_DIR/system/.alexandria_errors" 2>/dev/null | tr -d ' ')
     if [ "${err_count:-0}" -gt 0 ]; then
       if grep -qE '^(<<<<<<<|=======$|>>>>>>>)' "$ALEX_DIR/system/.alexandria_errors" 2>/dev/null; then
-        echo "alexandria: maintenance — .alexandria_errors has git conflict markers (autoloop will repair)"
+        echo "alexandria: maintenance — .alexandria_errors has git conflict markers (repair in an active session)"
       else
-        echo "alexandria: maintenance — $err_count sync errors pending (autoloop handles)"
+        echo "alexandria: maintenance — $err_count sync errors pending (drain in an active session)"
       fi
     fi
   fi
 
   if [ -f "$ALEX_DIR/system/.canon_update_notice" ] && [ -s "$ALEX_DIR/system/.canon_update_notice" ]; then
-    echo "alexandria: maintenance — canon update pending review (autoloop handles)"
+    echo "alexandria: maintenance — canon update pending review (review in an active session)"
   fi
 
   # Installed factory artefacts drift check — notify, never override.
