@@ -217,32 +217,27 @@ function FrontFilm() {
     };
   }, [open]);
   return (
-    <figure className="film-frame">
-      {/* Constant 16:9 canvas so the frame never resizes as the rotation
-          swipes; each film plays at its own aspect inside the lightbox. */}
+    <figure className="film-invite" role="group" aria-label="films">
+      {/* A museum plate beneath the fresco — the painting IS the slide
+          (the launch film re-authors this exact image); the plate is the
+          one quiet affordance. Arrows appear when the rotation has more
+          than one film; each plays in the lightbox. */}
+      {FILMS.length > 1 && (
+        <button type="button" className="film-arrow" onClick={() => step(-1)} aria-label="previous film">&larr;</button>
+      )}
       <button
         type="button"
-        className="film-canvas film-poster"
+        className="film-invite-btn"
         onClick={() => setOpen(true)}
         aria-label={`play ${film.label}`}
       >
-        {/* One line: the title with a quiet play mark beside it — the
-            whole card is the button, the glyph just names the gesture. */}
-        <span className="film-title" aria-hidden>
-          {film.label}
-          <svg className="film-play-glyph" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-            <path d="M8 5.5v13l11-6.5z" />
-          </svg>
-        </span>
+        <em>{film.label}</em>
+        <svg className="film-play-glyph" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M8 5.5v13l11-6.5z" />
+        </svg>
       </button>
-      {/* Rotation plate — only exists once there's something to rotate;
-          the card itself carries title + length. */}
       {FILMS.length > 1 && (
-        <figcaption className="film-plate">
-          <button type="button" className="film-arrow" onClick={() => step(-1)} aria-label="previous film">&larr;</button>
-          <span className="film-label"><em>{film.label}</em></span>
-          <button type="button" className="film-arrow" onClick={() => step(1)} aria-label="next film">&rarr;</button>
-        </figcaption>
+        <button type="button" className="film-arrow" onClick={() => step(1)} aria-label="next film">&rarr;</button>
       )}
       {/* The lightbox portals to <body> — .stage-top is transform-scaled,
           which would make position:fixed resolve against the stage. */}
@@ -629,14 +624,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             is absolute pixels, so type, drop-caps, and corner marks never
             reflow with viewport changes. Mobile (<899px) sets this to
             display:contents so the existing flow layout takes over. */}
-        {/* Frontispiece composition — the wall scene is the slide; the
-            film frame hangs where the fresco niche sits, a screen in a
-            museum tableau. It lives OUTSIDE the stage: the stage scales
-            by min(vw/1440, vh/900) while the wall background scales by
-            cover — two different laws, so a stage-anchored frame lets
-            the baked-in arch peek out at non-16:10 aspect ratios. The
-            frame instead tracks the wall's own cover geometry (CSS calc
-            below), covering the arch exactly at every viewport. */}
+        {/* Frontispiece composition — the wall + arch + fresco ARE the
+            slide (restored 2026-07-01 after a framed-card detour: the
+            painting is the image the launch film re-authors, so it
+            stays). The film plate beneath the arch is the one quiet
+            affordance; it lives OUTSIDE the stage because the stage
+            scales by min(vw/1440, vh/900) while the wall scales by
+            cover — the plate tracks the wall's own geometry instead. */}
         <FrontFilm />
         <div className="stage-top">
         <span className="alpha-mark">san francisco · mmxxvi</span>
@@ -1295,80 +1289,55 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           pointer-events: none;
           z-index: 1;
         }
-        /* FILM FRAME — the screen hung on the wall where the fresco niche
-           sits. Anchored to the WALL's cover geometry, not the stage:
+        /* FILM PLATE — the quiet line beneath the arch ("the demo ▸").
+           Anchored to the WALL's cover geometry, not the stage:
            --wall-w/--wall-h reproduce background-size: cover for the
-           1498×843 image (AR 1.7771), and the offsets place the frame on
-           the arch's centre (image-fraction x 0.5245 with the 75% crop
-           position, y 0.433) at every aspect ratio. Width 0.46·wall-w:
-           enough for the 16:9 canvas to cover the arch (w 0.275, h 0.4446
-           in image fractions) with margin. Type scales with the scene via
-           font-size = 0.01877·wall-w (≈30px at the 1440×900 baseline). */
-        .film-frame {
+           1498×843 image (AR 1.7771); x sits on the arch's centre
+           (image-fraction 0.5245 with the 75% crop position) and y just
+           below the arch's foot (bottom fraction 0.6556 + margin) at
+           every aspect ratio. Type scales gently with the scene. */
+        .film-invite {
           position: absolute;
           --wall-w: max(100vw, 177.71vh);
           --wall-h: max(100vh, 56.27vw);
           left: calc(75vw - 0.2255 * var(--wall-w));
-          top: calc(50vh - 0.067 * var(--wall-h));
+          top: calc(50vh + 0.187 * var(--wall-h));
           transform: translate(-50%, -50%);
-          width: calc(0.46 * var(--wall-w));
-          font-size: calc(0.01877 * var(--wall-w));
           margin: 0;
           display: flex;
-          flex-direction: column;
           align-items: center;
-          gap: 0.5em;
+          gap: 10px;
           z-index: 2;
         }
-        /* The canvas at rest is a title card — mounted print, not a
-           screenshot (a raw demo frame read as a floating browser; the
-           fresco crop read as the one image every ai company reaches
-           for). Constant 16:9 so the frame holds still as the rotation
-           swipes; films play at their own aspect in the lightbox. */
-        .film-canvas {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          aspect-ratio: 16 / 9;
-          padding: 0;
-          cursor: pointer;
-          background:
-            radial-gradient(ellipse 120% 90% at 50% 30%, rgba(255, 252, 245, 0.55) 0%, transparent 60%),
-            #efe8da;
-          border: 1px solid rgba(26, 19, 24, 0.16);
-          border-radius: 4px;
-          overflow: hidden;
-          box-shadow:
-            0 1px 4px rgba(59, 47, 47, 0.12),
-            0 12px 28px -10px rgba(59, 47, 47, 0.22),
-            0 34px 64px -26px rgba(59, 47, 47, 0.18);
-          /* No shadow-hop on hover — box-shadow animation is paint-
-             triggering, and the glyph's colour + nudge already carries
-             the affordance. */
-        }
-        .film-title {
+        .film-invite-btn {
           display: inline-flex;
           align-items: center;
-          gap: 0.5em;
+          gap: 11px;
+          padding: 10px 14px;
+          margin: -10px -14px;
+          border: none;
+          background: none;
+          cursor: pointer;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 1em;
-          letter-spacing: 0.01em;
-          color: #1a1318;
+          font-size: clamp(15px, calc(0.0115 * var(--wall-w)), 26px);
+          letter-spacing: 0.02em;
+          color: rgba(26, 19, 24, 0.66);
+          transition: color 200ms ease;
         }
+        .film-invite-btn em { font-style: italic; }
+        .film-invite-btn:hover { color: #1a1318; }
         .film-play-glyph {
           width: 0.5em;
           height: 0.5em;
-          margin-top: 0.07em;
-          color: rgba(26, 19, 24, 0.5);
+          margin-top: 0.1em;
+          color: rgba(26, 19, 24, 0.45);
           transition: color 200ms ease, transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .film-canvas:hover .film-play-glyph {
+        .film-invite-btn:hover .film-play-glyph {
           color: #1a1318;
           transform: translateX(2px);
         }
-        .film-canvas:active .film-play-glyph {
+        .film-invite-btn:active .film-play-glyph {
           transform: translateX(1px) scale(0.96);
         }
         /* Lightbox — the film lifts out and plays over a dimmed room.
@@ -1420,19 +1389,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           .film-lightbox,
           .film-lightbox-video { animation: none; }
         }
-        /* Museum plate under the frame — label + (when the rotation has
-           more than one film) the side arrows. */
-        .film-plate {
-          display: flex;
-          align-items: center;
-          gap: 0.6em;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 0.45em;
-          letter-spacing: 0.04em;
-          color: rgba(26, 19, 24, 0.55);
-          user-select: none;
-        }
-        .film-label em { font-style: italic; }
         .film-arrow {
           padding: 4px 8px;
           margin: -4px -8px;
@@ -2742,27 +2698,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             box-shadow: none !important;
           }
           .top-slide {
-            /* Compact hero — the film frame is the slide on mobile; no
-               dead cream below it. min-height overrides the desktop-flow
-               100svh set above. */
-            min-height: auto;
-            padding: 148px clamp(20px, 5vw, 64px) 72px;
-            /* The baked-in arch would double-image behind the film frame
-               here (on portrait it fills the whole width), so zoom the
-               wall image past it: a clean wall-and-tree-shadow slice from
-               left of the niche. 390% renders the image ~3.9× element
-               width — window ends left of the arch (x≈0.35) at any
-               phone width. */
-            background-size: 390% auto;
-            background-position: 2% 42%;
+            padding: 152px clamp(20px, 5vw, 64px) 96px;
+            /* Portrait viewport crops the wide image more aggressively
+               on the sides; centre-anchored cropping keeps the niche
+               in the visual middle. The desktop 62% offset pulled the
+               niche off-frame to the left here. */
+            background-position: center center;
+            /* Portrait crop fills the viewport with the dark niche +
+               painting (less cream wall visible than at desktop), so
+               the scene reads as a yellow-heavy dark cream. Subtle
+               lift + desaturation pulls it back toward the desktop
+               read. Affects PNG poster and breeze video together. */
             filter: brightness(1.06) saturate(0.92);
-          }
-          /* Breeze video + its watermark mask are cut on mobile — the
-             zoomed still IS the backdrop (no double image, no ~1MB
-             download on cellular). */
-          .adam-video,
-          .veo-mask {
-            display: none;
           }
           /* Breeze video sits on top of the PNG; same mobile recentre
              so the niche stays in the visual middle. Without this the
@@ -2824,21 +2771,20 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           .bottom-slide {
             padding: 60px clamp(20px, 5vw, 64px) 36px;
           }
-          /* Watermark — fixed so it persists across both slides as the user
-             scrolls, mirroring the desktop intent. Color uses the active
-             theme's fg with very low alpha so it reads faintly on both the
-             cream front slide and any themed back slide (the desktop
-             hardcoded purple was tuned for cream and disappears on dark
-             themes). */
+          /* Watermark — absolute in the hero, NOT fixed (founder's phone
+             screenshots 2026-07-01: fixed made the glyph float over the
+             letter mid-scroll and straddle the slide seam — "bleeding
+             over"). Anchored to the bottom of the first viewport, it
+             lives in the wall scene and scrolls away with it. */
           .watermark {
-            position: fixed;
-            top: auto;
-            bottom: 14%;
+            position: absolute;
+            top: calc(100svh - 40px);
+            bottom: auto;
             left: 40%;
-            transform: translateX(-50%);
+            transform: translate(-50%, -100%);
             font-size: clamp(160px, 44vw, 260px);
-            color: var(--theme-fg);
-            opacity: 0.06;
+            color: #1a1318;
+            opacity: 0.05;
           }
 
           .nav {
@@ -2943,6 +2889,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           .statement-close,
           .statement-beat {
             order: 4;
+            /* The letter's blocks are one thought — pull them back
+               against the 64px flat flex gap (desktop uses 18px). The
+               founder's phone screenshots read the 64px gaps as
+               "spacing all off". Net ≈ 26px inside the letter. */
+            margin-top: -38px;
           }
           .cta-pair {
             order: 5;
@@ -2965,15 +2916,17 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             margin-top: 0;
           }
 
-          /* Film frame flows in the top-slide (the stage is
-             display: contents here); full-width plate, generous
-             breathing room inside the 152px/96px slide padding. */
-          .film-frame {
-            position: static;
-            transform: none;
-            width: 100%;
-            max-width: 560px;
-            margin: 0 auto;
+          /* Film plate on mobile — the arch centres in the portrait crop
+             (bg-position center center overrides the desktop 75%), so the
+             cover x-math doesn't apply; centre it and hang it under the
+             arch's foot (~66svh). */
+          .film-invite {
+            left: 50%;
+            top: 72svh;
+            transform: translate(-50%, -50%);
+          }
+          .film-invite-btn {
+            font-size: 16px;
           }
 
           /* Statement — drop the absolute roman numerals (they hang in
