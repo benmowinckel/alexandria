@@ -231,6 +231,10 @@ function FrontFilm() {
         onClick={() => setOpen(true)}
         aria-label={`play ${film.label}`}
       >
+        {/* The title is the centered object; the glyph hangs outside it
+            (absolute) so the optical centre is the words, not
+            words+glyph — founder caught "the m is the thing in the
+            middle". */}
         <em>{film.label}</em>
         <svg className="film-play-glyph" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
           <path d="M8 5.5v13l11-6.5z" />
@@ -554,7 +558,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 wordmark. Classical title-block contrast: italic display,
                 roman small-caps subtitle. Tells the cold reader what
                 alexandria IS in three words, without dominating. */}
-            <span className="nav-subtitle nav-subtitle-front" aria-hidden>the library of human minds</span>
+            <span className="nav-subtitle nav-subtitle-front" aria-hidden>the library of<br className="nav-subtitle-br" />human minds</span>
             <span className="nav-subtitle nav-subtitle-back" aria-hidden>mentes aeternae</span>
           </div>
           <div className="nav-links">
@@ -742,7 +746,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 </p>
 
                 <p className="statement-beat">
-                  <em>Not a system to download &mdash; a culture to join.</em>
+                  <em>Not a system to download &mdash;{' '}
+                  <span className="no-orphan">a culture to join.</span></em>
                 </p>
 
                 <p className="statement-close statement-ways">
@@ -931,6 +936,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            wordmark. Wide tracking, weight 500, faint colour. Sits as
            a quiet plaque beside the painting. Visible on top slide;
            fades out on peel since slide 2's dict carries the same role. */
+        .nav-subtitle-br { display: none; }
+        @media (max-width: 899px) {
+          .nav-subtitle-br { display: inline; }
+        }
         .nav-subtitle {
           position: absolute;
           top: 100%;
@@ -1303,9 +1312,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           z-index: 2;
         }
         .film-invite-btn {
+          position: relative;
           display: inline-flex;
           align-items: center;
-          gap: 10px;
           padding: 10px 14px;
           margin: -10px -14px;
           border: none;
@@ -1323,18 +1332,22 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .film-invite-btn em { font-style: italic; }
         .film-invite-btn:hover { color: #1a1318; }
         .film-play-glyph {
+          position: absolute;
+          left: 100%;
+          top: 50%;
+          margin-left: -4px;
           width: 0.55em;
           height: 0.55em;
-          margin-top: 0.1em;
           color: rgba(26, 19, 24, 0.35);
+          transform: translateY(-50%);
           transition: color 200ms ease, transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
         }
         .film-invite-btn:hover .film-play-glyph {
           color: #1a1318;
-          transform: translateX(2px);
+          transform: translate(2px, -50%);
         }
         .film-invite-btn:active .film-play-glyph {
-          transform: translateX(1px) scale(0.96);
+          transform: translate(1px, -50%) scale(0.96);
         }
         /* Lightbox — the film lifts out and plays over a dimmed room.
            Backdrop or × or Esc closes. Portalled to <body>. */
@@ -2226,6 +2239,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         /* The pulled-out beat — the one line carrying the collective,
            set as its own typographic event between the paragraphs and
            the numbered ways. Italic, a half-step up, room around it. */
+        .statement-beat .no-orphan { white-space: nowrap; }
         .statement-beat {
           margin: 4px 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -2812,6 +2826,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           /* Tagline visible on mobile under the brand. */
           .nav-tagline {
             font-size: 12px;
+          }
+          /* Subtitle breaks in two ("the library of / human minds")
+             instead of running under the whitepaper label. Explicit <br>
+             — a max-width wrap gave three ragged lines under the heavy
+             tracking. */
+          .nav-subtitle {
+            line-height: 1.6;
           }
 
           /* TOP SLIDE — drop the glass bubble on mobile. The desktop
