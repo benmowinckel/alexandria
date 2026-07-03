@@ -19,6 +19,7 @@ How *Benjamin* runs the loop well — the best *general* starting point for some
 - **`editor.md` · `mercury.md` · `publisher.md`** — his three functions (extract, amplify, create).
 - **`library.md` · `filter.md`** — his Library surface and publishing conventions.
 - **`plm.md`** — compiling the Author's twin: a queryable language model built from the Constitution (positions) + all the Author's first-person text (voice), trained as one weighted multi-source SFT run, a downstream artifact recompiled each base-model generation, shipped behind the Author's gate.
+- **`twin.md`** — the onboarding companion to `plm.md`: the plain, compelling why an Author reads before deciding to compile — what a twin is, why only their substrate can build it, the weights-floor / context-ceiling split, the honest data bar, and the one-command path. The invitation; `plm.md` is the machine.
 - **`bookshelf.md`** — his reference shelf. Reference, not a survival-ranked module (ships + forkable, but intentionally not in the call-manifest).
 
 ## Marketplace — the person-specific (not canon)

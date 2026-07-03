@@ -59,3 +59,14 @@ ADMIN_GITHUB_LOGIN = "mowinckelb"
 WEBSITE_URL = "https://alexandria-library.com"
 LIBRARY_CUT_PERCENT = "50"
 KIN_THRESHOLD = "3"
+
+# PLM "ask this mind" twin inference. The Worker relays questions to a sidecar
+# that fronts Tinker sampling and holds TINKER_API_KEY (never the Worker). Empty
+# TWIN_INFERENCE_URL ⇒ the ask feature reports "twin offline" (zero-regret: the
+# surface ships, the engine slots in later). To go live: set TWIN_INFERENCE_URL
+# to the sidecar, `wrangler secret put TWIN_INFERENCE_SECRET`, and set
+# DEFAULT_TWIN_CHECKPOINT (the current User-Zero compile) here or per-author via
+# POST /library/{id}/twin. The checkpoint is not a secret; the Tinker key is.
+TWIN_INFERENCE_URL = ""
+DEFAULT_TWIN_BASE = "Qwen/Qwen3.6-35B-A3B"
+DEFAULT_TWIN_CHECKPOINT = ""

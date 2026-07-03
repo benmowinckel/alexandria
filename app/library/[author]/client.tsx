@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { FETCH_TIMEOUT_MS, SERVER_URL } from '../../lib/config';
 import { safeUrl } from '../../lib/url';
+import AskThisMind from './AskThisMind';
 
 interface ProtocolFile {
   name: string;
@@ -27,6 +28,7 @@ interface AuthorData {
     website: string | null;
     text: string | null;
   };
+  twin?: { enabled: boolean; label: string | null };
   files?: ProtocolFile[];
 }
 
@@ -308,10 +310,19 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
         </header>
 
         <section>
+          {data.twin?.enabled && (
+            <AskThisMind
+              authorId={authorId}
+              authorName={author.display_name || author.id}
+              label={data.twin.label}
+            />
+          )}
           {shadowFiles.length === 0 && openFiles.length === 0 ? (
-            <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>
-              nothing published yet.
-            </p>
+            !data.twin?.enabled && (
+              <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>
+                nothing published yet.
+              </p>
+            )
           ) : (
             <>
               {textSection('works', worksFile)}
