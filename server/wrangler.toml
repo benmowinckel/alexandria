@@ -74,4 +74,8 @@ KIN_THRESHOLD = "3"
 TWIN_INFERENCE_URL = ""
 DEFAULT_TWIN_BASE = "Qwen/Qwen3.6-35B-A3B"
 DEFAULT_TWIN_CHECKPOINT = ""
-DEFAULT_TWIN_CONTEXT_MODEL = ""
+# Sensible default so enabling a context twin doesn't silently no-op when the
+# Author didn't name a model. The sidecar uses its own TWIN_FRONTIER_MODEL for
+# actual inference; this just satisfies the "has a resolvable model" gate + is
+# the display value. Any Author can still override per-twin.
+DEFAULT_TWIN_CONTEXT_MODEL = "claude-sonnet-4-6"
