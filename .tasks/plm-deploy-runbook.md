@@ -24,11 +24,16 @@ curl -X POST https://api.alexandria-library.com/library/mowinckelb/twin \
   -d '{"context":{"enabled":true,"visibility":"invite","tools":{"works":true,"web":false}},"weights":{"enabled":false}}'
 ```
 
-**EVERY TIME you want your twin online — one command:**
+**ONE-TIME — make it automatic (do this once, then never again):**
 ```
-cd ~/alexandria-inc/private/plm && bash twin-serve.sh
+cd ~/alexandria-inc/private/plm && bash twin-autostart.sh on
 ```
-It starts your twin's brain, opens a public address, and registers it with Alexandria — your twin goes LIVE. Leave the window open to stay online; Ctrl-C (or close it) goes OFFLINE (the page shows "offline", not an error). Re-run to go back online — it re-registers the new address itself, you never touch a URL. Your keys + substrate never leave your machine; Alexandria only holds the address + shared secret (encrypted).
+From now on your twin is **online whenever your laptop is on** — macOS starts it at login and keeps it alive across sleep/wake, re-registering a fresh address each time. Nothing to remember, ever. Same pattern as your backup + morning-email jobs.
+- Turn it off any time: `bash twin-autostart.sh off` (twin goes offline, stays off).
+- Check it: `bash twin-autostart.sh status`.
+- Your keys + substrate never leave your machine; Alexandria only holds the address + shared secret (encrypted).
+
+(Manual alternative, if you ever want to run it just for a session: `bash twin-serve.sh` — online while it's open, offline when you Ctrl-C. The autostart above makes this unnecessary.)
 
 **Make invite codes** for the people you want to let in (one per person, so you can revoke individually):
 ```
