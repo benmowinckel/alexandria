@@ -253,6 +253,10 @@ export interface TwinVariantSummary {
    *  (reference the Author's works / search the web). Never a model handle. */
   tools: TwinToolConfig;
   accessible: boolean;
+  /** Enabled + invite-gated + this viewer isn't in yet: reachable by entering a
+   *  valid invite code. Lets the page render an "unlock" field instead of hiding
+   *  an invite-only twin entirely (otherwise an invited user sees nothing). */
+  needsInvite: boolean;
 }
 
 /** Drives whether the website renders the ask box and how many variants it
@@ -270,18 +274,29 @@ export function twinPublicSummary(
   const all: TwinConfig[] = [variants.weights, variants.context];
   const summaries: TwinVariantSummary[] = all
     .filter((cfg) => cfg.enabled)
-    .map((cfg) => ({
-      variant: cfg.variant,
-      enabled: cfg.enabled,
-      visibility: cfg.visibility,
-      label: cfg.label,
-      tools: cfg.tools,
-      accessible: accessibleFor(cfg),
-    }));
+    .map((cfg) => {
+      const accessible = accessibleFor(cfg);
+      return {
+        variant: cfg.variant,
+        enabled: cfg.enabled,
+        visibility: cfg.visibility,
+        label: cfg.label,
+        tools: cfg.tools,
+        accessible,
+        // An invite-gated variant the viewer can't yet reach is UNLOCKABLE, not
+        // hidden — the page offers an invite field. Without this, the invite-only
+        // launch config (weights dark, deep=invite) renders nothing for an
+        // invited user, hiding the flagship feature entirely.
+        needsInvite: !accessible && cfg.visibility === 'invite',
+      };
+    });
 
-  // Legacy top-level fields = the first variant this viewer can actually use
-  // (weights floor preferred), so the old single-box client still lights up.
-  const primary = summaries.find((s) => s.accessible) || null;
+  // Legacy top-level fields = the first variant this viewer can use OR unlock,
+  // so the section renders (weights floor preferred) instead of vanishing when
+  // the only twin is invite-gated.
+  const primary = summaries.find((s) => s.accessible)
+    || summaries.find((s) => s.needsInvite)
+    || null;
   return {
     enabled: !!primary,
     label: primary?.label ?? null,
@@ -294,7 +309,7 @@ export function twinPublicSummary(
  *  twin can be honest that it reads the Author's substrate. */
 export function twinDisclaimer(displayName: string, variant: TwinVariant = 'weights'): string {
   if (variant === 'context') {
-    return `this is ${displayName}'s twin reading their published substrate on a frontier model — not the person. it can be wrong, and may not reflect their real views.`;
+    return `this is ${displayName}'s twin — a top model reading everything they've published, not the person. it can be wrong, and may not reflect their real views.`;
   }
   return `this is ${displayName}'s trained twin — a model compiled from their published substrate, not the person. it can be wrong, and may not reflect their real views.`;
 }

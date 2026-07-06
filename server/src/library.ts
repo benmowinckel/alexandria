@@ -608,6 +608,24 @@ export function registerLibraryRoutes(app: Hono): void {
     }
   }
 
+  // Per-AUTHOR daily ceiling — the IP limiter above is defeated by IP rotation
+  // (a proxy pool → unbounded Anthropic/Tinker spend). This cap is IP-independent,
+  // so it bounds total cost-of-goods per author per day regardless of source.
+  // Returns true when the request should be BLOCKED. Fail closed on KV error.
+  async function checkTwinDailyCap(authorId: string, limit = 500): Promise<boolean> {
+    try {
+      const kv = getKV();
+      const key = `rate:twin:daily:${authorId}`;
+      const raw = await kv.get(key);
+      const count = raw ? parseInt(raw, 10) : 0;
+      if (count >= limit) return true;
+      await kv.put(key, String(count + 1), { expirationTtl: 86400 });
+      return false;
+    } catch {
+      return true; // FAIL CLOSED
+    }
+  }
+
   // Invite-code validation for twin queries — same access_codes table the file
   // gate uses. Author-scoped, revocation-aware. Result feeds the shared gate.
   async function validateTwinInvite(authorId: string, code: string): Promise<boolean> {
@@ -739,10 +757,14 @@ export function registerLibraryRoutes(app: Hono): void {
     const authorAccount = lookup?.account;
     if (!authorAccount?.github_id) return c.json({ error: 'Author not found' }, 404);
 
-    // Rate limit before doing any (paid) inference work — per IP+author.
+    // Rate limit before doing any (paid) inference work — per IP+author, plus a
+    // per-author daily ceiling that IP rotation can't defeat.
     const ip = c.req.header('cf-connecting-ip') || 'unknown';
     if (await checkTwinRateLimit(authorId, ip)) {
       return c.json({ error: 'Too many questions — give the twin a minute.' }, 429);
+    }
+    if (await checkTwinDailyCap(authorId)) {
+      return c.json({ error: 'This twin has answered its limit for today — try again tomorrow.' }, 429);
     }
 
     const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown };
@@ -801,6 +823,10 @@ export function registerLibraryRoutes(app: Hono): void {
     // Rate limit keyed on the API-key owner (not IP) — the API is per-account.
     if (await checkTwinRateLimit(authorId, `key:${accessor.github_login}`, 30, 60)) {
       return c.json({ error: 'Rate limit exceeded — slow down.' }, 429);
+    }
+    // Same per-author daily ceiling as the web route (shared cost surface).
+    if (await checkTwinDailyCap(authorId)) {
+      return c.json({ error: 'This twin has reached its daily limit — try again tomorrow.' }, 429);
     }
 
     const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown };

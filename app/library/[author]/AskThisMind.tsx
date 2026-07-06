@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent } from 'react';
 
 /**
@@ -8,17 +8,16 @@ import type { CSSProperties, KeyboardEvent } from 'react';
  *
  * An Author projects up to TWO queryable twins (plm.md § both-twin architecture):
  *
- *   • weights twin (quick) — the privacy FLOOR. Weights compiled from the
- *     Author's substrate; the visitor never sees, and cannot extract, the raw
+ *   • weights twin (quick) — the privacy FLOOR. A model trained on the Author's
+ *     published writing; the visitor never sees, and cannot extract, the raw
  *     substrate. Public by default → the stranger-facing option.
- *   • context twin (deep) — the fidelity CEILING. A frontier model reading the
- *     Author's substrate in context. Higher fidelity, but it EXPOSES the
- *     substrate at query time, so it is gated (authors by default).
+ *   • context twin (deep) — the fidelity CEILING. A top model reading the
+ *     Author's published writing live. Higher fidelity; invite-gated by default.
  *
- * The server sends only the variants THIS viewer may reach (per-variant gate).
- * If the viewer can reach both, we show a labelled toggle; if one, we show it;
- * if none, this component isn't rendered. The honest twin disclaimer is always
- * present, and adapts to the active variant.
+ * The server sends the variants THIS viewer may reach, PLUS invite-gated ones the
+ * viewer can UNLOCK (needsInvite) — so an invite-only twin shows an unlock field
+ * instead of vanishing. Reachable variants get a toggle; the honest disclaimer is
+ * always present and adapts to the active variant.
  *
  * State machine: idle → thinking → answered (or error). Awaited, not streamed.
  */
@@ -32,6 +31,7 @@ export type TwinVariantSummary = {
   label: string | null;
   tools: boolean;
   accessible: boolean;
+  needsInvite?: boolean;
 };
 
 type AskResponse = {
@@ -44,10 +44,11 @@ type AskResponse = {
   error?: string;
 };
 
-// Human labels for the toggle + the resting hint per variant.
+// Human labels for the toggle + the resting hint per variant. Hints read as a
+// matched pair (what each does), plain enough for a first-time visitor.
 const VARIANT_META: Record<TwinVariant, { toggle: string; hint: string }> = {
-  weights: { toggle: 'quick', hint: 'privacy-safe' },
-  context: { toggle: 'deep', hint: 'full substrate' },
+  weights: { toggle: 'quick', hint: 'trained on their writing' },
+  context: { toggle: 'deep', hint: 'reads their writing live · invite-only' },
 };
 
 const sectionLabelStyle: CSSProperties = {
@@ -59,7 +60,7 @@ const sectionLabelStyle: CSSProperties = {
 
 function restingDisclaimerFor(name: string, variant: TwinVariant): string {
   if (variant === 'context') {
-    return `you're talking to ${name}'s twin reading their published substrate on a frontier model — not ${name}. it can be wrong, and may not reflect their real views.`;
+    return `you're talking to ${name}'s twin — a top model reading everything ${name} has published, not ${name} themselves. it can be wrong, and may not reflect their real views.`;
   }
   return `you're talking to ${name}'s trained twin — a model compiled from their published writing, not ${name}. it can be wrong, and may not reflect their real views.`;
 }
@@ -75,9 +76,9 @@ export default function AskThisMind({
 }) {
   const name = authorName || authorId;
 
-  // Only variants the server says this viewer can reach. Weights (floor) first.
+  // Variants the viewer can reach OR unlock with an invite. Weights (floor) first.
   const usable = useMemo(
-    () => (variants || []).filter((v) => v.enabled && v.accessible),
+    () => (variants || []).filter((v) => v.enabled && (v.accessible || v.needsInvite)),
     [variants],
   );
 
@@ -89,15 +90,45 @@ export default function AskThisMind({
   const [disclaimer, setDisclaimer] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Invite code — pre-filled from ?invite= so an invite link just works.
+  const [invite, setInvite] = useState('');
+  const [waited, setWaited] = useState(0);
+  const waitTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get('invite');
+      if (fromUrl) setInvite(fromUrl.trim());
+    } catch {
+      /* no-op */
+    }
+  }, []);
+
+  // Elapsed-time reassurance: the deep twin can think for a while (tool loops).
+  useEffect(() => {
+    if (loading) {
+      setWaited(0);
+      waitTimer.current = setInterval(() => setWaited((s) => s + 1), 1000);
+    } else if (waitTimer.current) {
+      clearInterval(waitTimer.current);
+      waitTimer.current = null;
+    }
+    return () => {
+      if (waitTimer.current) clearInterval(waitTimer.current);
+    };
+  }, [loading]);
 
   if (usable.length === 0) return null;
 
   const activeSummary = usable.find((v) => v.variant === active) ?? usable[0];
   const showToggle = usable.length > 1;
+  // This viewer must supply an invite to use the active variant.
+  const inviteGated = !!activeSummary.needsInvite && !activeSummary.accessible;
+  const askDisabled = loading || !question.trim() || (inviteGated && !invite.trim());
 
   const ask = async () => {
     const q = question.trim();
-    if (!q || loading) return;
+    if (!q || loading || (inviteGated && !invite.trim())) return;
     setLoading(true);
     setError('');
     setAnswer('');
@@ -106,11 +137,20 @@ export default function AskThisMind({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ question: q, variant: activeSummary.variant }),
+        body: JSON.stringify({
+          question: q,
+          variant: activeSummary.variant,
+          ...(invite.trim() ? { invite: invite.trim() } : {}),
+        }),
       });
       const body = (await res.json().catch(() => ({}))) as AskResponse;
       if (!res.ok || !body.answer) {
-        setError(body.error || 'the twin could not answer just now.');
+        setError(
+          body.error
+            || (res.status === 401 || res.status === 403
+              ? 'that invite code didn’t work — check it and try again.'
+              : 'the twin could not answer just now.'),
+        );
         return;
       }
       const v = body.variant || activeSummary.variant;
@@ -141,6 +181,7 @@ export default function AskThisMind({
   };
 
   const restingDisclaimer = restingDisclaimerFor(name, activeSummary.variant);
+  const thinkingLabel = waited >= 5 ? 'thinking — this can take a moment…' : 'thinking…';
 
   return (
     <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '1.6rem', paddingTop: '1.1rem' }}>
@@ -155,7 +196,7 @@ export default function AskThisMind({
             <div
               role="group"
               aria-label="twin depth"
-              style={{ display: 'flex', gap: '1.1rem', alignItems: 'baseline', margin: '0 0 1rem' }}
+              style={{ display: 'flex', gap: '1.1rem', alignItems: 'baseline', margin: '0 0 0.5rem' }}
             >
               {usable.map((v) => {
                 const isActive = v.variant === active;
@@ -164,7 +205,8 @@ export default function AskThisMind({
                     key={v.variant}
                     type="button"
                     onClick={() => setActive(v.variant)}
-                    className="hover:opacity-100"
+                    onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--text-muted)'; }}
+                    onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--text-ghost)'; }}
                     style={{
                       border: 'none',
                       background: 'none',
@@ -175,8 +217,7 @@ export default function AskThisMind({
                       letterSpacing: '0.02em',
                       color: isActive ? 'var(--text-primary)' : 'var(--text-ghost)',
                       borderBottom: isActive ? '1px solid var(--accent)' : '1px solid transparent',
-                      opacity: isActive ? 1 : 0.75,
-                      transition: 'color 0.15s, opacity 0.15s',
+                      transition: 'color 0.15s',
                     }}
                     aria-pressed={isActive}
                   >
@@ -192,14 +233,23 @@ export default function AskThisMind({
             </div>
           )}
 
+          {/* Why one over the other — one muted line, only when both are offered. */}
+          {showToggle && (
+            <p style={{ color: 'var(--text-ghost)', fontSize: '0.78rem', lineHeight: 1.5, margin: '0 0 0.9rem' }}>
+              quick answers anyone can ask · deep is higher-fidelity, invite-only
+            </p>
+          )}
+
           {activeSummary.label ? (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0 0 0.9rem' }}>
               {activeSummary.label}
             </p>
           ) : (
-            <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.5, margin: '0 0 0.9rem' }}>
-              {VARIANT_META[activeSummary.variant].hint}
-            </p>
+            !showToggle && (
+              <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.5, margin: '0 0 0.9rem' }}>
+                {VARIANT_META[activeSummary.variant].hint}
+              </p>
+            )
           )}
 
           <label htmlFor="twin-q" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
@@ -227,17 +277,42 @@ export default function AskThisMind({
               padding: '0 0 0.55rem',
             }}
           />
+
+          {inviteGated && (
+            <input
+              type="text"
+              value={invite}
+              onChange={(e) => setInvite(e.target.value)}
+              disabled={loading}
+              placeholder="have an invite code?"
+              aria-label="invite code"
+              style={{
+                width: '100%',
+                border: 'none',
+                borderBottom: '1px solid var(--border-light)',
+                background: 'transparent',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-eb-garamond)',
+                fontSize: '0.92rem',
+                outline: 'none',
+                padding: '0.7rem 0 0.5rem',
+                margin: '0.6rem 0 0',
+              }}
+            />
+          )}
+
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', margin: '0.9rem 0 0' }}>
             <button
               type="button"
               onClick={() => void ask()}
-              disabled={loading || !question.trim()}
-              className="hover:opacity-60"
+              disabled={askDisabled}
+              onMouseEnter={(e) => { if (!askDisabled) e.currentTarget.style.opacity = '0.6'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = askDisabled ? '0.45' : '1'; }}
               style={{
                 fontSize: '0.95rem',
                 color: 'var(--text-primary)',
-                cursor: loading || !question.trim() ? 'default' : 'pointer',
-                opacity: loading || !question.trim() ? 0.45 : 1,
+                cursor: askDisabled ? 'default' : 'pointer',
+                opacity: askDisabled ? 0.45 : 1,
                 transition: 'opacity 0.15s',
                 border: 'none',
                 background: 'none',
@@ -245,9 +320,9 @@ export default function AskThisMind({
                 fontFamily: 'inherit',
               }}
             >
-              {loading ? 'thinking…' : 'ask'}
+              {loading ? thinkingLabel : 'ask'}
             </button>
-            <span style={{ color: 'var(--text-whisper)', fontSize: '0.78rem' }}>⌘↵</span>
+            {!loading && <span style={{ color: 'var(--text-whisper)', fontSize: '0.78rem' }}>⌘↵</span>}
           </div>
         </>
       )}
@@ -277,7 +352,8 @@ export default function AskThisMind({
           <button
             type="button"
             onClick={reset}
-            className="hover:opacity-60"
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.6'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = '1'; }}
             style={{
               fontSize: '0.9rem',
               color: 'var(--text-muted)',

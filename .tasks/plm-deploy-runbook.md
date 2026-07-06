@@ -47,9 +47,11 @@ curl -X POST https://api.alexandria-library.com/library/mowinckelb/twin \
 # make invite codes for people you want to let in (existing access_codes mechanism).
 ```
 
-**6. Test live:** open `https://alexandria-library.com/library/mowinckelb`, use an invite, ask the deep twin about one of your published works (it should call search_my_works and discuss it in your voice), and ask a curveball. Confirm it never dumps the constitution when you try to injection it.
+**5b. Give early users an invite LINK (not just a code).** The page reads `?invite=CODE` and pre-fills the unlock field, so the flagship works in one click: send `https://alexandria-library.com/library/mowinckelb?invite=CODE`. Without the code an invited user now sees the twin section with a "have an invite code?" field (fixed this pass — before, an invite-only twin rendered nothing). The per-author daily cap defaults to 500 answers/day; raise it in `library.ts checkTwinDailyCap` if an early cohort needs more.
 
-**7. Ship the module to other Alexandrians** (separate, your call): `cd ~/alexandria-inc/public/code && bash factory/ship.sh "ship PLM module"` — re-signs the manifest so `plm.md` + `twin.md` land in every Author's payload.
+**6. Test live:** open `https://alexandria-library.com/library/mowinckelb?invite=CODE`, ask the deep twin about one of your published works (it should call search_my_works and discuss it in your voice), and ask a curveball. Confirm it never dumps the constitution when you try to inject it. Also open the page with NO invite and confirm the "have an invite code?" field shows (not a blank section).
+
+**7. Ship the module to other Alexandrians** (separate, your call): `cd ~/alexandria-inc/public/code && bash factory/ship.sh "ship PLM + twin modules"` — re-signs the manifest so the (now corrected: tiered-shadow + frontier-teacher) `plm.md` + `twin.md` land in every Author's payload. NOTE: the factory canon edits this pass are committed but NOT yet signed — `ship.sh` is required before they reach Authors, and must run before any push that includes them (else payload verification breaks for every Author).
 
 **8. Later — public weights twin:** once v7 clears your sign-off bar (or a better base/OPD lands), flip `weights.enabled=true, visibility=public` via the same endpoint. Not before.
 
