@@ -980,6 +980,68 @@ html.app-shell input:focus {
 }
 
 /* ============================================
+   Colophon — the end-plate beneath the manuscript.
+   Rendered outside the article (so the signature keeps
+   its :last-child styling): a centred, clearly-separate
+   zone that carries the single invitation and the doors
+   out. The argument closes at the signature; this is
+   where the reader is handed the way to act on it.
+   ============================================ */
+.pdoc-colophon {
+  text-align: center;
+  margin: 0 auto;
+  padding: 0 0 1.5rem;
+}
+.pdoc-colophon::before {
+  content: "❦";
+  display: block;
+  color: var(--text-ghost);
+  font-size: 1.05rem;
+  line-height: 1;
+  margin: 1rem auto 2.8rem;
+  opacity: 0.75;
+}
+.pdoc-colophon .pdoc-p {
+  font-family: var(--font-eb-garamond);
+  margin: 0 auto;
+  color: var(--text-muted);
+}
+.pdoc-colophon .pdoc-p:first-of-type {
+  font-style: italic;
+  font-size: 1.08rem;
+  line-height: 1.62;
+  max-width: 30rem;
+  text-wrap: balance;
+}
+.pdoc-colophon .pdoc-p:first-of-type em {
+  font-style: italic;
+}
+.pdoc-colophon .pdoc-p + .pdoc-p {
+  margin-top: 1.85rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: lowercase;
+  color: var(--text-ghost);
+}
+.pdoc-colophon .pdoc-a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+  margin: 0 0.2em;
+  white-space: nowrap;
+  transition: border-color 200ms ease, color 200ms ease;
+}
+.pdoc-colophon .pdoc-a:hover {
+  color: var(--accent-hover);
+  border-bottom-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+@media (max-width: 640px) {
+  .pdoc-colophon::before { margin-bottom: 2.2rem; }
+  .pdoc-colophon .pdoc-p + .pdoc-p { font-size: 0.8rem; letter-spacing: 0.1em; }
+}
+
+/* ============================================
    Frontispiece — the ninety-second elevator pitch
    above the abstract. Custom section that
    suppresses chapter-opening drop-caps (which

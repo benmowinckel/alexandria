@@ -53,8 +53,9 @@ function slugify(node: React.ReactNode): string {
 const TOC_MARKER = '\n%%MDOC_TOC%%\n';
 const ABSTRACT_MARKER = '\n%%MDOC_ABSTRACT%%\n';
 const FRONTISPIECE_MARKER = '\n%%MDOC_FRONTISPIECE%%\n';
+const COLOPHON_MARKER = '\n%%MDOC_COLOPHON%%\n';
 
-function processNumbered(md: string): { pre: string; frontispiece: string; abstract: string; post: string; toc: TocEntry[] } {
+function processNumbered(md: string): { pre: string; frontispiece: string; abstract: string; post: string; colophon: string; toc: TocEntry[] } {
   const lines = md.split('\n');
   const out: string[] = [];
   const toc: TocEntry[] = [];
@@ -73,6 +74,15 @@ function processNumbered(md: string): { pre: string; frontispiece: string; abstr
     if (line.startsWith('```')) inFence = !inFence;
 
     if (!inFence) {
+      // End-plate sentinel — everything after `<!-- colophon -->` renders as a
+      // separate colophon block below the article (not body text), so the
+      // signature keeps its :last-child styling and the doors sit in their
+      // own clearly-demarcated zone.
+      if (line.trim() === '<!-- colophon -->') {
+        out.push(COLOPHON_MARKER);
+        continue;
+      }
+
       // Strip the manual `## contents.` block — runs until the next H1.
       if (/^##\s+\*?contents\.?\*?\s*$/i.test(line)) {
         if (inAbstract) {
@@ -174,6 +184,14 @@ function processNumbered(md: string): { pre: string; frontispiece: string; abstr
   let post = '';
   const [beforeToc, afterToc = ''] = full.split(TOC_MARKER);
   post = afterToc;
+  // Split the colophon (end-plate) off the tail of the post stream so it can
+  // render as its own block outside the article.
+  let colophon = '';
+  const colParts = post.split(COLOPHON_MARKER);
+  if (colParts.length >= 2) {
+    post = colParts[0];
+    colophon = colParts.slice(1).join('').trim();
+  }
   const absParts = beforeToc.split(ABSTRACT_MARKER);
   let preBefore = '';
   if (absParts.length >= 3) {
@@ -191,7 +209,7 @@ function processNumbered(md: string): { pre: string; frontispiece: string; abstr
   } else {
     pre = preBefore;
   }
-  return { pre, frontispiece, abstract, post, toc };
+  return { pre, frontispiece, abstract, post, colophon, toc };
 }
 
 function TocBlock({ entries }: { entries: TocEntry[] }) {
@@ -554,6 +572,14 @@ export default function MarkdownDoc({ src, header, homeHref = '/', numbered = fa
             </ReactMarkdown>
           )}
         </article>
+
+        {parsed?.colophon && (
+          <section className="mdoc-frame pdoc pdoc-colophon" aria-label="Begin">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={MD_COMPONENTS}>
+              {parsed.colophon}
+            </ReactMarkdown>
+          </section>
+        )}
 
         <nav className="mdoc-frame mdoc-footnav">
           <Link href={homeHref} className="mdoc-home">a.</Link>

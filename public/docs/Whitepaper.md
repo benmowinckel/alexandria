@@ -1,12 +1,16 @@
 # alexandria.
 
-Intelligence is being industrialised — made cheap, made fast, made at scale. Add robots for the body, and you reach the claim this age turns on: whatever you do, a machine will do, and do it better.
+One question decides the next century, and almost no one is answering it honestly: when a machine can do everything you do, and do it better, what is a person for?
 
-You don’t have to believe it yet. The question it forces holds either way. When a machine can do everything you do, and do it better, what is a person for?
+You could count the honest answers on one hand. Most of what’s said about AI is one of two things. It’s dishonest — from people whose money or standing depends on selling an inevitability, doom or utopia, whichever moves the room. Or it’s simply wrong — comfortable guesses from people who haven’t followed the thing all the way down. Between the salesmen and the sleepwalkers, the most important question of our lifetime sits almost untouched.
 
-This paper answers that from the ground up. It is one argument, start to finish — each step follows from the one before it, and none of the conclusions were chosen in advance. By the end you’ll see the whole of what Alexandria is, and why it couldn’t have been much else. Read the titles alone and you’ll have the shape of it.
+What’s missing isn’t another forecast. It’s a frame — a way to think clearly about how a person, and a species, comes through this still itself. Not just alive on the far side, but recognisably human, and worth being. No one has set that out plainly. So this paper does, from the ground up.
 
-*This is the full argument. For the shorter, more personal version, read [the letter](/docs/letter.pdf).*
+It’s one argument, start to finish — each step follows from the one before, and none of the conclusions were chosen in advance.
+
+There’s a company at the end of it — Alexandria. Not because the argument was built to justify one, but because once you take the frame seriously, something has to exist that nobody is building. Alexandria is that thing: the missing piece of a future worth reaching.
+
+*This is the full argument. [The letter](/docs/letter.pdf) is a different thing — the human side of it, felt rather than argued.*
 
 ## contents.
 
@@ -176,7 +180,23 @@ Nature runs on it: variation across many, the good kept, the rest let go. Athens
 
 The pattern under all of them is the same two steps. Protect the individual; then connect the individuals — so the whole becomes greater than the sum without grinding the parts down into it. A library of minds is that pattern, rebuilt for the age of AI. Each person keeps their own mind, fully theirs. Together they become something larger. Nobody disappears into the crowd.
 
-And there’s a reason it can be built now and never could before. The practice at the heart of it — having your thinking drawn out, questioned, and sharpened by something that gives you its full attention — has always existed, and was always rationed. Athens had it in the agora, but only for the handful with the leisure to stand and argue all day. A few lucky people, across all of history, had a great teacher or a circle sharp enough to do the same. Everyone else simply never got it. For the first time, the thing that develops a mind can be handed to anyone, at any hour, for almost nothing. That is the piece that was always missing — not a faster tool, but the oldest good practice finally within everyone’s reach.
+And there’s a reason it can be built now and never could before. The practice at the heart of it — having your thinking drawn out, questioned, and sharpened by something that gives you its full attention — has always existed, and was always rationed. Athens had it in the agora, but only for the handful with the leisure to stand and argue all day. A few lucky people, across all of history, had a great teacher or a circle sharp enough to do the same. Everyone else simply never got it. For the first time, the thing that develops a mind can be handed to anyone, at any hour, for almost nothing. That is what was always out of reach — not a faster tool, but the oldest good practice, finally within everyone’s reach.
+
+## the missing piece.
+
+Everything so far has been about you — your mind, your file, your place in the library. Take the two facts underneath all of it and run them across everyone at once, and the whole of what’s coming snaps into focus.
+
+Grant the optimists everything they promise. Intelligence, free. The work done by machines that never tire. Robots for the hands, energy too cheap to meter, disease falling away one illness at a time. Assume it all goes right — the material problem of being alive, finally solved. That is the future nearly everyone is pointed at, and it may well arrive.
+
+Even then, there’s a fork — and the machines don’t decide it. Two versions of that abundance, built on exactly the same technology.
+
+In one, everything is provided and nothing is asked. The pressure that kept minds in use is gone, everywhere at once — the decay from a few chapters back, run to the end. Nothing is left that a person can add and a machine can’t do better, so there’s no ladder to climb and no reason to climb it. It doesn’t come as catastrophe. It comes as comfort: a species that got everything it wanted and quietly stopped being anyone.
+
+In the other, the same abundance is a floor under people who are still *someone*. Minds still sharp, because the practice survived. Human work still worth paying for, because the culture kept caring who made the thing. The machines carry the load; the people are still real. Identical wealth, identical tools — an entirely different place to be alive.
+
+Nothing in the technology chooses between them. What chooses is whether people stay developed enough to matter, and whether the world stays willing to value them when they do — the exact two things this paper has been about. No amount of better machinery builds either one.
+
+And that is the piece that’s missing. Look at where the effort goes: every dollar, every company, every last one of the brightest people alive, all building the abundance — the intelligence, the robots, the power, the cures. Almost no one is building the other half: the thing that keeps a human worth something once the machines can do it all. The whole species is racing to raise the good future’s body and forgetting it needs someone inside. Alexandria is an attempt to build the part everyone else left out.
 
 ## what it’s all for.
 
@@ -193,3 +213,9 @@ Hear that word *value* correctly, because it was never only money. Money is the 
 And notice the shape of what just happened. We started with one question — when a machine can do everything, what’s left for a person? — and took it one step at a time. The file, the system, the library: none of it was chosen up front. Each piece was forced by the step before it. Follow the logic, and you end up here every time. That’s why Alexandria is what it is.
 
 *Benjamin a. Mowinckel*
+
+<!-- colophon -->
+
+*You don’t need to accept all of it to begin. One file, five minutes — free, and yours.*
+
+[start](/start) · [the letter](/docs/letter.pdf) · [the library](/library)
