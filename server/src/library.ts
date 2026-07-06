@@ -604,7 +604,7 @@ export function registerLibraryRoutes(app: Hono): void {
       await kv.put(key, String(count + 1), { expirationTtl: windowSec });
       return false;
     } catch {
-      return false; // never block on KV failure
+      return true; // FAIL CLOSED: a KV error must not open the metered/cost surface (security model, plm.md)
     }
   }
 
@@ -1241,7 +1241,12 @@ export function registerLibraryRoutes(app: Hono): void {
       const raw = await getKV().get(`library:access:${purchaseSessionId}`);
       if (raw) {
         const grant = parseJson<LibraryAccessGrant>(raw, {});
-        purchaseValid = grant.author_id === authorId
+        // Buyer-bound (parity with the paid-FILE path): a leaked ?session_id must
+        // not be bearer-replayable by a different account (security model, plm.md).
+        const buyerOk = !grant.buyer_github_login
+          || accessor?.github_login === grant.buyer_github_login;
+        purchaseValid = buyerOk
+          && grant.author_id === authorId
           && grant.artifact_id === workId
           && grant.artifact_type === 'work';
       }

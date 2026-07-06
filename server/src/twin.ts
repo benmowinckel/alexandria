@@ -94,8 +94,10 @@ export interface ContextTwinConfig {
   variant: 'context';
   /** Published + enabled AND has a resolvable frontier model. */
   enabled: boolean;
-  /** Access tier drawn from the shared visibility system. Default: authors —
-   *  the context twin exposes the substrate, so it is gated to trusted queriers. */
+  /** Access tier drawn from the shared visibility system. Default: INVITE —
+   *  the context twin exposes the substrate, so the SAFE default is the tightest
+   *  gate (a single injected authorized querier can extract the whole loaded
+   *  context; blast radius must be the smallest set — security model in plm.md). */
   visibility: TwinVisibility;
   /** Frontier model id the substrate is read in context by. Not a secret. */
   model: string | null;
@@ -216,7 +218,7 @@ export function resolveTwinVariants(
   const context: ContextTwinConfig = {
     variant: 'context',
     enabled: cRaw.enabled === true && !!model,
-    visibility: vis(cRaw.visibility) || 'authors',
+    visibility: vis(cRaw.visibility) || 'invite',
     model,
     label: str(cRaw.label),
     system: str(cRaw.system),
