@@ -370,6 +370,11 @@ export interface TwinInferenceRequest {
   author?: string | null;
   /** Pre-gated published works for the `search_my_works` tool (context only). */
   works?: TwinWork[];
+  /** The twin's visibility tier (context only). The sidecar loads ONLY the
+   *  shadow published at this tier as substrate — never the raw constitution —
+   *  so it's a structural ceiling on what the twin can reveal (plm.md § tiered
+   *  shadow). Worker-set from the twin's configured visibility, never the caller. */
+  tier?: TwinVisibility;
 }
 
 export type TwinInferenceResult =
@@ -451,6 +456,9 @@ export async function runTwinInference(
       body.model = req.model;
       body.tools = req.tools ?? { works: false, web: false };
       body.author = req.author ?? null;
+      // The tier the sidecar loads substrate at (structural ceiling). Worker-set,
+      // fail closed to public if somehow unset.
+      body.tier = req.tier ?? 'public';
       // Pre-gated published works for search_my_works (the Worker is the gate).
       if (req.works && req.works.length) body.works = req.works;
     }

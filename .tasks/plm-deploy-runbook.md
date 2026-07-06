@@ -57,5 +57,5 @@ curl -X POST https://api.alexandria-library.com/library/mowinckelb/twin \
 - Weights query ≈ $0.001 (public, Alexandria absorbs, rate-limited).
 - Deep query ≈ $0.10–0.15 (constitution+voice context + tool rounds) — the paid act; querier pays, you earn a share; ledger records `twin_query` per author/variant; pricing amount is your call (not built).
 
-## The one non-blocking known-small item
-Deep-twin context is ~40k tokens/query (full constitution+voice). To halve cost, swap `voice_exemplars.md` → `voice_lite.md` in `twin_server.py _deep_system` (minor quality/cost trade). Left at full for max fidelity.
+## Substrate is now tiered (2026-07-06)
+The deep twin loads the **live shadow at the twin's tier** (`~/alexandria/files/library/<tier>/shadow.md`), never the raw constitution — a structural ceiling per tier (see `~/alexandria-inc/private/plm.md § STRUCTURAL SECURITY MODEL` invariant 2, and `.tasks/plm-tiered-shadow-substrate.md`). Tier is Worker-set (`cfg.visibility` → `body.tier`). The dial per tier = the content of that tier's `shadow.md`, which you edit. `invite/shadow.md` was seeded from the old digest — **review it before enabling the deep twin** (it's the invite-tier ceiling). Cost scales with the tier's shadow size; the public tier uses `voice_lite`, trusted tiers use full `voice_exemplars`.

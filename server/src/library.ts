@@ -691,7 +691,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const result = await runTwinInference(
       cfg.variant === 'weights'
         ? { variant: 'weights', question: p.question, system, maxTokens: 512, checkpoint: cfg.checkpoint, base: cfg.base }
-        : { variant: 'context', question: p.question, system, maxTokens: 512, model: cfg.model, tools: cfg.tools, author: p.authorId, works },
+        : { variant: 'context', question: p.question, system, maxTokens: 512, model: cfg.model, tools: cfg.tools, author: p.authorId, works, tier: cfg.visibility },
       { url: process.env.TWIN_INFERENCE_URL, secret: process.env.TWIN_INFERENCE_SECRET },
     );
 
