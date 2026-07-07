@@ -496,6 +496,17 @@ export function registerRoutes(app: Hono) {
       }), { expirationTtl: 30 * 24 * 60 * 60 });
       c.header('Set-Cookie', `alex_library_session=${librarySessionToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}${deriveCookieDomain()}`);
 
+      // Safari (WebKit #196375 / #219650) drops a cookie SET on the response that
+      // lands a cross-site OAuth redirect — which is exactly this callback (GitHub
+      // → api subdomain). So the Set-Cookie above never sticks in Safari and the
+      // viewer bounces back to the site still signed-out. Fix: hand the session to
+      // the WEBSITE via a one-time code so the website sets the cookie first-party
+      // on its own origin (which Safari honours). Short TTL, single-use, consumed
+      // server-side — the token itself never rides the URL.
+      const handoffCode = randomBytes(24).toString('hex');
+      await kv.put(`handoff:${handoffCode}`, librarySessionToken, { expirationTtl: 120 });
+      const handoffUrl = (next: string) => `${getWebsiteUrl()}/auth/handoff?code=${handoffCode}&next=${encodeURIComponent(next)}`;
+
       // Company Library profile. This mirrors GitHub account metadata for
       // discovery; protocol file content still arrives only through /file.
       // GUARD (handle-recycle): the authors row is keyed by login, so only write
@@ -586,7 +597,7 @@ export function registerRoutes(app: Hono) {
       // They're founding members already, so claim their #N and show the page.
       if (updatedAccount.stripe_customer_id || ACTIVE_AUTHOR_STATUSES.has(updatedAccount.subscription_status || '')) {
         if (stateData.intent === 'library' && stateData.next) {
-          return c.redirect(`${getWebsiteUrl()}${stateData.next}`);
+          return c.redirect(handoffUrl(stateData.next));
         }
         const number = await assignAuthorNumber(user.login);
         return c.html(await callbackPageHtml(apiKey, user.login, false, number ?? 0));
@@ -617,7 +628,7 @@ export function registerRoutes(app: Hono) {
       }
 
       if (stateData.intent === 'library' && stateData.next) {
-        return c.redirect(`${getWebsiteUrl()}${stateData.next}`);
+        return c.redirect(handoffUrl(stateData.next));
       }
       const number = await assignAuthorNumber(user.login);
       return c.html(await callbackPageHtml(apiKey, user.login, false, number ?? 0));
@@ -625,6 +636,23 @@ export function registerRoutes(app: Hono) {
       console.error('GitHub callback error:', err);
       return c.html(authErrorHtml('something broke signing you in. please try again.'), 500);
     }
+  });
+
+  // Session handoff exchange. The OAuth callback stores a short-lived, single-use
+  // code → session-token in KV and redirects to the website's /auth/handoff, which
+  // calls this SERVER-SIDE to fetch the token and set the library cookie
+  // first-party on the website origin (Safari won't keep a cookie set on the api
+  // subdomain at the tail of a cross-site OAuth redirect — WebKit #196375). The
+  // code is deleted on first read, so it can't be replayed; the token never rides
+  // a browser-visible URL.
+  app.get('/auth/session/exchange', async (c) => {
+    const code = c.req.query('code') || '';
+    if (!code) return c.json({ error: 'missing code' }, 400);
+    const kv = getKV();
+    const token = await kv.get(`handoff:${code}`);
+    if (!token) return c.json({ error: 'invalid or expired code' }, 400);
+    await kv.delete(`handoff:${code}`);
+    return c.json({ token });
   });
 
   // --- Account management (redirects to Stripe portal) ---
