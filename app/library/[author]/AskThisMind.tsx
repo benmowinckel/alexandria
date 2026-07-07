@@ -99,20 +99,15 @@ export default function AskThisMind({
   const [disclaimer, setDisclaimer] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // Invite code — pre-filled from ?invite= so an invite link just works.
-  const [invite, setInvite] = useState('');
+  // Invite code — read from ?invite= synchronously so an invite link works on the
+  // first render (no "sign in" flash before it applies).
+  const [invite, setInvite] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    try { return new URLSearchParams(window.location.search).get('invite')?.trim() || ''; } catch { return ''; }
+  });
   const [showInviteInput, setShowInviteInput] = useState(false);
   const [waited, setWaited] = useState(0);
   const waitTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    try {
-      const fromUrl = new URLSearchParams(window.location.search).get('invite');
-      if (fromUrl) setInvite(fromUrl.trim());
-    } catch {
-      /* no-op */
-    }
-  }, []);
 
   // Elapsed-time reassurance: the deep twin can think for a while (tool loops).
   useEffect(() => {
@@ -151,8 +146,10 @@ export default function AskThisMind({
   // This viewer must supply an invite to use the active variant.
   const inviteGated = !!activeSummary.needsInvite && !activeSummary.accessible;
   const askDisabled = loading || !question.trim() || (inviteGated && !invite.trim());
-  // Not signed in + invite-gated → the way in is one click, no code to type.
-  const needsLogin = inviteGated && !signedIn;
+  // Not signed in + invite-gated + NO code in hand → the way in is one click.
+  // If they arrived with a code link, let them ask right away (the code works
+  // anonymously and binds to their account if they later sign in).
+  const needsLogin = inviteGated && !signedIn && !invite.trim();
   const signInUrl = `/auth/github?intent=library&next=${typeof window !== 'undefined' ? encodeURIComponent(window.location.pathname + window.location.search) : ''}`;
 
   if (needsLogin) {
