@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { SERVER_URL } from '../../../../../lib/config';
+import { localAuth } from '../../../../../lib/dev-auth';
 
 /**
  * Same-origin proxy for protocol-backed Library files.
@@ -20,6 +21,7 @@ export async function GET(
   const headers: Record<string, string> = {};
   if (auth) headers.Authorization = auth;
   if (cookie) headers.Cookie = cookie;
+  Object.assign(headers, localAuth(auth));
   const upstream = await fetch(
     upstreamUrl.toString(),
     { headers },

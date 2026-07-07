@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { SERVER_URL } from '../../../../lib/config';
+import { localAuth } from '../../../../lib/dev-auth';
 
 /**
  * Same-origin proxy for the "ask this mind" twin endpoint. Forwards the
@@ -19,6 +20,7 @@ export async function POST(
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (auth) headers.Authorization = auth;
   if (cookie) headers.Cookie = cookie;
+  Object.assign(headers, localAuth(auth));
 
   const upstream = await fetch(
     `${SERVER_URL}/library/${encodeURIComponent(author)}/ask`,

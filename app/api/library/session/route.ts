@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { SERVER_URL } from '../../../lib/config';
+import { localAuth } from '../../../lib/dev-auth';
 
 export async function GET(req: NextRequest): Promise<Response> {
   const cookie = req.headers.get('cookie');
@@ -7,6 +8,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   const headers: Record<string, string> = {};
   if (cookie) headers.Cookie = cookie;
   if (auth) headers.Authorization = auth;
+  Object.assign(headers, localAuth(auth));
 
   const upstream = await fetch(`${SERVER_URL}/library/session`, { headers });
 
