@@ -169,8 +169,8 @@ function HomeInstall() {
       <Link href="/start" className="install-cta">
         join the tribe
       </Link>
-      <span className="cta-sub install-cta-sub">
-        free, and yours forever.
+      <span className="cta-sub">
+        become an alexandrian
       </span>
     </div>
   );
@@ -2452,10 +2452,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           align-items: center;
         }
         .install-cta-icon svg { display: block; }
-        /* Caption sits under the button's label (matching its left padding),
-           not flush to the button's outer edge — reads as inside the box.
-           Scoped to .cta-pair so it outranks .cta-sub's later padding-left:0. */
-        .cta-pair .install-cta-sub { padding-left: 26px; }
         /* Subtitle — does the explanatory work so the buttons stay
            terse. Italic, faint. Hangs flush left from the button's
            outer edge — caption-from-box, not caption-from-text. */
