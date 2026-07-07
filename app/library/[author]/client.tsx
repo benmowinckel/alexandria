@@ -256,16 +256,21 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 500, letterSpacing: '-0.012em', margin: '2rem 0 0.35rem' }}>
             {author.display_name || author.id}
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: 0, lineHeight: 1.45 }}>
+          {profileText && (
+            <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.45, margin: '0.5rem 0 0' }}>
+              {profileText}
+            </p>
+          )}
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.3rem 0 0', lineHeight: 1.45 }}>
             {author.alexandria_id}
           </p>
-          {(author.location || author.contact) && (
+          {(author.location || author.contact || author.website) && (
             <div
               style={{
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: '0.45rem',
-                marginTop: '0.8rem',
+                marginTop: '0.9rem',
                 alignItems: 'flex-start',
               }}
             >
@@ -289,24 +294,18 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                   contact
                 </a>
               )}
+              {author.website && (
+                <a
+                  href={safeUrl(author.website.startsWith('http') ? author.website : `https://${author.website}`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={tagStyle}
+                  className="hover:opacity-60"
+                >
+                  website
+                </a>
+              )}
             </div>
-          )}
-          {profileText && (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '1rem 0 0' }}>
-              {profileText}
-            </p>
-          )}
-          {author.website && (
-            <WebsiteUrlLine
-              website={author.website}
-              style={{
-                marginTop: profileText
-                  ? '0.65rem'
-                  : author.location || author.contact
-                    ? '0.45rem'
-                    : '0.8rem',
-              }}
-            />
           )}
         </header>
 
@@ -336,6 +335,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             ))
           )}
         </section>
+        <footer style={{ textAlign: 'center', margin: '4.5rem 0 0' }}>
+          <Link href="/library" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '1rem', letterSpacing: '0.01em', textDecoration: 'none' }} className="hover:opacity-60">
+            alexandria<span style={{ fontStyle: 'normal' }}>.</span>
+          </Link>
+        </footer>
       </main>
     </>
   );
