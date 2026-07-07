@@ -510,8 +510,12 @@ export function registerLibraryRoutes(app: Hono): void {
       : authorPriceCents;
     const amountCents = clampPaidAmount(Math.max(requestedAmount, authorPriceCents));
 
-    const accessorKey = extractApiKey(c);
-    const accessor = accessorKey ? await findByApiKey(accessorKey) : null;
+    // Require an authenticated buyer (API key OR browser session), so the purchase
+    // grant BINDS to their account and a leaked ?session_id= success URL is useless
+    // to anyone else. Anonymous purchases produced a bearer grant — a replayable
+    // 7-day token for the file (audit #8/M2). No bearer purchases anymore.
+    const accessor = await resolveTwinAccessor(c);
+    if (!accessor?.github_login) return c.json({ error: 'Please sign in to purchase.', needs_login: true }, 401);
     const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
     const requestedOrigin = typeof body.return_origin === 'string' ? body.return_origin.trim() : '';
     const allowedOrigins = new Set(getAllowedOrigins());
@@ -613,12 +617,14 @@ export function registerLibraryRoutes(app: Hono): void {
         const artifactMatch = grant.author_id === authorId
           && grant.artifact_id === name
           && grant.artifact_type === 'protocol_file';
-        // If the grant was bound to a buyer (signed-in purchase), the viewer
-        // must BE that buyer — a leaked ?session_id= URL is useless to anyone
-        // else. Legacy/anonymous grants (no buyer) stay bearer-validated by the
-        // high-entropy session_id (now short-TTL). (audit M2)
-        const buyerOk = !grant.buyer_github_login
-          || accessor?.github_login === grant.buyer_github_login;
+        // STRUCTURAL: access requires the viewer to BE the bound buyer. A grant
+        // with no buyer (the old anonymous-bearer form) is NEVER honored — a
+        // leaked ?session_id= URL is useless to anyone, including the original
+        // anonymous buyer. Purchases are now sign-in-gated so every grant is
+        // buyer-bound; any pre-existing unbound grant (≤7-day TTL) simply stops
+        // working, which is the fix, not a regression (audit #8/M2).
+        const buyerOk = !!grant.buyer_github_login
+          && accessor?.github_login === grant.buyer_github_login;
         purchaseValid = artifactMatch && buyerOk;
       }
     }
@@ -1422,8 +1428,10 @@ export function registerLibraryRoutes(app: Hono): void {
     const platformFeeCents = Math.round(amountCents * MARKETPLACE_FEE_RATE);
     const buyerTotalCents = amountCents + platformFeeCents;
 
-    const accessorKey = extractApiKey(c);
-    const accessor = accessorKey ? await findByApiKey(accessorKey) : null;
+    // Require an authenticated buyer (API key OR browser session) so the grant
+    // binds to their account — no anonymous bearer session_id (audit #8/M2).
+    const accessor = await resolveTwinAccessor(c);
+    if (!accessor?.github_login) return c.json({ error: 'Please sign in to purchase.', needs_login: true }, 401);
     const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
     const SERVER_URL = process.env.SERVER_URL || 'https://api.alexandria-library.com';
     const requestedOrigin = typeof body.return_origin === 'string' ? body.return_origin.trim() : '';
