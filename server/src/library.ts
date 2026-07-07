@@ -32,6 +32,7 @@ import {
 } from './file-access.js';
 import { getAuditHead, getAuthorAuditEntries } from './audit.js';
 import { generateToken, encrypt, decrypt } from './crypto.js';
+import { hasGrant, grantAccess, listGrants, revokeGrant } from './grants.js';
 import {
   resolveTwinVariants,
   twinPublicSummary,
@@ -406,22 +407,25 @@ export function registerLibraryRoutes(app: Hono): void {
     const viewerSubscriber = !!viewer && ACTIVE_AUTHOR_STATUSES.has(viewer.subscription_status || '');
 
     const twinVariants = resolveTwinVariants(librarySettings(legacyAuthor), twinEnv());
-    // Per-variant reachability reuses the file-access gate. Invite is not
-    // evaluated here (a directory view carries no code); an invite-gated
-    // variant reads as inaccessible until queried with a valid code.
+    // Account-based access: a logged-in viewer with a live grant reaches an
+    // invite twin with NO code. So evaluate the grant here — the page can show
+    // "ask away" (granted) vs "log in" (anon) vs "not on the list" (signed in,
+    // no grant) up front, instead of only finding out on submit.
+    const twinGranted = viewer ? await hasGrant(authorId, viewer.github_id) : false;
     const twinAccessible = (cfg: TwinConfig): boolean => authorizeTwinAccess({
       visibility: cfg.visibility,
       authorGithubId: account!.github_id,
       accessorGithubId: viewer?.github_id ?? null,
-      context: { subscriberValid: viewerSubscriber },
+      context: { inviteValid: twinGranted, subscriberValid: viewerSubscriber },
     }).allowed;
 
     const twinSummary = twinPublicSummary(twinVariants, twinAccessible);
     // Online/offline: only ping the sidecar when the Author actually has a twin
     // enabled (skip the round-trip for the overwhelming majority who don't).
+    // `signed_in` lets the client pick "log in" vs "you're not on the list".
     const twinOut = twinSummary.enabled
-      ? { ...twinSummary, online: await twinOnline(authorId) }
-      : { ...twinSummary, online: false };
+      ? { ...twinSummary, online: await twinOnline(authorId), signed_in: !!viewer }
+      : { ...twinSummary, online: false, signed_in: !!viewer };
     return c.json({
       author: directoryAuthor(account!, legacyAuthor, fallbackIndex),
       twin: twinOut,
@@ -558,12 +562,17 @@ export function registerLibraryRoutes(app: Hono): void {
 
     let inviteValid = false;
     let inviteCodeId: string | null = null;
-    if (inviteCode) {
+    // Account grant first (no code needed once bound); else a valid code, which
+    // binds to the account on use so it's never re-entered.
+    if (accessor && await hasGrant(authorId, accessor.github_id)) {
+      inviteValid = true;
+    } else if (inviteCode) {
       const accessRow = await getDB().prepare(
         'SELECT id FROM access_codes WHERE author_id = ? AND code = ? AND revoked_at IS NULL LIMIT 1'
       ).bind(authorId, inviteCode).first<{ id: string }>();
       inviteValid = !!accessRow?.id;
       inviteCodeId = accessRow?.id || null;
+      if (inviteValid && accessor) await grantAccess(authorId, accessor.github_id, { codeId: inviteCodeId ?? undefined });
     }
 
     let purchaseValid = false;
@@ -680,12 +689,27 @@ export function registerLibraryRoutes(app: Hono): void {
 
   // Invite-code validation for twin queries — same access_codes table the file
   // gate uses. Author-scoped, revocation-aware. Result feeds the shared gate.
-  async function validateTwinInvite(authorId: string, code: string): Promise<boolean> {
-    if (!code) return false;
+  // A valid, un-revoked code for this author → its id (for grant provenance), else null.
+  async function lookupCode(authorId: string, code: string): Promise<string | null> {
+    if (!code) return null;
     const row = await getDB().prepare(
       'SELECT id FROM access_codes WHERE author_id = ? AND code = ? AND revoked_at IS NULL LIMIT 1'
     ).bind(authorId, code).first<{ id: string }>().catch(() => null);
-    return !!row?.id;
+    return row?.id ?? null;
+  }
+
+  // The invite decision, account-aware. Access is granted if the (logged-in)
+  // accessor already holds a grant, OR they present a valid code — in which case
+  // the code BINDS to their account (a grant), so they never re-enter it. An
+  // anonymous caller with a valid code passes THIS request but nothing is bound
+  // (no account yet); once they log in, the code binds. This one resolver backs
+  // both the twin and the file gate.
+  async function resolveInviteAccess(authorId: string, accessor: Account | null, code: string): Promise<boolean> {
+    if (accessor && await hasGrant(authorId, accessor.github_id)) return true;
+    const codeId = await lookupCode(authorId, code);
+    if (!codeId) return false;
+    if (accessor) await grantAccess(authorId, accessor.github_id, { codeId });
+    return true;
   }
 
   // Resolve the querier from an API key or the browser library session cookie.
@@ -836,7 +860,8 @@ export function registerLibraryRoutes(app: Hono): void {
     // Anonymous is allowed — the weights floor is the stranger-facing default.
     const accessor = await resolveTwinAccessor(c);
     const inviteCode = c.req.query('invite')?.trim() || (typeof body.invite === 'string' ? body.invite.trim() : '');
-    const inviteValid = await validateTwinInvite(authorId, inviteCode);
+    // Grant-aware: a live account grant OR a valid code (which binds to the account).
+    const inviteValid = await resolveInviteAccess(authorId, accessor, inviteCode);
 
     const outcome = await runTwinQuery({
       authorId, authorAccount, displayName, settings, question, requestedVariant, accessor, inviteValid, surface: 'library',
@@ -896,7 +921,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const displayName = profile?.display_name?.trim() || authorAccount.github_name?.trim() || authorId;
 
     const inviteCode = typeof body.invite === 'string' ? body.invite.trim() : (c.req.query('invite')?.trim() || '');
-    const inviteValid = await validateTwinInvite(authorId, inviteCode);
+    const inviteValid = await resolveInviteAccess(authorId, accessor, inviteCode);
 
     const outcome = await runTwinQuery({
       authorId, authorAccount, displayName, settings, question, requestedVariant, accessor, inviteValid, surface: 'api',
@@ -1512,6 +1537,43 @@ export function registerLibraryRoutes(app: Hono): void {
     }
     logEvent('access_code_revoked', { author: authorId, id });
     return c.json({ ok: true, id, revoked_at: now });
+  });
+
+  // Account grants — the code-free invite path. Grant a specific person by their
+  // github handle; they log in once and they're in, no code to send or type.
+  app.post('/library/:author/grant', async (c) => {
+    const authorId = c.req.param('author');
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
+
+    const body = await c.req.json<{ login?: string; label?: string }>().catch(() => ({} as { login?: string; label?: string }));
+    const login = typeof body.login === 'string' ? body.login.trim().replace(/^@/, '') : '';
+    if (!login) return c.json({ error: 'Provide the invitee’s github login.' }, 400);
+    const lookup = await getAccountByLogin(login);
+    const invitee = lookup?.account;
+    if (!invitee?.github_id) return c.json({ error: `No Alexandria account for "${login}" — they need to sign in once first.` }, 404);
+
+    const label = typeof body.label === 'string' && body.label.trim() ? body.label.trim().slice(0, 80) : login;
+    await grantAccess(authorId, invitee.github_id, { label });
+    logEvent('twin_grant_added', { author: authorId, invitee: login });
+    return c.json({ ok: true, login, github_id: invitee.github_id, label });
+  });
+
+  app.get('/library/:author/grants', async (c) => {
+    const authorId = c.req.param('author');
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
+    return c.json({ grants: await listGrants(authorId) });
+  });
+
+  app.delete('/library/:author/grant/:accountId', async (c) => {
+    const authorId = c.req.param('author');
+    const accountId = c.req.param('accountId');
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
+    await revokeGrant(authorId, accountId);
+    logEvent('twin_grant_revoked', { author: authorId, account: accountId });
+    return c.json({ ok: true });
   });
 
   // =========================================================================

@@ -28,7 +28,7 @@ interface AuthorData {
     website: string | null;
     text: string | null;
   };
-  twin?: { enabled: boolean; label: string | null; variants?: TwinVariantSummary[]; online?: boolean };
+  twin?: { enabled: boolean; label: string | null; variants?: TwinVariantSummary[]; online?: boolean; signed_in?: boolean };
   files?: ProtocolFile[];
 }
 
@@ -316,6 +316,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               authorName={author.display_name || author.id}
               variants={data.twin.variants || []}
               online={data.twin.online !== false}
+              signedIn={data.twin.signed_in === true}
             />
           )}
           {shadowFiles.length === 0 && openFiles.length === 0 ? (

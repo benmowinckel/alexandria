@@ -70,6 +70,7 @@ export default function AskThisMind({
   authorName,
   variants,
   online = true,
+  signedIn = true,
 }: {
   authorId: string;
   authorName: string;
@@ -78,6 +79,9 @@ export default function AskThisMind({
    *  isn't answering (their machine is asleep) — show an honest offline state
    *  instead of the ask box, so no one hits a dead end. */
   online?: boolean;
+  /** Is the VIEWER signed in? Drives "log in to ask" vs "you're not on the list
+   *  yet" for an invite twin the viewer can't yet reach. */
+  signedIn?: boolean;
 }) {
   const name = authorName || authorId;
 
@@ -147,6 +151,30 @@ export default function AskThisMind({
   // This viewer must supply an invite to use the active variant.
   const inviteGated = !!activeSummary.needsInvite && !activeSummary.accessible;
   const askDisabled = loading || !question.trim() || (inviteGated && !invite.trim());
+  // Not signed in + invite-gated → the way in is one click, no code to type.
+  const needsLogin = inviteGated && !signedIn;
+  const signInUrl = `/auth/github?intent=library&next=${typeof window !== 'undefined' ? encodeURIComponent(window.location.pathname + window.location.search) : ''}`;
+
+  if (needsLogin) {
+    return (
+      <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '1.6rem', paddingTop: '1.1rem' }}>
+        <p style={sectionLabelStyle}>
+          ask this mind
+          <span style={{ color: 'var(--accent)', marginLeft: '0.5rem', letterSpacing: '0.02em' }}>twin</span>
+        </p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.6, margin: '0 0 1rem' }}>
+          {name}’s twin is open to people they’ve invited. sign in to continue — if you’re on the list, you’re in.
+        </p>
+        <a
+          href={signInUrl}
+          style={{ display: 'inline-block', borderRadius: '11px', background: 'var(--accent)', color: 'var(--bg-primary)',
+            fontFamily: 'inherit', fontSize: '0.95rem', padding: '0.6rem 1.25rem', textDecoration: 'none' }}
+        >
+          sign in to ask
+        </a>
+      </div>
+    );
+  }
 
   const ask = async () => {
     const q = question.trim();
@@ -272,6 +300,13 @@ export default function AskThisMind({
                 {VARIANT_META[activeSummary.variant].hint}
               </p>
             )
+          )}
+
+          {/* Signed in but not granted: honest "no", with the way in. */}
+          {inviteGated && signedIn && !invite.trim() && (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, margin: '0 0 0.9rem' }}>
+              you’re not on {name}’s list yet — add your invite code below, or ask {name} for one.
+            </p>
           )}
 
           {/* Starter prompts — click to fill (never auto-send), like the demo's chips. */}
