@@ -281,24 +281,19 @@ export default function AskThisMind({
             </p>
           )}
 
-          {activeSummary.label ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0 0 0.9rem' }}>
-              {activeSummary.label}
-            </p>
-          ) : (
-            !showToggle && (
-              <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.5, margin: '0 0 0.9rem' }}>
-                {VARIANT_META[activeSummary.variant].hint}
-              </p>
-            )
-          )}
-
-          {/* Signed in but not granted: honest "no", with the way in. */}
-          {inviteGated && signedIn && !invite.trim() && (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, margin: '0 0 0.9rem' }}>
-              you’re not on {name}’s list yet — add your invite code below, or ask {name} for one.
-            </p>
-          )}
+          {/* Framing — a living model; depth deepens for signed-in members. */}
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, margin: '0.1rem 0 1rem' }}>
+            a living model of {name}’s mind.
+            {!signedIn && (
+              <>
+                {' '}
+                <a href={signInUrl} className="hover:opacity-60"
+                  style={{ color: 'var(--accent)', textDecoration: 'none', borderBottom: '1px solid var(--accent)' }}>
+                  sign in
+                </a>{' '}for the deeper version.
+              </>
+            )}
+          </p>
 
           {/* Starter prompts — click to fill (never auto-send), like the demo's chips. */}
           {!question && (

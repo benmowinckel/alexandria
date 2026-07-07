@@ -148,6 +148,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
 
   // Socials as clean links: the author's linked accounts (X, LinkedIn, …) plus
   // their website, shown plainly — never as buttons/pills.
+  // General account sign-in — lives at the top of the page, not tied to the twin.
+  const signedIn = data.twin?.signed_in === true;
+  const signInUrl = `${SERVER_URL}/auth/github?intent=library&next=${typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : ''}`;
   const cleanUrl = (u: string) => (u.startsWith('http') ? u : `https://${u}`);
   const socialLinks: { label: string; url: string }[] = [
     ...((author.socials || []).filter((s) => s && s.label && s.url).map((s) => ({ label: s.label, url: safeUrl(cleanUrl(s.url)) }))),
@@ -257,9 +260,16 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       <ThemeToggle />
       <main style={{ maxWidth: '560px', margin: '0 auto', padding: '6rem 2rem 4rem', fontFamily: 'var(--font-eb-garamond)' }}>
         <header style={{ margin: '0 0 2.5rem' }}>
-          <Link href="/library" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }} className="hover:opacity-60">
-            library
-          </Link>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <Link href="/library" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }} className="hover:opacity-60">
+              library
+            </Link>
+            {!signedIn && (
+              <a href={signInUrl} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }} className="hover:opacity-60">
+                sign in
+              </a>
+            )}
+          </div>
           <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 500, letterSpacing: '-0.012em', margin: '2rem 0 0.35rem' }}>
             {author.display_name || author.id}
           </h1>

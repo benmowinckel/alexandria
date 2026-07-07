@@ -42,6 +42,7 @@ import {
   healthEndpointFrom,
   validateSidecarUrl,
   type TwinVariant,
+  type TwinVisibility,
   type TwinConfig,
   type TwinEnv,
   type TwinWork,
@@ -796,6 +797,13 @@ export function registerLibraryRoutes(app: Hono): void {
       return { ok: false, status: decision.status, body: { ...decision.body, variant: cfg.variant } };
     }
 
+    // DEPTH is bound to the QUERIER, not the twin's config: a paid subscriber or
+    // an invited (comped) account gets the deep shadow; everyone else gets the
+    // free public shadow. So one public twin answers everyone, at the right depth
+    // — no toggling, no sign-in wall (plm.md § free/paid/invite twin).
+    const deep = p.inviteValid || subscriberValid;
+    const queryTier: TwinVisibility = deep ? 'invite' : 'public';
+
     const system = cfg.system || `You are ${p.displayName}. Speak as yourself.`;
     // Living page: when the deep twin has the works tool on, hand it the Author's
     // published works CONTENT — but only the pieces this querier is allowed to see.
@@ -809,7 +817,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const result = await runTwinInference(
       cfg.variant === 'weights'
         ? { variant: 'weights', question: p.question, system, maxTokens: 512, checkpoint: cfg.checkpoint, base: cfg.base }
-        : { variant: 'context', question: p.question, system, maxTokens: 512, model: cfg.model, tools: cfg.tools, author: p.authorId, works, tier: cfg.visibility },
+        : { variant: 'context', question: p.question, system, maxTokens: 512, model: cfg.model, tools: cfg.tools, author: p.authorId, works, tier: queryTier },
       { url: sidecar?.url, secret: sidecar?.secret },
     );
 
