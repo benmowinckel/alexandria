@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import AskAlexandria from './AskAlexandria';
 
 interface Props {
   brandClassName?: string;
@@ -764,14 +763,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     </span>
                   </div>
                 </div>
-
-                {/* The PLM, turned on the company — an "ask Alexandria" box
-                    where the FAQ link used to be. Handles the reader's last
-                    objection AND is the demo (the letter says "a mind you can
-                    ask" — here one is). Grounded in the public artifacts only;
-                    engine-agnostic (POSTs /api/ask). See truth/website.md +
-                    plm.md § Website integration. */}
-                <AskAlexandria />
 
                 {/* One faint line — the collective made visible. Was three
                     links (library · marketplace · questions); the FAQ link
@@ -2391,9 +2382,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
         .quiet-links a:hover { opacity: 0.62; }
         .quiet-sep { padding: 0 9px; user-select: none; }
-        /* The "ask Alexandria" composer owns all its own styling (styled-jsx in
-           AskAlexandria.tsx, riding the --theme-* vars). The host only sets the
-           mobile flex order of .ask-alx (in the media query below). */
         .cta-pair a.lr-cta {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           /* Matches button.install-cta exactly (font-size + padding) so the
@@ -2920,13 +2908,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                the CTAs. Adds to the bottom-inner 64px flex gap. */
             margin-top: 96px;
           }
-          .ask-alx {
-            order: 7;
-            margin-top: 10px;
-            max-width: 100%;
-          }
           .quiet-links {
-            order: 8;
+            order: 7;
             margin-top: 0;
           }
 
