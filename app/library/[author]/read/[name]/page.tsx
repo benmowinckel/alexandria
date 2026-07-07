@@ -29,6 +29,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const [visibility, setVisibility] = useState('public');
   const [signedIn, setSignedIn] = useState(false);
   const [content, setContent] = useState('');
+  const [pdfUrl, setPdfUrl] = useState('');
   const [status, setStatus] = useState<'loading' | 'ok' | 'signin' | 'pay' | 'error'>('loading');
   const [checkoutUrl, setCheckoutUrl] = useState('');
 
@@ -71,7 +72,15 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
         if (f?.visibility) setVisibility(f.visibility);
 
         if (fileRes.ok) {
-          setContent(await fileRes.text());
+          // Some pieces are PDFs (served as octet/markdown) — sniff the bytes and
+          // embed the PDF; otherwise it's markdown.
+          const blob = await fileRes.blob();
+          const head = await blob.slice(0, 5).text();
+          if (head.startsWith('%PDF')) {
+            setPdfUrl(URL.createObjectURL(new Blob([blob], { type: 'application/pdf' })));
+          } else {
+            setContent(await blob.text());
+          }
           setStatus('ok');
         } else if (fileRes.status === 401) {
           setStatus('signin');
@@ -198,7 +207,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
           )}
 
           {/* the piece (right, dominant) */}
-          <article className="reader-piece" style={{ flex: 1, overflow: 'auto', padding: '2.6rem clamp(1.4rem, 5vw, 4rem)', minWidth: 0 }}>
+          <article className="reader-piece" style={{ flex: 1, overflow: pdfUrl ? 'hidden' : 'auto', padding: pdfUrl ? 0 : '2.6rem clamp(1.4rem, 5vw, 4rem)', minWidth: 0 }}>
             {status === 'loading' && <p style={{ color: 'var(--text-ghost)' }}>loading…</p>}
             {status === 'signin' && (
               <div style={{ maxWidth: '32rem' }}>
@@ -213,11 +222,13 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
               </div>
             )}
             {status === 'error' && <p style={{ color: 'var(--text-ghost)' }}>couldn’t load this piece.</p>}
-            {status === 'ok' && (
-              <div className="reader-prose">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-              </div>
-            )}
+            {status === 'ok' && (pdfUrl
+              ? <iframe src={pdfUrl} title={nice} style={{ width: '100%', height: '100%', border: 'none' }} />
+              : (
+                <div className="reader-prose">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                </div>
+              ))}
           </article>
         </main>
       </div>
