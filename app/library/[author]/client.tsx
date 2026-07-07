@@ -108,7 +108,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       setAuthorId(author);
       const ctrl = new AbortController();
       const timeout = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-      fetch(`${SERVER_URL}/library/${author}`, { signal: ctrl.signal })
+      fetch(`/api/library/${encodeURIComponent(author)}`, { signal: ctrl.signal, credentials: 'include' })
         .then(r => { if (!r.ok) throw new Error('not found'); return r.json(); })
         .then(d => { setData(d); setLoading(false); })
         .catch(e => { setError(e.name === 'AbortError' ? 'unreachable' : e.message); setLoading(false); })
