@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent } from 'react';
-import { SERVER_URL } from '../../lib/config';
+import { librarySignInUrlHere } from '../../lib/config';
 
 /**
  * "ask this mind" — the PLM section on an Author's Library page.
@@ -151,7 +151,7 @@ export default function AskThisMind({
   // So an anonymous visitor always signs in first; a ?invite= code rides through
   // the login (in `next`) and binds to their account on their first ask.
   const needsLogin = inviteGated && !signedIn;
-  const signInUrl = `${SERVER_URL}/auth/github?intent=library&next=${typeof window !== 'undefined' ? encodeURIComponent(window.location.pathname + window.location.search) : ''}`;
+  const signInUrl = librarySignInUrlHere();
 
   if (needsLogin) {
     return (

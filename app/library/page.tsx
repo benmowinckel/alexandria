@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { SERVER_URL, pageMetadata } from '../lib/config';
+import { SERVER_URL, pageMetadata, librarySignInUrl } from '../lib/config';
 import { LibraryDirectory, type DirectoryAuthor } from './LibraryDirectory';
 
 export const dynamic = 'force-dynamic';
@@ -85,6 +85,17 @@ export default async function LibraryPage({
     .filter(Boolean);
   const { signed_in, authors, you_listed } = await loadDirectory();
 
+  // Sign-in must return you to the directory, signed in — not the signup
+  // callback page (which is a dead end for someone who just wanted to browse).
+  // intent=library skips the billing funnel; next brings you back here. Preserve
+  // any location filter so you land on the same view you left. (This is a server
+  // component — no window.location — so we rebuild the path from searchParams.)
+  const nextQuery = new URLSearchParams();
+  if (params?.locations) nextQuery.set('locations', params.locations);
+  else if (params?.location) nextQuery.set('location', params.location);
+  const nextPath = `/library${nextQuery.toString() ? `?${nextQuery}` : ''}`;
+  const signInUrl = librarySignInUrl(nextPath);
+
   return (
     <>
       <ThemeToggle />
@@ -105,7 +116,7 @@ export default async function LibraryPage({
               find who&rsquo;s near you, and reach them.
             </p>
             <p style={{ margin: '0 0 0.75rem' }}>
-              <a href={`${SERVER_URL}/auth/github`} style={linkStyle}>sign in</a>
+              <a href={signInUrl} style={linkStyle}>sign in</a>
             </p>
             <p style={{ margin: 0, color: 'var(--text-ghost)', fontSize: '0.9rem' }}>
               not a member yet? <Link href="/join" style={linkStyle}>join the collective</Link>.

@@ -146,7 +146,12 @@ export function registerRoutes(app: Hono) {
       const value = decodeURIComponent(raw).trim();
       if (!value.startsWith('/')) return '';
       if (value.startsWith('//')) return '';
-      return value.startsWith('/library/') ? value : '';
+      // Allow the library root ('/library', optionally with a query like
+      // ?locations=sf) as well as any '/library/...' subpath. The directory
+      // page IS '/library' exactly, so a trailing-slash-only check dropped it
+      // and sent returning members to the dead-end signup callback instead of
+      // back to the directory they were trying to reach.
+      return (value === '/library' || value.startsWith('/library/') || value.startsWith('/library?')) ? value : '';
     } catch {
       return '';
     }

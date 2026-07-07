@@ -2,6 +2,25 @@ export const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || 'https://api.ale
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://alexandria-library.com';
 export const FETCH_TIMEOUT_MS = 8000;
 
+// The single source for the library sign-in link. `intent=library` skips the
+// signup/billing funnel; `next` returns the viewer to `nextPath`, signed in,
+// instead of stranding them on the signup callback page. Every "sign in" link in
+// the library goes through here: hand-building this string per page is exactly
+// how the directory page silently dropped intent+next and dead-ended after
+// GitHub. One builder = a new page can't diverge the same way.
+export function librarySignInUrl(nextPath: string): string {
+  return `${SERVER_URL}/auth/github?intent=library&next=${encodeURIComponent(nextPath)}`;
+}
+
+// Client convenience: return the viewer to the page they're on right now. Empty
+// during SSR (no `window`); the href fills in on hydration, before any click can
+// land. Call only from client components.
+export function librarySignInUrlHere(): string {
+  return librarySignInUrl(
+    typeof window !== 'undefined' ? window.location.pathname + window.location.search : '',
+  );
+}
+
 // The homepage "ask Alexandria" box posts to /api/ask → the Worker's /ask relay
 // → the sidecar's isolated /guide route (a public Alexandria representative, not
 // anyone's personal twin). The Worker resolves which sidecar (the founder's

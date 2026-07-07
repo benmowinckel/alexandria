@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ThemeToggle } from '../../../../components/ThemeToggle';
-import { SERVER_URL } from '../../../../lib/config';
+import { SERVER_URL, librarySignInUrl } from '../../../../lib/config';
 
 type Visibility = 'public' | 'authors' | 'invite' | 'paid' | string;
 
@@ -111,9 +111,7 @@ export default function OpenProtocolFileGatePage({
     `/library/${encodeURIComponent(authorId)}/open/${encodeURIComponent(fileName)}`
   ), [authorId, fileName]);
 
-  const signInUrl = useMemo(() => (
-    `${SERVER_URL}/auth/github?intent=library&next=${encodeURIComponent(nextPath)}`
-  ), [nextPath]);
+  const signInUrl = useMemo(() => librarySignInUrl(nextPath), [nextPath]);
   const signUpUrl = useMemo(() => (
     `/signup?ref=${encodeURIComponent(authorId)}&ref_source=library`
   ), [authorId]);

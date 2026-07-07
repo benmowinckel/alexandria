@@ -6,7 +6,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ThemeToggle } from '../../../../components/ThemeToggle';
-import { SERVER_URL } from '../../../../lib/config';
+import { SERVER_URL, librarySignInUrlHere } from '../../../../lib/config';
 
 /**
  * The reader workspace — three panels: the piece (right, dominant), the twin
@@ -57,7 +57,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
 
   const nice = useMemo(() => displayName(name), [name]);
   const who = authorName || author;
-  const signInUrl = `${SERVER_URL}/auth/github?intent=library&next=${typeof window !== 'undefined' ? encodeURIComponent(window.location.pathname + window.location.search) : ''}`;
+  const signInUrl = librarySignInUrlHere();
 
   // Load author meta + the piece content (gated).
   useEffect(() => {

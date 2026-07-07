@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { ThemeToggle } from '../../components/ThemeToggle';
-import { FETCH_TIMEOUT_MS, SERVER_URL } from '../../lib/config';
+import { FETCH_TIMEOUT_MS, SERVER_URL, librarySignInUrlHere } from '../../lib/config';
 import { safeUrl } from '../../lib/url';
 import AskThisMind, { type TwinVariantSummary } from './AskThisMind';
 
@@ -155,7 +155,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // their website, shown plainly — never as buttons/pills.
   // General account sign-in — lives at the top of the page, not tied to the twin.
   const signedIn = data.twin?.signed_in === true;
-  const signInUrl = `${SERVER_URL}/auth/github?intent=library&next=${typeof window !== 'undefined' ? encodeURIComponent(window.location.pathname + window.location.search) : ''}`;
+  const signInUrl = librarySignInUrlHere();
   const cleanUrl = (u: string) => (u.startsWith('http') ? u : `https://${u}`);
   const socialLinks: { label: string; url: string }[] = [
     ...((author.socials || []).filter((s) => s && s.label && s.url).map((s) => ({ label: s.label, url: safeUrl(cleanUrl(s.url)) }))),
