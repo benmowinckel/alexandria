@@ -16,6 +16,10 @@ export const metadata = pageMetadata({
 // marketplace, the tribe. Signing in with GitHub starts the trial ($10/mo, first
 // month free, free with 3 kin, or email-to-waive) and assigns your number.
 //
+// Composition mirrors /start: one flush-left editorial column, an accent
+// eyebrow ("the collective") as the spine's anchor — the paid half, twinned
+// with /start's "the free tool".
+//
 // This is also the invite target: a member's invite link is /join?ref=THEIR_CODE.
 // The ref rides through GitHub OAuth (server round-trips it) so the inviter is
 // credited as kin. GitHub usernames are [A-Za-z0-9-], so we sanitise ref to that
@@ -51,12 +55,14 @@ export default async function JoinPage({
 
       <main className="primer-main">
         {ref ? (
-          <p className="join-eyebrow">@{ref} invited you in.</p>
-        ) : null}
+          <p className="join-invite">@{ref} invited you in.</p>
+        ) : (
+          <p className="primer-eyebrow">the collective</p>
+        )}
 
         <h1 className="primer-h1">become a founding member.</h1>
 
-        <p className="join-pitch">
+        <p className="primer-lede">
           the tool is free and always will be. joining the collective is the part
           you pay for &mdash; a place in the shared library, the people building
           it alongside you, and being seen among them.
@@ -110,33 +116,48 @@ export default async function JoinPage({
         .primer-brand:hover { opacity: 0.6; }
         .primer-brand-dot { font-style: normal; }
 
+        /* One flush-left editorial column, vertically centred — the same spine
+           as /start. */
         .primer-main {
           flex: 1;
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          max-width: 540px; margin: 0 auto; padding: 3rem 24px 6rem; width: 100%;
+          display: flex; flex-direction: column;
+          align-items: flex-start; justify-content: center;
+          max-width: 540px; margin: 0 auto; padding: 3rem 32px 6rem; width: 100%;
+          text-align: left;
         }
 
-        .join-eyebrow {
+        /* The one accent on the skeleton — small-caps, spaced, brand plum. */
+        .primer-eyebrow {
           margin: 0 0 18px; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 14px; letter-spacing: 0.04em; font-style: italic;
-          color: var(--text-muted, rgba(26, 19, 24, 0.55)); text-align: center;
+          font-weight: 500; font-size: 11px; letter-spacing: 0.3em;
+          text-transform: lowercase; font-variant-caps: all-small-caps;
+          font-feature-settings: "smcp" 1, "kern" 1;
+          color: var(--accent); line-height: 1;
+        }
+
+        /* Invite variant — warmer, personal, replaces the label when a kin
+           link brought them here. */
+        .join-invite {
+          margin: 0 0 18px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 14px; letter-spacing: 0.02em; font-style: italic;
+          color: var(--accent); line-height: 1;
         }
 
         .primer-h1 {
-          margin: 0 0 22px; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic; font-weight: 400; font-size: 31px; line-height: 1.4;
-          letter-spacing: -0.005em; color: var(--text-primary); text-wrap: balance;
-          text-align: center; font-feature-settings: "kern" 1, "liga" 1, "dlig" 1;
+          margin: 0 0 20px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-weight: 400; font-size: 34px; line-height: 1.25;
+          letter-spacing: -0.01em; color: var(--text-primary); text-wrap: balance;
+          font-feature-settings: "kern" 1, "liga" 1, "dlig" 1;
         }
 
-        .join-pitch {
-          margin: 0 0 40px; max-width: 460px; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 17px; line-height: 1.65; color: var(--text-secondary, rgba(26, 19, 24, 0.8));
-          text-align: center; text-wrap: pretty;
+        .primer-lede {
+          margin: 0 0 40px; max-width: 460px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 17px; line-height: 1.6; color: var(--text-secondary);
+          text-wrap: pretty;
         }
-        .join-pitch em { font-style: italic; color: var(--text-primary); }
 
-        /* The one action on the page. Filled, calm, unmistakable. */
+        /* The one action on the page. Filled, calm, hung from the left spine. */
         .join-btn {
           display: inline-flex; align-items: center; justify-content: center;
           padding: 14px 30px; border-radius: 9px;
@@ -149,9 +170,9 @@ export default async function JoinPage({
         .join-btn:active { transform: scale(0.99); }
 
         .join-deal {
-          margin: 32px 0 0; max-width: 440px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          margin: 32px 0 0; max-width: 450px; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 14px; line-height: 1.7; letter-spacing: 0.01em;
-          color: var(--text-muted, rgba(26, 19, 24, 0.55)); text-align: center;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55)); text-align: left;
           font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
         }
         .join-free { color: var(--text-secondary, rgba(26, 19, 24, 0.82)); }
@@ -159,7 +180,7 @@ export default async function JoinPage({
         .join-secondary {
           margin: 28px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 14px; line-height: 1.6; color: var(--text-muted, rgba(26, 19, 24, 0.55));
-          text-align: center;
+          text-align: left;
         }
         .join-secondary a {
           color: var(--text-secondary, rgba(26, 19, 24, 0.8));
@@ -170,15 +191,15 @@ export default async function JoinPage({
         .join-secondary a:hover { color: var(--text-primary); text-decoration-color: var(--text-primary); }
 
         .primer-coda {
-          margin: 56px 0 0; text-align: center; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          margin: 56px 0 0; text-align: left; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 20px; font-style: italic; color: var(--text-primary);
           letter-spacing: 0.005em; opacity: 0.72;
         }
 
         @media (max-width: 640px) {
-          .primer-main { padding: 2rem 20px 4rem; }
-          .primer-h1 { font-size: 25px; line-height: 1.4; margin-bottom: 18px; }
-          .join-pitch { font-size: 15.5px; margin-bottom: 32px; }
+          .primer-main { padding: 2rem 24px 4rem; }
+          .primer-h1 { font-size: 28px; line-height: 1.3; margin-bottom: 18px; }
+          .primer-lede { font-size: 16px; margin-bottom: 32px; }
           .primer-coda { font-size: 18px; margin-top: 48px; }
         }
       `}</style>
