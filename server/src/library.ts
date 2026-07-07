@@ -1622,8 +1622,15 @@ export function registerLibraryRoutes(app: Hono): void {
     if (!result.meta.changes) {
       return c.json({ error: 'Code not found or already revoked' }, 404);
     }
-    logEvent('access_code_revoked', { author: authorId, id });
-    return c.json({ ok: true, id, revoked_at: now });
+    // CASCADE: revoking a code must also cut off every account that already BOUND
+    // it (access_grants.code_id records provenance). Without this, revoking a code
+    // stopped only NEW redemptions — accounts that already redeemed kept deep
+    // access, so "revoke the code to cut everyone off" was false. Now it holds.
+    const cascade = await getDB().prepare(
+      'UPDATE access_grants SET revoked_at = ? WHERE author_id = ? AND code_id = ? AND revoked_at IS NULL'
+    ).bind(now, authorId, id).run().catch(() => null);
+    logEvent('access_code_revoked', { author: authorId, id, grants_revoked: String(cascade?.meta?.changes ?? 0) });
+    return c.json({ ok: true, id, revoked_at: now, grants_revoked: cascade?.meta?.changes ?? 0 });
   });
 
   // Account grants — the code-free invite path. Grant a specific person by their

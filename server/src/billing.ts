@@ -985,6 +985,16 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
         return c.redirect(`${WEBSITE_URL}/signup`);
       }
 
+      // SECURITY (paywall integrity): this endpoint is UNAUTHENTICATED and the
+      // session_id is attacker-supplied, so we must trust ONLY a Stripe-confirmed
+      // COMPLETED checkout. An abandoned/unpaid session has status 'open' — writing
+      // the setup-mode 'beta' grant (an ACTIVE status) for one was a free permanent
+      // paid-access bypass. Bounce anything not actually complete.
+      if (session.status !== 'complete') {
+        logEvent('billing_success_incomplete', { status: session.status || 'unknown' });
+        return c.redirect(`${WEBSITE_URL}/signup`);
+      }
+
       let customerId = session.customer as string | null;
       if (!customerId && session.setup_intent) {
         try {
@@ -998,6 +1008,8 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       // Don't write subscription_status here — customer.subscription.created/updated
       // carries the real Stripe state (trialing during the 30-day window, then active).
       // Hardcoding 'active' here would briefly contradict /alexandria for trial users.
+      // The 'beta' fallback is the setup-mode founding grant, now reachable ONLY on a
+      // genuinely completed checkout (card captured), never an abandoned session.
       const billingUpdate: Partial<BillingInfo> = {
         ...(customerId ? { stripe_customer_id: customerId } : {}),
         ...(session.subscription
