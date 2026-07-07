@@ -436,6 +436,20 @@ export function agentEndpointFrom(url: string): string {
   return `${u}/agent`;
 }
 
+/** Cloudflare Access service-token headers for reaching an Access-protected
+ *  sidecar tunnel. When set, "found the tunnel URL + bearer secret" is no longer
+ *  enough — the request must ALSO carry the Worker's Access service identity, so
+ *  network reachability becomes a structural second factor (invariant 5: network
+ *  identity). Env-gated: absent → no-op, so this is safe before the founder
+ *  provisions Access on the named tunnel. */
+export function accessHeaders(): Record<string, string> {
+  const id = process.env.TWIN_ACCESS_CLIENT_ID;
+  const secret = process.env.TWIN_ACCESS_CLIENT_SECRET;
+  return id && secret
+    ? { 'CF-Access-Client-Id': id, 'CF-Access-Client-Secret': secret }
+    : {};
+}
+
 /** The sidecar's liveness endpoint, derived from the configured inference URL —
  *  same base, `/health` path. Used by the online/offline check. */
 export function healthEndpointFrom(url: string): string {
@@ -524,6 +538,7 @@ export async function runTwinInference(
       headers: {
         'Content-Type': 'application/json',
         ...(opts.secret ? { Authorization: `Bearer ${opts.secret}` } : {}),
+        ...accessHeaders(),
       },
       body: JSON.stringify(body),
       signal: ctrl.signal,

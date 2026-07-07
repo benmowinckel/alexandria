@@ -40,6 +40,7 @@ import {
   runTwinInference,
   authorizeTwinAccess,
   healthEndpointFrom,
+  accessHeaders,
   validateSidecarUrl,
   type TwinVariant,
   type TwinVisibility,
@@ -93,7 +94,7 @@ async function twinOnline(authorId: string): Promise<boolean> {
       const ctrl = new AbortController();
       // Quick tunnels can be slow to first-byte; be tolerant so we don't flap offline.
       const t = setTimeout(() => ctrl.abort(), 6000);
-      const res = await fetch(healthEndpointFrom(conn.url), { signal: ctrl.signal });
+      const res = await fetch(healthEndpointFrom(conn.url), { signal: ctrl.signal, headers: accessHeaders() });
       clearTimeout(t);
       online = res.ok;
     } catch { online = false; }
