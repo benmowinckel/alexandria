@@ -136,7 +136,7 @@ It can’t live inside one AI’s memory, because then it isn’t yours — you 
 
 The half that’s easy to miss is the writing. The AI doesn’t just *read* the file to know you better; it *writes* to it too — so your thinking develops on the page itself, in words you can see and correct, instead of inside a machine where you can’t reach it. The record and the developing are the same act.
 
-We call it your `mind.md` — *mind*, because that’s what’s in it; *.md* because it’s just a plain text file, the kind anything can open. One file to start. It grows into more as there’s more of you to hold, but it never stops being plain text you own.
+We call it your mind.md — *mind*, because that’s what’s in it; *.md* because it’s just a plain text file, the kind anything can open. One file to start. It grows into more as there’s more of you to hold, but it never stops being plain text you own.
 
 And the fact that it’s *yours* isn’t a detail. It’s what makes a tool like this safe to use at all, and it runs three ways.
 
@@ -152,7 +152,7 @@ A file on its own has a problem: it goes stale. You change every day — you rea
 
 But notice what’s already in your hands. The same AI you think with can tend the record of your thinking. It listens as you work, asks the right questions, writes down what’s new, and prunes what’s gone stale — so the record stays alive without you ever filing it.
 
-That second piece — the part that tends the file — we call your `alexandria.md`. It’s the same kind of file as your `mind.md` — plain text, yours to read and change — except it holds instructions instead of content: how your AI draws you out, what it writes down, what it keeps current. Your `mind.md` is the record of your mind; your `alexandria.md` is the small, owned system that keeps that record true. Same principle, two parts.
+That second piece — the part that tends the file — we call your alexandria.md. It’s the same kind of file as your mind.md — plain text, yours to read and change — except it holds instructions instead of content: how your AI draws you out, what it writes down, what it keeps current. Your mind.md is the record of your mind; your alexandria.md is the small, owned system that keeps that record true. Same principle, two parts.
 
 It belongs to you the same way the file does, and for one more reason: you can change how it works. It starts as a shared default that suits almost anyone, and as you use it you bend it to fit you — and because it’s plain and open, it stays yours even as it becomes specific to you. You don’t get locked into Alexandria any more than you get locked into a model. All of it is built to be walked away from, which is the only reason it’s safe to let this far in.
 
@@ -178,7 +178,7 @@ It doesn’t have to be vast to be worth having. A library was always a place wh
 
 This is also why there has to be a company. You can build your own file and your own system alone — you don’t need us for that, and that part stays free and yours. But nobody builds a library alone; it only exists when many people are connected, and a shared place is what a person can’t make alone.
 
-And what you share is yours to shape, entirely. Your `mind.md` and `alexandria.md` live with you and stand on their own, working with or without the library, so developing yourself never depends on giving anything up. When you do add to the library you don’t hand over the file; you publish a version you shape from it — what you make, what you’re building, and as much of how you think as you choose to show — and you can take back anything you’ve shared. The library stays open to any reader, because an open library is the only kind that grows. On each piece you publish, you choose how wide it opens.
+And what you share is yours to shape, entirely. Your mind.md and alexandria.md live with you and stand on their own, working with or without the library, so developing yourself never depends on giving anything up. When you do add to the library you don’t hand over the file; you publish a version you shape from it — what you make, what you’re building, and as much of how you think as you choose to show — and you can take back anything you’ve shared. The library stays open to any reader, because an open library is the only kind that grows. On each piece you publish, you choose how wide it opens.
 
 ## the republic.
 
