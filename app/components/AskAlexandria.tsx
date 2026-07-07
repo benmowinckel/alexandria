@@ -56,8 +56,6 @@ export default function AskAlexandria() {
     };
   }, [loading]);
 
-  const askDisabled = loading || !question.trim();
-
   const ask = async (override?: string) => {
     const q = (override ?? question).trim();
     if (!q || loading) return;
@@ -122,8 +120,11 @@ export default function AskAlexandria() {
     fontSize: 14,
     letterSpacing: '0.02em',
     padding: '0.6rem 1.05rem',
-    cursor: askDisabled ? 'default' : 'pointer',
-    opacity: askDisabled ? 0.45 : 1,
+    // Crisp navy at rest (inviting, matches the "join the tribe" CTA) — only
+    // dims while actually thinking. A disabled-dimmed resting button read as
+    // muddy/half-broken. Clicking it empty is a no-op (ask() guards).
+    cursor: loading ? 'default' : 'pointer',
+    opacity: loading ? 0.55 : 1,
     transition: 'opacity 150ms ease',
     whiteSpace: 'nowrap',
     alignSelf: 'stretch',
@@ -169,9 +170,9 @@ export default function AskAlexandria() {
         <button
           type="button"
           onClick={() => void ask()}
-          disabled={askDisabled}
-          onMouseEnter={(e) => { if (!askDisabled) e.currentTarget.style.opacity = '0.82'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = askDisabled ? '0.45' : '1'; }}
+          disabled={loading}
+          onMouseEnter={(e) => { if (!loading) e.currentTarget.style.opacity = '0.82'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = loading ? '0.55' : '1'; }}
           style={sendStyle}
         >
           {loading ? '…' : 'ask'}
