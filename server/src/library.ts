@@ -764,6 +764,7 @@ export function registerLibraryRoutes(app: Hono): void {
     requestedVariant: TwinVariant | null;
     accessor: Account | null;
     inviteValid: boolean;
+    focus?: { name: string; content: string };
     surface: 'library' | 'api';
   }): Promise<TwinQueryOutcome> {
     const variants = resolveTwinVariants(p.settings, twinEnv());
@@ -817,7 +818,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const result = await runTwinInference(
       cfg.variant === 'weights'
         ? { variant: 'weights', question: p.question, system, maxTokens: 512, checkpoint: cfg.checkpoint, base: cfg.base }
-        : { variant: 'context', question: p.question, system, maxTokens: 512, model: cfg.model, tools: cfg.tools, author: p.authorId, works, tier: queryTier },
+        : { variant: 'context', question: p.question, system, maxTokens: 512, model: cfg.model, tools: cfg.tools, author: p.authorId, works, tier: queryTier, focus: p.focus },
       { url: sidecar?.url, secret: sidecar?.secret },
     );
 
@@ -875,11 +876,16 @@ export function registerLibraryRoutes(app: Hono): void {
       return c.json({ error: 'This twin has answered its limit for today — try again tomorrow.' }, 429);
     }
 
-    const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown };
+    const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown; focus?: unknown };
     const question = typeof body.question === 'string' ? body.question.trim() : '';
     if (!question) return c.json({ error: 'Ask a question.' }, 400);
     if (question.length > 2000) return c.json({ error: 'Question too long (2000 chars max).' }, 400);
     const requestedVariant: TwinVariant | null = body.variant === 'weights' || body.variant === 'context' ? body.variant : null;
+    // The piece being read (reader workspace), if any — bounded so it can't blow the payload.
+    const fRaw = body.focus && typeof body.focus === 'object' ? body.focus as Record<string, unknown> : null;
+    const focus = fRaw && typeof fRaw.content === 'string' && fRaw.content.trim()
+      ? { name: typeof fRaw.name === 'string' ? fRaw.name.slice(0, 200) : '', content: fRaw.content.slice(0, 20000) }
+      : undefined;
 
     const profile = await getDB().prepare('SELECT display_name, settings FROM authors WHERE id = ?')
       .bind(authorId)
@@ -895,7 +901,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const inviteValid = await resolveInviteAccess(authorId, accessor, inviteCode);
 
     const outcome = await runTwinQuery({
-      authorId, authorAccount, displayName, settings, question, requestedVariant, accessor, inviteValid, surface: 'library',
+      authorId, authorAccount, displayName, settings, question, requestedVariant, accessor, inviteValid, focus, surface: 'library',
     });
     if (!outcome.ok) return c.json(outcome.body, outcome.status as 401 | 402 | 403 | 404 | 502 | 503 | 504);
     return c.json({

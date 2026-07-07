@@ -390,6 +390,10 @@ export interface TwinInferenceRequest {
    *  so it's a structural ceiling on what the twin can reveal (plm.md § tiered
    *  shadow). Worker-set from the twin's configured visibility, never the caller. */
   tier?: TwinVisibility;
+  /** The piece the querier is reading (context only) — passed so the twin can
+   *  discuss it. The sidecar injects it as delimited, explicitly-untrusted text
+   *  in the USER turn (never the system prompt), so it can't reframe the twin. */
+  focus?: { name: string; content: string };
 }
 
 export type TwinInferenceResult =
@@ -499,6 +503,9 @@ export async function runTwinInference(
       // The tier the sidecar loads substrate at (structural ceiling). Worker-set,
       // fail closed to public if somehow unset.
       body.tier = req.tier ?? 'public';
+      // The piece being read (reader workspace) — sidecar puts it in a delimited
+      // untrusted USER block so the twin can discuss it without being reframed.
+      if (req.focus && req.focus.content) body.focus = req.focus;
       // Pre-gated published works for search_my_works (the Worker is the gate).
       if (req.works && req.works.length) body.works = req.works;
     }

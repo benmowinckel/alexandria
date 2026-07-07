@@ -239,19 +239,13 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       </>
     );
 
-    if (file.visibility === 'public') {
-      return (
-        <a key={file.name} href={`/api/library/${encodeURIComponent(authorId)}/file/${encodeURIComponent(file.name)}`}
-          className="hover:opacity-60" style={rowStyle}>
-          {inner}
-        </a>
-      );
-    }
+    // Every entry opens the 3-panel reader (piece + twin + notes); it handles the
+    // gate itself (public reads free, invite/paid prompt sign-in).
     return (
-      <button key={file.name} type="button" onClick={() => void openProtocolFile(file)}
+      <Link key={file.name} href={`/library/${encodeURIComponent(authorId)}/read/${encodeURIComponent(file.name)}`}
         className="hover:opacity-60" style={rowStyle}>
         {inner}
-      </button>
+      </Link>
     );
   };
 
