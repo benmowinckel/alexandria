@@ -130,6 +130,8 @@ It’s worth being precise about what this is *not*. Every platform is adding a 
 
 And it builds you the way a gym does: the growth comes from the strain. Most AI does the opposite — it agrees, it flatters, it hands you the answer you already liked, which feels good and changes nothing. This pushes back: it finds the hole in your reasoning and asks the question you were dodging. That friction isn’t a flaw in the tool, it’s the mechanism — a mind only sharpens against resistance, and one that hears nothing but *yes* stays exactly as dull as it started.
 
+And here is what falls out of all of it. Because it only adds — it stands beside everything you already use and takes nothing from it — choosing it costs you nothing. There is no downside to weigh, no wager to lose. So this was never a practice only for the few who are already sure. Grant only that there might be something in drawing your mind out and sharpening it, and the move is obvious: being wrong costs nothing, and not trying costs you the one thing that stays yours. It isn’t for some people. It’s for anyone who would rather stay themselves.
+
 ## the folder.
 
 Put your mind into words, and the words have to live somewhere. Follow that simple need and the right shape falls out on its own.
