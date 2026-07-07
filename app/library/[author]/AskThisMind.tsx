@@ -129,7 +129,7 @@ export default function AskThisMind({
   // calm state, not the ask box (so no one types a question into a dead end).
   if (!online) {
     return (
-      <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '1.6rem', paddingTop: '1.1rem' }}>
+      <div style={{ marginTop: '1.6rem' }}>
         <p style={sectionLabelStyle}>
           ask this mind
           <span style={{ color: 'var(--text-ghost)', marginLeft: '0.5rem', letterSpacing: '0.02em' }}>offline</span>
@@ -154,7 +154,7 @@ export default function AskThisMind({
 
   if (needsLogin) {
     return (
-      <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '1.6rem', paddingTop: '1.1rem' }}>
+      <div style={{ marginTop: '1.6rem' }}>
         <p style={sectionLabelStyle}>
           ask this mind
           <span style={{ color: 'var(--accent)', marginLeft: '0.5rem', letterSpacing: '0.02em' }}>twin</span>
