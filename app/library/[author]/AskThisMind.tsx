@@ -97,6 +97,7 @@ export default function AskThisMind({
   const [error, setError] = useState('');
   // Invite code — pre-filled from ?invite= so an invite link just works.
   const [invite, setInvite] = useState('');
+  const [showInviteInput, setShowInviteInput] = useState(false);
   const [waited, setWaited] = useState(0);
   const waitTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -166,6 +167,7 @@ export default function AskThisMind({
       });
       const body = (await res.json().catch(() => ({}))) as AskResponse;
       if (!res.ok || !body.answer) {
+        if (res.status === 401 || res.status === 403) setShowInviteInput(true); // let them fix it
         setError(
           body.error
             || (res.status === 401 || res.status === 403
@@ -300,26 +302,43 @@ export default function AskThisMind({
           />
 
           {inviteGated && (
-            <input
-              type="text"
-              value={invite}
-              onChange={(e) => setInvite(e.target.value)}
-              disabled={loading}
-              placeholder="have an invite code?"
-              aria-label="invite code"
-              style={{
-                width: '100%',
-                border: 'none',
-                borderBottom: '1px solid var(--border-light)',
-                background: 'transparent',
-                color: 'var(--text-primary)',
-                fontFamily: 'var(--font-eb-garamond)',
-                fontSize: '0.92rem',
-                outline: 'none',
-                padding: '0.7rem 0 0.5rem',
-                margin: '0.6rem 0 0',
-              }}
-            />
+            invite.trim() && !showInviteInput ? (
+              // An invite is applied (typed or pre-filled from ?invite=). Show a
+              // quiet confirmation, never the raw code — a bare hex string reads
+              // as broken.
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.7rem 0 0' }}>
+                <span style={{ color: 'var(--accent)' }}>✓</span> invite added
+                <button
+                  type="button"
+                  onClick={() => setShowInviteInput(true)}
+                  style={{ border: 'none', background: 'none', padding: 0, marginLeft: '0.6rem',
+                    color: 'var(--text-ghost)', fontFamily: 'inherit', fontSize: '0.78rem', cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  change
+                </button>
+              </p>
+            ) : (
+              <input
+                type="text"
+                value={invite}
+                onChange={(e) => setInvite(e.target.value)}
+                disabled={loading}
+                placeholder="have an invite code?"
+                aria-label="invite code"
+                style={{
+                  width: '100%',
+                  border: 'none',
+                  borderBottom: '1px solid var(--border-light)',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  fontFamily: 'var(--font-eb-garamond)',
+                  fontSize: '0.92rem',
+                  outline: 'none',
+                  padding: '0.7rem 0 0.5rem',
+                  margin: '0.6rem 0 0',
+                }}
+              />
+            )
           )}
 
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', margin: '0.9rem 0 0' }}>
