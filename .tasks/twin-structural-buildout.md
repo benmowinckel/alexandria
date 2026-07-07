@@ -12,9 +12,42 @@ lives, never by our-code-robustness (degree). Refs: `~/alexandria/files/core/fee
 structural security model").
 
 Where things stand (2026-07-07): twin is LIVE on the current sidecar + cloudflared
-named tunnel (bearer-locked). Mind-on-device is already structural. What remains is
-below. Do the phases in order. **Do NOT rush phases 2 & 3 — rushed crypto is a fake
-structural guarantee. Test the forge/compromise cases before shipping either.**
+named tunnel (bearer-locked). Mind-on-device is already structural. The rest below is
+**deliberately deferred** — correct work, but premature until the triggers below fire.
+Do the phases in order. **Do NOT rush phases 2 & 3 — rushed crypto is a fake structural
+guarantee. Test the forge/compromise cases before shipping either.**
+
+---
+
+## TRIGGERS — when to build each (so NEITHER the founder NOR the agent has to remember)
+
+These are **observable conditions**, not dates. Each fires exactly when the relevant work
+is already happening — so nobody has to remember a schedule. Discovery path: `plm.md`'s
+SETTLED-security entry points here; any session touching the twin / library / marketplace
+reads it and checks: *has a trigger fired?* If yes → build that phase from the spec below.
+If NO trigger has fired, the current state is correct — **do not build** (this line exists
+to stop a future agent over-building again, which was the 2026-07-07 failure).
+
+**The founder does NOT need to track any of this.** When the condition is real, the founder
+(or an agent) is necessarily working in that area, and this file surfaces the trigger.
+The agent decides "is it time"; the founder just says yes when asked, or the trigger is
+obvious enough to act on directly.
+
+- **Phase 1 (smooth module) — build when ANY of:**
+  1. A second person (any author besides the founder) wants to run a twin → packaging is now for a real user, not hypothetical.
+  2. The founder's own twin goes offline / the tunnel breaks costing real time a **SECOND** time → recurring fragility = fix it structurally ("recurring problems demand permanent solutions").
+  3. The founder decides to actively push the twin to authors as a product.
+- **Phase 2 (capability-passes) — build when ANY of** (prereq: Phase 1 done — passes must verify on the device):
+  1. The founder or any author puts genuinely sensitive content in the INVITE/deep tier AND cares that "our code decides who gets in" (the gap stops being hypothetical).
+  2. A second author with sensitive deep content onboards.
+  3. Right before any moment where a leaked deep *answer* would actually matter — a real, named person you'd be upset leaked to.
+- **Phase 3 (encrypted library) — build when ANY of** (prereq: Phases 1 + 2 done):
+  1. Multiple authors publish GATED (non-public) documents that must be always-on → at-rest secrecy of real gated content is now a real need.
+  2. A specific author / customer / investor explicitly requires "even Alexandria can't read my gated content."
+
+**Until a trigger fires:** the twin is live and safe (mind-on-device is structural today);
+these phases make it structural *for everyone, on every tier* — a scaling need, not a
+safety need. Ship to users; let real demand fire the triggers.
 
 ---
 
