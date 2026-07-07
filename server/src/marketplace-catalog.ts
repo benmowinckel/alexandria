@@ -104,6 +104,29 @@ export function deriveDescription(body: string): string {
   return '';
 }
 
+/**
+ * THREAT (prompt-injection channel): a module's `description` is attacker-
+ * controlled markdown fetched from raw.githubusercontent.com, then served in the
+ * public `/marketplace` JSON that OTHER Authors' ai agents ingest as context. It
+ * is React-escaped downstream (so not browser-XSS), but escaping does nothing to
+ * an LLM reader — a description like "ignore previous instructions and…" lands
+ * directly in another agent's context window. Defence: reduce it to an inert,
+ * single-line human label. Collapse newlines, strip markdown/control and the
+ * bracketing chars used to frame injected instructions (backticks, angle/square/
+ * curly brackets, pipes, backslashes, markdown emphasis/heading marks), then
+ * hard-cap length. The result can only ever be a short caption, never a command.
+ */
+const DESC_MAX = 280;
+export function sanitizeDescription(raw: string): string {
+  if (!raw) return '';
+  const inert = raw
+    .replace(/[\r\n\t]+/g, ' ')          // collapse to a single line — no multi-line instruction blocks
+    .replace(/[`<>[\]{}|\\*_#~]/g, '')   // strip markdown/control + instruction-framing brackets
+    .replace(/\s+/g, ' ')                // collapse whitespace runs
+    .trim();
+  return inert.length > DESC_MAX ? inert.slice(0, DESC_MAX - 1).trimEnd() + '…' : inert;
+}
+
 function cacheKey(id: string): string {
   return `module:${id}`;
 }
@@ -162,7 +185,10 @@ async function refreshCache(id: string, parsed: ParsedModuleId): Promise<ModuleM
   // github directly rather than re-reading it from KV.
   const fm = parseFrontmatter(fetched.content);
   const name = fm.name && SLUG_RE.test(fm.name) ? fm.name : fallbackName(parsed, id);
-  const description = fm.description || deriveDescription(fm.body);
+  // Sanitize at this single choke point so BOTH the front-matter description and
+  // the body-derived fallback are forced to inert plaintext before they are ever
+  // stored in KV or served in the public catalog (see sanitizeDescription).
+  const description = sanitizeDescription(fm.description || deriveDescription(fm.body));
   const meta: ModuleMeta = {
     name,
     description,

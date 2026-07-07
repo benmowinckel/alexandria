@@ -14,6 +14,38 @@ import {
   readProtocolFile,
 } from './file-access.js';
 
+// Per-account daily rate limit on /call — same self-expiring KV counter idiom
+// as library.ts's twin caps, but /call is NOT a paid inference surface (no model
+// spend), so it FAILS OPEN: a transient KV error must not block a legitimate
+// session-start module report or install-completion. The cap exists only to stop
+// a scripted account from flooding D1 (protocol_calls rows) and the public
+// marketplace catalog (one permanent entry per distinct module_id). 500/day is
+// ~70x the 7-module default manifest that fires once per session-start — ample
+// headroom for a many-session power user, while a flood attempt hits the wall.
+const CALL_DAILY_CAP_PER_ACCOUNT = 500;
+
+// Read-only: is the account's daily /call ceiling already reached?
+async function callDailyCapReached(accountId: string): Promise<boolean> {
+  try {
+    const raw = await getKV().get(`rate:call:daily:${accountId}`);
+    return (raw ? parseInt(raw, 10) : 0) >= CALL_DAILY_CAP_PER_ACCOUNT;
+  } catch {
+    return false; // FAIL OPEN: /call is a non-cost surface — a KV blip must not block legit module reporting
+  }
+}
+
+// Increment the daily counter — called only after a call succeeds.
+async function bumpCallDaily(accountId: string): Promise<void> {
+  try {
+    const kv = getKV();
+    const key = `rate:call:daily:${accountId}`;
+    const raw = await kv.get(key);
+    await kv.put(key, String((raw ? parseInt(raw, 10) : 0) + 1), { expirationTtl: 86400 });
+  } catch {
+    // best effort — a missed increment can only under-count, never open a bigger hole
+  }
+}
+
 export function registerProtocol(app: Hono) {
 
   // ── File obligation ────────────────────────────────────────────
@@ -268,6 +300,13 @@ export function registerProtocol(app: Hono) {
     if (!auth.ok) return c.text(auth.message, auth.status);
     if (!auth.account.github_id) return c.json({ error: 'Account missing github_id' }, 400);
 
+    // Abuse floor: bound how often one account can write to protocol_calls /
+    // the catalog per day. Read-only check up front (fails open, non-cost
+    // surface); the counter is only bumped after a successful insert below.
+    if (await callDailyCapReached(String(auth.account.github_id))) {
+      return c.json({ error: `Daily /call limit reached (${CALL_DAILY_CAP_PER_ACCOUNT})` }, 429);
+    }
+
     // Client version heartbeat — /call is the one authed endpoint every install hits
     // regularly. Header absent means either a pre-header bash shim (real upgrade
     // target) or a non-shim client (Claude Desktop/web MCP — node UA — legitimate,
@@ -313,6 +352,14 @@ export function registerProtocol(app: Hono) {
     if (!body?.modules || !Array.isArray(body.modules))
       return c.json({ error: 'modules required (array of {id, text})' }, 400);
 
+    // Bound the array: every distinct module_id becomes a permanent
+    // protocol_calls row / catalog entry, so an unbounded array is a D1/catalog
+    // flood vector. 100 is ~14x the 7-module default manifest and clears any
+    // realistic full-factory-plus-custom library, so it never bites legit use.
+    const MAX_MODULES_PER_CALL = 100;
+    if (body.modules.length > MAX_MODULES_PER_CALL)
+      return c.json({ error: `Too many modules (max ${MAX_MODULES_PER_CALL} per call)` }, 400);
+
     const id = String(auth.account.github_id);
     const now = new Date().toISOString();
     const db = getDB();
@@ -341,6 +388,9 @@ export function registerProtocol(app: Hono) {
       'INSERT INTO protocol_calls (module_id, account_id, time, text) VALUES (?, ?, ?, ?)'
     ).bind(r.mod, id, now, r.text));
     await db.batch(inserts);
+    // Consume daily budget only after a successful write — a rejected/empty call
+    // never counts against the account.
+    c.executionCtx.waitUntil(bumpCallDaily(id));
     logEvent('protocol_call', {
       author: auth.account.github_login,
       modules: String(rows.length),
