@@ -53,6 +53,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [midOpen, setMidOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [open, setOpen] = useState<OpenPiece | null>(null);
+  const [mtab, setMtab] = useState<'chat' | 'pieces'>('chat'); // mobile
 
   const idRef = useRef(2);
   const [convos, setConvos] = useState<Convo[]>([{ id: '1', messages: [] }]);
@@ -90,6 +91,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const openPiece = async (fileName: string) => {
     const nice = displayName(fileName);
     setRightOpen(true);
+    if (typeof window !== 'undefined' && window.innerWidth <= 900) setMtab('pieces');
     setOpen({ name: fileName, nice, content: '', pdfUrl: '', loading: true });
     try {
       const res = await fetch(`/api/library/${encodeURIComponent(author)}/file/${encodeURIComponent(fileName)}`, { credentials: 'include' });
@@ -172,7 +174,17 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           <span style={{ ...label }}>mind</span>
         </header>
 
-        <main style={{ flex: 1, display: 'flex', minHeight: 0 }}
+        <div className="plm-tabs" style={{ display: 'none', flex: 'none', borderBottom: '1px solid var(--border-light)' }}>
+          {(['chat', 'pieces'] as const).map((t) => (
+            <button key={t} type="button" onClick={() => setMtab(t)}
+              style={{ flex: 1, border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.7rem',
+                color: mtab === t ? 'var(--text-primary)' : 'var(--text-ghost)', borderBottom: mtab === t ? '2px solid var(--accent)' : '2px solid transparent' }}>
+              {t}
+            </button>
+          ))}
+        </div>
+
+        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-mtab={mtab}
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
@@ -298,10 +310,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         }
         @media (max-width: 900px) {
           .reader-strip, .pane-history { display: none !important; }
-          main { flex-direction: column; }
-          .pane-chat { order: 0 !important; width: 100% !important; flex: 1 1 55% !important; border-right: none !important; border-bottom: 1px solid var(--border-light); min-width: 0 !important; }
-          .pane-piece { order: 0 !important; width: 100% !important; flex: 1 1 45% !important; }
-          main[data-right="closed"] .pane-piece { display: none !important; }
+          .plm-tabs { display: flex !important; }
+          main { flex-direction: column !important; }
+          .pane-chat, .pane-piece { display: none !important; order: 0 !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; border-right: none !important; }
+          main[data-mtab="chat"] .pane-chat { display: flex !important; }
+          main[data-mtab="pieces"] .pane-piece { display: flex !important; }
         }
       `}</style>
     </>

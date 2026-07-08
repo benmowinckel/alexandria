@@ -298,9 +298,10 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
           main[data-right="open"] .pane-piece { display: flex; }
         }
         @media (max-width: 900px) {
-          .panes-toggle, .reader-strip, .pane-history { display: none !important; }
+          .reader-strip, .pane-history { display: none !important; }
           .reader-tabs { display: flex !important; }
-          .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 !important; order: 0 !important; }
+          main { flex-direction: column !important; }
+          .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; order: 0 !important; }
           main[data-tab="piece"] .pane-piece { display: flex !important; }
           main[data-tab="ask"] .pane-chat { display: flex !important; }
         }
