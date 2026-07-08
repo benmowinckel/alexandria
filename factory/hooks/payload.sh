@@ -521,7 +521,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
         }
 
         // Explicit display title: a one-line <name>.title sidecar. Absent → the
-        // server falls back to the prettified filename. (.title isn't a publishable
+        // server falls back to the prettified filename. (.title is not a publishable
         // extension, so it never becomes a file of its own.)
         function deriveTitle(absPath) {
           const sidecar = absPath.replace(/\.[^.]+$/, ".title");
