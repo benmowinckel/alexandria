@@ -139,7 +139,7 @@ chmod 644 "$ALEX_DIR/system/allowed_signers"
 # After install the payload NEVER auto-writes canon; it only notifies of updates and
 # the Author pulls (verified). So this install seed is the one automatic write, and
 # it is the Author's own decision to run setup.
-for module in foundation axioms methodology editor mercury publisher library filter bookshelf; do
+for module in foundation axioms methodology editor mercury publisher library filter bookshelf plm twin; do
   fetch_factory "canon/$module.md" "$ALEX_DIR/system/canon/$module.md" "canon/$module.md"
 done
 fetch_factory "canon/MODULES.md" "$ALEX_DIR/system/canon/MODULES.md" "canon/MODULES.md"

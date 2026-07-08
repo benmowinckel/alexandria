@@ -46,3 +46,17 @@ export async function ensureFilePriceColumn(): Promise<void> {
   }
   _filePriceColReady = true;
 }
+
+// Lazy-add the explicit display title column (additive, nullable). Same pattern.
+// The subtitle already lives in the existing `text` column; this is the title an
+// Author sets at upload (falls back to the pretty filename when unset).
+let _fileTitleColReady = false;
+export async function ensureFileTitleColumn(): Promise<void> {
+  if (_fileTitleColReady) return;
+  try {
+    await getDB().prepare('ALTER TABLE protocol_files ADD COLUMN title TEXT').run();
+  } catch {
+    /* column already exists */
+  }
+  _fileTitleColReady = true;
+}

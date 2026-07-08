@@ -7,7 +7,7 @@
  */
 
 import { Hono, type Context } from 'hono';
-import { getDB, generateId, ensureFilePriceColumn, clampPaidAmount } from './db.js';
+import { getDB, generateId, ensureFilePriceColumn, ensureFileTitleColumn, clampPaidAmount } from './db.js';
 import { logEvent } from './analytics.js';
 import {
   ACTIVE_AUTHOR_STATUSES,
@@ -170,6 +170,7 @@ interface ProtocolFileRow {
   account_id: string;
   name: string;
   text: string | null;
+  title: string | null;
   visibility: string;
   updated_at: string;
 }
@@ -383,8 +384,9 @@ export function registerLibraryRoutes(app: Hono): void {
 
     if (!accountId) return c.json({ error: 'Author not found' }, 404);
 
+    await ensureFileTitleColumn();
     const files = await db.prepare(
-      `SELECT account_id, name, text, visibility, updated_at
+      `SELECT account_id, name, text, title, visibility, updated_at
        FROM protocol_files
        WHERE account_id = ?
        ORDER BY CASE name WHEN 'shadow' THEN 0 ELSE 1 END, updated_at DESC`
@@ -457,6 +459,7 @@ export function registerLibraryRoutes(app: Hono): void {
       twin: twinOut,
       files: protocolFiles.map(file => ({
         name: file.name,
+        title: file.title ?? null,
         // This route is unauthenticated (public directory). Don't leak the
         // author's private preview blurb for non-public files: public = open,
         // paid = sales listing (preview is the teaser), authors/invite =

@@ -11,6 +11,7 @@ import { type TwinVariantSummary } from './AskThisMind';
 interface ProtocolFile {
   name: string;
   text: string | null;
+  title?: string | null;
   visibility: string;
   category?: string;
   updated_at: string;
@@ -237,7 +238,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     const inner = (
       <>
         <span style={{ minWidth: 0 }}>
-          <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{fileDisplayName(file.name)}</span>
+          <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{file.title || fileDisplayName(file.name)}</span>
           {preview && (
             <span style={{ display: 'block', color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
               {preview}

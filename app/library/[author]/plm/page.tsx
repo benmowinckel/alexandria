@@ -24,7 +24,7 @@ function displayName(name: string): string {
 
 type Msg = { role: 'you' | 'twin'; text: string };
 type Convo = { id: string; messages: Msg[] };
-type FileMeta = { name: string; visibility?: string };
+type FileMeta = { name: string; visibility?: string; title?: string | null };
 type Variant = { variant: 'weights' | 'context'; enabled: boolean; accessible: boolean; needsInvite?: boolean };
 type OpenPiece = { name: string; nice: string; content: string; pdfUrl: string; loading: boolean };
 
@@ -107,7 +107,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [active?.messages, asking]);
 
   const openPiece = async (fileName: string) => {
-    const nice = displayName(fileName);
+    const nice = files.find((x) => x.name === fileName)?.title || displayName(fileName);
     openTextRef.current = '';
     openExtractRef.current = null;
     setRightOpen(true);
@@ -312,7 +312,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                       style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', width: '100%', textAlign: 'left',
                         border: 'none', borderBottom: '1px solid var(--border-light)', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.7rem 0' }}
                       className="hover:opacity-60">
-                      <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{displayName(f.name)}</span>
+                      <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{f.title || displayName(f.name)}</span>
                       <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{f.visibility || 'public'}</span>
                     </button>
                   ))}

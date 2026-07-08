@@ -2,7 +2,7 @@
 
 import type { Hono } from 'hono';
 import { requireAuth, requireAuthor } from './auth.js';
-import { getDB, getR2, ensureFilePriceColumn, clampPaidAmount } from './db.js';
+import { getDB, getR2, ensureFilePriceColumn, ensureFileTitleColumn, clampPaidAmount } from './db.js';
 import { logEvent } from './analytics.js';
 import { saveAccount, getKV } from './kv.js';
 import { resolveModule, authorFromModuleId, deriveKind, parseModuleId } from './marketplace-catalog.js';
@@ -69,6 +69,9 @@ export function registerProtocol(app: Hono) {
     const id = String(auth.account.github_id);
     const now = new Date().toISOString();
     const text = typeof body.text === 'string' ? body.text : null;
+    // Explicit display title the Author sets at upload (falls back to the pretty
+    // filename in the UI when unset). Bounded; null means "don't change".
+    const title = typeof body.title === 'string' ? (body.title.trim().slice(0, 200) || null) : null;
     const visibility = ['authors', 'public', 'invite', 'paid'].includes(body.visibility) ? body.visibility : 'authors';
 
     // Just-in-time payout gate: marking a file `paid` is the moment the Author
@@ -137,9 +140,10 @@ export function registerProtocol(app: Hono) {
     const contentHash = [...new Uint8Array(hashBuf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 
     await ensureFilePriceColumn();
+    await ensureFileTitleColumn();
     const existing = await getDB().prepare(
-      'SELECT text, visibility, content_type, content_hash, price_cents FROM protocol_files WHERE account_id = ? AND name = ?'
-    ).bind(id, name).first<{ text: string | null; visibility: string; content_type: string; content_hash: string | null; price_cents: number | null }>();
+      'SELECT text, title, visibility, content_type, content_hash, price_cents FROM protocol_files WHERE account_id = ? AND name = ?'
+    ).bind(id, name).first<{ text: string | null; title: string | null; visibility: string; content_type: string; content_hash: string | null; price_cents: number | null }>();
 
     if (
       existing
@@ -147,6 +151,7 @@ export function registerProtocol(app: Hono) {
       && existing.visibility === visibility
       && existing.content_type === contentType
       && (existing.text ?? null) === (text ?? null)
+      && (existing.title ?? null) === (title ?? null)
       && (priceCents === null || priceCents === (existing.price_cents ?? null))
     ) {
       return c.json({ ok: true, unchanged: true, ...(payoutsRequired ? { payouts_required: true } : {}) });
@@ -167,16 +172,17 @@ export function registerProtocol(app: Hono) {
 
     await getR2().put(`protocol/${id}/${name}.${ext}`, bodyBytes);
     await getDB().prepare(
-      `INSERT INTO protocol_files (account_id, name, text, visibility, updated_at, content_type, content_hash, price_cents)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO protocol_files (account_id, name, text, title, visibility, updated_at, content_type, content_hash, price_cents)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(account_id, name) DO UPDATE SET
          text = COALESCE(excluded.text, protocol_files.text),
+         title = COALESCE(excluded.title, protocol_files.title),
          visibility = excluded.visibility,
          updated_at = excluded.updated_at,
          content_type = excluded.content_type,
          content_hash = excluded.content_hash,
          price_cents = COALESCE(excluded.price_cents, protocol_files.price_cents)`
-    ).bind(id, name, text, visibility, now, contentType, contentHash, priceCents).run();
+    ).bind(id, name, text, title, visibility, now, contentType, contentHash, priceCents).run();
 
     logEvent('protocol_file_published', {
       author: auth.account.github_login,
