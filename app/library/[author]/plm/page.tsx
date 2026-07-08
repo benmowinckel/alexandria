@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 import { ThemeToggle } from '../../../components/ThemeToggle';
 import PromptBox from '../../../components/PromptBox';
 import ActionButton from '../../../components/ActionButton';
+import { type TwinVariantSummary } from '../types';
 
 /**
  * The mind — a chat with an Author's personal language model. Three panes, each
@@ -25,7 +26,6 @@ function displayName(name: string): string {
 type Msg = { role: 'you' | 'twin'; text: string };
 type Convo = { id: string; messages: Msg[] };
 type FileMeta = { name: string; visibility?: string; title?: string | null };
-type Variant = { variant: 'weights' | 'context'; enabled: boolean; accessible: boolean; needsInvite?: boolean };
 type OpenPiece = { name: string; nice: string; content: string; pdfUrl: string; loading: boolean };
 
 function convoTitle(c: Convo): string {
@@ -49,7 +49,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [authorName, setAuthorName] = useState('');
   const [signedIn, setSignedIn] = useState(false);
   const [files, setFiles] = useState<FileMeta[]>([]);
-  const [variants, setVariants] = useState<Variant[]>([]);
+  const [variants, setVariants] = useState<TwinVariantSummary[]>([]);
   const [activeVariant, setActiveVariant] = useState<'weights' | 'context'>('context');
 
   const [leftOpen, setLeftOpen] = useState(false);
@@ -71,19 +71,27 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const dlBlobRef = useRef<Blob | null>(null);       // raw bytes of the open piece, for download
   const dlExtRef = useRef('md');
 
-  // Land on the mind named in ?variant=&tier= (the profile links each one here).
-  const [tier, setTier] = useState('public');
+  // Optional deep-link: ?variant=weights|context lands on a mind (quick|deep in
+  // the UI), ?invite=CODE seeds the unlock code so an invited link opens deep.
+  const [invite, setInvite] = useState('');
+  const [inviteDraft, setInviteDraft] = useState('');
   useEffect(() => {
     try {
       const q = new URLSearchParams(window.location.search);
       const v = q.get('variant'); if (v === 'weights' || v === 'context') setActiveVariant(v);
-      const t = q.get('tier'); if (t) setTier(t);
+      const inv = q.get('invite')?.trim(); if (inv) { setInvite(inv); setInviteDraft(inv); }
     } catch { /* */ }
   }, []);
 
   const who = authorName || author;
-  const mindLabel = activeVariant === 'weights' ? 'personal' : (tier === 'invite' ? 'friends' : 'everyone');
+  const mindLabel = activeVariant === 'weights' ? 'quick' : 'deep';
   const usable = useMemo(() => variants.filter((v) => v.enabled && (v.accessible || v.needsInvite)), [variants]);
+  const activeCfg = useMemo(() => variants.find((v) => v.variant === activeVariant), [variants, activeVariant]);
+  // Either mind can be invite-gated (which one is the Author's call). Show the
+  // unlock field whenever the mind in view is enabled but this viewer can't reach
+  // it yet — the code follows the gate rather than assuming it's always deep.
+  const locked = !!activeCfg && activeCfg.enabled && !activeCfg.accessible;
+  const applyInvite = () => { const code = inviteDraft.trim(); if (code) setInvite(code); };
 
   useEffect(() => {
     if (!author) return;
@@ -97,9 +105,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       setAuthorName(dir?.author?.display_name || '');
       setSignedIn(sess?.signed_in === true);
       setFiles(Array.isArray(dir?.files) ? dir.files : []);
-      const vs: Variant[] = Array.isArray(dir?.twin?.variants) ? dir.twin.variants : [];
+      const vs: TwinVariantSummary[] = Array.isArray(dir?.twin?.variants) ? dir.twin.variants : [];
       setVariants(vs);
-      const first = vs.find((v) => v.enabled && (v.accessible || v.needsInvite));
+      // Open on a mind the viewer can actually use; fall back to the first
+      // unlockable one so a fully-gated twin still lands somewhere.
+      const first = vs.find((v) => v.enabled && v.accessible) || vs.find((v) => v.enabled && v.needsInvite);
       if (first) setActiveVariant(first.variant);
     })();
     return () => { live = false; };
@@ -180,11 +190,17 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ question: text, variant: activeVariant, ...(focus ? { focus } : {}) }),
+        body: JSON.stringify({ question: text, variant: activeVariant, ...(invite ? { invite } : {}), ...(focus ? { focus } : {}) }),
       });
       const b = await res.json().catch(() => ({}));
       const answer = (res.ok && b.answer) ? b.answer : (b.error || 'the mind could not answer just now.');
       setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'twin', text: answer }] } : c)));
+      // A valid code binds a grant server-side — re-read the directory so the
+      // gated mind unlocks (the field falls away) for the rest of the session.
+      if (res.ok && b.answer && invite) {
+        fetch(`/api/library/${encodeURIComponent(author)}`, { credentials: 'include' })
+          .then((r) => r.json()).then((d) => { if (Array.isArray(d?.twin?.variants)) setVariants(d.twin.variants); }).catch(() => { /* */ });
+      }
     } catch {
       setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'twin', text: 'could not reach the mind.' }] } : c)));
     } finally {
@@ -263,7 +279,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                       style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', padding: '0 0 0.15rem',
                         color: activeVariant === v.variant ? 'var(--text-primary)' : 'var(--text-ghost)',
                         borderBottom: activeVariant === v.variant ? '1px solid var(--accent)' : '1px solid transparent' }}>
-                      {v.variant === 'weights' ? 'quick' : 'deep'}{v.needsInvite && !v.accessible ? ' · invite' : ''}
+                      {v.variant === 'weights' ? 'quick' : 'deep'}
                     </button>
                   ))}
                 </div>
@@ -296,7 +312,37 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               ))}
               {asking && <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem' }}>thinking…</p>}
             </div>
-            <div style={{ flex: 'none', padding: '0.9rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
+            {locked && (
+              <div style={{ flex: 'none', padding: '0.75rem 1.2rem 0', borderTop: '1px solid var(--border-light)' }}>
+                {invite ? (
+                  <p style={{ color: 'var(--text-ghost)', fontSize: '0.8rem', margin: 0 }}>
+                    invite code applied{!signedIn ? ' — sign in to keep this mind' : ''}.{' '}
+                    <button type="button" onClick={() => { setInvite(''); setInviteDraft(''); }}
+                      style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'inherit', fontSize: '0.8rem', textDecoration: 'underline' }} className="hover:opacity-60">
+                      change
+                    </button>
+                  </p>
+                ) : (
+                  <>
+                    <p style={{ color: 'var(--text-ghost)', fontSize: '0.8rem', margin: '0 0 0.45rem' }}>this mind is invite-only — enter a code to unlock.</p>
+                    {/* Same physics as the composer below it (radius, 1rem font — also the iOS no-zoom floor). */}
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <input value={inviteDraft} onChange={(e) => setInviteDraft(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') applyInvite(); }} placeholder="invite code" spellCheck={false} autoCapitalize="off"
+                        style={{ flex: 1, minWidth: 0, border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-secondary)', outline: 'none',
+                          color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: '1rem', padding: '0.5rem 0.95rem' }} />
+                      <button type="button" onClick={applyInvite} disabled={!inviteDraft.trim()}
+                        style={{ flex: 'none', border: '1px solid var(--border-light)', borderRadius: '11px', background: 'transparent',
+                          cursor: inviteDraft.trim() ? 'pointer' : 'default', opacity: inviteDraft.trim() ? 1 : 0.5, transition: 'opacity 0.15s',
+                          color: 'var(--text-muted)', fontFamily: 'inherit', fontSize: '0.95rem', padding: '0.5rem 1rem' }} className="hover:opacity-60">
+                        unlock
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            <div style={{ flex: 'none', padding: '0.9rem 1.2rem', borderTop: locked ? 'none' : '1px solid var(--border-light)' }}>
               <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder="ask anything…" />
             </div>
           </section>
