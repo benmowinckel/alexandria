@@ -34,10 +34,12 @@ export async function GET(
     let text = '';
     if (buf.subarray(0, 5).toString('latin1').startsWith('%PDF')) {
       try {
-        const { PDFParse } = await import('pdf-parse');
-        const parser = new PDFParse({ data: new Uint8Array(buf) });
-        const r = await parser.getText();
-        text = (r.text || '').trim();
+        // unpdf ships a serverless build of pdf.js — works on Vercel where
+        // pdf-parse (worker/asset deps) silently returns nothing.
+        const { extractText, getDocumentProxy } = await import('unpdf');
+        const pdf = await getDocumentProxy(new Uint8Array(buf));
+        const { text: t } = await extractText(pdf, { mergePages: true });
+        text = (t || '').trim();
       } catch { text = ''; }
     } else {
       text = buf.toString('utf-8');

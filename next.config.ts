@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // pdf-parse loads pdf.js assets at runtime — keep it out of the bundle so the
-  // server-side PDF text extraction (/api/library/:a/file/:n?format=text) works.
-  serverExternalPackages: ['pdf-parse'],
   async redirects() {
     return [
       { source: '/patron', destination: '/follow', permanent: true },

@@ -124,7 +124,7 @@ export default function PromptBox({
             type="button"
             onClick={toggleVoice}
             aria-label={listening ? 'stop voice input' : 'voice input'}
-            title={listening ? 'stop' : 'speak'}
+            title={listening ? 'stop  (⌘D)' : 'speak  (⌘D)'}
             style={{
               position: 'absolute', right: '0.55rem', bottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem',
