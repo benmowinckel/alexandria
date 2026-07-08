@@ -440,9 +440,15 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
   fi
 
   # ── The Call (protocol obligation) ──
-  # Report which factory modules this machine uses, derived from what's on disk.
-  # The .call_manifest file is written by the Engine during /a sessions.
-  # Default: methodology (the factory default). The Engine evolves this.
+  # Report which factory modules this machine uses. The .call_manifest file is
+  # written by the Engine during /a sessions and overrides the default below.
+  # Default: the marketplace-ranked Founder canon per MODULES.md — all Founder
+  # modules EXCEPT the intentional exclusions (foundation: values, not ranked;
+  # bookshelf: reference, deliberately not in the call-manifest; MODULES: the
+  # index). Kept as a literal list, not derived from canon/ on disk, so a
+  # user's own canon file is never misattributed to the factory repo. When
+  # MODULES.md gains or drops a ranked module, update this list — it drifted
+  # once (plm/twin missing until 2026-07-08, invisible on the marketplace).
   if [ -n "$API_KEY" ]; then
     mkdir -p "$ALEX_DIR/files/library" 2>/dev/null
 
@@ -665,7 +671,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
       fi
     fi
 
-    call_payload='{"modules":[{"id":"github:mowinckelb/alexandria#factory/canon/axioms","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/methodology","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/editor","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/mercury","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/publisher","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/library","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/filter","text":"default canon module"}]}'
+    call_payload='{"modules":[{"id":"github:mowinckelb/alexandria#factory/canon/axioms","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/methodology","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/editor","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/mercury","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/publisher","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/library","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/filter","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/plm","text":"default canon module"},{"id":"github:mowinckelb/alexandria#factory/canon/twin","text":"default canon module"}]}'
     if [ -f "$ALEX_DIR/.call_manifest" ]; then
       manifest=$(cat "$ALEX_DIR/.call_manifest" 2>/dev/null)
       [ -n "$manifest" ] && call_payload="$manifest"
