@@ -281,6 +281,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', letterSpacing: '0.02em', margin: '0.35rem 0 0' }}>
             {author.alexandria_id}
           </p>
+          {profileText && (
+            <p style={{ color: 'var(--text-muted)', fontSize: '1.02rem', lineHeight: 1.6, margin: '0.75rem 0 0', maxWidth: '34rem' }}>
+              {profileText}
+            </p>
+          )}
           {/* Alexandria features — location + contact as pills. */}
           {(author.location || author.contact) && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.9rem' }}>

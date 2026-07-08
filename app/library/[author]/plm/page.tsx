@@ -188,6 +188,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const label = { color: 'var(--text-ghost)', fontSize: '0.72rem', letterSpacing: '0.08em' } as const;
   const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
 
+  const copyText = (t: string) => { try { void navigator.clipboard?.writeText(t); } catch { /* */ } };
+  const copyConvo = () => copyText((active?.messages || []).map((m) => `${m.role === 'you' ? 'You' : who}: ${m.text}`).join('\n\n'));
   const copyPiece = () => { try { void navigator.clipboard?.writeText(open?.content || openTextRef.current || ''); } catch { /* */ } };
   const downloadPiece = () => {
     const blob = dlBlobRef.current;
@@ -259,6 +261,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                   ))}
                 </div>
               )}
+              {(active?.messages.length ?? 0) > 0 && (
+                <button type="button" onClick={copyConvo} aria-label="copy conversation" title="copy conversation" style={{ ...iconBtn, marginLeft: usable.length > 1 ? '0.4rem' : 'auto' }} className="hover:opacity-60">{CopyIcon}</button>
+              )}
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
               {active?.messages.map((m, i) => (
@@ -268,6 +273,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                     : (
                       <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '0.9rem' }}>
                         <div style={{ color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                        <button type="button" onClick={() => copyText(m.text)} aria-label="copy response" title="copy" style={{ ...iconBtn, marginTop: '0.4rem', marginRight: '0.5rem', padding: 0 }} className="hover:opacity-60">{CopyIcon}</button>
                         {referenced(m.text).map((f) => (
                           <button key={f.name} type="button" onClick={() => void openPiece(f.name)} className="hover:opacity-70"
                             style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.6rem', marginRight: '0.4rem', border: '1px solid var(--border-light)',

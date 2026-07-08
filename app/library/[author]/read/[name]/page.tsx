@@ -186,6 +186,8 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
 
   const copyArtifact = () => { try { void navigator.clipboard?.writeText(content || pdfTextRef.current || ''); } catch { /* */ } };
+  const copyText = (t: string) => { try { void navigator.clipboard?.writeText(t); } catch { /* */ } };
+  const copyConvo = () => copyText((active?.messages || []).map((m) => `${m.role === 'you' ? 'You' : who}: ${m.text}`).join('\n\n'));
   const downloadArtifact = () => {
     const blob = dlBlobRef.current;
     if (!blob) return;
@@ -244,13 +246,21 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 1rem 0.4rem' }}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="hover:opacity-60">{LinesIcon}</button>
+              {(active?.messages.length ?? 0) > 0 && (
+                <button type="button" onClick={copyConvo} aria-label="copy conversation" title="copy conversation" style={{ ...iconBtn, marginLeft: 'auto' }} className="hover:opacity-60">{CopyIcon}</button>
+              )}
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
               {active?.messages.map((m, i) => (
                 <div key={i} style={{ margin: '0 0 1.1rem' }}>
                   {m.role === 'you'
                     ? <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>{m.text}</p>
-                    : <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '0.9rem', color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{m.text}</div>}
+                    : (
+                      <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '0.9rem' }}>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                        <button type="button" onClick={() => copyText(m.text)} aria-label="copy response" title="copy" style={{ ...iconBtn, marginTop: '0.4rem', padding: 0 }} className="hover:opacity-60">{CopyIcon}</button>
+                      </div>
+                    )}
                 </div>
               ))}
               {asking && <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem' }}>thinking…</p>}
