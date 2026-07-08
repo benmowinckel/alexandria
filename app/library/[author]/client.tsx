@@ -327,21 +327,34 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
         </header>
 
         <section>
-          {data.twin?.enabled && (data.twin.variants || []).some((v) => v.enabled) && (
-            <div>
-              <p style={sectionLabelStyle}>minds</p>
-              {(data.twin.variants || []).filter((v) => v.enabled).map((v) => (
-                <Link key={v.variant} href={`/library/${encodeURIComponent(authorId)}/plm?variant=${v.variant}`} className="hover:opacity-60"
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem', width: '100%',
-                    padding: '0.72rem 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none', color: 'inherit' }}>
-                  <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{v.variant === 'weights' ? 'trained model' : 'personal language model'}</span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
-                    {(v.variant !== 'weights' && data.twin?.online) ? 'online' : 'offline'} · {v.visibility === 'public' ? 'public' : 'invite'}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
+          {data.twin?.enabled && (() => {
+            // The context engine serves everyone (public floor) and friends (deep,
+            // invited) — same model, two tiers. The weights model is "personal".
+            const ctxOn = (data.twin.variants || []).some((v) => v.variant === 'context' && v.enabled);
+            const wtsOn = (data.twin.variants || []).some((v) => v.variant === 'weights' && v.enabled);
+            const online = data.twin.online === true;
+            const rows: { key: string; label: string; variant: string; tier: string; online: boolean }[] = [
+              ...(ctxOn ? [
+                { key: 'everyone', label: 'everyone', variant: 'context', tier: 'public', online },
+                { key: 'friends', label: 'friends', variant: 'context', tier: 'invite', online },
+              ] : []),
+              ...(wtsOn ? [{ key: 'personal', label: 'personal', variant: 'weights', tier: 'invite', online: false }] : []),
+            ];
+            if (!rows.length) return null;
+            return (
+              <div>
+                <p style={sectionLabelStyle}>minds</p>
+                {rows.map((r) => (
+                  <Link key={r.key} href={`/library/${encodeURIComponent(authorId)}/plm?variant=${r.variant}&tier=${r.tier}`} className="hover:opacity-60"
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem', width: '100%',
+                      padding: '0.72rem 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none', color: 'inherit' }}>
+                    <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{r.label}</span>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{r.online ? 'online' : 'offline'} · {r.tier}</span>
+                  </Link>
+                ))}
+              </div>
+            );
+          })()}
           {grouped.length === 0 ? (
             !data.twin?.enabled && (
               <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>

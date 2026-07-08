@@ -70,13 +70,18 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const dlBlobRef = useRef<Blob | null>(null);       // raw bytes of the open piece, for download
   const dlExtRef = useRef('md');
 
-  // Land on the variant named in ?variant= (the profile links each mind here).
+  // Land on the mind named in ?variant=&tier= (the profile links each one here).
+  const [tier, setTier] = useState('public');
   useEffect(() => {
-    try { const v = new URLSearchParams(window.location.search).get('variant'); if (v === 'weights' || v === 'context') setActiveVariant(v); } catch { /* */ }
+    try {
+      const q = new URLSearchParams(window.location.search);
+      const v = q.get('variant'); if (v === 'weights' || v === 'context') setActiveVariant(v);
+      const t = q.get('tier'); if (t) setTier(t);
+    } catch { /* */ }
   }, []);
 
   const who = authorName || author;
-  const mindLabel = activeVariant === 'weights' ? 'trained model' : 'personal language model';
+  const mindLabel = activeVariant === 'weights' ? 'personal' : (tier === 'invite' ? 'friends' : 'everyone');
   const usable = useMemo(() => variants.filter((v) => v.enabled && (v.accessible || v.needsInvite)), [variants]);
 
   useEffect(() => {
