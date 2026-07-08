@@ -149,6 +149,13 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const label = { color: 'var(--text-ghost)', fontSize: '0.72rem', letterSpacing: '0.08em' } as const;
   const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
 
+  // Pieces the mind named in an answer — offered as "pull up" chips so a click
+  // opens them on the right. Simple substring match on the display name.
+  const referenced = (text: string) => {
+    const lc = text.toLowerCase();
+    return files.filter((f) => { const n = displayName(f.name); return n.length >= 5 && lc.includes(n.toLowerCase()) && f.name !== open?.name; });
+  };
+
   return (
     <>
       <ThemeToggle />
@@ -192,7 +199,18 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 <div key={i} style={{ margin: '0 0 1.1rem' }}>
                   {m.role === 'you'
                     ? <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>{m.text}</p>
-                    : <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '0.9rem', color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{m.text}</div>}
+                    : (
+                      <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '0.9rem' }}>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                        {referenced(m.text).map((f) => (
+                          <button key={f.name} type="button" onClick={() => void openPiece(f.name)} className="hover:opacity-70"
+                            style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.6rem', marginRight: '0.4rem', border: '1px solid var(--border-light)',
+                              color: 'var(--accent)', background: 'transparent', borderRadius: 999, fontFamily: 'inherit', fontSize: '0.82rem', padding: '0.28rem 0.7rem', cursor: 'pointer' }}>
+                            pull up: {displayName(f.name)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                 </div>
               ))}
               {asking && <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem' }}>thinking…</p>}
