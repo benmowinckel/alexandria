@@ -231,14 +231,16 @@ function FrontFilm() {
         onClick={() => setOpen(true)}
         aria-label={`play ${film.label}`}
       >
-        {/* The title is the centered object; the glyph hangs outside it
-            (absolute) so the optical centre is the words, not
-            words+glyph — founder caught "the m is the thing in the
-            middle". */}
-        <em>{film.label}</em>
-        <svg className="film-play-glyph" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M8 5.5v13l11-6.5z" />
-        </svg>
+        {/* A hairline-ringed play mark leads the label — reads as "a film
+            you can watch," not the orphaned triangle-dot it was. The ring
+            is the cinema/museum register; it inks up and fills on hover,
+            so the placard has life instead of sitting inert. */}
+        <span className="film-mark" aria-hidden>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5.5v13l11-6.5z" />
+          </svg>
+        </span>
+        <em className="film-label">{film.label}</em>
       </button>
       {FILMS.length > 1 && (
         <button type="button" className="film-arrow" onClick={() => step(1)} aria-label="next film">&rarr;</button>
@@ -558,7 +560,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 wordmark. Classical title-block contrast: italic display,
                 roman small-caps subtitle. Tells the cold reader what
                 alexandria IS in three words, without dominating. */}
-            <span className="nav-subtitle nav-subtitle-front" aria-hidden>the library of<br className="nav-subtitle-br" />human minds</span>
+            <span className="nav-subtitle nav-subtitle-front" aria-hidden><span className="nav-subtitle-wide">the library of<br className="nav-subtitle-br" />human minds</span><span className="nav-subtitle-narrow">mentes aeternae</span></span>
             <span className="nav-subtitle nav-subtitle-back" aria-hidden>mentes aeternae</span>
           </div>
           <div className="nav-links">
@@ -888,8 +890,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
 
         .nav-brand {
-          font-family: inherit;
-          font-style: italic;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: normal;
           font-weight: 500;
           font-size: 32px;
           line-height: 1;
@@ -927,8 +929,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            a quiet plaque beside the painting. Visible on top slide;
            fades out on peel since slide 2's dict carries the same role. */
         .nav-subtitle-br { display: none; }
+        /* Front subtitle text swaps by width: desktop reads "the library of
+           human minds"; mobile reads "mentes aeternae" on BOTH slides, so the
+           front matches the back. */
+        .nav-subtitle-narrow { display: none; }
         @media (max-width: 899px) {
           .nav-subtitle-br { display: inline; }
+          .nav-subtitle-wide { display: none; }
+          .nav-subtitle-narrow { display: inline; }
         }
         .nav-subtitle {
           position: absolute;
@@ -995,7 +1003,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           align-items: center;
           gap: clamp(20px, 2.2vw, 40px);
         }
-        /* Library — shelf entry: serif italic, quieter than the letter link */
+        /* Places (library · marketplace) — upright roman, the nav's third
+           register: roman = the places you go, wax label = the document
+           category, italic = the signed hand. Was italic, which read as
+           the letter's twin (founder flagged it, 2026-07-08). */
         .nav-shelf {
           display: inline-flex;
           align-items: center;
@@ -1008,10 +1019,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
         .nav-links .nav-shelf-link {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
+          font-style: normal;
           font-weight: 400;
-          font-size: 15px;
-          letter-spacing: 0.04em;
+          font-size: 14.5px;
+          letter-spacing: 0.05em;
           text-decoration: none;
           color: rgba(26, 19, 24, 0.5);
           transition: color 180ms ease;
@@ -1281,20 +1292,22 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           pointer-events: none;
           z-index: 1;
         }
-        /* FILM PLATE — the quiet line beneath the arch ("the demo ▸").
+        /* FILM PLATE — the museum wall-placard for the niche ("▷ the demo").
            Anchored to the WALL's cover geometry, not the stage:
            --wall-w/--wall-h reproduce background-size: cover for the
            1498×843 image (AR 1.7771); x sits on the arch's centre
            (image-fraction 0.505, measured off the arch's apex and inner
-           side edges, with the 75% crop position) and y just below the
-           arch's foot (bottom fraction 0.6556 + margin) at every aspect
-           ratio. Type scales gently with the scene. */
+           side edges, with the 75% crop position). y is pulled UP to sit
+           snug beneath the niche's sill (was 0.187 → floating in the bright
+           empty wall, orphaned; 0.128 seats it on the plinth so it reads as
+           the label OF the art, not stray text below it). Type scales
+           gently with the scene. */
         .film-invite {
           position: absolute;
           --wall-w: max(100vw, 177.71vh);
           --wall-h: max(100vh, 56.27vw);
           left: calc(75vw - 0.245 * var(--wall-w));
-          top: calc(50vh + 0.187 * var(--wall-h));
+          top: calc(50vh + 0.128 * var(--wall-h));
           transform: translate(-50%, -50%);
           margin: 0;
           display: flex;
@@ -1312,34 +1325,48 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           background: none;
           cursor: pointer;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
+        }
+        /* The ringed play mark — a hairline circle around a small triangle.
+           Reads as "a film," in the cinema/museum register, and gives the
+           placard a body so it isn't inert text. Rest: faint ink, no fill.
+           Hover: ring darkens, tints fill, triangle nudges — three-state
+           life (design.md: rest → hover escalation). */
+        .film-mark {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 1.85em;
+          height: 1.85em;
+          margin-right: 0.72em;
+          border-radius: 50%;
+          border: 1px solid rgba(26, 19, 24, 0.34);
+          color: rgba(26, 19, 24, 0.5);
+          transition: border-color 220ms ease, background-color 220ms ease, color 220ms ease;
+        }
+        .film-mark svg {
+          width: 0.5em;
+          height: 0.5em;
+          margin-left: 1px;
+          transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .film-label {
+          font-style: italic;
           /* Museum-caption register (the alpha-mark's family): small,
-             tracked, faint — the arch is the art, the plate whispers.
-             Hover wakes it to full ink. */
-          font-size: clamp(12.5px, calc(0.0095 * var(--wall-w)), 20px);
-          letter-spacing: 0.12em;
-          color: rgba(26, 19, 24, 0.46);
+             tracked — the arch is the art, the placard names it. Kept
+             legible now (0.62 ink), not a near-invisible whisper. */
+          font-size: clamp(13px, calc(0.0098 * var(--wall-w)), 21px);
+          letter-spacing: 0.14em;
+          color: rgba(26, 19, 24, 0.62);
           transition: color 200ms ease;
         }
-        .film-invite-btn em { font-style: italic; }
-        .film-invite-btn:hover { color: #1a1318; }
-        .film-play-glyph {
-          position: absolute;
-          left: 100%;
-          top: 50%;
-          margin-left: -4px;
-          width: 0.55em;
-          height: 0.55em;
-          color: rgba(26, 19, 24, 0.35);
-          transform: translateY(-50%);
-          transition: color 200ms ease, transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .film-invite-btn:hover .film-play-glyph {
+        .film-invite-btn:hover .film-label { color: #1a1318; }
+        .film-invite-btn:hover .film-mark {
+          border-color: rgba(26, 19, 24, 0.85);
+          background-color: rgba(26, 19, 24, 0.06);
           color: #1a1318;
-          transform: translate(2px, -50%);
         }
-        .film-invite-btn:active .film-play-glyph {
-          transform: translate(1px, -50%) scale(0.96);
-        }
+        .film-invite-btn:hover .film-mark svg { transform: translateX(1px); }
+        .film-invite-btn:active .film-mark svg { transform: translateX(0) scale(0.94); }
         /* Lightbox — the film lifts out and plays over a dimmed room.
            Backdrop or × or Esc closes. Portalled to <body>. */
         .film-lightbox {
@@ -2934,11 +2961,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              arch's foot (~66svh). */
           .film-invite {
             left: 50%;
-            top: 72svh;
+            top: 69svh;
             transform: translate(-50%, -50%);
           }
-          .film-invite-btn {
-            font-size: 13.5px;
+          .film-label {
+            font-size: 14px;
           }
 
           /* Statement — drop the absolute roman numerals (they hang in
