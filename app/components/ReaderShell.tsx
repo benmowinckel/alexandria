@@ -36,6 +36,65 @@ const PaneRightIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4
 const CopyIcon = <svg width="17" height="17" {...svgProps}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
 const DownloadIcon = <svg width="17" height="17" {...svgProps}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>;
 
+/**
+ * PdfView — renders a PDF as fit-to-width canvas pages stacked vertically, so it
+ * scrolls DOWN like a document on every device. Replaces `<iframe src=pdf>`,
+ * which on iOS Safari shows a zoomed, pan-in-all-directions, first-page-only
+ * preview (the letter bug). Re-renders on width change (pane resize / rotate).
+ */
+function PdfView({ url }: { url: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [err, setErr] = useState(false);
+  const widthRef = useRef(0);
+  useEffect(() => {
+    let cancelled = false;
+    const el = ref.current;
+    if (!el || !url) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let doc: any = null;
+    const renderAll = async (w: number) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pdfjs: any = await import('pdfjs-dist');
+      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';  // served statically (reliable in Next)
+      if (!doc) {
+        const bytes = new Uint8Array(await (await fetch(url)).arrayBuffer());
+        doc = await pdfjs.getDocument({ data: bytes }).promise;
+      }
+      if (cancelled || !ref.current) return;
+      const colW = Math.min(Math.max(w - 24, 200), 820);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      ref.current.innerHTML = '';
+      for (let i = 1; i <= doc.numPages; i++) {
+        if (cancelled) return;
+        const page = await doc.getPage(i);
+        const base = page.getViewport({ scale: 1 });
+        const vp = page.getViewport({ scale: (colW / base.width) * dpr });
+        const canvas = document.createElement('canvas');
+        canvas.width = vp.width; canvas.height = vp.height;
+        canvas.style.cssText = `width:${colW}px;height:auto;display:block;margin:0 auto 14px;box-shadow:0 1px 8px rgba(40,30,20,0.12)`;
+        const ctx = canvas.getContext('2d');
+        if (ctx) await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        if (!cancelled && ref.current) ref.current.appendChild(canvas);
+      }
+    };
+    (async () => { try { widthRef.current = el.clientWidth; await renderAll(el.clientWidth || 800); } catch { if (!cancelled) setErr(true); } })();
+    let t: ReturnType<typeof setTimeout>;
+    const ro = new ResizeObserver(() => {
+      const w = el.clientWidth;
+      if (Math.abs(w - widthRef.current) < 40) return;
+      widthRef.current = w;
+      clearTimeout(t); t = setTimeout(() => { renderAll(w).catch(() => setErr(true)); }, 200);
+    });
+    ro.observe(el);
+    return () => { cancelled = true; ro.disconnect(); clearTimeout(t); };
+  }, [url]);
+  return (
+    <div ref={ref} style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', background: 'var(--bg-secondary)', padding: '16px 12px' }}>
+      {err && <p style={{ color: 'var(--text-ghost)', textAlign: 'center', paddingTop: '2rem' }}>couldn’t render the PDF.</p>}
+    </div>
+  );
+}
+
 export type ReaderShellProps = {
   name: string;                                   // display title
   backHref: string;                               // chevron destination
@@ -136,15 +195,15 @@ export default function ReaderShell({
     <>
       <ThemeToggle />
       <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
-        <header style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.9rem', padding: '0.85rem 3.6rem 0.85rem 1.2rem', borderBottom: '1px solid var(--border-light)' }}>
+        <header style={{ flex: 'none', display: 'flex', alignItems: 'baseline', gap: '0.9rem', padding: '0.85rem 3.6rem 0.85rem 1.2rem', borderBottom: '1px solid var(--border-light)' }}>
           <Link href={backHref} aria-label={`back to ${backTitle}`} title={backTitle}
-            style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
+            style={{ color: 'var(--text-muted)', display: 'flex', alignSelf: 'center', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
           <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>{name}</span>
           <span style={{ ...label }}>{visibility}</span>
         </header>
 
         <div className="reader-tabs" style={{ display: 'none', flex: 'none', borderBottom: '1px solid var(--border-light)' }}>
-          {(['piece', 'ask'] as const).map((t) => (
+          {(['ask', 'piece'] as const).map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)}
               style={{ flex: 1, border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.7rem',
                 color: tab === t ? 'var(--text-primary)' : 'var(--text-ghost)', borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent' }}>
@@ -179,7 +238,7 @@ export default function ReaderShell({
           <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open chat" title="chat">{LinesIcon}</button>
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 1rem 0.4rem' }}>
-              <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="hover:opacity-60">{LinesIcon}</button>
+              <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
               {(active?.messages.length ?? 0) > 0 && (
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={{ ...iconBtn, marginLeft: 'auto' }} className="hover:opacity-60" />
               )}
@@ -190,10 +249,10 @@ export default function ReaderShell({
                   {m.role === 'you'
                     ? <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>{m.text}</p>
                     : (
-                      <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '0.9rem' }}>
-                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{m.text}</div>
-                        <ActionButton icon={CopyIcon} onAction={() => copyText(m.text)} title="copy" style={{ ...iconBtn, marginTop: '0.4rem', padding: 0 }} className="hover:opacity-60" />
-                      </div>
+                      <>
+                        <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '0.9rem', color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                        <ActionButton icon={CopyIcon} onAction={() => copyText(m.text)} title="copy" style={{ ...iconBtn, marginTop: '0.45rem', marginLeft: '0.9rem', padding: 0 }} className="hover:opacity-60" />
+                      </>
                     )}
                 </div>
               ))}
@@ -233,7 +292,7 @@ export default function ReaderShell({
               )}
               {status === 'error' && <p style={{ color: 'var(--text-ghost)' }}>couldn’t load this piece.</p>}
               {status === 'ok' && (pdfUrl
-                ? <iframe src={pdfUrl} title={name} style={{ width: '100%', height: '100%', border: 'none' }} />
+                ? <PdfView url={pdfUrl} />
                 : <div className="reader-prose"><ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown || ''}</ReactMarkdown></div>)}
             </div>
           </article>
@@ -268,6 +327,7 @@ export default function ReaderShell({
         }
         @media (max-width: 900px) {
           .reader-strip, .pane-history { display: none !important; }
+          .chat-collapse { display: none !important; }
           .reader-tabs { display: flex !important; }
           main { flex-direction: column !important; }
           .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; order: 0 !important; }
