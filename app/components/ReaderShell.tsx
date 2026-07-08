@@ -274,7 +274,7 @@ export default function ReaderShell({
                   {downloadBlob && <ActionButton icon={DownloadIcon} onAction={downloadArtifact} title="download" style={iconBtn} className="hover:opacity-60" />}
                 </>
               )}
-              <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneRightIcon}</button>
+              <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece" title="collapse" style={iconBtn} className="piece-collapse hover:opacity-60">{PaneRightIcon}</button>
             </div>
             <div style={{ flex: 1, overflow: pdfUrl ? 'hidden' : 'auto', minHeight: 0, padding: pdfUrl ? 0 : '2.2rem clamp(1.4rem, 5vw, 4rem)' }}>
               {status === 'loading' && <p style={{ color: 'var(--text-ghost)' }}>loading…</p>}
@@ -327,7 +327,7 @@ export default function ReaderShell({
         }
         @media (max-width: 900px) {
           .reader-strip, .pane-history { display: none !important; }
-          .chat-collapse { display: none !important; }
+          .chat-collapse, .piece-collapse { display: none !important; }
           .reader-tabs { display: flex !important; }
           main { flex-direction: column !important; }
           .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; order: 0 !important; }
