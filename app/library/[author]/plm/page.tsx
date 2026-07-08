@@ -38,6 +38,8 @@ const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6
 const PaneLeftIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
 const LinesIcon = <svg width="19" height="19" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
 const PaneRightIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
+const CopyIcon = <svg width="17" height="17" {...svgProps}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
+const DownloadIcon = <svg width="17" height="17" {...svgProps}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>;
 
 export default function PlmPage({ params }: { params: Promise<{ author: string }> }) {
   const [author, setAuthor] = useState('');
@@ -64,8 +66,16 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const threadRef = useRef<HTMLDivElement>(null);
   const openTextRef = useRef('');                    // extracted text of the open piece (race-safe)
   const openExtractRef = useRef<Promise<void> | null>(null);
+  const dlBlobRef = useRef<Blob | null>(null);       // raw bytes of the open piece, for download
+  const dlExtRef = useRef('md');
+
+  // Land on the variant named in ?variant= (the profile links each mind here).
+  useEffect(() => {
+    try { const v = new URLSearchParams(window.location.search).get('variant'); if (v === 'weights' || v === 'context') setActiveVariant(v); } catch { /* */ }
+  }, []);
 
   const who = authorName || author;
+  const mindLabel = activeVariant === 'weights' ? 'trained model' : 'personal language model';
   const usable = useMemo(() => variants.filter((v) => v.enabled && (v.accessible || v.needsInvite)), [variants]);
 
   useEffect(() => {
@@ -101,8 +111,10 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       const res = await fetch(`/api/library/${encodeURIComponent(author)}/file/${encodeURIComponent(fileName)}`, { credentials: 'include' });
       if (!res.ok) { setOpen({ name: fileName, nice, content: '', pdfUrl: '', loading: false }); return; }
       const blob = await res.blob();
+      dlBlobRef.current = blob;
       const head = await blob.slice(0, 5).text();
       if (head.startsWith('%PDF')) {
+        dlExtRef.current = 'pdf';
         const buf = await blob.arrayBuffer();
         const url = URL.createObjectURL(new Blob([buf], { type: 'application/pdf' }));
         setOpen({ name: fileName, nice, content: '', pdfUrl: url, loading: false });
@@ -122,6 +134,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           } catch { /* title-scoped focus fallback */ }
         })();
       } else {
+        dlExtRef.current = 'md';
         setOpen({ name: fileName, nice, content: await blob.text(), pdfUrl: '', loading: false });
       }
     } catch {
@@ -175,6 +188,17 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const label = { color: 'var(--text-ghost)', fontSize: '0.72rem', letterSpacing: '0.08em' } as const;
   const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
 
+  const copyPiece = () => { try { void navigator.clipboard?.writeText(open?.content || openTextRef.current || ''); } catch { /* */ } };
+  const downloadPiece = () => {
+    const blob = dlBlobRef.current;
+    if (!blob || !open) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${open.name}.${dlExtRef.current}`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   return (
     <>
       <ThemeToggle />
@@ -183,7 +207,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           <Link href={`/library/${encodeURIComponent(author)}`} aria-label="back to the library" title="library"
             style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
           <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>{who}</span>
-          <span style={{ ...label }}>PLM</span>
+          <span style={{ ...label }}>{mindLabel}</span>
         </header>
 
         <div className="plm-tabs" style={{ display: 'none', flex: 'none', borderBottom: '1px solid var(--border-light)' }}>
@@ -268,7 +292,13 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.7rem 1.4rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
               {open && <button type="button" onClick={() => setOpen(null)} aria-label="back to pieces" title="back" style={iconBtn} className="hover:opacity-60">{ChevronIcon}</button>}
               <span style={{ ...(open ? { color: 'var(--text-primary)', fontSize: '0.98rem' } : label) }}>{open ? open.nice : `${who}’s pieces`}</span>
-              <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece pane" title="collapse" style={{ ...iconBtn, marginLeft: 'auto' }} className="hover:opacity-60">{PaneRightIcon}</button>
+              {open && (
+                <>
+                  <button type="button" onClick={copyPiece} aria-label="copy text" title="copy text" style={{ ...iconBtn, marginLeft: 'auto' }} className="hover:opacity-60">{CopyIcon}</button>
+                  <button type="button" onClick={downloadPiece} aria-label="download" title="download" style={iconBtn} className="hover:opacity-60">{DownloadIcon}</button>
+                </>
+              )}
+              <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece pane" title="collapse" style={{ ...iconBtn, ...(open ? {} : { marginLeft: 'auto' }) }} className="hover:opacity-60">{PaneRightIcon}</button>
             </div>
             <div style={{ flex: 1, overflow: open?.pdfUrl ? 'hidden' : 'auto', minHeight: 0 }}>
               {!open && (

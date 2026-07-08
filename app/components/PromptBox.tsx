@@ -113,7 +113,7 @@ export default function PromptBox({
           placeholder={placeholder}
           aria-label={ariaLabel || placeholder}
           style={{
-            width: '100%', resize: 'none', overflow: 'auto', maxHeight: '160px',
+            width: '100%', resize: 'none', overflow: 'auto', minHeight: '2.85rem', maxHeight: '160px', boxSizing: 'border-box',
             border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-secondary)',
             color: 'var(--text-primary)', fontFamily: 'var(--font-eb-garamond)', fontSize: '1rem', lineHeight: 1.45,
             outline: 'none', padding: `0.62rem ${voiceOn ? '2.6rem' : '0.95rem'} 0.62rem 0.95rem`,

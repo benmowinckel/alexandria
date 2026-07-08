@@ -238,9 +238,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       <>
         <span style={{ minWidth: 0 }}>
           <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{fileDisplayName(file.name)}</span>
-          <span style={{ display: 'block', color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
-            {preview || `a piece by ${author.display_name || author.id}`}
-          </span>
+          {preview && (
+            <span style={{ display: 'block', color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
+              {preview}
+            </span>
+          )}
         </span>
         <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', flex: 'none', whiteSpace: 'nowrap' }}>
           {visibilityLabel(file.visibility)}
@@ -320,18 +322,17 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
         </header>
 
         <section>
-          {data.twin?.enabled && (
+          {data.twin?.enabled && (data.twin.variants || []).some((v) => v.enabled) && (
             <div>
-              <p style={sectionLabelStyle}>PLM</p>
-              <Link href={`/library/${encodeURIComponent(authorId)}/plm`} className="hover:opacity-60"
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem', width: '100%',
-                  padding: '0.72rem 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none', color: 'inherit' }}>
-                <span style={{ minWidth: 0 }}>
-                  <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>chat with {author.display_name || author.id}’s PLM</span>
-                  <span style={{ display: 'block', color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.2rem' }}>a model of everything they’ve published — ask it anything, and it can pull up their pieces.</span>
-                </span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', flex: 'none', whiteSpace: 'nowrap' }}>{data.twin.online === false ? 'offline' : 'open'}</span>
-              </Link>
+              <p style={sectionLabelStyle}>minds</p>
+              {(data.twin.variants || []).filter((v) => v.enabled).map((v) => (
+                <Link key={v.variant} href={`/library/${encodeURIComponent(authorId)}/plm?variant=${v.variant}`} className="hover:opacity-60"
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem', width: '100%',
+                    padding: '0.72rem 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none', color: 'inherit' }}>
+                  <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{v.variant === 'weights' ? 'trained model' : 'personal language model'}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{v.visibility === 'public' ? 'public' : 'invite'}</span>
+                </Link>
+              ))}
             </div>
           )}
           {grouped.length === 0 ? (

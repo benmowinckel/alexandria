@@ -37,6 +37,8 @@ const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6
 const PaneLeftIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
 const LinesIcon = <svg width="19" height="19" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
 const PaneRightIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
+const CopyIcon = <svg width="17" height="17" {...svgProps}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
+const DownloadIcon = <svg width="17" height="17" {...svgProps}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>;
 
 export default function ReaderPage({ params }: { params: Promise<{ author: string; name: string }> }) {
   const [author, setAuthor] = useState('');
@@ -64,6 +66,8 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const threadRef = useRef<HTMLDivElement>(null);
   const pdfTextRef = useRef('');                    // extracted PDF text (race-safe)
   const extractRef = useRef<Promise<void> | null>(null);
+  const dlBlobRef = useRef<Blob | null>(null);      // raw bytes for download
+  const dlExtRef = useRef('md');
 
   const nice = useMemo(() => displayName(name), [name]);
   const who = authorName || author;
@@ -86,8 +90,10 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
 
         if (fileRes.ok) {
           const blob = await fileRes.blob();
+          dlBlobRef.current = blob;
           const head = await blob.slice(0, 5).text();
           if (head.startsWith('%PDF')) {
+            dlExtRef.current = 'pdf';
             const buf = await blob.arrayBuffer();
             setPdfUrl(URL.createObjectURL(new Blob([buf], { type: 'application/pdf' })));
             setStatus('ok');
@@ -179,6 +185,17 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const label = { color: 'var(--text-ghost)', fontSize: '0.72rem', letterSpacing: '0.08em' } as const;
   const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
 
+  const copyArtifact = () => { try { void navigator.clipboard?.writeText(content || pdfTextRef.current || ''); } catch { /* */ } };
+  const downloadArtifact = () => {
+    const blob = dlBlobRef.current;
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${name}.${dlExtRef.current}`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   return (
     <>
       <ThemeToggle />
@@ -246,8 +263,14 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
           {/* the piece — slot 3 */}
           <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="piece">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
-            <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 1rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
+            <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.7rem 1rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
               <span style={{ ...label, marginRight: 'auto' }}>{nice}</span>
+              {status === 'ok' && (
+                <>
+                  <button type="button" onClick={copyArtifact} aria-label="copy text" title="copy text" style={iconBtn} className="hover:opacity-60">{CopyIcon}</button>
+                  <button type="button" onClick={downloadArtifact} aria-label="download" title="download" style={iconBtn} className="hover:opacity-60">{DownloadIcon}</button>
+                </>
+              )}
               <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneRightIcon}</button>
             </div>
             <div style={{ flex: 1, overflow: pdfUrl ? 'hidden' : 'auto', minHeight: 0, padding: pdfUrl ? 0 : '2.2rem clamp(1.4rem, 5vw, 4rem)' }}>
