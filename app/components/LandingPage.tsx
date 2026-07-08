@@ -573,7 +573,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   demo link used to carry. */}
               <a href="/whitepaper" className="nav-label">whitepaper</a>
               <span className="nav-sep" aria-hidden>·</span>
-              <a href="/docs/letter.pdf" target="_blank" rel="noopener noreferrer">letter</a>
+              <a href="/letter">letter</a>
             </span>
           </div>
         </div>

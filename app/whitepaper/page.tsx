@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import MarkdownDoc from '../components/MarkdownDoc';
+import PublicDocReader from '../components/PublicDocReader';
 import { pageMetadata } from '../lib/config';
 
 // Page-specific metadata. Without this, /whitepaper inherits the homepage
@@ -33,13 +33,5 @@ export const metadata: Metadata = {
 };
 
 export default function WhitepaperPage() {
-  return (
-    <MarkdownDoc
-      src="/docs/Whitepaper.md"
-      header=""
-      homeHref="/"
-      numbered
-      plain
-    />
-  );
+  return <PublicDocReader title="whitepaper" mdSrc="/docs/Whitepaper.md" />;
 }
