@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { FETCH_TIMEOUT_MS, SERVER_URL, librarySignInUrlHere } from '../../lib/config';
 import { safeUrl } from '../../lib/url';
-import AskThisMind, { type TwinVariantSummary } from './AskThisMind';
+import { type TwinVariantSummary } from './AskThisMind';
 
 interface ProtocolFile {
   name: string;
@@ -309,13 +309,15 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
 
         <section>
           {data.twin?.enabled && (
-            <AskThisMind
-              authorId={authorId}
-              authorName={author.display_name || author.id}
-              variants={data.twin.variants || []}
-              online={data.twin.online !== false}
-              signedIn={data.twin.signed_in === true}
-            />
+            <div>
+              <p style={sectionLabelStyle}>personal language model</p>
+              <Link href={`/library/${encodeURIComponent(authorId)}/plm`} className="hover:opacity-60"
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem', width: '100%',
+                  padding: '0.72rem 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none', color: 'inherit' }}>
+                <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>chat with {author.display_name || author.id}’s mind</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{data.twin.online === false ? 'offline' : 'open'}</span>
+              </Link>
+            </div>
           )}
           {grouped.length === 0 ? (
             !data.twin?.enabled && (

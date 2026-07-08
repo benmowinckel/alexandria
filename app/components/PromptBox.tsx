@@ -49,29 +49,48 @@ export default function PromptBox({
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }, [value]);
 
-  const toggleVoice = () => {
-    if (listening) { recRef.current?.stop(); return; }
+  const stopVoice = () => { try { recRef.current?.stop(); } catch { /* */ } };
+
+  const startVoice = () => {
     const Ctor = getSpeechRecognition();
     if (!Ctor) return;
     const rec = new Ctor();
     rec.lang = 'en-US';
     rec.interimResults = true;
-    rec.continuous = false;
+    rec.continuous = true; // keep listening through pauses — only a keypress ends it
+    // Dictation appends onto whatever's already typed.
+    const base = value ? `${value} ` : '';
     rec.onresult = (e) => {
       let t = '';
       for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
-      onChange(t);
+      onChange(base + t);
     };
-    rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
+    // Ended (by us, or a browser timeout): clear the indicator, cursor back in box.
+    rec.onend = () => { setListening(false); recRef.current = null; taRef.current?.focus(); };
+    rec.onerror = () => { setListening(false); recRef.current = null; taRef.current?.focus(); };
     recRef.current = rec;
     setListening(true);
     rec.start();
+    taRef.current?.focus();
   };
 
+  const toggleVoice = () => { if (listening) { stopVoice(); } else { startVoice(); } };
+
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Enter submits; Shift+Enter is a newline.
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!loading && value.trim()) onSubmit(); }
+    // Cmd/Ctrl+D toggles voice — full keyboard + voice control, no mouse.
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); toggleVoice(); return; }
+    // While dictating, ANY key ends it (Enter/other). Enter just ends here; the
+    // next Enter submits. Other keys end it and type through normally.
+    if (listening) {
+      stopVoice();
+      if (e.key === 'Enter' && !e.shiftKey) e.preventDefault();
+      return;
+    }
+    // Shift+Enter = newline; Enter submits.
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!loading && value.trim()) onSubmit();
+    }
   };
 
   const disabled = loading || !value.trim();

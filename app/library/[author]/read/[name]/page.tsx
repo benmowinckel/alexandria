@@ -9,10 +9,11 @@ import PromptBox from '../../../../components/PromptBox';
 import { librarySignInUrlHere } from '../../../../lib/config';
 
 /**
- * The reader workspace — the artifact is the star. A single pane toggle opens
- * the two side panels together (history + chat); collapsed, they sit as thin
- * slivers on the left so you can see there's something to expand. No notes,
- * no titles on the panels. Chats are in-memory only; close the tab, they're gone.
+ * The reader workspace — the artifact is the star. Two side panels (history +
+ * chat) each collapse independently to a wide, clearly-pressable strip carrying
+ * its own icon (a pane icon for history, three lines for chat); press to open,
+ * press again to close. The top-right three-pane icon toggles both at once. No
+ * notes. Chats are in-memory only; close the tab, they're gone.
  */
 
 const SMALL_WORDS = new Set(['of', 'the', 'a', 'an', 'and', 'or', 'for', 'to', 'in', 'on', 'at', 'by', 'with']);
@@ -27,12 +28,17 @@ function displayName(name: string): string {
 type Msg = { role: 'you' | 'twin'; text: string };
 type Convo = { id: string; messages: Msg[] };
 
-// A conversation's label is its first question, trimmed — else a placeholder.
 function convoTitle(c: Convo): string {
   const first = c.messages.find((m) => m.role === 'you')?.text.trim();
   if (!first) return 'new conversation';
   return first.length > 34 ? `${first.slice(0, 34)}…` : first;
 }
+
+const svgProps = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
+const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6-6 6-6" /></svg>;
+const PaneIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
+const LinesIcon = <svg width="19" height="19" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
+const ThreePaneIcon = <svg width="18" height="18" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
 
 export default function ReaderPage({ params }: { params: Promise<{ author: string; name: string }> }) {
   const [author, setAuthor] = useState('');
@@ -47,11 +53,11 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const [status, setStatus] = useState<'loading' | 'ok' | 'signin' | 'pay' | 'error'>('loading');
   const [checkoutUrl, setCheckoutUrl] = useState('');
 
-  // One toggle opens both side panels (history + chat); collapsed → slivers.
-  const [panesOpen, setPanesOpen] = useState(false);
+  // Two independent panels; both collapsed on landing → just the artifact + strips.
+  const [logOpen, setLogOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const [tab, setTab] = useState<'piece' | 'ask'>('piece'); // mobile
 
-  // conversations — in-memory only, this session
   const idRef = useRef(2);
   const [convos, setConvos] = useState<Convo[]>([{ id: '1', messages: [] }]);
   const [activeId, setActiveId] = useState('1');
@@ -64,7 +70,6 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const who = authorName || author;
   const signInUrl = librarySignInUrlHere();
 
-  // Load author meta + the piece content (gated).
   useEffect(() => {
     if (!author || !name) return;
     let live = true;
@@ -73,8 +78,6 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
       try {
         const [dirRes, sessRes, fileRes] = await Promise.all([
           fetch(`/api/library/${encodeURIComponent(author)}`, { credentials: 'include' }).then((r) => r.json()).catch(() => ({})),
-          // Signed-in state needs the cookie → same-origin session proxy, not the
-          // credential-less directory (which always reads signed_out cross-origin).
           fetch('/api/library/session', { credentials: 'include' }).then((r) => r.json()).catch(() => ({})),
           fetch(`/api/library/${encodeURIComponent(author)}/file/${encodeURIComponent(name)}`, { credentials: 'include' }),
         ]);
@@ -85,8 +88,6 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
         if (f?.visibility) setVisibility(f.visibility);
 
         if (fileRes.ok) {
-          // Some pieces are PDFs (served as octet/markdown) — sniff the bytes and
-          // embed the PDF; otherwise it's markdown.
           const blob = await fileRes.blob();
           const head = await blob.slice(0, 5).text();
           if (head.startsWith('%PDF')) {
@@ -135,10 +136,11 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
     setConvos((cs) => [{ id, messages: [] }, ...cs]);
     setActiveId(id);
     setQuestion('');
-    setPanesOpen(true);
+    setChatOpen(true);
   };
   const openChat = (id: string) => {
     setActiveId(id);
+    setChatOpen(true);
     if (typeof window !== 'undefined' && window.innerWidth <= 900) setTab('ask');
   };
 
@@ -148,13 +150,12 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
     const targetId = activeId;
     setAsking(true);
     setQuestion('');
-    setPanesOpen(true);
+    setChatOpen(true);
     setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'you', text }] } : c)));
     if (typeof window !== 'undefined' && window.innerWidth <= 900) setTab('ask');
     try {
-      // Always tell the PLM which piece the reader is on, so it answers about
-      // THIS document — not the company. Markdown pieces pass their full text;
-      // PDFs (no inline text) pass a scoping note naming the piece.
+      // Always tell the PLM which piece the reader is on. Markdown pieces pass
+      // their full text; PDFs pass the text extracted on load (or a title note).
       const focusText = content
         || `(The reader is currently viewing “${nice}”${pdfUrl ? ' (a PDF)' : ''}, a published piece by ${who}. Answer about THIS specific piece unless they clearly ask about something else.)`;
       const res = await fetch(`/api/library/${encodeURIComponent(author)}/ask`, {
@@ -174,24 +175,22 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   };
 
   const label = { color: 'var(--text-ghost)', fontSize: '0.72rem', letterSpacing: '0.08em' } as const;
+  const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
+  const bothOpen = logOpen && chatOpen;
 
   return (
     <>
       <ThemeToggle />
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
+      <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
         {/* top bar */}
         <header style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.9rem', padding: '0.85rem 3.6rem 0.85rem 1.2rem', borderBottom: '1px solid var(--border-light)' }}>
           <Link href={`/library/${encodeURIComponent(author)}`} aria-label="back to the library" title="library"
-            style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
-          </Link>
+            style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
           <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>{nice}</span>
           <span style={{ ...label }}>{visibility}</span>
-          <button type="button" className="panes-toggle" onClick={() => setPanesOpen((v) => !v)} aria-label="toggle panels" aria-pressed={panesOpen} title="panels"
-            style={{ marginLeft: 'auto', display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem',
-              color: panesOpen ? 'var(--text-primary)' : 'var(--text-ghost)', transition: 'color 0.15s' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>
-          </button>
+          <button type="button" className="panes-toggle" onClick={() => { const open = !bothOpen; setLogOpen(open); setChatOpen(open); }}
+            aria-label="toggle panels" aria-pressed={logOpen || chatOpen} title="panels"
+            style={{ ...iconBtn, marginLeft: 'auto', color: (logOpen || chatOpen) ? 'var(--text-primary)' : 'var(--text-ghost)' }}>{ThreePaneIcon}</button>
         </header>
 
         {/* mobile tabs */}
@@ -206,16 +205,17 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
           ))}
         </div>
 
-        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-tab={tab} data-panes={panesOpen ? 'open' : 'closed'}>
-          {/* collapsed slivers — thin, clickable, so you can see the panels are there */}
-          <button type="button" className="reader-sliver sliver-history" onClick={() => setPanesOpen(true)} aria-label="expand panels" title="expand" />
-          <button type="button" className="reader-sliver sliver-chat" onClick={() => setPanesOpen(true)} aria-label="expand panels" title="expand" />
+        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-tab={tab} data-log={logOpen ? 'open' : 'closed'} data-chat={chatOpen ? 'open' : 'closed'}>
+          {/* collapsed strips — wide, clearly pressable, each carrying its own icon */}
+          <button type="button" className="reader-strip strip-history" onClick={() => setLogOpen(true)} aria-label="open history" title="history">{PaneIcon}</button>
+          <button type="button" className="reader-strip strip-chat" onClick={() => setChatOpen(true)} aria-label="open chat" title="chat">{LinesIcon}</button>
 
-          {/* history (left) — no title, just the conversations + new */}
+          {/* history (left) */}
           <aside className="reader-log" style={{ flex: 'none', width: '240px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
-            <div style={{ flex: 'none', display: 'flex', justifyContent: 'flex-end', padding: '0.85rem 0.9rem 0.5rem' }}>
+            <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 0.9rem 0.5rem' }}>
+              <button type="button" onClick={() => setLogOpen(false)} aria-label="collapse history" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneIcon}</button>
               <button type="button" onClick={newChat} aria-label="new conversation" title="new conversation"
-                style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: 1, padding: 0 }} className="hover:opacity-60">＋</button>
+                style={{ marginLeft: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: 1, padding: 0 }} className="hover:opacity-60">＋</button>
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '0.2rem 0.6rem 1rem' }}>
               {convos.map((c) => (
@@ -230,9 +230,12 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
             </div>
           </aside>
 
-          {/* the chat (middle) — no title, just the thread + composer */}
+          {/* chat (middle) */}
           <section className="reader-chat" style={{ flex: 'none', width: '34%', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
-            <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '1.4rem' }}>
+            <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 1rem 0.4rem' }}>
+              <button type="button" onClick={() => setChatOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="hover:opacity-60">{LinesIcon}</button>
+            </div>
+            <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
               {active && active.messages.length === 0 && (
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6 }}>
                   ask {who}’s PLM about this piece.
@@ -290,24 +293,26 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
         .reader-prose hr { border: none; border-top: 1px solid var(--border-light); margin: 2.2rem 0; }
         .reader-prose code { background: var(--bg-secondary); border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.9em; }
 
-        /* collapsed slivers — thin visible strips hinting the panels */
-        .reader-sliver { flex: none; width: 12px; border: none; border-right: 1px solid var(--border-light);
-          background: var(--bg-secondary); cursor: pointer; padding: 0; transition: background 0.15s; }
-        .reader-sliver:hover { background: var(--border-light); }
+        /* collapsed strips — wide enough to press, icon near the top */
+        .reader-strip { flex: none; width: 46px; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.85rem;
+          border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer;
+          color: var(--text-muted); transition: color 0.15s, background 0.15s; }
+        .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
 
-        /* desktop — one toggle opens both panels; collapsed → slivers */
+        /* desktop — each panel shown by its own state; collapsed → its strip */
         @media (min-width: 901px) {
           .reader-tabs { display: none !important; }
-          .reader-sliver { display: none; }
+          .reader-strip { display: none; }
           .reader-log, .reader-chat { display: none; }
-          main[data-panes="closed"] .reader-sliver { display: block; }
-          main[data-panes="open"] .reader-log { display: flex; }
-          main[data-panes="open"] .reader-chat { display: flex; }
+          main[data-log="closed"] .strip-history { display: flex; }
+          main[data-log="open"] .reader-log { display: flex; }
+          main[data-chat="closed"] .strip-chat { display: flex; }
+          main[data-chat="open"] .reader-chat { display: flex; }
         }
 
-        /* mobile — read / ask tabs; rail + panels fold away */
+        /* mobile — read / ask tabs; strips + history fold away */
         @media (max-width: 900px) {
-          .panes-toggle, .reader-sliver, .reader-log { display: none !important; }
+          .panes-toggle, .reader-strip, .reader-log { display: none !important; }
           .reader-tabs { display: flex !important; }
           .reader-chat, .reader-piece { display: none !important; width: 100% !important; flex: 1 !important; }
           main[data-tab="piece"] .reader-piece { display: block !important; }
