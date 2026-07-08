@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent } from 'react';
 
 /**
@@ -24,9 +24,9 @@ function getSpeechRecognition(): SpeechRecCtor | null {
   return w.SpeechRecognition || w.webkitSpeechRecognition || null;
 }
 
-export default function PromptBox({
-  value, onChange, onSubmit, loading = false, placeholder = '', ariaLabel, submitLabel = 'ask',
-}: {
+export type PromptBoxHandle = { focus: () => void };
+
+const PromptBox = forwardRef<PromptBoxHandle, {
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
@@ -34,12 +34,18 @@ export default function PromptBox({
   placeholder?: string;
   ariaLabel?: string;
   submitLabel?: string;
-}) {
+}>(function PromptBox({
+  value, onChange, onSubmit, loading = false, placeholder = '', ariaLabel, submitLabel = 'ask',
+}, ref) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const [voiceOn, setVoiceOn] = useState(false);
   const [listening, setListening] = useState(false);
   const recRef = useRef<SpeechRec | null>(null);
   useEffect(() => { setVoiceOn(!!getSpeechRecognition()); }, []);
+
+  // Let callers drop the cursor in the box (e.g. when a collapsed chat pane
+  // expands) so you can start typing immediately.
+  useImperativeHandle(ref, () => ({ focus: () => taRef.current?.focus() }), []);
 
   // Grow from one line as content is added (Shift+Enter or wrapping), capped.
   useEffect(() => {
@@ -145,4 +151,6 @@ export default function PromptBox({
       </button>
     </div>
   );
-}
+});
+
+export default PromptBox;

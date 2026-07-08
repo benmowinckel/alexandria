@@ -65,6 +65,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+  const promptRef = useRef<{ focus: () => void } | null>(null);
   const openTextRef = useRef('');                    // extracted text of the open piece (race-safe)
   const openExtractRef = useRef<Promise<void> | null>(null);
   const dlBlobRef = useRef<Blob | null>(null);       // raw bytes of the open piece, for download
@@ -105,6 +106,15 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   }, [author]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [active?.messages, asking]);
+
+  // Drop the cursor in the composer whenever the chat pane is visible (this page
+  // opens chat-first, and again each time it's re-expanded) so you can just type.
+  useEffect(() => {
+    const mobile = typeof window !== 'undefined' && window.innerWidth <= 900;
+    if (mobile ? mtab !== 'chat' : !midOpen) return;
+    const id = requestAnimationFrame(() => promptRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [midOpen, mtab]);
 
   const openPiece = async (fileName: string) => {
     const nice = files.find((x) => x.name === fileName)?.title || displayName(fileName);
@@ -285,7 +295,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               {asking && <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem' }}>thinking…</p>}
             </div>
             <div style={{ flex: 'none', padding: '0.9rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
-              <PromptBox value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder="ask anything…" />
+              <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder="ask anything…" />
             </div>
           </section>
 

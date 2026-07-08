@@ -72,8 +72,18 @@ export default function ReaderShell({
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+  const promptRef = useRef<{ focus: () => void } | null>(null);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [active?.messages, asking]);
+
+  // When the chat pane becomes visible (expand it on desktop, or switch to the
+  // ask tab on mobile), drop the cursor in the composer so you can type at once.
+  useEffect(() => {
+    const mobile = typeof window !== 'undefined' && window.innerWidth <= 900;
+    if (mobile ? tab !== 'ask' : !midOpen) return;
+    const id = requestAnimationFrame(() => promptRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [midOpen, tab]);
 
   const newChat = () => {
     const id = String(idRef.current++);
@@ -190,7 +200,7 @@ export default function ReaderShell({
               {asking && <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem' }}>thinking…</p>}
             </div>
             <div style={{ flex: 'none', padding: '0.9rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
-              <PromptBox value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder={askPlaceholder} />
+              <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder={askPlaceholder} />
             </div>
           </section>
 
