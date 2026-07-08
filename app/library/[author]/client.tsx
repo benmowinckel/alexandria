@@ -67,6 +67,14 @@ function websiteHref(raw: string): string {
   return safeUrl(/^https?:\/\//i.test(t) ? t : `https://${t}`);
 }
 
+// The FORM of contact (capitalised, to match the location pill), not the raw value.
+function contactForm(contact: string): string {
+  const c = contact.trim();
+  if (c.includes('@') && !/^https?:\/\//i.test(c)) return 'Email';
+  if (/^https?:\/\//i.test(c) || /\.[a-z]{2,}(\/|$)/i.test(c)) return 'Website';
+  return c.charAt(0).toUpperCase() + c.slice(1);
+}
+
 function websiteLabel(raw: string): string {
   const href = websiteHref(raw);
   return href.replace(/^https?:\/\//i, '').replace(/\/$/, '');
@@ -157,10 +165,8 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   const signedIn = data.twin?.signed_in === true;
   const signInUrl = librarySignInUrlHere();
   const cleanUrl = (u: string) => (u.startsWith('http') ? u : `https://${u}`);
-  const socialLinks: { label: string; url: string }[] = [
-    ...((author.socials || []).filter((s) => s && s.label && s.url).map((s) => ({ label: s.label, url: safeUrl(cleanUrl(s.url)) }))),
-    ...(author.website ? [{ label: author.website.replace(/^https?:\/\//, '').replace(/\/$/, ''), url: safeUrl(cleanUrl(author.website)) }] : []),
-  ];
+  const socialLinks: { label: string; url: string }[] = (author.socials || []).filter((s) => s && s.label && s.url).map((s) => ({ label: s.label, url: safeUrl(cleanUrl(s.url)) }));
+  const websiteLink = author.website ? { label: author.website.replace(/^https?:\/\//, '').replace(/\/$/, ''), url: safeUrl(cleanUrl(author.website)) } : null;
   const renderLinkedText = (text: string) =>
     text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
       /^https?:\/\//.test(part) ? (
@@ -232,11 +238,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       <>
         <span style={{ minWidth: 0 }}>
           <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{fileDisplayName(file.name)}</span>
-          {preview && (
-            <span style={{ display: 'block', color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
-              {preview}
-            </span>
-          )}
+          <span style={{ display: 'block', color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
+            {preview || `a piece by ${author.display_name || author.id}`}
+          </span>
         </span>
         <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', flex: 'none', whiteSpace: 'nowrap' }}>
           {visibilityLabel(file.visibility)}
@@ -288,21 +292,29 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                   target={author.contact.startsWith('http') ? '_blank' : undefined}
                   rel={author.contact.startsWith('http') ? 'noopener noreferrer' : undefined}
                   style={tagStyle} className="hover:opacity-60">
-                  contact
+                  {contactForm(author.contact)}
                 </a>
               )}
             </div>
           )}
-          {/* Socials — plain links, below the pills. */}
-          {socialLinks.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', marginTop: '0.7rem', fontSize: '0.9rem' }}>
-              {socialLinks.map((s) => (
-                <a key={s.url} href={s.url} target="_blank" rel="noopener noreferrer"
-                  className="hover:opacity-60"
-                  style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
-                  {s.label}
-                </a>
-              ))}
+          {/* Socials on one line (dot-separated); the website link on the next. */}
+          {(socialLinks.length > 0 || websiteLink) && (
+            <div style={{ marginTop: '0.7rem', fontSize: '0.9rem' }}>
+              {socialLinks.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+                  {socialLinks.map((s, i) => (
+                    <span key={s.url} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {i > 0 && <span aria-hidden style={{ color: 'var(--text-ghost)' }}>·</span>}
+                      <a href={s.url} target="_blank" rel="noopener noreferrer" className="hover:opacity-60" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>{s.label}</a>
+                    </span>
+                  ))}
+                </div>
+              )}
+              {websiteLink && (
+                <div style={{ marginTop: '0.35rem' }}>
+                  <a href={websiteLink.url} target="_blank" rel="noopener noreferrer" className="hover:opacity-60" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>{websiteLink.label}</a>
+                </div>
+              )}
             </div>
           )}
         </header>
@@ -310,12 +322,12 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
         <section>
           {data.twin?.enabled && (
             <div>
-              <p style={sectionLabelStyle}>mind</p>
+              <p style={sectionLabelStyle}>PLM</p>
               <Link href={`/library/${encodeURIComponent(authorId)}/plm`} className="hover:opacity-60"
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem', width: '100%',
                   padding: '0.72rem 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none', color: 'inherit' }}>
                 <span style={{ minWidth: 0 }}>
-                  <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>chat with {author.display_name || author.id}’s mind</span>
+                  <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>chat with {author.display_name || author.id}’s PLM</span>
                   <span style={{ display: 'block', color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.2rem' }}>a model of everything they’ve published — ask it anything, and it can pull up their pieces.</span>
                 </span>
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', flex: 'none', whiteSpace: 'nowrap' }}>{data.twin.online === false ? 'offline' : 'open'}</span>

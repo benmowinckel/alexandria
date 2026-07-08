@@ -62,6 +62,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+  const openTextRef = useRef('');                    // extracted text of the open piece (race-safe)
+  const openExtractRef = useRef<Promise<void> | null>(null);
 
   const who = authorName || author;
   const usable = useMemo(() => variants.filter((v) => v.enabled && (v.accessible || v.needsInvite)), [variants]);
@@ -90,6 +92,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
 
   const openPiece = async (fileName: string) => {
     const nice = displayName(fileName);
+    openTextRef.current = '';
+    openExtractRef.current = null;
     setRightOpen(true);
     if (typeof window !== 'undefined' && window.innerWidth <= 900) setMtab('pieces');
     setOpen({ name: fileName, nice, content: '', pdfUrl: '', loading: true });
@@ -102,19 +106,21 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         const buf = await blob.arrayBuffer();
         const url = URL.createObjectURL(new Blob([buf], { type: 'application/pdf' }));
         setOpen({ name: fileName, nice, content: '', pdfUrl: url, loading: false });
-        try {
-          const pdfjs = await import('pdfjs-dist');
-          pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-          const pdf = await pdfjs.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
-          let text = '';
-          const pages = Math.min(pdf.numPages, 40);
-          for (let p = 1; p <= pages && text.length < 120000; p++) {
-            const page = await pdf.getPage(p);
-            const tc = await page.getTextContent();
-            text += tc.items.map((it) => (it as { str?: string }).str ?? '').join(' ') + '\n\n';
-          }
-          if (text.trim()) setOpen((o) => (o && o.name === fileName ? { ...o, content: text.trim() } : o));
-        } catch { /* title-scoped focus fallback */ }
+        openExtractRef.current = (async () => {
+          try {
+            const pdfjs = await import('pdfjs-dist');
+            pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+            const pdf = await pdfjs.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
+            let text = '';
+            const pages = Math.min(pdf.numPages, 40);
+            for (let p = 1; p <= pages && text.length < 120000; p++) {
+              const page = await pdf.getPage(p);
+              const tc = await page.getTextContent();
+              text += tc.items.map((it) => (it as { str?: string }).str ?? '').join(' ') + '\n\n';
+            }
+            if (text.trim()) { openTextRef.current = text.trim(); setOpen((o) => (o && o.name === fileName ? { ...o, content: text.trim() } : o)); }
+          } catch { /* title-scoped focus fallback */ }
+        })();
       } else {
         setOpen({ name: fileName, nice, content: await blob.text(), pdfUrl: '', loading: false });
       }
@@ -143,7 +149,13 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     setQuestion('');
     setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'you', text }] } : c)));
     try {
-      const focus = open ? { name: open.nice, content: open.content || `(The reader is looking at “${open.nice}”${open.pdfUrl ? ' (a PDF)' : ''} by ${who}.)` } : undefined;
+      // If a PDF piece is open and still extracting, wait so the PLM gets its text.
+      let fc = open ? (open.content || openTextRef.current) : '';
+      if (open && open.pdfUrl && !fc && openExtractRef.current) {
+        try { await Promise.race([openExtractRef.current, new Promise((r) => setTimeout(r, 8000))]); } catch { /* */ }
+        fc = openTextRef.current;
+      }
+      const focus = open ? { name: open.nice, content: fc || `(The reader is looking at “${open.nice}”${open.pdfUrl ? ' (a PDF)' : ''} by ${who}.)` } : undefined;
       const res = await fetch(`/api/library/${encodeURIComponent(author)}/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -171,7 +183,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           <Link href={`/library/${encodeURIComponent(author)}`} aria-label="back to the library" title="library"
             style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
           <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>{who}</span>
-          <span style={{ ...label }}>mind</span>
+          <span style={{ ...label }}>PLM</span>
         </header>
 
         <div className="plm-tabs" style={{ display: 'none', flex: 'none', borderBottom: '1px solid var(--border-light)' }}>
@@ -246,7 +258,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               {asking && <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem' }}>thinking…</p>}
             </div>
             <div style={{ flex: 'none', padding: '0.9rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
-              <PromptBox value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder={`ask ${who} anything…`} />
+              <PromptBox value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder="ask anything…" />
             </div>
           </section>
 
@@ -295,7 +307,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
 
         .reader-strip { flex: none; width: 46px; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.85rem;
           border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
-        .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); }
+        .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
 
         @media (min-width: 901px) {

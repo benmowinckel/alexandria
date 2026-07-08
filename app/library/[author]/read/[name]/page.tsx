@@ -45,7 +45,6 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
 
   const [authorName, setAuthorName] = useState('');
   const [visibility, setVisibility] = useState('public');
-  const [signedIn, setSignedIn] = useState(false);
   const [content, setContent] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
   const [status, setStatus] = useState<'loading' | 'ok' | 'signin' | 'pay' | 'error'>('loading');
@@ -63,6 +62,8 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
+  const pdfTextRef = useRef('');                    // extracted PDF text (race-safe)
+  const extractRef = useRef<Promise<void> | null>(null);
 
   const nice = useMemo(() => displayName(name), [name]);
   const who = authorName || author;
@@ -74,14 +75,12 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
     (async () => {
       setStatus('loading');
       try {
-        const [dirRes, sessRes, fileRes] = await Promise.all([
+        const [dirRes, fileRes] = await Promise.all([
           fetch(`/api/library/${encodeURIComponent(author)}`, { credentials: 'include' }).then((r) => r.json()).catch(() => ({})),
-          fetch('/api/library/session', { credentials: 'include' }).then((r) => r.json()).catch(() => ({})),
           fetch(`/api/library/${encodeURIComponent(author)}/file/${encodeURIComponent(name)}`, { credentials: 'include' }),
         ]);
         if (!live) return;
         setAuthorName(dirRes?.author?.display_name || '');
-        setSignedIn(sessRes?.signed_in === true);
         const f = (dirRes?.files || []).find((x: { name: string }) => x.name === name);
         if (f?.visibility) setVisibility(f.visibility);
 
@@ -92,19 +91,21 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
             const buf = await blob.arrayBuffer();
             setPdfUrl(URL.createObjectURL(new Blob([buf], { type: 'application/pdf' })));
             setStatus('ok');
-            try {
-              const pdfjs = await import('pdfjs-dist');
-              pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-              const pdf = await pdfjs.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
-              let text = '';
-              const pages = Math.min(pdf.numPages, 40);
-              for (let p = 1; p <= pages && text.length < 120000; p++) {
-                const page = await pdf.getPage(p);
-                const tc = await page.getTextContent();
-                text += tc.items.map((it) => (it as { str?: string }).str ?? '').join(' ') + '\n\n';
-              }
-              if (live && text.trim()) setContent(text.trim());
-            } catch { /* title-scoped focus fallback */ }
+            extractRef.current = (async () => {
+              try {
+                const pdfjs = await import('pdfjs-dist');
+                pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+                const pdf = await pdfjs.getDocument({ data: new Uint8Array(buf.slice(0)) }).promise;
+                let text = '';
+                const pages = Math.min(pdf.numPages, 40);
+                for (let p = 1; p <= pages && text.length < 120000; p++) {
+                  const page = await pdf.getPage(p);
+                  const tc = await page.getTextContent();
+                  text += tc.items.map((it) => (it as { str?: string }).str ?? '').join(' ') + '\n\n';
+                }
+                if (text.trim()) { pdfTextRef.current = text.trim(); if (live) setContent(text.trim()); }
+              } catch { /* title-scoped focus fallback */ }
+            })();
             return;
           }
           setContent(await blob.text());
@@ -150,7 +151,14 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
     setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'you', text }] } : c)));
     if (typeof window !== 'undefined' && window.innerWidth <= 900) setTab('ask');
     try {
-      const focusText = content
+      // If the piece is a PDF whose text is still extracting, wait for it so the
+      // mind gets the document, not an empty note (fixes the "content is empty" race).
+      let fc = content || pdfTextRef.current;
+      if (!fc && pdfUrl && extractRef.current) {
+        try { await Promise.race([extractRef.current, new Promise((r) => setTimeout(r, 8000))]); } catch { /* */ }
+        fc = pdfTextRef.current;
+      }
+      const focusText = fc
         || `(The reader is currently viewing “${nice}”${pdfUrl ? ' (a PDF)' : ''}, a published piece by ${who}. Answer about THIS specific piece unless they clearly ask about something else.)`;
       const res = await fetch(`/api/library/${encodeURIComponent(author)}/ask`, {
         method: 'POST',
@@ -221,12 +229,6 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="hover:opacity-60">{LinesIcon}</button>
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
-              {active && active.messages.length === 0 && (
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6 }}>
-                  ask {who}’s mind about this piece.
-                  {!signedIn && <> <a href={signInUrl} style={{ color: 'var(--accent)', textDecoration: 'none', borderBottom: '1px solid var(--accent)' }} className="hover:opacity-60">sign in</a> for the deeper version.</>}
-                </p>
-              )}
               {active?.messages.map((m, i) => (
                 <div key={i} style={{ margin: '0 0 1.1rem' }}>
                   {m.role === 'you'
@@ -283,7 +285,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
 
         .reader-strip { flex: none; width: 46px; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.85rem;
           border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
-        .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); }
+        .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
 
         @media (min-width: 901px) {
