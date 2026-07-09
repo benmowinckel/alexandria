@@ -767,19 +767,22 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   every model that comes. Alexandria is for those few.
                 </p>
 
+                {/* Recomposed 2026-07-09 (spine, second pass): the block is
+                    a staircase — fork (above), diagnosis (whose side the AI
+                    is on), the flip (words -> with you -> develops you),
+                    offer, dare. Allegiance precedes mechanism because it is
+                    the question the mechanism answers. */}
                 <p className="statement-close">
-                  AI can&rsquo;t read your mind, but it can read words. Put
-                  your thoughts into words, and it can think{' '}<em>with</em>
-                  {' '}you, not for you &mdash; an{' '}
-                  <em>&ldquo;alexandria.md&rdquo;</em>{' '}makes that automatic.
+                  Every AI is tuned to its maker, not to you. Out of the box
+                  it thinks{' '}<em>for</em>{' '}you &mdash; and the more it
+                  thinks, the less you do.
                 </p>
 
-                {/* The spine's what, one beat (2026-07-08): whose side the
-                    AI is on. Tuned/tuned is repetition-with-variation, not
-                    an accident. */}
                 <p className="statement-close">
-                  Every AI is tuned to its maker&rsquo;s goals. This one is
-                  tuned to yours &mdash; its one job is to develop you.
+                  It can&rsquo;t read your mind, but it can read words. Put
+                  your thoughts into words and it can think{' '}<em>with</em>
+                  {' '}you &mdash; its whole job becomes developing you. An{' '}
+                  <em>&ldquo;alexandria.md&rdquo;</em>{' '}makes that automatic.
                 </p>
 
                 <p className="statement-close">

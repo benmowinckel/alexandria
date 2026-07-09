@@ -12,6 +12,18 @@ There’s a company at the end of it — Alexandria. Not because the argument wa
 
 *This is the full argument. [The letter](/docs/letter.pdf) is its human side — felt rather than argued.*
 
+## the short version.
+
+Machines will match or beat everything a person can do. The one part they can't take is that *you* did it — and that part is only worth something if there's a developed you behind it.
+
+Nothing is going to maintain that development. Every AI is tuned to its maker and eager to think in your place — and a mind that stops thinking quietly stops being anyone. You can refuse the machine and fall behind; you can hand it your mind and hollow out; or you can turn it on yourself — use it to think *more*, not less.
+
+That third way runs on the oldest practice there is: putting your thinking into words. Written down, your mind becomes something an AI can finally work with — read it, question it, sharpen it, grow it — and something you can own outright: plain files, yours, no company between you and your own head.
+
+Do that once and a person stays worth being. Do it across many people and the minds gather into a library — the place where human thinking compounds while everything else is automated. Develop the minds. Keep them owned. Gather them. So that when machines can do everything, a human is worth more, not less.
+
+*The rest of the paper earns each of those steps, one at a time.*
+
 ## contents.
 
 # what survives.
