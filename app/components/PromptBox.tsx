@@ -55,7 +55,19 @@ const PromptBox = forwardRef<PromptBoxHandle, {
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }, [value]);
 
-  const stopVoice = () => { try { recRef.current?.stop(); } catch { /* */ } };
+  // Tear down recognition. `silent` nulls the callbacks first, so the final
+  // result the browser delivers on .stop() — and any late continuous result —
+  // can't write back into a box the parent may have just cleared on submit.
+  const endVoice = (silent = false) => {
+    const rec = recRef.current;
+    if (rec) {
+      if (silent) { rec.onresult = null; rec.onend = null; rec.onerror = null; }
+      try { rec.stop(); } catch { /* */ }
+    }
+    recRef.current = null;
+    setListening(false);
+  };
+  const stopVoice = () => endVoice(false);
 
   const startVoice = () => {
     const Ctor = getSpeechRecognition();
@@ -82,6 +94,17 @@ const PromptBox = forwardRef<PromptBoxHandle, {
 
   const toggleVoice = () => { if (listening) { stopVoice(); } else { startVoice(); } };
 
+  // The one submit path for button + Enter. Kill dictation SILENTLY before
+  // firing, so a late speech result can't refill the box after the parent
+  // clears it. On mobile submit arrives via the button or the soft keyboard's
+  // "go" — neither hits onKeyDown's "any key ends dictation", so the recognizer
+  // would otherwise keep running through the clear.
+  const submit = () => {
+    if (loading || !value.trim()) return;
+    endVoice(true);
+    onSubmit();
+  };
+
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     // Cmd/Ctrl+D toggles voice — full keyboard + voice control, no mouse.
     if ((e.metaKey || e.ctrlKey) && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); toggleVoice(); return; }
@@ -95,7 +118,7 @@ const PromptBox = forwardRef<PromptBoxHandle, {
     // Shift+Enter = newline; Enter submits.
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!loading && value.trim()) onSubmit();
+      submit();
     }
   };
 
@@ -143,7 +166,7 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           </button>
         )}
       </div>
-      <button type="button" onClick={() => { if (!disabled) onSubmit(); }} disabled={disabled}
+      <button type="button" onClick={submit} disabled={disabled}
         onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.opacity = '0.85'; }}
         onMouseLeave={(e) => { e.currentTarget.style.opacity = disabled ? '0.5' : '1'; }}
         style={btn}>
