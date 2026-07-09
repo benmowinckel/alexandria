@@ -665,14 +665,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             <source src={mobileScene ? '/sea-scene-mobile.mp4' : '/sea-scene.mp4'} type="video/mp4" />
           </video>
         )}
-        {/* Scene veil — a wash of the wall's own sunlit cream over the
-            whole scene (PNG and video alike), beneath the type. The
-            photoreal window was the one crisp, full-contrast object on
-            an otherwise faint page and read as pasted-on ("too
-            artificial… needs to be blended into the page", founder
-            2026-07-09); the veil compresses the scene's dynamic range
-            toward the page's. One knob: --scene-veil. */}
-        <span className="scene-veil" aria-hidden />
         {/* Stage canvas — pixel-locked 1440×900 frame uniformly scaled to
             the viewport via --stage-scale-top. Inside this wrapper everything
             is absolute pixels, so type, drop-caps, and corner marks never
@@ -1282,16 +1274,23 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              aspect ratios still reads as the same wall. */
           background-color: #d8ccb6;
           /* SEA scene (2026-07-09) — the fresco niche as an open window
-             onto open water. Third pass on the water: v1 saturated blue
-             read fake ("too blue, looks artificial"), v2 whisper-faint
-             read as beige fog ("pretty mid… not elegant"). This one is
-             a real sea — visible hazy horizon, luminous azure with a
-             natural depth gradient, sun glitter — bound to the cream
-             wall by shared warm light rather than by draining the
-             colour. (Pharos lighthouse and Creation-of-Adam were cut
-             earlier — image anti-reflex, design.md.) Poster is JPEG
-             now: same frame-zero-of-the-video pipeline, ~10x lighter
-             than the PNG for first paint. */
+             onto open water, seen through haze. Four passes on the
+             water: v1 saturated blue read fake; v2 whisper-faint read
+             as beige fog ("pretty mid… not elegant") because it had no
+             structure; v3 restored a real sea (hazy horizon, depth
+             gradient, sun glitter) but its blue was still crisp against
+             the cream page; a CSS veil over v3 was rejected ("make the
+             actual colors more muted"). v4 = v3's structure with the
+             pigment itself faded: blues/cyans desaturated hard
+             (huesaturation -0.75 c+b strength 16) + gentle shadow lift,
+             baked into poster and loop alike. The sea reads through
+             luminance — horizon, ripples, glitter — while its colour
+             sits in the page's dusty family. The lesson pair: fog fails
+             (no structure), crisp blue fails (full chroma); haze over
+             structure is the register. (Pharos lighthouse and
+             Creation-of-Adam were cut earlier — image anti-reflex,
+             design.md.) Poster is JPEG: frame zero of the loop, ~10x
+             lighter than PNG for first paint. */
           background-image: url(/sea-arch-wide.jpg);
           /* Desktop landscape viewports crop the wide image evenly;
              75% pulls the niche from right-of-centre to visual middle
@@ -1326,19 +1325,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
         .breeze-video.is-ready {
           opacity: 1;
-        }
-        /* Scene veil — see the JSX note. Sits above the PNG background
-           and the breeze video (z 0), below FrontFilm (z 2) and the
-           stage (.top-inner z 1, later in DOM). The colour is the
-           wall's own bright plaster sampled from the poster, so the
-           wash reads as sun haze, not grey fog. */
-        .scene-veil {
-          position: absolute;
-          inset: 0;
-          background: #d9d3bf;
-          opacity: var(--scene-veil, 0.35);
-          pointer-events: none;
-          z-index: 1;
         }
         /* Reduced-motion: keep the still frontispiece. */
         @media (prefers-reduced-motion: reduce) {
