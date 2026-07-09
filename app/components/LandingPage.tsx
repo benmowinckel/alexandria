@@ -647,7 +647,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             key={mobileScene ? 'm' : 'd'}
             ref={videoRef}
             className="breeze-video"
-            poster={mobileScene ? '/pharos-arch-mobile.png' : '/pharos-arch-wide.png'}
+            poster={mobileScene ? '/sea-arch-mobile.png' : '/sea-arch-wide.png'}
             autoPlay
             loop
             muted
@@ -661,8 +661,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 the full download until the canplay event drives the
                 fade-in. Mobile gets the square scene (key remounts
                 the element if the breakpoint flips). */}
-            <source src={mobileScene ? '/pharos-scene-mobile.webm' : '/pharos-scene.webm'} type="video/webm" />
-            <source src={mobileScene ? '/pharos-scene-mobile.mp4' : '/pharos-scene.mp4'} type="video/mp4" />
+            <source src={mobileScene ? '/sea-scene-mobile.webm' : '/sea-scene.webm'} type="video/webm" />
+            <source src={mobileScene ? '/sea-scene-mobile.mp4' : '/sea-scene.mp4'} type="video/mp4" />
           </video>
         )}
         {/* Stage canvas — pixel-locked 1440×900 frame uniformly scaled to
@@ -1253,12 +1253,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              image's edge cream so any uncovered area at extreme
              aspect ratios still reads as the same wall. */
           background-color: #d8ccb6;
-          /* PHAROS scene (2026-07-08) — the fresco niche re-authored as an
-             open window onto the harbor: the Lighthouse of Alexandria hazy
-             across pale water. You stand inside the library, looking out.
-             Replaces adam-arch-wide.png (Creation-of-Adam — cut per the
-             image anti-reflex, design.md: the ai industry's stock visual). */
-          background-image: url(/pharos-arch-wide.png);
+          /* SEA scene (2026-07-08) — the fresco niche re-authored as an
+             open window onto open water: light-blue sea meeting a pale
+             sky, sunlight glistening on the surface. You stand inside
+             the library, looking out. (The Pharos lighthouse variant was
+             tried and cut same day — founder: "maybe we just have water…
+             really elegant light blue water and sky." Creation-of-Adam
+             was cut earlier per the image anti-reflex, design.md.) */
+          background-image: url(/sea-arch-wide.png);
           /* Desktop landscape viewports crop the wide image evenly;
              75% pulls the niche from right-of-centre to visual middle
              and brings the tree shadow into view on the left. Mobile
@@ -1300,7 +1302,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         /* FILM PLATE — the quiet line beneath the arch ("the demo ▸").
            Anchored to the WALL's cover geometry, not the stage:
            --wall-w/--wall-h reproduce background-size: cover for the
-           2247×1265 pharos image (AR 1.7771, same as the old wall); x
+           2246×1264 sea image (AR 1.7771, same as the old wall); x
            sits on the window's centre (image-fraction 0.514, measured
            off the inner side edges, with the 75% crop position) and y
            below the outer ledge line (0.711 + margin) at every aspect
@@ -1351,7 +1353,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           color: #f5f0e8;
           opacity: 0;
           /* nudged below the window's centre so it floats on the water,
-             not over the Pharos */
+             beneath the horizon line */
           position: relative;
           top: 13%;
           transform: scale(0.92);
@@ -2771,7 +2773,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                is the same frame outpainted (wall continues above, floor
                and foliage below), so cover on portrait shows the window
                at ~59% of screen width with room to breathe. */
-            background-image: url(/pharos-arch-mobile.png);
+            background-image: url(/sea-arch-mobile.png);
             background-position: center center;
             /* Portrait crop fills the viewport with the dark niche +
                painting (less cream wall visible than at desktop), so
@@ -2993,7 +2995,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           }
 
           /* Film plate on mobile — geometry for the SQUARE mobile asset
-             (pharos-arch-mobile.png, bg center/center cover). Measured
+             (sea-arch-mobile.png, bg center/center cover). Measured
              fractions of the 1:1 canvas: window centre x 0.514, y 0.4815;
              window 0.273w × 0.205h; ledge line 0.619; caption anchor
              0.645. Wall units for a square image under cover: both
