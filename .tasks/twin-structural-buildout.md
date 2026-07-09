@@ -70,7 +70,7 @@ locally (substrate + the author's Anthropic key stay on device) and returns the 
     ("public = plaintext, no gate" in the settled model), so it needs no crypto — but the
     outbound rewrite must not drop it: keep the company guide answerable (as a company job
     over the founder's outbound connection, or a tiny always-on company relay). Frontend
-    (`AskAlexandria.tsx` → `/api/ask`) and Worker `/ask` are architecture-agnostic and stay.
+    (the reader's ask via `PublicDocReader` → `/api/ask`) and Worker `/ask` are architecture-agnostic and stay.
 - **Deletes entirely:** cloudflared, the public tunnel, Cloudflare Access, the inbound
   bearer, `validateSidecarUrl`/SSRF guard, `twinOnline` health-polling + 30s cache, URL
   drift, sidecar registration. "Online" becomes "is the connection open" — instant, certain.

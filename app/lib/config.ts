@@ -21,7 +21,7 @@ export function librarySignInUrlHere(): string {
   );
 }
 
-// The homepage "ask Alexandria" box posts to /api/ask → the Worker's /ask relay
+// The reader's "ask" (the letter/whitepaper via PublicDocReader) posts to /api/ask → the Worker's /ask relay
 // → the sidecar's isolated /guide route (a public Alexandria representative, not
 // anyone's personal twin). The Worker resolves which sidecar (the founder's
 // always-on one) and holds the routing, so the frontend needs no author config.
