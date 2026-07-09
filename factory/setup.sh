@@ -214,14 +214,17 @@ if command -v node &>/dev/null && { [ -d "$HOME/.claude" ] || command -v claude 
     # `add` is a no-op when the marketplace is already registered, so refresh
     # the registration too — otherwise a stale clone serves old content.
     claude plugin marketplace update alexandria >/dev/null 2>&1 || true
-    if claude plugin install alexandria@alexandria --scope user >/dev/null 2>&1; then
-      # Verify-then-remove: the filter below deletes the legacy settings hooks
-      # whenever this flag is set, so trusting the exit code alone could leave
-      # the Author with NO hooks if the plugin didn't genuinely land. Only set
-      # the flag once the installed-plugin registry confirms it; on failure the
-      # flag stays empty and the filter re-adds the settings hooks.
-      alex_plugin_installed && ALEX_PLUGIN_OK=1
-    fi
+    claude plugin install alexandria@alexandria --scope user >/dev/null 2>&1 || true
+    # Re-runs: advance an already-installed plugin to the latest version too
+    # (install alone can no-op or fail on the already-installed case).
+    claude plugin update alexandria@alexandria >/dev/null 2>&1 || true
+    # Verify-then-remove: the filter below deletes the legacy settings hooks
+    # whenever this flag is set, so trusting exit codes alone could leave the
+    # Author with NO hooks if the plugin didn't genuinely land. The installed-
+    # plugin registry is the ground truth — consult it regardless of what the
+    # commands above returned; on failure the flag stays empty and the filter
+    # re-adds the settings hooks.
+    alex_plugin_installed && ALEX_PLUGIN_OK=1
   fi
 
   node -e "
