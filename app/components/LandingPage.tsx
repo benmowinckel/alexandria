@@ -959,23 +959,22 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           flex-direction: column;
           align-items: flex-start;
         }
-        /* Frontispiece subtitle — the Latin motto in Roman small-caps
-           beneath the italic wordmark. Wide tracking, weight 500, faint
-           colour. Sits as a quiet plaque beside the painting; persists
-           across both slides, only the colour follows the theme. */
+        /* Frontispiece subtitle — the Latin motto in the italic hand the
+           back slide used to carry (nav-subtitle-back, pre-2026-07-08):
+           italic lowercase, 13px, gentle tracking — a written line, not
+           the tracked small-caps plaque (founder: that back-slide font,
+           now on both slides). Only the colour follows the theme. */
         .nav-subtitle {
           position: absolute;
           top: 100%;
           left: 0;
           margin-top: 6px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: normal;
+          font-style: italic;
           font-weight: 500;
-          font-size: 10.5px;
-          letter-spacing: 0.32em;
-          text-transform: lowercase;
-          font-variant-caps: all-small-caps;
-          font-feature-settings: "smcp" 1, "kern" 1;
+          font-size: 13px;
+          letter-spacing: 0.04em;
+          font-feature-settings: "kern" 1;
           color: rgba(26, 19, 24, 0.55);
           line-height: 1;
           white-space: nowrap;
@@ -1349,20 +1348,26 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 54px;
-          height: 54px;
+          width: 56px;
+          height: 56px;
           border-radius: 50%;
-          background: rgba(26, 19, 24, 0.45);
-          color: #f5f0e8;
+          /* Hairline ring over frosted glass — the heavy dark disc read
+             as a UI sticker on the faint water; this one sits IN the
+             scene, like a lens of the view itself. Ink triangle. */
+          border: 1px solid rgba(26, 19, 24, 0.38);
+          background: rgba(245, 240, 232, 0.28);
+          backdrop-filter: blur(7px);
+          -webkit-backdrop-filter: blur(7px);
+          color: rgba(26, 19, 24, 0.68);
           opacity: 0;
           /* nudged below the window's centre so it floats on the water,
              beneath the horizon line */
           position: relative;
           top: 13%;
-          transform: scale(0.92);
-          transition: opacity 220ms ease, transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+          transform: scale(0.94);
+          transition: opacity 260ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .film-window-cue svg { margin-left: 3px; }
+        .film-window-cue svg { width: 14px; height: 14px; margin-left: 3px; }
         .film-window-hit:hover .film-window-cue,
         .film-invite.is-hot .film-window-cue {
           opacity: 1;
