@@ -920,12 +920,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
 
         .nav-brand {
-          /* Signature-script exploration — scripts run small, so sized
-             well up from the serif-era 32px. */
-          font-family: var(--font-wordmark), cursive;
-          font-style: normal;
-          font-weight: 400;
-          font-size: 52px;
+          /* Italic-serif wordmark — restored 2026-07-08 after the
+             signature-script exploration (Mrs Saint Delafield) was
+             reverted by the founder: "put back the alexandria and
+             mentes aeternae fonts we had previously." Same treatment
+             on both slides; only the colour follows the theme. */
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-weight: 500;
+          font-size: 32px;
           line-height: 1;
           text-decoration: none;
           letter-spacing: -0.01em;
@@ -2775,12 +2778,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                at ~59% of screen width with room to breathe. */
             background-image: url(/sea-arch-mobile.png);
             background-position: center center;
-            /* Portrait crop fills the viewport with the dark niche +
-               painting (less cream wall visible than at desktop), so
-               the scene reads as a yellow-heavy dark cream. Subtle
-               lift + desaturation pulls it back toward the desktop
-               read. Affects PNG poster and breeze video together. */
-            filter: brightness(1.06) saturate(0.92);
+            /* No filter — the brightness(1.06) lift compensated for the
+               old dark Adam niche; on the already-bright sea scene it
+               washed the faint window out entirely. */
           }
           /* Breeze video sits on top of the PNG; same mobile recentre
              so the niche stays in the visual middle. Without this the
@@ -2876,9 +2876,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             -webkit-backdrop-filter: blur(14px) saturate(1.05);
           }
           .nav-brand {
-            /* Script hand needs more size than the old serif's 22px
-               to stay legible on a phone header. */
-            font-size: 36px;
+            font-size: 22px;
           }
           /* Mobile shows the reading group only; the places (library ·
              marketplace) live in the colophon footer line instead —

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { EB_Garamond, Mrs_Saint_Delafield, Spectral } from "next/font/google";
+import { EB_Garamond, Spectral } from "next/font/google";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
@@ -19,14 +19,6 @@ const spectral = Spectral({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
-});
-
-// The nav wordmark's hand, nothing else — trying the signature script
-// direction (founder exploration, 2026-07-08).
-const wordmark = Mrs_Saint_Delafield({
-  variable: "--font-wordmark",
-  subsets: ["latin"],
-  weight: "400",
 });
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://alexandria-library.com";
@@ -156,7 +148,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${ebGaramond.variable} ${spectral.variable} ${wordmark.variable} antialiased`}
+        className={`${ebGaramond.variable} ${spectral.variable} antialiased`}
       >
         <ThemeProvider>
           {children}
