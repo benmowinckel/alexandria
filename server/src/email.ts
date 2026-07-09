@@ -192,11 +192,9 @@ export async function sendInstallNudge(
   const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; font-size: 1.05rem; line-height: 1.7;">
   <p style="margin: 0 0 1.8rem; color: #8a8078;">ready when you are.</p>
 
-  <p style="margin: 0 0 0.7rem;">1. <a href="${installUrl}" style="color: #3d3630;">install</a> &mdash; everything local, nothing sent anywhere</p>
-  <p style="margin: 0 0 0.7rem;">2. <a href="${installUrl}" style="color: #3d3630;">begin</a> &mdash; drafts a constitution from your files</p>
-  <p style="margin: 0 0 2rem;">3. <a href="${SHORTCUT_URL}" style="color: #3d3630;">shortcut</a> &mdash; save anything worth thinking about</p>
+  <p style="margin: 0 0 1.4rem;">one thing to do: <a href="${installUrl}" style="color: #3d3630;">open your install page</a> and run the one command in your coding agent (claude code, cursor, codex, factory). your agent takes it from there &mdash; everything local, nothing sent anywhere.</p>
 
-  <p style="margin: 0 0 1.6rem; color: #8a8078; font-size: 0.95rem;">keep adding via the shortcut meanwhile &mdash; what you save becomes your first session.</p>
+  <p style="margin: 0 0 2rem; color: #8a8078; font-size: 0.95rem;">until then, the <a href="${SHORTCUT_URL}" style="color: #8a8078;">shortcut</a> &mdash; save anything worth thinking about; it becomes your first session.</p>
 
   <p style="margin: 0 0 0.4rem; font-size: 0.9rem; color: #8a8078;">your kin code: <code style="font-family: ui-monospace, monospace; font-size: 0.85em; padding: 1px 6px; background: rgba(61,54,48,0.05); border-radius: 3px; color: #3d3630;">${githubLogin}</code> &mdash; <a href="${kinLink}" style="color: #8a8078;">invite link</a></p>
 
@@ -228,7 +226,7 @@ export async function sendOnboardCommand(
   unsubscribeToken: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; font-size: 1.05rem; line-height: 1.7;">
-  <p style="margin: 0 0 1.4rem;">here it is. when you&rsquo;re at your computer, paste this into a terminal:</p>
+  <p style="margin: 0 0 1.4rem;">here it is. when you&rsquo;re at your computer, paste this into your coding agent (claude code, cursor, codex, factory):</p>
   ${onboardCommandBlock(installToken)}
   <p style="margin: 0 0 1.4rem; color: #8a8078;">it links up everything you&rsquo;ve been saving.</p>
   <p style="margin: 0 0 1.8rem;">until then &mdash; <a href="${SHORTCUT_URL}" style="color: #3d3630;">add the shortcut</a>: save anything you read, hear, or think, straight from your phone.</p>
@@ -250,7 +248,7 @@ export async function sendOnboardFollowup(
   const first = nth <= 1;
   const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; font-size: 1.05rem; line-height: 1.7;">
   <p style="margin: 0 0 1.4rem;">${first
-    ? 'still here when you are &mdash; paste this into a terminal at your computer:'
+    ? 'still here when you are &mdash; paste this into your coding agent when you&rsquo;re back at your computer:'
     : 'last one from me. the command:'}</p>
   ${onboardCommandBlock(installToken)}
   <p style="margin: 0 0 1.8rem; color: #8a8078;">${first

@@ -15,18 +15,17 @@ A single ed25519 keypair, held offline.
 
 ## What is signed
 
-A single manifest, `factory/manifest.txt`, lists the SHA-256 of every file that runs as code or steers the model:
+A single manifest, `factory/manifest.txt`, lists the SHA-256 of every file that runs as code or steers the model — the payload, every canon module, the signed skills and scripts, and the plugin's shell files. The authoritative set is the `SIGNED_FILES` array in `factory/ship.sh`; the manifest itself is one `<sha256>  <path>` line per file. Excerpt (trimmed — read the real file for the full list):
 
 ```
 <sha256>  factory/hooks/payload.sh
+<sha256>  factory/canon/foundation.md
 <sha256>  factory/canon/axioms.md
 <sha256>  factory/canon/methodology.md
-<sha256>  factory/canon/editor.md
-<sha256>  factory/canon/mercury.md
-<sha256>  factory/canon/publisher.md
-<sha256>  factory/canon/library.md
-<sha256>  factory/canon/filter.md
-<sha256>  factory/canon/bookshelf.md
+...
+<sha256>  factory/skills/scheduled.md
+<sha256>  factory/scripts/install.sh
+<sha256>  factory/migrate.sh
 ```
 
 The manifest is signed with the offline key (`factory/manifest.txt.sig`), in the namespace `alexandria` with identity `alexandria-payload-signing`.

@@ -1,6 +1,6 @@
 # Mechanics
 
-You are about to run a curl command that puts files on your machine, modifies your ai config, and pulls live code from GitHub on every session. Read this once. If anything here doesn't match the scripts, don't run it. (Installing from inside Claude Desktop or Cowork instead? That's the same code delivered as a plugin — see [The plugin](#the-plugin-claude-code-claude-desktop-cowork) below. Everything on this page still applies.)
+You are about to run a curl command that puts files on your machine, modifies your ai config, and pulls live code from GitHub on every session. Read this once. If anything here doesn't match the scripts, don't run it. (Using Claude Desktop or Cowork? The same code reaches those apps as a plugin, installed by the same setup run once on your machine — see [The plugin](#the-plugin-claude-code-claude-desktop-cowork) below. Everything on this page still applies.)
 
 ## TL;DR for the auditor
 
@@ -51,7 +51,7 @@ The setup is one bash script. The hooks payload is one bash script. The shim is 
 | `system/.hooks_payload` | The most recently verified payload, cached. |
 | `system/.canon_manifest` | The signed manifest that backed this cached payload — every canon module is hash-checked against it before being written, so a compromised GitHub repo cannot push poisoned canon either. |
 | `system/allowed_signers` | The maintainer's offline ed25519 public key. Trust root for payload + manifest signature verification. |
-| `system/canon/` | The canon modules, cached locally. **Foundation:** `foundation.md` (the incompressible core — the minimal closed-loop system). **Founder module** (Author #1's default, forkable): `axioms.md`, `methodology.md`, `editor.md`, `mercury.md`, `publisher.md`, `library.md`, `filter.md`, `bookshelf.md`. Plus `MODULES.md` (the tier map). **Sovereign and never auto-written** — seeded once at install; after that nothing is auto-applied. Each session checks upstream, **verifies it against the signed manifest**, and surfaces any update as a notice; you pull it (verified) or ignore it. |
+| `system/canon/` | The canon modules, cached locally. **Foundation:** `foundation.md` (the incompressible core — the minimal closed-loop system). **Founder module** (Author #1's default, forkable): `axioms.md`, `methodology.md`, `editor.md`, `mercury.md`, `publisher.md`, `library.md`, `filter.md`, `bookshelf.md`, `plm.md`, `twin.md`. Plus `MODULES.md` (the tier map). **Sovereign and never auto-written** — seeded once at install; after that nothing is auto-applied. Each session checks upstream, **verifies it against the signed manifest**, and surfaces any update as a notice; you pull it (verified) or ignore it. |
 | `system/.api_key` | Your API key, mode 0600. |
 | `system/.block` | One-time onboarding instructions cached locally. |
 | `system/.*` (other) | Ephemeral state — session ID markers, sync logs, the error log, autoloop dedup, account-status cache, last-maintenance timestamps. All readable. None leave the machine. |
@@ -99,7 +99,7 @@ The public repo doubles as a Claude plugin marketplace (`.claude-plugin/marketpl
 Install paths:
 
 - **Claude Code:** nothing to do — `setup.sh` installs the plugin automatically (settings-hooks fallback on CLIs that predate plugins). Manual: `claude plugin marketplace add mowinckelb/alexandria && claude plugin install alexandria@alexandria`.
-- **Claude Desktop / Cowork:** settings → plugins → add marketplace `mowinckelb/alexandria` → install **alexandria**. In Cowork, attach your `alexandria` folder to the session if it isn't at `~/alexandria` — Cowork sessions only see folders you attach.
+- **Claude Desktop / Cowork:** no in-app install — run the setup once on your machine via a coding agent (Claude Code, Cursor, Codex, Factory); the plugin it registers also loads in Desktop and Cowork. In Cowork, attach your `alexandria` folder to the session and type `/a` — Cowork sessions only see folders you attach.
 
 Result: session-start context load and session-end capture run in every Claude Code, Claude Desktop, and Cowork session. Cursor, Codex, and Factory are unchanged — `setup.sh` wires them directly. One behavior source (the signed payload), N dumb shells; the sovereign folder is the interop bus between all of them.
 
@@ -159,9 +159,10 @@ Every outbound call the install or hooks make. Complete list.
 | Call | Trigger | Sends | Receives |
 |---|---|---|---|
 | `GET raw.githubusercontent.com/.../factory/setup.sh` | You, once, at install | nothing | the install script |
+| `GET alexandria-library.com/a/<token>` (302s via `api.alexandria-library.com/a/<token>`) | You, once, at install — only if you used the command from the onboarding email (the public copy-paste command is the tokenless `/a`) | the one-time token in the URL path, which marks that email capture as installed so the follow-up nudges stop — no other data | redirect to the same `setup.sh` above |
 | `GET raw.githubusercontent.com/.../factory/hooks/{shim.sh,payload.sh}` | Install (both); session start (payload only) | nothing | hooks |
 | `GET raw.githubusercontent.com/.../factory/manifest.txt(.sig)` | Session start | nothing | signed manifest + signature |
-| `GET raw.githubusercontent.com/.../factory/canon/*.md` | Session start, eight modules | nothing | canon |
+| `GET raw.githubusercontent.com/.../factory/canon/*.md` | Session start, eleven modules | nothing | canon |
 | `GET raw.githubusercontent.com/.../factory/{skills,hooks/cursor,templates,scripts}/...` | Install + session-start drift checks | nothing | factory files for skill/hook/template install + comparison |
 | `GET api.alexandria-library.com/alexandria` | Setup probe + session status | API key (Bearer) | account + membership status |
 | `POST api.alexandria-library.com/canon/status` | Session start, fire-and-forget | API key, list of canon modules that failed to fetch, whether divergence notice exists | 200 |
@@ -173,7 +174,7 @@ Every outbound call the install or hooks make. Complete list.
 | `POST api.alexandria-library.com/feedback` | Install (one install status report, attributed to your account, no file content) + session end (only if YOU typed into `~/alexandria/system/.session_feedback`) | API key, the text being submitted | 200/4xx |
 | `git push` / `git pull --rebase` against your own `alexandria-private` GitHub repo | Session start (pull then push) + session end (push) | the tracked contents of `~/alexandria/` — gitignored paths excluded: `system/canon/`, `system/hooks/`, `system/.*`, `files/library/`, `node_modules/` | git ref data |
 | `gh` CLI: `gh ssh-key add`, `gh repo create alexandria-private`, `gh repo fork mowinckelb/alexandria` | Install, only if `gh` is authenticated | your separate `gh` OAuth token (not your Alexandria API key) | success/failure |
-| `git clone github.com/mowinckelb/alexandria` via the Claude plugin system | Plugin install (`setup.sh` on Claude Code, or you, in Desktop/Cowork settings) + the Claude app's own marketplace refreshes | nothing | the public repo (the plugin lives at `factory/plugin/`) |
+| `git clone github.com/mowinckelb/alexandria` via the Claude plugin system | Plugin install (`setup.sh` on Claude Code) + the Claude app's own marketplace refreshes | nothing | the public repo (the plugin lives at `factory/plugin/`) |
 
 That is all. No telemetry pings, no error reporters, no third-party CDNs, no analytics SDKs, no DNS callbacks beyond what's listed. You can confirm by `grep -E 'curl|wget|http' ~/alexandria/system/.hooks_payload`.
 
@@ -226,7 +227,7 @@ curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/plugin
 curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/manifest.txt
 curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/manifest.txt.sig
 
-# The canon the ai follows (one of eight modules)
+# The canon the ai follows (one of eleven modules)
 curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/canon/methodology.md
 
 # What the ai is told via skill
@@ -272,7 +273,7 @@ The first should match only the `curl` calls in the network inventory above. The
 # on GitHub stay yours; we never had access to that repo.
 rm -rf ~/alexandria ~/alexandria-fork
 
-# Remove the plugin (Claude Code; in Claude Desktop / Cowork: settings → plugins → uninstall)
+# Remove the plugin (Desktop and Cowork read the same plugin registration)
 claude plugin uninstall alexandria@alexandria 2>/dev/null
 claude plugin marketplace remove alexandria 2>/dev/null
 

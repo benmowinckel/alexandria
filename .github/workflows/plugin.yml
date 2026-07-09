@@ -6,12 +6,35 @@ on:
       - 'factory/plugin/**'
       - '.claude-plugin/**'
       - 'factory/hooks/shim.sh'
+      # Signing surface — the signing job below must run on any commit that
+      # touches a signed file, the manifest, or the signer roots, or a
+      # "committed but never re-signed" drift ships without CI ever looking.
+      - 'factory/manifest.txt'
+      - 'factory/manifest.txt.sig'
+      - 'factory/setup.sh'
+      - 'factory/ship.sh'
+      - 'factory/canon/**'
+      - 'factory/hooks/payload.sh'
+      - 'factory/skills/**'
+      - 'factory/scripts/**'
+      - 'factory/systems/**'
+      - 'factory/migrate.sh'
   pull_request:
     branches: [main]
     paths:
       - 'factory/plugin/**'
       - '.claude-plugin/**'
       - 'factory/hooks/shim.sh'
+      - 'factory/manifest.txt'
+      - 'factory/manifest.txt.sig'
+      - 'factory/setup.sh'
+      - 'factory/ship.sh'
+      - 'factory/canon/**'
+      - 'factory/hooks/payload.sh'
+      - 'factory/skills/**'
+      - 'factory/scripts/**'
+      - 'factory/systems/**'
+      - 'factory/migrate.sh'
 
 jobs:
   smoke:
@@ -65,3 +88,52 @@ jobs:
           export HOME=$FAKE3/home CLAUDE_PLUGIN_ROOT=$GITHUB_WORKSPACE/factory/plugin
           OUT=$(bash $GITHUB_WORKSPACE/factory/plugin/scripts/plugin-shim.sh session-start)
           echo "$OUT" | grep -q "no alexandria folder exists yet"
+
+  # Signing integrity — makes "committed but never re-signed" impossible to
+  # ship green. Three gates:
+  #   (a) manifest.txt.sig verifies against the exact public key setup.sh
+  #       installs as the trust root (extracted from setup.sh itself, so CI
+  #       checks the same key users get — no second copy to drift),
+  #   (b) every path listed in manifest.txt re-hashes to its pinned sha256,
+  #   (c) every path in ship.sh's SIGNED_FILES appears in manifest.txt.
+  #
+  # NOTE (2026-07-09): gate (c) FAILS on current HEAD by design — the plugin
+  # files (factory/plugin/*) are in SIGNED_FILES but were committed without a
+  # re-sign, so they are missing from manifest.txt. Red here means exactly
+  # that drift; it goes green the moment the maintainer re-signs
+  # (bash factory/ship.sh). Intended — do not weaken this job to pass.
+  signing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Manifest signature verifies against the setup.sh trust root
+        run: |
+          # Extract the allowed_signers block exactly as setup.sh writes it
+          # to ~/alexandria/system/allowed_signers (the <<'EOF' heredoc).
+          awk '/^cat > .*allowed_signers/{f=1;next} f&&/^EOF$/{exit} f' factory/setup.sh > "$RUNNER_TEMP/allowed_signers"
+          test -s "$RUNNER_TEMP/allowed_signers" || { echo "could not extract allowed_signers from factory/setup.sh"; exit 1; }
+          ssh-keygen -Y verify \
+            -f "$RUNNER_TEMP/allowed_signers" \
+            -I alexandria-payload-signing \
+            -n alexandria \
+            -s factory/manifest.txt.sig < factory/manifest.txt
+
+      - name: Every manifest entry re-hashes to its pinned sha256
+        run: sha256sum --strict -c factory/manifest.txt
+
+      - name: Every SIGNED_FILES entry is present in the manifest
+        run: |
+          sed -n '/^SIGNED_FILES=(/,/^)/p' factory/ship.sh \
+            | sed '1d;$d;s/#.*//;s/^[[:space:]]*//;s/[[:space:]]*$//' \
+            | grep -v '^$' > "$RUNNER_TEMP/signed_files.txt"
+          test -s "$RUNNER_TEMP/signed_files.txt" || { echo "could not extract SIGNED_FILES from factory/ship.sh"; exit 1; }
+          awk '{print $2}' factory/manifest.txt > "$RUNNER_TEMP/manifest_paths.txt"
+          missing=0
+          while IFS= read -r f; do
+            grep -qxF "$f" "$RUNNER_TEMP/manifest_paths.txt" || {
+              echo "NOT IN MANIFEST: $f — listed in ship.sh SIGNED_FILES but never signed. Run 'bash factory/ship.sh' to re-sign."
+              missing=1
+            }
+          done < "$RUNNER_TEMP/signed_files.txt"
+          exit $missing

@@ -64,7 +64,7 @@ export default function MobileStart() {
             <p className="mobile-email-hint">
               {state === 'error'
                 ? 'couldn’t send — try again.'
-                : 'we’ll email you the install command.'}
+                : 'we’ll email you the install command — it runs in a coding agent (claude code, cursor, codex, factory).'}
             </p>
           </>
         )}

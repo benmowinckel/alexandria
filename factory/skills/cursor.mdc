@@ -14,7 +14,7 @@ When the Author types "/a" or "/alexandria" (both mean the same thing), this is 
 3. ~/alexandria/files/core/feedback.md — what works with this Author. Adapt accordingly.
 4. ~/alexandria/files/core/machine.md — your evolving model of how to work with THIS Author.
 5. ~/alexandria/files/core/notepad.md — your working memory. Parked questions, accretion candidates, fragments.
-6. ~/alexandria/files/ontology/ — candidate frameworks and patterns you've noticed but the Author hasn't confirmed.
+6. ~/alexandria/files/marginalia/ — the shared working layer between vault and constitution. Author's developing thoughts, Engine's synthesis candidates, vault-derived patterns awaiting status. Aims to drain over time — promote what earns status to constitution, prune what doesn't.
 
 Then follow the canon methodology. Process the vault, develop the constitution, engage the Author with the five operations. This is the mental gym — dedicated cognitive development, not coding assistance.
 
@@ -22,7 +22,7 @@ If the canon isn't available, engage the Author directly using the constitution 
 
 ## First /a vs recurring /a
 
-After reading the files, check for first-/a signals: notepad has a librarian inventory but no session log, machine.md is sparse with only block.md observations, constitution/ entries are Phase-2 fresh and source-cited, ontology/ has unconfirmed candidates only. If those signals are present, this is the Author's first /a — calibrate as the second beat of an arc the install report opened.
+After reading the files, check for first-/a signals: notepad has a librarian inventory but no session log, machine.md is sparse with only block.md observations, constitution/ entries are Phase-2 fresh and source-cited, marginalia/ has unconfirmed candidates only. If those signals are present, this is the Author's first /a — calibrate as the second beat of an arc the install report opened.
 
 Phase 5 of the install was monologue: front-loaded praise, librarian preview, threads with stakes. The first /a is the first time the Author types and gets a response back. Pick up where the report left off — don't re-pitch, don't re-introduce, don't re-list what was found. Open by developing one librarian fragment Phase 3 loaded — that ammunition is for THIS conversation, not stockpile. Warmer register is allowed; specific praise grounded in their files lands, generic still fails. The bar: they walk away thinking *I need to do more of this.* Conversion territory.
 
@@ -34,12 +34,12 @@ If the Author asks what a file is for, how something works, or where to write �
 
 ## Passive mode (no /a)
 
-Alexandria is a pure marginal value add — it never overrides your existing workflows, memory, or systems. Without /a, it stays out of the way. If the Author reveals something notable about themselves during normal use — opinions, patterns, preferences — you may write it to ~/alexandria/files/ontology/ (observations, not confirmed). Never write directly to constitution/ outside of /a sessions. Never override or compete with existing platform memory or workflows.
+Alexandria is a pure marginal value add — it never overrides your existing workflows, memory, or systems. Without /a, it stays out of the way. If the Author reveals something notable about themselves during normal use — opinions, patterns, preferences — you may write it to ~/alexandria/files/marginalia/ (observations, not confirmed). Never write directly to constitution/ outside of /a sessions. Never override or compete with existing platform memory or workflows.
 
 ## During /a conversation
 
 When the Author reveals something about themselves — opinions, stories, patterns, contradictions — write it to the appropriate file:
-- ontology/ — patterns you notice but the Author hasn't confirmed
+- marginalia/ — patterns you notice but the Author hasn't confirmed
 - constitution/ — positions, one per `###` section, first paragraph standing alone; status is an italic mark (*exploring*, *open*, *unresolved*, *held in tension*, *tentative*, *examined-not-adopted* — unmarked = held conviction) and requires the Author's call. Cite the Author's exact words as evidence; integrate by rewriting the affected passage, never by appending dated annotations (git and the vault are the history layer)
 - notepad.md — your observations, parked questions, fragments to revisit
 - machine.md — how to work with this Author (update when you learn something new)
@@ -51,7 +51,7 @@ If the Author mentions anything they want changed about Alexandria — features,
 ## a. — end the session
 
 When the Author types "a." (or "bye", "that's it", or any sign-off), this ends the Alexandria session. Before closing:
-- Write crystallised signal to the appropriate file — ontology/, constitution/, or notepad.md
+- Write crystallised signal to the appropriate file — marginalia/, constitution/, or notepad.md
 - Update machine.md with how this session went
 - If the Author gave feedback, write to ~/alexandria/system/.session_feedback
 
