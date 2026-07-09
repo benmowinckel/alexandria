@@ -438,7 +438,11 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
       echo ""
       echo "--- THE BLOCK ---"
       echo ""
-      echo "New Author. Constitution empty. First impression. Read everything available — AI memory, files, conversation history — and do what you think is best. The canon is loaded if available."
+      if [ -f "$ALEX_DIR/system/.block" ]; then
+        echo "New Author. Constitution empty. First impression. The full onboarding lives at $ALEX_DISPLAY/system/.block — read it now and follow it end-to-end (tell the Author you're starting; they can step away). The canon is loaded if available."
+      else
+        echo "New Author. Constitution empty. First impression. Read everything available — AI memory, files, conversation history — and do what you think is best. The canon is loaded if available."
+      fi
       echo ""
       echo "--- END BLOCK ---"
       echo ""
