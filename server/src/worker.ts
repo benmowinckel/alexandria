@@ -621,21 +621,26 @@ app.post('/onboard', async (c) => {
       if (raw) record = JSON.parse(raw) as OnboardRecord;
     }
 
-    if (!record) {
-      // Unsubscribe rides the existing waitlist substrate (/email/stop already
-      // resolves waitlist unsubscribe_tokens). COALESCE keeps whatever token
-      // the email already has (e.g. from a /follow signup) and never touches
-      // its existing type.
-      const newToken = generateToken();
-      const upserted = await db.prepare(
-        `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)
-         VALUES (?, 'onboard', 'public', ?, ?)
-         ON CONFLICT(email) DO UPDATE
-           SET unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token)
-         RETURNING unsubscribe_token`,
-      ).bind(normalizedEmail, new Date().toISOString(), newToken)
-        .first<{ unsubscribe_token: string | null }>();
+    // The waitlist upsert runs on EVERY submit, not just first capture. Typing
+    // your email into the /start install box is an explicit opt-in, so it must
+    // (a) guarantee the email is on the list and (b) clear any prior opt-out —
+    // a returning submitter re-engaging from /start overrides an earlier
+    // /email/stop, otherwise the reminders + list membership they just asked
+    // for are silently suppressed. Unsubscribe rides the existing waitlist
+    // substrate (/email/stop resolves waitlist unsubscribe_tokens); COALESCE
+    // keeps whatever token the email already has and never touches its type.
+    const newToken = generateToken();
+    const upserted = await db.prepare(
+      `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)
+       VALUES (?, 'onboard', 'public', ?, ?)
+       ON CONFLICT(email) DO UPDATE
+         SET unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token),
+             opted_out_at = NULL
+       RETURNING unsubscribe_token`,
+    ).bind(normalizedEmail, new Date().toISOString(), newToken)
+      .first<{ unsubscribe_token: string | null }>();
 
+    if (!record) {
       installToken = generateToken();
       record = {
         email: normalizedEmail,
