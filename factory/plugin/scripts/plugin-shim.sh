@@ -11,12 +11,18 @@
 MODE="$1"
 PLUGIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# ── 1. Legacy-defer: if setup.sh's settings.json hooks are installed on this
-# machine, they own the session lifecycle — exit so nothing fires twice.
-# setup.sh removes those hooks when it migrates an install to the plugin.
-if grep -q 'alexandria/system/hooks/shim\.sh' "$HOME/.claude/settings.json" 2>/dev/null; then
-  exit 0
-fi
+# ── 1. Legacy-defer: if settings.json hooks run the shim (user or project
+# scope), they own the session lifecycle — exit so nothing fires twice.
+# setup.sh removes the user-scope ones when it migrates an install to the
+# plugin. The match is anchored to hook "command" entries specifically: a
+# permissions rule that merely mentions the shim path (e.g. an old
+# always-allow) must NOT defer us — that would silently disable capture.
+for settings in "$HOME/.claude/settings.json" "${CLAUDE_PROJECT_DIR:-}/.claude/settings.json"; do
+  [ -f "$settings" ] || continue
+  if grep -qE '"command"[[:space:]]*:[[:space:]]*"[^"]*alexandria/system/hooks/shim\.sh' "$settings" 2>/dev/null; then
+    exit 0
+  fi
+done
 
 # ── 2. Locate the alexandria folder. Host default first; then the Cowork VM
 # case — the folder the Author attached, visible from the session cwd.
