@@ -39,6 +39,27 @@ async function checkAdminRateLimit(endpoint: string, limit = 10, windowSec = 60)
   }
 }
 
+/**
+ * KV-backed per-account rate limit for authenticated endpoints with
+ * side effects per call (GitHub commits, founder emails). Same
+ * mechanics as checkAdminRateLimit, keyed on the acting account so
+ * one Author hammering an endpoint can't exhaust it for everyone.
+ * Returns true if the request should be blocked.
+ */
+async function checkAccountRateLimit(endpoint: string, login: string, limit = 5, windowSec = 600): Promise<boolean> {
+  try {
+    const kv = getKV();
+    const key = `rate:account:${endpoint}:${login}`;
+    const raw = await kv.get(key);
+    const count = raw ? parseInt(raw, 10) : 0;
+    if (count >= limit) return true;
+    await kv.put(key, String(count + 1), { expirationTtl: windowSec });
+    return false;
+  } catch {
+    return false; // don't block on KV failure
+  }
+}
+
 /** Stripe cancel + KV + D1 + R2 — shared by DELETE /account and admin removal.
  *  Marketplace repo signals/feedback are unchanged (same as self-delete). */
 async function purgeAuthorAccount(account: Account, storeKey: string | null, authKeyHash: string | null) {
@@ -896,6 +917,7 @@ export function registerRoutes(app: Hono) {
   app.post('/account/feedback', async (c) => {
     const account = await authorFromRequest(c);
     if (!account) return c.json({ error: 'Unauthorized' }, 401);
+    if (await checkAccountRateLimit('account-feedback', account.github_login, 5, 600)) return c.json({ error: 'Rate limited (5/10min)' }, 429);
 
     let body: { message?: string } = {};
     try { body = await c.req.json() as { message?: string }; } catch {}
@@ -1032,6 +1054,7 @@ export function registerRoutes(app: Hono) {
     const auth = await requireAuth(c);
     if (!auth) return c.json({ error: 'Unauthorized' }, 401);
     const { account } = auth;
+    if (await checkAccountRateLimit('feedback', account.github_login, 5, 600)) return c.json({ error: 'Rate limited (5/10min)' }, 429);
 
     const body = await c.req.json().catch(() => ({}));
     const { text, context } = body;
@@ -1238,21 +1261,24 @@ export function registerRoutes(app: Hono) {
   // is generated per-nudge with a 14d TTL; expired tokens fall back to
   // /signup (clean OAuth flow). Redemption is logged so we know whether the
   // email actually drove a click (mirror loop between "nudge sent" and
-  // "installed_after_nudge").
+  // "installed_after_nudge"). Single-use: the rendered page carries the live
+  // api key, so the token is deleted on first redemption (same pattern as
+  // the welcome/handoff codes) instead of staying replayable for its TTL.
   app.get('/install/:token', async (c) => {
     const token = c.req.param('token');
     if (!token) return c.text('missing token', 400);
-    const stored = await getKV().get(`install:${token}`);
+    const kv = getKV();
+    const stored = await kv.get(`install:${token}`);
     if (!stored) {
       logEvent('install_token_expired', { token_prefix: token.slice(0, 8) });
       return c.redirect(`${getWebsiteUrl()}/signup`, 302);
     }
+    await kv.delete(`install:${token}`);
     const { api_key, github_login } = JSON.parse(stored) as { api_key: string; github_login: string };
     logEvent('install_token_redeemed', { author: github_login });
     const number = await assignAuthorNumber(github_login);
     // Mint a browser session so the founding-member page lands them signed-in,
     // and route it through the welcome handoff so the cookie sticks (Safari).
-    const kv = getKV();
     const sessionToken = randomBytes(24).toString('hex');
     await kv.put(`library:session:${sessionToken}`, JSON.stringify({ github_login }), { expirationTtl: 30 * 24 * 60 * 60 });
     return c.redirect(await welcomeHandoffUrl(kv, sessionToken, api_key, github_login, true, number ?? 0));
