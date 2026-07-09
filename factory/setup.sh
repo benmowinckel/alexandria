@@ -702,7 +702,11 @@ esac
 CLAUDE_DETECTED="no"
 if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   CLAUDE_DETECTED="yes"
-  if [ -f "$HOME/.claude/settings.json" ] && \
+  # Two valid states: plugin delivery (preferred — also covers Claude
+  # Desktop/Cowork) or legacy settings.json hooks (older CLIs).
+  if [ -n "${ALEX_PLUGIN_OK:-}" ] && [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ]; then
+    STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a + /alexandria skill + plugin (Claude Code/Desktop/Cowork)"
+  elif [ -f "$HOME/.claude/settings.json" ] && \
      grep -q "alexandria/system/hooks/shim.sh" "$HOME/.claude/settings.json" 2>/dev/null && \
      [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ]; then
     STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a + /alexandria skill + session hooks wired"

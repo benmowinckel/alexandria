@@ -567,7 +567,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     root.setProperty('--theme-border-soft', theme.borderSoft);
   }, [theme]);
   return (
-    <div className="landing-root" data-theme={theme.id} data-adam="1" data-centerpiece={centerpieceVariant ?? undefined}>
+    <div className="landing-root" data-theme={theme.id} data-centerpiece={centerpieceVariant ?? undefined}>
       {/* ═════ PERSISTENT NAV — fixed over both slides. Colors switch at
              the peel midpoint so it stays readable on top (cream) and on
              any bottom-slide theme. ═════ */}
@@ -620,38 +620,36 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            is the only ornament. */}
       <div className="top-slide" ref={topRef}>
         {/* Breeze video — the same scene as the PNG background, with
-            tree-leaf shadows swaying. PNG stays as the .top-slide
-            background so first paint is instant; video fades in on top
-            once it can play. Ping-pong loop (forward+reverse), so it's
-            seamless with no visible cut. Reduced-motion users keep the
-            still PNG (video is hidden via media query). */}
+            tree-leaf shadows swaying and a faint shimmer on the sea.
+            PNG stays as the .top-slide background so first paint is
+            instant; video fades in on top once it can play. Reduced-
+            motion users keep the still PNG (video is hidden via media
+            query). Single-source pipeline (2026-07-08): the background
+            still IS frame zero of this video (extracted, 2K-upscaled),
+            and the loop is ping-pong encoded (forward+reverse, boundary
+            frames deduped) — so the fade-in cannot jump and the loop
+            cannot stutter, by construction. No watermark (the old Veo
+            mask is gone with the old renderer). */}
         {showBreeze && (
-          <>
-            <video
-              ref={videoRef}
-              className="adam-video"
-              poster="/adam-arch-wide.png"
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="metadata"
-              aria-hidden
-            >
-              {/* WebM (137KB, VP9) first — Android Chrome and most
-                  modern browsers pick it. Safari falls through to the
-                  H.264 MP4 (923KB). preload="metadata" so cellular
-                  users don't eat the full download until the canplay
-                  event drives the fade-in. */}
-              <source src="/adam-scene.webm" type="video/webm" />
-              <source src="/adam-scene.mp4" type="video/mp4" />
-            </video>
-            {/* Veo watermark mask — Fast-plan output stamps "Veo" in
-                the bottom-right; soft cream radial blend covers the
-                corner. Only rendered with the video — the PNG poster
-                has no watermark. */}
-            <div className="veo-mask" aria-hidden />
-          </>
+          <video
+            ref={videoRef}
+            className="breeze-video"
+            poster="/pharos-arch-wide.png"
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            aria-hidden
+          >
+            {/* WebM (67KB, VP9) first — Android Chrome and most
+                modern browsers pick it. Safari falls through to the
+                H.264 MP4 (913KB). preload="metadata" so cellular
+                users don't eat the full download until the canplay
+                event drives the fade-in. */}
+            <source src="/pharos-scene.webm" type="video/webm" />
+            <source src="/pharos-scene.mp4" type="video/mp4" />
+          </video>
         )}
         {/* Stage canvas — pixel-locked 1440×900 frame uniformly scaled to
             the viewport via --stage-scale-top. Inside this wrapper everything
@@ -909,10 +907,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
 
         .nav-brand {
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-weight: 500;
-          font-size: 32px;
+          /* Signature-script exploration — scripts run small, so sized
+             well up from the serif-era 32px. */
+          font-family: var(--font-wordmark), cursive;
+          font-style: normal;
+          font-weight: 400;
+          font-size: 52px;
           line-height: 1;
           text-decoration: none;
           letter-spacing: -0.01em;
@@ -1240,7 +1240,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              image's edge cream so any uncovered area at extreme
              aspect ratios still reads as the same wall. */
           background-color: #d8ccb6;
-          background-image: url(/adam-arch-wide.png);
+          /* PHAROS scene (2026-07-08) — the fresco niche re-authored as an
+             open window onto the harbor: the Lighthouse of Alexandria hazy
+             across pale water. You stand inside the library, looking out.
+             Replaces adam-arch-wide.png (Creation-of-Adam — cut per the
+             image anti-reflex, design.md: the ai industry's stock visual). */
+          background-image: url(/pharos-arch-wide.png);
           /* Desktop landscape viewports crop the wide image evenly;
              75% pulls the niche from right-of-centre to visual middle
              and brings the tree shadow into view on the left. Mobile
@@ -1260,7 +1265,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            sees no jump when the video begins playing. Fades in on
            canplay (.is-ready) to hide Veo's slight bloom/softening
            vs the source PNG. */
-        .adam-video {
+        .breeze-video {
           position: absolute;
           inset: 0;
           width: 100%;
@@ -1272,45 +1277,27 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           pointer-events: none;
           z-index: 0;
         }
-        .adam-video.is-ready {
+        .breeze-video.is-ready {
           opacity: 1;
         }
         /* Reduced-motion: keep the still frontispiece. */
         @media (prefers-reduced-motion: reduce) {
-          .adam-video { display: none; }
-        }
-        /* Veo watermark mask — soft cream radial blob in the bottom-
-           right covering the ~120×40px stamp on Fast-plan output. */
-        .veo-mask {
-          position: absolute;
-          right: 0;
-          bottom: 0;
-          width: 220px;
-          height: 110px;
-          background: radial-gradient(
-            ellipse at 78% 70%,
-            #d8ccb6 0%,
-            rgba(216, 204, 182, 0.96) 32%,
-            rgba(216, 204, 182, 0.65) 60%,
-            rgba(216, 204, 182, 0) 100%
-          );
-          pointer-events: none;
-          z-index: 1;
+          .breeze-video { display: none; }
         }
         /* FILM PLATE — the quiet line beneath the arch ("the demo ▸").
            Anchored to the WALL's cover geometry, not the stage:
            --wall-w/--wall-h reproduce background-size: cover for the
-           1498×843 image (AR 1.7771); x sits on the arch's centre
-           (image-fraction 0.505, measured off the arch's apex and inner
-           side edges, with the 75% crop position) and y just below the
-           arch's foot (bottom fraction 0.6556 + margin) at every aspect
+           2247×1265 pharos image (AR 1.7771, same as the old wall); x
+           sits on the window's centre (image-fraction 0.514, measured
+           off the inner side edges, with the 75% crop position) and y
+           below the outer ledge line (0.711 + margin) at every aspect
            ratio. Type scales gently with the scene. */
         .film-invite {
           position: absolute;
           --wall-w: max(100vw, 177.71vh);
           --wall-h: max(100vh, 56.27vw);
-          left: calc(75vw - 0.245 * var(--wall-w));
-          top: calc(50vh + 0.187 * var(--wall-h));
+          left: calc(75vw - 0.236 * var(--wall-w));
+          top: calc(50vh + 0.238 * var(--wall-h));
           transform: translate(-50%, -50%);
           margin: 0;
           display: flex;
@@ -1319,16 +1306,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           z-index: 2;
         }
         /* WINDOW HIT-AREA — the art itself is the button. Invisible zone
-           over the arch's inner window (image fractions: centre x 0.505,
-           y 0.28→0.6556), expressed as offsets from the plate's anchor
+           over the arch's inner window (image fractions: centre x 0.514,
+           y 0.285→0.649), expressed as offsets from the plate's anchor
            point in the same wall units. Hover raises a quiet play cue at
            the window's centre and inks the caption (shared .is-hot). */
         .film-window-hit {
           position: absolute;
           left: 50%;
-          top: calc(50% - 0.219 * var(--wall-h));
-          width: calc(0.27 * var(--wall-w));
-          height: calc(0.3756 * var(--wall-h));
+          top: calc(50% - 0.271 * var(--wall-h));
+          width: calc(0.273 * var(--wall-w));
+          height: calc(0.364 * var(--wall-h));
           transform: translate(-50%, -50%);
           display: flex;
           align-items: center;
@@ -1350,6 +1337,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           background: rgba(26, 19, 24, 0.45);
           color: #f5f0e8;
           opacity: 0;
+          /* nudged below the window's centre so it floats on the water,
+             not over the Pharos */
+          position: relative;
+          top: 13%;
           transform: scale(0.92);
           transition: opacity 220ms ease, transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
         }
@@ -2777,7 +2768,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           /* Breeze video sits on top of the PNG; same mobile recentre
              so the niche stays in the visual middle. Without this the
              desktop 75% crop pushes the painting halfway off the left. */
-          .adam-video {
+          .breeze-video {
             object-position: center center;
           }
           /* Mobile bypasses the desktop scaled canvases — display:contents
@@ -2868,7 +2859,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             -webkit-backdrop-filter: blur(14px) saturate(1.05);
           }
           .nav-brand {
-            font-size: 22px;
+            /* Script hand needs more size than the old serif's 22px
+               to stay legible on a phone header. */
+            font-size: 36px;
           }
           /* Mobile shows the reading group only; the places (library ·
              marketplace) live in the colophon footer line instead —
@@ -2990,19 +2983,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              arch's foot (~66svh). */
           .film-invite {
             left: 50%;
-            top: 72svh;
+            top: 74svh;
             transform: translate(-50%, -50%);
           }
           .film-invite-btn {
             font-size: 13.5px;
           }
           /* Window hit-area on mobile — bg is center/center so the window
-             centre sits at ~47svh; offsets are from the plate's 72svh
+             centre sits at ~47svh; offsets are from the plate's 74svh
              anchor. Tap-to-play; the hover cue is already display:none. */
           .film-window-hit {
-            top: calc(50% - 25svh);
-            width: min(48svh, 94vw);
-            height: 38svh;
+            top: calc(50% - 27svh);
+            width: min(48.5svh, 94vw);
+            height: 36.4svh;
           }
 
           /* Statement — drop the absolute roman numerals (they hang in
