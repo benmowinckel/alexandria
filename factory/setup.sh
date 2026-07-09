@@ -106,7 +106,7 @@ fetch_factory "templates/library/filter.md" "$ALEX_DIR/files/library/filter.md" 
 # Hooks (always update)
 mkdir -p "$ALEX_DIR/system/canon"
 fetch_factory "hooks/shim.sh" "$ALEX_DIR/system/hooks/shim.sh" "hooks/shim.sh" yes
-chmod +x "$ALEX_DIR/system/hooks/shim.sh"
+chmod +x "$ALEX_DIR/system/hooks/shim.sh" 2>/dev/null
 fetch_factory "hooks/payload.sh" "$ALEX_DIR/system/.hooks_payload" "hooks/payload.sh" yes
 fetch_factory "scripts/capture_resolver.py" "$ALEX_DIR/system/scripts/capture_resolver.py" "scripts/capture_resolver.py" yes
 
@@ -457,6 +457,14 @@ GITIGNORE
     git -C "$ALEX_DIR" config gpg.ssh.allowedSignersFile "$ALLOWED" 2>/dev/null
 
     SIGNING_OK=1
+  fi
+
+  # Fresh machines often have no git identity at all — without one, every
+  # commit (genesis and every session's worldline commit after it) silently
+  # fails. Repo-local fallback only; never touches global config.
+  if [ -z "$(git -C "$ALEX_DIR" config user.email 2>/dev/null)" ]; then
+    git -C "$ALEX_DIR" config user.name "${USER:-author}" 2>/dev/null
+    git -C "$ALEX_DIR" config user.email "${USER:-author}@alexandria.local" 2>/dev/null
   fi
 
   # Genesis commit — signed if signing was configured, unsigned otherwise.
