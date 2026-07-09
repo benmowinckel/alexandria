@@ -28,7 +28,7 @@ export default function StartPage() {
 
       <main className="primer-main">
         <p className="primer-eyebrow">the free tool</p>
-        <h1 className="primer-h1">becoming alexandrian</h1>
+        <h1 className="primer-h1">becoming an alexandrian</h1>
         <p className="primer-lede">
           one line adds it to the ai you already use. it runs on your own files
           &mdash; nothing is ever sent to us.
@@ -201,40 +201,28 @@ export default function StartPage() {
           .start-mobile { display: contents; }
         }
 
-        /* Mobile CTA — the Shortcut is the one action (filled, calm, generous
-           touch target); the email delivery sits quiet underneath. */
+        /* Mobile flow — installs happen on a computer, not a phone, so email
+           is the hero (leave it, get the command + a nudge later); the Shortcut
+           and the follow/explore links sit quiet underneath. */
         .mobile-cta {
           display: flex; flex-direction: column; align-items: flex-start;
           width: 100%; max-width: 400px;
         }
-        .mobile-shortcut-btn {
-          display: inline-flex; align-items: center; justify-content: center;
-          width: 100%; min-height: 54px; padding: 14px 30px; border-radius: 9px;
-          background: var(--text-primary); color: var(--bg-primary);
-          font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 18px;
-          letter-spacing: 0.01em; text-decoration: none; cursor: pointer;
-          transition: opacity 200ms, transform 120ms;
-        }
-        .mobile-shortcut-btn:active { transform: scale(0.99); opacity: 0.85; }
-        .mobile-shortcut-hint {
-          margin: 14px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic; font-size: 13.5px; line-height: 1.6; letter-spacing: 0.02em;
-          color: var(--text-muted, rgba(26, 19, 24, 0.55)); text-align: left;
-          max-width: 340px;
+
+        /* The explanation — why the phone can't install, what to do instead. */
+        .mobile-lede {
+          margin: 0 0 26px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 15.5px; line-height: 1.6; letter-spacing: 0.01em;
+          color: var(--text-secondary, rgba(26, 19, 24, 0.8)); text-align: left;
+          max-width: 384px; text-wrap: pretty;
         }
 
+        /* Email — the primary action. min-height reserves the form's footprint
+           (row 48 + hint 25 + gap) so the swap to the one-line "sent" state
+           doesn't pull the secondary block up. */
         .mobile-email {
           display: flex; flex-direction: column; align-items: flex-start;
-          width: 100%; margin-top: 44px;
-          /* Reserve the form's footprint (lead 22 + row 48 + hint 25 +
-             gaps) so the swap to the one-line "sent" state doesn't
-             collapse the block and shift the coda up. */
-          min-height: 122px;
-        }
-        .mobile-email-lead {
-          margin: 0 0 14px; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 14px; letter-spacing: 0.01em;
-          color: var(--text-secondary, rgba(26, 19, 24, 0.8)); text-align: left;
+          width: 100%; min-height: 86px;
         }
         .mobile-email-row {
           display: flex; gap: 8px; width: 100%;
@@ -250,14 +238,16 @@ export default function StartPage() {
         }
         .mobile-email-row input:focus { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .mobile-email-row input::placeholder { color: var(--text-muted, rgba(26, 19, 24, 0.4)); }
+        /* Filled — this is now the primary action on the page. */
         .mobile-email-row button {
-          min-height: 48px; padding: 10px 20px; border-radius: 9px;
-          background: transparent; color: var(--text-primary);
-          border: 1px solid var(--text-muted, rgba(26, 19, 24, 0.35));
+          min-height: 48px; padding: 10px 24px; border-radius: 9px;
+          background: var(--text-primary); color: var(--bg-primary);
+          border: 1px solid var(--text-primary);
           font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 16px;
           letter-spacing: 0.01em; cursor: pointer;
           transition: opacity 200ms, transform 120ms;
         }
+        .mobile-email-row button:hover { opacity: 0.85; }
         .mobile-email-row button:active { transform: scale(0.98); }
         .mobile-email-row button:disabled { opacity: 0.5; }
         .mobile-email-hint {
@@ -270,6 +260,49 @@ export default function StartPage() {
           font-style: italic; font-size: 15px; letter-spacing: 0.01em;
           color: var(--text-secondary, rgba(26, 19, 24, 0.8)); text-align: left;
         }
+
+        /* Secondary — do these from the phone now. Separated by a hairline
+           rule; the Shortcut is demoted to a ghost button (email is the hero). */
+        .mobile-more {
+          display: flex; flex-direction: column; align-items: flex-start;
+          width: 100%; margin-top: 38px; padding-top: 32px;
+          border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
+        }
+        .mobile-more-lead {
+          margin: 0 0 16px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 13.5px; letter-spacing: 0.03em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55)); text-align: left;
+        }
+        .mobile-shortcut-btn {
+          display: inline-flex; align-items: center; justify-content: center;
+          width: 100%; min-height: 52px; padding: 13px 28px; border-radius: 9px;
+          background: transparent; color: var(--text-primary);
+          border: 1px solid var(--text-muted, rgba(26, 19, 24, 0.35));
+          font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 17px;
+          letter-spacing: 0.01em; text-decoration: none; cursor: pointer;
+          transition: border-color 200ms, transform 120ms;
+        }
+        .mobile-shortcut-btn:hover { border-color: var(--text-primary); }
+        .mobile-shortcut-btn:active { transform: scale(0.99); }
+        .mobile-shortcut-hint {
+          margin: 12px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 13px; line-height: 1.6; letter-spacing: 0.02em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55)); text-align: left;
+          max-width: 340px;
+        }
+        .mobile-more-links {
+          margin: 22px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 14px; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55)); text-align: left;
+        }
+        .mobile-more-links a {
+          color: var(--text-secondary, rgba(26, 19, 24, 0.8));
+          text-decoration: underline; text-decoration-color: var(--text-muted, rgba(26, 19, 24, 0.4));
+          text-underline-offset: 3px; text-decoration-thickness: 1px;
+          transition: color 200ms, text-decoration-color 200ms;
+        }
+        .mobile-more-links a:hover { color: var(--text-primary); text-decoration-color: var(--text-primary); }
+        .mobile-more-sep { color: var(--text-muted, rgba(26, 19, 24, 0.4)); margin: 0 10px; }
 
         @media (max-width: 640px) {
           .primer-main { padding: 2rem 24px 4rem; }
