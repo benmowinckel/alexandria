@@ -3012,15 +3012,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
 
           /* Film plate on mobile — geometry for the SQUARE mobile asset
              (sea-arch-mobile.png, bg center/center cover). Measured
-             fractions of the 1:1 canvas: window centre x 0.514, y 0.4815;
-             window 0.273w × 0.205h; ledge line 0.619; caption anchor
-             0.645. Wall units for a square image under cover: both
-             dimensions = max(100vw, 100svh). */
+             fractions of the dapple-edit canvas (2026-07-09): window
+             centre x 0.498, y 0.4735; window 0.229w × 0.235h; ledge
+             line 0.638; caption anchor 0.663. Wall units for a square
+             image under cover: both dimensions = max(100vw, 100svh). */
           .film-invite {
             --wall-w: max(100vw, 100svh);
             --wall-h: max(100vw, 100svh);
-            left: calc(50vw + 0.014 * var(--wall-w));
-            top: calc(50svh + 0.145 * var(--wall-h));
+            left: 50vw;
+            top: calc(50svh + 0.163 * var(--wall-h));
             transform: translate(-50%, -50%);
           }
           .film-invite-btn {
@@ -3030,9 +3030,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              in the same wall units. Tap-to-play; the hover cue is
              already display:none. */
           .film-window-hit {
-            top: calc(50% - 0.1635 * var(--wall-h));
-            width: calc(0.273 * var(--wall-w));
-            height: calc(0.205 * var(--wall-h));
+            top: calc(50% - 0.19 * var(--wall-h));
+            width: calc(0.235 * var(--wall-w));
+            height: calc(0.24 * var(--wall-h));
           }
 
           /* Statement — drop the absolute roman numerals (they hang in
