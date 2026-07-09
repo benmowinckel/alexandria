@@ -774,6 +774,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   <em>&ldquo;alexandria.md&rdquo;</em>{' '}makes that automatic.
                 </p>
 
+                {/* The spine's what, one beat (2026-07-08): whose side the
+                    AI is on. Tuned/tuned is repetition-with-variation, not
+                    an accident. */}
+                <p className="statement-close">
+                  Every AI is tuned to its maker&rsquo;s goals. This one is
+                  tuned to yours &mdash; its one job is to develop you.
+                </p>
+
                 <p className="statement-close">
                   You don&rsquo;t have to buy the vision, only the smallest
                   piece of it: that augmenting how you think could be worth

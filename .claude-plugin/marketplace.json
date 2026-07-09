@@ -11,7 +11,7 @@
     {
       "name": "alexandria",
       "source": "./factory/plugin",
-      "description": "Auto-loads your constitution at session start, captures signal at session end, ships the /a skill. Works in Claude Code, Claude Desktop, and Cowork.",
+      "description": "Aligns your ai to you: loads your mind at session start, captures new thinking at session end, ships /a. Your files, any model \u2014 Claude Code, Claude Desktop, Cowork.",
       "author": {
         "name": "Benjamin a. Mowinckel",
         "url": "https://alexandria-library.com"
