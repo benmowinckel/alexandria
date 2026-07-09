@@ -777,9 +777,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 </p>
 
                 <p className="statement-close">
-                  Every AI is tuned to the company that built it, not to
-                  you. Out of the box it thinks{' '}<em>for</em>{' '}you
-                  &mdash; and the more it thinks, the less you do.
+                  Every AI is tuned for everyone at once &mdash; which means
+                  it isn&rsquo;t tuned to you. Out of the box it thinks{' '}
+                  <em>for</em>{' '}you, and the more it thinks, the less
+                  you do.
                 </p>
 
                 <p className="statement-close">
