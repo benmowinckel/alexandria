@@ -1,7 +1,6 @@
 {
   "name": "alexandria",
-  "version": "1.0.0",
-  "description": "Alexandria — sovereign cognitive infrastructure. Auto-loads your constitution at session start, captures signal at session end. Your files, any model.",
+  "description": "Alexandria \u2014 sovereign cognitive infrastructure. Auto-loads your constitution at session start, captures signal at session end. Your files, any model.",
   "author": {
     "name": "Benjamin a. Mowinckel",
     "url": "https://alexandria-library.com"
@@ -9,5 +8,10 @@
   "homepage": "https://alexandria-library.com",
   "repository": "https://github.com/mowinckelb/alexandria",
   "license": "MIT",
-  "keywords": ["alexandria", "constitution", "sovereignty", "cognition"]
+  "keywords": [
+    "alexandria",
+    "constitution",
+    "sovereignty",
+    "cognition"
+  ]
 }

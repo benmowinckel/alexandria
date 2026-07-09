@@ -5,15 +5,13 @@
     "url": "https://alexandria-library.com"
   },
   "metadata": {
-    "description": "Alexandria — sovereign cognitive infrastructure. Your files, any model.",
-    "version": "1.0.0"
+    "description": "Alexandria \u2014 sovereign cognitive infrastructure. Your files, any model."
   },
   "plugins": [
     {
       "name": "alexandria",
       "source": "./factory/plugin",
       "description": "Auto-loads your constitution at session start, captures signal at session end, ships the /a skill. Works in Claude Code, Claude Desktop, and Cowork.",
-      "version": "1.0.0",
       "author": {
         "name": "Benjamin a. Mowinckel",
         "url": "https://alexandria-library.com"
