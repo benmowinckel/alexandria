@@ -806,22 +806,50 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     words. Value delta held implicitly: epigraph = the
                     don't-side, P1's flip = the do-side, P2 = cost ≈
                     zero. */}
+                {/* Eighth pass, 2026-07-10 — the missing-piece argument.
+                    Founder corrections on the seventh: "you don't need to
+                    know who you're trying to become" (cut); the point is
+                    simply the best version of yourself, and you help the
+                    AI get there — give it the intention + the one piece
+                    it can't get: your thinking (his delegated phrase
+                    choice — picked over "thought space" / "internal
+                    monologue" / "inner theatre" for plainness; glossed
+                    as "what you think, and how you think", his formula).
+                    Everything-else-plugs-in = positive-sum/supplementary.
+                    ".md" dropped on this surface ("people don't really
+                    know what MD is") — it's the Alexandria FILE, and the
+                    AGENTS.md anchor went with it; sell the concept.
+                    Collective gets his humility: nobody knows the best
+                    way yet, every file unique by definition, figure it
+                    out together, share what it makes possible. Offer:
+                    start right now, free, prepackaged (founder's own
+                    system), just an instruction file — your AI can tweak
+                    it with you. */}
                 <p className="statement-close">
-                  The change: align your AI with you. One file &mdash;
-                  your{' '}<em>alexandria.md</em>, the AGENTS.md of
-                  personal alignment &mdash; holds who you are and who
-                  you&rsquo;re trying to become, and every AI you use
-                  reads it. From then on your AI{' '}<em>develops</em>{' '}
-                  you, instead of{' '}<em>replacing</em>{' '}you.
+                  The change: align your AI to you, so it develops you
+                  into the best version of yourself instead of replacing
+                  you. You&rsquo;ve got to help it, though. Give it that
+                  intention, and give it the one piece it can&rsquo;t
+                  see &mdash; your thinking.{' '}
+                  <em>What</em>{' '}you think, and{' '}<em>how</em>{' '}
+                  you think. Everything else, it can already plug into.
                 </p>
 
                 <p className="statement-close">
-                  Alexandria is that concept, and everyone who agrees.
-                  Ninety percent of it already exists; we provide the last
-                  ten &mdash; and to get you started, the founder&rsquo;s
-                  own system, free. Five minutes, and you make it your own
-                  from there. Delete the folder and it&rsquo;s like it
-                  never happened.
+                  That, written down as one instruction file, is the
+                  Alexandria file. And Alexandria is everyone who
+                  agrees &mdash; nobody knows the best way to do this
+                  yet, every file is unique to its author, so we figure
+                  it out together and share what it makes possible.
+                </p>
+
+                <p className="statement-close">
+                  If this resonates, you can start right now: the
+                  founder&rsquo;s own system, free, prepackaged &mdash;
+                  running in five minutes. Make it your own from there;
+                  it&rsquo;s just an instruction file, and your AI can
+                  tweak it with you. Delete the folder and it&rsquo;s like
+                  it never happened.
                 </p>
 
                 <p className="statement-beat">
