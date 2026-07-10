@@ -172,8 +172,10 @@ function HomeInstall() {
       <Link href="/start" className="install-cta">
         try it free
       </Link>
+      {/* His riff attaches the two fear-killers to the try moment:
+          "just try it for free. It's fully private. It's fully open." */}
       <span className="cta-sub">
-        and join the tribe
+        fully private, fully open
       </span>
     </div>
   );
@@ -764,44 +766,46 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     filenames). The collective is deliberately one beat, not
                     a paragraph: the post-install block makes the join ask
                     at peak conviction, so the page doesn't pre-explain. */}
-                {/* Fifth pass, 2026-07-10 — the founder's arc, verbatim
-                    riff distilled (supersedes the fourth-pass conversion
-                    cut, which kept the old soon-AI epigraph). His
-                    staircase: outsourcing is already happening → stakes
-                    are personal ("in a couple years you won't even be
-                    able to think for yourself… change something today")
-                    → the move is aligning your AI to you via your own
-                    instruction file ("you call that an alexandria.md")
-                    → develop-you-instead-of-replace-you IS the concept,
-                    and Alexandria is "a collection of everyone who
-                    agrees" → 90% of the infrastructure exists, we provide
-                    the last 10, and the founder's system is free to
-                    start → dare (unchanged, his words). The old
-                    for-those-few epigraph (founder's own, 2026-06) is in
-                    git + website.md if the elite fork is ever wanted
-                    back. */}
+                {/* Sixth pass, 2026-07-10 — his phrasing, his emphasis
+                    (fifth-pass verdict: "I feel like my phrasing was
+                    better… really think about how I phrased it and where
+                    the emphasis was"). The spine the fifth pass dropped
+                    is ALIGNMENT: align the AI with your incentives /
+                    personal alignment / best version of yourself — plus
+                    the key mindset, "it's just the equivalent of an
+                    AGENTS.md, but for personal alignment" (his words,
+                    near-verbatim in P1; degrades gracefully for readers
+                    who don't know AGENTS.md — the surrounding plain
+                    words still carry it). Concept over software: the
+                    letter defines Alexandria as the concept + everyone
+                    who agrees, never as a product. "fully private,
+                    fully open" moved to the try-CTA sub (his riff
+                    attached it to the try moment); tribe language left
+                    the page — "everyone who agrees" carries membership. */}
                 <p className="statement-epigraph">
-                  People are already outsourcing their thinking. Stay on
-                  this road and in a few years you won&rsquo;t be able to
-                  think for yourself. If you don&rsquo;t want that, change
-                  something today.
+                  People are already outsourcing their thinking. Carry on
+                  without changing anything, and in a couple of years you
+                  won&rsquo;t even be able to think for yourself. If you
+                  don&rsquo;t want that to happen to you, change something
+                  today.
                 </p>
 
                 <p className="statement-close">
-                  The change: write down what and how you think, in a file
-                  on your own computer &mdash; your{' '}
-                  <em>alexandria.md</em>{' '}&mdash; and every AI you use
-                  reads it. From then on it{' '}<em>develops</em>{' '}you
-                  instead of{' '}<em>replacing</em>{' '}you. Alexandria is
-                  the idea, and everyone who agrees.
+                  The change is alignment. Figure out your own incentives
+                  &mdash; what the best version of you looks like &mdash;
+                  and write them into a file every AI you use reads. Call
+                  it your{' '}<em>alexandria.md</em>: an AGENTS.md, but
+                  for personal alignment. From then on your AI{' '}
+                  <em>develops</em>{' '}you, instead of{' '}
+                  <em>replacing</em>{' '}you.
                 </p>
 
                 <p className="statement-close">
-                  Ninety percent of what this takes already exists; we
-                  provide the last ten. To get you started, the
-                  founder&rsquo;s system is free &mdash; five minutes,
-                  fully private, fully yours. Delete the folder and
-                  it&rsquo;s like it never happened.
+                  Alexandria is that concept, and everyone who agrees.
+                  Ninety percent of it already exists; we provide the last
+                  ten. To get you started, the founder&rsquo;s system is
+                  free &mdash; begin with it, make it your own over time,
+                  delete it whenever.
                 </p>
 
                 <p className="statement-beat">
