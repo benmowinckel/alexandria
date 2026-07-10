@@ -67,7 +67,7 @@ export default function StartCTA() {
         {copied ? 'copied — now paste it into your coding agent.' : 'copy, then paste it into your coding agent.'}
       </p>
       <p className="install-where">
-        claude code · cursor · codex · factory. on claude desktop? use the code tab &mdash; the same one command works there. cowork can&rsquo;t load plugins yet. in a plain chat app? it needs one of the above.
+        claude code · cursor · codex · factory. on claude desktop? use the code tab &mdash; it&rsquo;s claude code, so the same one command works there. in a plain chat app? it needs one of the above.
       </p>
     </section>
   );

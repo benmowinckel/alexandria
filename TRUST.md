@@ -15,7 +15,7 @@ A single ed25519 keypair, held offline.
 
 ## What is signed
 
-A single manifest, `factory/manifest.txt`, lists the SHA-256 of every file that runs as code or steers the model — the payload, every canon module, the signed skills and scripts, and the plugin's shell files. The authoritative set is the `SIGNED_FILES` array in `factory/ship.sh`; the manifest itself is one `<sha256>  <path>` line per file. Excerpt (trimmed — read the real file for the full list):
+A single manifest, `factory/manifest.txt`, lists the SHA-256 of every file that runs as code or steers the model — the payload, every canon module, and the signed skills and scripts. The authoritative set is the `SIGNED_FILES` array in `factory/ship.sh`; the manifest itself is one `<sha256>  <path>` line per file. Excerpt (trimmed — read the real file for the full list):
 
 ```
 <sha256>  factory/hooks/payload.sh
@@ -91,12 +91,6 @@ If the offline key is ever compromised or suspected compromised, the maintainer 
 5. Existing users will need to re-run the install script to pick up the new public key (`curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh | bash`).
 
 This is intentionally manual — automated key-rotation infrastructure would itself become a new attack surface.
-
-## Plugin delivery (Claude Code / Claude Desktop)
-
-The `alexandria` plugin (`factory/plugin/`, served from this repo's marketplace manifest at `.claude-plugin/marketplace.json`) is a delivery shell, not a second product. Its hook entries call `plugin-shim.sh`, which locates the Author's alexandria folder and hands off to the same `shim.sh` → signature-verified `payload.sh` chain documented above. All evolving behavior remains inside the signed payload.
-
-Trust surface: the plugin's shell files (`hooks/hooks.json`, `scripts/plugin-shim.sh`, `scripts/shim.sh`, `skills/a/SKILL.md`) arrive via the Claude plugin marketplace — a git clone of this repo — the same channel `setup.sh` and the shim itself arrive through. They are listed in `SIGNED_FILES` and covered by `manifest.txt` from the first signing after their introduction, so tampering is detectable by comparing a clone against the signed manifest. Claude Code itself does not verify plugin content at load time; the runtime signature gate remains where it has always been — on the payload, immediately before execution.
 
 ## Reporting issues
 

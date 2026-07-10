@@ -1,10 +1,10 @@
 # Mechanics
 
-You are about to run a curl command that puts files on your machine, modifies your ai config, and pulls live code from GitHub on every session. Read this once. If anything here doesn't match the scripts, don't run it. (Using Claude Desktop? The same code reaches it as a plugin, installed by the same setup run once on your machine — see [The plugin](#the-plugin-claude-code-claude-desktop) below. Everything on this page still applies.)
+You are about to run a curl command that puts files on your machine, modifies your ai config, and pulls live code from GitHub on every session. Read this once. If anything here doesn't match the scripts, don't run it. (Using Claude Desktop? Its **code tab** is Claude Code running on your machine — the same setup, run once via a coding agent, wires it up automatically. Everything on this page still applies.)
 
 ## TL;DR for the auditor
 
-- **What runs:** plain bash and markdown. No binaries, no daemons, no shell-rc edits, no root. (The Claude plugin variant is the same code: a JSON hook manifest plus one bash wrapper that hands off to the same scripts.)
+- **What runs:** plain bash and markdown. No binaries, no daemons, no shell-rc edits, no root.
 - **Source of truth:** `github.com/mowinckelb/alexandria` (public). Auditable line by line.
 - **Trust model:** every session, the shim refuses to run any payload whose SHA-256 doesn't match an entry in a manifest signed by the maintainer's offline ed25519 key. Compromise of the GitHub account alone does not yield code execution. Full mechanism in [`TRUST.md`](https://github.com/mowinckelb/alexandria/blob/main/TRUST.md).
 - **What our server holds:** your email, GitHub user ID, hashed API key, a 60-day event log of which endpoints you hit, and any files you explicitly publish to the Library. Nothing else.
@@ -80,8 +80,7 @@ The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your o
 
 | File | Change | Inspect |
 |---|---|---|
-| `~/.claude/plugins/` | Preferred path: `setup.sh` installs the `alexandria` plugin via the Claude plugin system (marketplace `mowinckelb/alexandria` — the same public repo; plugin at `factory/plugin/`). Registers the same 3 hooks + the `/a` skill; also active in Claude Desktop's code tab. | `claude plugin list` |
-| `~/.claude/settings.json` | Fallback, only on CLIs that predate plugins: adds 3 hook entries (SessionStart, SessionEnd, SubagentStart) pointing to the shim. On the plugin path, prior alexandria hook entries are removed instead — and the plugin defers to any that remain, so nothing ever fires twice. | `cat ~/.claude/settings.json` |
+| `~/.claude/settings.json` | `setup.sh` adds 3 hook entries (SessionStart, SessionEnd, SubagentStart) pointing to the shim. Same file Claude Desktop's code tab reads, so that surface is covered by the same entries — nothing extra to install. | `cat ~/.claude/settings.json` |
 | `~/.cursor/hooks.json` | Only if Cursor detected. Adds 3 hook entries pointing to the Python wrappers below. | `cat ~/.cursor/hooks.json` |
 | `~/.cursor/hooks/alexandria-{session-start,session-end,stop}.py` | Only if Cursor detected. Three small Python files that just shell out to the shim. | `cat ~/.cursor/hooks/alexandria-*.py` |
 | `~/.cursor/rules/alexandria.mdc` | Only if Cursor detected. Plain markdown rule. | `cat ~/.cursor/rules/alexandria.mdc` |
@@ -92,23 +91,22 @@ The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your o
 
 **Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system `PATH`, sudoers, system services, anything outside `~/alexandria/`, `~/.claude/`, `~/.cursor/`, `~/.codex/`, `~/.factory/`, and the launchd/cron entries above. The repo-local git config inside `~/alexandria/` is set; your global git config is not.
 
-### The plugin (Claude Code, Claude Desktop)
+### How each surface is wired
 
-The public repo doubles as a Claude plugin marketplace (`.claude-plugin/marketplace.json` at the root; the plugin itself at `factory/plugin/`). The plugin is packaging, not a new code path: a JSON hook manifest registering the same three hooks, one bash wrapper (`plugin-shim.sh`), and the `/a` skill. The wrapper holds no behavior of its own. It does three things: (1) exits if legacy settings-hook entries are present, so nothing fires twice; (2) locates your `~/alexandria/` folder — on the host directly, or an attached/mounted copy visible from the session (future-proofing for sandboxed surfaces); (3) hands off to the same signature-verified shim → payload chain described below. Every check on this page — manifest signature, hash pinning, cache cutoff — applies identically.
+One curl wires every surface — nothing to install per-agent, no plugin, no marketplace:
 
-Install paths:
+- **Claude Code:** the 3 hook entries in `~/.claude/settings.json` fire the shim at session start/end.
+- **Claude Desktop's code tab:** that tab **is** Claude Code running on your machine — it reads the same `~/.claude/settings.json`, so the same entries cover it automatically. (The chat tab has no local file access, so it does nothing.)
+- **Cursor:** three hook entries in `~/.cursor/hooks.json` call small Python wrappers that shell out to the same shim.
+- **Codex, Factory:** an always-loaded instruction block appended to `~/.codex/instructions.md` / `~/.factory/droids/a.md` — no hooks, the instructions load every session.
 
-- **Claude Code:** nothing to do — `setup.sh` installs the plugin automatically (settings-hooks fallback on CLIs that predate plugins). Manual: `claude plugin marketplace add mowinckelb/alexandria && claude plugin install alexandria@alexandria`.
-- **Claude Desktop:** no in-app install — run the setup once on your machine via a coding agent (Claude Code, Cursor, Codex, Factory); the plugin it registers also loads in Desktop's **code tab**, which runs the same engine as Claude Code — automatic load and capture, nothing more to do. (The chat tab has no local file access.)
-- **Cowork:** not yet — Cowork keeps its own skills/plugins registry and does not load Claude Code plugins (verified hands-on 2026-07-09; matches Anthropic's issue tracker). When Anthropic wires plugins into Cowork, this same plugin covers it — nothing to reinstall.
-
-Result: session-start context load and session-end capture run in every Claude Code and Claude Desktop code-tab session. Cursor, Codex, and Factory are unchanged — `setup.sh` wires them directly. One behavior source (the signed payload), N dumb shells; the sovereign folder is the interop bus between all of them.
+Result: session-start context load and session-end capture run in every Claude Code, Claude Desktop code-tab, and Cursor session; Codex and Factory load the same behavior via their instruction files. One behavior source (the signed payload), N dumb shells; the sovereign folder is the interop bus between all of them.
 
 ## The bootstrap-from-main model
 
 This is the most important property to understand.
 
-The shim at `~/alexandria/system/hooks/shim.sh` is installed by `setup.sh` (re-running setup will overwrite it; sessions never refetch the shim). On every session start — Claude Code and Claude Desktop reach it via the plugin's wrapper; Cursor via its Python wrappers — the shim does this:
+The shim at `~/alexandria/system/hooks/shim.sh` is installed by `setup.sh` (re-running setup will overwrite it; sessions never refetch the shim). On every session start — Claude Code and Claude Desktop's code tab reach it via the settings-hook entries; Cursor via its Python wrappers — the shim does this:
 
 1. Fetches `factory/hooks/payload.sh` from `main` over HTTPS.
 2. Fetches `factory/manifest.txt` and `factory/manifest.txt.sig` over HTTPS.
@@ -175,7 +173,6 @@ Every outbound call the install or hooks make. Complete list.
 | `POST api.alexandria-library.com/feedback` | Install (one install status report, attributed to your account, no file content) + session end (only if YOU typed into `~/alexandria/system/.session_feedback`) | API key, the text being submitted | 200/4xx |
 | `git push` / `git pull --rebase` against your own `alexandria-private` GitHub repo | Session start (pull then push) + session end (push) | the tracked contents of `~/alexandria/` — gitignored paths excluded: `system/canon/`, `system/hooks/`, `system/.*`, `files/library/`, `node_modules/` | git ref data |
 | `gh` CLI: `gh ssh-key add`, `gh repo create alexandria-private`, `gh repo fork mowinckelb/alexandria` | Install, only if `gh` is authenticated | your separate `gh` OAuth token (not your Alexandria API key) | success/failure |
-| `git clone github.com/mowinckelb/alexandria` via the Claude plugin system | Plugin install (`setup.sh` on Claude Code) + the Claude app's own marketplace refreshes | nothing | the public repo (the plugin lives at `factory/plugin/`) |
 
 That is all. No telemetry pings, no error reporters, no third-party CDNs, no analytics SDKs, no DNS callbacks beyond what's listed. You can confirm by `grep -E 'curl|wget|http' ~/alexandria/system/.hooks_payload`.
 
@@ -220,9 +217,6 @@ curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/hooks/
 
 # The mutable payload — the one to read most carefully
 curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/hooks/payload.sh
-
-# The plugin wrapper (Claude Code / Desktop delivery — hands off to the shim)
-curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/plugin/scripts/plugin-shim.sh
 
 # The signed manifest that gates the payload
 curl https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/manifest.txt
@@ -274,12 +268,8 @@ The first should match only the `curl` calls in the network inventory above. The
 # on GitHub stay yours; we never had access to that repo.
 rm -rf ~/alexandria ~/alexandria-fork
 
-# Remove the plugin (Desktop reads the same plugin registration)
-claude plugin uninstall alexandria@alexandria 2>/dev/null
-claude plugin marketplace remove alexandria 2>/dev/null
-
-# Remove the Claude Code hooks (settings-hooks fallback installs only —
-# plugin installs have no alexandria entries here)
+# Remove the Claude Code hooks (Claude Desktop's code tab reads the same file,
+# so this covers it too)
 jq 'del(.hooks.SessionStart, .hooks.SessionEnd, .hooks.SubagentStart)' \
   ~/.claude/settings.json > ~/.claude/settings.json.tmp \
   && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
