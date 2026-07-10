@@ -766,87 +766,43 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     filenames). The collective is deliberately one beat, not
                     a paragraph: the post-install block makes the join ask
                     at peak conviction, so the page doesn't pre-explain. */}
-                {/* Sixth pass, 2026-07-10 — his phrasing, his emphasis
-                    (fifth-pass verdict: "I feel like my phrasing was
-                    better… really think about how I phrased it and where
-                    the emphasis was"). The spine the fifth pass dropped
-                    is ALIGNMENT: align the AI with your incentives /
-                    personal alignment / best version of yourself — plus
-                    the key mindset, "it's just the equivalent of an
-                    AGENTS.md, but for personal alignment" (his words,
-                    near-verbatim in P1; degrades gracefully for readers
-                    who don't know AGENTS.md — the surrounding plain
-                    words still carry it). Concept over software: the
-                    letter defines Alexandria as the concept + everyone
-                    who agrees, never as a product. "fully private,
-                    fully open" moved to the try-CTA sub (his riff
-                    attached it to the try moment); tribe language left
-                    the page — "everyone who agrees" carries membership. */}
-                {/* Ninth pass, 2026-07-10 — the values fork + trajectory.
-                    Founder riff (hedged — "maybe we try… I don't know",
-                    so this pass is the try): "some people won't mind
-                    this… but if that's not who you wanna be… you create
-                    that type of identity." The fork returns — the
-                    original for-those-few epigraph in VALUES form: the
-                    reader self-selects by choice, not destiny. Plus the
-                    trajectory mechanism ("tweak the trajectory just a
-                    tiny angle, it changes the outcome a lot") with
-                    "this early" carrying ahead-of-everyone urgency; and
-                    the low-agency thought reborn plainly in the dare
-                    ("there's literally nothing to lose") — never as an
-                    attack, per his instruction. */}
+                {/* Tenth pass, 2026-07-10 — full pass history lives in
+                    website.md § the 2026-07-09/10 conversion passes;
+                    per-pass comments were collapsed to this one.
+                    Standing rulings that bind this block: EASY register
+                    (zero cognitive effort); sell the CONCEPT, never
+                    software — "Alexandria file", no ".md", no AGENTS.md
+                    on this surface; "your thinking — what you think and
+                    how you think" is the settled phrase for the thought
+                    space; no attacking the other path; corridor dead-
+                    ends at the buttons. This pass: the fork goes
+                    POSITIVE — two paths stated flat (no people-labels,
+                    no "if you're not one of them"), calculator precedent
+                    makes the atrophy claim land instead of asserted, and
+                    P1 becomes his chain: aligning = just personal
+                    context → almost all already connectable → the one
+                    unreached place is your thinking → add the final
+                    piece + hand it the intention → everything aligned,
+                    everything automatic. The mental gym was his spec for
+                    how obvious the value must feel, not page copy. */}
                 <p className="statement-epigraph">
-                  People are already outsourcing their thinking. Carry on,
-                  and in a couple of years you won&rsquo;t even be able to
-                  think for yourself. Some people won&rsquo;t mind. If
-                  you&rsquo;re not one of them, change your trajectory
-                  today &mdash; even a small turn, this early, ends
-                  somewhere completely different.
+                  People are already outsourcing their thinking. One path
+                  carries on like that: the way calculators took mental
+                  math, AI quietly takes the rest. The other path is the
+                  same AI, aligned to you &mdash; developing you instead.
+                  They end somewhere completely different, and the fork is
+                  today.
                 </p>
 
-                {/* Seventh pass, 2026-07-10 — the conviction chain
-                    ("ruthlessly optimize for the conversion… be clear
-                    what the value delta is and what the cost is… the
-                    correct level — covering the company, not one narrow
-                    feature — so they're not surprised by what they
-                    download"). Fixes over the sixth pass: benefit now
-                    lands mid-P1 instead of last; "figure out your own
-                    incentives" cut — it made the start sound like
-                    homework when the download actually hands you a
-                    working system (fair-reflection rule); the cost story
-                    consolidated in P2 (free, five minutes, delete-the-
-                    folder); "who you are and who you're trying to
-                    become" carries incentives/best-version in plain
-                    words. Value delta held implicitly: epigraph = the
-                    don't-side, P1's flip = the do-side, P2 = cost ≈
-                    zero. */}
-                {/* Eighth pass, 2026-07-10 — the missing-piece argument.
-                    Founder corrections on the seventh: "you don't need to
-                    know who you're trying to become" (cut); the point is
-                    simply the best version of yourself, and you help the
-                    AI get there — give it the intention + the one piece
-                    it can't get: your thinking (his delegated phrase
-                    choice — picked over "thought space" / "internal
-                    monologue" / "inner theatre" for plainness; glossed
-                    as "what you think, and how you think", his formula).
-                    Everything-else-plugs-in = positive-sum/supplementary.
-                    ".md" dropped on this surface ("people don't really
-                    know what MD is") — it's the Alexandria FILE, and the
-                    AGENTS.md anchor went with it; sell the concept.
-                    Collective gets his humility: nobody knows the best
-                    way yet, every file unique by definition, figure it
-                    out together, share what it makes possible. Offer:
-                    start right now, free, prepackaged (founder's own
-                    system), just an instruction file — your AI can tweak
-                    it with you. */}
                 <p className="statement-close">
-                  The change: align your AI to you, so it develops you
-                  into the best version of yourself instead of replacing
-                  you. You&rsquo;ve got to help it, though. Give it that
-                  intention, and give it the one piece it can&rsquo;t
-                  see &mdash; your thinking.{' '}
-                  <em>What</em>{' '}you think, and{' '}<em>how</em>{' '}
-                  you think. Everything else, it can already plug into.
+                  Aligning it is simpler than it sounds &mdash; just
+                  personal context, and your AI can already plug into
+                  almost all of it. The one place it can&rsquo;t reach is
+                  your thinking:{' '}<em>what</em>{' '}you think, and{' '}
+                  <em>how</em>{' '}you think. Add that final piece, hand
+                  it the intention &mdash; the best version of you &mdash;
+                  and the chain is complete: everything aligned,
+                  everything automatic.
                 </p>
 
                 <p className="statement-close">
