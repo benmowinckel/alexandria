@@ -159,28 +159,6 @@ fetch_factory "block.md" "$ALEX_DIR/system/.block" "block.md" yes
 
 # Claude Code — skill + hooks
 
-# True only when Claude Code's installed-plugin registry
-# (~/.claude/plugins/installed_plugins.json) lists an alexandria@alexandria
-# entry whose install dir exists on disk and isn't disabled. The install
-# command's exit code alone is NOT proof the plugin landed (stale marketplace
-# registration, silent failure). Tolerant of registry shape: v2 nests under
-# .plugins with an array of installs per plugin; older/flat forms handled too.
-# Defined top-level so the status matrix can probe it even when the install
-# block below was skipped.
-alex_plugin_installed() {
-  command -v node &>/dev/null || return 1
-  node -e "
-    const fs = require('fs'), path = require('path');
-    const f = path.join(process.env.HOME, '.claude', 'plugins', 'installed_plugins.json');
-    const reg = JSON.parse(fs.readFileSync(f, 'utf-8'));
-    const entry = (reg.plugins || reg)['alexandria@alexandria'];
-    const installs = Array.isArray(entry) ? entry : entry ? [entry] : [];
-    const live = installs.some(p => p && p.enabled !== false && p.disabled !== true &&
-      (!p.installPath || fs.existsSync(p.installPath)));
-    process.exit(live ? 0 : 1);
-  " 2>/dev/null
-}
-
 if command -v node &>/dev/null && { [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; }; then
   # Install the skill under BOTH names so /a and /alexandria both work (Claude Code
   # keys on the skill, by dir + frontmatter name). Same content; the alias's
@@ -203,42 +181,32 @@ if command -v node &>/dev/null && { [ -d "$HOME/.claude" ] || command -v claude 
   # live instructions stay pinned to the current canonical playbook.
   fetch_factory "skills/scheduled-bootstrap.md" "$HOME/.claude/scheduled-tasks/alexandria/SKILL.md" "skills/scheduled-bootstrap.md" yes
 
-  # Delivery: plugin first (marketplace-updated; also active in Claude Desktop's
-  # code tab), settings.json hooks as fallback for CLIs that predate plugin
-  # support. Both shells hand off to the same signed shim -> payload chain —
-  # identical product, one behavior source. The plugin defers to legacy hooks
-  # when both are present, so this migration can never double-fire.
-  ALEX_PLUGIN_OK=""
-  if command -v claude &>/dev/null && claude plugin --help &>/dev/null 2>&1; then
-    claude plugin marketplace add mowinckelb/alexandria >/dev/null 2>&1 || true
-    # `add` is a no-op when the marketplace is already registered, so refresh
-    # the registration too — otherwise a stale clone serves old content.
-    claude plugin marketplace update alexandria >/dev/null 2>&1 || true
-    claude plugin install alexandria@alexandria --scope user >/dev/null 2>&1 || true
-    # Re-runs: advance an already-installed plugin to the latest version too
-    # (install alone can no-op or fail on the already-installed case).
-    claude plugin update alexandria@alexandria >/dev/null 2>&1 || true
-    # Verify-then-remove: the filter below deletes the legacy settings hooks
-    # whenever this flag is set, so trusting exit codes alone could leave the
-    # Author with NO hooks if the plugin didn't genuinely land. The installed-
-    # plugin registry is the ground truth — consult it regardless of what the
-    # commands above returned; on failure the flag stays empty and the filter
-    # re-adds the settings hooks.
-    alex_plugin_installed && ALEX_PLUGIN_OK=1
+  # Delivery: settings.json hooks, wired directly — the same signed
+  # shim -> payload chain Cursor/Codex/Factory hand off to. One mechanism,
+  # one behavior source, works on every Claude Code surface (CLI + Claude
+  # Desktop's code tab, which is Claude Code on the host). No marketplace,
+  # no second code path. (An earlier build also shipped a marketplace plugin;
+  # it's parked in factory/_parked-plugin/ and no longer used — it added
+  # nothing this curl doesn't, and couldn't reach Cowork anyway. Reintroduce
+  # only if Anthropic makes plugins load + fire hooks in Cowork.)
+  #
+  # Migrate off any prior plugin install so nothing double-fires and the
+  # Author lands cleanly on the one hook path.
+  if command -v claude &>/dev/null && claude plugin list 2>/dev/null | grep -q 'alexandria@alexandria'; then
+    claude plugin uninstall alexandria@alexandria >/dev/null 2>&1 || true
+    claude plugin marketplace remove alexandria >/dev/null 2>&1 || true
+    echo "  Claude Code: migrated off the parked plugin"
   fi
 
   node -e "
     const fs = require('fs'), path = require('path');
     const f = path.join(process.env.HOME, '.claude', 'settings.json');
-    const viaPlugin = process.argv[1] === 'plugin';
     let settings = {};
     try { settings = JSON.parse(fs.readFileSync(f, 'utf-8')); } catch {}
     if (!settings.hooks) settings.hooks = {};
-    // Match any prior shim/resolver registration regardless of path form (~ vs
-    // \$HOME, /system/hooks/shim vs /hooks/shim) — substring on 'alexandria' AND
-    // the script name de-dupes across naming variants so reinstalls replace
-    // rather than append. On the plugin path this filter IS the migration:
-    // legacy entries are removed and nothing is re-added.
+    // De-dupe any prior alexandria shim/resolver entry regardless of path form
+    // (~ vs \$HOME, /system/hooks/shim vs /hooks/shim) so a re-run replaces
+    // rather than appends.
     const filter = arr => (arr || []).filter(h => {
       const s = JSON.stringify(h).toLowerCase();
       return !(s.includes('alexandria') && (s.includes('shim.sh') || s.includes('capture_resolver')));
@@ -246,27 +214,21 @@ if command -v node &>/dev/null && { [ -d "$HOME/.claude" ] || command -v claude 
     settings.hooks.SessionStart = filter(settings.hooks.SessionStart);
     settings.hooks.SessionEnd = filter(settings.hooks.SessionEnd);
     settings.hooks.SubagentStart = filter(settings.hooks.SubagentStart);
-    if (!viaPlugin) {
-      settings.hooks.SessionStart.push({
-        hooks: [{ type: 'command', command: 'bash \$HOME/alexandria/system/hooks/shim.sh session-start', timeout: 10 }]
-      });
-      settings.hooks.SessionStart.push({
-        hooks: [{ type: 'command', command: 'python3 \$HOME/alexandria/system/scripts/capture_resolver.py 2>/dev/null || true', timeout: 10 }]
-      });
-      settings.hooks.SessionEnd.push({
-        hooks: [{ type: 'command', command: 'bash \$HOME/alexandria/system/hooks/shim.sh session-end', timeout: 15 }]
-      });
-      settings.hooks.SubagentStart.push({
-        hooks: [{ type: 'command', command: 'bash \$HOME/alexandria/system/hooks/shim.sh subagent' }]
-      });
-    }
+    settings.hooks.SessionStart.push({
+      hooks: [{ type: 'command', command: 'bash \$HOME/alexandria/system/hooks/shim.sh session-start', timeout: 10 }]
+    });
+    settings.hooks.SessionStart.push({
+      hooks: [{ type: 'command', command: 'python3 \$HOME/alexandria/system/scripts/capture_resolver.py 2>/dev/null || true', timeout: 10 }]
+    });
+    settings.hooks.SessionEnd.push({
+      hooks: [{ type: 'command', command: 'bash \$HOME/alexandria/system/hooks/shim.sh session-end', timeout: 15 }]
+    });
+    settings.hooks.SubagentStart.push({
+      hooks: [{ type: 'command', command: 'bash \$HOME/alexandria/system/hooks/shim.sh subagent' }]
+    });
     fs.writeFileSync(f, JSON.stringify(settings, null, 2));
-  " ${ALEX_PLUGIN_OK:+plugin} 2>/dev/null
-  if [ -n "$ALEX_PLUGIN_OK" ]; then
-    echo "  Claude Code: configured (plugin — also active in Claude Desktop's code tab)"
-  else
-    echo "  Claude Code: configured (settings hooks)"
-  fi
+  " 2>/dev/null
+  echo "  Claude Code: configured (session hooks)"
 fi
 
 # Cursor
@@ -757,15 +719,10 @@ esac
 CLAUDE_DETECTED="no"
 if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   CLAUDE_DETECTED="yes"
-  # Two valid states: plugin delivery (preferred — also covers Claude
-  # Desktop's code tab) or legacy settings.json hooks (older CLIs, or the fallback
-  # when plugin verification failed). ALEX_PLUGIN_OK is only set after the
-  # registry confirmed the install; re-probe the registry here anyway so the
-  # matrix reflects the config Claude actually reads — the plugin detail never
-  # shows for a hooks-based config, and vice versa.
-  if [ -n "${ALEX_PLUGIN_OK:-}" ] && alex_plugin_installed && [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ]; then
-    STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a + /alexandria skill + plugin (Claude Code + Desktop code tab)"
-  elif [ -f "$HOME/.claude/settings.json" ] && \
+  # Ground truth: the shim hook is registered in settings.json (the config
+  # Claude Code — CLI and Desktop code tab — actually reads) and the skill is
+  # present.
+  if [ -f "$HOME/.claude/settings.json" ] && \
      grep -q "alexandria/system/hooks/shim.sh" "$HOME/.claude/settings.json" 2>/dev/null && \
      [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ]; then
     STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a + /alexandria skill + session hooks wired"

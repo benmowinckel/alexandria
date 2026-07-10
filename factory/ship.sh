@@ -45,10 +45,6 @@ SIGNED_FILES=(
   factory/scripts/capture_resolver.py
   factory/systems/capture-pipeline.md
   factory/migrate.sh
-  factory/plugin/hooks/hooks.json
-  factory/plugin/scripts/plugin-shim.sh
-  factory/plugin/scripts/shim.sh
-  factory/plugin/skills/a/SKILL.md
 )
 
 # ── Coverage enforcement (permanent fix: no executable/steering file ships unsigned) ──
@@ -93,17 +89,7 @@ UNSIGNED_OK=(
 while IFS= read -r f; do
   printf '%s\n' "${SIGNED_FILES[@]}" "${UNSIGNED_OK[@]}" | grep -qxF "$f" || \
     echo "⚠️  $f looks executable but is unsigned — add to SIGNED_FILES (or UNSIGNED_OK if it's an install-once root)" >&2
-done < <(cd "$REPO_ROOT" && find factory -type f \( -name '*.sh' -o -name '*.py' \) | sort)
-
-# Shim drift gate: the plugin bundles its own copy of the shim
-# (factory/plugin/scripts/shim.sh). If it drifts from factory/hooks/shim.sh the
-# two delivery paths bootstrap different code — refuse to ship until synced.
-if ! cmp -s factory/hooks/shim.sh factory/plugin/scripts/shim.sh; then
-  echo "error: factory/plugin/scripts/shim.sh differs from factory/hooks/shim.sh" >&2
-  echo "The plugin ships a byte-identical copy of the shim. Sync them first:" >&2
-  echo "  cp factory/hooks/shim.sh factory/plugin/scripts/shim.sh" >&2
-  exit 1
-fi
+done < <(cd "$REPO_ROOT" && find factory -type f \( -name '*.sh' -o -name '*.py' \) -not -path 'factory/_parked-plugin/*' | sort)
 
 # Build manifest: one line per file, "sha256  relative/path".
 # Stable order (literal list above) so the manifest is reproducible.
