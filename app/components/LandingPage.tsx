@@ -801,43 +801,62 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     already here → just press ("it makes no sense to
                     agree with all of it… and then not do it when
                     you're already here. Just press it."). */}
+                {/* Twelfth pass, same day — the anchors come aboard
+                    ("maybe we even mention Strava. Maybe we mention
+                    AGENTS.md. Maybe we mention calculators… rich
+                    reference points so they can anchor the mindset
+                    instead of it just being pure floating"). One anchor
+                    per beat, sentences still one-thought: calculators
+                    (epigraph, the felt precedent), gym (epigraph + the
+                    mostly-runs-itself line — passive capture + active
+                    sessions, honest), AGENTS.md (the file), Strava (the
+                    community — converges the page onto a4's locked
+                    "Strava for thought" + mental-gym stack), running
+                    shoes (the free starter, his metaphor). Honesty
+                    call: his "ten seconds to add" stayed OFF — install
+                    is five minutes and the fair-reflection rule wins;
+                    removal really is instant (delete the folder). The
+                    product/company decoupling stays implicit ("we don't
+                    talk about this") — "get your own when you're
+                    ready" + the delete line carry it. Dare hinges on
+                    the intention, his reduction of the ask. */}
                 <p className="statement-epigraph">
-                  People are outsourcing more and more of their thinking
-                  to AI. Keep going, and eventually it does all of it.
-                  That&rsquo;s one path. The other is the same AI, aligned
-                  to you &mdash; developing you instead. The fork is
-                  today.
+                  Calculators ended mental math. Left alone, AI will do
+                  the same to the rest of your thinking. Aligned to you,
+                  it does the opposite &mdash; it becomes a gym for your
+                  mind. Same AI, two paths. The fork is today.
                 </p>
 
                 <p className="statement-close">
-                  Aligning it is simple: your AI just needs to know you.
-                  It can already plug into almost everything &mdash; the
-                  one place it can&rsquo;t reach is your thinking.{' '}
-                  <em>What</em>{' '}you think, and{' '}<em>how</em>{' '}
-                  you think. Share that, and tell it the goal: the best
-                  version of you. From there, everything is aligned, and
-                  automatic.
+                  AI can develop you in any area &mdash; you just have to
+                  give it the intention. It can already plug into almost
+                  everything about you. The one gap is your thinking:{' '}
+                  <em>what</em>{' '}you think, and{' '}<em>how</em>{' '}
+                  you think. That&rsquo;s data you don&rsquo;t really
+                  have &mdash; and the part of you most at risk of being
+                  lost.
                 </p>
 
                 <p className="statement-close">
-                  All of that, written down, is one instruction file:
-                  your Alexandria file. And Alexandria is everyone who
-                  agrees &mdash; nobody knows the best way yet, yours
-                  will be yours alone, so we figure it out together and
-                  share what it makes possible.
+                  The Alexandria file closes the gap. One instruction
+                  file &mdash; an AGENTS.md for you. It gives your AI the
+                  intention, then writes your thinking down as you go;
+                  when you want more, you show up and train. A mental gym
+                  that mostly runs itself. And Alexandria is the Strava
+                  around it: everyone who agrees, each file unique to its
+                  author, figuring out the best way together.
                 </p>
 
                 <p className="statement-close">
-                  If this resonates, starting is the easy part:
-                  it&rsquo;s free, open source, and already set up &mdash;
-                  the founder&rsquo;s own system, running in five minutes.
-                  Make it your own from there; your AI can tweak it with
-                  you. Delete the folder and it&rsquo;s like it never
-                  happened.
+                  Starting is the easy part: the founder&rsquo;s own file
+                  is free &mdash; running shoes, so you can start today
+                  and get your own when you&rsquo;re ready. Five minutes
+                  to set up, as easy to edit as any text file. Delete the
+                  folder and it&rsquo;s like it never happened.
                 </p>
 
                 <p className="statement-beat">
-                  <em>If all that made sense, you&rsquo;re already
+                  <em>Agree with the intention? You&rsquo;re already
                   here &mdash; just press one.</em>
                 </p>
 
