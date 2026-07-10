@@ -1273,40 +1273,29 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              image's edge cream so any uncovered area at extreme
              aspect ratios still reads as the same wall. */
           background-color: #d8ccb6;
-          /* SEA scene (2026-07-09) — the fresco niche as an open window
-             onto open water, seen through haze. Four passes on the
-             water: v1 saturated blue read fake; v2 whisper-faint read
-             as beige fog ("pretty mid… not elegant") because it had no
-             structure; v3 restored a real sea (hazy horizon, depth
-             gradient, sun glitter) but its blue was still crisp against
-             the cream page; a CSS veil over v3 was rejected ("make the
-             actual colors more muted"). v4-v6 muted global colour in
-             steps and were all still "pasted on top"; v7 is the settled
-             treatment, calibrated against the old Adam fresco the
-             founder named as the reference ("the faint haziness of the
-             Michelangelo image… but for the ocean"). Measured Adam
-             physics: all content within ~6% luminance of the wall, in
-             the wall's own sepia hue (H~35 S~0.10-0.14), niche edges
-             eaten by glow. Recipe (offline, baked into poster + loop
-             from the ungraded source): window zone only (feathered
-             elliptical mask; wall + leaf shadows stay original) →
-             grayscale → luminance compressed into the wall band
-             (curves 0/0.62 0.3/0.73 0.6/0.83 1/0.95 desktop; mobile
-             slightly darker floor, tighter feather, lighter blur) →
-             sepia remap (colorchannelmixer 0.99/0.955/0.875) → gblur
-             1.2 + sigma-30 bloom at 22% so the frame's light bleeds
-             over its own edges → 30% of the band-compressed ORIGINAL
-             colour blended back over the sepia (founder, on pure
-             sepia: "a little bit more blue rather than gray, just a
-             touch" — the blue returns only where the water was blue).
-             The sea is IN the plaster now — a fresco of the ocean,
-             not a view — which is what finally kills the pasted-on
-             read. The lesson pair: fog fails (no
-             structure), crisp blue fails (full chroma); legible
-             structure in the wall's own pigment is the register. (Pharos lighthouse and
-             Creation-of-Adam were cut earlier — image anti-reflex,
-             design.md.) Poster is JPEG: frame zero of the loop, ~10x
-             lighter than PNG for first paint. */
+          /* SEA scene (settled 2026-07-09, v8) — the arch window onto
+             open water as a memory: dissolved edges, everything faint,
+             a quiet blue in the water. The founder's terminal verdict
+             after eight iterations: "I just want what's currently in
+             production, but the water slightly more blue. That's it."
+             Shipped recipe = the v6 "memory" chain with ONLY the
+             blue-cut relaxed, applied to poster + loop from the
+             ungraded source: huesaturation -0.60 on c+b strength 16
+             (v6 was -0.98 — the delta IS the blue), global
+             eq saturation 0.8, shadow lift 0.15, gblur 2.0, sigma-25
+             bloom screen-blended at 35% (edges melt under their own
+             light), 45% wash of the wall's cream (0xdcd6c2). The c+b
+             targeting is what keeps everything except the water
+             pixel-equal to the preferred production scene.
+             Iteration history (v1 crisp blue "fake" → v2 fog "mid" →
+             v3 real sea "crisp" → CSS veil rejected → v4-v5 global
+             mutes → v6 memory (was production) → v7 Adam-fresco
+             sepia "overcorrected… gray") lives in git; the v7 fresco
+             recipe (measured off the old Adam asset) is in commit
+             2f6af0a if the plaster treatment is ever wanted again.
+             (Pharos lighthouse and Creation-of-Adam were cut earlier —
+             image anti-reflex, design.md.) Poster is JPEG: frame zero
+             of the loop, ~10x lighter than PNG for first paint. */
           background-image: url(/sea-arch-wide.jpg);
           /* Desktop landscape viewports crop the wide image evenly;
              75% pulls the niche from right-of-centre to visual middle
