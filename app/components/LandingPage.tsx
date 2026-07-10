@@ -785,47 +785,60 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     piece + hand it the intention → everything aligned,
                     everything automatic. The mental gym was his spec for
                     how obvious the value must feel, not page copy. */}
+                {/* Eleventh pass, same day — idiot-proof ("so clear and
+                    so simple that anyone reading it at a normal
+                    digestion pace just reads it, and it's like: oh,
+                    that makes sense, I'll try it"). Calculator cut —
+                    his own escalation replaced it ("people are
+                    outsourcing more and more… what happens if you just
+                    never stop? And it goes all the way") — zero
+                    analogy-mapping required. Every sentence shortened
+                    to one thought; "chain" metaphor and double
+                    appositives removed; "personal context" the handle
+                    gave way to "your AI just needs to know you" (same
+                    meaning, no jargon). Dare closes the interest→press
+                    gap with his logic, non-attacking: agree + easy +
+                    already here → just press ("it makes no sense to
+                    agree with all of it… and then not do it when
+                    you're already here. Just press it."). */}
                 <p className="statement-epigraph">
-                  People are already outsourcing their thinking. One path
-                  carries on like that: the way calculators took mental
-                  math, AI quietly takes the rest. The other path is the
-                  same AI, aligned to you &mdash; developing you instead.
-                  They end somewhere completely different, and the fork is
+                  People are outsourcing more and more of their thinking
+                  to AI. Keep going, and eventually it does all of it.
+                  That&rsquo;s one path. The other is the same AI, aligned
+                  to you &mdash; developing you instead. The fork is
                   today.
                 </p>
 
                 <p className="statement-close">
-                  Aligning it is simpler than it sounds &mdash; just
-                  personal context, and your AI can already plug into
-                  almost all of it. The one place it can&rsquo;t reach is
-                  your thinking:{' '}<em>what</em>{' '}you think, and{' '}
-                  <em>how</em>{' '}you think. Add that final piece, hand
-                  it the intention &mdash; the best version of you &mdash;
-                  and the chain is complete: everything aligned,
-                  everything automatic.
+                  Aligning it is simple: your AI just needs to know you.
+                  It can already plug into almost everything &mdash; the
+                  one place it can&rsquo;t reach is your thinking.{' '}
+                  <em>What</em>{' '}you think, and{' '}<em>how</em>{' '}
+                  you think. Share that, and tell it the goal: the best
+                  version of you. From there, everything is aligned, and
+                  automatic.
                 </p>
 
                 <p className="statement-close">
-                  That, written down as one instruction file, is the
-                  Alexandria file. And Alexandria is everyone who
-                  agrees &mdash; nobody knows the best way to do this
-                  yet, every file is unique to its author, so we figure
-                  it out together and share what it makes possible.
+                  All of that, written down, is one instruction file:
+                  your Alexandria file. And Alexandria is everyone who
+                  agrees &mdash; nobody knows the best way yet, yours
+                  will be yours alone, so we figure it out together and
+                  share what it makes possible.
                 </p>
 
                 <p className="statement-close">
-                  If this resonates, nothing stands between you and
-                  starting: it&rsquo;s open source, it&rsquo;s free, and
-                  it&rsquo;s already set up for you &mdash; the
-                  founder&rsquo;s own system, running in five minutes.
-                  Make it your own from there; it&rsquo;s just an
-                  instruction file, and your AI can tweak it with you.
-                  Delete the folder and it&rsquo;s like it never happened.
+                  If this resonates, starting is the easy part:
+                  it&rsquo;s free, open source, and already set up &mdash;
+                  the founder&rsquo;s own system, running in five minutes.
+                  Make it your own from there; your AI can tweak it with
+                  you. Delete the folder and it&rsquo;s like it never
+                  happened.
                 </p>
 
                 <p className="statement-beat">
-                  <em>Even a little curious? There&rsquo;s nothing to
-                  lose &mdash; press one now, before you forget.</em>
+                  <em>If all that made sense, you&rsquo;re already
+                  here &mdash; just press one.</em>
                 </p>
 
                 <div className="cta-pair">
