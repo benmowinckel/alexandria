@@ -782,12 +782,26 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     fully open" moved to the try-CTA sub (his riff
                     attached it to the try moment); tribe language left
                     the page — "everyone who agrees" carries membership. */}
+                {/* Ninth pass, 2026-07-10 — the values fork + trajectory.
+                    Founder riff (hedged — "maybe we try… I don't know",
+                    so this pass is the try): "some people won't mind
+                    this… but if that's not who you wanna be… you create
+                    that type of identity." The fork returns — the
+                    original for-those-few epigraph in VALUES form: the
+                    reader self-selects by choice, not destiny. Plus the
+                    trajectory mechanism ("tweak the trajectory just a
+                    tiny angle, it changes the outcome a lot") with
+                    "this early" carrying ahead-of-everyone urgency; and
+                    the low-agency thought reborn plainly in the dare
+                    ("there's literally nothing to lose") — never as an
+                    attack, per his instruction. */}
                 <p className="statement-epigraph">
-                  People are already outsourcing their thinking. Carry on
-                  without changing anything, and in a couple of years you
-                  won&rsquo;t even be able to think for yourself. If you
-                  don&rsquo;t want that to happen to you, change something
-                  today.
+                  People are already outsourcing their thinking. Carry on,
+                  and in a couple of years you won&rsquo;t even be able to
+                  think for yourself. Some people won&rsquo;t mind. If
+                  you&rsquo;re not one of them, change your trajectory
+                  today &mdash; even a small turn, this early, ends
+                  somewhere completely different.
                 </p>
 
                 {/* Seventh pass, 2026-07-10 — the conviction chain
@@ -844,17 +858,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 </p>
 
                 <p className="statement-close">
-                  If this resonates, you can start right now: the
-                  founder&rsquo;s own system, free, prepackaged &mdash;
-                  running in five minutes. Make it your own from there;
-                  it&rsquo;s just an instruction file, and your AI can
-                  tweak it with you. Delete the folder and it&rsquo;s like
-                  it never happened.
+                  If this resonates, nothing stands between you and
+                  starting: it&rsquo;s open source, it&rsquo;s free, and
+                  it&rsquo;s already set up for you &mdash; the
+                  founder&rsquo;s own system, running in five minutes.
+                  Make it your own from there; it&rsquo;s just an
+                  instruction file, and your AI can tweak it with you.
+                  Delete the folder and it&rsquo;s like it never happened.
                 </p>
 
                 <p className="statement-beat">
-                  <em>Even a little curious? Press one now, before you
-                  forget.</em>
+                  <em>Even a little curious? There&rsquo;s nothing to
+                  lose &mdash; press one now, before you forget.</em>
                 </p>
 
                 <div className="cta-pair">
