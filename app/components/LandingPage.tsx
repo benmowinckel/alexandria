@@ -1295,9 +1295,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              slightly darker floor, tighter feather, lighter blur) →
              sepia remap (colorchannelmixer 0.99/0.955/0.875) → gblur
              1.2 + sigma-30 bloom at 22% so the frame's light bleeds
-             over its own edges. The sea is IN the plaster now — a
-             fresco of the ocean, not a view — which is what finally
-             kills the pasted-on read. The lesson pair: fog fails (no
+             over its own edges → 30% of the band-compressed ORIGINAL
+             colour blended back over the sepia (founder, on pure
+             sepia: "a little bit more blue rather than gray, just a
+             touch" — the blue returns only where the water was blue).
+             The sea is IN the plaster now — a fresco of the ocean,
+             not a view — which is what finally kills the pasted-on
+             read. The lesson pair: fog fails (no
              structure), crisp blue fails (full chroma); legible
              structure in the wall's own pigment is the register. (Pharos lighthouse and
              Creation-of-Adam were cut earlier — image anti-reflex,
