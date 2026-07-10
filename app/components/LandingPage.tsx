@@ -157,20 +157,23 @@ const THEMES: Theme[] = [
   },
 ];
 
-// The homepage primary action: the "join the tribe" button copies the install
-// "join the tribe" navigates to /start on every device (the action page:
-// open-in-claude-code + copy-command on desktop, shortcut + email on
-// mobile). One scalable door instead of an inline copy that couldn't say
-// where the command goes — new agents, deep links, and flows land on
-// /start without ever touching this button again.
+// The homepage primary action — navigates to /start on every device (the
+// action page: open-in-claude-code + copy-command on desktop, shortcut +
+// email on mobile). One scalable door — new agents, deep links, and flows
+// land on /start without ever touching this button again.
+// Label renamed 2026-07-09: "join the tribe" → "try it free". Founder
+// field data — visitors interested in trying it still weren't pressing;
+// the identity label hid a free five-minute action behind a commitment-
+// sounding one. The button now names the action; the tribe identity
+// moved to the sub-line.
 function HomeInstall() {
   return (
     <div className="cta-block">
       <Link href="/start" className="install-cta">
-        join the tribe
+        try it free
       </Link>
       <span className="cta-sub">
-        become an alexandrian
+        and join the tribe
       </span>
     </div>
   );
@@ -761,15 +764,21 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     filenames). The collective is deliberately one beat, not
                     a paragraph: the post-install block makes the join ask
                     at peak conviction, so the page doesn't pre-explain. */}
-                {/* Third pass, 2026-07-09 — the EASY register (founder axiom:
-                    easy = short simple / medium = long simple or short
-                    complex / hard = long complex; letter is hard, whitepaper
-                    is medium, the website MUST be easy — zero cognitive
-                    effort to 80/20 the company). Staircase: fork, diagnosis,
-                    the concrete what, offer, dare. The 80/20 a zero-context
-                    reader must leave holding: a plugin for the AI I already
-                    use; learns how I think; files I own; free; makes my AI
-                    make me sharper. */}
+                {/* Fourth pass, 2026-07-09 evening — the CONVERSION cut.
+                    Founder verdict on the third pass: too long, a little
+                    boring, and the tuned-for-everyone diagnosis added that
+                    morning made it worse — cut whole (its payload, the
+                    with/for flip, survives inside the what-paragraph).
+                    "Low agency is the only friction left" cut too: decode-
+                    required (plain over clever, Taste.md) and the founder
+                    no longer stands behind it. Field data drove all of it:
+                    visitors interested in the company weren't pressing
+                    either button, and some couldn't parse "stay close".
+                    The page's job is to convert — staircase is now
+                    fork → what → offer → dare, the dare says press, and
+                    the corridor dead-ends at the buttons. The 80/20 is
+                    unchanged: a layer on the AI I already use; learns how
+                    I think; files I own; free; develops me. */}
                 <p className="statement-epigraph">
                   Soon, AI will do most of the thinking. Most minds will
                   quietly go soft; a few will compound through every model
@@ -777,47 +786,39 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 </p>
 
                 <p className="statement-close">
-                  Every AI is tuned for everyone at once &mdash; which means
-                  it isn&rsquo;t tuned to you. Out of the box it thinks{' '}
-                  <em>for</em>{' '}you, and the more it thinks, the less
-                  you do.
+                  It&rsquo;s a layer on the AI you already use. It writes
+                  down what and how you think as you go &mdash; in files on
+                  your own computer, yours to keep. From then on your AI
+                  thinks{' '}<em>with</em>{' '}you, not{' '}<em>for</em>{' '}
+                  you &mdash; and its whole job becomes developing you.
                 </p>
 
                 <p className="statement-close">
-                  It can&rsquo;t read your mind, but it can read words.
-                  Alexandria is a plugin for the AI you already use: it
-                  writes down what and how you think as you go, in files on
-                  your computer that belong to you. From then on your AI
-                  thinks{' '}<em>with</em>{' '}you &mdash; and its whole job
-                  becomes developing you.
-                </p>
-
-                <p className="statement-close">
-                  You don&rsquo;t have to buy the vision, only the smallest
-                  piece of it: that a sharper you could be worth something.
-                  It&rsquo;s free, it takes five minutes, and it only adds.
-                  Delete the folder, and it&rsquo;s like it never happened.
+                  It&rsquo;s free. It takes five minutes. Delete the folder,
+                  and it&rsquo;s like it never happened.
                 </p>
 
                 <p className="statement-beat">
-                  <em>Low agency is the only friction left.</em>
+                  <em>Even a little curious? Press one now, before you
+                  forget.</em>
                 </p>
 
                 <div className="cta-pair">
                   <HomeInstall />
                   <div className="cta-block">
-                    {/* The ghost CTA: "stay close" is the watch-the-company
-                        path (vs "join the tribe", the use-it path). It was
-                        "follow along" 2026-07-01→07-08, echoing a numbered
-                        "2 the company — follow along" line; those numbered
-                        ways were cut 2026-07-07, so the original returned —
-                        the sub-line below carries the clarity it lacks
-                        alone (founder, 2026-07-08). */}
+                    {/* The ghost CTA: the watch-the-company path (vs the
+                        use-it path on the left). Label history: "stay
+                        close" → "follow along" (07-01) → "stay close"
+                        (07-08) → "keep me posted" (07-09). The kill was
+                        field data, not taste: visitors interested in the
+                        company never pressed it, and some asked out loud
+                        what "stay close" meant. The label now names the
+                        transaction; the sub names its cost. */}
                     <Link href="/follow" className="lr-cta lr-cta-ghost">
-                      stay close
+                      keep me posted
                     </Link>
                     <span className="cta-sub">
-                      friends, family, the curious
+                      ten seconds &mdash; just your email
                     </span>
                   </div>
                 </div>

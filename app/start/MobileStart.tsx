@@ -81,7 +81,9 @@ export default function MobileStart() {
           up when you install.
         </p>
         <p className="mobile-more-links">
-          <Link href="/follow">stay close</Link>
+          {/* Label matches the homepage ghost CTA (renamed from "stay
+              close" 2026-07-09 — visitors couldn't parse it). */}
+          <Link href="/follow">keep me posted</Link>
           <span className="mobile-more-sep" aria-hidden>&middot;</span>
           <Link href="/library">the library</Link>
         </p>

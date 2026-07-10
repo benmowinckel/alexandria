@@ -110,7 +110,7 @@ export async function sendPatronWelcome(
   </p>
   <p style="margin: 0 0 1.4rem;">
     feel free to reply any time, i&rsquo;ll read them all!<br>
-    and if you know anyone else who might want to follow along, send them to <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a> &mdash; they can stay close, or just follow.
+    and if you know anyone else who might want to follow along, send them to <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a> &mdash; they can press keep me posted, or just follow.
   </p>
   <p style="margin: 0 0 1.8rem;">ok, that&rsquo;s all for now :)</p>
   <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
@@ -131,7 +131,7 @@ export async function sendFollowerWelcome(email: string, unsubscribeToken?: stri
   </p>
   <p style="margin: 0 0 1.4rem;">
     feel free to reply whenever you want. i'll read all of them!<br>
-    and if there are others you think might want to follow along, send them to <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a> &mdash; they can join the tribe, or just stay close.
+    and if there are others you think might want to follow along, send them to <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a> &mdash; they can try it free, or just press keep me posted.
   </p>
   <p style="margin: 0 0 1.8rem;">ok, that's all. bye for now :)</p>
   <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
@@ -169,7 +169,7 @@ export async function sendWeekOneCheckIn(
   <p style="margin: 0 0 1.4rem;">you signed up to alexandria a week ago &mdash; just dropping in.</p>
   <p style="margin: 0 0 1.4rem;">it's like the gym &mdash; the more you put in, the more you get out. and the unusual part is it molds to you. so anything you want &mdash; say it. anything you don't &mdash; say it. anything confusing &mdash; just ask.</p>
   <p style="margin: 0 0 2.2rem;">what's going well, what's not, what you like, what you don't &mdash; reply to this, or call: <a href="tel:+14155038178" style="color: #3d3630;">+1 (415) 503-8178</a>. you're early, so what you tell me actually shapes this. i read all of it. anything annoying &mdash; i'll cut it. anything missing &mdash; i'll add it.</p>
-  <p style="margin: 0 0 1.4rem;">if you want to follow along more closely (and support the work), there's <a href="${WEBSITE_URL}/follow" style="color: #3d3630;">stay close</a>.</p>
+  <p style="margin: 0 0 1.4rem;">if you want to follow along more closely (and support the work), there's <a href="${WEBSITE_URL}/follow" style="color: #3d3630;">keep me posted</a>.</p>
   <p style="margin: 0 0 1.8rem;">ok, that's all for now.</p>
   <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
   <p style="margin: 0; font-style: italic; color: #8a8078;">a.</p>
