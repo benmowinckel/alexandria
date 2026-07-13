@@ -906,31 +906,28 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     so there is no drift. Firm, never insulting. */}
                 <div className="close-tree">
                   <p className="close-tree-lead">
-                    <em>Whoever you are, you&rsquo;re on one of these three
-                    branches. Find yours, and take the step beside it:</em>
+                    <em>By now, you know which of these is you.</em>
                   </p>
-                  <ol className="close-tree-list">
-                    <li>
-                      <span className="branch-if">You don&rsquo;t agree
-                      with the idea.</span>{' '}Close the tab; no hard
-                      feelings.
-                    </li>
-                    <li>
-                      <span className="branch-if">You agree, but
-                      don&rsquo;t use a coding agent yet (Claude Code,
-                      Cursor, and the like).</span>{' '}Follow along, and
-                      start when you do.
-                    </li>
-                    <li>
-                      <span className="branch-if">You agree, and you use
-                      one.</span>{' '}Install it now &mdash; and follow
-                      along too, if you like.
-                    </li>
-                  </ol>
+                  <div className="close-tree-branches">
+                    <p>
+                      <span className="branch-if">If the idea
+                      isn&rsquo;t for you</span>{' '}&mdash; close the tab,
+                      no hard feelings.
+                    </p>
+                    <p>
+                      <span className="branch-if">If it is, but you have
+                      no coding agent yet</span>{' '}&mdash; follow along,
+                      and start the day you do.
+                    </p>
+                    <p>
+                      <span className="branch-if">If it is, and you
+                      do</span>{' '}&mdash; start now.
+                    </p>
+                  </div>
                   <p className="close-tree-tag">
-                    <em>There is no fourth branch. To agree, be able, and
-                    still not do it isn&rsquo;t a choice &mdash; it&rsquo;s
-                    just low agency.</em>
+                    <em>There is no fourth. To agree, to be ready, and
+                    still do nothing is not another answer &mdash; only
+                    the third, left undone.</em>
                   </p>
                 </div>
 
@@ -2505,16 +2502,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           color: var(--theme-fg);
           hanging-punctuation: first last;
         }
-        /* THE DECISION TREE — the exhaustive close. Lead + numbered
-           branches (each condition → action) + the tag that closes the
-           "maybe later" escape. Numerals in the wax accent so the three
-           branches read as a deliberate enumeration the reader must
-           place themselves in. */
+        /* THE DECISION TREE — the exhaustive close, set as an epistle's
+           coda rather than a checklist (founder: "not elegant enough").
+           A lead, three parallel "if" branches (the anaphora carries the
+           enumeration — no numerals), each with an italic condition and a
+           roman action across an em dash, and a tag that forecloses the
+           fourth. A hairline on the left gathers the branches as one
+           quiet stanza. */
         .close-tree {
-          margin: 14px 0 0;
+          margin: 16px 0 0;
         }
         .close-tree-lead {
-          margin: 0 0 11px;
+          margin: 0 0 13px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
           font-size: 17px;
@@ -2522,49 +2521,32 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           letter-spacing: 0.006em;
           color: var(--theme-fg);
         }
-        .close-tree-list {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          counter-reset: closebranch;
+        .close-tree-branches {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 9px;
+          padding-left: 20px;
+          border-left: 1px solid var(--theme-border-soft);
         }
-        .close-tree-list li {
-          position: relative;
-          padding-left: 27px;
+        .close-tree-branches p {
+          margin: 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 16px;
-          line-height: 1.42;
+          line-height: 1.5;
+          letter-spacing: 0.004em;
           color: var(--theme-fg);
-          counter-increment: closebranch;
         }
-        .close-tree-list li::before {
-          content: counter(closebranch);
-          position: absolute;
-          left: 0;
-          top: 0.05em;
-          width: 18px;
-          text-align: center;
-          font-size: 13px;
-          font-weight: 600;
-          font-variant-numeric: lining-nums;
-          color: var(--accent, var(--theme-fg-muted));
-        }
-        /* The condition (the "if you're this") reads italic-muted; the
-           action after it stays roman ink, so each branch is visibly
-           condition → do-this. */
-        .close-tree-list .branch-if {
+        /* The condition (the hypothesis) sits in italic; the action after
+           the em dash stays roman ink, so each branch reads if → do. */
+        .close-tree-branches .branch-if {
           font-style: italic;
-          color: var(--theme-fg-muted);
         }
         .close-tree-tag {
-          margin: 12px 0 0;
+          margin: 14px 0 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
           font-size: 15.5px;
-          line-height: 1.45;
+          line-height: 1.5;
           letter-spacing: 0.008em;
           color: var(--theme-fg-muted);
         }
