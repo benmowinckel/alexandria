@@ -302,6 +302,9 @@ function FrontFilm() {
 
 export default function LandingPage({ brandClassName = '' }: Props) {
   const [themeIdx, setThemeIdx] = useState(0);
+  // Letter scroll cue — "keep reading" sits at the box's bottom over the
+  // ghost text; it retires once the reader scrolls the box.
+  const [letterCue, setLetterCue] = useState(true);
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
   // Default (no param) keeps the existing CSS-built window. Read on
   // mount so the data-attribute picks up the correct CSS branch.
@@ -783,6 +786,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   className="letter-scroll"
                   tabIndex={0}
                   aria-label="the letter"
+                  onScroll={(e) => setLetterCue(e.currentTarget.scrollTop < 24)}
                 >
                 <p className="letter-sec">i &middot; the cost</p>
 
@@ -873,6 +877,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   what you build.
                 </p>
                 </div>
+                {/* Scroll cue — its own solid backing masks the ghost
+                    text behind it so the two don't visually collide
+                    (founder: the old overlap "looked bad"). Retires once
+                    the reader scrolls. */}
+                <span
+                  className={`letter-more${letterCue ? '' : ' is-gone'}`}
+                  aria-hidden
+                >
+                  keep reading&nbsp;&darr;
+                </span>
                 </div>
 
                 <p className="statement-close letter-outro">
@@ -894,10 +908,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     a clear action for BOTH CTAs (try it / keep me posted).
                     Softer than the "no you won't admit" line. */}
                 <p className="statement-beat">
-                  <em>So it&rsquo;s yours to decide. If you agree, try
-                  it &mdash; that&rsquo;s one click. If you&rsquo;d rather
-                  follow along, leave your email. Either way, the moment
-                  to choose is now.</em>
+                  <em>So it&rsquo;s your call. If you agree, try it &mdash;
+                  that&rsquo;s one click. If you&rsquo;d rather follow
+                  along first, leave your email.</em>
                 </p>
 
                 <div className="cta-pair">
@@ -2621,29 +2634,59 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .letter-window {
           position: relative;
         }
+        /* Scroll cue — sits at the box's bottom-right on its own solid
+           backing (theme bg) so the ghost text behind it is masked and
+           they don't collide. Gentle bob; retires once the reader
+           scrolls the box. */
+        .letter-more {
+          position: absolute;
+          right: 18px;
+          bottom: 6px;
+          z-index: 2;
+          padding: 2px 9px 3px;
+          background: var(--theme-bg);
+          border-radius: 10px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 12.5px;
+          letter-spacing: 0.06em;
+          color: var(--theme-fg-muted);
+          pointer-events: none;
+          user-select: none;
+          animation: letterMoreBob 2.4s ease-in-out infinite;
+          transition: opacity 400ms ease;
+        }
+        .letter-more.is-gone {
+          opacity: 0;
+          animation: none;
+        }
+        @keyframes letterMoreBob {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(2px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .letter-more { animation: none; }
+        }
         .letter-scroll {
           position: relative;
-          /* 2026-07-12: shows ONLY section i at rest (founder). Height
-             tuned so the fade sits right after section i's last line so
-             section ii doesn't peek. The void is solved by centring the
-             whole block (see .right-lower justify-content), not by
-             growing the box. No text scroll-cue (it overlapped the faded
-             text and looked bad — the fade alone signals more). */
-          height: 326px;
+          /* 2026-07-12: shows section i at rest, with section ii ghosting
+             under the fade (founder wants the ghost text). The void is
+             solved by centring the whole block (see .right-lower
+             justify-content), not by growing the box. */
+          height: 330px;
           overflow-y: auto;
           padding-right: 18px;
           padding-bottom: 34px;
           display: block;
           scrollbar-width: thin;
           scrollbar-color: var(--theme-border-soft) transparent;
-          /* Taller/stronger fade so the next section fully dissolves
-             (no ghost heading peeking under it) while still signalling
-             there's more. */
+          /* Soft bottom fade so section ii ghosts under it (the "ghost
+             text" the founder wants) and the cue signals more. */
           -webkit-mask-image: linear-gradient(
-            to bottom, #000 0, #000 calc(100% - 84px), transparent calc(100% - 20px)
+            to bottom, #000 0, #000 calc(100% - 48px), transparent 100%
           );
           mask-image: linear-gradient(
-            to bottom, #000 0, #000 calc(100% - 84px), transparent calc(100% - 20px)
+            to bottom, #000 0, #000 calc(100% - 48px), transparent 100%
           );
         }
         .letter-scroll::-webkit-scrollbar {
@@ -3385,6 +3428,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           .letter-window,
           .letter-scroll {
             display: contents;
+          }
+          .letter-more {
+            display: none;
           }
           .cta-pair {
             padding-left: 0;
