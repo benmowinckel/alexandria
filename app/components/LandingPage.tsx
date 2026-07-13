@@ -302,10 +302,6 @@ function FrontFilm() {
 
 export default function LandingPage({ brandClassName = '' }: Props) {
   const [themeIdx, setThemeIdx] = useState(0);
-  // Letter scroll cue — the box shows only section i at rest; this cue
-  // (plus the fade + scrollbar) makes it clear there's more. It retires
-  // once the reader has scrolled a little.
-  const [letterCue, setLetterCue] = useState(true);
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
   // Default (no param) keeps the existing CSS-built window. Read on
   // mount so the data-attribute picks up the correct CSS branch.
@@ -787,7 +783,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   className="letter-scroll"
                   tabIndex={0}
                   aria-label="the letter"
-                  onScroll={(e) => setLetterCue(e.currentTarget.scrollTop < 24)}
                 >
                 <p className="letter-sec">i &middot; the cost</p>
 
@@ -878,15 +873,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   what you build.
                 </p>
                 </div>
-                {/* Scroll cue — the box shows only section i at rest;
-                    this makes "there's more" unmistakable. Retires once
-                    the reader scrolls. */}
-                <span
-                  className={`letter-more${letterCue ? '' : ' is-gone'}`}
-                  aria-hidden
-                >
-                  keep reading&nbsp;&darr;
-                </span>
                 </div>
 
                 <p className="statement-close letter-outro">
@@ -2216,11 +2202,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              bottom-align the CTAs with the left wordmark"). The box sits
              high (this margin-top), the column fills the height (flex 1),
              and the closing group is pushed to the bottom via
-             margin-top:auto on the outro — so the CTAs land at the same
-             baseline as the left wordmark with generous air between. */
-          margin-top: 58px;
+             box + closing read as one block (no void); the block is
+             centred in the column so the breathing is balanced above and
+             below rather than pooled in one place. */
+          margin-top: 0;
           flex: 1;
           min-height: 0;
+          justify-content: center;
           /* Squeeze the column — narrower text width pushes the left
              edge inward (right edge unchanged because right-lower is
              flex-end aligned). */
@@ -2330,7 +2318,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           /* 14 → 11 (2026-07-12): tighter column spacing helps the open
              reveal panel + CTAs fit the fixed stage. */
           gap: 11px;
-          margin-bottom: var(--lower-block-bottom);
+          /* No bottom margin — the block is vertically centred, so the
+             air must be symmetric top and bottom. */
+          margin-bottom: 0;
         }
         /* Roman numeral marginalia — four argument beats. The split's
            second half (.continuation) inherits the prior numeral by not
@@ -2631,55 +2621,29 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .letter-window {
           position: relative;
         }
-        /* Scroll cue — quiet italic on the fade, gentle bob, gone once
-           the reader scrolls. */
-        .letter-more {
-          position: absolute;
-          right: 20px;
-          bottom: 2px;
-          z-index: 2;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 13px;
-          letter-spacing: 0.08em;
-          color: var(--theme-fg-muted);
-          pointer-events: none;
-          user-select: none;
-          animation: letterMoreBob 2.4s ease-in-out infinite;
-          transition: opacity 400ms ease;
-        }
-        .letter-more.is-gone {
-          opacity: 0;
-          animation: none;
-        }
-        @keyframes letterMoreBob {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(3px); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .letter-more { animation: none; }
-        }
         .letter-scroll {
           position: relative;
-          /* 2026-07-12: the box is anchored top and the closing anchored
-             bottom, so a short letter leaves a void between them. The box
-             now grows to nearly meet the closing (only a small breath
-             left), killing the void while the CTAs stay bottom-aligned.
-             --letter-box-h is measured/tuned so box-bottom sits just
-             above the outro. Shows section i + ii at rest; scroll for the
-             rest. */
-          height: var(--letter-box-h, 490px);
+          /* 2026-07-12: shows ONLY section i at rest (founder). Height
+             tuned so the fade sits right after section i's last line so
+             section ii doesn't peek. The void is solved by centring the
+             whole block (see .right-lower justify-content), not by
+             growing the box. No text scroll-cue (it overlapped the faded
+             text and looked bad — the fade alone signals more). */
+          height: 326px;
           overflow-y: auto;
           padding-right: 18px;
           padding-bottom: 34px;
           display: block;
           scrollbar-width: thin;
           scrollbar-color: var(--theme-border-soft) transparent;
+          /* Taller/stronger fade so the next section fully dissolves
+             (no ghost heading peeking under it) while still signalling
+             there's more. */
           -webkit-mask-image: linear-gradient(
-            to bottom, #000 0, #000 calc(100% - 42px), transparent 100%
+            to bottom, #000 0, #000 calc(100% - 84px), transparent calc(100% - 20px)
           );
           mask-image: linear-gradient(
-            to bottom, #000 0, #000 calc(100% - 42px), transparent 100%
+            to bottom, #000 0, #000 calc(100% - 84px), transparent calc(100% - 20px)
           );
         }
         .letter-scroll::-webkit-scrollbar {
@@ -2702,11 +2666,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            a graceful final line — the two registers give the zone air
            and hierarchy. */
         .letter-outro {
-          /* margin-top:auto pushes the outro + tree + CTAs to the bottom
-             of the (now full-height) column, leaving the breathing gap
-             below the box; the rule marks the turn from argument to
-             invitation. */
-          margin-top: auto;
+          /* Follows the box with a modest gap (no bottom-push) — the
+             whole block is centred by .right-lower, so no void; the rule
+             marks the turn from argument to invitation. */
+          margin-top: 26px;
           padding-top: 24px;
           border-top: 1px solid var(--theme-border-soft);
           font-size: 15.5px;
@@ -3422,9 +3385,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           .letter-window,
           .letter-scroll {
             display: contents;
-          }
-          .letter-more {
-            display: none;
           }
           .cta-pair {
             padding-left: 0;
