@@ -906,27 +906,31 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     so there is no drift. Firm, never insulting. */}
                 <div className="close-tree">
                   <p className="close-tree-lead">
-                    <em>By now you&rsquo;re one of three people &mdash; and
-                    it can only be one. Find yourself, and do what it
-                    says.</em>
+                    <em>Whoever you are, you&rsquo;re on one of these three
+                    branches. Find yours, and take the step beside it:</em>
                   </p>
                   <ol className="close-tree-list">
                     <li>
-                      You don&rsquo;t agree with the idea. Then close the
-                      tab &mdash; no hard feelings.
+                      <span className="branch-if">You don&rsquo;t agree
+                      with the idea.</span>{' '}Close the tab; no hard
+                      feelings.
                     </li>
                     <li>
-                      You agree, but aren&rsquo;t set up to install yet.
-                      Then leave your email.
+                      <span className="branch-if">You agree, but
+                      don&rsquo;t use a coding agent yet (Claude Code,
+                      Cursor, and the like).</span>{' '}Follow along, and
+                      start when you do.
                     </li>
                     <li>
-                      You agree, and you&rsquo;re ready. Then press the
-                      button.
+                      <span className="branch-if">You agree, and you use
+                      one.</span>{' '}Install it now &mdash; and follow
+                      along too, if you like.
                     </li>
                   </ol>
                   <p className="close-tree-tag">
-                    <em>There is no fourth. &lsquo;Maybe later&rsquo; is
-                    just the first one, left unsaid.</em>
+                    <em>There is no fourth branch. To agree, be able, and
+                    still not do it isn&rsquo;t a choice &mdash; it&rsquo;s
+                    just low agency.</em>
                   </p>
                 </div>
 
@@ -2547,6 +2551,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           font-weight: 600;
           font-variant-numeric: lining-nums;
           color: var(--accent, var(--theme-fg-muted));
+        }
+        /* The condition (the "if you're this") reads italic-muted; the
+           action after it stays roman ink, so each branch is visibly
+           condition → do-this. */
+        .close-tree-list .branch-if {
+          font-style: italic;
+          color: var(--theme-fg-muted);
         }
         .close-tree-tag {
           margin: 12px 0 0;
