@@ -895,23 +895,40 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   change, and gone without a trace if you delete it.
                 </p>
 
-                {/* The close (2026-07-12): pointed and concrete, not
-                    poetic — the previous "only the idea is left to weigh…
-                    no fourth" was too smooth to force the frame (founder:
-                    "too easy to not actually follow the frame"). Isolate
-                    the one decision (agree or not), give each answer its
-                    concrete action (the button / your email / close the
-                    tab), then NAME the specific escape — "maybe later" —
-                    and rule it out, so the reader can't drift past. Firm,
-                    never insulting. */}
-                <p className="statement-beat">
-                  <em>So, really: do you agree with the idea, or not? If
-                  you do, the button is right there &mdash; one click, and
-                  undone in another if you&rsquo;re wrong. If you
-                  can&rsquo;t install yet, leave your email. Any answer is
-                  fair except one: &lsquo;maybe later,&rsquo; which is just
-                  not choosing.</em>
-                </p>
+                {/* The close (2026-07-12): the EXHAUSTIVE decision tree,
+                    literal (founder: "have that exhaustive decision tree
+                    thing… explain how the person reading literally has to
+                    pick one of them… clear action items… force them to
+                    make a decision and follow the resulting action"). An
+                    enumerated three-branch tree — the reader is
+                    necessarily in one — each with its concrete action; the
+                    tag collapses the "maybe later" escape into branch one
+                    so there is no drift. Firm, never insulting. */}
+                <div className="close-tree">
+                  <p className="close-tree-lead">
+                    <em>By now you&rsquo;re one of three people &mdash; and
+                    it can only be one. Find yourself, and do what it
+                    says.</em>
+                  </p>
+                  <ol className="close-tree-list">
+                    <li>
+                      You don&rsquo;t agree with the idea. Then close the
+                      tab &mdash; no hard feelings.
+                    </li>
+                    <li>
+                      You agree, but aren&rsquo;t set up to install yet.
+                      Then leave your email.
+                    </li>
+                    <li>
+                      You agree, and you&rsquo;re ready. Then press the
+                      button.
+                    </li>
+                  </ol>
+                  <p className="close-tree-tag">
+                    <em>There is no fourth. &lsquo;Maybe later&rsquo; is
+                    just the first one, left unsaid.</em>
+                  </p>
+                </div>
 
                 <div className="cta-pair">
                   <HomeInstall />
@@ -2213,12 +2230,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           /* Was 126px (ornament-top alignment); pulled up 2026-07-10 to
              keep the CTAs above the fold as the letter grew — the fold
              wins over the ornament nicety until the shortening pass. */
-          /* 96 → 26 → 108 → 178 (2026-07-12): the box shows only section
-             i and the closing is now short, so the column is short; push
-             it down so the CTAs sit near the left wordmark's baseline
-             (vertical balance) rather than floating high with empty space
-             below. */
-          margin-top: 178px;
+          /* 96 → 26 → 108 → 178 → 138 (2026-07-12): balances the column
+             (CTAs near the left wordmark's baseline) while leaving the
+             taller decision-tree close clear of the fold. */
+          margin-top: 138px;
           /* Squeeze the column — narrower text width pushes the left
              edge inward (right edge unchanged because right-lower is
              flex-end aligned). Restored to 680 (letter-box pass) — the
@@ -2485,6 +2500,62 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           letter-spacing: 0.006em;
           color: var(--theme-fg);
           hanging-punctuation: first last;
+        }
+        /* THE DECISION TREE — the exhaustive close. Lead + numbered
+           branches (each condition → action) + the tag that closes the
+           "maybe later" escape. Numerals in the wax accent so the three
+           branches read as a deliberate enumeration the reader must
+           place themselves in. */
+        .close-tree {
+          margin: 14px 0 0;
+        }
+        .close-tree-lead {
+          margin: 0 0 11px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 17px;
+          line-height: 1.5;
+          letter-spacing: 0.006em;
+          color: var(--theme-fg);
+        }
+        .close-tree-list {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          counter-reset: closebranch;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .close-tree-list li {
+          position: relative;
+          padding-left: 27px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 16px;
+          line-height: 1.42;
+          color: var(--theme-fg);
+          counter-increment: closebranch;
+        }
+        .close-tree-list li::before {
+          content: counter(closebranch);
+          position: absolute;
+          left: 0;
+          top: 0.05em;
+          width: 18px;
+          text-align: center;
+          font-size: 13px;
+          font-weight: 600;
+          font-variant-numeric: lining-nums;
+          color: var(--accent, var(--theme-fg-muted));
+        }
+        .close-tree-tag {
+          margin: 12px 0 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 15.5px;
+          line-height: 1.45;
+          letter-spacing: 0.008em;
+          color: var(--theme-fg-muted);
         }
         /* Two ways — the numbered product/company split closing the letter,
            labelling the two buttons below. Accent numerals, italic labels. */
@@ -3323,6 +3394,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           }
           .letter-sec {
             margin-bottom: -44px;
+          }
+          /* The decision tree is one flex child on mobile (its lead/list/
+             tag flow within it); order it with the letter, and give it a
+             touch of air above rather than the -38px pull. */
+          .close-tree {
+            order: 4;
+            margin-top: 8px;
           }
           .cta-pair {
             order: 5;
