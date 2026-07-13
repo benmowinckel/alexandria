@@ -904,32 +904,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     necessarily in one — each with its concrete action; the
                     tag collapses the "maybe later" escape into branch one
                     so there is no drift. Firm, never insulting. */}
-                <div className="close-tree">
-                  <p className="close-tree-lead">
-                    <em>By now, you know which of these is you.</em>
-                  </p>
-                  <div className="close-tree-branches">
-                    <p>
-                      <span className="branch-if">If the idea
-                      isn&rsquo;t for you</span>{' '}&mdash; close the tab,
-                      no hard feelings.
-                    </p>
-                    <p>
-                      <span className="branch-if">If it is, but you have
-                      no coding agent yet</span>{' '}&mdash; follow along,
-                      and start the day you do.
-                    </p>
-                    <p>
-                      <span className="branch-if">If it is, and you
-                      do</span>{' '}&mdash; start now.
-                    </p>
-                  </div>
-                  <p className="close-tree-tag">
-                    <em>There is no fourth. To agree, to be ready, and
-                    still do nothing is not another answer &mdash; only
-                    the third, left undone.</em>
-                  </p>
-                </div>
+                {/* The close (2026-07-12): concise, forcing. No list —
+                    one line that isolates the decision and closes the
+                    escape (putting it off = an unspoken no). */}
+                <p className="statement-beat">
+                  <em>So decide, now. If you agree, the button is one
+                  click away; if you don&rsquo;t, close the tab. Putting
+                  it off is just a no you won&rsquo;t admit.</em>
+                </p>
 
                 <div className="cta-pair">
                   <HomeInstall />
@@ -2503,54 +2485,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           color: var(--theme-fg);
           hanging-punctuation: first last;
         }
-        /* THE DECISION TREE — the exhaustive close, set as an epistle's
-           coda rather than a checklist (founder: "not elegant enough").
-           A lead, three parallel "if" branches (the anaphora carries the
-           enumeration — no numerals), each with an italic condition and a
-           roman action across an em dash, and a tag that forecloses the
-           fourth. A hairline on the left gathers the branches as one
-           quiet stanza. */
-        .close-tree {
-          margin: 22px 0 0;
-        }
-        .close-tree-lead {
-          margin: 0 0 13px;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 17px;
-          line-height: 1.5;
-          letter-spacing: 0.006em;
-          color: var(--theme-fg);
-        }
-        .close-tree-branches {
-          display: flex;
-          flex-direction: column;
-          gap: 9px;
-          padding-left: 20px;
-          border-left: 1px solid var(--theme-border-soft);
-        }
-        .close-tree-branches p {
-          margin: 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 16px;
-          line-height: 1.5;
-          letter-spacing: 0.004em;
-          color: var(--theme-fg);
-        }
-        /* The condition (the hypothesis) sits in italic; the action after
-           the em dash stays roman ink, so each branch reads if → do. */
-        .close-tree-branches .branch-if {
-          font-style: italic;
-        }
-        .close-tree-tag {
-          margin: 14px 0 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 15.5px;
-          line-height: 1.5;
-          letter-spacing: 0.008em;
-          color: var(--theme-fg-muted);
-        }
         /* Two ways — the numbered product/company split closing the letter,
            labelling the two buttons below. Accent numerals, italic labels. */
         .statement-close .way-num {
@@ -3392,13 +3326,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           }
           .letter-sec {
             margin-bottom: -44px;
-          }
-          /* The decision tree is one flex child on mobile (its lead/list/
-             tag flow within it); order it with the letter, and give it a
-             touch of air above rather than the -38px pull. */
-          .close-tree {
-            order: 4;
-            margin-top: 8px;
           }
           .cta-pair {
             order: 5;
