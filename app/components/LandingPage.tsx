@@ -700,9 +700,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           <p className="front-salutation"><em>to the reader.</em></p>
           <p className="front-epigraph-line">
             When calculators arrived, we let them do the math &mdash; and
-            lost the ability to do it ourselves. Hand AI your thinking,
-            and this time it isn&rsquo;t one skill you lose. It&rsquo;s
-            all of them.
+            got worse at doing it ourselves. Thinking is no different: the
+            more you let AI do it for you, the weaker the muscle gets.
           </p>
         </div>
         <div className="top-inner" />
@@ -794,22 +793,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
 
                 <p className="statement-close">
                   It creeps in. You ask AI to write the email, make the
-                  plan, solve the problem &mdash; and it does, better
-                  than you would have. So you keep asking. But thinking
-                  is a muscle: stop using it and it fades. The calculator
-                  only took arithmetic; this takes the lot. Give it a few
-                  years and you won&rsquo;t just outsource your
-                  thinking &mdash; you&rsquo;ll lose the ability, and
-                  barely notice.
+                  plan, weigh the decision &mdash; and it does, often
+                  better than you would have. So you keep asking. It
+                  handles more of your thinking and you do less of it
+                  yourself, until one day you notice how much you have
+                  handed over.
                 </p>
 
                 <p className="statement-close">
                   There are three doors. Take the benefit and the cost:
                   let AI think for you, and let your mind go soft. Refuse
                   both: reject AI, and fall behind. Or take the benefit
-                  without the cost &mdash; use AI fully, and have it make
-                  you{' '}<em>sharper</em>, not{' '}<em>emptier</em>.
-                  Alexandria is that third door.
+                  without the cost &mdash; use AI fully, and have it keep
+                  you{' '}<em>sharp</em>. Alexandria is that third door.
                 </p>
 
                 <p className="letter-sec">ii &middot; the missing piece</p>
@@ -895,10 +891,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
 
                 <p className="statement-close letter-outro">
                   To start, one command installs the founder&rsquo;s own
-                  folder on your computer &mdash; his system, working from
-                  the first minute. It is free and open, private to you,
-                  yours to change however you like, and gone without a
-                  trace the moment you delete it.
+                  folder on your computer &mdash; free, private, yours to
+                  change, and gone without a trace if you delete it.
                 </p>
 
                 {/* The close (2026-07-12): reset the frame and FORCE the
@@ -911,12 +905,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     them into one of the exhaustive decisions, and they own
                     it." Firm, never insulting. */}
                 <p className="statement-beat">
-                  <em>So the practical side is all handled &mdash; which
-                  leaves only the idea itself. On that, there are three
-                  kinds of reader. If you don&rsquo;t agree, you&rsquo;ve
-                  made your choice. If you agree but can&rsquo;t start
-                  today, leave your email. And if you agree and you can,
-                  the only thing left is the click. There is no fourth.</em>
+                  <em>So only the idea is left to weigh. Agree, and
+                  it&rsquo;s one click &mdash; or your email, if you
+                  can&rsquo;t start today. Don&rsquo;t, and you&rsquo;ve
+                  made your choice. There is no fourth.</em>
                 </p>
 
                 <div className="cta-pair">
@@ -2219,11 +2211,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           /* Was 126px (ornament-top alignment); pulled up 2026-07-10 to
              keep the CTAs above the fold as the letter grew — the fold
              wins over the ornament nicety until the shortening pass. */
-          /* 96 → 26 → 108 (2026-07-12): with the box now showing only
-             section i, the column is short; push it down so the CTAs
-             sit near the left wordmark's baseline (vertical balance)
-             rather than floating high with empty space below. */
-          margin-top: 108px;
+          /* 96 → 26 → 108 → 178 (2026-07-12): the box shows only section
+             i and the closing is now short, so the column is short; push
+             it down so the CTAs sit near the left wordmark's baseline
+             (vertical balance) rather than floating high with empty space
+             below. */
+          margin-top: 178px;
           /* Squeeze the column — narrower text width pushes the left
              edge inward (right edge unchanged because right-lower is
              flex-end aligned). Restored to 680 (letter-box pass) — the
