@@ -85,11 +85,16 @@ UNSIGNED_OK=(
   factory/hooks/cursor/alexandria-session-end.py
   factory/hooks/cursor/alexandria-stop.py
   factory/scripts/publish-fork.sh
+  # Cowork plugin — a skill delivery only (its hooks are inert in Cowork, and
+  # the curl path never installs it). Added via Claude's git-clone plugin
+  # system (TOFU), not our signed payload chain, so it's not signature-gated.
+  factory/plugin/scripts/plugin-shim.sh
+  factory/plugin/scripts/shim.sh
 )
 while IFS= read -r f; do
   printf '%s\n' "${SIGNED_FILES[@]}" "${UNSIGNED_OK[@]}" | grep -qxF "$f" || \
     echo "⚠️  $f looks executable but is unsigned — add to SIGNED_FILES (or UNSIGNED_OK if it's an install-once root)" >&2
-done < <(cd "$REPO_ROOT" && find factory -type f \( -name '*.sh' -o -name '*.py' \) -not -path 'factory/_parked-plugin/*' | sort)
+done < <(cd "$REPO_ROOT" && find factory -type f \( -name '*.sh' -o -name '*.py' \) | sort)
 
 # Build manifest: one line per file, "sha256  relative/path".
 # Stable order (literal list above) so the manifest is reproducible.

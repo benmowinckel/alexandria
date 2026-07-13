@@ -104,11 +104,12 @@ Result: session-start context load and session-end capture run in every Claude C
 
 ### Cowork and the Claude app (a different, opt-in path)
 
-Cowork runs your agent in a sealed Apple-Virtualization VM: it can't run the hooks or load the `/a` skill on its own, and it can only see a folder when you explicitly attach it that session (no external script can auto-mount it — the share is created inside the Claude app's own process). So Cowork isn't wired by the curl. It's still usable, opt-in, in three parts:
+Cowork runs your agent in a sealed Apple-Virtualization VM: it can't run the hooks or load the `/a` skill on its own, and it can only see a folder when you explicitly attach it that session (no external script can auto-mount it — the share is created inside the Claude app's own process). So Cowork isn't wired by the curl. It's still usable, opt-in, in four parts (two one-time, then per-session):
 
 1. **Capture (automatic).** An optional launchd agent (`com.alexandria.session-capture`, enabled separately) reads the transcripts Cowork writes to your disk and mirrors the dialogue into `~/alexandria/files/vault/sessions/` — no attach needed, riding the one direction the VM shares out.
-2. **Awareness (one-time paste).** `setup.sh` writes `~/alexandria/system/.claude-instructions.md`; paste it into **Claude Settings → Profile → "Instructions for Claude"**. Every Cowork/chat session then knows who you are and prompts you to attach the folder + run `/a` when it would help.
-3. **Full read/write (prompted).** Attach `~/alexandria` in a desktop Cowork session and type `/a` — it loads your constitution and works from your real files. Mobile and plain chat can't attach a folder, so there they point you to your desktop.
+2. **The `/a` command (one-time plugin add).** Cowork keeps its own skill registry, so `/a` isn't there by default. Add it once: in Cowork, **Add plugins → from repo → `mowinckelb/alexandria`**. This installs only the `/a` skill (its hooks are inert in Cowork — they can't fire in the VM — so it's a skill delivery, nothing more). This is the *only* thing the plugin is still used for; the curl path never touches it.
+3. **Awareness (one-time paste).** `setup.sh` writes `~/alexandria/system/.claude-instructions.md`; paste it into **Claude Settings → Profile → "Instructions for Claude"**. Every Cowork/chat session then knows who you are and proactively prompts you to attach the folder + run `/a` when it would help.
+4. **Full read/write (prompted).** Attach `~/alexandria` in a desktop Cowork session and type `/a` — it loads your constitution and works from your real files. (If you skipped the plugin, the pasted instructions make the agent do the same by reading your canon directly once the folder is attached.) Mobile and plain chat can't attach a folder, so there they point you to your desktop.
 
 Nothing here routes your files through a server; it's the same sovereign folder, reached the only way a sealed VM allows.
 

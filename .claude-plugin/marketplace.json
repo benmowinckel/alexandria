@@ -11,7 +11,7 @@
     {
       "name": "alexandria",
       "source": "./factory/plugin",
-      "description": "An AGENTS.md for your mind \u2014 your AI reads it, writes to it, and develops you with it. Files you own; works across Claude Code and Claude Desktop.",
+      "description": "The /a command for Cowork \u2014 Alexandria reads your files, writes to them, and develops you. For Cowork only; Claude Code/Cursor/Codex/Factory install via the one curl at alexandria-library.com/a.",
       "author": {
         "name": "Benjamin a. Mowinckel",
         "url": "https://alexandria-library.com"
