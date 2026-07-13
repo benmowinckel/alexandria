@@ -793,7 +793,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   When calculators arrived, we let them do the
                   math &mdash; and most of us lost the ability to do it
                   in our heads. AI is about to do the same to your
-                  thinking.
+                  thinking, all of it.
                 </p>
 
                 {/* THE LETTER BOX (2026-07-10, founder-directed): the
@@ -816,106 +816,116 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   className="letter-scroll"
                   onScroll={(e) => setLetterCue(e.currentTarget.scrollTop < 24)}
                 >
-                <p className="letter-sec">i &middot; the wave</p>
+                <p className="letter-sec">i &middot; the cost</p>
 
                 <p className="statement-close">
-                  Most people won&rsquo;t mind, honestly &mdash; AI is
-                  that good, and it only gets better. It&rsquo;s a wave,
-                  and it&rsquo;s still growing. Refuse it, and
-                  you&rsquo;re left standing on the beach. Surrender,
-                  and it pulls you under. Or choose the third option:
-                  surf it. Use AI fully, scale alongside it &mdash; an
-                  infinite intelligence that{' '}<em>develops</em>{' '}
-                  your mind and brings you with it, instead of{' '}
-                  <em>replacing</em>{' '}you. That choice is what
-                  defines an Alexandrian.
+                  It creeps in. You ask AI to write the email, make the
+                  plan, solve the problem &mdash; and it does, better
+                  than you would have. The answers are great, so you
+                  keep asking. But thinking is a muscle: stop using it
+                  and it fades. The calculator only took arithmetic;
+                  this takes the lot &mdash; every kind of thinking you
+                  do. Give it a few years and you won&rsquo;t just
+                  outsource your thinking, you&rsquo;ll lose the ability
+                  to do it at all. Most people won&rsquo;t notice until
+                  it&rsquo;s too late.
                 </p>
 
-                <p className="letter-sec">ii &middot; the gap</p>
+                <p className="statement-close">
+                  So there are three doors. Through the first, you take
+                  the benefit and the cost: let AI do your thinking, and
+                  let your own mind go soft. Through the second, you
+                  refuse both: reject AI, and fall behind everyone who
+                  didn&rsquo;t. The third door is the benefit without
+                  the cost: use AI fully, and have it make you{' '}
+                  <em>sharper</em>{' '}instead of{' '}<em>emptier</em>.
+                  Alexandria is the third door.
+                </p>
+
+                <p className="letter-sec">ii &middot; the missing piece</p>
 
                 <p className="statement-close">
-                  To surf it, your AI has to know where you want to
-                  go &mdash; and who you are. Almost everything about
-                  you is already connectable &mdash; other companies do
-                  that part well. The one gap is your inner monologue:
-                  {' '}<em>what</em>{' '}you think, and{' '}
-                  <em>how</em>{' '}you think. Nothing has access to it,
-                  and nothing seems to be trying &mdash; because nobody
-                  can open it but you. AI can&rsquo;t read your mind.
-                  But it can read words: put your thoughts into words,
-                  and it can think{' '}<em>with</em>{' '}you, not{' '}
-                  <em>for</em>{' '}you.
+                  For AI to sharpen your mind, it has to actually know
+                  you. Most of what makes you{' '}<em>you</em>{' '}&mdash;
+                  your files, your messages, your history &mdash; it can
+                  already reach, and other apps connect all that well.
+                  But the most important part is missing: what goes on
+                  in your head. What you think, and how you think it.
+                  Nothing records that. No app can reach it, because
+                  it&rsquo;s inside you &mdash; only you can get it out.
+                  The opening is simple: AI can&rsquo;t read your mind,
+                  but it can read words. Put your thoughts into words,
+                  and it can think{' '}<em>with</em>{' '}you instead of
+                  {' '}<em>for</em>{' '}you.
                 </p>
 
                 <p className="letter-sec">iii &middot; the folder</p>
 
                 <p className="statement-close">
-                  Our solution is the Alexandria folder: an open
-                  standard &mdash; like an AGENTS.md, but for personal
-                  alignment. It becomes the one place that holds you, a
-                  single ground truth any AI or service can plug into,
-                  read, and write to. It replaces nothing &mdash; it
-                  connects what can be connected, and you dump in the
-                  rest: old journals, voice memos, half-finished notes;
-                  the intelligence sorts it. Fully private, fully
-                  sovereign &mdash; yours to organise, gate, even sell,
-                  or delete.
+                  So here is the product, plainly: a folder on your
+                  computer. Inside it is a simple file that tells any AI
+                  who you are and how you think. (Coding tools already
+                  use a file like this &mdash; an AGENTS.md &mdash; to
+                  learn how a project works; this is the same idea, but
+                  for a person.) Point any AI at the folder and it
+                  treats you like someone it knows, not a stranger.
+                  Connect your other apps and data too, and it all
+                  gathers in this one place.
                 </p>
 
                 <p className="statement-close">
-                  It also sets you free. Your personalisation now lives
-                  with you, not inside any one AI company &mdash; so you
-                  can switch models any time and take everything with
-                  you. You own your data. And it&rsquo;s your own AI
-                  doing all of it, on your own computer; it has nothing
-                  to do with us. We just handed you the idea. We never
-                  see a word.
+                  It stays on your machine, fully private and fully
+                  yours: organise it, hide parts, even sell access, or
+                  delete the whole thing in a second. And it frees you
+                  &mdash; your context lives with you now, not locked
+                  inside one AI company, so you can switch to any AI any
+                  time and take everything with you. It&rsquo;s your own
+                  AI doing the work, on your own computer. We never
+                  touch it. We just gave you the idea.
                 </p>
 
                 <p className="letter-sec">iv &middot; the gym</p>
 
                 <p className="statement-close">
-                  Most of it is automatic: as you work, your AI analyses
-                  what you say, extracts the signal &mdash; the ideas,
-                  the decisions, the way you think &mdash; and keeps it.
-                  Knowing you like that makes it better at helping you
-                  everywhere, the way any personalisation does. It only
-                  adds.
+                  Most of it runs on its own. As you work with AI day to
+                  day, it quietly notes how you think &mdash; your ideas,
+                  your decisions, your patterns &mdash; and saves them to
+                  the folder. The more it knows you, the better it helps
+                  you, in every app. It only ever adds.
                 </p>
 
                 <p className="statement-close">
-                  The deeper half takes your participation. A Wikipedia
-                  page is written from a person&rsquo;s outputs; a
-                  biography is richer because the biographer sits with
-                  the person for months, asks, and gets let in. The
-                  active sessions are that: a biographer for your
-                  mind &mdash; and a personal trainer for it. We provide
-                  the gym and the weights; you do the lifting. Because
-                  what matters isn&rsquo;t how fancy the gym is &mdash;
-                  it&rsquo;s the athlete who walks out. The product is
-                  the changed person.
+                  The deeper part you do on purpose. Now and then you sit
+                  with it like a coach: it asks you questions, draws out
+                  what you haven&rsquo;t put into words, helps you think
+                  things through, then sends you off to act. Picture a
+                  Wikipedia page next to a real biography &mdash; one is
+                  pieced together from the outside, the other comes from
+                  someone who sat with you for months and got let in.
+                  That richer version only happens if you show up. It is
+                  a gym for your mind: we hand you the equipment, you do
+                  the lifting. What matters isn&rsquo;t the gym &mdash;
+                  it&rsquo;s who walks out. The product is a sharper you.
                 </p>
 
                 <p className="letter-sec">v &middot; the tribe</p>
 
                 <p className="statement-close">
-                  And Alexandria itself is like Strava, but for the
-                  mind. Runners share one belief &mdash; that health
-                  matters &mdash; and everyone still runs their own way:
-                  their own shoes, their own routes, their own pace.
-                  Same here. You connect with the others, learn from
-                  each other, and show what you&rsquo;ve built.
+                  Everyone doing this together is Alexandria &mdash; like
+                  Strava, but for the mind. We share one belief, that a
+                  sharper mind is worth the work, and each of us goes our
+                  own way. You connect with the others, learn from them,
+                  and share what you&rsquo;ve built.
                 </p>
 
                 <p className="statement-close">
-                  The company&rsquo;s job: sell this vision, connect the
-                  people who share it, and make starting easy. Everyone
-                  is welcome; not everyone will come. Starting is one
-                  command: it installs a copy of the founder&rsquo;s own
-                  folder &mdash; his instructions, his methods, working
-                  from the first minute &mdash; free, updated monthly,
-                  yours to reshape into your own. His shoes, until you
-                  have yours. We just want you to run.
+                  Our job is to make starting easy and to bring these
+                  people together. Everyone is welcome; not everyone will
+                  come. Starting takes one command: it drops in a copy of
+                  the founder&rsquo;s own folder &mdash; his setup, ready
+                  to use from minute one &mdash; free, refreshed monthly,
+                  yours to reshape into your own. Borrow his until
+                  you&rsquo;ve made yours. We just want you to start.
                 </p>
                 </div>
                 {/* Scroll cue — quiet plate riding the fade; gone once
@@ -933,11 +943,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     those are the only options lol") — every reader maps
                     to a button or an honest exit; no fourth option. */}
                 <p className="statement-beat">
-                  <em>Only three readers get this far. You don&rsquo;t
-                  want this &mdash; fair. You want it, but don&rsquo;t
-                  run a coding agent yet &mdash; that&rsquo;s the right
-                  button. Or you want it, and it&rsquo;s one press
-                  away. There&rsquo;s no fourth option.</em>
+                  <em>Only three kinds of reader get this far. You
+                  don&rsquo;t want this &mdash; fair enough. You want it
+                  but don&rsquo;t use a coding tool yet &mdash; press
+                  keep me posted, and start when you&rsquo;re ready. Or
+                  you want it, and it&rsquo;s one click away. There is no
+                  fourth.</em>
                 </p>
 
                 <div className="cta-pair">
