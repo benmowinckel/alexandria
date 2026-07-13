@@ -2661,12 +2661,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
         .letter-scroll {
           position: relative;
-          /* 322 → 372 (2026-07-12): with the shorter close there was a
-             big void between the box and the closing group; a taller box
-             narrows it toward the wax seal's baseline on the left (a
-             cleaner horizon). Shows section i + a graceful peek of ii
-             under the fade. */
-          height: 372px;
+          /* 2026-07-12: the box is anchored top and the closing anchored
+             bottom, so a short letter leaves a void between them. The box
+             now grows to nearly meet the closing (only a small breath
+             left), killing the void while the CTAs stay bottom-aligned.
+             --letter-box-h is measured/tuned so box-bottom sits just
+             above the outro. Shows section i + ii at rest; scroll for the
+             rest. */
+          height: var(--letter-box-h, 490px);
           overflow-y: auto;
           padding-right: 18px;
           padding-bottom: 34px;
