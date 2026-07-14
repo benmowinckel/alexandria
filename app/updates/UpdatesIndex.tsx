@@ -33,6 +33,8 @@ export default function UpdatesIndex({ updates }: { updates: UpdateMeta[] }) {
             ))}
           </ol>
         )}
+
+        <p className="cta"><em>keep thinking.</em> <Link href="/start" className="cta-link">start free →</Link> <span className="cta-sep">·</span> <Link href="/join" className="cta-link">join the collective →</Link></p>
       </section>
 
       <span className="watermark" aria-hidden><em>a.</em></span>
@@ -129,6 +131,17 @@ export default function UpdatesIndex({ updates }: { updates: UpdateMeta[] }) {
           font-variant-numeric: tabular-nums;
           font-style: italic;
         }
+        .cta {
+          margin: 64px 0 0;
+          padding-top: 28px;
+          border-top: 1px solid ${RULE};
+          font-size: 17px;
+          color: ${INK_MUTED};
+        }
+        .cta :global(em) { font-style: italic; color: ${INK}; }
+        .cta :global(.cta-link) { color: ${INK}; text-decoration: none; border-bottom: 1px solid ${RULE}; transition: opacity 200ms ease; }
+        .cta :global(.cta-link):hover { opacity: 0.6; }
+        .cta .cta-sep { color: ${INK_MUTED}; margin: 0 4px; }
         .watermark {
           position: fixed;
           bottom: 22px;

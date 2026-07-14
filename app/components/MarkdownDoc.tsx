@@ -5,11 +5,17 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ThemeToggle } from './ThemeToggle';
+import StartJoinCTA from './StartJoinCTA';
 
 type Props = {
   src: string;
   header: string;
   homeHref?: string;
+  /** Append the shared conversion block (start free / join the collective)
+   *  above the footer, so an info page hands off to the funnel instead of
+   *  dead-ending at the wordmark. On for the public reads (questions,
+   *  mechanics); off for internal/noindex docs (memo). */
+  cta?: boolean;
   /** When true, strip the manual `## contents.` block, inject hierarchical
    *  part.chapter numbers into headings, and render an auto-generated TOC
    *  in its place. Designed for the whitepaper's parts → chapters structure. */
@@ -489,7 +495,7 @@ function FaqBody({ content }: { content: string }) {
   );
 }
 
-export default function MarkdownDoc({ src, header, homeHref = '/', numbered = false, plain = false, faq = false }: Props) {
+export default function MarkdownDoc({ src, header, homeHref = '/', cta = false, numbered = false, plain = false, faq = false }: Props) {
   const [content, setContent] = useState<string | null>(null);
 
   useEffect(() => {
@@ -579,6 +585,12 @@ export default function MarkdownDoc({ src, header, homeHref = '/', numbered = fa
               {parsed.colophon}
             </ReactMarkdown>
           </section>
+        )}
+
+        {cta && content !== null && (
+          <div className="mdoc-frame" style={{ margin: '1rem 0 0' }}>
+            <StartJoinCTA align="left" />
+          </div>
         )}
 
         <nav className="mdoc-frame mdoc-footnav">

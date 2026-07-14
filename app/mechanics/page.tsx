@@ -37,6 +37,7 @@ export default function MechanicsPage() {
       header=""
       homeHref="/"
       plain
+      cta
     />
   );
 }

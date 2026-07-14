@@ -39,6 +39,7 @@ export default function QuestionsPage() {
       homeHref="/"
       plain
       faq
+      cta
     />
   );
 }

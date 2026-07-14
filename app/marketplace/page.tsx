@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
+import StartJoinCTA from '../components/StartJoinCTA';
 import { SERVER_URL, pageMetadata } from '../lib/config';
 
 export const dynamic = 'force-dynamic';
@@ -141,6 +142,9 @@ export default async function MarketplacePage() {
             })}
           </section>
         )}
+        <div style={{ marginTop: '3.5rem' }}>
+          <StartJoinCTA lead="want your own system in here?" />
+        </div>
       </main>
     </>
   );

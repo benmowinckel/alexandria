@@ -114,15 +114,18 @@ export type ReaderShellProps = {
   who?: string;                                   // whose piece (signin/pay copy)
   askPlaceholder?: string;
   askFn: (question: string) => Promise<string>;   // the twin call (wrapper decides which)
+  intro?: React.ReactNode;                        // chat empty-state (who you're talking to + CTAs)
+  defaultChatOpen?: boolean;                       // open the chat pane on load (surface the ask)
 };
 
 export default function ReaderShell({
   name, backHref, backTitle, visibility = 'public', status, pdfUrl, markdown,
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askFn,
+  intro, defaultChatOpen = false,
 }: ReaderShellProps) {
   const [leftOpen, setLeftOpen] = useState(false);   // history
-  const [midOpen, setMidOpen] = useState(false);     // chat
+  const [midOpen, setMidOpen] = useState(defaultChatOpen);     // chat
   const [rightOpen, setRightOpen] = useState(true);  // the piece
   const [tab, setTab] = useState<'piece' | 'ask'>('piece'); // mobile
   const [expanded, setExpanded] = useState(false);   // full-screen the piece
@@ -271,6 +274,9 @@ export default function ReaderShell({
               )}
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
+              {intro && (active?.messages.length ?? 0) === 0 && !asking && (
+                <div style={{ padding: '0.6rem 0 0.2rem' }}>{intro}</div>
+              )}
               {active?.messages.map((m, i) => (
                 <div key={i} style={{ margin: '0 0 1.1rem' }}>
                   {m.role === 'you'

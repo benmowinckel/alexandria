@@ -1,15 +1,19 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import ReaderShell from './ReaderShell';
+import { FOUNDER_LIBRARY_ID, FOUNDER_PROFILE_PATH } from '../lib/config';
 
 /**
  * PublicDocReader — the website's public docs (whitepaper markdown, letter PDF)
- * in the SAME reader as the library (ReaderShell). The one difference from a
- * library piece: the "ask" goes to the public **Alexandria guide** (`/api/ask`),
- * NOT anyone's personal twin. The guide already holds both docs + the company
- * context server-side, so the browser sends only the question — no doc payload,
- * no substrate, no personal twin.
+ * in the SAME reader as the library (ReaderShell). The "ask" talks to the
+ * founder's OWN public context twin (`/api/library/{FOUNDER_LIBRARY_ID}/ask`) —
+ * the same mind the public reaches on his profile — with the doc being read
+ * passed as `focus`. This replaced the old faceless `/api/ask` guide: a reader
+ * now talks to Benjamin's actual mind, built with Alexandria, which is itself
+ * the pitch. Inference runs on the device sidecar; the twin loads only the
+ * public shadow + public product facts (no private substrate in reach).
  */
 export default function PublicDocReader({
   title, mdSrc, pdfSrc, txtSrc,
@@ -53,14 +57,36 @@ export default function PublicDocReader({
     return () => { live = false; };
   }, [mdSrc, pdfSrc, txtSrc]);
 
+  // Ask Benjamin's OWN public context twin (the same mind on his profile), with
+  // the doc the reader is on passed as `focus` so the answer is grounded in it.
+  // `text` holds the current doc (markdown or the letter's extracted text).
   const askFn = async (question: string): Promise<string> => {
-    const res = await fetch('/api/ask', {
+    const res = await fetch(`/api/library/${FOUNDER_LIBRARY_ID}/ask`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({
+        question,
+        variant: 'context',
+        ...(text.trim() ? { focus: { name: title, content: text } } : {}),
+      }),
     });
     const b = await res.json().catch(() => ({}));
-    return (res.ok && b.answer) ? b.answer : (b.error || 'Alexandria could not answer just now.');
+    return (res.ok && b.answer) ? b.answer : (b.error || 'the mind could not answer just now.');
   };
+
+  // The chat empty-state: name who you're talking to (a live proof of the
+  // product), and give the two conversion doors — make your own · his library.
+  const intro = (
+    <div style={{ color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.65 }}>
+      <p style={{ margin: '0 0 0.9rem' }}>
+        you’re reading this with <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Benjamin</strong> — his
+        actual mind, built with alexandria from his own writing. ask it about this piece, about alexandria, or about him.
+      </p>
+      <p style={{ margin: 0, display: 'flex', flexWrap: 'wrap', gap: '0.35rem 1.1rem' }}>
+        <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>make your own →</Link>
+        <Link href={FOUNDER_PROFILE_PATH} style={{ color: 'var(--accent)', textDecoration: 'none' }}>his library →</Link>
+      </p>
+    </div>
+  );
 
   return (
     <ReaderShell
@@ -75,9 +101,11 @@ export default function PublicDocReader({
       downloadBlob={dlBlobRef.current}
       downloadName={title.replace(/\s+/g, '-')}
       downloadExt={pdfSrc ? 'pdf' : 'md'}
-      who="Alexandria"
-      askPlaceholder={`ask about the ${title}…`}
+      who="Benjamin"
+      askPlaceholder={'ask benjamin about this…'}
       askFn={askFn}
+      intro={intro}
+      defaultChatOpen
     />
   );
 }

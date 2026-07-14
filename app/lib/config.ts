@@ -21,12 +21,24 @@ export function librarySignInUrlHere(): string {
   );
 }
 
-// The reader's "ask" (the letter/whitepaper via PublicDocReader) posts to /api/ask → the Worker's /ask relay
-// → the sidecar's isolated /guide route (a public Alexandria representative, not
-// anyone's personal twin). The Worker resolves which sidecar (the founder's
-// always-on one) and holds the routing, so the frontend needs no author config.
-// Inference runs on the device; the Worker only relays (plm.md § settled
-// security model). Nothing secret is in this path's reach.
+// The founder's Library id (his author slug). His profile lives at
+// /library/{FOUNDER_LIBRARY_ID}; his public PLM ("ask this mind") answers at
+// /api/library/{FOUNDER_LIBRARY_ID}/ask. Single source so every surface that
+// points at "Benjamin's mind" — the whitepaper/letter reader, the funnel CTAs —
+// stays in sync. His profile is the one canonical Library page we deep-link to
+// (the /library directory is empty to a signed-out stranger).
+export const FOUNDER_LIBRARY_ID = 'mowinckelb';
+export const FOUNDER_PROFILE_PATH = `/library/${FOUNDER_LIBRARY_ID}`;
+
+// The reader's "ask" (the letter/whitepaper via PublicDocReader) posts to
+// /api/library/{FOUNDER_LIBRARY_ID}/ask — the founder's OWN public context twin,
+// the same mind the public reaches on his profile. It replaced the old generic
+// /api/ask → /guide relay: consolidated so a reader talks to Benjamin's actual
+// mind (a live proof of the product), not a faceless company chatbot. The doc
+// being read is passed as `focus`; inference runs on the device sidecar, the
+// Worker only relays (plm.md § settled security model). The context twin loads
+// only the PUBLIC tiered shadow + public product facts — no private substrate in
+// this path's reach, prompt-injection-guarded server-side.
 
 // Shared social/openGraph fields. Next.js metadata merging is **shallow**:
 // any page that sets `openGraph` at all replaces the parent layout's
@@ -59,10 +71,11 @@ export function pageMetadata(opts: {
   };
 }
 
-// Founder contact — used on /cancel and anywhere else a user needs the
+// Founder contact — used on /cancel, /join, and anywhere else a user needs the
 // human at the other end (mailto / tel). Kept here so a single edit
 // propagates to every surface and the value stays out of component code.
 export const FOUNDER_PHONE = '+14155038178';
+export const FOUNDER_EMAIL = 'benmowinckel@gmail.com';
 
 // The iCloud Shortcut — phone-side capture. Single source for every surface
 // that links it (/shortcut, mobile /start; the server's email templates carry

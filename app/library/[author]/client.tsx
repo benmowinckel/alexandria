@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { ThemeToggle } from '../../components/ThemeToggle';
+import StartJoinCTA from '../../components/StartJoinCTA';
 import { FETCH_TIMEOUT_MS, SERVER_URL, librarySignInUrlHere } from '../../lib/config';
 import { safeUrl } from '../../lib/url';
 import { type TwinVariantSummary } from './types';
@@ -364,7 +365,14 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             ))
           )}
         </section>
-        <footer style={{ textAlign: 'center', margin: '4.5rem 0 0' }}>
+        {/* The "make your own version of these" door — this profile (a mind + a
+            library, built with alexandria) IS the demo; the CTA turns it into a
+            start. Sits above the quiet wordmark so the page ends on the next step,
+            not a link back into the (stranger-empty) directory. */}
+        <div style={{ margin: '4.5rem 0 0' }}>
+          <StartJoinCTA lead="want a mind and a library like this?" />
+        </div>
+        <footer style={{ textAlign: 'center', margin: '3rem 0 0' }}>
           <Link href="/library" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '1rem', letterSpacing: '0.01em', textDecoration: 'none' }} className="hover:opacity-60">
             alexandria<span style={{ fontStyle: 'normal' }}>.</span>
           </Link>

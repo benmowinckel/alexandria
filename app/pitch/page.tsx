@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
+import StartJoinCTA from '../components/StartJoinCTA';
 
 export const metadata = {
   title: 'Alexandria — Pitch',
@@ -27,6 +28,9 @@ export default function PitchPage() {
             </video>
           </div>
         </article>
+        <div className="mdoc-frame" style={{ margin: '1rem 0 2rem' }}>
+          <StartJoinCTA />
+        </div>
         <nav className="mdoc-frame mdoc-footnav">
           <Link href="/" className="mdoc-home">a.</Link>
         </nav>

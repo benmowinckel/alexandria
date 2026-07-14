@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
+import StartJoinCTA from '../components/StartJoinCTA';
 
 export const metadata = {
   title: 'Alexandria — Demo',
@@ -24,6 +25,9 @@ export default function DemoPage() {
           Your browser does not support the video tag.
         </video>
       </main>
+      <section style={{ padding: '0 2rem 5rem', fontFamily: 'var(--font-eb-garamond)' }}>
+        <StartJoinCTA />
+      </section>
       <style>{`
         /* Stage fills the viewport. Video sits centered, sized to fill
            as much of the viewport as possible while preserving its

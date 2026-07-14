@@ -289,6 +289,16 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               )}
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
+              {who && (active?.messages.length ?? 0) === 0 && !asking && (
+                <div style={{ padding: '0.6rem 0 0.2rem', color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.65 }}>
+                  <p style={{ margin: '0 0 0.9rem' }}>
+                    this is <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{who}</strong>’s mind — built with alexandria from their own writing. ask it anything.
+                  </p>
+                  <p style={{ margin: 0 }}>
+                    <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>make your own →</Link>
+                  </p>
+                </div>
+              )}
               {active?.messages.map((m, i) => (
                 <div key={i} style={{ margin: '0 0 1.1rem' }}>
                   {m.role === 'you'

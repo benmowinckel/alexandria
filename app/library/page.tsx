@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { SERVER_URL, pageMetadata, librarySignInUrl } from '../lib/config';
+import { SERVER_URL, pageMetadata, librarySignInUrl, FOUNDER_PROFILE_PATH } from '../lib/config';
 import { LibraryDirectory, type DirectoryAuthor } from './LibraryDirectory';
 
 export const dynamic = 'force-dynamic';
@@ -114,6 +114,9 @@ export default async function LibraryPage({
             <p style={{ margin: '0 0 1rem' }}>
               the member directory is for the collective — sign in to browse the Alexandrians,
               find who&rsquo;s near you, and reach them.
+            </p>
+            <p style={{ margin: '0 0 1.25rem' }}>
+              new here? see one for real — <Link href={FOUNDER_PROFILE_PATH} style={linkStyle}>Benjamin&rsquo;s mind &amp; library &rarr;</Link>
             </p>
             <p style={{ margin: '0 0 0.75rem' }}>
               <a href={signInUrl} style={linkStyle}>sign in</a>
