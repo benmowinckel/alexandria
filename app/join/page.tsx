@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: '/join',
   title: 'join alexandria.',
   description:
-    'the tool is free and always will be; the collective is the half still being built. become a founding member.',
+    'the tool is free and always will be; the community is the half still being built. become a founding member.',
 });
 
 // The founding-member JOIN — the paid half of the two things. The tool (the run)

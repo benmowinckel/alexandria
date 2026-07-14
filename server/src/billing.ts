@@ -15,7 +15,7 @@ import { requireAuth, ACTIVE_AUTHOR_STATUSES, type Account } from './auth.js';
 import { loadAccounts, getKV } from './kv.js';
 import { assignAuthorNumber, getAccountByLogin, updateAccountBilling } from './accounts.js';
 import { getDB } from './db.js';
-import { sendEmail, sendPatronWelcome } from './email.js';
+import { sendEmail, sendPatronWelcome, sendKinFreeUnlocked, sendKinLapseWarning } from './email.js';
 import { generateToken } from './crypto.js';
 import { safeEqual, hashApiKey } from './crypto.js';
 
@@ -336,19 +336,35 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
 
   let nowHasDiscount = hadDiscount;
 
+  const periodEndUnix = sub.items?.data?.[0]?.current_period_end ?? null;
+  const currentPeriodEnd = periodEndUnix ? new Date(periodEndUnix * 1000) : null;
+
   if (shouldBeFree && !hadDiscount) {
     const couponId = await ensureKinCoupon();
     await stripe.subscriptions.update(user.subscription_id, { discounts: [{ coupon: couponId }] });
     nowHasDiscount = true;
     logEvent('kin_pricing_free', { github_login: user.github_login, compliant_kin: String(kinData.compliant) });
+    // Crossed to free-for-good — the positive counterpart to the pre-bill
+    // warning. This block runs only on the actual transition (guarded by
+    // !hadDiscount = Stripe's own coupon state), so it's once-per-crossing with
+    // no KV guard needed. Best-effort: an email hiccup must never block the
+    // pricing update that already succeeded above.
+    if (user.email) {
+      try { await sendKinFreeUnlocked(user.email, user.github_login, user.email_token); }
+      catch (e) { console.error('[billing] kin-free carrot email failed:', e); }
+    }
   } else if (!shouldBeFree && hadDiscount) {
     await stripe.subscriptions.update(user.subscription_id, { discounts: [] });
     nowHasDiscount = false;
     logEvent('kin_pricing_paid', { github_login: user.github_login, compliant_kin: String(kinData.compliant) });
+    // Dropped below three — discount removed, $10 resumes at period end. Warn so
+    // the re-charge is never silent (same once-per-transition guarantee). The
+    // 7-day pre-bill warning is a second net if this one is missed.
+    if (user.email) {
+      try { await sendKinLapseWarning(user.email, user.github_login, currentPeriodEnd, user.email_token); }
+      catch (e) { console.error('[billing] kin-lapse warning email failed:', e); }
+    }
   }
-
-  const periodEndUnix = sub.items?.data?.[0]?.current_period_end ?? null;
-  const currentPeriodEnd = periodEndUnix ? new Date(periodEndUnix * 1000) : null;
 
   return {
     email: user.email,

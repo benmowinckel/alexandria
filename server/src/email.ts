@@ -196,6 +196,33 @@ export async function sendKinFreeUnlocked(
     emailToken ? { unsubscribeUrl: `${SERVER_URL}/email/stop?t=${emailToken}` } : undefined);
 }
 
+// Kin-lapse warning — fired once when a member drops BELOW KIN_THRESHOLD active
+// kin and the free-for-good discount is removed, so $10/month resumes. The honest
+// counterpart to the carrot: the re-charge is never silent. The crossing is
+// detected where kin pricing recalcs run. resumeDate = the next charge date.
+export async function sendKinLapseWarning(
+  email: string,
+  githubLogin: string,
+  resumeDate: Date | null,
+  emailToken?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const kinLink = `${WEBSITE_URL}/join?ref=${encodeURIComponent(githubLogin)}`;
+  const when = resumeDate
+    ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(resumeDate).toLowerCase()
+    : null;
+  const resumeLine = when ? `$10/month resumes on ${when}` : `$10/month resumes at your next renewal`;
+  const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 48px 24px; color: #3d3630; font-size: 1.05rem; line-height: 1.7;">
+  <p style="margin: 0 0 1.4rem;">heads up &mdash; your free membership paused.</p>
+  <p style="margin: 0 0 1.4rem; color: #8a8078;">you were free for good with three active friends and you&rsquo;ve dropped below that, so ${resumeLine}. get back to three any time &mdash; add one more and it&rsquo;s free again.</p>
+  <p style="margin: 0 0 1.8rem; font-size: 0.9rem; color: #8a8078;">your invite link: <a href="${kinLink}" style="color: #3d3630;">${kinLink.replace(/^https?:\/\//, '')}</a></p>
+  <p style="margin: 0 0 0.4rem;">Benjamin a. Mowinckel</p>
+  <p style="margin: 0; font-style: italic; color: #8a8078;">a.</p>${emailToken ? `
+  <p style="margin: 1.5rem 0 0; font-size: 0.72rem; color: #bbb4aa;"><a href="${SERVER_URL}/email/stop?t=${emailToken}" style="color: #8a8078;">stop these emails</a></p>` : ''}
+</div>`;
+  return await sendEmail(email, 'alexandria. — back to $10', html,
+    emailToken ? { unsubscribeUrl: `${SERVER_URL}/email/stop?t=${emailToken}` } : undefined);
+}
+
 export async function sendWeekOneCheckIn(
   email: string,
   emailToken: string,

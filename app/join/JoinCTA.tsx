@@ -75,7 +75,7 @@ export default function JoinCTA({
       {validUrlRef ? (
         <p className="join-invite">@{validUrlRef} invited you in.</p>
       ) : (
-        <p className="primer-eyebrow">the collective</p>
+        <p className="primer-eyebrow">the community</p>
       )}
 
       <h1 className="primer-h1">become a founding member.</h1>
@@ -86,11 +86,8 @@ export default function JoinCTA({
           proper-grammar per the settled Taste boundary (2026-07-01);
           lowercase stays on the marks (title, button, eyebrow). */}
       <p className="primer-lede">
-        The tool is free and always will be. The collective is the half
-        still being built &mdash; the library of minds, the marketplace of
-        methods, the people building theirs beside you. It is early, and
-        that is the point: you aren&rsquo;t buying a finished thing, you are
-        founding it.
+        It&rsquo;s early, and that&rsquo;s the point: you&rsquo;re not joining
+        a finished thing, you&rsquo;re founding one.
       </p>
 
       <a className="join-btn" href={joinUrl}>
