@@ -318,23 +318,24 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // read as one complete argument: stakes → gap → the file → the practice
   // → decide.
   const SECTIONS = [
-    // One level above the product (2026-07-15): concept → community → the
-    // free taste. One-sentence leads, ~20-second read-aloud; the product
-    // mechanics live in the bodies, opt-in.
+    // Concept → community → the gift (2026-07-15), each lead 2-3 FULL
+    // spoken sentences that walk a zero-context reader through the frame —
+    // no fragment the reader has to decompress. Bodies stay the opt-in
+    // depth.
     {
       title: 'the idea',
-      lead: 'Your ai knows everything except you — fix that, and it develops you instead of replacing you.',
-      body: 'Fixing it means writing down who you are and how you think — one file, like an AGENTS.md but for a person, that every ai you use reads. AI can’t read your mind, but it can read words: put your thoughts into words, and it can finally think with you, not for you. Nobody can write that file but you.',
+      lead: 'Your ai already knows almost everything — except you. Write who you are and how you think into one file, and let every ai you use read it. From then on it thinks with you, not for you.',
+      body: 'The file works like an AGENTS.md, but for a person. Most of it builds itself: as you work, your ai writes your thinking down, and every session it knows you better. When you want more, you sit down and think out loud with it — a gym for your mind. AI can’t read your mind, but it can read words — and nobody can put yours into words but you.',
     },
     {
       title: 'the company',
-      lead: 'We’re assembling everyone who agrees — Strava, but for the mind.',
-      body: 'Everyone builds their own version and shares what works — the methods, the files, the systems: a library of minds. That community is the real company, and the paid part, later, only if you ever want it. The free tool never needs it.',
+      lead: 'We’re gathering everyone who wants to use ai this way — think Strava, but for the mind. People build their own versions, share what works, and keep each other sharp. The community is the only paid part; the tool itself is free.',
+      body: 'Everyone solves this differently, and that’s the point — so we trade what works: the files, the methods, the systems. A library of minds, a marketplace of systems. Reading it is free; publishing into it is the membership. None of it is required — the tool works alone, forever.',
     },
     {
       title: 'the free part',
-      lead: 'Everything the founder uses, free — try it, make it yours, or delete it without a trace.',
-      body: 'One command installs the setup he actually runs, working from the first minute. Open source, private, on your computer — we never see a word. Reshape it into your own over time. If it’s not for you, one delete and it’s like it never happened. If it is, the tribe is waiting.',
+      lead: 'To start, you don’t build anything — you take the founder’s setup, the one he actually runs, and it works from the first minute. It’s open source, it lives on your computer, and we never see a word. Make it your own over time — or delete it, and it’s like it never happened.',
+      body: 'One command installs it — no account, nothing to sign. Inside is everything he uses: the file, the methods, the daily practice. Treat it like a starter recipe — run it as-is at first, then swap in your own ingredients. If you like where it takes you, the tribe is one step away. If not, one delete and you never hear from us again.',
     },
   ];
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
@@ -726,16 +727,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             founder): the cold visitor meets the argument on arrival, before
             the peel. what / how + the decision live on the back slide. */}
         <div className="front-epigraph">
-          <p className="front-lead">People are outsourcing their thinking to ai.</p>
-          {/* One level above the product (2026-07-15, founder): sell the
-              concept + the fact that a community exists around it; the
-              click hands you the founder's own setup — so the visitor
-              knows exactly what's behind the button. Observation → threat
-              (dim) → the people going the other way (ink) → the offer. */}
+          <p className="front-lead">People are outsourcing more and more of their thinking to ai.</p>
+          {/* The frame, fully walked (2026-07-15): complete spoken sentences
+              a distracted stranger absorbs at reading speed — compression is
+              difficulty, not simplicity (the one-liner pass failed: "they
+              wouldn't be able to decompress it"). Observation → threat (dim)
+              → the concept (ink) → the gift. */}
           <div className="front-fork">
-            <p className="fork-line fork-lose">Keep going, and you forget how to think for yourself.</p>
-            <p className="fork-line fork-win">Some of us are going the other way &mdash; teaching the same ai to develop us instead.</p>
-            <p className="fork-line fork-offer">The founder&rsquo;s setup is free. Try it.</p>
+            <p className="fork-line fork-lose">Keep going, and eventually you forget how to think for yourself.</p>
+            <p className="fork-line fork-win">There&rsquo;s another way to use the same ai &mdash; teach it who you are, and it develops you instead of replacing you.</p>
+            <p className="fork-line fork-offer">To get you started, the founder&rsquo;s whole setup is free. Try it.</p>
           </div>
         </div>
         <div className="top-inner" />
@@ -851,7 +852,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     forcing speech. One warm hand-over line naming the thing,
                     and the button is the outstretched plate. */}
                 <p className="statement-beat action-beat">
-                  <em>Agree with the idea? It&rsquo;s ready &mdash; take it.</em>
+                  <em>If the idea makes sense, take the founder&rsquo;s setup
+                  &mdash; it&rsquo;s ready. Just here to watch? Leave your
+                  email, and we&rsquo;ll keep you posted.</em>
                 </p>
 
                 <div className="cta-pair">
