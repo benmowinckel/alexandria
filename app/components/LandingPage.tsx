@@ -306,25 +306,28 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // WHY / WHAT / HOW expandable overviews (2026-07-13 exploration). Accordion —
   // one open at a time — so the fixed back-slide stage can never overflow.
   const [openPillar, setOpenPillar] = useState<string | null>(null);
-  // The front slide carries the fork (why-care). The back opens with the
-  // SECOND why — why it's on you (your AI is aligned to no one; only you can
-  // close the gap) — then what / how, then the close. One cohesive arc:
-  // stakes → why only you can → the solution → the practice → decide.
+  // The front slide carries the fork (why-care). The back is the skim layer:
+  // three radically-simple leads (why / what / how), each opening on its
+  // load-bearing sentence; the detailed richness lives in the expanded
+  // bodies (2026-07-15, founder: "radically simple and just super obvious…
+  // and then have that expanded for the detailed richness"). Skim path must
+  // read as one complete argument: stakes → gap → the file → the practice
+  // → decide.
   const SECTIONS = [
     {
       title: 'why',
-      lead: 'Your ai is built for everyone at once, so it’s aligned to no one in particular. It already reaches the outside of your life — your files, your messages, your history — but not the inside: what you actually think, and how. Only you can give it that.',
-      body: 'No company will fix this at the model level; they’re solving a general problem, for everyone. The distance between an ai that answers the whole world and one that’s truly yours is exactly the part only you hold — your own view, from the inside. Close it, and the same model everyone else uses quietly becomes yours in particular.',
+      lead: 'Your ai doesn’t know you. It can read your files, your messages, your history — but it can’t read your mind: what you think, and how you think. Only you can give it that.',
+      body: 'It isn’t for lack of trying. Your ai is built for everyone at once, which leaves it tuned to no one — and no company can fix that at the model level. The outside of your life it already reaches; the inside — your own view, from where you stand — only you hold. Close that gap, and the same model everyone else uses quietly becomes yours in particular.',
     },
     {
       title: 'what',
-      lead: 'So put your mind into a file any ai can read: who you are, how you think, what you’re after. Point any ai at it, and its job flips — from answering you to developing you. It stays yours: private, portable, gone in a click if you ever want it gone.',
-      body: 'It’s a folder on your computer, holding a file that tells any ai who you are and how you think — like the one a codebase keeps to explain itself, except this one is you. Nothing else records your inner monologue; you’re the only one who can. Plug your other apps and data in too, and it all gathers in one place that’s yours.',
+      lead: 'Alexandria is a file on your computer that tells any ai who you are and how you think. Every ai you use reads it, and its job flips — from answering you to developing you. And it’s yours: private, portable, gone in a click.',
+      body: 'A codebase keeps one file that explains it to any ai — this is that file, for a person. AI can’t read your mind, but it can read words: put your thoughts into words, and it can think with you, not for you. Nothing else records your inner monologue; you’re the only one who can. Plug your other apps and data in too, and it all gathers in one place that’s yours.',
     },
     {
       title: 'how',
-      lead: 'It runs two ways — quietly in the background as you work, and on purpose when you sit down with it and think out loud. Either way it builds into a record of your mind that’s yours alone. And you’re not building it by yourself.',
-      body: 'The passive side only ever adds; the active side is a gym for your mind — you sit with it like a coach, and it draws out what you couldn’t quite put into words. We give the equipment, you lift; what matters is who walks out. Around it is the tribe: everyone building the same way, trading what works — a living library of minds. Strava for the mind.',
+      lead: 'Most of it is automatic: as you work with your ai, it writes your thinking down. When you want to go deeper, you sit with it and think out loud — a gym for your mind. And a whole tribe is training alongside you.',
+      body: 'The quiet side only ever adds — it builds while you work, until every ai treats you like someone it knows. The active side is the workout: it questions you, draws out what you couldn’t quite put into words, and pushes you to act on it. We give the equipment, you lift; what matters is who walks out. The tribe trades what works — Strava for the mind. Starting takes five minutes: the founder’s own system, free and open. His shoes, until you have your own.',
     },
   ];
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
