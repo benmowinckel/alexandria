@@ -315,19 +315,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // → decide.
   const SECTIONS = [
     {
-      title: 'why you',
-      lead: 'Your ai doesn’t know you. It can read your files, your messages, your history — but it can’t read your mind: what you think, and how you think. Only you can give it that.',
-      body: 'It isn’t for lack of trying. Your ai is built for everyone at once, which leaves it tuned to no one — and no company can fix that at the model level. The missing piece is your inner monologue: nothing records it, and nobody can write it down but you. Do that, and the same model everyone else uses quietly becomes yours in particular.',
+      title: 'what it is',
+      lead: 'One file on your computer that tells any ai who you are and how you think. Every ai you use reads it, and its job flips: from answering you to developing you. Not software, not a subscription — a file.',
+      body: 'It works like an AGENTS.md, but for a person. Most of it builds itself: as you work with your ai, it writes your thinking down. When you want more, you sit with it and think out loud — a gym for your mind. And you don’t start from a blank page: you get the founder’s own file, working from the first minute, yours to reshape.',
     },
     {
-      title: 'what',
-      lead: 'Alexandria is a file that tells any ai who you are and how you think — an AGENTS.md, but for a person. Every ai you use reads it, and its job flips: from answering you to developing you. It’s not software — just a file, on your computer, yours.',
-      body: 'AI can’t read your mind, but it can read words: put your thoughts into words, and it can finally think with you, not for you. It’s plain text — open it, read every line, change any word, take it to any model tomorrow. We never see a word. And delete the folder, and it’s like it never happened.',
+      title: 'why it works',
+      lead: 'Your ai can read your files, your messages, your history — but not your mind. It’s built for everyone at once; it doesn’t know you. This file is the missing piece: the one only you can add.',
+      body: 'AI can’t read your mind, but it can read words: put your thoughts into words, and it can finally think with you, not for you. Nothing records your inner monologue; nobody can write it down but you. Do it, and the same model everyone else uses quietly becomes yours in particular.',
     },
     {
-      title: 'how',
-      lead: 'Most of it is automatic: as you work with your ai, it writes your thinking down. And you start with the founder’s own system — free, working in five minutes, and yours from then on: keep it, reshape it, or bin it.',
-      body: 'When you want to go deeper, you sit with it and think out loud — a gym for your mind: it questions you, draws out what you couldn’t quite put into words, and pushes you to act on it. Around that is the tribe, trading what works — Strava for the mind. The tool is free and completely open; the tribe is the paid part, later, if you ever want it. The file never needs it.',
+      title: 'what it costs',
+      lead: 'Nothing. It’s free, it’s private, and it’s yours — we never see a word. Five minutes to start, one delete to make it like it never happened.',
+      body: 'The file is open source and stays free — the paid part, if you ever want it later, is the tribe: everyone building their own, trading what works. Strava for the mind. The file never needs it. Everything lives on your computer in plain text: read every line, change any word, take it to any model, or bin it.',
     },
   ];
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
@@ -719,19 +719,17 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             founder): the cold visitor meets the argument on arrival, before
             the peel. what / how + the decision live on the back slide. */}
         <div className="front-epigraph">
-          <p className="front-lead">Soon, ai &amp; robotics can do everything.</p>
-          {/* The fork rebuilt zero-inertia (2026-07-15, founder: free-sample
-              frame, laser conversion): the reject branch cut (philosophy-
-              completeness, not conversion fuel — the close's matrix carries
-              exhaustiveness now); the two lines that remain are the actual
-              customer fork (replace vs develop), and a third small line
-              shatters the "big AI-software decision" prior on slide one:
-              it's one file, it's free, take it. Form held: lose dimmed,
-              win alive, offer quiet beneath. */}
+          <p className="front-lead">People are outsourcing more and more of their thinking to ai.</p>
+          {/* The front is the founder's spoken chain, verbatim register
+              (2026-07-15): the observation everyone already nods at →
+              the felt threat (dim) → the company's fix (ink) → the
+              sample-cart question. The entire pitch lands before the
+              scroll; the back slide is the cart: what it is, why it
+              works, what it costs, take it or walk past. */}
           <div className="front-fork">
-            <p className="fork-line fork-lose">Let it think for you, and it slowly replaces you.</p>
-            <p className="fork-line fork-win">Teach it who you are, and it develops you instead.</p>
-            <p className="fork-line fork-offer">One file does that. Ours is free &mdash; take it.</p>
+            <p className="fork-line fork-lose">Keep going, and eventually you forget how to think for yourself.</p>
+            <p className="fork-line fork-win">We built the fix: the same ai, developing you instead of replacing you.</p>
+            <p className="fork-line fork-offer">Would you like to try? It&rsquo;s free.</p>
           </div>
         </div>
         <div className="top-inner" />
@@ -842,34 +840,33 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     single action beat below. */}
                 <div className="secs-rule" aria-hidden />
 
-                {/* The close (2026-07-15, free-sample frame): the founder's
-                    own sample line leads, then the exhaustive matrix — the
-                    three exits named, ending on the button, sealed with the
-                    no-fourth. Gentle wording, forcing structure. */}
+                {/* The close (2026-07-15, founder): BINARY. A free sample
+                    has two answers — take it, or walk past. The email path
+                    is no longer offered as a middle door (it was the
+                    procrastinator's escape); the ghost button below serves
+                    the spectator, not the doubter. "No third answer" seals
+                    the maybe-later exit without accusing anyone. */}
                 <p className="statement-beat action-beat">
-                  <em>This is a free sample, right in front of you. It&rsquo;s
-                  private, it&rsquo;s five minutes, and if it&rsquo;s not for
-                  you, you put it back like it never happened. If the idea
-                  lands even a little, take it &mdash; that&rsquo;s one click.
-                  If you&rsquo;re curious but not ready, leave your email. If
-                  you don&rsquo;t agree, close the tab. There&rsquo;s no
-                  fourth option.</em>
+                  <em>So &mdash; would you like to try? If you&rsquo;re even a
+                  little curious, take it; it&rsquo;s one click, and it&rsquo;s
+                  yours. If not, walk on &mdash; no hard feelings.
+                  There&rsquo;s no third answer to a free sample.</em>
                 </p>
 
                 <div className="cta-pair">
                   <HomeInstall />
                   <div className="cta-block">
-                    {/* The ghost CTA — the follow / watch-the-company path.
-                        "stay close" (07-13) → "keep me posted" (2026-07-15,
-                        free-sample frame): his own field data — real
-                        visitors couldn't parse "stay close" — plus the
-                        sample frame want the button to name the exact
-                        transaction and the sub its cost. */}
+                    {/* The ghost CTA — the SPECTATOR's button (friends,
+                        family, fans of the company), deliberately NOT
+                        offered in the close as a middle door for the
+                        interested-but-not-ready — the sample decision is
+                        binary. Label names the transaction (07-09 field
+                        data: "stay close" was unparseable). */}
                     <Link href="/follow" className="lr-cta lr-cta-ghost">
                       keep me posted
                     </Link>
                     <span className="cta-sub">
-                      just your email &mdash; updates as we build
+                      just your email &mdash; watch us build
                     </span>
                   </div>
                 </div>
