@@ -161,20 +161,20 @@ const THEMES: Theme[] = [
 // action page: open-in-claude-code + copy-command on desktop, shortcut +
 // email on mobile). One scalable door — new agents, deep links, and flows
 // land on /start without ever touching this button again.
-// Label history: "join the tribe" → "try it free" (07-09) → back to "join
-// the tribe" (2026-07-13, founder). The commitment-sounding-label risk that
-// drove the 07-09 rename is now handled by the sub, which plainly names the
-// action (free, one line) so the identity label can carry the aspiration.
+// Label history: "join the tribe" → "try it free" (07-09) → "join the
+// tribe" (07-13) → "take it — it's free" (2026-07-15, the free-sample
+// frame): the button IS the biggest frame-setter on the page, and an
+// identity label ("join") re-inflates the decision the whole page works
+// to shrink. The sample frame demands the button name the tiny free grab.
 function HomeInstall() {
   return (
     <div className="cta-block">
       <Link href="/start" className="install-cta">
-        join the tribe
+        take it &mdash; it&rsquo;s free
       </Link>
-      {/* Sub = the no-risk nudge (founder 2026-07-13), tightened: free,
-          yours, zero risk — the yes should feel like taking a free gift. */}
+      {/* Sub = the sample's contents: what you get, that it's yours. */}
       <span className="cta-sub">
-        just try it &mdash; free, yours, nothing to lose
+        one file, five minutes, yours forever
       </span>
     </div>
   );
@@ -315,19 +315,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // → decide.
   const SECTIONS = [
     {
-      title: 'why',
+      title: 'why you',
       lead: 'Your ai doesn’t know you. It can read your files, your messages, your history — but it can’t read your mind: what you think, and how you think. Only you can give it that.',
       body: 'It isn’t for lack of trying. Your ai is built for everyone at once, which leaves it tuned to no one — and no company can fix that at the model level. The missing piece is your inner monologue: nothing records it, and nobody can write it down but you. Do that, and the same model everyone else uses quietly becomes yours in particular.',
     },
     {
       title: 'what',
-      lead: 'Alexandria is a file on your computer that tells any ai who you are and how you think. Every ai you use reads it, and its job flips — from answering you to developing you. And it’s yours: private, portable, gone in a click.',
-      body: 'A codebase keeps one file that explains it to any ai — this is that file, for a person. AI can’t read your mind, but it can read words: put your thoughts into words, and it can finally think with you, not for you. And it’s plain text on your own machine — read every line, change any word, take it to any model tomorrow. We never see a word.',
+      lead: 'Alexandria is a file that tells any ai who you are and how you think — an AGENTS.md, but for a person. Every ai you use reads it, and its job flips: from answering you to developing you. It’s not software — just a file, on your computer, yours.',
+      body: 'AI can’t read your mind, but it can read words: put your thoughts into words, and it can finally think with you, not for you. It’s plain text — open it, read every line, change any word, take it to any model tomorrow. We never see a word. And delete the folder, and it’s like it never happened.',
     },
     {
       title: 'how',
-      lead: 'Most of it is automatic: as you work with your ai, it writes your thinking down. When you want to go deeper, you sit with it and think out loud — a gym for your mind. And a whole tribe is training alongside you.',
-      body: 'The quiet side only ever adds — it builds while you work, until every ai treats you like someone it knows. The active side is the workout: it questions you, draws out what you couldn’t quite put into words, and pushes you to act on it. We give the equipment, you lift; what matters is who walks out. The tribe trades what works — Strava for the mind. And you start in the founder’s own system, free and open: his shoes, until you have your own.',
+      lead: 'Most of it is automatic: as you work with your ai, it writes your thinking down. And you start with the founder’s own system — free, working in five minutes, and yours from then on: keep it, reshape it, or bin it.',
+      body: 'When you want to go deeper, you sit with it and think out loud — a gym for your mind: it questions you, draws out what you couldn’t quite put into words, and pushes you to act on it. Around that is the tribe, trading what works — Strava for the mind. The tool is free and completely open; the tribe is the paid part, later, if you ever want it. The file never needs it.',
     },
   ];
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
@@ -720,18 +720,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             the peel. what / how + the decision live on the back slide. */}
         <div className="front-epigraph">
           <p className="front-lead">Soon, ai &amp; robotics can do everything.</p>
-          {/* The three doors as form (2026-07-13, founder): the two losing
-              paths dimmed, the way through alive in full ink — the eye is
-              made to land on it. Form is the content: the choice is shown,
-              not argued. Win line "use it" → "make it yours" (2026-07-15):
-              everyone already uses ai, so "use it" told the skimmer they
-              were on the good path already; "make it yours" is the delta
-              they don't have — it opens the question the back slide
-              answers. */}
+          {/* The fork rebuilt zero-inertia (2026-07-15, founder: free-sample
+              frame, laser conversion): the reject branch cut (philosophy-
+              completeness, not conversion fuel — the close's matrix carries
+              exhaustiveness now); the two lines that remain are the actual
+              customer fork (replace vs develop), and a third small line
+              shatters the "big AI-software decision" prior on slide one:
+              it's one file, it's free, take it. Form held: lose dimmed,
+              win alive, offer quiet beneath. */}
           <div className="front-fork">
-            <p className="fork-line fork-lose">Reject it, and fall behind.</p>
-            <p className="fork-line fork-lose">Surrender to it, and disappear.</p>
-            <p className="fork-line fork-win">Or make it yours &mdash; and become more yourself.</p>
+            <p className="fork-line fork-lose">Let it think for you, and it slowly replaces you.</p>
+            <p className="fork-line fork-win">Teach it who you are, and it develops you instead.</p>
+            <p className="fork-line fork-offer">One file does that. Ours is free &mdash; take it.</p>
           </div>
         </div>
         <div className="top-inner" />
@@ -842,39 +842,34 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     single action beat below. */}
                 <div className="secs-rule" aria-hidden />
 
-                {/* The close (2026-07-15, conversion pass): the visibly-zero
-                    ledger (free / private / five minutes / deletes clean) +
-                    the locked isolate-and-point routing. The 07-13 agency
-                    lead-in ("AI is coming either way… more yourself, or
-                    less") cut as decompression-heavy and a repeat of the
-                    front's frame; "If you agree" widened to "If any of this
-                    lands" (his original closer line) so rough-philosophy
-                    believers route to the button too. */}
+                {/* The close (2026-07-15, free-sample frame): the founder's
+                    own sample line leads, then the exhaustive matrix — the
+                    three exits named, ending on the button, sealed with the
+                    no-fourth. Gentle wording, forcing structure. */}
                 <p className="statement-beat action-beat">
-                  <em>Everything practical is handled &mdash; it&rsquo;s free,
-                  it&rsquo;s private, it takes five minutes, and it deletes
-                  without a trace. So it&rsquo;s your call. If any of this
-                  lands, try it &mdash; that&rsquo;s one click. If you&rsquo;d
-                  rather follow along first, leave your email.</em>
+                  <em>This is a free sample, right in front of you. It&rsquo;s
+                  private, it&rsquo;s five minutes, and if it&rsquo;s not for
+                  you, you put it back like it never happened. If the idea
+                  lands even a little, take it &mdash; that&rsquo;s one click.
+                  If you&rsquo;re curious but not ready, leave your email. If
+                  you don&rsquo;t agree, close the tab. There&rsquo;s no
+                  fourth option.</em>
                 </p>
 
                 <div className="cta-pair">
                   <HomeInstall />
                   <div className="cta-block">
                     {/* The ghost CTA — the follow / watch-the-company path.
-                        Label back to "stay close" (2026-07-13, founder). The
-                        "visitors asked what it meant" problem that killed it
-                        on 07-09 is now handled by the sub, which plainly
-                        states it — the identity label rides on top. */}
+                        "stay close" (07-13) → "keep me posted" (2026-07-15,
+                        free-sample frame): his own field data — real
+                        visitors couldn't parse "stay close" — plus the
+                        sample frame want the button to name the exact
+                        transaction and the sub its cost. */}
                     <Link href="/follow" className="lr-cta lr-cta-ghost">
-                      stay close
+                      keep me posted
                     </Link>
-                    {/* Sub back to the old command register (founder
-                        2026-07-13): the too-passive version killed the
-                        button — "every friend and family should immediately
-                        know they are to press it." */}
                     <span className="cta-sub">
-                      rooting for us? make it official
+                      just your email &mdash; updates as we build
                     </span>
                   </div>
                 </div>
@@ -2815,6 +2810,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .fork-win {
           color: rgba(26, 19, 24, 0.74);
           font-style: italic;
+        }
+        /* The offer line — the free-sample frame planted on slide one:
+           quieter and smaller than the win line (it's the footnote-sized
+           fact that shrinks the decision), set apart by a breath. */
+        .fork-offer {
+          margin-top: 22px;
+          font-size: 16px;
+          font-style: italic;
+          color: rgba(26, 19, 24, 0.55);
         }
         .cta-block {
           display: flex;
