@@ -61,7 +61,7 @@ const ABSTRACT_MARKER = '\n%%MDOC_ABSTRACT%%\n';
 const FRONTISPIECE_MARKER = '\n%%MDOC_FRONTISPIECE%%\n';
 const COLOPHON_MARKER = '\n%%MDOC_COLOPHON%%\n';
 
-function processNumbered(md: string): { pre: string; frontispiece: string; abstract: string; post: string; colophon: string; toc: TocEntry[] } {
+export function processNumbered(md: string): { pre: string; frontispiece: string; abstract: string; post: string; colophon: string; toc: TocEntry[] } {
   const lines = md.split('\n');
   const out: string[] = [];
   const toc: TocEntry[] = [];
@@ -218,7 +218,7 @@ function processNumbered(md: string): { pre: string; frontispiece: string; abstr
   return { pre, frontispiece, abstract, post, colophon, toc };
 }
 
-function TocBlock({ entries }: { entries: TocEntry[] }) {
+export function TocBlock({ entries }: { entries: TocEntry[] }) {
   return (
     <nav className="mdoc-toc" aria-label="Contents">
       <p className="mdoc-toc-label">contents.</p>
@@ -343,7 +343,7 @@ function ReadingProgress() {
 const FLEURONS = ['❦', '❧', '※', '§', '⁂'];
 let fleuronIdx = 0;
 
-const MD_COMPONENTS = {
+export const MD_COMPONENTS = {
   h1: ({ children }: { children?: React.ReactNode }) => (
     <h1 id={slugify(children)} className="pdoc-h1">{children}</h1>
   ),
@@ -406,12 +406,12 @@ function NumberedHeading({ level, children }: { level: 1 | 2; children?: React.R
 // Numbered docs (the whitepaper): headings hang their numerals; everything
 // else renders as standard. The pre map additionally marks the preamble
 // paragraphs (between title and contents) as the lede.
-const MD_COMPONENTS_NUMBERED = {
+export const MD_COMPONENTS_NUMBERED = {
   ...MD_COMPONENTS,
   h1: ({ children }: { children?: React.ReactNode }) => <NumberedHeading level={1}>{children}</NumberedHeading>,
   h2: ({ children }: { children?: React.ReactNode }) => <NumberedHeading level={2}>{children}</NumberedHeading>,
 };
-const MD_COMPONENTS_NUMBERED_PRE = {
+export const MD_COMPONENTS_NUMBERED_PRE = {
   ...MD_COMPONENTS_NUMBERED,
   p: ({ children }: { children?: React.ReactNode }) => <p className="pdoc-p pdoc-lede">{children}</p>,
 };
@@ -452,7 +452,7 @@ function AbstractParagraph({ children }: { children?: React.ReactNode }) {
   );
 }
 
-const MD_COMPONENTS_ABSTRACT = {
+export const MD_COMPONENTS_ABSTRACT = {
   ...MD_COMPONENTS,
   p: AbstractParagraph,
 };

@@ -16,12 +16,14 @@ import { FOUNDER_LIBRARY_ID, FOUNDER_PROFILE_PATH } from '../lib/config';
  * public shadow + public product facts (no private substrate in reach).
  */
 export default function PublicDocReader({
-  title, mdSrc, pdfSrc, txtSrc,
+  title, mdSrc, pdfSrc, txtSrc, numbered, plain,
 }: {
   title: string;
   mdSrc?: string;   // markdown to fetch + render (the whitepaper)
   pdfSrc?: string;  // a PDF to embed (the letter)
   txtSrc?: string;  // the PDF's text (for the copy button)
+  numbered?: boolean; // book setting — TOC + hanging numerals + colophon plate
+  plain?: boolean;    // with numbered: the plain (ragged-right) variant
 }) {
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [markdown, setMarkdown] = useState('');
@@ -97,6 +99,8 @@ export default function PublicDocReader({
       status={status}
       pdfUrl={pdfUrl || undefined}
       markdown={pdfUrl ? undefined : markdown}
+      numbered={numbered}
+      plain={plain}
       artifactText={text}
       downloadBlob={dlBlobRef.current}
       downloadName={title.replace(/\s+/g, '-')}

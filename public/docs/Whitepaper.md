@@ -6,7 +6,7 @@ You could count the honest answers on one hand. Most of what’s said about AI i
 
 What’s missing isn’t another forecast. It’s a frame — a way to think clearly about how a person, and a species, comes through this still itself. Not just alive on the far side, but recognisably human, and worth being. No one has set that out plainly. So this paper does, from the ground up.
 
-It’s one argument, start to finish — each step follows from the one before, and none of the conclusions were chosen in advance.
+It’s one argument, start to finish — each step follows from the one before.
 
 There’s a company at the end of it — Alexandria. Not because the argument was built to justify one, but because once you take the frame seriously, something has to exist that nobody is building. Alexandria is it — the missing piece of a future worth reaching.
 
@@ -34,9 +34,9 @@ Do that once and a person stays worth being. Do it across many people and the mi
 
 Start with the part that isn’t really in dispute anymore.
 
-The man who invented the computer saw where it ended the moment he built the start. In 1951, Alan Turing wrote down what would follow once a machine could think: *“once the machine thinking method had started, it would not take long to outstrip our feeble powers. There would be no question of the machines dying, and they would be able to converse with each other to sharpen their wits. At some stage therefore we should have to expect the machines to take control.”* He drew the beginning and named the end in the same breath. The only real question was when.
+The father of the computer saw where it ended the moment he built the start. In 1951, Alan Turing wrote down what would follow once a machine could think: *“once the machine thinking method had started, it would not take long to outstrip our feeble powers. There would be no question of the machines dying, and they would be able to converse with each other to sharpen their wits. At some stage therefore we should have to expect the machines to take control.”* He drew the beginning and named the end in the same breath. The only real question was when.
 
-Geoffrey Hinton is why the answer is *soon*. He invented the way nearly every AI system alive is trained — the machinery underneath the models you use today is his, and it won him a Nobel Prize. The students in his lab built the program, in 2012, that set off the whole modern boom. In 2023 he quit Google to say what he'd come to believe: these systems are on course to outthink us at almost everything, far faster than the field expected, and no one is ready. That isn't a commentator with an opinion. It's the man who built the engine, reading his own machine.
+Geoffrey Hinton is why the answer is *soon*. He pioneered the way nearly every AI system alive is trained — the machinery underneath the models you use today runs on his work, and it won him a Nobel Prize. The students in his lab built the program, in 2012, that set off the whole modern boom. In 2023 he quit Google to say what he'd come to believe: these systems are on course to outthink us at almost everything, far faster than the field expected, and no one is ready. That isn't a commentator with an opinion. It's the man who built the engine, reading his own machine.
 
 The reason it won't stop is physical. AI runs on the same basic principle as the brain: networks of artificial neurons that strengthen their connections through experience, the way the neurons in your head do. We didn’t stumble onto that — we copied it from biology on purpose, and it worked. And once you take a principle out of biology and rebuild it in silicon, it stops obeying biology’s limits. A bird is remarkable, but no bird flies at three times the speed of sound. A jet isn’t a better bird; it’s something else, with a higher ceiling. AI is that move applied to thinking, and robotics is that move applied to the body. The ceiling rises with every release, and no law of physics says it stops anywhere near you.
 
@@ -54,7 +54,7 @@ And all four are getting cheap, one after another. Strength went first, a centur
 
 The fifth is different. It isn’t something you *do* — it’s something you *are*: the simple fact that **you** were the one who did it. It’s built into you — nothing you have to earn, nothing you can lose, nothing anyone else can have.
 
-That fact is the whole of what’s left. The next step is the most important one in the paper, so we’ll take it slowly.
+That fact is all that’s left. The next step is the most important one in the paper, so we’ll take it slowly.
 
 ## the alien.
 
@@ -126,7 +126,7 @@ It’s the one part of you nothing else even reaches. Every system built to know
 
 Putting it into words costs a little — a thought forced onto the page is slower than the fluid version inside, and always a rough copy of it, the way a sketch on a whiteboard is rougher than the idea in your mind. What you get back dwarfs the cost. Once a thought is on the board it stops being a private blur and becomes a piece you can pick up, turn over, and rebuild — and a piece someone else can take hold of too. You can’t think through a hard problem with another person while you both sit in silence; someone has to put it on the board. Then the others pile on — a friend, an AI, or just you tomorrow — and push it further than the silent version ever could. Then you carry it back inside, and act.
 
-And the board does one more thing: it holds what your head can’t. A brain is a fixed size, and it’s built to forget — it keeps what you use and drops what you don’t. That’s the design, not a flaw; it’s how the thing stays fast. But it means a full mind is heavy. Anyone who thinks a lot knows the feeling: more threads than you can hold, the good ones slipping away with the noise, that specific ache of *I had something, and it’s gone*. Words on a page are the oldest escape there is — the first time thinking ever got out from under biology’s limits, long before silicon did it. A thought on the page doesn’t fade, doesn’t slip, doesn’t need holding. The page frees you to do the one thing the brain does best: forget — freely, and lose nothing.
+And the board does one more job: it holds what your head can’t. A brain is a fixed size, and it’s built to forget — it keeps what you use and drops what you don’t. That’s the design, not a flaw; it’s how the thing stays fast. But it means a full mind is heavy. Anyone who thinks a lot knows the feeling: more threads than you can hold, the good ones slipping away with the noise, that specific ache of *I had something, and it’s gone*. Words on a page are the oldest escape there is — the first time thinking ever got out from under biology’s limits, long before silicon did it. A thought on the page doesn’t fade, doesn’t slip, doesn’t need holding. The page frees the brain to do what it does best: forget — freely, and lose nothing.
 
 That drawing-out is the practice. And now, for the first time, you do it beside an AI that can think in your place — which turns the practice into a choice you can’t dodge: how you let it meet your mind.
 
@@ -138,15 +138,15 @@ You can **outsource to it** — let it do your thinking, take the answers, move 
 
 Or you can **augment** — keep doing the thinking, but use the tool to push your own mind further than it could go alone. Your reasoning stays in your hands; the AI sharpens it, stress-tests it, and carries the parts that don’t need you. This is the only one of the three where you keep your mind *and* keep up.
 
-That’s where Alexandria comes in — the gym your mind has never had. Joining a gym doesn’t make you strong; it gives you what you need to make yourself strong, and the work — and the strength it builds — stays yours. Alexandria is that, for the mind. It hands you the three things a gym does: the **gear** (the method), the **trainer** (any AI you already talk to, turned to face *you* — pushing your own thinking harder instead of doing it in your place), and the **tribe** (everyone else training beside you). What it never does is lift for you: the thinking stays yours, because that is the only part that makes you stronger. **So Alexandria isn’t another AI, and not a replacement for the ones you use — it’s what turns the AI you already have into a trainer for the mind you’re building.** That is the missing piece, the one everyone else is racing past.
+That’s where Alexandria comes in — the gym your mind has never had. Joining a gym doesn’t make you strong; it gives you what you need to make yourself strong, and the work — and the strength it builds — stays yours. Alexandria is that, for the mind. It gives you what a gym gives: the **gear** (the method), the **trainer** (any AI you already talk to, turned to face *you* — pushing your own thinking harder instead of doing it in your place), and the **tribe** (everyone else training beside you). What it never does is lift for you: the thinking stays yours, because that is the only part that makes you stronger. **So Alexandria isn’t another AI, and not a replacement for the ones you use — it’s what turns the AI you already have into a trainer for the mind you’re building.** That is the missing piece, the one everyone else is racing past.
 
 It’s worth being precise about what this is *not*. Every platform is adding a memory of you — but a memory is a locker: it stores what you did so the machine can serve you better. A gym is where *you* get stronger. One holds your past for the machine’s use; the other builds the part of you that’s still yours — and that second one is the part you have to choose.
 
 And notice what the tool is aligned to. Every AI you use is built by a company solving a general problem — tuned to everyone at once, which means perfectly tuned to no one. That isn’t sinister; it’s just what a general tool is. But it leaves a gap only you can close, because only you hold the inside view of you. Closing it is the same practice again: know yourself, put it into words, and hand those words to the machine — so the AI you already have turns to face *you*, with its instructions in your hands. Align it, and it can finally help you properly. Help it help you.
 
-And it builds you the way a gym does: the growth comes from the strain. Most AI does the opposite — it agrees, it flatters, it hands you the answer you already liked, which feels good and changes nothing. This pushes back: it finds the hole in your reasoning and asks the question you were dodging. That friction isn’t a flaw in the tool, it’s the mechanism — a mind only sharpens against resistance, and one that hears nothing but *yes* stays exactly as dull as it started.
+It builds you the way a gym does: the growth comes from the strain. Most AI does the opposite — it agrees, it flatters, it hands you the answer you already liked, which feels good and changes nothing. This pushes back: it finds the hole in your reasoning and asks the question you were dodging. That friction isn’t a flaw in the tool, it’s the mechanism — a mind only sharpens against resistance, and one that hears nothing but *yes* stays exactly as dull as it started.
 
-And here is what falls out of all of it. Because it only adds — it stands beside everything you already use and takes nothing from it — choosing it costs you nothing. There is no downside to weigh, no wager to lose. So this was never a practice only for the few who are already sure. Grant only that there might be something in drawing your mind out and sharpening it, and the move is obvious: being wrong costs nothing, and not trying costs you the one thing that stays yours. It isn’t for some people. It’s for anyone who would rather stay themselves.
+And here is what falls out of all of it. Because it only adds — it stands beside everything you already use and takes nothing from it — choosing it costs you nothing. There is no downside to weigh, no wager to lose. So this was never a practice only for the few who are already sure. Grant only that there might be something in drawing your mind out and sharpening it, and the move is obvious: being wrong costs nothing, and not trying costs you the one part that stays yours. It isn’t for some people. It’s for anyone who would rather stay themselves.
 
 ## the folder.
 
@@ -220,7 +220,7 @@ And there’s a reason it can be built now and never could before. The practice 
 
 ## the missing piece.
 
-Everything so far has been about you — your mind, your words, your place in the library. Take the two facts underneath all of it and run them across everyone at once, and the whole of what’s coming snaps into focus.
+Everything so far has been about you — your mind, your words, your place in the library. Take the two facts underneath all of it and run them across everyone at once, and what’s coming snaps into focus.
 
 Grant the optimists everything they promise. Intelligence, free. The work done by machines that never tire. Robots for the hands, energy too cheap to meter, disease falling away one illness at a time. Assume it all goes right — the material problem of being alive, finally solved. That is the future nearly everyone is pointed at, and it may well arrive.
 
