@@ -317,17 +317,17 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     {
       title: 'why',
       lead: 'Your ai doesn’t know you. It can read your files, your messages, your history — but it can’t read your mind: what you think, and how you think. Only you can give it that.',
-      body: 'It isn’t for lack of trying. Your ai is built for everyone at once, which leaves it tuned to no one — and no company can fix that at the model level. The outside of your life it already reaches; the inside — your own view, from where you stand — only you hold. Close that gap, and the same model everyone else uses quietly becomes yours in particular.',
+      body: 'It isn’t for lack of trying. Your ai is built for everyone at once, which leaves it tuned to no one — and no company can fix that at the model level. The missing piece is your inner monologue: nothing records it, and nobody can write it down but you. Do that, and the same model everyone else uses quietly becomes yours in particular.',
     },
     {
       title: 'what',
       lead: 'Alexandria is a file on your computer that tells any ai who you are and how you think. Every ai you use reads it, and its job flips — from answering you to developing you. And it’s yours: private, portable, gone in a click.',
-      body: 'A codebase keeps one file that explains it to any ai — this is that file, for a person. AI can’t read your mind, but it can read words: put your thoughts into words, and it can think with you, not for you. Nothing else records your inner monologue; you’re the only one who can. Plug your other apps and data in too, and it all gathers in one place that’s yours.',
+      body: 'A codebase keeps one file that explains it to any ai — this is that file, for a person. AI can’t read your mind, but it can read words: put your thoughts into words, and it can finally think with you, not for you. And it’s plain text on your own machine — read every line, change any word, take it to any model tomorrow. We never see a word.',
     },
     {
       title: 'how',
       lead: 'Most of it is automatic: as you work with your ai, it writes your thinking down. When you want to go deeper, you sit with it and think out loud — a gym for your mind. And a whole tribe is training alongside you.',
-      body: 'The quiet side only ever adds — it builds while you work, until every ai treats you like someone it knows. The active side is the workout: it questions you, draws out what you couldn’t quite put into words, and pushes you to act on it. We give the equipment, you lift; what matters is who walks out. The tribe trades what works — Strava for the mind. Starting takes five minutes: the founder’s own system, free and open. His shoes, until you have your own.',
+      body: 'The quiet side only ever adds — it builds while you work, until every ai treats you like someone it knows. The active side is the workout: it questions you, draws out what you couldn’t quite put into words, and pushes you to act on it. We give the equipment, you lift; what matters is who walks out. The tribe trades what works — Strava for the mind. And you start in the founder’s own system, free and open: his shoes, until you have your own.',
     },
   ];
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
@@ -723,11 +723,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           {/* The three doors as form (2026-07-13, founder): the two losing
               paths dimmed, the way through alive in full ink — the eye is
               made to land on it. Form is the content: the choice is shown,
-              not argued. */}
+              not argued. Win line "use it" → "make it yours" (2026-07-15):
+              everyone already uses ai, so "use it" told the skimmer they
+              were on the good path already; "make it yours" is the delta
+              they don't have — it opens the question the back slide
+              answers. */}
           <div className="front-fork">
             <p className="fork-line fork-lose">Reject it, and fall behind.</p>
             <p className="fork-line fork-lose">Surrender to it, and disappear.</p>
-            <p className="fork-line fork-win">Or use it &mdash; and become more yourself.</p>
+            <p className="fork-line fork-win">Or make it yours &mdash; and become more yourself.</p>
           </div>
         </div>
         <div className="top-inner" />
@@ -838,17 +842,20 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     single action beat below. */}
                 <div className="secs-rule" aria-hidden />
 
-                {/* ONE action + agency section (2026-07-13, founder): the
-                    agency push and the locked close (plain, isolate-and-
-                    point — wording preserved verbatim) as a single italic
-                    beat that points at the CTAs. */}
+                {/* The close (2026-07-15, conversion pass): the visibly-zero
+                    ledger (free / private / five minutes / deletes clean) +
+                    the locked isolate-and-point routing. The 07-13 agency
+                    lead-in ("AI is coming either way… more yourself, or
+                    less") cut as decompression-heavy and a repeat of the
+                    front's frame; "If you agree" widened to "If any of this
+                    lands" (his original closer line) so rough-philosophy
+                    believers route to the button too. */}
                 <p className="statement-beat action-beat">
-                  <em>AI is coming either way. The only choice left is whether
-                  you meet it as more yourself, or less &mdash; and that&rsquo;s
-                  the one call no one can make for you, not even the ai. So
-                  it&rsquo;s your call. If you agree, try it &mdash;
-                  that&rsquo;s one click. If you&rsquo;d rather follow along
-                  first, leave your email.</em>
+                  <em>Everything practical is handled &mdash; it&rsquo;s free,
+                  it&rsquo;s private, it takes five minutes, and it deletes
+                  without a trace. So it&rsquo;s your call. If any of this
+                  lands, try it &mdash; that&rsquo;s one click. If you&rsquo;d
+                  rather follow along first, leave your email.</em>
                 </p>
 
                 <div className="cta-pair">
