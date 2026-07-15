@@ -716,7 +716,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             founder): the cold visitor meets the argument on arrival, before
             the peel. what / how + the decision live on the back slide. */}
         <div className="front-epigraph">
-          <p className="front-lead">Soon, ai/robotics can do everything.</p>
+          <p className="front-lead">Soon, ai &amp; robotics can do everything.</p>
           {/* The three doors as form (2026-07-13, founder): the two losing
               paths dimmed, the way through alive in full ink — the eye is
               made to land on it. Form is the content: the choice is shown,
