@@ -729,7 +729,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           <div className="front-fork">
             <p className="fork-line fork-lose">Keep going, and eventually you forget how to think for yourself.</p>
             <p className="fork-line fork-win">We built the fix: the same ai, developing you instead of replacing you.</p>
-            <p className="fork-line fork-offer">Would you like to try? It&rsquo;s free.</p>
+            <p className="fork-line fork-offer">Try it &mdash; it&rsquo;s free.</p>
           </div>
         </div>
         <div className="top-inner" />
@@ -840,17 +840,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     single action beat below. */}
                 <div className="secs-rule" aria-hidden />
 
-                {/* The close (2026-07-15, founder): BINARY. A free sample
-                    has two answers — take it, or walk past. The email path
-                    is no longer offered as a middle door (it was the
-                    procrastinator's escape); the ghost button below serves
-                    the spectator, not the doubter. "No third answer" seals
-                    the maybe-later exit without accusing anyone. */}
+                {/* The close (2026-07-15, founder): the sample cart doesn't
+                    lecture — no options disclaimer, no "your call," no
+                    forcing speech. One warm hand-over line naming the thing,
+                    and the button is the outstretched plate. */}
                 <p className="statement-beat action-beat">
-                  <em>So &mdash; would you like to try? If you&rsquo;re even a
-                  little curious, take it; it&rsquo;s one click, and it&rsquo;s
-                  yours. If not, walk on &mdash; no hard feelings.
-                  There&rsquo;s no third answer to a free sample.</em>
+                  <em>Ours is ready &mdash; the founder&rsquo;s own file,
+                  already set up. Take it.</em>
                 </p>
 
                 <div className="cta-pair">
