@@ -172,9 +172,13 @@ function HomeInstall() {
       <Link href="/start" className="install-cta">
         take it &mdash; it&rsquo;s free
       </Link>
-      {/* Sub = the sample's contents: what you get, that it's yours. */}
+      {/* Sub = defuse the PRESS, not describe the product (2026-07-15
+          simulation pass): the last flinch before any unknown button is
+          "what happens when I click — a wizard? a signup?" The sub answers
+          the next ten seconds. All three claims true: setup is one pasted
+          command, the free tool needs no account, install runs ~5 min. */}
       <span className="cta-sub">
-        one file, five minutes, yours forever
+        one command, no account &mdash; five minutes
       </span>
     </div>
   );
@@ -321,7 +325,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     },
     {
       title: 'why it works',
-      lead: 'Your ai can read your files, your messages, your history — but not your mind. It’s built for everyone at once; it doesn’t know you. This file is the missing piece: the one only you can add.',
+      lead: 'Your ai can read your files, your messages, your history — but not your mind. It’s built for everyone at once, so it doesn’t really know you. This file is the missing piece — the one only you can add.',
       body: 'AI can’t read your mind, but it can read words: put your thoughts into words, and it can finally think with you, not for you. Nothing records your inner monologue; nobody can write it down but you. Do it, and the same model everyone else uses quietly becomes yours in particular.',
     },
     {
@@ -728,7 +732,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               works, what it costs, take it or walk past. */}
           <div className="front-fork">
             <p className="fork-line fork-lose">Keep going, and eventually you forget how to think for yourself.</p>
-            <p className="fork-line fork-win">We built the fix: the same ai, developing you instead of replacing you.</p>
+            <p className="fork-line fork-win">We built the fix: the same ai, but it develops you instead of replacing you.</p>
             <p className="fork-line fork-offer">Try it &mdash; it&rsquo;s free.</p>
           </div>
         </div>
