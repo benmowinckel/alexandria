@@ -77,4 +77,4 @@ bash "$VF" scripts/install.sh | bash -s -- "$id"
 
 ## Source of truth
 
-Script: `factory/scripts/publish.sh`. Template: `factory/templates/system-module.md`. Architecture and lifecycle: `factory/canon/library.md`. All in the public alexandria repo (`mowinckelb/alexandria`).
+Script: `factory/scripts/publish.sh`. Template: `factory/templates/module.md`. Architecture and lifecycle: `factory/canon/library.md`. All in the public alexandria repo (`mowinckelb/alexandria`).

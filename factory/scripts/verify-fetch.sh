@@ -6,9 +6,12 @@
 # GitHub or MITMs the fetch cannot get it executed. Mirrors shim.sh /
 # scheduled-bootstrap exactly, fail-closed at every step.
 #
-# Installed ONCE by setup.sh (trust root, same class as shim.sh — not itself a
-# fetched payload, so it can't bootstrap-verify itself; its trust is the
-# install-time TOFU, same residual as setup.sh, audit H5).
+# Installed by setup.sh to ~/alexandria/system/scripts/verify-fetch.sh (trust
+# root, same class as shim.sh — not itself a fetched payload, so it can't
+# bootstrap-verify itself; its trust is the install-time TOFU, same residual
+# as setup.sh, audit H5). Consumers (install/publish/brief-setup skills,
+# migrate.sh) lazy-fetch it unverified only if that install is absent — a
+# fallback for pre-2026-07 installs, same TOFU class, not the designed path.
 #
 #   Usage:   bash verify-fetch.sh <factory-relative-path>     # e.g. scripts/brief.py
 #   Success: prints the verified file to stdout, exit 0.  →  verify-fetch.sh scripts/x.sh | bash

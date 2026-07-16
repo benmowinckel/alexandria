@@ -35,8 +35,11 @@ while [ $# -gt 0 ]; do
       API_KEY="$1"
       ;;
     *)
-      # Unknown token — ignore rather than fail (keyless front door must never
-      # break on a stray arg).
+      # Any other token is almost certainly an intended API key that got
+      # mangled (truncated paste, wrong prefix, shell-eaten quotes). Capture
+      # it so the format check below rejects it LOUDLY — silently dropping it
+      # would hand the Author a keyless install they think is keyed.
+      API_KEY="$1"
       ;;
   esac
   shift
@@ -72,8 +75,10 @@ fi
 # constitution files, so this is pre-run state even when read later. Drives the
 # closing message — "synced" for an existing Author, the onboarding block for a
 # fresh install. (Works keyless too, unlike keying off API-key reuse.)
+# Plain ls (not -A): dotfiles don't count — a Finder-browsed empty folder grows
+# a .DS_Store, which must not fake an existing Author.
 EXISTING_AUTHOR=""
-[ -n "$(ls -A "$ALEX_DIR/files/constitution" 2>/dev/null)" ] && EXISTING_AUTHOR=1
+[ -n "$(ls "$ALEX_DIR/files/constitution" 2>/dev/null)" ] && EXISTING_AUTHOR=1
 
 # Keyless = the free product (the gym), no account. A key — passed, or reused
 # from a prior install above — adds the hub layer (Library, marketplace, kin).
@@ -84,16 +89,17 @@ if [ -z "$API_KEY" ]; then
   KEYLESS=true
   echo "Setting up Alexandria — free, local, no account needed."
 elif [[ "$API_KEY" != alex_* ]]; then
-  echo "Invalid API key format. Your key should start with alex_."
-  echo "Get a fresh key at https://alexandria-library.com/signup"
+  echo "Invalid API key format — got '$API_KEY', but keys start with alex_."
+  echo "Check the paste (keys sometimes get truncated), or get a fresh key at"
+  echo "https://alexandria-library.com/signup"
   exit 1
 fi
 
 # ── Preflight: required vs optional ───────────────────────────────
 # Front-load every dependency check here so nothing stops mid-install. Two
 # tiers:
-#   REQUIRED — the bare minimum to deliver the first session: a way to fetch
-#     files (curl or wget) and a coding agent that can read/write the machine.
+#   REQUIRED — the bare minimum to deliver the first session: curl and a
+#     coding agent that can read/write the machine.
 #     Missing → one clear line, stop. No wall of errors later.
 #   OPTIONAL — git, node/python3, gh sign-in, ssh signing, iCloud. Each adds a
 #     layer (backup, session hooks, signing, capture) but NONE gates the first
@@ -101,10 +107,12 @@ fi
 #     $DEFERRED and offered AFTER the first session as a short "want the full
 #     setup?" list. Never blocks, never nags mid-install.
 
-# REQUIRED #1 — a fetcher. curl is used unconditionally throughout; if neither
-# curl nor wget exists we can't install at all. One clear line, clean exit.
-if ! command -v curl &>/dev/null && ! command -v wget &>/dev/null; then
-  echo "alexandria needs curl to install — install it (or run this on a machine that has it) and try again."
+# REQUIRED #1 — curl. Used unconditionally throughout (fetch_factory, the key
+# probe, the session hooks); wget alone can't run this installer, so passing
+# preflight on wget would just fail later with a wall of fetch errors. One
+# clear line, clean exit.
+if ! command -v curl &>/dev/null; then
+  echo "alexandria needs curl to install — install curl (wget alone isn't enough) and try again."
   exit 1
 fi
 
@@ -128,10 +136,9 @@ echo "Setting up Alexandria..."
 mkdir -p "$ALEX_DIR/files/vault" "$ALEX_DIR/system/hooks" "$ALEX_DIR/files/constitution" "$ALEX_DIR/files/marginalia" "$ALEX_DIR/files/library/public" "$ALEX_DIR/files/library/paid" "$ALEX_DIR/files/library/invite" "$ALEX_DIR/files/library/authors" "$ALEX_DIR/files/works" "$ALEX_DIR/files/core" "$ALEX_DIR/files/vault/input" "$ALEX_DIR/files/vault/_input" "$ALEX_DIR/system/.autoloop"
 # Keyless leaves no .api_key — its absence IS the "no account" signal the hooks
 # read (every server call in payload.sh is guarded by [ -n "$API_KEY" ]).
-if [ -n "$API_KEY" ]; then
-  echo "$API_KEY" > "$ALEX_DIR/system/.api_key"
-  chmod 600 "$ALEX_DIR/system/.api_key"
-fi
+# NOTE: the key is persisted AFTER the server verify near the end of this
+# script, never here — storing an unverified key poisoned every future bare
+# re-run (the reuse fallback above would resurrect a rejected key forever).
 # Referrer (from `--ref <login>`) — baked so the close message's "Finish setup →"
 # link carries ?ref=<login> and the join is attributed. Sanitized above; write
 # only if non-empty.
@@ -158,6 +165,13 @@ fetch_factory "hooks/shim.sh" "$ALEX_DIR/system/hooks/shim.sh" "hooks/shim.sh" y
 chmod +x "$ALEX_DIR/system/hooks/shim.sh" 2>/dev/null
 fetch_factory "hooks/payload.sh" "$ALEX_DIR/system/.hooks_payload" "hooks/payload.sh" yes
 fetch_factory "scripts/capture_resolver.py" "$ALEX_DIR/system/scripts/capture_resolver.py" "scripts/capture_resolver.py" yes
+# verify-fetch.sh — the trust root for every later "fetch a factory script,
+# then run it" flow (install/publish/brief-setup skills, migrate.sh). Installed
+# HERE so it lands in the same install-time trust step as the shim; consumers
+# keep a lazy-fetch fallback but that fallback is unverified TOFU — this line
+# is what makes the trust-root claim real.
+fetch_factory "scripts/verify-fetch.sh" "$ALEX_DIR/system/scripts/verify-fetch.sh" "scripts/verify-fetch.sh" yes
+chmod +x "$ALEX_DIR/system/scripts/verify-fetch.sh" 2>/dev/null
 
 # Continuous-update module — present = on (default). Its contents ARE the
 # explanation; deleting the file freezes updates (shim + payload both check it,
@@ -232,7 +246,17 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   # frontmatter `name:` is rewritten to alexandria. Additive — if the rewrite ever
   # fails, /a still works, so no regression.
   mkdir -p "$HOME/.claude/skills/a" "$HOME/.claude/skills/alexandria" 2>/dev/null
-  fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/a/SKILL.md" "skills/claudecode.md" yes
+  # /a may already be the user's OWN skill (DIY setups predating Alexandria).
+  # Only overwrite when the existing file is ours — any alexandria marker in
+  # it means we wrote it (every shipped version contains the word). A foreign
+  # /a stays untouched; /alexandria below carries the full skill either way.
+  A_SKILL_KEPT=""
+  if [ -f "$HOME/.claude/skills/a/SKILL.md" ] && \
+     ! grep -qi 'alexandria' "$HOME/.claude/skills/a/SKILL.md" 2>/dev/null; then
+    A_SKILL_KEPT=1
+  else
+    fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/a/SKILL.md" "skills/claudecode.md" yes
+  fi
   if fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/alexandria/SKILL.md" "skills/claudecode.md (/alexandria alias)" yes; then
     if [ "$(uname)" = "Darwin" ]; then
       sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
@@ -306,8 +330,11 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
     " 2>/dev/null; then
       CLAUDE_HOOKS_OK=1
     fi
-  elif command -v python3 &>/dev/null; then
-    # Same edit, python3 — no node required. Identical de-dupe + append.
+  fi
+  if [ -z "$CLAUDE_HOOKS_OK" ] && command -v python3 &>/dev/null; then
+    # Same edit, python3 — no node required. Identical de-dupe + append. Also
+    # the fallback when node EXISTS but the edit failed (broken node install,
+    # odd version) — don't give up while a working interpreter is sitting here.
     if python3 - <<'PY' 2>/dev/null
 import json, os
 from pathlib import Path
@@ -336,8 +363,11 @@ def clean(event):
     return [e for e in arr if keep(e)]
 
 sh = "$HOME/alexandria/system/hooks/shim.sh"
+# 60s not 10 for the shim: it verifies + fetches the payload over the network
+# before any output — hotel-wifi first sessions were killed mid-fetch at 10s,
+# eating THE BLOCK notice (warm-lead P0.3, 2026-07-15). Mirrors the node path.
 hooks["SessionStart"] = clean("SessionStart") + [
-    {"hooks": [{"type": "command", "command": f"bash {sh} session-start", "timeout": 10}]},
+    {"hooks": [{"type": "command", "command": f"bash {sh} session-start", "timeout": 60}]},
     {"hooks": [{"type": "command", "command": "python3 $HOME/alexandria/system/scripts/capture_resolver.py 2>/dev/null || true", "timeout": 10}]},
 ]
 hooks["SessionEnd"] = clean("SessionEnd") + [
@@ -723,10 +753,22 @@ if [ -d "$ICLOUD_DIR" ] && [ "$(uname)" = "Darwin" ]; then
   ICLOUD_INPUT="$ICLOUD_DIR/alexandria"
   mkdir -p "$ICLOUD_INPUT"
   if [ ! -L "$ALEX_DIR/files/vault/input" ]; then
-    [ -d "$ALEX_DIR/files/vault/input" ] && rmdir "$ALEX_DIR/files/vault/input" 2>/dev/null
-    ln -s "$ICLOUD_INPUT" "$ALEX_DIR/files/vault/input"
+    # Replace the placeholder dir with the symlink ONLY if it's empty (rmdir
+    # refuses otherwise — that's the guard). A non-empty real dir is the
+    # Author's live capture inbox: leave it alone. Blindly running ln -s at a
+    # surviving dir would nest the link INSIDE it (input/alexandria → iCloud),
+    # silently splitting captures across two inboxes. .DS_Store alone doesn't
+    # count as content — clear it so a Finder-browsed empty dir still links.
+    rm -f "$ALEX_DIR/files/vault/input/.DS_Store" 2>/dev/null
+    if rmdir "$ALEX_DIR/files/vault/input" 2>/dev/null || [ ! -e "$ALEX_DIR/files/vault/input" ]; then
+      ln -s "$ICLOUD_INPUT" "$ALEX_DIR/files/vault/input"
+    fi
   fi
-  echo "  iCloud: input pipe ready (~/alexandria/files/vault/input → iCloud/alexandria)"
+  if [ -L "$ALEX_DIR/files/vault/input" ]; then
+    echo "  iCloud: input pipe ready (~/alexandria/files/vault/input → iCloud/alexandria)"
+  else
+    echo "  iCloud: files/vault/input already has your files — kept as-is (local capture inbox); iCloud drops land in iCloud/alexandria"
+  fi
 fi
 
 # ── 6b. iCloud full backup mirror (macOS) ────────────────────────
@@ -790,6 +832,29 @@ elif command -v curl &>/dev/null; then
     -H "Authorization: Bearer $API_KEY" \
     --max-time 8 \
     "$SERVER/alexandria" 2>/dev/null || echo "000")
+fi
+
+# Persist the key ONLY now that the server has spoken (or couldn't). Three
+# outcomes:
+#   200 → verified — store it (0600); the hub layer is live.
+#   401 → definitively rejected — never store it, and if the SAME key was
+#         already stored by a prior install, quarantine it to
+#         .api_key.rejected so a bare re-run goes keyless instead of
+#         re-failing on the dead key forever.
+#   000 / anything else → server unreachable or degraded. The key may well be
+#         valid (offline install is legit) — store it anyway. Fail-open here:
+#         the hooks re-probe every session and a dead key just no-ops server
+#         calls; only a positive 401 is proof of poison.
+if [ -n "$API_KEY" ] && [ "$KEYLESS" != "true" ]; then
+  if [ "$KEY_STATUS" = "401" ]; then
+    if [ -f "$ALEX_DIR/system/.api_key" ] && \
+       [ "$(tr -d '[:space:]' < "$ALEX_DIR/system/.api_key" 2>/dev/null)" = "$API_KEY" ]; then
+      mv "$ALEX_DIR/system/.api_key" "$ALEX_DIR/system/.api_key.rejected" 2>/dev/null
+    fi
+  else
+    echo "$API_KEY" > "$ALEX_DIR/system/.api_key"
+    chmod 600 "$ALEX_DIR/system/.api_key"
+  fi
 fi
 
 # ── Done ──────────────────────────────────────────────────────────
@@ -864,7 +929,12 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   if [ -f "$HOME/.claude/settings.json" ] && \
      grep -q "alexandria/system/hooks/shim.sh" "$HOME/.claude/settings.json" 2>/dev/null && \
      [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ]; then
-    STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a + /alexandria skill + session hooks wired"
+    if [ -n "$A_SKILL_KEPT" ]; then
+      # Honest row: their own /a was left alone; ours lives at /alexandria.
+      STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/alexandria skill + session hooks wired (your own /a skill left untouched)"
+    else
+      STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a + /alexandria skill + session hooks wired"
+    fi
   else
     STATUS_CLAUDE="fail"; DETAIL_CLAUDE="Claude Code detected but not configured — re-run setup"
   fi
@@ -914,6 +984,9 @@ if [ -d "$ALEX_DIR/.git" ]; then
     else
       STATUS_REPO="fail"; DETAIL_REPO="local git ok but no GitHub remote — re-run setup"
     fi
+  elif command -v gh &>/dev/null; then
+    # gh is installed but not signed in — the fix is auth, not installation.
+    STATUS_REPO="skip"; DETAIL_REPO="local git only — run 'gh auth login' for cloud backup, then re-run setup"
   else
     STATUS_REPO="skip"; DETAIL_REPO="local git only — install gh CLI for cloud backup (https://cli.github.com)"
   fi
@@ -953,6 +1026,12 @@ if [ "$(uname)" = "Darwin" ]; then
   ICLOUD_TARGET="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
   if [ -L "$ALEX_DIR/files/vault/input" ] && [ -d "$ALEX_DIR/files/vault/input/" ]; then
     STATUS_ICLOUD="ok"; DETAIL_ICLOUD="input pipe → iCloud/alexandria"
+  elif [ ! -L "$ALEX_DIR/files/vault/input" ] && [ -d "$ALEX_DIR/files/vault/input" ] && \
+       [ -n "$(ls "$ALEX_DIR/files/vault/input" 2>/dev/null)" ]; then
+    # Deliberate, not broken: a pre-existing non-empty input dir is the Author's
+    # capture inbox and setup left it alone. "Re-run" can't (and shouldn't) fix
+    # this — say what actually happened.
+    STATUS_ICLOUD="skip"; DETAIL_ICLOUD="capture inbox kept local — files/vault/input already had your files (iCloud drops land in iCloud/alexandria)"
   elif [ -d "$ICLOUD_TARGET" ]; then
     STATUS_ICLOUD="fail"; DETAIL_ICLOUD="iCloud detected but pipe not linked — re-run setup"
   else
@@ -1090,9 +1169,20 @@ CORE_OK=true
 for s in "$STATUS_FILES" "$STATUS_CANON" "$STATUS_HOOKS" "$STATUS_CORE"; do
   [ "$s" = "ok" ] || CORE_OK=false
 done
+# The block is core for a FRESH install: the close below points the agent at
+# ~/alexandria/system/.block, so a missing block would send it to a file that
+# doesn't exist (and the payload's no-block branch then freestyles onboarding).
+# Existing Authors already ran it — absence is harmless on a sync re-run.
+BLOCK_MISSING=""
+if [ -z "$EXISTING_AUTHOR" ] && [ ! -f "$ALEX_DIR/system/.block" ]; then
+  CORE_OK=false
+  BLOCK_MISSING=1
+fi
 
 if [ "$CORE_OK" != "true" ]; then
   echo "Install incomplete — a core piece didn't land (see the ✗ rows above)."
+  # The block has no matrix row — name it explicitly when it's the gap.
+  [ -n "$BLOCK_MISSING" ] && echo "(Also missing: the onboarding file at ~/alexandria/system/.block — the first session needs it.)"
   echo "Re-run the one line; it's safe and never overwrites your files:"
   if [ "$KEYLESS" = "true" ]; then
     echo "  curl -fsSL alexandria-library.com/a | bash"
@@ -1158,6 +1248,14 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
       [ -n "$line" ] && echo "  · $line"
     done
   fi
+elif [ "$KEY_STATUS" = "401" ]; then
+  # Rejected key deserves a plain closing, not just a matrix row: the local
+  # install landed fine — only the account layer didn't connect.
+  echo "Your API key was rejected by the server — the local install itself is fine,"
+  echo "but the account layer (Library, marketplace, kin) isn't connected."
+  echo "Get a fresh key at https://alexandria-library.com/signup, then re-run:"
+  echo "  curl -fsSL alexandria-library.com/a | bash -s -- \$NEW_KEY"
+  echo "(The rejected key was not saved — a bare re-run stays keyless instead of re-failing.)"
 else
   echo "Re-run anytime: curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh | bash -s -- \$API_KEY"
 fi

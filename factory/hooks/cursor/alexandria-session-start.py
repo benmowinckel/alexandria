@@ -53,6 +53,30 @@ def _read_or_note(path: Path, label: str) -> str:
         return f"(Failed to read {label} at `{path}`: {exc})\n"
 
 
+def _is_untouched_template(text: str) -> bool:
+    """True when agent.md is still the shipped starter stub (or trivially empty).
+
+    The template is ~160 bytes: headings, one italic descriptor line, empty
+    "- " bullets. Injecting that verbatim spends context budget on nothing and
+    reads as noise — skip it until the Author writes a real preference. Any
+    content line that isn't a heading, an empty bullet, or the italic
+    descriptor counts as real.
+    """
+    stripped = text.strip()
+    if len(stripped) < 50:
+        return True
+    for line in stripped.splitlines():
+        s = line.strip()
+        if not s:
+            continue
+        if s.startswith("#") or s in {"-", "*"}:
+            continue
+        if s.startswith("*") and s.endswith("*"):
+            continue  # the template's italic descriptor line
+        return False
+    return True
+
+
 def _truncate(text: str, max_chars: int) -> tuple[str, bool]:
     if max_chars < 1:
         return "", False
@@ -180,7 +204,7 @@ def _run() -> None:
         f"- context_budget_chars: {max_chars}\n"
         f"- include_derivatives: {include_derivatives}\n\n"
         "Canon for values and principles. Repo-local CLAUDE.md / AGENTS.md wins on project facts; "
-        "this block wins on founder axioms.\n\n---\n\n"
+        "this block wins on the Author's own preferences and principles.\n\n---\n\n"
     )
 
     sections: list[tuple[str, str, bool]] = []
@@ -206,13 +230,27 @@ def _run() -> None:
         )
 
     if agent_path.is_file():
-        sections.append(
-            ("Founder axioms (`agent.md`)", _read_or_note(agent_path, "Alexandria agent.md"), True)
-        )
+        agent_text = _read_or_note(agent_path, "Alexandria agent.md")
+        if _is_untouched_template(agent_text):
+            # Still the shipped stub — a one-line note beats injecting an
+            # empty scaffold as if it were the Author's preferences.
+            sections.append(
+                (
+                    "Author preferences (`agent.md`)",
+                    (
+                        f"(agent.md at `{agent_path}` is still the untouched starter "
+                        "template — nothing to inject yet. It fills in as the Author "
+                        "states operating preferences.)\n"
+                    ),
+                    True,
+                )
+            )
+        else:
+            sections.append(("Author preferences (`agent.md`)", agent_text, True))
     else:
         sections.append(
             (
-                "Founder axioms (`agent.md`)",
+                "Author preferences (`agent.md`)",
                 (
                     f"(Alexandria agent.md not found at `{agent_path}`. "
                     "Set `ALEXANDRIA_ROOT` or clone `~/alexandria`.)\n"

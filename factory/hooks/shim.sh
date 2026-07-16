@@ -35,8 +35,10 @@ verify_payload_file() {
     echo "fail:no-allowed-signers"; return
   fi
 
-  manifest_file=$(mktemp 2>/dev/null) || { echo "fail:mktemp"; return; }
-  sig_file=$(mktemp 2>/dev/null) || { rm -f "$manifest_file"; echo "fail:mktemp"; return; }
+  # Explicit template — bare mktemp fails on shells/environments where TMPDIR
+  # is unset or unwritable; payload.sh uses the same pattern.
+  manifest_file=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null) || { echo "fail:mktemp"; return; }
+  sig_file=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null) || { rm -f "$manifest_file"; echo "fail:mktemp"; return; }
 
   if ! curl -sf --max-time 5 "$MANIFEST_URL" -o "$manifest_file" 2>/dev/null; then
     rm -f "$manifest_file" "$sig_file"; echo "fail:manifest-fetch"; return
@@ -88,7 +90,7 @@ verify_payload_file() {
 
 if [ "$MODE" = "session-start" ]; then
   fresh=false
-  payload_tmp=$(mktemp 2>/dev/null)
+  payload_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
 
   # Continuous-update module (default on). If the Author deleted
   # ~/alexandria/system/hooks/auto-update, don't fetch a fresh payload — run the
