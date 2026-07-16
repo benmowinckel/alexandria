@@ -310,39 +310,43 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // Expandable overviews (accordion — one open at a time — so the fixed
   // back-slide stage can never overflow).
   const [openPillar, setOpenPillar] = useState<string | null>(null);
-  // The back slide is the founding sentence unpacked (2026-07-15 second
-  // rebuild, from the founder's mission skeleton): a one-line intro — founded
-  // to fix this: the solution, the people who care, a free way to start —
-  // whose three clauses ARE the three sections below. Two tracks: the leads
-  // are the skim layer (2-3 FULL spoken sentences each, no fragment the
-  // reader has to decompress; must read as one complete non-repeating
-  // argument front → close); the bodies are the opt-in depth (the full
-  // mechanism, the conviction, the objection sweep).
+  // The back slide is the founder's mission skeleton in his own structure
+  // (2026-07-15 second rebuild): problem → solution → community → the free
+  // sample, leads built from his skeleton's sentences nearly verbatim. Two
+  // tracks: the leads are the skim layer (full spoken sentences, one
+  // complete argument front → close); the bodies are the opt-in depth (the
+  // creep + three doors, the folder mechanism, the objection sweep).
   const SECTIONS = [
     {
+      title: 'the problem',
+      // His Problem paragraph, near-verbatim. The front carries the trend
+      // and the stakes; this carries the cause (ai is DESIGNED to answer)
+      // and the mechanism of the fading (the muscle).
+      lead: 'ai is designed to give you all the answers. But when it does everything for you, your mind — like any muscle you don’t use — begins to fade.',
+      // Depth: the creep (the seduction mechanics) + the three doors from
+      // the letter, ending on the company as the third door.
+      body: 'It creeps in. You ask ai to write the email, make the plan, weigh the decision — and it does, often better than you would have. So you keep asking, and it handles more of your thinking while you do less of it. There are three doors: reject ai, and fall behind. Let it think for you, and go soft. Or use it fully — and have it keep you sharp. Alexandria is the third door.',
+    },
+    {
       title: 'the solution',
-      // The mechanism in one breath: the folder (concrete referent), it
-      // writes itself (kills the effort objection), with-not-for (the
-      // payoff). AGENTS.md gloss, the map, and the gym live in the body.
-      lead: 'It’s one folder on your computer that holds what you think and how you think. Your ai fills it in as you go and reads it whenever you work — so alongside giving you answers, it starts developing your thinking. It can’t read your mind, but it can read words: put your thoughts into words, and it thinks with you, not for you.',
-      // Depth track opens on the cause (ai is built to answer) and the
-      // founder's conviction line — verbatim, his words; the "we think"
-      // keeps it a stated belief, not a claim on the reader.
-      body: 'ai is built to hand you the answers, and it keeps getting better at it — that’s exactly how the fading happens. Most people are on this trajectory; we think it will be disastrous for humanity. The folder turns the same power around: your ai writes the full richness of how you think — every idea, decision, and pattern — into private files on your own storage, a maximum-detail map of your mind. With that map, it can work out how to develop your thinking alongside answering you. Coding tools keep a file like this so any ai can learn a project; this is the same, but for a person. Most of it runs on its own in the background — and now and then you sit with it on purpose, think out loud, and let it draw out what you haven’t put into words yet.',
+      // His Solution paragraph: the orientation tweak + with-not-for.
+      lead: 'You tweak the orientation of your ai so that it develops you instead of replacing you: it writes what and how you think into private files on your own computer, and reads them to build on your thinking alongside answering you. It can’t read your mind, but it can read words — put your thoughts into words, and it thinks with you, not for you.',
+      body: 'Every alexandrian has their own Alexandria folder, holding personalized instructions for their ai — the way coding tools keep a file that teaches any ai a project, but for a person. As you work, your ai writes the full richness of how you think — every idea, decision, and pattern — into it: a maximum-detail map of your mind, on your own storage, that we never see. Most of it runs in the background; now and then you sit with it on purpose, think out loud, and let it draw out what you haven’t put into words yet.',
     },
     {
       title: 'the community',
       // Identity by choice — an alexandrian is a decision, not a download.
-      lead: 'Everyone doing this together is Alexandria — like Strava, but for the mind. An alexandrian is just someone who decided they don’t want their thinking to fade, and did something about it. The community is the only paid part; the tool itself is free.',
+      lead: 'Everyone doing this together is Alexandria — like Strava, but for the mind. An alexandrian is someone who decided they don’t want their thinking to fade, and did something about it. The community is the only paid part; the tool itself is free.',
       body: 'One shared belief — that a sharper mind is worth the work — and everyone their own way of working at it. Members share how they’ve set up their folders, what they’ve changed, and what they’ve made because of them; the best of it flows into a library of minds and a marketplace of methods. We provide the philosophy, the gathering place, and the free starter system — the rest is yours. None of it is required: the tool works alone, forever.',
     },
     {
-      title: 'the free part',
-      lead: 'To start, you don’t build anything — you take the founder’s setup, the one he actually runs, and it works from the first minute. It’s open source, it lives on your computer, and we never see a word. Make it your own over time — or delete it, and it’s like it never happened.',
-      // The four-branch sweep (founder's device, 2026-07-15): every kind of
-      // visitor lands with the sample in hand — bin it / merge it / let it
-      // run / remake it. Depth track only; the skim stays a clean cart.
-      body: 'One command installs it — no account, nothing to sign; inside is everything he actually uses. And whoever you are, it works: if you don’t like it, delete it and it’s gone. If you already have something similar, take this anyway and keep the pieces that beat yours. If you’re busy, let it run in the background while you use your ai normally. And if you want to change everything — good: it’s a starter recipe, built to be made yours. If the idea is even a little interesting, all you have to do is reach out your hand.',
+      title: 'the free sample',
+      // His supermarket frame, stated once, as the lead — then the
+      // four-branch sweep (bin it / merge it / let it run / remake it) as
+      // the depth, his sentences near-verbatim, every branch ending with
+      // the sample in hand.
+      lead: 'It works like a free sample at the supermarket: if the idea is even remotely interesting, all you have to do is reach out your hand. One command installs the founder’s own setup — no account, five minutes, on your computer, and we never see a word. Keep it, change everything, or delete it without a trace.',
+      body: 'Whoever you are, it works. Don’t like it? Bin it — one delete, gone. Already have something similar? Add this anyway, and keep only the valuable pieces. Agree, but no time? It’s the easiest way possible — it updates itself and works in the background while you use your ai normally. Like it, but want it different? Then you’re a true alexandrian: it’s designed to be the starting point for your own version.',
     },
   ];
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
@@ -735,14 +739,17 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             the peel. what / how + the decision live on the back slide. */}
         <div className="front-epigraph">
           <p className="front-lead">People are outsourcing more and more of their thinking to ai.</p>
-          {/* The frame, fully walked (2026-07-15): complete spoken sentences
-              a distracted stranger absorbs at reading speed — compression is
-              difficulty, not simplicity (the one-liner pass failed: "they
-              wouldn't be able to decompress it"). Observation → threat (dim)
-              → the concept (ink) → the gift. */}
+          {/* The front is the founder's mission skeleton walked in full
+              (2026-07-15 second rebuild): observation → threat (dim) → the
+              conviction (dim, "we think" — a stated belief, not a claim on
+              the reader) → the founding (ink; sell one level above — a fix
+              exists, a community is forming, the founder's version is the
+              free way in; the mechanism itself waits on the back slide) →
+              the gift. */}
           <div className="front-fork">
             <p className="fork-line fork-lose">Keep going, and eventually you forget how to think for yourself.</p>
-            <p className="fork-line fork-win">There&rsquo;s another way to use the same ai &mdash; teach it who you are, and it develops you instead of replacing you.</p>
+            <p className="fork-line fork-lose">Most people are on this trajectory &mdash; we think it will be disastrous for humanity.</p>
+            <p className="fork-line fork-win">Alexandria was founded to fix it: a solution, a community who care, and the tools for anyone to start.</p>
             <p className="fork-line fork-offer">To get you started, the founder&rsquo;s whole setup is free. Try it.</p>
           </div>
         </div>
@@ -829,17 +836,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     flowing with no dividers between them. A lead paragraph
                     shows; a rotating caret reveals the rest. Accordion (one
                     open at a time) keeps the fixed stage bounded. */}
-                {/* The founding line (2026-07-15, from the founder's mission
-                    skeleton) — the hinge between the front's problem and the
-                    three sections below: its three clauses ARE the section
-                    titles (form is content). Italic, mirroring the action
-                    beat at the close, so the argument opens and shuts in the
-                    same register. */}
-                <p className="secs-intro">
-                  <em>Alexandria was founded to fix this &mdash; to share the
-                  solution, gather the people who care, and give anyone a free
-                  way to start.</em>
-                </p>
                 <div className="secs">
                   {SECTIONS.map((s) => {
                     const isOpen = openPillar === s.title;
@@ -2646,19 +2642,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           display: none;
         }
         /* ─── WHY / WHAT / HOW pillars (2026-07-13 exploration) ─── */
-        /* The founding line — same measure as the leads, italic like the
-           closing action beat (the argument opens and shuts in one
-           register), with a hairline beneath marking the turn from
-           mission to sections (mirrors .secs-rule at the close). */
-        .secs-intro {
-          margin: 0 0 4px;
-          padding-bottom: 20px;
-          border-bottom: 1px solid var(--theme-border-soft);
-          font-size: 15.5px;
-          line-height: 1.66;
-          letter-spacing: 0.012em;
-          color: var(--theme-fg);
-        }
         .secs {
           display: flex;
           flex-direction: column;
