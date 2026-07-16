@@ -321,7 +321,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       body: [
         'Human chess is more popular than ever — even though ai can do it better — because humans value humans; but only if they can still play the games.',
         'It will be increasingly tempting to let ai think and decide for you; but then your mind, like any muscle you don’t use, will begin to fade — and forget how to compete.',
-        'Technology is a multiplier — ai is the most extreme version in history, so it will take you down the path you point it. Continue to let it think for you, and you’ll end up like the humans in Wall-E. Align it to think with you, and you can master anything.',
+        'Technology is a multiplier — ai is the most extreme version in history, so it will take you down the path you point it down. Continue to let it think for you, and you’ll end up like the humans in Wall-E. Align it to think with you, and you can master anything.',
         'Alexandrians are defined by this choice alone.',
       ],
     },
@@ -337,10 +337,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     },
     {
       title: 'how',
-      lead: 'Your private Alexandria folder connects to your ai so that it can follow instructions and use what it knows about you.',
+      lead: 'Your private Alexandria folder connects to your ai so that it can follow your instructions and use what it knows about you.',
       body: [
-        'A local, private, custom folder is made on your own computer — containing files of everything your ai already knows about what and how you think, and instruction files on how your ai should read/write to these files to update, develop, and use.',
-        'Dump all the data you have into this one folder so your ai can tie together everything and extract all the messy connections into one unified map of your mind — to know where you currently stand, and then help you get to where you want to go: actively chatting with you to fill in any gaps, analysing connections you might have never seen, showing you new ideas it now knows you’d find interesting, stopping you from forgetting details that might drift, and synthesizing the unique knowledge you have so that you can get it out into the world.',
+        'A local, private, custom folder is made on your own computer — containing files of everything your ai already knows about what and how you think, and instruction files on how your ai should read/write to these files to update, develop, and use them.',
+        'Dump all the data you have into this one folder so your ai can tie together everything and extract all the messy connections into one unified map of your mind — to know where you currently stand, and then help you get to where you want to go: actively chatting with you to fill in any gaps, analyzing connections you might have never seen, showing you new ideas it now knows you’d find interesting, stopping you from forgetting details that might drift, and synthesizing the unique knowledge you have so that you can get it out into the world.',
         'Any ai, product, or service can connect to your folder because it’s just plain files owned on your computer alone. This is the simplest system possible — just you, plain files you own, any ai, any input, unlimited output.',
         'All of this is free because it’s your ai and your files and system. The founder has his own system and he just made it free so it’s easy for people to start — they can personalize the system however they want, and the files they create are personal regardless. Joining the community is the price of two coffees a month, and it’s just sharing how they have their systems set up, and showing what they’ve been able to do because of it — connecting the humans who chose to keep thinking.',
       ],
@@ -747,7 +747,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               rhyme); each function line is his sentence, unedited. */}
           <p className="front-lead">When ai can do everything humans can, what do we do?</p>
           <div className="front-fork">
-            <p className="fork-line fork-win">Alexandria</p>
+            {/* The answer (founder, 2026-07-16): one line, answering both
+                readings of the question — what shall we do / what remains
+                ours to do. */}
+            <p className="fork-line fork-win">We keep thinking &mdash; and use ai to help us do it.</p>
+            <p className="fork-line front-alex">Alexandria</p>
             <p className="fork-line front-fn"><span className="fn-label">idea</span><span>articulates our philosophy as an answer</span></p>
             <p className="fork-line front-fn"><span className="fn-label">community</span><span>connects those who, even slightly, agree</span></p>
             <p className="fork-line front-fn"><span className="fn-label">sample</span><span>provides infrastructure so anyone can join</span></p>
@@ -2865,6 +2869,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           font-size: 16px;
           font-style: italic;
           color: rgba(26, 19, 24, 0.55);
+        }
+        /* The name over its functions — a small letterspaced plate (the
+           letter-title register), introducing the three rows beneath as
+           what the name provides. */
+        .front-alex {
+          margin-top: 24px;
+          font-style: italic;
+          font-size: 14px;
+          letter-spacing: 0.14em;
+          color: rgba(26, 19, 24, 0.6);
         }
         /* The three function lines — label column in the letter-plate
            register (mirrors the back's section titles), sentence beside it;
