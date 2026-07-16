@@ -54,8 +54,23 @@ setup() {
   if [[ -f "$file" ]]; then
     echo "publish: $file already exists — re-editing" >&2
   else
-    template_url="https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/templates/system-module.md"
-    curl -sf "$template_url" | sed "s/<slug>/$slug/g" > "$file"
+    template_url="https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/templates/module.md"
+    # Fetch to a tempfile and gate on content BEFORE writing $file: a 404 or
+    # truncated response piped straight through sed would leave an empty
+    # scaffold that sails past finalize()'s H1 grep and ships blank. The
+    # template's own H1 placeholder is the fingerprint — if it isn't there,
+    # this isn't the template.
+    template_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX")
+    if ! curl -sf "$template_url" -o "$template_tmp" \
+       || [[ ! -s "$template_tmp" ]] \
+       || ! grep -qF '# <Module title>' "$template_tmp"; then
+      rm -f "$template_tmp"
+      echo "publish: template fetch failed or returned unexpected content ($template_url)" >&2
+      echo "publish: refusing to write a blank scaffold — check network/URL and retry" >&2
+      exit 1
+    fi
+    sed "s/<slug>/$slug/g" "$template_tmp" > "$file"
+    rm -f "$template_tmp"
   fi
 
   # Path on stdout — the only stdout line, so the skill can capture it cleanly.

@@ -440,9 +440,35 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
   fi
 
   # ── The Block (first-session onboarding) ──
+  # Completion is EXPLICIT: block.md's close and every tool skill (claudecode,
+  # cursor, codex, droid) touch .block_complete when onboarding finishes.
+  # Inference is only for legacy installs that predate the marker — a built
+  # constitution with NO .block on disk means the block was never even fetched,
+  # so nothing could have written the marker; that Author is done. A >200-byte
+  # constitution WITH .block present proves nothing: a crash mid-onboarding
+  # leaves exactly that state, and the old auto-touch here stranded those
+  # half-onboarded Authors as permanently "done".
   if [ ! -f "$ALEX_DIR/system/.block_complete" ]; then
-    if [ "$has_constitution" = "true" ]; then
+    if [ "$has_constitution" = "true" ] && [ ! -f "$ALEX_DIR/system/.block" ]; then
+      # Legacy complete — onboarded before the block/marker shipped. Infer once.
       touch "$ALEX_DIR/system/.block_complete"
+    elif [ "$has_constitution" = "true" ]; then
+      # Constitution has content but completion was never recorded: either
+      # onboarding crashed partway, or a completed pre-marker Author re-ran
+      # setup (which re-fetches .block). Never re-onboard over a real mind;
+      # never silently mark done. Hand the judgment to the agent, gently —
+      # both cases self-heal in one session.
+      echo ""
+      echo "--- ALEXANDRIA ONBOARDING CHECK ---"
+      echo "This Author's constitution has content, but onboarding never recorded completion."
+      echo "Check $ALEX_DISPLAY/system/.setup_report and the constitution itself: if onboarding"
+      echo "clearly finished (real, source-cited entries across the files), just run:"
+      echo "  touch $ALEX_DIR/system/.block_complete"
+      echo "If it stopped partway, offer the Author to finish the remaining phases of"
+      echo "$ALEX_DISPLAY/system/.block — keep everything already written; never restart"
+      echo "from scratch or re-draft what exists."
+      echo "--- END CHECK ---"
+      echo ""
     else
       echo ""
       echo "--- THE BLOCK ---"
@@ -458,7 +484,9 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
     fi
   fi
 
-  if [ -f "$ALEX_DIR/system/.block_complete" ] && [ "$has_constitution" = "true" ]; then
+  # Context injects whenever there is real constitution content — including the
+  # onboarding-check case above, where the agent needs the file map to judge.
+  if [ "$has_constitution" = "true" ]; then
     echo ""
     echo "--- AUTHOR CONTEXT (read-only — do not override existing workflows or memory) ---"
     echo "Author files live at $ALEX_DISPLAY/files/. Read what's relevant for the moment, not everything every time. Prefer derivatives (underscore-prefixed: _constitution.md, _notepad.md, _feedback.md) when they exist — they are the compressed working copy. Fall back to sources when the derivative is missing."
