@@ -119,6 +119,15 @@ if [ "$MODE" = "session-start" ]; then
   # with Alexandria). See Mechanics.md → "turning off continuous updates".
   AUTO_UPDATE=true
   [ -f "$ALEX_DIR/system/hooks/auto-update" ] || AUTO_UPDATE=false
+  # Cold-start fast path (2026-07-15, warm-lead P0.3): on a brand-new install
+  # (.block present, onboarding not yet complete) skip the 11-module update
+  # check — the installer fetched canon minutes ago, and this loop's worst
+  # case (11 × curl --max-time 5) can blow the wired hook timeout, killing
+  # THE BLOCK notice below before it ever prints. First impression beats
+  # freshness; update checks resume on the next session.
+  if [ -f "$ALEX_DIR/system/.block" ] && [ ! -f "$ALEX_DIR/system/.block_complete" ]; then
+    AUTO_UPDATE=false
+  fi
   for module in foundation axioms methodology editor mercury publisher library filter bookshelf plm twin; do
     local_path="$ALEX_DIR/system/canon/$module.md"
     fresh_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
