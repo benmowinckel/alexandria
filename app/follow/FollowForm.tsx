@@ -7,7 +7,10 @@ import { INK, PAPER, INK_MUTED, INK_FAINT, RULE } from '../lib/palette';
 
 const AMOUNT_MIN = 0;
 const AMOUNT_MAX = 200;
-const AMOUNT_DEFAULT = 15;
+// Opens on free (2026-07-15, warm-lead P0.6a): the homepage ghost CTA promises
+// "just your email", so this page must open as an email capture, not a $15
+// anchor. The pay-what-you-want slider stays — as the optional second beat.
+const AMOUNT_DEFAULT = 0;
 
 export default function FollowForm({ initialDone }: { initialDone: boolean }) {
   const [email, setEmail] = useState('');
@@ -109,6 +112,10 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
       <section className="form-wrap">
         <div className="form">
 
+          <p className="lede">
+            leave your email &mdash; we&rsquo;ll keep you posted as we build.
+          </p>
+
           <label className="field">
             <input
               key={shakeKey}
@@ -174,7 +181,7 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
           </div>
 
           <p className="caption">
-            pay what you want &mdash; or just follow for free.
+            it&rsquo;s free &mdash; the slider&rsquo;s there if you want to back us.
           </p>
 
           <div className="cta-row">
@@ -258,6 +265,15 @@ const styles = `
     display: flex;
     flex-direction: column;
     gap: 56px;
+  }
+
+  .lede {
+    margin: 0 0 -22px;
+    font-size: 15px;
+    line-height: 1.5;
+    font-style: italic;
+    color: ${INK_MUTED};
+    letter-spacing: 0.005em;
   }
 
   .field input {
