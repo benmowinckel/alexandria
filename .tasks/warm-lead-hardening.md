@@ -21,10 +21,7 @@
 - **P2.14** honorary spelling; marketplace hrefs → alexandria-modules; OG description realigned to the rebuilt page; short-phone CTA/header overlap fixed. Verified live.
 - **P2.15** droid.md first-/a calibration ported; Cursor hook "Founder axioms"→Author preferences + stub-template skip; branded connect command in emails/templates; price single-constant; pre-bill unsubscribe footer; AGENTS.md endpoint table pruned + rotate-key row.
 
-## Awaiting founder (one line)
-
-- **P1.7 + P1.10c** — edits DONE in working tree, signature-gated: `factory/scripts/publish.sh` (module.md template path + non-empty/H1 guard) and `factory/hooks/payload.sh` (onboarding resume state machine: legacy infer-complete only when .block absent; .block present + no marker → gentle resume, never re-onboard, never strand). Ship with:
-  `bash factory/ship.sh "payload: onboarding resume state machine; publish: module template path + guard (P1.7/P1.10c)"` (needs the signing passphrase). Until then every Author is on the OLD payload — fine (the old inference behavior), just not the fix.
+- **P1.7 + P1.10c** founder-shipped via ship.sh (cddc367): publish.sh module.md path + non-empty/H1 guard; payload.sh onboarding resume state machine (legacy infer-complete only when .block absent; .block present + no marker → gentle resume, never re-onboard, never strand). Verified: manifest hashes match, signature GOOD on origin/main, all four CI checks green (Canon Sovereignty / Signing / Smoke / Stranger).
 
 ## Remaining (open)
 
