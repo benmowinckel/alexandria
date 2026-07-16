@@ -325,7 +325,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       lead: 'ai is designed to give you all the answers — but your mind, like any muscle you don’t use, begins to fade.',
       // Depth: the creep (the seduction mechanics) + the three doors from
       // the letter, ending on the company as the third door.
-      body: 'It creeps in. You ask ai to write the email, make the plan, weigh the decision — and it does, often better than you would have. So you keep asking, and it handles more of your thinking while you do less of it. There are three doors: reject ai, and fall behind. Let it think for you, and go soft. Or use it fully — and have it keep you sharp. Alexandria is the third door.',
+      body: 'It creeps in. You ask ai to write the email, make the plan, weigh the decision — and it does, often better than you would have. So you keep asking, and it handles more of your thinking while you do less of it. Most people are on this trajectory; we think it will be disastrous for humanity. There are three doors: reject ai, and fall behind. Let it think for you, and go soft. Or use it fully — and have it keep you sharp. Alexandria is the third door.',
     },
     {
       title: 'the solution',
@@ -739,17 +739,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             the peel. what / how + the decision live on the back slide. */}
         <div className="front-epigraph">
           <p className="front-lead">People are outsourcing more and more of their thinking to ai.</p>
-          {/* The front is the founder's mission skeleton walked in full
-              (2026-07-15 second rebuild): observation → threat (dim) → the
-              conviction (dim, "we think" — a stated belief, not a claim on
-              the reader) → the founding (ink; sell one level above — a fix
-              exists, a community is forming, the founder's version is the
-              free way in; the mechanism itself waits on the back slide) →
-              the gift. */}
+          {/* Four beats, one line each — the founder's 30-second bar applies
+              here hardest ("front slide already too long. didnt even read
+              it"): trend → threat (dim) → the fix exists (ink, five words)
+              → free, try it. The conviction line and the mission's
+              enumeration live on the back (problem body / section titles). */}
           <div className="front-fork">
             <p className="fork-line fork-lose">Keep going, and eventually you forget how to think for yourself.</p>
-            <p className="fork-line fork-lose">Most people are on this trajectory &mdash; we think it will be disastrous for humanity.</p>
-            <p className="fork-line fork-win">Alexandria was founded to fix it: a solution, a community who care, and the tools for anyone to start.</p>
+            <p className="fork-line fork-win">Alexandria was founded to fix it.</p>
             <p className="fork-line fork-offer">To get you started, the founder&rsquo;s whole setup is free. Try it.</p>
           </div>
         </div>
@@ -861,14 +858,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     single action beat below. */}
                 <div className="secs-rule" aria-hidden />
 
-                {/* The close (2026-07-15, founder): the sample cart doesn't
-                    lecture — no options disclaimer, no "your call," no
-                    forcing speech. One warm hand-over line naming the thing,
-                    and the button is the outstretched plate. */}
+                {/* The close (2026-07-15, "way too weak" fix): back to the
+                    locked forcing form — isolate the one question, show the
+                    zero-cost ledger, make putting-it-off a no (the pass-33
+                    escape-naming, minus the accusatory "you won't admit"
+                    killed in pass 39). Email stays the spectator's door. */}
                 <p className="statement-beat action-beat">
-                  <em>If the idea makes sense, take the founder&rsquo;s setup
-                  &mdash; it&rsquo;s ready. Just here to watch? Leave your
-                  email, and we&rsquo;ll keep you posted.</em>
+                  <em>The only question is whether the idea interests you
+                  &mdash; the rest is free, five minutes, and one delete to
+                  undo. If it does, take it; putting it off is just a no.
+                  Just here to watch? Leave your email.</em>
                 </p>
 
                 <div className="cta-pair">
