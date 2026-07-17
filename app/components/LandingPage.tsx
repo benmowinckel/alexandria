@@ -868,8 +868,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     you&rsquo;re interested enough to try.</em>
                   </p>
                   <p className="statement-beat action-beat action-beat-final">
-                    <em>Just try it, if you don&rsquo;t like it, bin it.
-                    This should be the smallest decision you make all day.</em>
+                    <em>Just try it, if you don&rsquo;t like it, bin it
+                    &mdash; should be the smallest decision you make all day.</em>
                   </p>
                 </div>
 
@@ -2685,11 +2685,17 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           transform: translateY(-2px) rotate(45deg);
           transition: transform 520ms cubic-bezier(0.33, 0, 0.2, 1), border-color 200ms ease;
         }
+        /* The openers as aphorisms (founder, 2026-07-16: "more interesting
+           styling") — the letter's italic voice at display size, so each
+           section opens on a spoken line rather than body text: faint
+           plate → italic aphorism → small roman depth. */
         .sec-lead {
-          margin: 7px 0 0;
-          font-size: 17.5px;
-          line-height: 1.55;
-          letter-spacing: 0.004em;
+          margin: 8px 0 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 19px;
+          line-height: 1.5;
+          letter-spacing: 0.006em;
           color: var(--theme-fg);
         }
         /* Body reveal — grid-rows 0fr→1fr eases to the body's EXACT height
@@ -2892,9 +2898,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .front-alex {
           margin: 0;
           font-style: italic;
-          font-size: 18px;
+          font-size: 19px;
           letter-spacing: 0.02em;
-          color: rgba(26, 19, 24, 0.72);
+          color: rgba(26, 19, 24, 0.74);
         }
         /* The three functions — each under a faint mini header (founder,
            2026-07-16: "mini faint headers"), stacked like small entries in
@@ -2912,11 +2918,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           letter-spacing: 0.18em;
           color: rgba(26, 19, 24, 0.38);
         }
+        /* The functions in the letter's italic voice (2026-07-16) — the
+           roman question above, the italic answer beneath: the register
+           shift IS the question/answer turn, and it rhymes with the back
+           slide's italic aphorism leads. */
         .fn-text {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 17px;
+          font-style: italic;
+          font-size: 17.5px;
           line-height: 1.5;
-          color: rgba(26, 19, 24, 0.66);
+          color: rgba(26, 19, 24, 0.68);
         }
         .cta-block {
           display: flex;
