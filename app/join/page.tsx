@@ -223,15 +223,19 @@ export default async function JoinPage({
           font-feature-settings: "smcp" 1, "kern" 1;
           color: var(--text-muted); line-height: 1;
         }
-        /* Underline field — border-bottom only, editorial not form-y. Capped
-           SHORT (founder: the write/paste lines "are still way too long, looks
-           weird") so the rule sits just under the text. */
+        /* Auto-width underline field. The row hugs its content (inline-flex),
+           and the input width is driven by its size attribute (set in JS to
+           the longer of the ghost text and what is typed) — so the
+           border-bottom sits under exactly the ghost text and grows only when
+           they type past it (founder 2026-07-17). max-width stops a very long
+           address from overrunning the column. */
         .join-door-field {
-          display: flex; align-items: baseline; gap: 12px;
-          max-width: 240px; width: 100%;
+          display: inline-flex; align-items: baseline; gap: 9px;
+          max-width: 100%;
         }
         .join-door-field input {
-          flex: 1; min-width: 0; height: 34px; padding: 0 2px;
+          width: auto; flex: none; min-width: 0; max-width: 340px;
+          height: 32px; padding: 0 1px;
           font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 15px;
           color: var(--text-primary); background: transparent;
           border: none; border-bottom: 1px solid var(--text-muted, rgba(61, 54, 48, 0.3));
@@ -239,43 +243,39 @@ export default async function JoinPage({
         }
         .join-door-field input::placeholder { color: var(--text-muted, rgba(61, 54, 48, 0.42)); }
         .join-door-field input:focus { border-bottom-color: var(--text-secondary, rgba(61, 54, 48, 0.7)); }
-        .join-door-submit {
-          flex-shrink: 0; padding: 0 2px 4px; align-self: flex-end;
-          font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 14px;
-          font-style: italic; letter-spacing: 0.02em; color: var(--text-secondary, rgba(61, 54, 48, 0.7));
-          background: none; border: none; cursor: pointer; transition: color 200ms;
+
+        /* The action affordance — a small-caps action word + a stroked arrow
+           that morphs to a tick on completion. On the two fields it appears
+           only once they type (join-appear); on the install link it's static
+           (.is-link) because a link is always actionable. */
+        .join-door-go {
+          display: inline-flex; align-items: center; gap: 5px; flex: none;
+          align-self: center; padding: 0; background: none; border: none;
+          color: var(--text-muted); cursor: pointer; text-decoration: none;
+          transition: color 200ms, opacity 200ms;
+          animation: joinGoAppear 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
         }
-        .join-door-submit:hover { color: var(--text-primary); }
-        .join-door-submit:disabled { opacity: 0.5; cursor: default; }
-        .join-door-status {
-          flex-shrink: 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 13px; font-style: italic; letter-spacing: 0.01em;
-          color: var(--text-muted, rgba(61, 54, 48, 0.6));
+        .join-door-go.is-link { animation: none; }
+        .join-door-go:hover { color: var(--text-primary); }
+        .join-door-go.is-done { color: var(--text-primary); cursor: default; }
+        .join-door-go:disabled { cursor: default; }
+        .join-go-word {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-weight: 500; font-size: 11px; letter-spacing: 0.1em;
+          text-transform: lowercase; font-variant-caps: all-small-caps;
+          font-feature-settings: "smcp" 1, "kern" 1; line-height: 1;
         }
+        .join-door-go .door-glyph { display: block; }
+        @keyframes joinGoAppear {
+          from { opacity: 0; transform: translateX(-5px); }
+          to { opacity: 1; transform: none; }
+        }
+
         .join-door-hint {
-          margin: 8px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          margin: 9px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic; font-size: 12.5px; letter-spacing: 0.02em;
           color: var(--text-muted, rgba(61, 54, 48, 0.5));
         }
-        .join-door-done {
-          margin: 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 14px; line-height: 1.7; font-style: italic;
-          color: var(--text-secondary, rgba(61, 54, 48, 0.82));
-        }
-        /* The install door's answer — sits BELOW its question (same shape as
-           the referral/email doors). Body serif with an inline link. */
-        .join-door-answer {
-          margin: 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 15px; line-height: 1.55; letter-spacing: 0.01em;
-          color: var(--text-primary);
-        }
-        .join-door-answer a {
-          color: var(--text-primary);
-          text-decoration: underline; text-decoration-color: var(--text-muted, rgba(61, 54, 48, 0.4));
-          text-underline-offset: 3px; text-decoration-thickness: 1px;
-          transition: text-decoration-color 200ms;
-        }
-        .join-door-answer a:hover { text-decoration-color: var(--text-primary); }
 
         .primer-coda {
           margin: 56px 0 0; text-align: left; font-family: var(--font-serif), ui-serif, Georgia, serif;

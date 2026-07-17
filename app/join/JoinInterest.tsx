@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { SERVER_URL } from '../lib/config';
+import { ArrowIcon, TickIcon } from './DoorIcons';
+
+const EMAIL_GHOST = 'your email';
 
 // The decline path (founder verdict 2026-07-09): a "no" at the join step
 // should still leave a contactable address — the reach the community gets
@@ -33,18 +36,13 @@ export default function JoinInterest({ refCode }: { refCode?: string }) {
     }
   };
 
-  if (state === 'sent') {
-    return (
-      <div className="join-door">
-        <p className="join-door-done">
-          Noted &mdash; the tool stays free. We&rsquo;ll be in touch.
-        </p>
-      </div>
-    );
-  }
+  const sent = state === 'sent';
+  // Auto-width: the underline hugs the ghost text and grows past it as they
+  // type (same rule as the referral field). The send affordance (arrow → tick)
+  // shows only once there's an address, and the form stays put on success so
+  // the arrow can morph into a tick in place rather than swapping the block.
+  const size = Math.max(EMAIL_GHOST.length, email.length) + 1;
 
-  // Styled as one of the three "doors" — question label + editorial underline
-  // input — so the decline path sits flush with the referral and install exits.
   return (
     <div className="join-door">
       <label className="join-door-q" htmlFor="join-interest-email">
@@ -56,24 +54,42 @@ export default function JoinInterest({ refCode }: { refCode?: string }) {
           type="email"
           inputMode="email"
           autoComplete="email"
-          placeholder="your email"
+          size={size}
+          placeholder={EMAIL_GHOST}
           aria-label="your email"
           value={email}
+          readOnly={sent}
           onChange={(e) => {
             setEmail(e.target.value);
-            if (state === 'error') setState('idle');
+            if (state === 'error' || sent) setState('idle');
           }}
           required
         />
-        <button type="submit" className="join-door-submit" disabled={state === 'sending'}>
-          {state === 'sending' ? 'sending…' : 'send'}
-        </button>
+        {(email.trim() || sent) && (
+          <button
+            type="submit"
+            className={`join-door-go${sent ? ' is-done' : ''}`}
+            aria-label={sent ? 'sent' : 'send'}
+            disabled={state === 'sending' || sent}
+          >
+            {sent ? (
+              <TickIcon />
+            ) : (
+              <>
+                <span className="join-go-word">send</span>
+                <ArrowIcon />
+              </>
+            )}
+          </button>
+        )}
       </form>
-      {state === 'error' ? (
-        <p className="join-door-hint">couldn&rsquo;t send &mdash; try again.</p>
-      ) : (
-        <p className="join-door-hint">leave your email to continue on your own.</p>
-      )}
+      <p className="join-door-hint">
+        {state === 'error'
+          ? 'couldn’t send — try again.'
+          : sent
+            ? 'sent — we’ll be in touch.'
+            : 'leave your email to continue on your own.'}
+      </p>
     </div>
   );
 }

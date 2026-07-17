@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { SERVER_URL } from '../lib/config';
 import JoinInterest from './JoinInterest';
+import { ArrowIcon, TickIcon } from './DoorIcons';
+
+const REF_GHOST = 'referral code';
 
 // The interactive join cluster — eyebrow through decline path. Owns the one
 // piece of client state the page turns on: the VALIDATED referral code. A ref
@@ -142,6 +145,12 @@ export default function JoinCTA({
           <label className="join-door-q" htmlFor="join-code-input">
             been referred by a friend?
           </label>
+          {/* Auto-width input: `size` tracks the longer of the ghost text and
+              what's typed, so the underline hugs the placeholder and only
+              grows past it (founder 2026-07-17: "only underline the ghost
+              text… if they type longer then expand it"). The apply affordance
+              (arrow → tick) appears only once they type; it's a status glyph,
+              not a button — the code auto-applies on validation. */}
           <div className="join-door-field">
             <input
               id="join-code-input"
@@ -155,20 +164,26 @@ export default function JoinCTA({
               data-1p-ignore="true"
               data-lpignore="true"
               data-form-type="other"
-              placeholder="referral code"
+              size={Math.max(REF_GHOST.length, typedRef.length) + 1}
+              placeholder={REF_GHOST}
               aria-label="referral code"
               value={typedRef}
               onChange={(e) => setTypedRef(e.target.value)}
             />
             {typedRef.trim() && (
-              <span className="join-door-status" aria-live="polite">
-                {typedState === 'checking'
-                  ? 'checking…'
-                  : typedValid
-                    ? 'applied ✓'
-                    : typedState === 'invalid'
-                      ? 'not found'
-                      : ''}
+              <span
+                className={`join-door-go${typedValid ? ' is-done' : ''}`}
+                aria-live="polite"
+                aria-label={typedValid ? 'applied' : 'apply'}
+              >
+                {typedValid ? (
+                  <TickIcon />
+                ) : (
+                  <>
+                    <span className="join-go-word">apply</span>
+                    <ArrowIcon />
+                  </>
+                )}
               </span>
             )}
           </div>
@@ -177,16 +192,21 @@ export default function JoinCTA({
 
         <JoinInterest refCode={effectiveRef || undefined} />
 
-        {/* Install door — same shape as the other two (question label, answer
-            below) for consistency (founder 2026-07-17). */}
+        {/* Install door — symmetrical with the other two: question, a "launch"
+            affordance (persistent, since it's a direct link — nothing to type),
+            then the "take you here later" line as the hint underneath. Forwards
+            the validated ref so an invited visitor who installs still credits
+            their inviter as kin. */}
         <div className="join-door">
           <p className="join-door-q">don&rsquo;t have the free tool yet?</p>
-          <p className="join-door-answer">
-            {/* Forward the validated ref so an invited visitor who takes the
-                free door still credits their inviter as kin on install. */}
-            <Link href={effectiveRef ? `/start?ref=${effectiveRef}` : '/start'}>install it</Link>{' '}
-            &mdash; it&rsquo;ll take you here later.
-          </p>
+          <Link
+            className="join-door-go is-link"
+            href={effectiveRef ? `/start?ref=${effectiveRef}` : '/start'}
+          >
+            <span className="join-go-word">launch</span>
+            <ArrowIcon />
+          </Link>
+          <p className="join-door-hint">it&rsquo;ll take you here later.</p>
         </div>
       </div>
     </>
