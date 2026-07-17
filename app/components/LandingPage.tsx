@@ -380,8 +380,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       body: [
         'A private folder on your own computer holds everything your ai knows about what and how you think — plus instructions for how to read, write, and develop it.',
         'Dump everything you have into it, and your ai ties it into one unified map of your mind: chatting with you to fill the gaps, surfacing connections you’d never seen, showing you new ideas it now knows you’d find interesting, catching details before they drift, and synthesising what only you know so you can get it out into the world.',
-        'It’s just plain files you own, that we never see — any ai can connect, any input, unlimited output. All of it free, because it’s your ai and your files.',
-        'Joining the community is the price of two coffees a month: share how your system is set up, show what you’ve made because of it — connecting the humans who chose to keep thinking.',
+        'It’s just plain files on your computer — and the privacy is structural, not a promise: there’s no server behind the tool, so nothing can be sent to us. Any ai can connect — any input, unlimited output. All of it free, because it’s your ai and your files.',
+        'Joining the community is the price of two coffees a month — think Strava, but for the mind: share how your system is set up, show what you’ve made because of it, and meet the others doing the same. The humans who chose to keep thinking, connected.',
       ],
     },
   ];
