@@ -17,16 +17,16 @@ export const metadata = pageMetadata({
 // marketplace, the tribe. Signing in with GitHub starts the trial ($10/mo, first
 // month free, free with 3 kin, or email-to-waive) and assigns your number.
 //
-// The pitch is the founder's own narrative, near-verbatim (his dictation
-// 2026-07-17, third pass — the price-led ladder "didn't read well"): first
-// month free, cancel anytime, just try it → get your friends on it; three on
-// = free while they're on ("we want as many people thinking as possible") →
-// haven't brought people on = $10, a tiny decision (one Uber, two coffees, a
-// package delivery charge) → the personal appeal (my project, something
-// positive, don't start being a penny pincher here) → the genuine-hardship
-// waive. Everything else — tool-free-forever, the founding-bet honesty
-// (2026-07-09 verdict), the have-a-code field — sits below a hairline like
-// /start's fine print. No roster pitch from the outside (who's in is visible
+// The structure is CLICK-FIRST (founder note 2026-07-17, fourth pass — the
+// full narrative above the button was "a wall of text"): above the button
+// only the orienting line and "the first month is free — just try it";
+// the rest of his dictation sits UNDER the click, consolidated to two short
+// paragraphs — friends on = free while they're on, otherwise $10 (one Uber,
+// two coffees, a package delivery charge, don't overthink it), then the
+// appeal + waive merged (my project, as many people thinking as possible,
+// don't start penny-pinching here, genuine-hardship waive). Everything else
+// — tool-free-forever, the founding-bet honesty (2026-07-09 verdict), the
+// have-a-code field — sits below a hairline like /start's fine print. No roster pitch from the outside (who's in is visible
 // once you're in, never the sell). A "no" has its own path: the JoinInterest
 // email capture below the fine print — every decline leaves a contactable
 // address (the reach the community gets recruited from).
@@ -146,32 +146,28 @@ export default async function JoinPage({
           text-wrap: pretty;
         }
 
-        /* The deal ladder — three short lines, air between, each led by the
-           price word (Free / Free / $10) so the terms scan in one pass.
-           Mirrors /start's step lines: the ladder IS the page. */
-        .join-terms { max-width: 460px; }
+        /* The one line above the button — the click costs nothing. */
         .join-line {
-          margin: 0 0 14px;
+          margin: 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 17px; line-height: 1.55; letter-spacing: 0.01em;
-          color: var(--text-primary); text-wrap: pretty;
+          color: var(--text-primary); text-wrap: pretty; max-width: 460px;
         }
-        /* The personal appeal — the founder's own voice, a step quieter than
-           the deal lines: my project, something positive, don't start
-           penny-pinching here. */
-        .join-note {
-          margin: 20px 0 0; max-width: 460px;
+        /* The explanation under the click — the rest of the deal, one step
+           quieter than the line above. */
+        .join-explain {
+          margin: 28px 0 0; max-width: 460px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 15px; line-height: 1.65; letter-spacing: 0.01em;
-          color: var(--text-secondary, rgba(26, 19, 24, 0.82)); text-wrap: pretty;
+          font-size: 14px; line-height: 1.7; letter-spacing: 0.01em;
+          color: var(--text-secondary, rgba(26, 19, 24, 0.75)); text-wrap: pretty;
         }
-        /* The waive escape — quietest, beneath the appeal: the generosity
-           that keeps the ask fair. */
+        /* The appeal + waive — quietest: his voice, the generosity that
+           keeps the ask fair. */
         .join-waive {
           margin: 12px 0 0; max-width: 460px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 14px; line-height: 1.65; letter-spacing: 0.01em;
-          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+          font-size: 14px; line-height: 1.7; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55)); text-wrap: pretty;
         }
         .join-waive a {
           color: var(--text-secondary, rgba(26, 19, 24, 0.82));
@@ -184,7 +180,7 @@ export default async function JoinPage({
         /* The one action on the page. Filled, calm, hung from the left spine. */
         .join-btn {
           display: inline-flex; align-items: center; justify-content: center;
-          margin: 30px 0 0; padding: 14px 30px; border-radius: 9px;
+          margin: 26px 0 0; padding: 14px 30px; border-radius: 9px;
           background: var(--text-primary); color: var(--bg-primary);
           font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 17px;
           letter-spacing: 0.01em; text-decoration: none; cursor: pointer;
