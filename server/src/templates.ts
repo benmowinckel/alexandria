@@ -127,34 +127,70 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
 <link rel="icon" href="${WEBSITE_URL}/favicon.png" type="image/png">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400&display=swap" rel="stylesheet">
 <style>
+  /* Themed to match the site (/start · /join · /follow): the same cream/ink
+     palette as CSS vars, PLUS a dark override so a dark-mode member doesn't
+     get a bright page straight after signup. Standalone Worker page, so the
+     theme rides prefers-color-scheme (no toggle available here). */
+  :root {
+    --paper: #f5f0e8; --ink: #3d3630; --ink-secondary: #4d4640;
+    --ink-muted: #8a8078; --ink-faint: #bbb4aa; --accent: #5B1F47;
+    --rule: rgba(61, 54, 48, 0.14); --tip-bg: #3d3630; --tip-fg: #f5f0e8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #2b2a27; --ink: #ece8e1; --ink-secondary: #cdc8c0;
+      --ink-muted: #9b9690; --ink-faint: #6b6660; --accent: #9F87C5;
+      --rule: rgba(236, 232, 225, 0.14); --tip-bg: #ece8e1; --tip-fg: #2b2a27;
+    }
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
-    background: #f5f0e8;
-    color: #3d3630;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: var(--paper);
+    color: var(--ink);
     min-height: 100vh;
-    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 120% 80% at 30% 20%, rgba(91, 31, 71, 0.025) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 70% at 70% 80%, rgba(74, 50, 30, 0.020) 0%, transparent 60%);
   }
-  .container { max-width: 420px; text-align: center; }
-  .welcome { font-size: 1.5rem; font-weight: 400; line-height: 1.4; }
-  .line { font-size: 1.1rem; line-height: 1.9; }
-  .deal { font-size: 0.9rem; line-height: 1.8; color: #8a8078; margin-top: 2rem; }
-  .deal .free { color: #3d3630; }
-  .kin-progress { font-size: 0.92rem; line-height: 1.8; color: #8a8078; margin-top: 1.25rem; }
-  .shortcut { font-size: 0.82rem; line-height: 1.7; color: #bbb4aa; margin-top: 2rem; }
-  .shortcut a { color: #8a8078; text-decoration: none; border-bottom: 1px dotted #bbb4aa; transition: color 0.15s, border-color 0.15s; }
-  .shortcut a:hover { color: #3d3630; border-bottom-color: #8a8078; }
-  .welcome-back { color: #8a8078; margin-top: 1.5rem; }
-  .lostkey { font-size: 0.78rem; line-height: 1.7; color: #bbb4aa; margin-top: 1.25rem; }
-  .lostkey a { color: #8a8078; text-decoration: none; border-bottom: 1px dotted #bbb4aa; transition: color 0.15s, border-color 0.15s; }
-  .lostkey a:hover { color: #3d3630; border-bottom-color: #8a8078; }
-  .signout { font-size: 0.78rem; line-height: 1.7; color: #bbb4aa; margin-top: 2.5rem; }
-  .signout a { color: inherit; text-decoration: none; border-bottom: 1px dotted #bbb4aa; transition: color 0.15s, border-color 0.15s; }
-  .signout a:hover { color: #8a8078; border-bottom-color: #8a8078; }
-  .steps { margin-top: 2.5rem; }
+  /* Flush-left editorial column, vertically centred — the shared spine. */
+  .wrap {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: center;
+    max-width: 620px; margin: 0 auto; padding: 5rem 40px 6rem; width: 100%;
+    text-align: left;
+  }
+  .eyebrow {
+    margin: 0 0 18px; font-size: 11.5px; letter-spacing: 0.3em;
+    text-transform: lowercase; font-variant-caps: all-small-caps;
+    color: var(--accent); line-height: 1;
+  }
+  .welcome {
+    margin: 0 0 26px; max-width: 560px;
+    font-style: italic; font-weight: 400;
+    font-size: clamp(28px, 1.6rem + 1.6vw, 38px); line-height: 1.2;
+    letter-spacing: -0.01em; color: var(--ink); text-wrap: balance;
+  }
+  .line { font-size: 1.05rem; line-height: 1.75; color: var(--ink-secondary); margin-bottom: 16px; max-width: 520px; }
+  .deal { font-size: 0.9rem; line-height: 1.75; color: var(--ink-muted); margin-top: 34px; padding-top: 26px; border-top: 1px solid var(--rule); max-width: 520px; }
+  .deal .free { color: var(--ink); }
+  .kin-progress { font-size: 0.92rem; line-height: 1.75; color: var(--ink-muted); margin-top: 14px; max-width: 520px; }
+  .shortcut { font-size: 0.82rem; line-height: 1.7; color: var(--ink-faint); margin-top: 30px; }
+  .shortcut a { color: var(--ink-muted); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); transition: color 0.15s, border-color 0.15s; }
+  .shortcut a:hover { color: var(--ink); border-bottom-color: var(--ink-muted); }
+  .welcome-back { color: var(--ink-secondary); }
+  .lostkey { font-size: 0.78rem; line-height: 1.7; color: var(--ink-faint); margin-top: 16px; }
+  .lostkey a { color: var(--ink-muted); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); transition: color 0.15s, border-color 0.15s; }
+  .lostkey a:hover { color: var(--ink); border-bottom-color: var(--ink-muted); }
+  .signout { font-size: 0.78rem; line-height: 1.7; color: var(--ink-faint); margin-top: 34px; }
+  .signout a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--ink-faint); transition: color 0.15s, border-color 0.15s; }
+  .signout a:hover { color: var(--ink-muted); border-bottom-color: var(--ink-muted); }
+  .coda { margin-top: 48px; font-size: 20px; font-style: italic; color: var(--ink); opacity: 0.72; letter-spacing: 0.005em; }
+  .steps { margin-top: 4px; width: 100%; }
   .action {
     background: none;
     border: none;
@@ -170,10 +206,10 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
     transition: opacity 0.15s;
   }
   .action:hover { opacity: 0.6; }
-  .action:focus-visible { outline: 1px dotted #8a8078; outline-offset: 3px; border-radius: 2px; }
-  .action .icon { display: inline-flex; align-items: center; color: #bbb4aa; transition: color 0.15s; }
-  .action:hover .icon { color: #3d3630; }
-  .action.done .icon { color: #3d3630; }
+  .action:focus-visible { outline: 1px dotted var(--ink-muted); outline-offset: 3px; border-radius: 2px; }
+  .action .icon { display: inline-flex; align-items: center; color: var(--ink-faint); transition: color 0.15s; }
+  .action:hover .icon { color: var(--ink); }
+  .action.done .icon { color: var(--ink); }
   .action .icon .icon-check { display: none; }
   .action.done .icon .icon-copy { display: none; }
   .action.done .icon .icon-check { display: inline; }
@@ -183,21 +219,21 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
     padding: 0;
     display: inline-flex;
     align-items: center;
-    color: #bbb4aa;
+    color: var(--ink-faint);
     cursor: pointer;
     transition: color 0.15s;
     vertical-align: middle;
     margin-left: 4px;
     position: relative;
   }
-  .info:hover, .info:focus-visible { color: #8a8078; outline: none; }
+  .info:hover, .info:focus-visible { color: var(--ink-muted); outline: none; }
   .tooltip {
     display: none;
     position: absolute;
     bottom: calc(100% + 8px);
-    right: -8px;
-    background: #3d3630;
-    color: #f5f0e8;
+    left: -8px;
+    background: var(--tip-bg);
+    color: var(--tip-fg);
     font-size: 0.78rem;
     line-height: 1.6;
     padding: 10px 14px;
@@ -211,29 +247,38 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
     content: '';
     position: absolute;
     top: 100%;
-    right: 14px;
+    left: 14px;
     border: 6px solid transparent;
-    border-top-color: #3d3630;
+    border-top-color: var(--tip-bg);
   }
   .info.active .tooltip { display: block; }
   .brand-corner {
     position: fixed;
-    top: 1.25rem;
-    left: 1.5rem;
-    font-size: 1.05rem;
+    top: 28px;
+    left: clamp(24px, 6vw, 40px);
+    font-size: 21px;
+    font-style: italic;
     font-weight: 400;
-    color: #3d3630;
+    color: var(--ink);
     text-decoration: none;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.005em;
     transition: opacity 0.15s;
     z-index: 20;
   }
+  .brand-corner .brand-dot { font-style: normal; }
   .brand-corner:hover { opacity: 0.6; }
+  @media (max-width: 640px) {
+    .wrap { padding: 4rem 24px 4rem; }
+    .brand-corner { top: 22px; left: 22px; font-size: 19px; }
+    .welcome { font-size: 26px; }
+    .coda { font-size: 18px; margin-top: 40px; }
+  }
 </style>
 </head>
 <body>
-${isReturning ? `<a class="brand-corner" href="${WEBSITE_URL}/">alexandria.</a>` : ''}
-<div class="container">
+<a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
+<main class="wrap">
+  <p class="eyebrow">the community</p>
   <h1 class="welcome">${isReturning ? `welcome back.` : `welcome to alexandria.`}</h1>
   ${isReturning ? `<p class="line welcome-back">call /alexandria in your coding agent.</p>${rotateUrl ? `
   <p class="lostkey">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a> &mdash; your old key stops working.</p>` : ''}` : `<div class="steps">
@@ -245,7 +290,8 @@ ${isReturning ? `<a class="brand-corner" href="${WEBSITE_URL}/">alexandria.</a>`
   <p class="shortcut">on your phone? <a href="${SHORTCUT_URL}" target="_blank" rel="noopener noreferrer">add the shortcut</a> &mdash; capture anything, anywhere.</p>
   <p class="deal"><span class="free">first month free</span>, then $10/month &mdash; or free for good with three friends, or just email if that&rsquo;s a stretch. you&rsquo;re joining the community, not paying for the tool.</p>`}
   <p class="signout">wrong account? <a href="https://github.com/logout" target="_blank" rel="noopener noreferrer">sign out of github</a></p>
-</div>
+  <p class="coda">keep thinking.</p>
+</main>
 <script>
 function flash(el) {
   el.classList.add('done');
