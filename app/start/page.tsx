@@ -1,7 +1,17 @@
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { pageMetadata } from '../lib/config';
 import StartCTA from './StartCTA';
 import MobileStart from './MobileStart';
+
+// Own metadata (2026-07-17 SEO sweep) — the highest-priority page after
+// the homepage was inheriting the root title and description.
+export const metadata = pageMetadata({
+  path: '/start',
+  title: 'start alexandria.',
+  description:
+    'one command installs the founder’s whole setup — free, five minutes, no account. paste it into your coding agent and it walks you through the rest.',
+});
 
 // The front door for someone who already clicked "join the tribe" — bought in,
 // here to act. One job: get the command into their agent. So: brand header, the

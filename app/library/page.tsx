@@ -17,8 +17,6 @@ const LIBRARY_DESCRIPTION =
   'the member directory of the community — find the Alexandrians near you and reach them. each mind has its own page, shared by link.';
 
 export const metadata: Metadata = {
-  title: LIBRARY_TITLE,
-  description: LIBRARY_DESCRIPTION,
   ...pageMetadata({
     path: '/library',
     title: LIBRARY_TITLE,

@@ -66,8 +66,15 @@ export function pageMetadata(opts: {
   const { path, title, description } = opts;
   const url = path === '/' ? SITE_URL : `${SITE_URL}${path}`;
   return {
+    // Top-level title/description too (2026-07-17 SEO sweep): callers that
+    // used this helper alone were silently inheriting the ROOT tab title
+    // and meta description (/join did) — the canonical/og fix hid a
+    // title/description gap.
+    title,
+    description,
     alternates: { canonical: url },
     openGraph: { ...OG_BASE, title, description, url },
+    twitter: { card: 'summary_large_image' as const, title, description },
   };
 }
 

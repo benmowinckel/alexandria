@@ -740,19 +740,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               each under a faint mini header. All copy his, verbatim. */}
           <p className="front-salutation">the question</p>
           <p className="front-lead">When ai can do everything humans can, what do we do?</p>
-          <p className="front-salutation front-salutation-answer">our answer</p>
+          {/* The answer as a credo (2026-07-17 reflection, founder: "figure
+              out whats optimal"): the previous stack was bureaucratic —
+              five labels for four sentences, a founded-line repeating the
+              plate, monotonous rows. Now ONE label system: the name enters
+              through the plate itself (alexandria's answer), and the
+              We-anaphora IS the structure — explain / connect / provide
+              carry idea / community / sample without labels. */}
+          <p className="front-salutation front-salutation-answer">alexandria&rsquo;s answer</p>
           <div className="front-fork">
-            {/* Not the bare name — "the answer is Alexandria" doesn't parse
-                (founder, 2026-07-16); the company was founded to ANSWER the
-                question, and the three functions below are how. */}
-            {/* Each line is a COMPLETE sentence (founder: a bare "explains…"
-                after a header interrupt "doesnt make sense… thats not a
-                start of a sentence") — the We-anaphora reads straight
-                through even if the eye skips the faint labels. */}
-            <p className="fork-line front-alex">Alexandria was founded to answer this question.</p>
-            <p className="front-fn"><span className="fn-label">idea</span><span className="fn-text">We explain why we must keep thinking &mdash; and how.</span></p>
-            <p className="front-fn"><span className="fn-label">community</span><span className="fn-text">We connect those who, even slightly, agree.</span></p>
-            <p className="front-fn"><span className="fn-label">sample</span><span className="fn-text">We provide infrastructure so anyone can join.</span></p>
+            <p className="fork-line fork-ans">We explain why we must keep thinking &mdash; and how.</p>
+            <p className="fork-line fork-ans">We connect those who, even slightly, agree.</p>
+            <p className="fork-line fork-ans">We provide infrastructure so anyone can join.</p>
           </div>
         </div>
         <div className="top-inner" />
@@ -2185,7 +2184,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              big wordmark's baseline across the slide (founder: "the bottom
              of the CTAs bottom aligned with the bottom of the alexandria
              text"); quiet-links keep the lower tier with the dict lines. */
-          padding-bottom: 84px;
+          padding-bottom: 72px;
           /* Squeeze the column — narrower text width pushes the left
              edge inward (right edge unchanged because right-lower is
              flex-end aligned). */
@@ -2660,7 +2659,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           flex-direction: column;
           /* Sections sit a third down the column, not jammed at the top
              (founder, 2026-07-17) — composed against the seal opposite. */
-          margin-top: 128px;
+          margin-top: 112px;
         }
         /* Header — small title + rotating caret, a compact click target.
            No dividers between sections (they flow like the old letter). */
@@ -2734,7 +2733,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            no fixed stage). Thin quiet scrollbar as the more-content cue. */
         @media (min-width: 900px) {
           .sec-body-inner {
-            max-height: 250px;
+            /* Cap ≤ the sections↔rule gap so an open body NEVER moves the
+               rule or anything below it (founder, 2026-07-17: "only the
+               three sections move when expanding") — long bodies scroll
+               inside the window instead. */
+            max-height: 140px;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: var(--theme-border-soft) transparent;
@@ -2775,8 +2778,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           /* margin-top auto = the turn: everything above it (sections)
              anchors top, everything below (close + CTAs) sinks to the
              bottom of the column — the rule rides with the closing group
-             so the break always sits naturally just above it. */
-          margin: auto 0 22px;
+             so the break always sits naturally just above it. Bottom
+             margin lifted (22→34, 2026-07-17): the rule sits higher and
+             the closing sections breathe. */
+          margin: auto 0 34px;
+        }
+        /* Extra air between the close beats and the buttons — the two
+           closing sections read as separate breaths (2026-07-17). */
+        .right-lower > .cta-pair {
+          margin-top: 14px;
         }
         .action-beat {
           margin: 0;
@@ -2905,48 +2915,24 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           font-style: italic;
           color: rgba(26, 19, 24, 0.55);
         }
-        /* The second plate — "our answer" mirrors "the question" above it
-           (same register, same hairline), separated from the question by a
-           full breath so the front reads as two mini-sections that fit
-           together. */
+        /* The second plate — mirrors "the question" above it (same
+           register, same hairline), a full breath apart so the front reads
+           as two mini-sections; carries the name so no sentence has to. */
         .front-salutation-answer {
           margin-top: 64px;
         }
-        /* The name as the answer's first word. */
-        .front-alex {
-          margin: 0;
-          font-style: italic;
-          font-size: 19px;
-          letter-spacing: 0.02em;
-          color: rgba(26, 19, 24, 0.74);
-        }
-        /* The three functions — each under a faint mini header (founder,
-           2026-07-16: "mini faint headers"), stacked like small entries in
-           an index; the header whispers the category, the sentence carries
-           the content. */
-        .front-fn {
-          display: flex;
-          flex-direction: column;
-          gap: 1px;
-          margin: 13px 0 0;
-        }
-        .fn-label {
-          font-style: italic;
-          font-size: 11px;
-          letter-spacing: 0.18em;
-          color: rgba(26, 19, 24, 0.38);
-        }
-        /* The functions in the letter's italic voice (2026-07-16) — the
-           roman question above, the italic answer beneath: the register
-           shift IS the question/answer turn, and it rhymes with the back
-           slide's italic aphorism leads. */
-        .fn-text {
+        /* The credo — three parallel We-sentences in the letter's italic
+           voice, stanza-spaced; the anaphora is the only structure (the
+           labeled-rows version read as a form, not a page). */
+        .fork-ans {
+          margin: 0 0 11px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
-          font-size: 17.5px;
+          font-size: 18.5px;
           line-height: 1.5;
-          color: rgba(26, 19, 24, 0.68);
+          color: rgba(26, 19, 24, 0.7);
         }
+        .fork-ans:last-child { margin-bottom: 0; }
         .cta-block {
           display: flex;
           flex-direction: column;

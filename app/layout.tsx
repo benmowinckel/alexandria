@@ -27,14 +27,14 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://alexandria-library.com
 // keyword-dense, classical, and reads well as a search snippet under the
 // browser tab title.
 const SEO_DESCRIPTION =
-  "a tribe of humans who put their minds into writing, so ai thinks with them, not for them. the path through the singularity.";
+  "alexandria helps humans keep thinking in the age of ai — one folder teaches your ai who you are, so it thinks with you, not for you. free to try; the community is the only paid part.";
 
 // Sharing-optimised description — punchier than the SEO sentence. Lands as
 // the body of social previews (Twitter / Slack / iMessage / LinkedIn).
-// Leads with the homepage's own hook (the 2026-07-15 sample-frame rebuild
-// dropped the old existential-stakes back-slide), then states the practice.
+// Leads with the live homepage's own question (the 2026-07-16
+// founder-written rebuild), then his answer and the free sample.
 const SHARE_DESCRIPTION =
-  "your ai already knows almost everything — except you. write yourself into one file, and every ai you use thinks with you, not for you.";
+  "when ai can do everything humans can, what do we do? we keep thinking — and use ai to help. the founder's whole setup is free. try it.";
 
 export const metadata: Metadata = {
   title: "alexandria — the library of human minds",
@@ -45,8 +45,12 @@ export const metadata: Metadata = {
   publisher: "alexandria",
   keywords: [
     "alexandria",
+    "alexandria folder",
+    "keep thinking",
     "library of human minds",
     "ai personalization",
+    "personal alignment",
+    "ai thought partner",
     "sovereign cognitive substrate",
     "ai thinks with you",
     "singularity",
