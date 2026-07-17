@@ -770,8 +770,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               are gone; hierarchy is size and air alone. */}
           <p className="front-lead">When ai can do everything humans can, what do we do?</p>
           <div className="front-fork">
-            <p className="fork-line front-alex">So we made Alexandria</p>
-            <p className="fork-line fork-ans">to explain why we must keep thinking &mdash; and how,</p>
+            <p className="fork-line front-alex">Our answer is Alexandria &mdash;</p>
+            <p className="fork-line fork-ans">to explain why we must keep thinking, and how,</p>
             <p className="fork-line fork-ans">to connect those who, even slightly, agree,</p>
             <p className="fork-line fork-ans">to provide free tools so anyone can join.</p>
           </div>
@@ -2685,7 +2685,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            what why/what/how refer to: the answer in full (front gives it
            in short). Sits where the sections' top margin was. */
         .secs-kicker {
+          display: inline-block;
+          align-self: flex-start;
           margin: 40px 0 0;
+          padding-bottom: 8px;
+          border-bottom: 1px solid var(--theme-border-soft);
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
           font-size: 12px;
