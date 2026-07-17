@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: '/join',
   title: 'join alexandria.',
   description:
-    'the tool is free and always will be; the community is the half still being built. become a founding member.',
+    'the tool is free forever; the community is two coffees a month — one uber ride. become a founding member.',
 });
 
 // The founding-member JOIN — the paid half of the two things. The tool (the run)
@@ -17,13 +17,18 @@ export const metadata = pageMetadata({
 // marketplace, the tribe. Signing in with GitHub starts the trial ($10/mo, first
 // month free, free with 3 kin, or email-to-waive) and assigns your number.
 //
-// The pitch is the FOUNDING BET, honestly told (founder verdict 2026-07-09):
-// at this stage the network value is thin by construction, so the page never
-// sells the library/marketplace as arrived value — it sells being early in
-// the thing being built. No roster pitch from the outside (who's in is
-// visible once you're in, never the sell). A "no" has its own path: the
-// JoinInterest email capture below the deal — every decline leaves a
-// contactable address (the reach the community gets recruited from).
+// The pitch is the homepage's FREE-SAMPLE frame, carried to the counter
+// (founder direction 2026-07-17, mirroring the /start radical-simplicity
+// pass): the tool is the sample and stays free; the community is the thing
+// for sale behind it, priced in throwaway money — two coffees a month, one
+// Uber ride — so the reader's own spending does the arguing, and the close
+// is "so just spend it — support the thing". The founding-bet honesty
+// (founder verdict 2026-07-09: never sell the library/marketplace as arrived
+// value) survives in the deal line ("you're founding one"). No roster pitch
+// from the outside (who's in is visible once you're in, never the sell). A
+// "no" has its own path: the JoinInterest email capture below the deal —
+// every decline leaves a contactable address (the reach the community gets
+// recruited from).
 //
 // Composition mirrors /start: one flush-left editorial column, an accent
 // eyebrow ("the community") as the spine's anchor — the paid half, twinned

@@ -80,14 +80,20 @@ export default function JoinCTA({
 
       <h1 className="primer-h1">become a founding member.</h1>
 
-      {/* The founding bet, honestly told (founder verdict 2026-07-09): the
-          community is early and small, and the copy says so — you are not
-          buying a finished network, you are founding one. Prose is
+      {/* The pitch — the homepage's free-sample frame carried to the counter
+          (founder direction 2026-07-17): the tool is the sample and stays free;
+          the community is the thing for sale behind it, priced in throwaway
+          money (two coffees, one Uber ride) so the reader's own spending habits
+          do the arguing. The founding-bet honesty (2026-07-09) moves to the
+          deal line below — the H1 still carries "founding member". Prose is
           proper-grammar per the settled Taste boundary (2026-07-01);
           lowercase stays on the marks (title, button, eyebrow). */}
       <p className="primer-lede">
-        It&rsquo;s early, and that&rsquo;s the point: you&rsquo;re not joining
-        a finished thing, you&rsquo;re founding one.
+        The tool is the free sample &mdash; yours forever, free either way.
+        The community is the thing for sale behind it. Membership costs two
+        coffees a month &mdash; one Uber ride ($10, and the first month is
+        free). Think how easily you spend that. So just spend it &mdash;
+        support the thing, and take your founding number.
       </p>
 
       <a className="join-btn" href={joinUrl}>
@@ -127,18 +133,20 @@ export default function JoinCTA({
         </div>
       </div>
 
-      {/* The deal — small, below the button. The community pitch, not shouting:
-          first month free, free for good with three referrals, else $10/mo with
-          a message-to-waive escape; you pay for the community, never the tool. */}
+      {/* The deal — the escape hatches, quiet below the button: founding not
+          joining (the 2026-07-09 honesty verdict, demoted here), the three-kin
+          waiver, the tool never costs anything, and the genuine can't-afford-it
+          escape. The generosity is what makes the "just spend it" shove above
+          fair: if $10 is throwaway money for you, spend it; if it genuinely
+          isn't, it's waived. */}
       <p className="join-deal">
-        The first month is free, and if you get three friends to join using
-        your referral code it&rsquo;s free indefinitely &mdash; otherwise it&rsquo;s
-        $10/month (but if you need to, just{' '}
+        It&rsquo;s early &mdash; you&rsquo;re not joining a finished thing,
+        you&rsquo;re founding one. If three friends join with your referral
+        code, it&rsquo;s free for good. And you&rsquo;re never paying for the
+        tool &mdash; that&rsquo;s a file on your machine, free forever, so
+        leaving costs nothing. If $10 is real money for you right now,{' '}
         <a href="mailto:benmowinckel@gmail.com?subject=waive%20it">message me</a>{' '}
-        and I&rsquo;ll waive the fee for you). You&rsquo;re joining the
-        community (the library, the marketplace, the tribe), never paying to
-        use the tool &mdash; that&rsquo;s always free, because it&rsquo;s just a
-        file you&rsquo;ve already downloaded and can do whatever you want with.
+        and I&rsquo;ll waive it.
       </p>
 
       <JoinInterest refCode={effectiveRef || undefined} />
