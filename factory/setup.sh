@@ -398,7 +398,26 @@ if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
   fetch_factory "hooks/cursor/alexandria-session-start.py" "$HOME/.cursor/hooks/alexandria-session-start.py" "hooks/cursor/alexandria-session-start.py" yes
   fetch_factory "hooks/cursor/alexandria-session-end.py" "$HOME/.cursor/hooks/alexandria-session-end.py" "hooks/cursor/alexandria-session-end.py" yes
   fetch_factory "hooks/cursor/alexandria-stop.py" "$HOME/.cursor/hooks/alexandria-stop.py" "hooks/cursor/alexandria-stop.py" yes
-  chmod +x "$HOME/.cursor/hooks/alexandria-session-start.py" "$HOME/.cursor/hooks/alexandria-session-end.py" "$HOME/.cursor/hooks/alexandria-stop.py" 2>/dev/null
+  fetch_factory "hooks/cursor/alexandria-transcript.py" "$HOME/.cursor/hooks/alexandria-transcript.py" "hooks/cursor/alexandria-transcript.py" yes
+  chmod +x "$HOME/.cursor/hooks/alexandria-session-start.py" "$HOME/.cursor/hooks/alexandria-session-end.py" "$HOME/.cursor/hooks/alexandria-stop.py" "$HOME/.cursor/hooks/alexandria-transcript.py" 2>/dev/null
+
+  # /a as a native Cursor skill — same source file as the Claude Code skill
+  # (skills/claudecode.md), same DIY-preservation rule, same /alexandria alias
+  # rename. One content source, two harness surfaces.
+  mkdir -p "$HOME/.cursor/skills/a" "$HOME/.cursor/skills/alexandria" 2>/dev/null
+  if [ -f "$HOME/.cursor/skills/a/SKILL.md" ] && \
+     ! grep -qi 'alexandria' "$HOME/.cursor/skills/a/SKILL.md" 2>/dev/null; then
+    : # Author's own /a skill — keep it, /alexandria alias still installs below
+  else
+    fetch_factory "skills/claudecode.md" "$HOME/.cursor/skills/a/SKILL.md" "skills/claudecode.md (cursor /a skill)" yes
+  fi
+  if fetch_factory "skills/claudecode.md" "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md (cursor /alexandria alias)" yes; then
+    if [ "$(uname)" = "Darwin" ]; then
+      sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
+    else
+      sed -i 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
+    fi
+  fi
 
   CURSOR_HOOKS_OK=""
   if command -v python3 &>/dev/null; then
@@ -430,6 +449,7 @@ def is_alex_hook(entry):
         "alexandria-session-start.py" in cmd
         or "alexandria-session-end.py" in cmd
         or "alexandria-stop.py" in cmd
+        or "alexandria-transcript.py" in cmd
     )
 
 def clean(event):
@@ -438,11 +458,25 @@ def clean(event):
         return []
     return [item for item in arr if not is_alex_hook(item)]
 
+# sessionStart 60s: the hook delegates to the signed shim -> payload chain,
+# which verifies + fetches payload and canon over the network before any
+# output — same 60s Claude Code wires for the same reason (hotel-wifi first
+# sessions died at 10s). The hook itself caps the shim at 50s and falls back
+# to local context, so the worst case never actually hits 60.
 hooks["sessionStart"] = clean("sessionStart") + [
-    {"command": "./hooks/alexandria-session-start.py", "timeout": 8}
+    {"command": "./hooks/alexandria-session-start.py", "timeout": 60}
 ]
+# sessionEnd 30s: transcript -> vault + feedback POST + git sync via the same
+# chain (hook caps the shim at 25s).
 hooks["sessionEnd"] = clean("sessionEnd") + [
-    {"command": "./hooks/alexandria-session-end.py", "timeout": 8}
+    {"command": "./hooks/alexandria-session-end.py", "timeout": 30}
+]
+# Transcript capture: pure local append, one raw event line per hook fire.
+hooks["beforeSubmitPrompt"] = clean("beforeSubmitPrompt") + [
+    {"command": "./hooks/alexandria-transcript.py beforeSubmitPrompt", "timeout": 5}
+]
+hooks["afterAgentResponse"] = clean("afterAgentResponse") + [
+    {"command": "./hooks/alexandria-transcript.py afterAgentResponse", "timeout": 5}
 ]
 hooks["stop"] = clean("stop") + [
     {"command": "./hooks/alexandria-stop.py", "timeout": 8, "loop_limit": None}
@@ -460,7 +494,7 @@ PY
   # otherwise the rule is present but session capture won't fire, so say so.
   fetch_factory "skills/cursor.mdc" "$HOME/.cursor/rules/alexandria.mdc" "skills/cursor.mdc" yes
   if [ -n "$CURSOR_HOOKS_OK" ]; then
-    echo "  Cursor: configured"
+    echo "  Cursor: configured (hooks + rules + /a skill)"
   else
     echo "  Cursor: found, but python3 is needed to finish — install python3 and re-run"
   fi

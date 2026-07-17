@@ -1,16 +1,46 @@
 #!/usr/bin/env python3
-"""Cursor hook: inject Alexandria context at session start."""
+"""Cursor hook: inject Alexandria context at session start.
+
+Thin adapter over the same signed shim -> payload chain Claude Code runs:
+translate Cursor's JSON protocol, delegate the behavior. The shim output
+carries everything payload.sh gives every harness — canon fetch + update
+notices, installed-artefact drift, git sync, maintenance status, onboarding
+(THE BLOCK), the Author-context pointer, protocol calls. One behavior source;
+when payload.sh improves, Cursor improves with zero changes here.
+
+Two things stay Cursor-native:
+  1. agent.md is injected INLINE. Claude Code has a global instruction file
+     (~/.claude/CLAUDE.md); Cursor has none — this injection fills that gap.
+  2. Orphaned transcript staging files (crashed sessions that never reached
+     sessionEnd) are swept into the vault so no capture is ever lost.
+
+If the shim is missing or fails, fall back to local-only injection
+(agent.md + constitution derivative + marginalia + onboarding notice) so a
+degraded install still gets context. Soft default: the fallback is the floor,
+the shim chain is the real path.
+"""
 
 from __future__ import annotations
 
 import json
 import os
+import shutil
+import subprocess
 import sys
+import time
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
 DEFAULT_MAX_CONTEXT_CHARS = 90000
+# The shim verifies + fetches the payload and canon over the network before
+# any output — same reason Claude Code wires it at 60s (hotel-wifi first
+# sessions died at 10s). Capped below hooks.json's 60s so on timeout we still
+# emit fallback context instead of Cursor killing us mid-write.
+SHIM_TIMEOUT_SECONDS = 50
+# Staging transcripts older than this belong to sessions that died without a
+# sessionEnd (hard window close, crash). Sweep them into the vault.
+ORPHAN_TRANSCRIPT_SECONDS = 12 * 3600
 
 
 def _utc_now() -> str:
@@ -164,6 +194,65 @@ def _derive_root(agent_path: Path, fallback: Path) -> Path:
     return fallback
 
 
+def _run_shim(root: Path) -> tuple[str, str]:
+    """Run the signed shim session-start chain. Returns (output, status).
+
+    status: "ok" | "missing" | "timeout" | "error:<detail>"
+    """
+    shim = root / "system" / "hooks" / "shim.sh"
+    if not shim.is_file():
+        return "", "missing"
+    env = dict(os.environ)
+    env["ALEXANDRIA_DIR"] = str(root)
+    try:
+        proc = subprocess.run(
+            ["bash", str(shim), "session-start"],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=SHIM_TIMEOUT_SECONDS,
+            env=env,
+        )
+    except subprocess.TimeoutExpired as exc:
+        partial = (exc.stdout or "") if isinstance(exc.stdout, str) else ""
+        return partial, "timeout"
+    except OSError as exc:
+        return "", f"error:{exc}"
+    if proc.returncode != 0 and not proc.stdout.strip():
+        detail = (proc.stderr or "").strip().splitlines()
+        return "", f"error:rc={proc.returncode} {detail[-1] if detail else ''}".strip()
+    return proc.stdout, "ok"
+
+
+def _sweep_orphan_transcripts(root: Path, home: Path) -> list[str]:
+    """Move staging transcripts from dead sessions into the vault.
+
+    A staging file that hasn't been touched in ORPHAN_TRANSCRIPT_SECONDS
+    belongs to a session that never reached sessionEnd (hard window close,
+    crash). The capture is the point — vault it rather than lose it. A live
+    marathon session that gets swept self-heals: the transcript hook recreates
+    the staging file on the next event and sessionEnd flushes the remainder.
+    """
+    staging_dir = home / ".alexandria" / "transcripts"
+    if not staging_dir.is_dir():
+        return []
+    vault = root / "files" / "vault"
+    swept: list[str] = []
+    now = time.time()
+    for staged in sorted(staging_dir.glob("cursor-*.jsonl")):
+        try:
+            if now - staged.stat().st_mtime < ORPHAN_TRANSCRIPT_SECONDS:
+                continue
+            vault.mkdir(parents=True, exist_ok=True)
+            stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+            dest = vault / f"{stamp}-{staged.stem}-recovered.jsonl"
+            shutil.move(str(staged), str(dest))
+            swept.append(dest.name)
+        except OSError:
+            continue  # never block session start on cleanup
+    return swept
+
+
 def _run() -> None:
     raw = sys.stdin.read()
     try:
@@ -193,6 +282,9 @@ def _run() -> None:
     )
     marginalia_status = _derivative_status(root / "files" / "marginalia", marginalia_file)
 
+    swept = _sweep_orphan_transcripts(root, home)
+    shim_output, shim_status = _run_shim(root)
+
     header = (
         "## Alexandria (Cursor sessionStart)\n\n"
         f"- injected_at: {_utc_now()}\n"
@@ -201,33 +293,14 @@ def _run() -> None:
         f"- composer_mode: {composer_mode}\n"
         f"- agent_source: {agent_path}\n"
         f"- derivative_status: constitution={constitution_status}, marginalia={marginalia_status}\n"
-        f"- context_budget_chars: {max_chars}\n"
-        f"- include_derivatives: {include_derivatives}\n\n"
-        "Canon for values and principles. Repo-local CLAUDE.md / AGENTS.md wins on project facts; "
-        "this block wins on the Author's own preferences and principles.\n\n---\n\n"
+        f"- shim_chain: {shim_status}\n"
+        f"- context_budget_chars: {max_chars}\n\n"
+        "Session transcripts are captured automatically and flushed to the vault at "
+        "session end. Repo-local CLAUDE.md / AGENTS.md wins on project facts; this "
+        "block wins on the Author's own preferences and principles.\n\n---\n\n"
     )
 
     sections: list[tuple[str, str, bool]] = []
-
-    # Brand-new install: onboarding never auto-starts on Cursor (no installer
-    # same-session stdout here), so surface THE BLOCK as the first required
-    # section until it completes. Mirrors payload.sh's session-start branch.
-    block_path = root / "system" / ".block"
-    block_complete = root / "system" / ".block_complete"
-    if block_path.is_file() and not block_complete.is_file():
-        sections.append(
-            (
-                "Onboarding pending (`system/.block`)",
-                (
-                    "New Author. First impression. The full onboarding lives at "
-                    f"`{block_path}` — read it now and follow it end-to-end (tell the "
-                    "Author you're starting; they can step away). Do not run a normal "
-                    f"/a on an empty constitution. When it completes, create "
-                    f"`{block_complete}` so this notice retires.\n"
-                ),
-                True,
-            )
-        )
 
     if agent_path.is_file():
         agent_text = _read_or_note(agent_path, "Alexandria agent.md")
@@ -259,6 +332,62 @@ def _run() -> None:
             )
         )
 
+    if shim_status == "ok":
+        # The full payload chain ran — canon notices, drift, maintenance,
+        # onboarding, the Author-context pointer. This IS the product's
+        # session-start; inject it whole.
+        if shim_output.strip():
+            sections.append(("Alexandria session start (payload chain)", shim_output, True))
+    else:
+        # Fallback: shim missing/failed/timed out. Local-only injection so a
+        # degraded install still gets context — and say plainly what's off so
+        # the Engine can surface it (awareness beats silent degradation).
+        sections.append(
+            (
+                "Payload chain unavailable",
+                (
+                    f"(The signed shim -> payload chain did not run: {shim_status}. "
+                    "Canon update notices, drift checks, git sync, and protocol calls "
+                    "were skipped this session. Falling back to local context. "
+                    "If this persists, re-run: curl -fsSL alexandria-library.com/a | bash)\n"
+                ),
+                True,
+            )
+        )
+        block_path = root / "system" / ".block"
+        block_complete = root / "system" / ".block_complete"
+        if block_path.is_file() and not block_complete.is_file():
+            sections.append(
+                (
+                    "Onboarding pending (`system/.block`)",
+                    (
+                        "New Author. First impression. The full onboarding lives at "
+                        f"`{block_path}` — read it now and follow it end-to-end (tell the "
+                        "Author you're starting; they can step away). Do not run a normal "
+                        f"/a on an empty constitution. When it completes, create "
+                        f"`{block_complete}` so this notice retires.\n"
+                    ),
+                    True,
+                )
+            )
+        if include_derivatives:
+            if constitution_derivative.is_file():
+                sections.append(
+                    (
+                        "Constitution derivative (`files/constitution/_constitution.md`)",
+                        _read_or_note(constitution_derivative, "constitution derivative"),
+                        False,
+                    )
+                )
+            if marginalia_file.is_file():
+                sections.append(
+                    (
+                        "Marginalia (`files/marginalia/marginalia.md`)",
+                        _read_or_note(marginalia_file, "marginalia"),
+                        False,
+                    )
+                )
+
     if include_overlay and overlay.is_file():
         sections.append(
             (
@@ -267,24 +396,6 @@ def _run() -> None:
                 False,
             )
         )
-
-    if include_derivatives:
-        if constitution_derivative.is_file():
-            sections.append(
-                (
-                    "Constitution derivative (`files/constitution/_constitution.md`)",
-                    _read_or_note(constitution_derivative, "constitution derivative"),
-                    False,
-                )
-            )
-        if marginalia_file.is_file():
-            sections.append(
-                (
-                    "Marginalia (`files/marginalia/marginalia.md`)",
-                    _read_or_note(marginalia_file, "marginalia"),
-                    False,
-                )
-            )
 
     required_sections: list[tuple[str, str]] = []
     optional_sections: list[tuple[str, str]] = []
@@ -358,10 +469,12 @@ def _run() -> None:
                 "is_background_agent": is_bg,
                 "composer_mode": composer_mode,
                 "agent_source": str(agent_path),
+                "shim_status": shim_status,
+                "shim_output_chars": len(shim_output),
+                "orphan_transcripts_swept": swept,
                 "included_sections": included_sections,
                 "truncated_sections": truncated_sections,
                 "skipped_sections": skipped_sections,
-                "include_derivatives": include_derivatives,
                 "context_budget_chars": max_chars,
                 "context_chars": len(context),
             },

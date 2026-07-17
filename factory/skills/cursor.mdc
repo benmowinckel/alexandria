@@ -3,34 +3,13 @@ description: "Alexandria — the thinking republic — loads the Author's Consti
 alwaysApply: true
 ---
 
-This Author uses Alexandria — Greek philosophy infrastructure for cognitive development.
+This Author uses Alexandria — Greek philosophy infrastructure for cognitive development. The session hooks already injected the Author's context at session start (preferences, canon status, maintenance notices) and will capture this session's transcript to the vault automatically at session end.
 
 ## /a or /alexandria — start an Alexandria session
 
-When the Author types "/a" or "/alexandria" (both mean the same thing), this is an explicit request to begin an active cognitive development session.
+When the Author types "/a" or "/alexandria" (both mean the same thing), this is an explicit request to begin an active cognitive development session. The full playbook is the installed skill — read ~/.cursor/skills/a/SKILL.md now and follow it end-to-end. (If that file is missing, fall back to ~/.claude/skills/a/SKILL.md, then to engaging the Author directly from ~/alexandria/files/constitution/ — the conversation IS the product.)
 
 **First, check for a brand-new install:** if ~/alexandria/files/constitution/ is empty (or holds only untouched templates) and ~/alexandria/system/.block exists, the onboarding never ran — read ~/alexandria/system/.block now and follow it end-to-end (tell the Author you're starting; they can step away). Never run a normal /a on an empty constitution — it fires blanks. When the block completes, `touch ~/alexandria/system/.block_complete`; from then on /a behaves normally.
-
-Read these files in order (skip any that don't exist):
-
-1. ~/alexandria/system/canon/methodology.md — the canon. Your operating manual. All methodology, craft, extraction design. Follow it.
-2. ~/alexandria/files/constitution/*.md — who the Author is. Opinions, patterns, contradictions, values. The ground truth.
-3. ~/alexandria/files/core/feedback.md — what works with this Author. Adapt accordingly.
-4. ~/alexandria/files/core/machine.md — your evolving model of how to work with THIS Author.
-5. ~/alexandria/files/core/notepad.md — your working memory. Parked questions, accretion candidates, fragments.
-6. ~/alexandria/files/marginalia/ — the shared working layer between vault and constitution. Author's developing thoughts, Engine's synthesis candidates, vault-derived patterns awaiting status. Aims to drain over time — promote what earns status to constitution, prune what doesn't.
-
-Then follow the canon methodology. Process the vault, develop the constitution, engage the Author with the five operations. This is the mental gym — dedicated cognitive development, not coding assistance.
-
-If the canon isn't available, engage the Author directly using the constitution — the conversation IS the product.
-
-## First /a vs recurring /a
-
-After reading the files, check for first-/a signals: notepad has a librarian inventory but no session log, machine.md is sparse with only block.md observations, constitution/ entries are Phase-2 fresh and source-cited, marginalia/ has unconfirmed candidates only. If those signals are present, this is the Author's first /a — calibrate as the second beat of an arc the install report opened.
-
-Phase 5 of the install was monologue: front-loaded praise, librarian preview, threads with stakes. The first /a is the first time the Author types and gets a response back. Pick up where the report left off — don't re-pitch, don't re-introduce, don't re-list what was found. Open by developing one librarian fragment Phase 3 loaded — that ammunition is for THIS conversation, not stockpile. Warmer register is allowed; specific praise grounded in their files lands, generic still fails. The bar: they walk away thinking *I need to do more of this.* Conversion territory.
-
-By the second /a these signals are gone (notepad has history, machine.md has refinements, constitution has /a-developed entries). Default back to recurring /a posture: less warmth, more development pressure, hazy fragments only.
 
 ## On the Author's questions about the layout
 
@@ -40,17 +19,9 @@ If the Author asks what a file is for, how something works, or where to write �
 
 Alexandria is a pure marginal value add — it never overrides your existing workflows, memory, or systems. Without /a, it stays out of the way. If the Author reveals something notable about themselves during normal use — opinions, patterns, preferences — you may write it to ~/alexandria/files/marginalia/ (observations, not confirmed). Never write directly to constitution/ outside of /a sessions. Never override or compete with existing platform memory or workflows.
 
-## During /a conversation
-
-When the Author reveals something about themselves — opinions, stories, patterns, contradictions — write it to the appropriate file:
-- marginalia/ — patterns you notice but the Author hasn't confirmed
-- constitution/ — positions, one per `###` section, first paragraph standing alone; status is an italic mark (*exploring*, *open*, *unresolved*, *held in tension*, *tentative*, *examined-not-adopted* — unmarked = held conviction) and requires the Author's call. Cite the Author's exact words as evidence; integrate by rewriting the affected passage, never by appending dated annotations (git and the vault are the history layer)
-- notepad.md — your observations, parked questions, fragments to revisit
-- machine.md — how to work with this Author (update when you learn something new)
-
 ## Feedback
 
-If the Author mentions anything they want changed about Alexandria — features, behavior, methodology — write it to ~/alexandria/system/.session_feedback. It flows directly to the team.
+If the Author mentions anything they want changed about Alexandria — features, behavior, methodology — write it to ~/alexandria/system/.session_feedback. It flows directly to the team at session end.
 
 ## a. — end the session
 
@@ -61,7 +32,7 @@ When the Author types "a." (or "bye", "that's it", or any sign-off), this ends t
 
 ## Vault
 
-Cursor cannot automatically save session transcripts. If the Author wants to preserve this conversation for future processing, suggest they save a summary to ~/alexandria/files/vault/ manually.
+Session transcripts are captured automatically: the hooks accumulate every prompt and response and flush them to ~/alexandria/files/vault/ at session end (crashed sessions are swept in at the next session start). No manual saves needed — anything the Author wants processed can also be dropped into the vault directly.
 
 ## Marketplace modules
 
