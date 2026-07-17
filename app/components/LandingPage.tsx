@@ -361,7 +361,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       body: [
         'A private folder on your own computer holds what and how you think. Dump everything you have into it, and your ai ties it into one unified map of your mind — then works with you to fill the gaps, sharpen it, and get what only you know out into the world.',
         'Privacy is simple: the folder is just files on your computer. There’s no server, no account, and nothing is ever sent to anyone. It works with any ai, and it’s completely free.',
-        'The community is where alexandrians share their systems and what they’ve made with them. Joining costs about two coffees a month.',
+        'The community is where alexandrians share their systems and what they’ve made with them. Joining costs about two coffees a month — or it’s free with friends.',
       ],
     },
   ];
@@ -897,9 +897,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     the frame / the punch / the action. */}
                 <div className="action-close">
                   <p className="statement-beat action-beat action-beat-final">
-                    <em>See it as a free sample: try it, and if you
-                    don&rsquo;t like it, bin it &mdash; the smallest
-                    decision you&rsquo;ll make all day.</em>
+                    <em>See it as a free sample at a shop. It&rsquo;s being
+                    handed straight to you &mdash; as long as you&rsquo;re
+                    not allergic, just take it, try it, and move on. Should
+                    be the smallest decision you make all day.</em>
                   </p>
                 </div>
 
