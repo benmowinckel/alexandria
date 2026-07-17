@@ -271,22 +271,22 @@ export default async function JoinPage({
           to { opacity: 1; transform: none; }
         }
 
-        /* Install row — a link dressed as a field so it reads like the other
-           two: an underlined "value" ("the free tool") + the launch action.
-           .join-door-faux mirrors the input's border-bottom and metrics. */
+        /* Install row — just a hyperlink ("the free tool"), no action word or
+           arrow (founder 2026-07-17). Styled to sit at the same faint weight
+           as the other sections' field line (the placeholder ghost tone), with
+           the same underline; it darkens on hover so it still reads as a link. */
         .join-door-launchrow { text-decoration: none; cursor: pointer; }
         .join-door-faux {
           display: inline-flex; align-items: center; flex: none;
           height: 32px; padding: 0 1px;
           font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 15px;
-          color: var(--text-secondary, rgba(61, 54, 48, 0.72));
+          color: var(--text-muted);
           border-bottom: 1px solid var(--text-muted, rgba(61, 54, 48, 0.3));
           transition: color 200ms, border-color 200ms;
         }
         .join-door-launchrow:hover .join-door-faux {
           color: var(--text-primary); border-bottom-color: var(--text-secondary, rgba(61, 54, 48, 0.7));
         }
-        .join-door-launchrow:hover .join-door-go { color: var(--text-primary); }
 
         .join-door-hint {
           margin: 9px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;

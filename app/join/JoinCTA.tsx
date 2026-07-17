@@ -192,12 +192,11 @@ export default function JoinCTA({
 
         <JoinInterest refCode={effectiveRef || undefined} />
 
-        {/* Install door — visually mirrors the other two even though it's a
-            link, not a field (founder 2026-07-17): an underlined "field
-            content" ("the free tool", parallel to "referral code" / "your
-            email") plus the "launch" action word + arrow. The whole row is the
-            link. Forwards the validated ref so an invited visitor who installs
-            still credits their inviter as kin. */}
+        {/* Install door — no action word/arrow (founder 2026-07-17): "the
+            free tool" is simply a hyperlink, styled to sit at the same faint
+            weight as the other sections' field line. Forwards the validated
+            ref so an invited visitor who installs still credits their inviter
+            as kin. */}
         <div className="join-door">
           <p className="join-door-q">don&rsquo;t have the free tool yet?</p>
           <Link
@@ -205,10 +204,6 @@ export default function JoinCTA({
             href={effectiveRef ? `/start?ref=${effectiveRef}` : '/start'}
           >
             <span className="join-door-faux">the free tool</span>
-            <span className="join-door-go is-link">
-              <span className="join-go-word">launch</span>
-              <ArrowIcon />
-            </span>
           </Link>
           <p className="join-door-hint">it&rsquo;ll take you here later.</p>
         </div>
