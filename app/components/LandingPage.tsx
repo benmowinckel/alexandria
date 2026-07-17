@@ -742,7 +742,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           <p className="front-lead">When ai can do everything humans can, what do we do?</p>
           <p className="front-salutation front-salutation-answer">our answer</p>
           <div className="front-fork">
-            <p className="fork-line front-alex">alexandria.</p>
+            {/* Not the bare name — "the answer is Alexandria" doesn't parse
+                (founder, 2026-07-16); the company was founded to ANSWER the
+                question, and the three functions below are how. */}
+            <p className="fork-line front-alex">Alexandria was founded to answer this question &mdash;</p>
             <p className="front-fn"><span className="fn-label">idea</span><span className="fn-text">explains why we must keep thinking &mdash; and how</span></p>
             <p className="front-fn"><span className="fn-label">community</span><span className="fn-text">connects those who, even slightly, agree</span></p>
             <p className="front-fn"><span className="fn-label">sample</span><span className="fn-text">provides infrastructure so anyone can join</span></p>
@@ -886,7 +889,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       show support
                     </Link>
                     <span className="cta-sub">
-                      if even slightly interested in the company &mdash; founder updates
+                      if even slightly interested in the company &mdash; stay updated
                     </span>
                   </div>
                 </div>
@@ -1009,13 +1012,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
 
         .nav-brand {
-          /* Italic-serif wordmark — restored 2026-07-08 after the
-             signature-script exploration (Mrs Saint Delafield) was
-             reverted by the founder: "put back the alexandria and
-             mentes aeternae fonts we had previously." Same treatment
-             on both slides; only the colour follows the theme. */
+          /* Roman wordmark (founder 2026-07-16: "make the top left
+             alexandria not in italics") — upright serif; the italic
+             voice now belongs to the argument lines, not the mark. */
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
+          font-style: normal;
           font-weight: 500;
           font-size: 32px;
           line-height: 1;
@@ -2167,14 +2168,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              the 5 sections up, give the stuff under it room to breathe,
              bottom-align the CTAs with the left wordmark"). The box sits
              high (this margin-top), the column fills the height (flex 1),
-             and the closing group is pushed to the bottom via
-             box + closing read as one block (no void); the block is
-             centred in the column so the breathing is balanced above and
-             below rather than pooled in one place. */
+             and the closing group is pushed to the bottom (2026-07-16,
+             founder: sections up top, rule + close + CTAs bottom-aligned
+             with the left wordmark; the flexible gap between them also
+             absorbs an open section's body, so hover-expand never pushes
+             the closing group off-stage). */
           margin-top: 0;
           flex: 1;
           min-height: 0;
-          justify-content: center;
+          justify-content: flex-start;
           /* Squeeze the column — narrower text width pushes the left
              edge inward (right edge unchanged because right-lower is
              flex-end aligned). */
@@ -2656,7 +2658,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           gap: 9px;
           align-self: flex-start;
           padding: 6px 6px 6px 0;
-          margin: 20px 0 0 0;
+          margin: 30px 0 0 0;
           background: none;
           border: none;
           cursor: pointer;
@@ -2758,7 +2760,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .secs-rule {
           height: 1px;
           background: var(--theme-border-soft);
-          margin: 26px 0 22px;
+          /* margin-top auto = the turn: everything above it (sections)
+             anchors top, everything below (close + CTAs) sinks to the
+             bottom of the column — the rule rides with the closing group
+             so the break always sits naturally just above it. */
+          margin: auto 0 22px;
         }
         .action-beat {
           margin: 0;
@@ -2892,7 +2898,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            full breath so the front reads as two mini-sections that fit
            together. */
         .front-salutation-answer {
-          margin-top: 46px;
+          margin-top: 64px;
         }
         /* The name as the answer's first word. */
         .front-alex {
