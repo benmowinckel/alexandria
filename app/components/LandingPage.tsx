@@ -2768,11 +2768,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              base body rule below it in the sheet (same selector in a
              media query loses on source order). */
           .secs .sec .sec-body-inner {
-            max-width: 600px;
+            max-width: 660px;
           }
           .secs .sec .sec-body-inner p {
-            font-size: 14px;
-            line-height: 1.55;
+            /* Bigger (founder, 2026-07-17: "much bigger… actually fills
+               the space") — the open body now reads as real prose, not a
+               footnote; matches the lead's weight. */
+            font-size: 16.5px;
+            line-height: 1.6;
           }
           .sec-lead {
             max-height: 160px;
