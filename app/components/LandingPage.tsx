@@ -740,18 +740,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               each under a faint mini header. All copy his, verbatim. */}
           <p className="front-salutation">the question</p>
           <p className="front-lead">When ai can do everything humans can, what do we do?</p>
-          {/* The answer as a credo (2026-07-17 reflection, founder: "figure
-              out whats optimal"): the previous stack was bureaucratic —
-              five labels for four sentences, a founded-line repeating the
-              plate, monotonous rows. Now ONE label system: the name enters
-              through the plate itself (alexandria's answer), and the
-              We-anaphora IS the structure — explain / connect / provide
-              carry idea / community / sample without labels. */}
-          <p className="front-salutation front-salutation-answer">alexandria&rsquo;s answer</p>
+          {/* The answer (founder, 2026-07-17): "our answer" plate, a
+              founding line that sets up a list of three, then the labeled
+              rows — verbs in the bare form (explain / connect / provide)
+              so each reads as one of the "three things in mind". */}
+          <p className="front-salutation front-salutation-answer">our answer</p>
           <div className="front-fork">
-            <p className="fork-line fork-ans">We explain why we must keep thinking &mdash; and how.</p>
-            <p className="fork-line fork-ans">We connect those who, even slightly, agree.</p>
-            <p className="fork-line fork-ans">We provide infrastructure so anyone can join.</p>
+            <p className="fork-line front-alex">Alexandria was founded with three things in mind.</p>
+            <p className="front-fn"><span className="fn-label">idea</span><span className="fn-text">explain why we must keep thinking &mdash; and how</span></p>
+            <p className="front-fn"><span className="fn-label">community</span><span className="fn-text">connect those who, even slightly, agree</span></p>
+            <p className="front-fn"><span className="fn-label">sample</span><span className="fn-text">provide infrastructure so anyone can join</span></p>
           </div>
         </div>
         <div className="top-inner" />
@@ -2184,7 +2182,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              big wordmark's baseline across the slide (founder: "the bottom
              of the CTAs bottom aligned with the bottom of the alexandria
              text"); quiet-links keep the lower tier with the dict lines. */
-          padding-bottom: 72px;
+          /* CTA bottom = wordmark bottom + exactly one pixel (founder). */
+          padding-bottom: 83px;
           /* Squeeze the column — narrower text width pushes the left
              edge inward (right edge unchanged because right-lower is
              flex-end aligned). */
@@ -2737,7 +2736,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                rule or anything below it (founder, 2026-07-17: "only the
                three sections move when expanding") — long bodies scroll
                inside the window instead. */
-            max-height: 140px;
+            max-height: 118px;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: var(--theme-border-soft) transparent;
@@ -2781,12 +2780,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              so the break always sits naturally just above it. Bottom
              margin lifted (22→34, 2026-07-17): the rule sits higher and
              the closing sections breathe. */
-          margin: auto 0 34px;
+          margin: auto 0 46px;
         }
         /* Extra air between the close beats and the buttons — the two
-           closing sections read as separate breaths (2026-07-17). */
+           closing sections read as separate breaths (2026-07-17), taking
+           the space the lifted rule opens up. */
         .right-lower > .cta-pair {
-          margin-top: 14px;
+          margin-top: 24px;
         }
         .action-beat {
           margin: 0;
@@ -2921,18 +2921,37 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .front-salutation-answer {
           margin-top: 64px;
         }
-        /* The credo — three parallel We-sentences in the letter's italic
-           voice, stanza-spaced; the anaphora is the only structure (the
-           labeled-rows version read as a form, not a page). */
-        .fork-ans {
-          margin: 0 0 11px;
+        /* The founding line — sets up the three things in mind. */
+        .front-alex {
+          margin: 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
           font-size: 18.5px;
           line-height: 1.5;
-          color: rgba(26, 19, 24, 0.7);
+          color: rgba(26, 19, 24, 0.72);
         }
-        .fork-ans:last-child { margin-bottom: 0; }
+        /* The three things — faint mini header over each, the row text in
+           the letter's italic voice, bare verbs continuing the founding
+           line above. */
+        .front-fn {
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+          margin: 14px 0 0;
+        }
+        .fn-label {
+          font-style: italic;
+          font-size: 11px;
+          letter-spacing: 0.18em;
+          color: rgba(26, 19, 24, 0.38);
+        }
+        .fn-text {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 17.5px;
+          line-height: 1.5;
+          color: rgba(26, 19, 24, 0.68);
+        }
         .cta-block {
           display: flex;
           flex-direction: column;
