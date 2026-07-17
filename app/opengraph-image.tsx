@@ -29,11 +29,15 @@ export default async function OpengraphImage() {
 
   return new ImageResponse(
     (
+      // Mirrors the live nav mark (2026-07-16): upright roman wordmark
+      // (the italic left with the argument lines, not the mark), "mentes
+      // aeternae" beneath as on the homepage, and the front slide's pale
+      // cream — far whiter than the old heavy-vignette card.
       <div
         style={{
-          background: "#f8f0e0",
+          background: "#f1ede2",
           backgroundImage:
-            "radial-gradient(ellipse 70% 60% at 100% 100%, rgba(20, 12, 6, 0.18), rgba(20, 12, 6, 0) 70%)",
+            "radial-gradient(ellipse 80% 65% at 50% 20%, rgba(255, 253, 246, 0.7), rgba(255, 253, 246, 0) 70%)",
           width: "100%",
           height: "100%",
           display: "flex",
@@ -41,33 +45,33 @@ export default async function OpengraphImage() {
           alignItems: "center",
           justifyContent: "center",
           fontFamily: "Spectral",
-          color: "#2a1f28",
+          color: "#1a1318",
         }}
       >
         <div
           style={{
-            fontSize: 220,
-            fontStyle: "italic",
+            fontSize: 210,
+            fontStyle: "normal",
             fontWeight: 500,
-            letterSpacing: "-0.026em",
+            letterSpacing: "-0.015em",
             lineHeight: 0.9,
             display: "flex",
           }}
         >
           alexandria
-          <span style={{ fontStyle: "normal", marginLeft: "-0.04em" }}>.</span>
+          <span style={{ marginLeft: "-0.02em" }}>.</span>
         </div>
         <div
           style={{
-            marginTop: 36,
-            fontSize: 42,
+            marginTop: 40,
+            fontSize: 38,
             fontStyle: "italic",
             fontWeight: 500,
-            color: "#7a6a70",
-            letterSpacing: "0.005em",
+            color: "rgba(26, 19, 24, 0.55)",
+            letterSpacing: "0.06em",
           }}
         >
-          the thinking republic
+          mentes aeternae
         </div>
       </div>
     ),
