@@ -127,7 +127,12 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
           Leave your email &mdash; we&rsquo;ll keep you posted as we build.
         </p>
 
-        {/* Primary action — the email. Underline field to match /join's doors. */}
+        {/* Primary action — the email. Underline field to match /join's doors.
+            The button is dynamic: at $0 it's "follow" (email only); once the
+            slider sets an amount it becomes "support $X/mo", so it's obvious
+            THIS is how the money goes through — a real checkout on click
+            (founder 2026-07-17: it was unclear how to actually send money when
+            the button just said "follow"). */}
         <div className="follow-field">
           <input
             key={shakeKey}
@@ -147,13 +152,18 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
             disabled={loading}
             className="follow-cta"
           >
-            {loading ? '…' : 'follow'}
+            {loading ? '…' : isHonorary ? `support $${amount}/mo` : 'follow'}
           </button>
         </div>
         {error ? <p className="follow-error">{error}</p> : null}
+        {isHonorary ? (
+          <p className="follow-checkout-note">
+            secure checkout on the next screen &mdash; cancel anytime.
+          </p>
+        ) : null}
 
-        {/* Optional support — clearly secondary, below the action. Free by
-            default; the slider is there only if they want to chip in. */}
+        {/* Optional support — free by default; drag the slider to set a monthly
+            amount, and the button above turns into the "support" action. */}
         <div className="follow-support">
           <p className="follow-support-q">It&rsquo;s free either way &mdash; drag the slider if you&rsquo;d like to support the project.</p>
           <div className="follow-amount">
@@ -311,6 +321,13 @@ const styles = `
   .follow-error {
     margin: 12px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
     font-size: 13px; font-style: italic; color: var(--text-muted);
+  }
+  /* Appears only once an amount is set — makes clear the button starts a real
+     payment, and de-risks the click. */
+  .follow-checkout-note {
+    margin: 10px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 12.5px; font-style: italic; letter-spacing: 0.01em;
+    color: var(--text-muted, rgba(61, 54, 48, 0.55));
   }
 
   /* Optional support — a quiet block beneath the email, clearly secondary. */
