@@ -862,10 +862,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     the frame / the punch / the action. */}
                 <div className="action-close">
                   <p className="statement-beat action-beat">
-                    <em>See this as a free food sample at the supermarket.
-                    The only reason you&rsquo;d say no is if you&rsquo;re
-                    allergic&hellip; reading this is proof you&rsquo;re
-                    interested enough to try.</em>
+                    <em>See this as a free food sample at the supermarket
+                    &mdash; the only reason you&rsquo;d say no is if
+                    you&rsquo;re allergic&hellip; reading this is proof
+                    you&rsquo;re interested enough to try.</em>
                   </p>
                   <p className="statement-beat action-beat">
                     <em>If you don&rsquo;t like it, bin it. This should be
@@ -2666,15 +2666,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           text-align: left;
         }
         .sec:first-child .sec-head { margin-top: 0; }
-        /* Section titles lifted from whisper to voice (founder, 2026-07-16:
-           "bigger and more engaging") — the why/what/how are now the
-           slide's landmarks; the leads and bodies stay small beneath. */
+        /* Titles back to the whisper register (founder, 2026-07-16 second
+           note) — the LEADS carry the size instead: small plate over a
+           big visible first line, echoing the front's mini headers. */
         .sec-title {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
-          font-size: 21px;
-          letter-spacing: 0.045em;
-          color: var(--theme-fg);
+          font-size: 12px;
+          letter-spacing: 0.16em;
+          color: var(--theme-fg-faint);
           transition: color 180ms ease;
         }
         .sec-head:hover .sec-title { color: var(--theme-fg-muted); }
@@ -2690,8 +2690,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
         .sec-lead {
           margin: 7px 0 0;
-          font-size: 15px;
-          line-height: 1.62;
+          font-size: 17.5px;
+          line-height: 1.55;
           letter-spacing: 0.004em;
           color: var(--theme-fg);
         }
@@ -2889,7 +2889,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            full breath so the front reads as two mini-sections that fit
            together. */
         .front-salutation-answer {
-          margin-top: 34px;
+          margin-top: 46px;
         }
         /* The name as the answer's first word. */
         .front-alex {
