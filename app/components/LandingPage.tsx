@@ -835,11 +835,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     flowing with no dividers between them. A lead paragraph
                     shows; a rotating caret reveals the rest. Accordion (one
                     open at a time) keeps the fixed stage bounded. */}
-                <div className="secs">
+                <div className="secs" onMouseLeave={() => setOpenPillar(null)}>
                   {SECTIONS.map((s) => {
                     const isOpen = openPillar === s.title;
                     return (
-                      <div key={s.title} className={`sec${isOpen ? ' is-open' : ''}`}>
+                      <div
+                        key={s.title}
+                        className={`sec${isOpen ? ' is-open' : ''}`}
+                        onMouseEnter={() => setOpenPillar(s.title)}
+                      >
                         <button
                           type="button"
                           className="sec-head"
@@ -2768,25 +2772,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             transition: margin-top 520ms cubic-bezier(0.33, 0, 0.2, 1);
           }
         }
-        @media (min-width: 900px) and (hover: hover) and (pointer: fine) {
-          /* FOCUS MODE: while one section is open its siblings hide
-             entirely (head + lead) and the block slides up — the open
-             section takes the stage alone, and even the longest body fits
-             without scroll or spill. Mouse off, everything returns. */
-          .secs:has(.sec:hover) { margin-top: 28px; }
-          .secs:has(.sec:hover) .sec:not(:hover) .sec-lead,
-          .secs:has(.sec:hover) .sec:not(:hover) .sec-head {
-            max-height: 0;
-            opacity: 0;
-            margin: 0;
-            padding: 0;
-          }
-          /* The library·marketplace row is peripheral chrome — it yields
-             during focus so a long open body's slide never collides. */
-          .right-col:has(.sec:hover) .quiet-links { opacity: 0; }
-        }
-        @media (min-width: 900px) and (hover: none) {
-          .secs:has(.sec.is-open) { margin-top: 28px; }
+        /* FOCUS MODE (desktop) — driven by .is-open, NEVER by :hover:
+           focus mode moves the layout, and a :hover that moves under the
+           cursor revokes itself — the massive expand glitch of 2026-07-17.
+           JS sets is-open on mouseenter; only leaving the whole .secs
+           container (or tapping elsewhere) clears it, so layout shifts
+           can't break the state. */
+        @media (min-width: 900px) {
+          /* min-height pins the container's hover footprint while its
+             content shrinks — otherwise the cursor can fall outside the
+             collapsed bounds and close what it just opened (the boundary
+             half of the 2026-07-17 glitch). */
+          .secs:has(.sec.is-open) { margin-top: 28px; min-height: 350px; }
           .secs:has(.sec.is-open) .sec:not(.is-open) .sec-lead,
           .secs:has(.sec.is-open) .sec:not(.is-open) .sec-head {
             max-height: 0;
@@ -2794,29 +2791,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             margin: 0;
             padding: 0;
           }
+          /* The library·marketplace row is peripheral chrome — it yields
+             during focus so a long open body's slide never collides. */
           .right-col:has(.sec.is-open) .quiet-links { opacity: 0; }
         }
-        /* Fluid HOVER-expand on pointer devices (founder 2026-07-13): move
-           over a section and it opens; move off and it eases shut — no click.
-           Only one is ever open (you hover one at a time), so the fixed
-           stage can't overflow. */
-        @media (hover: hover) and (pointer: fine) {
-          .sec:hover .sec-body { grid-template-rows: 1fr; }
-          .sec:hover .sec-body-inner { opacity: 1; }
-          .sec:hover .sec-title { color: var(--theme-fg-muted); }
-          .sec:hover .sec-caret {
-            border-color: var(--theme-fg-muted);
-            transform: translateY(1px) rotate(-135deg);
-          }
-        }
-        /* Touch has no hover — tap toggles (is-open) instead. */
-        @media (hover: none) {
-          .sec.is-open .sec-body { grid-template-rows: 1fr; }
-          .sec.is-open .sec-body-inner { opacity: 1; }
-          .sec.is-open .sec-caret {
-            border-color: var(--theme-fg-muted);
-            transform: translateY(1px) rotate(-135deg);
-          }
+        /* The expand itself — is-open on every input (mouseenter via JS on
+           desktop, tap toggle on touch). */
+        .sec.is-open .sec-body { grid-template-rows: 1fr; }
+        .sec.is-open .sec-body-inner { opacity: 1; }
+        .sec.is-open .sec-title { color: var(--theme-fg-muted); }
+        .sec.is-open .sec-caret {
+          border-color: var(--theme-fg-muted);
+          transform: translateY(1px) rotate(-135deg);
         }
         .sec-body-inner > p {
           margin: 10px 0 0;
@@ -2887,7 +2873,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           left: 118px;
           top: 50%;
           transform: translateY(-50%);
-          width: 384px;
+          width: 348px;
           text-align: left;
           z-index: 3;
           pointer-events: none;
@@ -2938,7 +2924,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           line-height: 1.45;
           letter-spacing: 0.004em;
           color: rgba(26, 19, 24, 0.72);
-          text-wrap: pretty;
+          text-wrap: balance;
         }
         .front-fork { margin: 0; }
         .fork-line {
