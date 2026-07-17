@@ -80,46 +80,50 @@ export default function JoinCTA({
 
       <h1 className="primer-h1">become a founding member.</h1>
 
-      {/* One orienting line, then the deal as a scannable ladder (founder
-          notes 2026-07-17: the dense paragraph read confusing and
-          overwhelming — mirror /start's short-lines-plus-fine-print skeleton
-          instead). The ladder leads with the price words — Free / Free / $10
-          — in his exact order: three-friends-free, first-month-free +
-          cancel-anytime + just-try-it, then $10 with the throwaway anchor
-          (two coffees, one Uber). The waive escape rides quieter beneath
-          ("we just want people to join"), and the penny-pincher line, said
-          nicely, is the wink under the button. */}
+      {/* The deal, told in the founder's narrative order (his dictation
+          2026-07-17, near-verbatim — this is him talking, transcript cleaned):
+          first month free → get your friends on → three on = free while
+          they're on ("we want as many people thinking as possible") → else
+          $10, a tiny decision (one Uber, two coffees, a package delivery
+          charge) → the personal appeal (my project, something positive,
+          don't start penny-pinching here) → the genuine-hardship waive.
+          Three deal lines at body weight, then the appeal and the waive
+          each a step quieter — voice narrowing from terms to him. */}
       <p className="primer-lede">
         The tool is the free sample. This is the community around it.
       </p>
 
       <div className="join-terms">
         <p className="join-line">
-          Free if you bring three friends in &mdash; everyone gets a referral
-          code to share.
+          The first month is free &mdash; cancel anytime, just try it and see
+          how you like it.
         </p>
         <p className="join-line">
-          Free for the first month either way. Cancel anytime &mdash; just
-          try it and see how you like it.
+          Then get your friends on it. If at least three join with your code,
+          your membership is free for as long as they&rsquo;re on &mdash; we
+          want as many people thinking as possible.
         </p>
         <p className="join-line">
-          Then it&rsquo;s $10 a month: two coffees, or one Uber ride. A
-          dollar there is the same as a dollar here.
+          If you haven&rsquo;t brought people on, it&rsquo;s $10 a month.
+          Don&rsquo;t overthink the 10 &mdash; it&rsquo;s a tiny decision:
+          one Uber ride, two coffees, a package delivery charge.
+        </p>
+        <p className="join-note">
+          This is my project, and we&rsquo;re trying to do something positive
+          here &mdash; so please don&rsquo;t decide that this is where you
+          start being a penny pincher.
         </p>
         <p className="join-waive">
-          If $10 is difficult right now,{' '}
+          But if $10 is genuinely difficult right now &mdash; and the three
+          friends aren&rsquo;t happening &mdash;{' '}
           <a href="mailto:benmowinckel@gmail.com?subject=waive%20it">message me</a>{' '}
-          and I&rsquo;ll waive it &mdash; we just want people to join.
+          and I&rsquo;ll waive it, so it&rsquo;s free.
         </p>
       </div>
 
       <a className="join-btn" href={joinUrl}>
         join with github
       </a>
-
-      <p className="join-hint">
-        a very small decision &mdash; nobody penny-pinches coffee.
-      </p>
 
       {/* The fine print — everything that isn't the deal, grouped under one
           hairline like /start's details zone: tool-free-forever, the

@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: '/join',
   title: 'join alexandria.',
   description:
-    'free with three friends, free for the first month, then $10 — two coffees, or one uber ride. become a founding member.',
+    'first month free; free for good when three friends join with your code; otherwise $10 — one uber ride, or two coffees a month. become a founding member.',
 });
 
 // The founding-member JOIN — the paid half of the two things. The tool (the run)
@@ -17,21 +17,19 @@ export const metadata = pageMetadata({
 // marketplace, the tribe. Signing in with GitHub starts the trial ($10/mo, first
 // month free, free with 3 kin, or email-to-waive) and assigns your number.
 //
-// The pitch is a DEAL LADDER under the homepage's free-sample frame (founder
-// notes 2026-07-17 — the paragraph version read confusing and overwhelming;
-// "seem simpler, like the start page"): one orienting line, then three short
-// scannable lines led by the price words, in his exact order — Free (three
-// friends join with your code), Free (first month, cancel anytime, just try
-// it), then $10 (two coffees, one Uber ride — a dollar there is a dollar
-// here). The waive escape sits quieter beneath ("we just want people to
-// join"), the penny-pincher line said nicely is the wink under the button
-// ("nobody penny-pinches coffee"), and everything else — tool-free-forever,
-// the founding-bet honesty (2026-07-09 verdict), the have-a-code field —
-// drops below a hairline like /start's fine print. No roster pitch from the
-// outside (who's in is visible once you're in, never the sell). A "no" has
-// its own path: the JoinInterest email capture below the fine print — every
-// decline leaves a contactable address (the reach the community gets
-// recruited from).
+// The pitch is the founder's own narrative, near-verbatim (his dictation
+// 2026-07-17, third pass — the price-led ladder "didn't read well"): first
+// month free, cancel anytime, just try it → get your friends on it; three on
+// = free while they're on ("we want as many people thinking as possible") →
+// haven't brought people on = $10, a tiny decision (one Uber, two coffees, a
+// package delivery charge) → the personal appeal (my project, something
+// positive, don't start being a penny pincher here) → the genuine-hardship
+// waive. Everything else — tool-free-forever, the founding-bet honesty
+// (2026-07-09 verdict), the have-a-code field — sits below a hairline like
+// /start's fine print. No roster pitch from the outside (who's in is visible
+// once you're in, never the sell). A "no" has its own path: the JoinInterest
+// email capture below the fine print — every decline leaves a contactable
+// address (the reach the community gets recruited from).
 //
 // Composition mirrors /start: one flush-left editorial column, an accent
 // eyebrow ("the community") as the spine's anchor — the paid half, twinned
@@ -158,10 +156,19 @@ export default async function JoinPage({
           font-size: 17px; line-height: 1.55; letter-spacing: 0.01em;
           color: var(--text-primary); text-wrap: pretty;
         }
-        /* The waive escape — quieter than the ladder, still above the button:
-           the generosity that keeps the ask fair. */
+        /* The personal appeal — the founder's own voice, a step quieter than
+           the deal lines: my project, something positive, don't start
+           penny-pinching here. */
+        .join-note {
+          margin: 20px 0 0; max-width: 460px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 15px; line-height: 1.65; letter-spacing: 0.01em;
+          color: var(--text-secondary, rgba(26, 19, 24, 0.82)); text-wrap: pretty;
+        }
+        /* The waive escape — quietest, beneath the appeal: the generosity
+           that keeps the ask fair. */
         .join-waive {
-          margin: 20px 0 0;
+          margin: 12px 0 0; max-width: 460px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 14px; line-height: 1.65; letter-spacing: 0.01em;
           color: var(--text-muted, rgba(26, 19, 24, 0.55));
@@ -185,13 +192,6 @@ export default async function JoinPage({
         }
         .join-btn:hover { opacity: 0.85; }
         .join-btn:active { transform: scale(0.99); }
-
-        /* The wink under the button — the penny-pincher line, said nicely. */
-        .join-hint {
-          margin: 14px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic; font-size: 13px; letter-spacing: 0.04em;
-          color: var(--text-muted, rgba(26, 19, 24, 0.55));
-        }
 
         /* The fine print — everything that isn't the deal, under one hairline
            (mirrors /start's details zone). */
