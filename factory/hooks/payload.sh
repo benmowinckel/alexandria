@@ -385,6 +385,10 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
     check_drift "$HOME/.cursor/hooks/alexandria-session-start.py" "hooks/cursor/alexandria-session-start.py" "  cursor session-start hook (~/.cursor/hooks/alexandria-session-start.py)"
     check_drift "$HOME/.cursor/hooks/alexandria-session-end.py" "hooks/cursor/alexandria-session-end.py" "  cursor session-end hook (~/.cursor/hooks/alexandria-session-end.py)"
     check_drift "$HOME/.cursor/hooks/alexandria-stop.py" "hooks/cursor/alexandria-stop.py" "  cursor stop hook (~/.cursor/hooks/alexandria-stop.py)"
+    check_drift "$HOME/.cursor/hooks/alexandria-transcript.py" "hooks/cursor/alexandria-transcript.py" "  cursor transcript hook (~/.cursor/hooks/alexandria-transcript.py)"
+    # Alias only, like the Claude Code entry above — ~/.cursor/skills/a/ may be
+    # an Author's own DIY skill (setup preserves it), which would false-flag.
+    check_drift "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md" "  cursor /alexandria skill (~/.cursor/skills/alexandria/SKILL.md)" "rename-alexandria"
     check_drift "$ALEX_DIR/system/hooks/shim.sh" "hooks/shim.sh" "  hook shim ($ALEX_DISPLAY/system/hooks/shim.sh)"
 
     # Codex case — block embedded between markers in a shared instructions.md.
