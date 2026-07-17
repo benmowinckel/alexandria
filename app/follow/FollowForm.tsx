@@ -3,15 +3,22 @@
 import { useState, useLayoutEffect, useRef } from 'react';
 import Link from 'next/link';
 import { SERVER_URL } from '../lib/config';
-import { INK, PAPER, INK_MUTED, INK_FAINT, RULE } from '../lib/palette';
+import { ThemeToggle } from '../components/ThemeToggle';
 
 const AMOUNT_MIN = 0;
 const AMOUNT_MAX = 200;
 // Opens on free (2026-07-15, warm-lead P0.6a): the homepage ghost CTA promises
-// "just your email", so this page must open as an email capture, not a $15
-// anchor. The pay-what-you-want slider stays — as the optional second beat.
+// "just your email", so this page must open as an email capture, not a $ anchor.
+// The pay-what-you-want slider stays — the optional second beat below the email.
 const AMOUNT_DEFAULT = 0;
 
+// /follow — the third door, rebuilt onto the /start + /join skeleton (founder
+// 2026-07-17): the flush-left editorial spine, the CSS-var theme (so dark mode
+// works), the ThemeToggle, the brand header, the coda. This is the low-friction
+// COMPANY door — no GitHub, no tool needed — for someone who likes the mission
+// and wants to follow along, with an optional pay-what-you-want slider to back
+// it. Distinct from /join (founding member, $10, the community) and /start (the
+// free tool). Copy is the founder's, kept; only the structure and style change.
 export default function FollowForm({ initialDone }: { initialDone: boolean }) {
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState(AMOUNT_DEFAULT);
@@ -26,6 +33,7 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [hintLeft, setHintLeft] = useState<number | null>(null);
 
+  // Keep the "drag" hint centred under the slider thumb as it moves.
   useLayoutEffect(() => {
     const slider = sliderRef.current;
     const wrap = wrapRef.current;
@@ -74,477 +82,343 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
     }
   };
 
+  const brand = (
+    <header className="primer-header">
+      <Link href="/" className="primer-brand">
+        alexandria<span className="primer-brand-dot">.</span>
+      </Link>
+    </header>
+  );
+
   if (done) {
     const paid = doneKind === 'paid';
     return (
-      <main className="follow-root">
-        <Link href="/" className="nav-brand" aria-label="alexandria">
-          <em>alexandria</em>
-          <span className="nav-dot">.</span>
-        </Link>
-        <section className="done-wrap">
-          <div className="done-msg">
-            <p className="done-headline">
-              {paid ? 'thank you for supporting alexandria.' : 'welcome.'}
-            </p>
-            <p className="done-sub">
-              {paid
-                ? <>a note&rsquo;s on its way &mdash; reply any time.</>
-                : <>a note&rsquo;s on its way to your inbox.</>}
-            </p>
-          </div>
-        </section>
-        <span className="watermark" aria-hidden><em>a.</em></span>
-        <style jsx>{styles}</style>
-      </main>
+      <div className="primer-page">
+        <ThemeToggle />
+        {brand}
+        <main className="primer-main">
+          <p className="primer-eyebrow">{paid ? 'thank you' : 'you’re following along'}</p>
+          <h1 className="follow-hero">
+            {paid ? 'Thank you for backing alexandria.' : 'You’re in.'}
+          </h1>
+          <p className="follow-lede">
+            {paid
+              ? 'A note’s on its way — reply any time.'
+              : 'A note’s on its way to your inbox — we’ll keep you posted as we build.'}
+          </p>
+          <p className="primer-coda"><em>keep thinking.</em></p>
+        </main>
+        <style>{styles}</style>
+      </div>
     );
   }
 
   const isHonorary = amount > 0;
 
   return (
-    <main className="follow-root">
-      <Link href="/" className="nav-brand" aria-label="alexandria">
-        <em>alexandria</em>
-        <span className="nav-dot">.</span>
-      </Link>
+    <div className="primer-page">
+      <ThemeToggle />
+      {brand}
 
-      <section className="form-wrap">
-        <div className="form">
+      <main className="primer-main">
+        <p className="primer-eyebrow">follow along</p>
+        <h1 className="follow-hero">Not ready for the tool? Follow along as we build.</h1>
+        <p className="follow-lede">
+          Leave your email &mdash; we&rsquo;ll keep you posted, and you can back
+          the project if you want to.
+        </p>
 
-          <p className="lede">
-            leave your email &mdash; we&rsquo;ll keep you posted as we build.
-          </p>
-
-          <label className="field">
-            <input
-              key={shakeKey}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
-              data-follow-shake={shakeKey > 0 ? 'on' : 'off'}
-              placeholder="email"
-              autoComplete="email"
-              spellCheck={false}
-              aria-label="email"
-            />
-          </label>
-
-          <div className="amount-block">
-            <div className="amount-line">
-              {amount === 0 ? (
-                <span className="amount-value amount-free"><em>free.</em></span>
-              ) : (
-                <>
-                  <span className="amount-value">${amount}</span>
-                  <span className="amount-unit">/ month</span>
-                </>
-              )}
-            </div>
-            <div className="slider-wrap" ref={wrapRef}>
-              <input
-                ref={sliderRef}
-                type="range"
-                min={AMOUNT_MIN}
-                max={AMOUNT_MAX}
-                step={5}
-                value={amount}
-                onChange={(e) => setAmount(parseInt(e.target.value, 10))}
-                className="slider"
-                aria-label="monthly amount"
-                style={{ ['--fill' as string]: `${(amount / AMOUNT_MAX) * 100}%` }}
-              />
-              <p
-                className="slider-hint"
-                aria-hidden
-                style={{
-                  left: hintLeft == null ? '50%' : `${hintLeft}px`,
-                  visibility: hintLeft == null ? 'hidden' : 'visible',
-                  ['--lfade' as string]: amount <= AMOUNT_MIN ? '0' : '1',
-                  ['--rfade' as string]: amount >= AMOUNT_MAX ? '0' : '1',
-                }}
-              >
-                <span className="hint-arrow hint-l">←</span>
-                <em>drag</em>
-                <span className="hint-arrow hint-r">→</span>
-              </p>
-            </div>
-            <div className="tier-row" aria-live="polite">
-              <span className={`tier ${isHonorary ? 'is-dim' : 'is-on'}`}>
-                <em>follower of alexandria.</em>
-              </span>
-              <span className={`tier tier-right ${isHonorary ? 'is-on' : 'is-dim'}`}>
-                <em>honorary alexandrian.</em>
-              </span>
-            </div>
-          </div>
-
-          <p className="caption">
-            it&rsquo;s free &mdash; the slider&rsquo;s there if you want to back us.
-          </p>
-
-          <div className="cta-row">
-            {error ? <span className="error">{error}</span> : null}
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={loading}
-              className="cta"
-            >
-              {loading ? '…' : 'follow.'}
-            </button>
-          </div>
-
+        {/* Primary action — the email. Underline field to match /join's doors. */}
+        <div className="follow-field">
+          <input
+            key={shakeKey}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
+            data-follow-shake={shakeKey > 0 ? 'on' : 'off'}
+            placeholder="your email"
+            autoComplete="email"
+            spellCheck={false}
+            aria-label="email"
+          />
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="follow-cta"
+          >
+            {loading ? '…' : 'follow'}
+          </button>
         </div>
-      </section>
+        {error ? <p className="follow-error">{error}</p> : null}
 
-      <span className="watermark" aria-hidden><em>a.</em></span>
+        {/* Optional support — clearly secondary, below the action. Free by
+            default; the slider is there only if they want to chip in. */}
+        <div className="follow-support">
+          <p className="follow-support-q">want to back us? it&rsquo;s free either way &mdash; drag if you&rsquo;d like to chip in.</p>
+          <div className="follow-amount">
+            {amount === 0 ? (
+              <span className="follow-amount-free"><em>free</em></span>
+            ) : (
+              <>
+                <span className="follow-amount-value">${amount}</span>
+                <span className="follow-amount-unit">/ month</span>
+              </>
+            )}
+          </div>
+          <div className="slider-wrap" ref={wrapRef}>
+            <input
+              ref={sliderRef}
+              type="range"
+              min={AMOUNT_MIN}
+              max={AMOUNT_MAX}
+              step={5}
+              value={amount}
+              onChange={(e) => setAmount(parseInt(e.target.value, 10))}
+              className="slider"
+              aria-label="monthly amount"
+              style={{ ['--fill' as string]: `${(amount / AMOUNT_MAX) * 100}%` }}
+            />
+            <p
+              className="slider-hint"
+              aria-hidden
+              style={{
+                left: hintLeft == null ? '50%' : `${hintLeft}px`,
+                visibility: hintLeft == null ? 'hidden' : 'visible',
+                ['--lfade' as string]: amount <= AMOUNT_MIN ? '0' : '1',
+                ['--rfade' as string]: amount >= AMOUNT_MAX ? '0' : '1',
+              }}
+            >
+              <span className="hint-arrow hint-l">←</span>
+              <em>drag</em>
+              <span className="hint-arrow hint-r">→</span>
+            </p>
+          </div>
+          <div className="tier-row" aria-live="polite">
+            <span className={`tier ${isHonorary ? 'is-dim' : 'is-on'}`}>
+              <em>follower of alexandria.</em>
+            </span>
+            <span className={`tier tier-right ${isHonorary ? 'is-on' : 'is-dim'}`}>
+              <em>honorary alexandrian.</em>
+            </span>
+          </div>
+        </div>
 
-      <style jsx>{styles}</style>
-    </main>
+        {/* The other two doors — a quiet cross-link so /follow doesn't read as a
+            dead end or a rival to /join. */}
+        <p className="follow-next">
+          Or: <Link href="/start">get the free tool</Link> &middot;{' '}
+          <Link href="/join">join the community</Link>.
+        </p>
+
+        <p className="primer-coda"><em>keep thinking.</em></p>
+      </main>
+
+      <style>{styles}</style>
+    </div>
   );
 }
 
 const styles = `
-  :global(html), :global(body) {
-    background: ${PAPER};
-  }
-
-  .follow-root {
-    position: relative;
+  .primer-page {
+    background: var(--bg-primary);
+    color: var(--text-primary);
     min-height: 100vh;
-    min-height: 100dvh;
-    background: ${PAPER};
-    color: ${INK};
-    font-family: var(--font-eb-garamond), Georgia, 'Times New Roman', serif;
-    -webkit-font-smoothing: antialiased;
-    overflow: hidden;
-  }
-
-  .nav-brand {
-    position: fixed;
-    top: calc(22px - 10px);
-    left: calc(clamp(24px, 6vw, 120px) - 8px);
-    z-index: 10;
-    font-style: italic;
-    font-weight: 500;
-    font-size: 28px;
-    line-height: 1;
-    color: ${INK};
-    text-decoration: none;
-    letter-spacing: -0.01em;
-    display: inline-flex;
-    align-items: baseline;
-    transition: opacity 200ms ease;
-    padding: 10px 8px;
-  }
-  .nav-brand:hover { opacity: 0.7; }
-  .nav-brand :global(em) { font-style: italic; }
-  .nav-brand .nav-dot {
-    font-style: normal;
-    display: inline-block;
-    animation: dotBreathe 3.2s ease-in-out infinite;
-  }
-  @keyframes dotBreathe {
-    0%, 100% { opacity: 1; }
-    50%      { opacity: 0.42; }
-  }
-
-  .form-wrap {
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 96px clamp(24px, 6vw, 80px);
-  }
-  .form {
-    width: 100%;
-    max-width: 540px;
     display: flex;
     flex-direction: column;
-    gap: 56px;
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    background-image:
+      radial-gradient(ellipse 120% 80% at 30% 20%, rgba(91, 31, 71, 0.025) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 70% at 70% 80%, rgba(74, 50, 30, 0.020) 0%, transparent 60%);
+    animation: primerFadeIn 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @keyframes primerFadeIn {
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .primer-header { padding: 28px 32px 0; }
+  .primer-brand {
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-style: italic; font-weight: 400; font-size: 21px;
+    color: var(--text-primary); text-decoration: none;
+    letter-spacing: 0.005em; transition: opacity 220ms ease;
+    display: inline-block; padding: 10px 8px; margin: -10px -8px;
+  }
+  .primer-brand:hover { opacity: 0.6; }
+  .primer-brand-dot { font-style: normal; }
+
+  /* Flush-left editorial column, vertically centred — the /start + /join spine. */
+  .primer-main {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: center;
+    max-width: 620px; margin: 0 auto; padding: 3rem 40px 6rem; width: 100%;
+    text-align: left;
   }
 
-  .lede {
-    margin: 0 0 -22px;
-    font-size: 15px;
-    line-height: 1.5;
-    font-style: italic;
-    color: ${INK_MUTED};
-    letter-spacing: 0.005em;
+  .primer-eyebrow {
+    margin: 0 0 18px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-weight: 500; font-size: 11.5px; letter-spacing: 0.3em;
+    text-transform: lowercase; font-variant-caps: all-small-caps;
+    font-feature-settings: "smcp" 1, "kern" 1;
+    color: var(--accent); line-height: 1;
   }
 
-  .field input {
-    width: 100%;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid ${RULE};
-    border-radius: 0;
-    outline: none;
-    color: ${INK};
-    font-family: inherit;
-    font-size: 22px;
-    line-height: 1.4;
-    padding: 10px 0;
-    letter-spacing: -0.005em;
-    transition: border-color 200ms ease;
-  }
-  .field input::placeholder {
-    color: ${INK_FAINT};
-    font-style: italic;
-  }
-  .field input:focus {
-    border-bottom-color: ${INK};
-  }
-  .field input[data-follow-shake="on"] {
-    animation: follow-shake 320ms ease-in-out;
-  }
-  @keyframes follow-shake {
-    0%, 100%   { transform: translateX(0);    border-bottom-color: ${RULE}; }
-    25%        { transform: translateX(-3px); border-bottom-color: #b3261e; }
-    75%        { transform: translateX(3px);  border-bottom-color: #b3261e; }
+  /* Hero in EB Garamond (the calligraphic italic), matching /join. */
+  .follow-hero {
+    margin: 0 0 22px; max-width: 560px;
+    font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+    font-style: italic; font-weight: 500;
+    font-size: clamp(27px, 1.5rem + 1.4vw, 34px); line-height: 1.22;
+    letter-spacing: -0.01em; color: var(--text-primary); text-wrap: balance;
+    font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "calt" 1, "swsh" 1;
   }
 
-  .amount-block {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .amount-line {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-  }
-  .amount-value {
-    font-size: 38px;
-    line-height: 1;
-    font-weight: 400;
-    letter-spacing: -0.015em;
-  }
-  .amount-unit {
-    font-size: 14px;
-    font-style: italic;
-    color: ${INK_MUTED};
-    letter-spacing: 0.02em;
+  .follow-lede {
+    margin: 0 0 30px; max-width: 500px;
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 16px; line-height: 1.6; color: var(--text-secondary);
+    text-wrap: pretty;
   }
 
-  .amount-free :global(em) {
-    font-style: italic;
-    letter-spacing: -0.005em;
+  /* Email — the primary action. Underline field + inline follow button, in the
+     same editorial idiom as /join's doors. */
+  .follow-field {
+    display: flex; align-items: baseline; gap: 14px;
+    width: 100%; max-width: 460px;
+  }
+  .follow-field input {
+    flex: 1; min-width: 0; height: 40px; padding: 0 2px;
+    font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 18px;
+    color: var(--text-primary); background: transparent;
+    border: none; border-bottom: 1px solid var(--text-muted, rgba(61, 54, 48, 0.32));
+    border-radius: 0; outline: none; transition: border-color 200ms;
+  }
+  .follow-field input::placeholder { color: var(--text-muted, rgba(61, 54, 48, 0.42)); font-style: italic; }
+  .follow-field input:focus { border-bottom-color: var(--text-secondary, rgba(61, 54, 48, 0.7)); }
+  .follow-field input[data-follow-shake="on"] { animation: followShake 320ms ease-in-out; }
+  @keyframes followShake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-3px); border-bottom-color: #b3261e; }
+    75%      { transform: translateX(3px);  border-bottom-color: #b3261e; }
+  }
+  .follow-cta {
+    flex-shrink: 0; align-self: center;
+    padding: 11px 24px; border-radius: 9px;
+    background: var(--text-primary); color: var(--bg-primary);
+    font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 16px;
+    letter-spacing: 0.01em; border: none; cursor: pointer;
+    transition: opacity 200ms, transform 120ms;
+  }
+  .follow-cta:hover:not(:disabled) { opacity: 0.88; }
+  .follow-cta:active { transform: scale(0.98); }
+  .follow-cta:disabled { opacity: 0.4; cursor: default; }
+  .follow-error {
+    margin: 12px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 13px; font-style: italic; color: var(--text-muted);
   }
 
-  .slider-wrap {
-    position: relative;
-    padding-bottom: 44px;
+  /* Optional support — a quiet block beneath the email, clearly secondary. */
+  .follow-support {
+    margin: 40px 0 0; padding-top: 28px; width: 100%; max-width: 500px;
+    border-top: 1px solid var(--bg-tertiary, rgba(61, 54, 48, 0.12));
   }
+  .follow-support-q {
+    margin: 0 0 20px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 13.5px; line-height: 1.6; font-style: italic; letter-spacing: 0.01em;
+    color: var(--text-muted, rgba(61, 54, 48, 0.6));
+  }
+  .follow-amount {
+    display: flex; align-items: baseline; gap: 9px; margin: 0 0 14px;
+  }
+  .follow-amount-free {
+    font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+    font-size: 30px; line-height: 1; font-style: italic; letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+  .follow-amount-value {
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 30px; line-height: 1; letter-spacing: -0.015em; color: var(--text-primary);
+    font-variant-numeric: lining-nums;
+  }
+  .follow-amount-unit {
+    font-size: 13px; font-style: italic; color: var(--text-muted); letter-spacing: 0.02em;
+  }
+
+  .slider-wrap { position: relative; padding-bottom: 42px; max-width: 460px; }
   .slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 1px;
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 1px;
     background: linear-gradient(
       to right,
-      ${INK} 0%,
-      ${INK} var(--fill, 0%),
-      ${RULE} var(--fill, 0%),
-      ${RULE} 100%
+      var(--text-primary) 0%,
+      var(--text-primary) var(--fill, 0%),
+      var(--text-muted, rgba(61, 54, 48, 0.3)) var(--fill, 0%),
+      var(--text-muted, rgba(61, 54, 48, 0.3)) 100%
     );
-    outline: none;
-    cursor: pointer;
-    margin: 4px 0 2px;
-    position: relative;
-    z-index: 1;
+    outline: none; cursor: pointer; margin: 4px 0 2px; position: relative; z-index: 1;
   }
   .slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: ${INK};
-    cursor: grab;
-    box-shadow: 0 0 0 0 rgba(26, 19, 24, 0.28);
-    animation: slider-pulse 2.6s ease-out infinite;
-    transition: transform 160ms ease;
+    -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--text-primary); cursor: grab; transition: transform 160ms ease;
   }
   .slider::-webkit-slider-thumb:hover { transform: scale(1.18); }
-  .slider::-webkit-slider-thumb:active { cursor: grabbing; animation: none; }
-  .slider:focus-visible::-webkit-slider-thumb {
-    box-shadow: 0 0 0 4px rgba(26, 19, 24, 0.18);
-    animation: none;
-  }
+  .slider::-webkit-slider-thumb:active { cursor: grabbing; }
   .slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: ${INK};
-    border: none;
-    cursor: grab;
-    box-shadow: 0 0 0 0 rgba(26, 19, 24, 0.28);
-    animation: slider-pulse 2.6s ease-out infinite;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--text-primary); border: none; cursor: grab;
   }
-  .slider::-moz-range-thumb:active { cursor: grabbing; animation: none; }
-  .slider:focus-visible::-moz-range-thumb {
-    box-shadow: 0 0 0 4px rgba(26, 19, 24, 0.18);
-    animation: none;
-  }
-  @keyframes slider-pulse {
-    0%   { box-shadow: 0 0 0 0   rgba(26, 19, 24, 0.32); }
-    70%  { box-shadow: 0 0 0 9px rgba(26, 19, 24, 0);    }
-    100% { box-shadow: 0 0 0 0   rgba(26, 19, 24, 0);    }
-  }
-
   .slider-hint {
-    position: absolute;
-    top: 38px;
-    transform: translateX(-50%);
-    display: inline-flex;
-    align-items: center;
-    margin: 0;
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    color: ${INK_MUTED};
-    opacity: 0.7;
-    white-space: nowrap;
-    pointer-events: none;
+    position: absolute; top: 36px; transform: translateX(-50%);
+    display: inline-flex; align-items: center; margin: 0;
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 11px; letter-spacing: 0.04em; color: var(--text-muted);
+    opacity: 0.75; white-space: nowrap; pointer-events: none;
     transition: left 80ms ease-out;
   }
-  .slider-hint :global(em) {
-    font-style: italic;
-  }
+  .slider-hint :global(em) { font-style: italic; }
   .slider-hint .hint-arrow {
-    display: inline-block;
-    width: 12px;
-    text-align: center;
-    font-style: normal;
-    font-size: 11px;
-    transition: opacity 200ms ease;
+    display: inline-block; width: 12px; text-align: center; font-style: normal;
+    font-size: 11px; transition: opacity 200ms ease;
   }
-  .slider-hint .hint-l {
-    margin-right: 8px;
-    opacity: var(--lfade, 1);
-  }
-  .slider-hint .hint-r {
-    margin-left: 8px;
-    opacity: var(--rfade, 1);
-  }
+  .slider-hint .hint-l { margin-right: 8px; opacity: var(--lfade, 1); }
+  .slider-hint .hint-r { margin-left: 8px; opacity: var(--rfade, 1); }
 
   .tier-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    font-size: 14px;
-    letter-spacing: 0.015em;
+    display: flex; justify-content: space-between; gap: 16px; max-width: 460px;
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 13.5px; letter-spacing: 0.015em; font-style: italic;
   }
-  .tier {
-    transition: color 320ms ease, opacity 320ms ease;
-  }
+  .tier { transition: color 320ms ease, opacity 320ms ease; }
   .tier-right { text-align: right; }
-  .tier.is-on  { color: ${INK};       opacity: 1;    }
-  .tier.is-dim { color: ${INK_MUTED}; opacity: 0.42; }
+  .tier.is-on  { color: var(--text-primary); opacity: 1; }
+  .tier.is-dim { color: var(--text-muted); opacity: 0.5; }
 
-  .caption {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.55;
-    color: ${INK_MUTED};
-    letter-spacing: 0.005em;
-    text-align: center;
-    font-style: italic;
+  /* Cross-link to the other two doors. */
+  .follow-next {
+    margin: 34px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 14px; line-height: 1.6; color: var(--text-muted, rgba(61, 54, 48, 0.6));
   }
+  .follow-next a {
+    color: var(--text-secondary, rgba(61, 54, 48, 0.82));
+    text-decoration: underline; text-decoration-color: var(--text-muted, rgba(61, 54, 48, 0.4));
+    text-underline-offset: 3px; text-decoration-thickness: 1px;
+    transition: color 200ms, text-decoration-color 200ms;
+  }
+  .follow-next a:hover { color: var(--text-primary); text-decoration-color: var(--text-primary); }
 
-  .cta-row {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 18px;
-    min-height: 28px;
-  }
-  .error {
-    font-size: 13px;
-    font-style: italic;
-    color: ${INK_MUTED};
-  }
-  .cta {
-    background: transparent;
-    border: none;
-    /* Tap target — Apple HIG ≥ 44pt. Pad and back the inline rhythm
-       out so the button reads as a 22px word but registers as a 44px
-       hit-rect. */
-    padding: 11px 16px;
-    margin: -11px -16px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 22px;
-    color: ${INK};
-    letter-spacing: -0.005em;
-    transition: opacity 200ms ease;
-  }
-  .cta:hover:not(:disabled) { opacity: 0.62; }
-  .cta:disabled { opacity: 0.32; cursor: default; }
-  .cta:focus { outline: none; }
-  .cta:focus-visible {
-    outline: none;
-    text-decoration: underline;
-    text-underline-offset: 6px;
-    text-decoration-thickness: 1px;
+  .primer-coda {
+    margin: 52px 0 0; text-align: left; font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 20px; font-style: italic; color: var(--text-primary);
+    letter-spacing: 0.005em; opacity: 0.72;
   }
 
-  .watermark {
-    position: fixed;
-    bottom: 22px;
-    right: clamp(24px, 6vw, 120px);
-    z-index: 10;
-    font-size: 22px;
-    font-style: italic;
-    color: ${INK};
-    pointer-events: none;
-  }
-  .watermark :global(em) { font-style: italic; }
-
-  .done-wrap {
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 96px clamp(24px, 6vw, 80px);
-  }
-  .done-msg {
-    width: 100%;
-    max-width: 540px;
-    text-align: center;
-    animation: done-fade 720ms ease-out both;
-  }
-  .done-headline {
-    margin: 0 0 14px;
-    font-size: 28px;
-    line-height: 1.3;
-    color: ${INK};
-    letter-spacing: -0.01em;
-  }
-  .done-sub {
-    margin: 0;
-    font-size: 16px;
-    line-height: 1.55;
-    color: ${INK_MUTED};
-    font-style: italic;
-    letter-spacing: 0.005em;
-  }
-  @keyframes done-fade {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  @media (max-width: 600px) {
-    .nav-brand { font-size: 24px; top: calc(18px - 10px); left: calc(22px - 8px); }
-    .watermark { font-size: 20px; bottom: 18px; right: 22px; }
-    .form { gap: 48px; }
-    .field input { font-size: 20px; }
-    .amount-value { font-size: 32px; }
-    .cta { font-size: 20px; }
-    .done-headline { font-size: 24px; }
-    .done-sub { font-size: 15px; }
+  @media (max-width: 640px) {
+    .primer-main { padding: 2rem 24px 4rem; }
+    .follow-hero { font-size: 25px; }
+    .follow-lede { font-size: 15.5px; }
+    .follow-field input { font-size: 17px; }
+    .primer-coda { font-size: 18px; margin-top: 44px; }
   }
 `;
