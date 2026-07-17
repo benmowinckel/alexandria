@@ -80,87 +80,89 @@ export default function JoinCTA({
 
       <h1 className="primer-h1">become a founding member.</h1>
 
-      {/* The pitch — the homepage's free-sample frame carried to the counter
-          (founder direction 2026-07-17): the tool is the sample and stays free;
-          the community is the paid part, priced in throwaway money (two
-          coffees, one Uber ride) so the reader's own spending habits do the
-          arguing. The close is the founder's own sentence ("support the
-          project, and be a founding member") — no founding-number pitch, no
-          "thing" anywhere on the page (his notes, same day). Prose is
-          proper-grammar per the settled Taste boundary (2026-07-01);
-          lowercase stays on the marks (title, button, eyebrow). */}
+      {/* One orienting line, then the deal as a scannable ladder (founder
+          notes 2026-07-17: the dense paragraph read confusing and
+          overwhelming — mirror /start's short-lines-plus-fine-print skeleton
+          instead). The ladder leads with the price words — Free / Free / $10
+          — in his exact order: three-friends-free, first-month-free +
+          cancel-anytime + just-try-it, then $10 with the throwaway anchor
+          (two coffees, one Uber). The waive escape rides quieter beneath
+          ("we just want people to join"), and the penny-pincher line, said
+          nicely, is the wink under the button. */}
       <p className="primer-lede">
-        The tool is the free sample &mdash; yours forever, free either way.
-        The community is the paid part: two coffees a month, one Uber ride
-        ($10, and the first month is free). Think how easily you spend that.
-        So just spend it &mdash; support the project, and be a founding
-        member.
+        The tool is the free sample. This is the community around it.
       </p>
+
+      <div className="join-terms">
+        <p className="join-line">
+          Free if you bring three friends in &mdash; everyone gets a referral
+          code to share.
+        </p>
+        <p className="join-line">
+          Free for the first month either way. Cancel anytime &mdash; just
+          try it and see how you like it.
+        </p>
+        <p className="join-line">
+          Then it&rsquo;s $10 a month: two coffees, or one Uber ride. A
+          dollar there is the same as a dollar here.
+        </p>
+        <p className="join-waive">
+          If $10 is difficult right now,{' '}
+          <a href="mailto:benmowinckel@gmail.com?subject=waive%20it">message me</a>{' '}
+          and I&rsquo;ll waive it &mdash; we just want people to join.
+        </p>
+      </div>
 
       <a className="join-btn" href={joinUrl}>
         join with github
       </a>
 
-      {/* The referral pitch — first-class, not fine print (founder note
-          2026-07-17: "thats the main thing we want them to do"). The one move
-          we want from every member: bring your people. Sits directly under the
-          button, above the enter-a-code field so the two sides of the mechanic
-          read in order: you'll GET a code; if you HAVE one, it goes here. */}
-      <p className="join-referral">
-        Once you&rsquo;re in, you get a referral code &mdash; when three
-        friends join with it, your membership is free for good. Bring your
-        people.
+      <p className="join-hint">
+        a very small decision &mdash; nobody penny-pinches coffee.
       </p>
 
-      {/* Have-a-code field — subtle, for someone told a code with no ?ref= link.
-          Live-validated; when valid the code rides the join URL above. */}
-      <div className="join-code">
-        <label className="join-code-label" htmlFor="join-code-input">
-          have a referral code?
-        </label>
-        <div className="join-code-row">
-          <input
-            id="join-code-input"
-            type="text"
-            inputMode="text"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            placeholder="their github username"
-            aria-label="referral code (a github username)"
-            value={typedRef}
-            onChange={(e) => setTypedRef(e.target.value)}
-          />
-          {typedRef.trim() && (
-            <span className="join-code-status" aria-live="polite">
-              {typedState === 'checking'
-                ? 'checking…'
-                : typedValid
-                  ? 'applied ✓'
-                  : typedState === 'invalid'
-                    ? 'not found'
-                    : ''}
-            </span>
-          )}
+      {/* The fine print — everything that isn't the deal, grouped under one
+          hairline like /start's details zone: tool-free-forever, the
+          founding-bet honesty (2026-07-09 verdict, kept), and the
+          have-a-code field for someone told a code with no ?ref= link
+          (live-validated; when valid the code rides the join URL above). */}
+      <div className="join-details">
+        <p>
+          You&rsquo;re never paying for the tool &mdash; that&rsquo;s yours,
+          free forever. And it&rsquo;s early: you&rsquo;re founding the
+          community, not joining it finished.
+        </p>
+        <div className="join-code">
+          <label className="join-code-label" htmlFor="join-code-input">
+            have a referral code?
+          </label>
+          <div className="join-code-row">
+            <input
+              id="join-code-input"
+              type="text"
+              inputMode="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="their github username"
+              aria-label="referral code (a github username)"
+              value={typedRef}
+              onChange={(e) => setTypedRef(e.target.value)}
+            />
+            {typedRef.trim() && (
+              <span className="join-code-status" aria-live="polite">
+                {typedState === 'checking'
+                  ? 'checking…'
+                  : typedValid
+                    ? 'applied ✓'
+                    : typedState === 'invalid'
+                      ? 'not found'
+                      : ''}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* The deal — the escape hatches, quiet below: founding not joining
-          (the 2026-07-09 honesty verdict, demoted here), the tool never costs
-          anything, and the genuine can't-afford-it escape. The referral deal
-          moved UP out of here (it's the main ask, not a caveat). The
-          generosity is what makes the "just spend it" shove above fair: if
-          $10 is throwaway money for you, spend it; if it genuinely isn't,
-          it's waived. */}
-      <p className="join-deal">
-        It&rsquo;s early &mdash; you&rsquo;re not joining a finished
-        community, you&rsquo;re founding one. And you&rsquo;re never paying
-        for the tool &mdash; that&rsquo;s a file on your machine, free
-        forever, so leaving costs nothing. If $10 is real money for you right
-        now,{' '}
-        <a href="mailto:benmowinckel@gmail.com?subject=waive%20it">message me</a>{' '}
-        and I&rsquo;ll waive it.
-      </p>
 
       <JoinInterest refCode={effectiveRef || undefined} />
 

@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: '/join',
   title: 'join alexandria.',
   description:
-    'the tool is free forever; the community is two coffees a month — one uber ride, or free when three friends join with your code. become a founding member.',
+    'free with three friends, free for the first month, then $10 — two coffees, or one uber ride. become a founding member.',
 });
 
 // The founding-member JOIN — the paid half of the two things. The tool (the run)
@@ -17,20 +17,21 @@ export const metadata = pageMetadata({
 // marketplace, the tribe. Signing in with GitHub starts the trial ($10/mo, first
 // month free, free with 3 kin, or email-to-waive) and assigns your number.
 //
-// The pitch is the homepage's FREE-SAMPLE frame, carried to the counter
-// (founder direction 2026-07-17, mirroring the /start radical-simplicity
-// pass): the tool is the sample and stays free; the community is the paid
-// part, priced in throwaway money — two coffees a month, one Uber ride — so
-// the reader's own spending does the arguing, and the close is his sentence:
-// "support the project, and be a founding member". His same-day notes: never
-// say "thing", no founding-number pitch, and the REFERRAL is the main ask —
-// so the three-friends deal sits first-class under the button (join-referral),
-// not in the fine print. The founding-bet honesty (founder verdict
-// 2026-07-09: never sell the library/marketplace as arrived value) survives
-// in the deal line ("you're founding one"). No roster pitch from the outside
-// (who's in is visible once you're in, never the sell). A "no" has its own
-// path: the JoinInterest email capture below the deal — every decline leaves
-// a contactable address (the reach the community gets recruited from).
+// The pitch is a DEAL LADDER under the homepage's free-sample frame (founder
+// notes 2026-07-17 — the paragraph version read confusing and overwhelming;
+// "seem simpler, like the start page"): one orienting line, then three short
+// scannable lines led by the price words, in his exact order — Free (three
+// friends join with your code), Free (first month, cancel anytime, just try
+// it), then $10 (two coffees, one Uber ride — a dollar there is a dollar
+// here). The waive escape sits quieter beneath ("we just want people to
+// join"), the penny-pincher line said nicely is the wink under the button
+// ("nobody penny-pinches coffee"), and everything else — tool-free-forever,
+// the founding-bet honesty (2026-07-09 verdict), the have-a-code field —
+// drops below a hairline like /start's fine print. No roster pitch from the
+// outside (who's in is visible once you're in, never the sell). A "no" has
+// its own path: the JoinInterest email capture below the fine print — every
+// decline leaves a contactable address (the reach the community gets
+// recruited from).
 //
 // Composition mirrors /start: one flush-left editorial column, an accent
 // eyebrow ("the community") as the spine's anchor — the paid half, twinned
@@ -139,17 +140,44 @@ export default async function JoinPage({
           font-feature-settings: "kern" 1, "liga" 1, "dlig" 1;
         }
 
+        /* One orienting line — short, so it reads as a caption, not a pitch. */
         .primer-lede {
-          margin: 0 0 40px; max-width: 460px;
+          margin: 0 0 32px; max-width: 460px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 17px; line-height: 1.6; color: var(--text-secondary);
           text-wrap: pretty;
         }
 
+        /* The deal ladder — three short lines, air between, each led by the
+           price word (Free / Free / $10) so the terms scan in one pass.
+           Mirrors /start's step lines: the ladder IS the page. */
+        .join-terms { max-width: 460px; }
+        .join-line {
+          margin: 0 0 14px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 17px; line-height: 1.55; letter-spacing: 0.01em;
+          color: var(--text-primary); text-wrap: pretty;
+        }
+        /* The waive escape — quieter than the ladder, still above the button:
+           the generosity that keeps the ask fair. */
+        .join-waive {
+          margin: 20px 0 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 14px; line-height: 1.65; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
+        .join-waive a {
+          color: var(--text-secondary, rgba(26, 19, 24, 0.82));
+          text-decoration: underline; text-decoration-color: var(--text-muted, rgba(26, 19, 24, 0.4));
+          text-underline-offset: 3px; text-decoration-thickness: 1px;
+          transition: color 200ms, text-decoration-color 200ms;
+        }
+        .join-waive a:hover { color: var(--text-primary); text-decoration-color: var(--text-primary); }
+
         /* The one action on the page. Filled, calm, hung from the left spine. */
         .join-btn {
           display: inline-flex; align-items: center; justify-content: center;
-          padding: 14px 30px; border-radius: 9px;
+          margin: 30px 0 0; padding: 14px 30px; border-radius: 9px;
           background: var(--text-primary); color: var(--bg-primary);
           font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 17px;
           letter-spacing: 0.01em; text-decoration: none; cursor: pointer;
@@ -158,34 +186,29 @@ export default async function JoinPage({
         .join-btn:hover { opacity: 0.85; }
         .join-btn:active { transform: scale(0.99); }
 
-        /* The referral pitch — the main ask, so it reads at body weight
-           (secondary ink, 15px), clearly above the muted fine print. */
-        .join-referral {
-          margin: 28px 0 0; max-width: 450px;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 15px; line-height: 1.65; letter-spacing: 0.01em;
-          color: var(--text-secondary, rgba(26, 19, 24, 0.82)); text-align: left;
-          font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
+        /* The wink under the button — the penny-pincher line, said nicely. */
+        .join-hint {
+          margin: 14px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 13px; letter-spacing: 0.04em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
         }
 
-        .join-deal {
-          margin: 32px 0 0; max-width: 450px; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 14px; line-height: 1.7; letter-spacing: 0.01em;
-          color: var(--text-muted, rgba(26, 19, 24, 0.55)); text-align: left;
-          font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
+        /* The fine print — everything that isn't the deal, under one hairline
+           (mirrors /start's details zone). */
+        .join-details {
+          margin: 36px 0 0; padding-top: 24px; width: 100%; max-width: 460px;
+          border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
         }
-        .join-deal a {
-          color: var(--text-secondary, rgba(26, 19, 24, 0.82));
-          text-decoration: underline; text-decoration-color: var(--text-muted, rgba(26, 19, 24, 0.4));
-          text-underline-offset: 3px; text-decoration-thickness: 1px;
-          transition: color 200ms, text-decoration-color 200ms;
+        .join-details > p {
+          margin: 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 13px; line-height: 1.6; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
         }
-        .join-deal a:hover { color: var(--text-primary); text-decoration-color: var(--text-primary); }
 
-        /* Have-a-referral-code field — subtle by design: it sits under the join
-           button for the person told a code with no ?ref= link, and must never
+        /* Have-a-referral-code field — subtle by design: it sits in the fine
+           print for the person told a code with no ?ref= link, and must never
            compete with the button. Small label, low-contrast, single line. */
-        .join-code { margin: 20px 0 0; max-width: 450px; width: 100%; }
+        .join-code { margin: 18px 0 0; max-width: 450px; width: 100%; }
         .join-code-label {
           display: block; margin: 0 0 8px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
