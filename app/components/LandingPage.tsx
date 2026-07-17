@@ -173,7 +173,7 @@ function HomeInstall() {
         free sample
       </Link>
       <span className="cta-sub">
-        one command, five minutes &mdash; one delete undoes it
+        if even slightly interested in the product &mdash; just try it
       </span>
     </div>
   );
@@ -2685,7 +2685,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           flex-direction: column;
           /* Sections sit a third down the column, not jammed at the top
              (founder, 2026-07-17) — composed against the seal opposite. */
-          margin-top: 112px;
+          margin-top: 136px;
         }
         /* Header — small title + rotating caret, a compact click target.
            No dividers between sections (they flow like the old letter). */
