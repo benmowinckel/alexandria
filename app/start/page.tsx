@@ -44,11 +44,9 @@ export default async function StartPage({
 
       <main className="primer-main">
         <p className="primer-eyebrow">the free tool</p>
+        {/* No lede (2026-07-16, radical simplicity): the two steps are the
+            page; the lede's privacy line lives in the fine print below. */}
         <h1 className="primer-h1">becoming an alexandrian</h1>
-        <p className="primer-lede">
-          one line adds it to the ai you already use. it runs on your own files
-          &mdash; nothing is ever sent to us.
-        </p>
 
         <div className="start-desktop">
           {/* StartCTA carries the command, the curl|bash reassurance, and the
@@ -150,7 +148,44 @@ export default async function StartPage({
 
         /* CTA — the copy-block command is the single primary action; the whole
            cluster hangs from the left spine. */
-        .cta-section { display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin: 0; width: 100%; }
+        .cta-section { display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin: 12px 0 0; width: 100%; }
+
+        /* The two steps — readable instructions, faint numerals; the page IS
+           these two lines plus the block between them. */
+        .step-line {
+          margin: 0 0 12px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 17px; letter-spacing: 0.01em;
+          color: var(--text-primary);
+        }
+        .step-two { margin: 28px 0 6px; }
+        .step-num { color: var(--text-muted, rgba(26, 19, 24, 0.45)); font-variant-numeric: lining-nums; }
+        .step-copied {
+          font-style: italic; font-size: 14px;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
+        .step-agents {
+          margin: 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 14px; line-height: 1.6;
+          color: var(--text-secondary, rgba(26, 19, 24, 0.75));
+        }
+
+        /* The fine print — every caveat, grouped under one hairline, quiet
+           enough to skim past and small enough never to compete. */
+        .start-details {
+          margin: 36px 0 0; padding-top: 24px; width: 100%; max-width: 460px;
+          border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
+          display: flex; flex-direction: column; gap: 8px;
+        }
+        .start-details p {
+          margin: 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 13px; line-height: 1.6; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
+        .start-details code {
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          font-size: 11.5px;
+        }
 
         /* Invite banner — warmer, personal, sits above the command when a kin
            link brought them here (only after the ref validates). */

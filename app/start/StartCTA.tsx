@@ -109,23 +109,21 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         <p className="install-invite">@{validRef} invited you to alexandria.</p>
       )}
 
+      {/* Radically simple (founder, 2026-07-16): the page IS two steps —
+          what to copy, where to paste. Everything else lives below in the
+          fine print, present but never in the way. */}
+      <p className="step-line"><span className="step-num">1 &mdash;</span> copy this line</p>
       <button type="button" className="install-block" onClick={copy} aria-label="copy the install command">
         <code className="install-cmd">{cmd}</code>
         <span className="install-copy">{copied ? ICON_CHECK : ICON_COPY}</span>
       </button>
-      <p className="install-hint">
-        {copied ? 'copied — now paste it into your coding agent.' : 'copy, then paste it into your coding agent.'}
+
+      <p className="step-line step-two">
+        <span className="step-num">2 &mdash;</span> paste it into your coding agent
+        {copied && <span className="step-copied"> (copied &mdash; go ahead)</span>}
       </p>
-      <p className="install-where">
-        claude code · cursor · codex · factory. in cowork it works too &mdash; one extra settings step and it walks you through it. a plain chat app won&rsquo;t work &mdash; you need one of the coding agents above.
-      </p>
-      {/* The no-agent rescue — one quiet line so a visitor with no coding
-          agent isn't dead-ended; the with-agent majority skims past it. */}
-      <p className="install-where">
-        don&rsquo;t have one? get claude code: <code>npm install -g @anthropic-ai/claude-code</code> &mdash; then paste the line above into it.
-      </p>
-      <p className="install-where">
-        on windows? run it inside your coding agent, or in git bash / wsl.
+      <p className="step-agents">
+        claude code &middot; cursor &middot; codex &middot; factory &mdash; it walks you through the rest.
       </p>
 
       {validRef && (
@@ -134,11 +132,14 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         </p>
       )}
 
-      {/* curl|bash reassurance — sits with the command it's about (their own
-          agent reads the open script), before the do-it-later net below. */}
-      <p className="primer-trust">
-        not sure? paste it in and ask your agent what it does &mdash; it reads every line.
-      </p>
+      {/* The fine print — every caveat and reassurance, grouped and quiet. */}
+      <div className="start-details">
+        <p>yours &mdash; it runs on your own files; nothing is ever sent to us.</p>
+        <p>careful? paste it in and ask your agent what it does &mdash; it reads every line.</p>
+        <p>no coding agent? get claude code: <code>npm install -g @anthropic-ai/claude-code</code> &mdash; then paste the line above into it.</p>
+        <p>in cowork it works too &mdash; one extra settings step, and it walks you through it. a plain chat app won&rsquo;t work.</p>
+        <p>on windows, run it inside your coding agent, or in git bash / wsl.</p>
+      </div>
 
       {/* The do-it-later net — hairline-separated, quieter than the command
           above (the command is the hero; this catches the not-right-now). */}
