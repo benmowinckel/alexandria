@@ -745,10 +745,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             {/* Not the bare name — "the answer is Alexandria" doesn't parse
                 (founder, 2026-07-16); the company was founded to ANSWER the
                 question, and the three functions below are how. */}
-            <p className="fork-line front-alex">Alexandria was founded to answer this question &mdash;</p>
-            <p className="front-fn"><span className="fn-label">idea</span><span className="fn-text">explains why we must keep thinking &mdash; and how</span></p>
-            <p className="front-fn"><span className="fn-label">community</span><span className="fn-text">connects those who, even slightly, agree</span></p>
-            <p className="front-fn"><span className="fn-label">sample</span><span className="fn-text">provides infrastructure so anyone can join</span></p>
+            {/* Each line is a COMPLETE sentence (founder: a bare "explains…"
+                after a header interrupt "doesnt make sense… thats not a
+                start of a sentence") — the We-anaphora reads straight
+                through even if the eye skips the faint labels. */}
+            <p className="fork-line front-alex">Alexandria was founded to answer this question.</p>
+            <p className="front-fn"><span className="fn-label">idea</span><span className="fn-text">We explain why we must keep thinking &mdash; and how.</span></p>
+            <p className="front-fn"><span className="fn-label">community</span><span className="fn-text">We connect those who, even slightly, agree.</span></p>
+            <p className="front-fn"><span className="fn-label">sample</span><span className="fn-text">We provide infrastructure so anyone can join.</span></p>
           </div>
         </div>
         <div className="top-inner" />
@@ -2177,6 +2181,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           flex: 1;
           min-height: 0;
           justify-content: flex-start;
+          /* Lifts the closing group so the CTA row's bottom lands on the
+             big wordmark's baseline across the slide (founder: "the bottom
+             of the CTAs bottom aligned with the bottom of the alexandria
+             text"); quiet-links keep the lower tier with the dict lines. */
+          padding-bottom: 84px;
           /* Squeeze the column — narrower text width pushes the left
              edge inward (right edge unchanged because right-lower is
              flex-end aligned). */
@@ -2649,6 +2658,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .secs {
           display: flex;
           flex-direction: column;
+          /* Sections sit a third down the column, not jammed at the top
+             (founder, 2026-07-17) — composed against the seal opposite. */
+          margin-top: 128px;
         }
         /* Header — small title + rotating caret, a compact click target.
            No dividers between sections (they flow like the old letter). */
@@ -2722,7 +2734,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            no fixed stage). Thin quiet scrollbar as the more-content cue. */
         @media (min-width: 900px) {
           .sec-body-inner {
-            max-height: 300px;
+            max-height: 250px;
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: var(--theme-border-soft) transparent;
