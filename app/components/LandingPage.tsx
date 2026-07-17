@@ -297,25 +297,6 @@ function FrontFilm() {
   );
 }
 
-// Balanced two-column split by character weight. WebKit renders CSS
-// multicol as a zero-height track inside an animated 0fr->1fr grid (the
-// invisible-body bug, 2026-07-17, reproduced: gridTemplateRows "1px"),
-// so the columns are built explicitly and split deterministically.
-function splitColumns(paras: string[]): [string[], string[]] {
-  if (paras.length < 2) return [paras, []];
-  const len = (arr: string[]) => arr.reduce((n, p) => n + p.length, 0);
-  let best = 1;
-  let bestDiff = Infinity;
-  for (let cut = 1; cut < paras.length; cut++) {
-    const diff = Math.abs(len(paras.slice(0, cut)) - len(paras.slice(cut)));
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      best = cut;
-    }
-  }
-  return [paras.slice(0, best), paras.slice(best)];
-}
-
 export default function LandingPage({ brandClassName = '' }: Props) {
   const [themeIdx, setThemeIdx] = useState(0);
   // Letter scroll cue — "keep reading" sits at the box's bottom over the
@@ -901,9 +882,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           <span className="sec-caret" aria-hidden />
                         </button>
                         <p className="sec-lead">{s.lead}</p>
-                        <div className="sec-body"><div className="sec-body-inner"><div className="sec-cols">{splitColumns(s.body).map((col, ci) => col.length > 0 && (
-                          <div key={ci} className="sec-col">{col.map((para, i) => <p key={i}>{para}</p>)}</div>
-                        ))}</div></div></div>
+                        <div className="sec-body"><div className="sec-body-inner">{s.body.map((para, i) => <p key={i}>{para}</p>)}</div></div>
                       </div>
                     );
                   })}
@@ -2788,21 +2767,17 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            room, and the rule below may slide within the stage. Mobile
            keeps the natural single-column flow. */
         @media (min-width: 900px) {
-          .sec-cols {
-            display: flex;
-            gap: 30px;
-            align-items: flex-start;
+          /* Normal paragraphs (founder, 2026-07-17: "don't split it into
+             two sections") — one column, quieter size, capped measure so
+             the long lines stay readable. Higher specificity than the
+             base body rule below it in the sheet (same selector in a
+             media query loses on source order). */
+          .secs .sec .sec-body-inner {
+            max-width: 600px;
           }
-          .sec-col {
-            flex: 1 1 0;
-            min-width: 0;
-          }
-          /* Higher specificity than the base body rule below it in the
-             sheet (same selector in a media query loses on source order —
-             this bug shipped the 15px override unnoticed). */
           .secs .sec .sec-body-inner p {
-            font-size: 13px;
-            line-height: 1.52;
+            font-size: 14px;
+            line-height: 1.55;
           }
           .sec-lead {
             max-height: 160px;
