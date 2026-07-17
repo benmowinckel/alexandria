@@ -132,12 +132,16 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         </p>
       )}
 
-      {/* The fine print — every caveat and reassurance, grouped and quiet. */}
+      {/* The fine print — one concern per line, ordered by how many readers
+          need it; each line self-contained and instantly parseable (the
+          founder's bar: simple, no noise, but never so compressed it turns
+          unclear). */}
       <div className="start-details">
-        <p>yours &mdash; it runs on your own files; nothing is ever sent to us.</p>
-        <p>careful? paste it in and ask your agent what it does &mdash; it reads every line.</p>
-        <p>no coding agent? get claude code: <code>npm install -g @anthropic-ai/claude-code</code> &mdash; then paste the line above into it.</p>
-        <p>in cowork it works too &mdash; one extra settings step, and it walks you through it. a plain chat app won&rsquo;t work.</p>
+        <p>it all runs on your own computer &mdash; nothing is ever sent to us.</p>
+        <p>unsure? paste it in and ask your agent what it does &mdash; it can read the whole script first.</p>
+        <p>a plain chat app won&rsquo;t work &mdash; it has to be one of the coding agents above.</p>
+        <p>no coding agent yet? get claude code: <code>npm install -g @anthropic-ai/claude-code</code> &mdash; then paste the line into it.</p>
+        <p>using cowork? one extra settings step &mdash; it walks you through it.</p>
         <p>on windows, run it inside your coding agent, or in git bash / wsl.</p>
       </div>
 
