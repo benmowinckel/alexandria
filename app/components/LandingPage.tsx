@@ -899,8 +899,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   <p className="statement-beat action-beat">
                     <em>See this as a free food sample at the supermarket
                     &mdash; the only reason you&rsquo;d say no is if
-                    you&rsquo;re allergic&hellip; reading this is proof
-                    you&rsquo;re not, and have enough interest to try.</em>
+                    you&rsquo;re allergic&hellip; reading this far is proof
+                    you&rsquo;re not, and have at least enough interest to try.</em>
                   </p>
                   <p className="statement-beat action-beat action-beat-final">
                     <em>Just try it, if you don&rsquo;t like it, bin it
