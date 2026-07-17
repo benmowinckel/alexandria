@@ -770,7 +770,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               are gone; hierarchy is size and air alone. */}
           <p className="front-lead">When ai can do everything humans can, what do we do?</p>
           <div className="front-fork">
-            <p className="fork-line front-alex">Founded with this question in mind &mdash;<br />here, in short, is our answer:</p>
+            <p className="fork-line front-alex">With this question in mind,<br />we built Alexandria to:</p>
             <p className="fork-line fork-ans">explain why we must keep thinking &mdash; and how</p>
             <p className="fork-line fork-ans">connect those who, even slightly, agree</p>
             <p className="fork-line fork-ans">provide free tools so anyone can join</p>
@@ -859,7 +859,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     flowing with no dividers between them. A lead paragraph
                     shows; a rotating caret reveals the rest. Accordion (one
                     open at a time) keeps the fixed stage bounded. */}
-                <p className="secs-kicker">the answer, in full</p>
+                <p className="secs-kicker">what alexandria is</p>
                 <div className="secs">
                   {SECTIONS.map((s) => {
                     const isOpen = openPillar === s.title;
