@@ -305,6 +305,42 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // Expandable overviews (accordion — one open at a time — so the fixed
   // back-slide stage can never overflow).
   const [openPillar, setOpenPillar] = useState<string | null>(null);
+  // Focus-mode controller — MOUSEMOVE only, never mouseenter/leave: focus
+  // mode moves the layout, and browsers dispatch hover-boundary events when
+  // elements shift under a stationary cursor, so enter/leave semantics
+  // self-trigger (the 2026-07-17 auto-cascade: hovering why slid the block
+  // up, what swept under the cursor, stole the open, reshuffled again).
+  // mousemove fires only on physical pointer movement — layout shifts are
+  // silent — and the settle lockout stops a moving pointer from switching
+  // sections mid-transition.
+  const focusLockUntil = useRef(0);
+  // Hover-intent: a section opens only when the pointer RESTS on it
+  // (~160ms), never on transit — a path crossing sections en route opens
+  // nothing, so the layout slide can't trap the wrong section under the
+  // cursor. The short post-change lock covers the animation window.
+  const focusPending = useRef<{ title: string | null; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const handleSecsPointer = (e: React.MouseEvent) => {
+    const el = e.target as HTMLElement;
+    const sec = el.closest?.('.sec');
+    const title = sec?.getAttribute('data-sec') ?? null;
+    // Gaps inside the sections block keep the current state.
+    if (title === null && el.closest?.('.secs')) return;
+    if (title === openPillar) {
+      if (focusPending.current) { clearTimeout(focusPending.current.timer); focusPending.current = null; }
+      return;
+    }
+    if (Date.now() < focusLockUntil.current) return;
+    if (focusPending.current?.title === title) return;
+    if (focusPending.current) clearTimeout(focusPending.current.timer);
+    focusPending.current = {
+      title,
+      timer: setTimeout(() => {
+        focusPending.current = null;
+        focusLockUntil.current = Date.now() + 560;
+        setOpenPillar(title);
+      }, 160),
+    };
+  };
   // The founder's own text (2026-07-16) — his why/what/how, set verbatim
   // (mechanical cleanup only: typos, punctuation; no word choices touched).
   // Lead = each section's opening line as he wrote it; body = his remaining
@@ -746,7 +782,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               are gone; hierarchy is size and air alone. */}
           <p className="front-lead">When ai can do everything humans can, what do we do?</p>
           <div className="front-fork">
-            <p className="fork-line front-alex">Alexandria was founded with three things in mind.</p>
+            <p className="fork-line front-alex">Alexandria was founded to do three things.</p>
             <p className="fork-line fork-ans">explain why we must keep thinking &mdash; and how</p>
             <p className="fork-line fork-ans">connect those who, even slightly, agree</p>
             <p className="fork-line fork-ans">provide free tools so anyone can join</p>
@@ -787,7 +823,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               '<!-- with a fleeting thank you to fleetai.com -->',
           }}
         />
-        <div className="bottom-inner">
+        <div className="bottom-inner" onMouseMove={handleSecsPointer}>
           {/* TWO COLUMNS spanning full vertical height.
                 LEFT  : ornament (top, original padding-top preserved)
                         + wordmark/dict (bottom)
@@ -835,14 +871,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     flowing with no dividers between them. A lead paragraph
                     shows; a rotating caret reveals the rest. Accordion (one
                     open at a time) keeps the fixed stage bounded. */}
-                <div className="secs" onMouseLeave={() => setOpenPillar(null)}>
+                <div className="secs">
                   {SECTIONS.map((s) => {
                     const isOpen = openPillar === s.title;
                     return (
                       <div
                         key={s.title}
+                        data-sec={s.title}
                         className={`sec${isOpen ? ' is-open' : ''}`}
-                        onMouseEnter={() => setOpenPillar(s.title)}
                       >
                         <button
                           type="button"
@@ -2876,7 +2912,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           width: 402px;
           text-align: left;
           z-index: 3;
-          pointer-events: none;
         }
         /* Orientation robustness — the wall scales by cover while the stage
            scales by min(), so as the viewport squares up (below ~10:7) the
