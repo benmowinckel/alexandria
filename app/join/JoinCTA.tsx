@@ -82,23 +82,35 @@ export default function JoinCTA({
 
       {/* The pitch — the homepage's free-sample frame carried to the counter
           (founder direction 2026-07-17): the tool is the sample and stays free;
-          the community is the thing for sale behind it, priced in throwaway
-          money (two coffees, one Uber ride) so the reader's own spending habits
-          do the arguing. The founding-bet honesty (2026-07-09) moves to the
-          deal line below — the H1 still carries "founding member". Prose is
+          the community is the paid part, priced in throwaway money (two
+          coffees, one Uber ride) so the reader's own spending habits do the
+          arguing. The close is the founder's own sentence ("support the
+          project, and be a founding member") — no founding-number pitch, no
+          "thing" anywhere on the page (his notes, same day). Prose is
           proper-grammar per the settled Taste boundary (2026-07-01);
           lowercase stays on the marks (title, button, eyebrow). */}
       <p className="primer-lede">
         The tool is the free sample &mdash; yours forever, free either way.
-        The community is the thing for sale behind it. Membership costs two
-        coffees a month &mdash; one Uber ride ($10, and the first month is
-        free). Think how easily you spend that. So just spend it &mdash;
-        support the thing, and take your founding number.
+        The community is the paid part: two coffees a month, one Uber ride
+        ($10, and the first month is free). Think how easily you spend that.
+        So just spend it &mdash; support the project, and be a founding
+        member.
       </p>
 
       <a className="join-btn" href={joinUrl}>
         join with github
       </a>
+
+      {/* The referral pitch — first-class, not fine print (founder note
+          2026-07-17: "thats the main thing we want them to do"). The one move
+          we want from every member: bring your people. Sits directly under the
+          button, above the enter-a-code field so the two sides of the mechanic
+          read in order: you'll GET a code; if you HAVE one, it goes here. */}
+      <p className="join-referral">
+        Once you&rsquo;re in, you get a referral code &mdash; when three
+        friends join with it, your membership is free for good. Bring your
+        people.
+      </p>
 
       {/* Have-a-code field — subtle, for someone told a code with no ?ref= link.
           Live-validated; when valid the code rides the join URL above. */}
@@ -133,18 +145,19 @@ export default function JoinCTA({
         </div>
       </div>
 
-      {/* The deal — the escape hatches, quiet below the button: founding not
-          joining (the 2026-07-09 honesty verdict, demoted here), the three-kin
-          waiver, the tool never costs anything, and the genuine can't-afford-it
-          escape. The generosity is what makes the "just spend it" shove above
-          fair: if $10 is throwaway money for you, spend it; if it genuinely
-          isn't, it's waived. */}
+      {/* The deal — the escape hatches, quiet below: founding not joining
+          (the 2026-07-09 honesty verdict, demoted here), the tool never costs
+          anything, and the genuine can't-afford-it escape. The referral deal
+          moved UP out of here (it's the main ask, not a caveat). The
+          generosity is what makes the "just spend it" shove above fair: if
+          $10 is throwaway money for you, spend it; if it genuinely isn't,
+          it's waived. */}
       <p className="join-deal">
-        It&rsquo;s early &mdash; you&rsquo;re not joining a finished thing,
-        you&rsquo;re founding one. If three friends join with your referral
-        code, it&rsquo;s free for good. And you&rsquo;re never paying for the
-        tool &mdash; that&rsquo;s a file on your machine, free forever, so
-        leaving costs nothing. If $10 is real money for you right now,{' '}
+        It&rsquo;s early &mdash; you&rsquo;re not joining a finished
+        community, you&rsquo;re founding one. And you&rsquo;re never paying
+        for the tool &mdash; that&rsquo;s a file on your machine, free
+        forever, so leaving costs nothing. If $10 is real money for you right
+        now,{' '}
         <a href="mailto:benmowinckel@gmail.com?subject=waive%20it">message me</a>{' '}
         and I&rsquo;ll waive it.
       </p>

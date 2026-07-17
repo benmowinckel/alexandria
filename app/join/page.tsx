@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: '/join',
   title: 'join alexandria.',
   description:
-    'the tool is free forever; the community is two coffees a month — one uber ride. become a founding member.',
+    'the tool is free forever; the community is two coffees a month — one uber ride, or free when three friends join with your code. become a founding member.',
 });
 
 // The founding-member JOIN — the paid half of the two things. The tool (the run)
@@ -19,16 +19,18 @@ export const metadata = pageMetadata({
 //
 // The pitch is the homepage's FREE-SAMPLE frame, carried to the counter
 // (founder direction 2026-07-17, mirroring the /start radical-simplicity
-// pass): the tool is the sample and stays free; the community is the thing
-// for sale behind it, priced in throwaway money — two coffees a month, one
-// Uber ride — so the reader's own spending does the arguing, and the close
-// is "so just spend it — support the thing". The founding-bet honesty
-// (founder verdict 2026-07-09: never sell the library/marketplace as arrived
-// value) survives in the deal line ("you're founding one"). No roster pitch
-// from the outside (who's in is visible once you're in, never the sell). A
-// "no" has its own path: the JoinInterest email capture below the deal —
-// every decline leaves a contactable address (the reach the community gets
-// recruited from).
+// pass): the tool is the sample and stays free; the community is the paid
+// part, priced in throwaway money — two coffees a month, one Uber ride — so
+// the reader's own spending does the arguing, and the close is his sentence:
+// "support the project, and be a founding member". His same-day notes: never
+// say "thing", no founding-number pitch, and the REFERRAL is the main ask —
+// so the three-friends deal sits first-class under the button (join-referral),
+// not in the fine print. The founding-bet honesty (founder verdict
+// 2026-07-09: never sell the library/marketplace as arrived value) survives
+// in the deal line ("you're founding one"). No roster pitch from the outside
+// (who's in is visible once you're in, never the sell). A "no" has its own
+// path: the JoinInterest email capture below the deal — every decline leaves
+// a contactable address (the reach the community gets recruited from).
 //
 // Composition mirrors /start: one flush-left editorial column, an accent
 // eyebrow ("the community") as the spine's anchor — the paid half, twinned
@@ -155,6 +157,16 @@ export default async function JoinPage({
         }
         .join-btn:hover { opacity: 0.85; }
         .join-btn:active { transform: scale(0.99); }
+
+        /* The referral pitch — the main ask, so it reads at body weight
+           (secondary ink, 15px), clearly above the muted fine print. */
+        .join-referral {
+          margin: 28px 0 0; max-width: 450px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 15px; line-height: 1.65; letter-spacing: 0.01em;
+          color: var(--text-secondary, rgba(26, 19, 24, 0.82)); text-align: left;
+          font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
+        }
 
         .join-deal {
           margin: 32px 0 0; max-width: 450px; font-family: var(--font-serif), ui-serif, Georgia, serif;
