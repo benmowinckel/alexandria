@@ -124,8 +124,7 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
         <p className="primer-eyebrow">follow along</p>
         <h1 className="follow-hero">Not ready for the tool? Follow along as we build.</h1>
         <p className="follow-lede">
-          Leave your email &mdash; we&rsquo;ll keep you posted, and you can back
-          the project if you want to.
+          Leave your email &mdash; we&rsquo;ll keep you posted as we build.
         </p>
 
         {/* Primary action — the email. Underline field to match /join's doors. */}
@@ -156,7 +155,7 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
         {/* Optional support — clearly secondary, below the action. Free by
             default; the slider is there only if they want to chip in. */}
         <div className="follow-support">
-          <p className="follow-support-q">want to back us? it&rsquo;s free either way &mdash; drag if you&rsquo;d like to chip in.</p>
+          <p className="follow-support-q">It&rsquo;s free either way &mdash; drag the slider if you&rsquo;d like to support the project.</p>
           <div className="follow-amount">
             {amount === 0 ? (
               <span className="follow-amount-free"><em>free</em></span>
@@ -204,13 +203,6 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
             </span>
           </div>
         </div>
-
-        {/* The other two doors — a quiet cross-link so /follow doesn't read as a
-            dead end or a rival to /join. */}
-        <p className="follow-next">
-          Or: <Link href="/start">get the free tool</Link> &middot;{' '}
-          <Link href="/join">join the community</Link>.
-        </p>
 
         <p className="primer-coda"><em>keep thinking.</em></p>
       </main>
@@ -284,8 +276,10 @@ const styles = `
 
   /* Email — the primary action. Underline field + inline follow button, in the
      same editorial idiom as /join's doors. */
+  /* align-items: flex-end so the input's underline (its bottom border) lines
+     up with the bottom edge of the follow button (founder 2026-07-17). */
   .follow-field {
-    display: flex; align-items: baseline; gap: 14px;
+    display: flex; align-items: flex-end; gap: 14px;
     width: 100%; max-width: 460px;
   }
   .follow-field input {
@@ -304,7 +298,7 @@ const styles = `
     75%      { transform: translateX(3px);  border-bottom-color: #b3261e; }
   }
   .follow-cta {
-    flex-shrink: 0; align-self: center;
+    flex-shrink: 0;
     padding: 11px 24px; border-radius: 9px;
     background: var(--text-primary); color: var(--bg-primary);
     font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 16px;
@@ -394,19 +388,6 @@ const styles = `
   .tier-right { text-align: right; }
   .tier.is-on  { color: var(--text-primary); opacity: 1; }
   .tier.is-dim { color: var(--text-muted); opacity: 0.5; }
-
-  /* Cross-link to the other two doors. */
-  .follow-next {
-    margin: 34px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 14px; line-height: 1.6; color: var(--text-muted, rgba(61, 54, 48, 0.6));
-  }
-  .follow-next a {
-    color: var(--text-secondary, rgba(61, 54, 48, 0.82));
-    text-decoration: underline; text-decoration-color: var(--text-muted, rgba(61, 54, 48, 0.4));
-    text-underline-offset: 3px; text-decoration-thickness: 1px;
-    transition: color 200ms, text-decoration-color 200ms;
-  }
-  .follow-next a:hover { color: var(--text-primary); text-decoration-color: var(--text-primary); }
 
   .primer-coda {
     margin: 52px 0 0; text-align: left; font-family: var(--font-serif), ui-serif, Georgia, serif;
