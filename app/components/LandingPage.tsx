@@ -297,6 +297,25 @@ function FrontFilm() {
   );
 }
 
+// Balanced two-column split by character weight. WebKit renders CSS
+// multicol as a zero-height track inside an animated 0fr->1fr grid (the
+// invisible-body bug, 2026-07-17, reproduced: gridTemplateRows "1px"),
+// so the columns are built explicitly and split deterministically.
+function splitColumns(paras: string[]): [string[], string[]] {
+  if (paras.length < 2) return [paras, []];
+  const len = (arr: string[]) => arr.reduce((n, p) => n + p.length, 0);
+  let best = 1;
+  let bestDiff = Infinity;
+  for (let cut = 1; cut < paras.length; cut++) {
+    const diff = Math.abs(len(paras.slice(0, cut)) - len(paras.slice(cut)));
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = cut;
+    }
+  }
+  return [paras.slice(0, best), paras.slice(best)];
+}
+
 export default function LandingPage({ brandClassName = '' }: Props) {
   const [themeIdx, setThemeIdx] = useState(0);
   // Letter scroll cue — "keep reading" sits at the box's bottom over the
@@ -305,6 +324,33 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // Expandable overviews (accordion — one open at a time — so the fixed
   // back-slide stage can never overflow).
   const [openPillar, setOpenPillar] = useState<string | null>(null);
+  // Hover-intent controller — MOUSEMOVE only (layout shifts are silent to
+  // it, unlike hover-boundary events), 160ms dwell so transit opens
+  // nothing, settle lock through the animation. Touch gets tap-toggle via
+  // onClick; desktop click force-opens as a fallback but never closes.
+  const focusLockUntil = useRef(0);
+  const focusPending = useRef<{ title: string | null; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const handleSecsPointer = (e: React.MouseEvent) => {
+    const el = e.target as HTMLElement;
+    const sec = el.closest?.('.sec');
+    const title = sec?.getAttribute('data-sec') ?? null;
+    if (title === null && el.closest?.('.secs')) return;
+    if (title === openPillar) {
+      if (focusPending.current) { clearTimeout(focusPending.current.timer); focusPending.current = null; }
+      return;
+    }
+    if (Date.now() < focusLockUntil.current) return;
+    if (focusPending.current?.title === title) return;
+    if (focusPending.current) clearTimeout(focusPending.current.timer);
+    focusPending.current = {
+      title,
+      timer: setTimeout(() => {
+        focusPending.current = null;
+        focusLockUntil.current = Date.now() + 560;
+        setOpenPillar(title);
+      }, 160),
+    };
+  };
   // The founder's own text (2026-07-16) — his why/what/how, set verbatim
   // (mechanical cleanup only: typos, punctuation; no word choices touched).
   // Lead = each section's opening line as he wrote it; body = his remaining
@@ -787,7 +833,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               '<!-- with a fleeting thank you to fleetai.com -->',
           }}
         />
-        <div className="bottom-inner">
+        <div className="bottom-inner" onMouseMove={handleSecsPointer}>
           {/* TWO COLUMNS spanning full vertical height.
                 LEFT  : ornament (top, original padding-top preserved)
                         + wordmark/dict (bottom)
@@ -843,7 +889,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         key={s.title}
                         data-sec={s.title}
                         className={`sec${isOpen ? ' is-open' : ''}`}
-                        onClick={() => setOpenPillar(isOpen ? null : s.title)}
+                        onClick={() => {
+                          const touch = window.matchMedia('(hover: none)').matches;
+                          setOpenPillar(touch ? (isOpen ? null : s.title) : s.title);
+                        }}
                       >
                         <button
                           type="button"
@@ -854,7 +903,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           <span className="sec-caret" aria-hidden />
                         </button>
                         <p className="sec-lead">{s.lead}</p>
-                        <div className="sec-body"><div className="sec-body-inner">{s.body.map((para, i) => <p key={i}>{para}</p>)}</div></div>
+                        <div className="sec-body"><div className="sec-body-inner"><div className="sec-cols">{splitColumns(s.body).map((col, ci) => col.length > 0 && (
+                          <div key={ci} className="sec-col">{col.map((para, i) => <p key={i}>{para}</p>)}</div>
+                        ))}</div></div></div>
                       </div>
                     );
                   })}
@@ -2739,14 +2790,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            room, and the rule below may slide within the stage. Mobile
            keeps the natural single-column flow. */
         @media (min-width: 900px) {
-          .sec-body-inner {
-            column-count: 2;
-            column-gap: 30px;
+          .sec-cols {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+          }
+          .sec-col {
+            flex: 1 1 0;
+            min-width: 0;
           }
           /* Higher specificity than the base body rule below it in the
              sheet (same selector in a media query loses on source order —
              this bug shipped the 15px override unnoticed). */
-          .secs .sec .sec-body-inner > p {
+          .secs .sec .sec-body-inner p {
             font-size: 13px;
             line-height: 1.52;
           }
@@ -2808,7 +2864,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           border-color: var(--theme-fg-muted);
           transform: translateY(1px) rotate(-135deg);
         }
-        .sec-body-inner > p {
+        .sec-body-inner p {
           margin: 10px 0 0;
           font-size: 15px;
           line-height: 1.62;
