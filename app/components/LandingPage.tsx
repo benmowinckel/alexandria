@@ -2921,13 +2921,17 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .front-salutation-answer {
           margin-top: 64px;
         }
-        /* The founding line — sets up the three things in mind. */
+        /* The founding line — ROMAN, same register as the question (the
+           two plate-sections rhyme: faint plate → roman statement → then
+           the italic material). Differentiates it from the three italic
+           rows below, which read as its subordinate list. */
         .front-alex {
           margin: 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 18.5px;
-          line-height: 1.5;
+          font-style: normal;
+          font-size: 20px;
+          line-height: 1.45;
+          letter-spacing: 0.004em;
           color: rgba(26, 19, 24, 0.72);
         }
         /* The three things — faint mini header over each, the row text in
@@ -2937,7 +2941,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           display: flex;
           flex-direction: column;
           gap: 1px;
-          margin: 14px 0 0;
+          margin: 15px 0 0;
+        }
+        /* A fuller break between the founding statement and its list. */
+        .front-alex + .front-fn {
+          margin-top: 24px;
         }
         .fn-label {
           font-style: italic;
