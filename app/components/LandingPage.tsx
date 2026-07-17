@@ -173,7 +173,7 @@ function HomeInstall() {
         free sample
       </Link>
       <span className="cta-sub">
-        if even slightly interested in the product &mdash; just try it
+        one command, five minutes &mdash; one delete undoes it
       </span>
     </div>
   );
@@ -359,9 +359,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       title: 'how',
       lead: 'Connect an Alexandria folder to your ai so it knows your thinking and how to use it.',
       body: [
-        'A private folder on your own computer holds what and how you think. Dump everything you have into it, and your ai ties it into one unified map of your mind — chatting with you to fill the gaps, surfacing connections you’d never seen, showing you ideas it now knows you’d find interesting, and synthesising what only you know so you can get it out into the world.',
-        'The privacy is structural, not a promise: just plain files on your computer, no server behind the tool, nothing sent to us. Any ai can connect — and all of it is free, because it’s your ai and your files.',
-        'The community is two coffees a month — Strava, but for the mind: share your system, show what you’ve made, meet the others doing the same. The humans who chose to keep thinking, connected.',
+        'A private folder on your own computer holds what and how you think. Dump everything you have into it, and your ai ties it into one unified map of your mind — then works with you to fill the gaps, sharpen it, and get what only you know out into the world.',
+        'Privacy is simple: the folder is just files on your computer. There’s no server, no account, and nothing is ever sent to anyone. It works with any ai, and it’s completely free.',
+        'The community is where alexandrians share their systems and what they’ve made with them. Joining costs about two coffees a month.',
       ],
     },
   ];
@@ -896,15 +896,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     under the line so that its maximally engaging"):
                     the frame / the punch / the action. */}
                 <div className="action-close">
-                  <p className="statement-beat action-beat">
-                    <em>See this as a free food sample at the supermarket
-                    &mdash; the only reason you&rsquo;d say no is if
-                    you&rsquo;re allergic&hellip; reading this far is proof
-                    you&rsquo;re not, and have at least enough interest to try.</em>
-                  </p>
                   <p className="statement-beat action-beat action-beat-final">
-                    <em>Just try it, if you don&rsquo;t like it, bin it
-                    &mdash; should be the smallest decision you make all day.</em>
+                    <em>See it as a free sample: try it, and if you
+                    don&rsquo;t like it, bin it &mdash; the smallest
+                    decision you&rsquo;ll make all day.</em>
                   </p>
                 </div>
 
