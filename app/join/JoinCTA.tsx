@@ -90,17 +90,16 @@ export default function JoinCTA({
         The tool was the free sample &mdash; the community is the full meal.
       </h1>
 
-      {/* THE OFFER — second tier. The word "free" pulled into the plum accent
-          (twice = visual rhyme) so the eye lands on the value before the
-          button. This is the one controlled pop that fixes "boring". */}
+      {/* THE OFFER — the two simple facts, plain ink, no colour (founder
+          2026-07-17: "no colours like that… too loud… really simple"). The
+          reader's whole decision is here: it's free, just try it. */}
       <div className="join-offer">
         <p className="join-offer-line">
-          The first month is <span className="join-free">free</span>, so just
-          try it &mdash; cancel anytime.
+          The first month is free, so just try it &mdash; cancel anytime.
         </p>
         <p className="join-offer-line">
-          If you like it, get three friends to join, and it becomes{' '}
-          <span className="join-free">free&nbsp;indefinitely</span>.
+          If you like it, get three friends to join, and it becomes free
+          indefinitely.
         </p>
       </div>
 
@@ -152,7 +151,7 @@ export default function JoinCTA({
               data-1p-ignore="true"
               data-lpignore="true"
               data-form-type="other"
-              placeholder="paste their referral code"
+              placeholder="referral code"
               aria-label="referral code"
               value={typedRef}
               onChange={(e) => setTypedRef(e.target.value)}

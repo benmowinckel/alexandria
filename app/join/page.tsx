@@ -118,13 +118,14 @@ export default async function JoinPage({
           text-align: left;
         }
 
-        /* The one accent on the skeleton — small-caps, spaced, brand plum. */
+        /* The one label on the skeleton — small-caps, spaced, muted ink (no
+           colour, per the founder's calm-monochrome steer). */
         .primer-eyebrow {
           margin: 0 0 18px; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-weight: 500; font-size: 11px; letter-spacing: 0.3em;
           text-transform: lowercase; font-variant-caps: all-small-caps;
           font-feature-settings: "smcp" 1, "kern" 1;
-          color: var(--accent); line-height: 1;
+          color: var(--text-muted); line-height: 1;
         }
 
         /* Invite variant — warmer, personal, replaces the label when a kin
@@ -132,39 +133,31 @@ export default async function JoinPage({
         .join-invite {
           margin: 0 0 18px; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 14px; letter-spacing: 0.02em; font-style: italic;
-          color: var(--accent); line-height: 1;
+          color: var(--text-secondary); line-height: 1;
         }
 
-        /* THE HERO — the star. Large editorial display, fluid so it scales
-           with the viewport (design.md: clamp for marketing display only).
-           Italic, one weight, tight tracking; text-wrap: balance keeps the
-           two clauses evenly split around the em-dash. */
+        /* THE HERO — a calm headline, not a shout (founder 2026-07-17: "too
+           loud… really simple"). Modest display size, ink only, italic. */
         .join-hero {
-          margin: 0 0 30px; max-width: 600px;
+          margin: 0 0 26px; max-width: 480px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic; font-weight: 400;
-          font-size: clamp(30px, 2rem + 2.2vw, 44px); line-height: 1.14;
-          letter-spacing: -0.02em; color: var(--text-primary);
+          font-size: clamp(23px, 1.5rem + 0.7vw, 27px); line-height: 1.28;
+          letter-spacing: -0.01em; color: var(--text-primary);
           text-wrap: balance;
           font-feature-settings: "kern" 1, "liga" 1, "dlig" 1;
         }
 
-        /* THE OFFER — second tier, larger than body so the eye reads it before
-           the fine print, primary ink. */
-        .join-offer { max-width: 520px; margin: 0 0 34px; }
+        /* THE OFFER — the two simple facts. Plain body ink, no colour, no
+           emphasis — the reader's whole decision, read in two seconds. */
+        .join-offer { max-width: 460px; margin: 0 0 30px; }
         .join-offer-line {
-          margin: 0 0 11px;
+          margin: 0 0 10px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 19px; line-height: 1.5; letter-spacing: 0.005em;
+          font-size: 16px; line-height: 1.55; letter-spacing: 0.005em;
           color: var(--text-primary); text-wrap: pretty;
         }
         .join-offer-line:last-child { margin-bottom: 0; }
-        /* "free" — the one controlled pop: brand plum, a touch heavier. Used
-           twice = visual rhyme; this is what fixes "boring / all the same". */
-        .join-free {
-          color: var(--accent); font-weight: 500;
-          font-style: italic; letter-spacing: 0;
-        }
 
         /* THE $10 TRUTH — de-emphasised reassurance, clearly below the action. */
         .join-explain {
@@ -188,23 +181,18 @@ export default async function JoinPage({
         }
         .join-waive a:hover { color: var(--text-primary); text-decoration-color: var(--text-primary); }
 
-        /* THE ONE ACTION — the page's second star, hung from the left spine.
-           Filled, a little more presence than /start's (18px, roomier pad, a
-           soft shadow that lifts it off the cream) so the eye lands here. */
+        /* THE ONE ACTION — filled, calm, hung from the left spine. No shadow,
+           no flourish; it just needs to be the obvious thing to click. */
         .join-btn {
           display: inline-flex; align-items: center; justify-content: center;
-          margin: 30px 0 0; padding: 15px 34px; border-radius: 10px;
+          margin: 26px 0 0; padding: 13px 28px; border-radius: 9px;
           background: var(--text-primary); color: var(--bg-primary);
-          font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 18px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 16px;
           letter-spacing: 0.01em; text-decoration: none; cursor: pointer;
-          box-shadow: 0 1px 2px rgba(61, 54, 48, 0.10), 0 8px 24px -12px rgba(61, 54, 48, 0.28);
-          transition: opacity 200ms, transform 120ms, box-shadow 200ms;
+          transition: opacity 200ms, transform 120ms;
         }
-        .join-btn:hover {
-          opacity: 0.92;
-          box-shadow: 0 1px 2px rgba(61, 54, 48, 0.12), 0 12px 30px -12px rgba(61, 54, 48, 0.34);
-        }
-        .join-btn:active { transform: scale(0.985); }
+        .join-btn:hover { opacity: 0.88; }
+        .join-btn:active { transform: scale(0.99); }
 
         /* THE OTHER DOORS — the three exits under one hairline. Tertiary by
            design: each is a small muted question + an editorial underline
@@ -222,30 +210,34 @@ export default async function JoinPage({
           font-style: italic; font-size: 14px; letter-spacing: 0.01em;
           color: var(--text-secondary, rgba(61, 54, 48, 0.7));
         }
-        /* Underline field — border-bottom only, editorial not form-y. Shared by
-           the referral code and the email door. */
-        .join-door-field { display: flex; align-items: baseline; gap: 12px; }
+        /* Underline field — border-bottom only, editorial not form-y. Capped
+           short (founder: the write/paste lines "are too long and look weird")
+           so the rule sits under the text, not across the whole column. */
+        .join-door-field {
+          display: flex; align-items: baseline; gap: 12px;
+          max-width: 300px; width: 100%;
+        }
         .join-door-field input {
           flex: 1; min-width: 0; height: 34px; padding: 0 2px;
-          font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 16px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 15px;
           color: var(--text-primary); background: transparent;
-          border: none; border-bottom: 1px solid var(--text-muted, rgba(61, 54, 48, 0.28));
+          border: none; border-bottom: 1px solid var(--text-muted, rgba(61, 54, 48, 0.3));
           border-radius: 0; outline: none; transition: border-color 200ms;
         }
         .join-door-field input::placeholder { color: var(--text-muted, rgba(61, 54, 48, 0.42)); }
-        .join-door-field input:focus { border-bottom-color: var(--accent); }
+        .join-door-field input:focus { border-bottom-color: var(--text-secondary, rgba(61, 54, 48, 0.7)); }
         .join-door-submit {
           flex-shrink: 0; padding: 0 2px 4px; align-self: flex-end;
           font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 14px;
-          font-style: italic; letter-spacing: 0.02em; color: var(--accent);
-          background: none; border: none; cursor: pointer; transition: opacity 200ms;
+          font-style: italic; letter-spacing: 0.02em; color: var(--text-secondary, rgba(61, 54, 48, 0.7));
+          background: none; border: none; cursor: pointer; transition: color 200ms;
         }
-        .join-door-submit:hover { opacity: 0.7; }
+        .join-door-submit:hover { color: var(--text-primary); }
         .join-door-submit:disabled { opacity: 0.5; cursor: default; }
         .join-door-status {
           flex-shrink: 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 13px; font-style: italic; letter-spacing: 0.01em;
-          color: var(--accent);
+          color: var(--text-muted, rgba(61, 54, 48, 0.6));
         }
         .join-door-hint {
           margin: 8px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -264,12 +256,12 @@ export default async function JoinPage({
           color: var(--text-secondary, rgba(61, 54, 48, 0.7));
         }
         .join-door-link a {
-          font-style: normal; color: var(--accent);
-          text-decoration: underline; text-decoration-color: var(--accent-faint, rgba(91, 31, 71, 0.3));
+          font-style: normal; color: var(--text-primary);
+          text-decoration: underline; text-decoration-color: var(--text-muted, rgba(61, 54, 48, 0.4));
           text-underline-offset: 3px; text-decoration-thickness: 1px;
           transition: text-decoration-color 200ms;
         }
-        .join-door-link a:hover { text-decoration-color: var(--accent); }
+        .join-door-link a:hover { text-decoration-color: var(--text-primary); }
 
         .primer-coda {
           margin: 56px 0 0; text-align: left; font-family: var(--font-serif), ui-serif, Georgia, serif;

@@ -56,7 +56,7 @@ export default function JoinInterest({ refCode }: { refCode?: string }) {
           type="email"
           inputMode="email"
           autoComplete="email"
-          placeholder="leave your email to continue on your own"
+          placeholder="your email"
           aria-label="your email"
           value={email}
           onChange={(e) => {
