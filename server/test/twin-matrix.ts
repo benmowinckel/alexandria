@@ -15,7 +15,7 @@
  * Usage:   tsx server/test/twin-matrix.ts
  * Env:
  *   TEST_URL          override base (default https://api.alexandria-library.com)
- *   TEST_AUTHOR_ID    author under test (default mowinckelb)
+ *   TEST_AUTHOR_ID    author under test (default benmowinckel)
  *   OWNER_API_KEY     owner key; falls back to ~/alexandria/system/.api_key
  *   GRANT_LOGIN       account to grant for the invite-tier cell (default: the owner
  *                     itself — a standing self-grant is the correct owner state:
@@ -27,7 +27,7 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const BASE = process.env.TEST_URL || 'https://api.alexandria-library.com';
-const AUTHOR = process.env.TEST_AUTHOR_ID || 'mowinckelb';
+const AUTHOR = process.env.TEST_AUTHOR_ID || 'benmowinckel';
 const HOME = process.env.HOME || process.env.USERPROFILE || '';
 
 function loadKey(envName: string, fallbackPath?: string): string | null {

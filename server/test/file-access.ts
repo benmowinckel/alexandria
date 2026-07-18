@@ -266,7 +266,7 @@ test('PUT-writable: rejects non-strings and unknown strings', () => {
 // Shadow gate
 // ---------------------------------------------------------------------------
 
-const SHADOW_OWNER = 'mowinckelb';
+const SHADOW_OWNER = 'benmowinckel';
 const SHADOW_STRANGER = 'someone-else';
 
 test('shadow public + unauth → allowed', () => {

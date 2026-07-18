@@ -118,7 +118,7 @@ test('counts unset-curl as stale, unset-native as fine', () => {
 test('ignores unrelated event types without error', () => {
   const log = [
     JSON.stringify({ t: inWindow, e: 'waitlist_signup', type: 'author' }),
-    JSON.stringify({ t: inWindow, e: 'morning_brief', author: 'mowinckelb' }),
+    JSON.stringify({ t: inWindow, e: 'morning_brief', author: 'benmowinckel' }),
     JSON.stringify({ t: inWindow, e: 'server_error' }),
   ].join('\n');
   const r = scanEventsForAlarms(log, cutoff);

@@ -5,14 +5,14 @@
 # Trust model: this shim is the root. It uses the allowed_signers file
 # installed alongside (with the embedded public key) and refuses to exec
 # anything not signed by the corresponding offline private key.
-#   Audit: https://github.com/mowinckelb/alexandria/blob/main/TRUST.md
-#   Inspect payload: https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/hooks/payload.sh
+#   Audit: https://github.com/benmowinckel/alexandria/blob/main/TRUST.md
+#   Inspect payload: https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hooks/payload.sh
 
 ALEX_DIR="${ALEXANDRIA_DIR:-$HOME/alexandria}"
 API_KEY="${ALEXANDRIA_KEY:-$(cat "$ALEX_DIR/system/.api_key" 2>/dev/null)}"
 MODE="$1"
 
-GITHUB_RAW="${ALEX_GITHUB_RAW:-https://raw.githubusercontent.com/mowinckelb/alexandria/main}"
+GITHUB_RAW="${ALEX_GITHUB_RAW:-https://raw.githubusercontent.com/benmowinckel/alexandria/main}"
 PAYLOAD_URL="$GITHUB_RAW/factory/hooks/payload.sh"
 MANIFEST_URL="$GITHUB_RAW/factory/manifest.txt"
 MANIFEST_SIG_URL="$GITHUB_RAW/factory/manifest.txt.sig"
@@ -109,7 +109,7 @@ if [ "$MODE" = "session-start" ]; then
         echo "--- ALEXANDRIA SIGNATURE VERIFY FAILED ---"
         echo "Fresh payload from GitHub did not pass signature check (reason: $reason)."
         echo "Falling back to cached payload (previously verified)."
-        echo "If this persists across sessions, audit https://github.com/mowinckelb/alexandria"
+        echo "If this persists across sessions, audit https://github.com/benmowinckel/alexandria"
         echo "and reinstall: curl -fsSL $GITHUB_RAW/factory/setup.sh | bash"
         echo "--- END VERIFY FAILED ---"
         echo ""

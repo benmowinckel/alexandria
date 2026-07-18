@@ -2,7 +2,7 @@
  * Marketplace feedback substrate.
  *
  * Author-typed feedback (from ~/alexandria/system/.session_feedback) writes
- * to the mowinckelb/alexandria-feedback private GitHub repo. CCR routines
+ * to the benmowinckel/alexandria-feedback private GitHub repo. CCR routines
  * (the factory autoloop) can only reach github.com, so the substrate has
  * to be there. Single source of truth — no KV duplicate to keep in sync.
  *
@@ -20,7 +20,7 @@
 import { logEvent } from './analytics.js';
 import { getKV } from './kv.js';
 
-const FEEDBACK_REPO = 'mowinckelb/alexandria-feedback';
+const FEEDBACK_REPO = 'benmowinckel/alexandria-feedback';
 const GITHUB_API = 'https://api.github.com';
 
 function getGithubToken(): string {

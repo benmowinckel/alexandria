@@ -20,7 +20,7 @@ set -euo pipefail
 
 REL="${1:?usage: verify-fetch.sh <factory-relative-path>}"
 ALEX_DIR="$HOME/alexandria"
-RAW="${ALEX_GITHUB_RAW:-https://raw.githubusercontent.com/mowinckelb/alexandria/main}"
+RAW="${ALEX_GITHUB_RAW:-https://raw.githubusercontent.com/benmowinckel/alexandria/main}"
 SIGNERS="$ALEX_DIR/system/allowed_signers"
 NS="alexandria"; ID="alexandria-payload-signing"
 fail(){ echo "verify-fetch failed ($1) for $REL — refusing to emit" >&2; exit 1; }

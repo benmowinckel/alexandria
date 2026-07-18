@@ -64,7 +64,7 @@ entirely. your mind.md and alexandria.md are plain files on your own computer; t
 
 ## is it safe to install.
 
-yes. the install is one command that drops a folder on your machine and pulls code from github each session. look before you run it: it's [open source](https://github.com/mowinckelb/alexandria), you (or your ai) can read every line, and nothing runs unless the maintainer has signed it. it touches nothing outside its own folder and uninstalls clean — delete the folder and it's gone. the [mechanics](/mechanics) page walks an auditor through the rest.
+yes. the install is one command that drops a folder on your machine and pulls code from github each session. look before you run it: it's [open source](https://github.com/benmowinckel/alexandria), you (or your ai) can read every line, and nothing runs unless the maintainer has signed it. it touches nothing outside its own folder and uninstalls clean — delete the folder and it's gone. the [mechanics](/mechanics) page walks an auditor through the rest.
 
 ## what does it cost.
 

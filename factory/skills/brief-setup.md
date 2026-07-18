@@ -20,7 +20,7 @@ The brief always sends — silence would train the inbox to filter. The droplet 
 
 Where the daily fire happens depends on the Author's environment. Detect — don't ask:
 
-- **GH Actions** (preferred) — fires from GitHub's clock. Immune to laptop sleep/off. Requires `gh` CLI authenticated AND a private alexandria-private repo on the Author's GitHub. This is the path the canonical user (mowinckelb) runs on.
+- **GH Actions** (preferred) — fires from GitHub's clock. Immune to laptop sleep/off. Requires `gh` CLI authenticated AND a private alexandria-private repo on the Author's GitHub. This is the path the canonical user (benmowinckel) runs on.
 - **launchd** (fallback) — fires from the Author's Mac at a chosen local time. Requires nothing beyond the Author's laptop being awake at brief-time. Failure mode: silent miss if the laptop is sleeping/off.
 
 ```bash
@@ -59,7 +59,7 @@ mkdir -p "$HOME/alexandria/system/scripts"
 # brief.py handles SMTP creds, so verify it against the offline-signed manifest
 # before installing — verify-fetch refuses tampered/unsigned code. (installed by
 # setup.sh; self-bootstrap if absent.)
-VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/scripts/verify-fetch.sh -o "$VF" && chmod +x "$VF"; }
+VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/scripts/verify-fetch.sh -o "$VF" && chmod +x "$VF"; }
 bash "$VF" scripts/brief.py > "$HOME/alexandria/system/scripts/brief.py" || { echo "brief.py verification failed — not installed"; return 1 2>/dev/null || exit 1; }
 chmod +x "$HOME/alexandria/system/scripts/brief.py"
 ```

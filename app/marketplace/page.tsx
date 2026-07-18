@@ -47,7 +47,7 @@ function parseGithubId(id: string): ParsedId | null {
 // Canonical Machine — the factory's output repo. Items here are Alexandria's;
 // items in any other repo are forks / community contributions.
 function isCanonical(parsed: ParsedId | null): boolean {
-  return !!parsed && parsed.user === 'mowinckelb' && parsed.repo === 'alexandria';
+  return !!parsed && parsed.user === 'benmowinckel' && parsed.repo === 'alexandria';
 }
 
 async function loadModules(): Promise<MarketplaceModule[]> {

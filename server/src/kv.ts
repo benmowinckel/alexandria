@@ -11,7 +11,7 @@
  *   "library-signal"        → daily library-signal snapshot (single key)
  *
  * (Feedback used to live here under `feedback:` prefix; moved 2026-05-16 to
- * mowinckelb/alexandria-feedback github repo so the factory autoloop can
+ * benmowinckel/alexandria-feedback github repo so the factory autoloop can
  * reach it. Existing `feedback:*` keys remain as orphans, harmless.)
  *
  * Each account is its own KV key — no concurrent write corruption,

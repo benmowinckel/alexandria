@@ -219,8 +219,8 @@ export function registerRoutes(app: Hono) {
             note: 'private Marketplace Signal — usage timestamps + per-call text',
           },
         },
-        factory: 'https://github.com/mowinckelb/alexandria/tree/main/factory',
-        methodology: 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/canon/methodology.md',
+        factory: 'https://github.com/benmowinckel/alexandria/tree/main/factory',
+        methodology: 'https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/canon/methodology.md',
       });
     }
 
@@ -304,7 +304,7 @@ export function registerRoutes(app: Hono) {
           ? 'free'
           : `${Math.max(0, kinNeeded - kinData.compliant)} more needed`,
       },
-      factory: 'https://github.com/mowinckelb/alexandria/tree/main/factory',
+      factory: 'https://github.com/benmowinckel/alexandria/tree/main/factory',
       endpoints: {
         file: '/file/{name}',
         call: '/call',
@@ -1055,7 +1055,7 @@ export function registerRoutes(app: Hono) {
 
     const body = await c.req.json().catch(() => ({}));
     const login = typeof body.login === 'string' ? body.login.trim() : '';
-    const adminLogin = process.env.ADMIN_GITHUB_LOGIN || 'mowinckelb';
+    const adminLogin = process.env.ADMIN_GITHUB_LOGIN || 'benmowinckel';
     if (!login || login.length > 39 || !/^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(login)) {
       return c.json({ error: 'Invalid login' }, 400);
     }
@@ -1377,7 +1377,7 @@ export function registerRoutes(app: Hono) {
     // to scanners and to anyone who copies the rendered curl command).
     const apiKey = returning ? '' : 'PREVIEW-NOT-A-REAL-KEY';
     // Dummy number + kin count for the founding-member preview; no side effects.
-    const html = await callbackPageHtml(apiKey, 'mowinckelb', false, returning ? 0 : 142, 1);
+    const html = await callbackPageHtml(apiKey, 'benmowinckel', false, returning ? 0 : 142, 1);
     return c.html(html);
   };
   app.get('/preview/welcome', previewWelcome);

@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ALEX_DIR: /tmp/alex_fixture
-      CANON_GITHUB: https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/canon
+      CANON_GITHUB: https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/canon
     steps:
       - uses: actions/checkout@v5
 

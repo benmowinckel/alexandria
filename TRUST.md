@@ -61,8 +61,8 @@ If any check fails: fall back to the last verified cached payload, surface a lou
 
 ```bash
 # 1. Fetch the latest manifest + signature from GitHub
-curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/manifest.txt -o /tmp/m.txt
-curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/manifest.txt.sig -o /tmp/m.sig
+curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/manifest.txt -o /tmp/m.txt
+curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/manifest.txt.sig -o /tmp/m.sig
 
 # 2. Verify the signature against the published public key
 ssh-keygen -Y verify \
@@ -75,7 +75,7 @@ ssh-keygen -Y verify \
 #   Good "alexandria" signature for alexandria-payload-signing with ED25519 key SHA256:kAas5fUUnV/XcfKoH3Ysm7IZrqY2HcQSuhSaMoAMqnA
 
 # 3. Verify any individual file's hash matches the manifest
-curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/hooks/payload.sh \
+curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hooks/payload.sh \
   | shasum -a 256
 # Compare to the line in /tmp/m.txt for factory/hooks/payload.sh
 ```
@@ -88,10 +88,10 @@ If the offline key is ever compromised or suspected compromised, the maintainer 
 2. Update `factory/setup.sh` to embed the new public key.
 3. Sign the next manifest with the new key.
 4. Announce the rotation on the project website and in the repo.
-5. Existing users will need to re-run the install script to pick up the new public key (`curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh | bash`).
+5. Existing users will need to re-run the install script to pick up the new public key (`curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh | bash`).
 
 This is intentionally manual — automated key-rotation infrastructure would itself become a new attack surface.
 
 ## Reporting issues
 
-Suspected key compromise, signature anomalies, or trust-model questions: open an issue at [github.com/mowinckelb/alexandria](https://github.com/mowinckelb/alexandria) or email Benjamin@mowinckel.com.
+Suspected key compromise, signature anomalies, or trust-model questions: open an issue at [github.com/benmowinckel/alexandria](https://github.com/benmowinckel/alexandria) or email Benjamin@mowinckel.com.

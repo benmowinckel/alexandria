@@ -15,7 +15,7 @@
 # ───────────────────────────────────────────────────────────────────
 
 ALEX_DIR="$HOME/alexandria"
-FACTORY_RAW="https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory"
+FACTORY_RAW="https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory"
 SERVER="https://api.alexandria-library.com"
 FETCH_ERRORS=""
 
@@ -228,7 +228,7 @@ cat > "$ALEX_DIR/system/.claude-instructions.md" << 'CLAUDEINSTR'
 I use "Alexandria": sovereign files at ~/alexandria on my computer — my constitution (who I am, how I think, my beliefs, taste, voice), my notes, and my work. These files are how you actually know me. You can only read or write them when the ~/alexandria FOLDER is attached — which needs the desktop app on the computer where the files live. Mobile, web/plain chat, and Dispatch cannot reach my local files.
 
 Be eager and explicit. The moment a task would be better with my real files — my views, my voice, my past thinking, a decision, or developing an idea personal to me — do NOT wing it. Stop and tell me how to load them, based on what this session can actually do:
-- If you can attach a whole folder here (desktop Cowork): "This needs your Alexandria files. Attach the ~/alexandria folder, then type /a." (/a runs my full load; it comes from the one-time Cowork step: Add plugins -> from repo -> mowinckelb/alexandria.) If /a isn't available here, do the same thing yourself the moment the folder is attached: read ~/alexandria/system/canon/methodology.md and my constitution in ~/alexandria/files/constitution/ (Core.md first), and follow that methodology as my Alexandria.
+- If you can attach a whole folder here (desktop Cowork): "This needs your Alexandria files. Attach the ~/alexandria folder, then type /a." (/a runs my full load; it comes from the one-time Cowork step: Add plugins -> from repo -> benmowinckel/alexandria.) If /a isn't available here, do the same thing yourself the moment the folder is attached: read ~/alexandria/system/canon/methodology.md and my constitution in ~/alexandria/files/constitution/ (Core.md first), and follow that methodology as my Alexandria.
 - If you cannot attach a folder here — only individual files, or no local access (mobile, web chat, Dispatch): "This needs your Alexandria files, which live on your computer. Do it on your desktop: open Cowork or Claude Code there and attach the ~/alexandria folder."
 
 Once the folder is attached and loaded, work entirely from my files: read the relevant parts to inform everything, and when I articulate a belief, preference, correction, or idea worth keeping, judge whether it's genuinely new, decide where it belongs (constitution, marginalia, or notes), keep the file coherent, and confirm with me before writing to my constitution.
@@ -681,7 +681,7 @@ if [ "$KEYLESS" = "true" ]; then
   echo "  public fork: skipped (free mode — the marketplace is part of the hub; sign in later)"
 elif [ -z "$GITHUB_USER" ]; then
   echo "  public fork: skipped (gh CLI not authenticated — run 'gh auth login' and re-run setup)"
-elif [ "$GITHUB_USER" = "mowinckelb" ]; then
+elif [ "$GITHUB_USER" = "benmowinckel" ]; then
   echo "  public fork: skipped (canonical owner — no self-fork needed)"
 else
   if [ ! -d "$FORK_DIR/.git" ]; then
@@ -689,7 +689,7 @@ else
     if gh repo view "$GITHUB_USER/alexandria" &>/dev/null; then
       git clone --filter=blob:none --no-checkout "https://github.com/$GITHUB_USER/alexandria.git" "$FORK_DIR" 2>/dev/null
     else
-      gh repo fork mowinckelb/alexandria --clone="$FORK_DIR" --remote=false 2>/dev/null
+      gh repo fork benmowinckel/alexandria --clone="$FORK_DIR" --remote=false 2>/dev/null
     fi
 
     if [ -d "$FORK_DIR/.git" ]; then
@@ -1051,7 +1051,7 @@ elif [ -d "$FORK_DIR/.git" ]; then
   else
     STATUS_FORK="fail"; DETAIL_FORK="$FORK_DIR exists but auto-publish not scheduled — re-run setup"
   fi
-elif [ "$GITHUB_USER" = "mowinckelb" ]; then
+elif [ "$GITHUB_USER" = "benmowinckel" ]; then
   STATUS_FORK="skip"; DETAIL_FORK="canonical owner — no self-fork needed"
 elif [ -z "$GITHUB_USER" ]; then
   STATUS_FORK="skip"; DETAIL_FORK="gh CLI not authenticated — run 'gh auth login' and re-run setup"
@@ -1275,7 +1275,7 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
   # their own — but one paste makes them Alexandria-aware.
   echo ""
   echo "Also use Cowork or the Claude app? Two one-time steps, then it just works:"
-  echo "  1. In Cowork: Add plugins → from repo → mowinckelb/alexandria (gives /a)."
+  echo "  1. In Cowork: Add plugins → from repo → benmowinckel/alexandria (gives /a)."
   echo "  2. Paste ~/alexandria/system/.claude-instructions.md into Claude Settings →"
   echo "     Profile → \"Instructions for Claude\" (so it prompts you to attach + /a)."
   echo "Then per session: attach your ~/alexandria folder + type /a. (Full read/write"
@@ -1301,5 +1301,5 @@ elif [ "$KEY_STATUS" = "401" ]; then
   echo "  curl -fsSL alexandria-library.com/a | bash -s -- \$NEW_KEY"
   echo "(The rejected key was not saved — a bare re-run stays keyless instead of re-failing.)"
 else
-  echo "Re-run anytime: curl -fsSL https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh | bash -s -- \$API_KEY"
+  echo "Re-run anytime: curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh | bash -s -- \$API_KEY"
 fi

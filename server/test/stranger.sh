@@ -125,7 +125,7 @@ echo "[stranger] pre-populated settings.json with existing hooks"
 echo ""
 echo "═══ Phase 2: Setup script ═══"
 
-SETUP_SCRIPT=$(curl -s --max-time 15 "https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh" 2>/dev/null)
+SETUP_SCRIPT=$(curl -s --max-time 15 "https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh" 2>/dev/null)
 
 check "setup script fetched"       [ -n "$SETUP_SCRIPT" ]
 SETUP_FIRST_LINE=$(echo "$SETUP_SCRIPT" | head -1)

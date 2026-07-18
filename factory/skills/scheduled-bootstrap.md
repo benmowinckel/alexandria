@@ -12,7 +12,7 @@ Run this block. It fetches `scheduled.md`, verifies the signed manifest, confirm
 bash -c '
 set -euo pipefail
 ALEX_DIR="$HOME/alexandria"
-RAW="${ALEX_GITHUB_RAW:-https://raw.githubusercontent.com/mowinckelb/alexandria/main}"
+RAW="${ALEX_GITHUB_RAW:-https://raw.githubusercontent.com/benmowinckel/alexandria/main}"
 SIGNERS="$ALEX_DIR/system/allowed_signers"
 NS="alexandria"; ID="alexandria-payload-signing"
 fail(){ echo "alexandria: scheduled skill verification failed ($1) — skipping run" >&2; exit 1; }

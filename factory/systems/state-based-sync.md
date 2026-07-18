@@ -2,7 +2,7 @@
 
 ## Module ID
 
-`github:mowinckelb/alexandria#factory/systems/state-based-sync`
+`github:benmowinckel/alexandria#factory/systems/state-based-sync`
 
 ## Problem
 

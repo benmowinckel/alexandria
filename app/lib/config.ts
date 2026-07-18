@@ -27,7 +27,7 @@ export function librarySignInUrlHere(): string {
 // points at "Benjamin's mind" — the whitepaper/letter reader, the funnel CTAs —
 // stays in sync. His profile is the one canonical Library page we deep-link to
 // (the /library directory is empty to a signed-out stranger).
-export const FOUNDER_LIBRARY_ID = 'mowinckelb';
+export const FOUNDER_LIBRARY_ID = 'benmowinckel';
 export const FOUNDER_PROFILE_PATH = `/library/${FOUNDER_LIBRARY_ID}`;
 
 // The reader's "ask" (the letter/whitepaper via PublicDocReader) posts to

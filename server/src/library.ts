@@ -1146,7 +1146,7 @@ export function registerLibraryRoutes(app: Hono): void {
 
     // The guide runs on the founder's always-on sidecar (env fallback if not
     // separately registered). getSidecar → the same relay every other twin uses.
-    const conn = await getSidecar(process.env.ADMIN_GITHUB_LOGIN || 'mowinckelb');
+    const conn = await getSidecar(process.env.ADMIN_GITHUB_LOGIN || 'benmowinckel');
     if (!conn?.url) return c.json({ error: 'the guide is offline right now.' }, 503);
 
     const ctrl = new AbortController();
@@ -1772,7 +1772,7 @@ export function registerLibraryRoutes(app: Hono): void {
       author: authorId,
       head,
       entries,
-      audit_repo: 'mowinckelb/alexandria-audit',
+      audit_repo: 'benmowinckel/alexandria-audit',
       note: 'Long-term tamper-evident history lives in the audit_repo. Walk the hash chain from genesis to verify entries match the head_hash.',
     });
   });

@@ -149,7 +149,7 @@ export async function assignAuthorNumber(githubLogin: string): Promise<number | 
 export async function requireAdmin(c: { req: { header: (name: string) => string | undefined; query: (name: string) => string | undefined } }): Promise<{ key: string; account: Account } | null> {
   const auth = await requireAuth(c);
   if (!auth) return null;
-  const adminLogin = process.env.ADMIN_GITHUB_LOGIN || 'mowinckelb';
+  const adminLogin = process.env.ADMIN_GITHUB_LOGIN || 'benmowinckel';
   if (auth.account.github_login !== adminLogin) return null;
   return auth;
 }

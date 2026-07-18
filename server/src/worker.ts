@@ -289,7 +289,7 @@ app.get('/audit/head', async (c) => {
     const head = await getAuditHead();
     return c.json({
       ...head,
-      audit_repo: 'mowinckelb/alexandria-audit',
+      audit_repo: 'benmowinckel/alexandria-audit',
       verify: 'Walk the hash chain in the audit_repo from genesis; the final entry hash must equal head_hash.',
     }, 200, { 'Cache-Control': 'no-store' });
   } catch (err) {
@@ -594,7 +594,7 @@ app.options('/follow', (c) => {
 // command stays clean and tokenless.
 // ---------------------------------------------------------------------------
 
-const SETUP_SH_URL = 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh';
+const SETUP_SH_URL = 'https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh';
 const ONBOARD_TTL_SECONDS = 90 * 24 * 60 * 60;
 
 export interface OnboardRecord {
@@ -782,7 +782,7 @@ async function analyticsAuth(c: any, next: any) {
   if (!key) return c.json({ error: 'Unauthorized' }, 401);
   const account = await findByApiKey(key);
   if (!account) return c.json({ error: 'Unauthorized' }, 401);
-  const adminLogin = process.env.ADMIN_GITHUB_LOGIN || 'mowinckelb';
+  const adminLogin = process.env.ADMIN_GITHUB_LOGIN || 'benmowinckel';
   if (account.github_login !== adminLogin) return c.json({ error: 'Forbidden' }, 403);
   c.set('account', account);
   await next();
@@ -861,7 +861,7 @@ for (const path of DEPRECATED_ROUTES) {
     }
 
     logEvent('deprecated_hit', details);
-    return c.text('410 Gone — endpoint removed. Upgrade the client: https://github.com/mowinckelb/alexandria', 410);
+    return c.text('410 Gone — endpoint removed. Upgrade the client: https://github.com/benmowinckel/alexandria', 410);
   });
 }
 

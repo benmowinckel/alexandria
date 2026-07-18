@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
       // Humans land on /start (the primer); `/a` is the machine target only.
       {
         source: '/a',
-        destination: 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory/setup.sh',
+        destination: 'https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh',
         permanent: false,
       },
       // Tokenized install — the command emailed by the mobile "send it to my

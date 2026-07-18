@@ -140,7 +140,7 @@ const ORGANIZATION_JSONLD = {
   },
   sameAs: [
     "https://x.com/benmowinckel",
-    "https://github.com/mowinckelb/alexandria",
+    "https://github.com/benmowinckel/alexandria",
   ],
 };
 

@@ -14,7 +14,7 @@
  * Usage:   tsx server/test/gate-matrix.ts
  * Env:
  *   TEST_URL              override base (default https://api.alexandria-library.com)
- *   TEST_AUTHOR_ID        github_login of the author whose files to test (default mowinckelb)
+ *   TEST_AUTHOR_ID        github_login of the author whose files to test (default benmowinckel)
  *   OWNER_API_KEY         API key of the author above; falls back to ~/alexandria/system/.api_key
  *   ALEXANDRIA_TEST_KEY   optional second account; enables the stranger cells
  *
@@ -26,7 +26,7 @@ import { join } from 'path';
 import { authorizeFileRead } from '../src/file-access.js';
 
 const BASE = process.env.TEST_URL || 'https://api.alexandria-library.com';
-const AUTHOR = process.env.TEST_AUTHOR_ID || 'mowinckelb';
+const AUTHOR = process.env.TEST_AUTHOR_ID || 'benmowinckel';
 const HOME = process.env.HOME || process.env.USERPROFILE || '';
 
 function loadKey(envName: string, fallbackPath?: string): string | null {

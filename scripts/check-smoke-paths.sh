@@ -15,7 +15,7 @@
 set -euo pipefail
 
 : "${SERVER:=https://api.alexandria-library.com}"
-: "${FACTORY:=https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory}"
+: "${FACTORY:=https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory}"
 
 PAYLOAD=$(curl -sf "$FACTORY/hooks/payload.sh")
 SCHED=$(curl -sf "$FACTORY/skills/scheduled.md")

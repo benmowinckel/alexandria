@@ -40,7 +40,7 @@
 import { logEvent } from './analytics.js';
 import { getKV, getRecentDaysEvents } from './kv.js';
 
-const AUDIT_REPO = 'mowinckelb/alexandria-audit';
+const AUDIT_REPO = 'benmowinckel/alexandria-audit';
 const GITHUB_API = 'https://api.github.com';
 const GENESIS_HASH = '0'.repeat(64);
 const EPOCH = '1970-01-01T00:00:00.000Z';   // genesis cursor — no history yet

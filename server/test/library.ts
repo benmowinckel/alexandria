@@ -55,7 +55,7 @@ async function main() {
 
   // The catalog is the company layer over protocol accounts/files. Per-Author
   // URLs remain the canonical shelf for each Author.
-  const authorId = process.env.TEST_AUTHOR_ID || 'mowinckelb';
+  const authorId = process.env.TEST_AUTHOR_ID || 'benmowinckel';
 
   // The member directory is authors-only: signed-out callers get a gate
   // (signed_in:false, empty list); a signed-in member gets the fill-to-appear

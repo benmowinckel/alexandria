@@ -6,7 +6,7 @@
 # signature-verified shim.sh -> payload.sh chain every other surface runs.
 # No behavior lives here. Behavior lives in the signed payload.
 #
-# Audit: https://github.com/mowinckelb/alexandria/blob/main/TRUST.md
+# Audit: https://github.com/benmowinckel/alexandria/blob/main/TRUST.md
 
 MODE="$1"
 PLUGIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -51,7 +51,7 @@ if [ -z "$ALEX_DIR" ]; then
   # The install belongs on the Author's real machine; this session just needs
   # the folder attached.
   if [ "$MODE" = "session-start" ]; then
-    echo "alexandria plugin: installed, but no alexandria folder is visible here. AGENT: tell the Author in one line — if they already have an alexandria folder, attach it to this session; if they've never installed, run the open, signature-verified setup on their real machine first (in a terminal or a coding agent like Claude Code, Cursor, Codex, or Factory): curl -fsSL alexandria-library.com/a | bash — installing inside this session would be lost on teardown. They can read it first: https://github.com/mowinckelb/alexandria/blob/main/factory/setup.sh. Then attach the folder here."
+    echo "alexandria plugin: installed, but no alexandria folder is visible here. AGENT: tell the Author in one line — if they already have an alexandria folder, attach it to this session; if they've never installed, run the open, signature-verified setup on their real machine first (in a terminal or a coding agent like Claude Code, Cursor, Codex, or Factory): curl -fsSL alexandria-library.com/a | bash — installing inside this session would be lost on teardown. They can read it first: https://github.com/benmowinckel/alexandria/blob/main/factory/setup.sh. Then attach the folder here."
   fi
   exit 0
 fi

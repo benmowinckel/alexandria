@@ -8,7 +8,7 @@ Cowork is the exception: it runs your agent in a sealed VM with its own skill re
 
 ## Install (Cowork only)
 
-In Cowork: **Add plugins → from repo → `mowinckelb/alexandria`**.
+In Cowork: **Add plugins → from repo → `benmowinckel/alexandria`**.
 
 That's it — `/a` now works in your Cowork sessions. You still need the one-time curl install (to create `~/alexandria`) and the "Instructions for Claude" paste (so Cowork proactively prompts you to attach the folder). See the setup close message or [Mechanics](https://alexandria-library.com/mechanics) for the full Cowork flow.
 

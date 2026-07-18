@@ -524,10 +524,10 @@ export function registerProtocol(app: Hono) {
     const authorFilter = c.req.query('author');
     if (authorFilter) modules = modules.filter((m) => m.author_github_login === authorFilter);
 
-    // Canonical (mowinckelb/alexandria) first, then alphabetical by name.
+    // Canonical (benmowinckel/alexandria) first, then alphabetical by name.
     modules.sort((a, b) => {
-      const aCanon = a.id.startsWith('github:mowinckelb/alexandria#');
-      const bCanon = b.id.startsWith('github:mowinckelb/alexandria#');
+      const aCanon = a.id.startsWith('github:benmowinckel/alexandria#');
+      const bCanon = b.id.startsWith('github:benmowinckel/alexandria#');
       if (aCanon !== bCanon) return aCanon ? -1 : 1;
       return a.name.localeCompare(b.name);
     });

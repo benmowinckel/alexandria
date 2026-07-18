@@ -20,7 +20,7 @@ const FILES_DIR = join(ALEX_DIR, 'files');
 const CORE_DIR = join(FILES_DIR, 'core');
 const SYS_DIR = join(ALEX_DIR, 'system');
 const API_KEY_PATH = join(SYS_DIR, '.api_key');
-const FACTORY_RAW = 'https://raw.githubusercontent.com/mowinckelb/alexandria/main/factory';
+const FACTORY_RAW = 'https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory';
 
 interface TestResult {
   test: string;
