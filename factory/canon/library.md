@@ -47,6 +47,14 @@ The Engine continuously maintains a full-file draft as `_shadow.md` alongside wh
 
 When file compliance is due within seven days, stale, or missing, this becomes a high-priority `/a` task and a morning-brief item. The Engine should bring the smallest useful ask: "I drafted your shadow; approve/edit this paragraph" rather than a vague maintenance warning. The goal is closed-loop compliance without dark patterns: the Machine drafts and reminds; the Author approves what becomes visible.
 
+**Projects loop.** The same drafts-then-consent shape, applied to what the Author is building — so their ideas reach their library page without the Author having to remember any of it.
+
+1. *Organize at the source.* Every project is a **folder**: `~/alexandria/files/projects/<name>/<name>.md` (the spine — what it is, status, links) plus supporting docs in the same folder; subfolders only for genuine clusters; one index file at the projects root and nothing else. When an Author's idea recurs or crystallizes into a named thing, the Engine files it into this shape — never scattered root files, never sidecar clutter, never a flat pile. Organizing is the Engine's job, unprompted; a mess here breaks everything downstream.
+2. *Stage the library entry, armed.* Once a project has a coherent spine, the Engine maintains a draft triplet in the Author's chosen tier folder (default `library/public/`): `_<name>.md` — a short body in the Author's register (what it is, one link out if the project has its own surface); `_<name>.title` — the display name; `_<name>.txt` — the one-line subtitle, drafted from the spine. The underscore prefix means it can never ship by accident.
+3. *One confirmation, nothing else.* The Engine surfaces the smallest ask — "**<name>** is ready for your library page; subtitle: '<line>' — approve, edit, or skip." Consent = the final rename (the Author's word is enough; the Engine performs it). The session hook then publishes automatically. After publish, the Engine sets the file's category to `projects` via `PUT /library/{author}/file-categories` — always sending the complete existing map, since the endpoint overwrites.
+4. *Stay in sync.* When a project's subtitle, status, or link changes anywhere — its spine, its own site — the Engine refreshes the library triplet in the same session. Drift between an Author's project and their library entry is an Engine failure, not an Author chore.
+5. *Router principle.* The entry links onward to wherever the project actually lives. The library page is the canonical, always-resolvable node — the primary surface only when the project has no other home.
+
 **Publish call mapping.** Local IS the source of truth. The factory hook reconciles the full Library every session-start: walks `~/alexandria/files/library/{tier}/`, PUTs each non-draft, non-filter file (the server hash-skips unchanged content), then DELETEs anything the server has that local doesn't. Deletion is by removing the local file. Visibility change is by moving the file between tier folders.
 
 Each PUT maps placement to:
@@ -56,7 +64,7 @@ Each PUT maps placement to:
 
 There is one publish endpoint — `PUT /file/{name}` — and its inverse, `DELETE /file/{name}`. They carry every artifact type. Format-specific endpoints (`/library/publish/shadow`, `/library/publish/pulse`) do not exist and will not be added; the protocol stays minimal on purpose.
 
-Five artifact types: Shadow (curated Constitution fragments), Pulse (monthly change artifact, typically public), Delta (progress diff, typically invite with zero invitees = Author-only), Quiz (viral distribution engine, typically public), Work (finished creative artifact, frozen on publication, any tier).
+Six artifact types: Shadow (curated Constitution fragments), Pulse (monthly change artifact, typically public), Delta (progress diff, typically invite with zero invitees = Author-only), Quiz (viral distribution engine, typically public), Work (finished creative artifact, frozen on publication, any tier), Project (a venture or build the Author is making — category `projects`, maintained by the Projects loop above).
 
 The Engine decides content, structure, and format for all artifacts. No prescribed shapes. The marketplace watches engagement and surfaces what works. The only hard constraint: at least one Authors-visible file (authors-tier or public-tier) — the minimum that makes the network function. Paid and invite files don't satisfy the obligation: they're gated artifacts; the point of the file obligation is that other Authors can see something.
 

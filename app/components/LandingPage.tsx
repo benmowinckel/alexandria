@@ -173,7 +173,7 @@ function HomeInstall() {
         free sample
       </Link>
       <span className="cta-sub">
-        if even slightly interested in the product &mdash; just try it
+        even slightly interested? just try it
       </span>
     </div>
   );
@@ -913,7 +913,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       show support
                     </Link>
                     <span className="cta-sub">
-                      if even slightly interested in the company &mdash; stay updated
+                      even slightly interested? stay updated
                     </span>
                   </div>
                 </div>
