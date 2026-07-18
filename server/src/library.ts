@@ -914,7 +914,7 @@ export function registerLibraryRoutes(app: Hono): void {
       return {
         ok: false,
         status: 404,
-        body: { error: p.requestedVariant ? `the ${p.requestedVariant} twin is not available.` : 'This author has not enabled a twin.' },
+        body: { error: p.requestedVariant ? `that mind is not available.` : 'This author has not enabled a mind.' },
       };
     }
 
@@ -1043,10 +1043,10 @@ export function registerLibraryRoutes(app: Hono): void {
     // per-author daily ceiling that IP rotation can't defeat.
     const ip = c.req.header('cf-connecting-ip') || 'unknown';
     if (await checkTwinRateLimit(authorId, ip)) {
-      return c.json({ error: 'Too many questions — give the twin a minute.' }, 429);
+      return c.json({ error: 'Too many questions — give the mind a minute.' }, 429);
     }
     if (await twinDailyCapReached(authorId)) {
-      return c.json({ error: 'This twin has answered its limit for today — try again tomorrow.' }, 429);
+      return c.json({ error: 'This mind has answered its limit for today — try again tomorrow.' }, 429);
     }
 
     const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown; focus?: unknown; depth?: unknown };

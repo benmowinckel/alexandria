@@ -395,13 +395,13 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                   </span>
                 </div>
                 <div style={{ margin: '0.9rem -0.98rem 0' }}>
-                  <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask me anything…" />
+                  <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask anything…" />
                 </div>
                 {/* One tap to the first question — and each chip TEACHES what
                     the door is for (founder, round eleven): one for the work,
                     one for the mind, one that shows it speaks for the LINKED
                     surfaces — the thing no other page can do. */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.85rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', margin: '0.85rem -0.98rem 0' }}>
                   {[
                     (() => {
                       const proj = grouped.find((g) => g.cat === 'projects')?.items[0];
@@ -412,7 +412,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                     routerLinks.some((l) => l.label === 'x') ? 'what’s on your x?'
                       : author.website ? 'what’s on your website?' : 'where should i start?'].map((q) => (
                     <button key={q} type="button" onClick={() => goAskWith(q)}
-                      style={{ ...tagStyle, background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}
+                      style={{ ...tagStyle, background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)', padding: '0.34rem 0.95rem' }}
                       className="hover:opacity-60">
                       {q}
                     </button>
@@ -475,7 +475,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             whole pitch). */}
         <footer style={{ borderTop: '1px solid var(--border-light)', textAlign: 'center', margin: '4rem 0 0', padding: '1.6rem 0 0' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', margin: 0 }}>
-            want a mind like this?{' '}
+            want this for yourself?{' '}
             <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">build your own</Link>
           </p>
           <p style={{ margin: '1.4rem 0 0' }}>

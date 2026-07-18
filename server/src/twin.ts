@@ -308,10 +308,13 @@ export function twinPublicSummary(
  *  reading published substrate — not the person. Variant-aware so the context
  *  twin can be honest that it reads the Author's substrate. */
 export function twinDisclaimer(displayName: string, variant: TwinVariant = 'weights'): string {
+  // MIRROR, never "twin" in visitor-facing language (founder, 2026-07-18): the
+  // mirror exists because it REFLECTS the actual human — it never replaces
+  // them. "twin" survives only as the internal code name (like "protocol").
   if (variant === 'context') {
-    return `this is ${displayName}'s twin — a top model reading everything they've published, not the person. it can be wrong, and may not reflect their real views.`;
+    return `this is a mirror of ${displayName}'s mind — a model reflecting everything they've published, not the person. it can be wrong, and may not reflect their real views.`;
   }
-  return `this is ${displayName}'s trained twin — a model compiled from their published substrate, not the person. it can be wrong, and may not reflect their real views.`;
+  return `this is a mirror of ${displayName}'s mind — a model compiled from their published substrate, not the person. it can be wrong, and may not reflect their real views.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -507,7 +510,7 @@ export async function runTwinInference(
 ): Promise<TwinInferenceResult> {
   const url = opts.url?.trim();
   if (!url) {
-    return { ok: false, status: 503, reason: 'offline', error: 'the twin is offline right now.' };
+    return { ok: false, status: 503, reason: 'offline', error: 'the mind is offline right now.' };
   }
 
   // -----------------------------------------------------------------------
@@ -564,19 +567,19 @@ export async function runTwinInference(
     });
 
     if (!res.ok) {
-      return { ok: false, status: 502, reason: 'upstream_error', error: 'the twin could not answer just now.' };
+      return { ok: false, status: 502, reason: 'upstream_error', error: 'the mind could not answer just now.' };
     }
     const respBody = (await res.json().catch(() => null)) as { answer?: unknown; error?: unknown } | null;
     const answer = typeof respBody?.answer === 'string' ? respBody.answer.trim() : '';
     if (!answer) {
-      return { ok: false, status: 502, reason: 'empty', error: 'the twin returned nothing.' };
+      return { ok: false, status: 502, reason: 'empty', error: 'the mind returned nothing.' };
     }
     return { ok: true, answer };
   } catch (e) {
     const aborted = e instanceof Error && e.name === 'AbortError';
     return aborted
-      ? { ok: false, status: 504, reason: 'timeout', error: 'the twin took too long to answer.' }
-      : { ok: false, status: 502, reason: 'fetch_failed', error: 'could not reach the twin.' };
+      ? { ok: false, status: 504, reason: 'timeout', error: 'the mind took too long to answer.' }
+      : { ok: false, status: 502, reason: 'fetch_failed', error: 'could not reach the mind.' };
   } finally {
     clearTimeout(timeout);
   }
