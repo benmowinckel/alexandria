@@ -146,17 +146,18 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         </p>
       )}
 
-      <p className="start-section start-section-later">on your phone</p>
+      {/* Steps 3–4 don't actually need the phone (the shortcut adds from
+          Mac too; the email works anywhere) — so the label says where they
+          CAN be done, and the grab line above routes the phone-only case. */}
+      <p className="start-section start-section-later">from anywhere</p>
 
       <p className="step-line">
         <span className="step-num">3 &mdash;</span>{' '}
         <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">Add the shortcut</a>
       </p>
       <p className="step-agents">
-        Open that link on your phone and tap Add. From then on, share
-        anything to it &mdash; an article, a voice note, a thought &mdash;
-        and it lands in your Alexandria, picked up automatically the next
-        time you open a session.
+        Tap Add, then share anything to it &mdash; an article, a voice note,
+        a thought &mdash; and it&rsquo;s in your Alexandria next session.
       </p>
 
       <p className="step-line step-two">
@@ -203,25 +204,21 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
             : 'we’ll send you the line for later, so you can do step 1 then.'}
       </p>
 
-      {/* The fine print — question/answer pairs in the door idiom. First
-          pair plants the /a habit (founder 2026-07-17: build the habit of
-          triggering the slash command everywhere). */}
+      {/* The fine print — three question/answer pairs, one line each (the
+          install flow itself teaches what comes after, so no what-now pair —
+          founder 2026-07-17). */}
       <div className="start-details">
-        <div className="start-qa">
-          <p className="start-qa-q">installed &mdash; what now?</p>
-          <p className="start-qa-a">Open a new tab, type <code>/a</code>, and leave it. That&rsquo;s a session &mdash; do it whenever.</p>
-        </div>
         <div className="start-qa">
           <p className="start-qa-q">on a plain chat app?</p>
           <p className="start-qa-a">It won&rsquo;t work &mdash; it has to be one of the coding agents above.</p>
         </div>
         <div className="start-qa">
           <p className="start-qa-q">using cowork?</p>
-          <p className="start-qa-a">Switch to the code tab just for this one line &mdash; it&rsquo;ll walk you through using Cowork as normal after.</p>
+          <p className="start-qa-a">Switch to the code tab just for this one line &mdash; it walks you through the rest.</p>
         </div>
         <div className="start-qa">
           <p className="start-qa-q">hesitant to run it?</p>
-          <p className="start-qa-a">Paste it in and ask your ai to check it first &mdash; it&rsquo;ll read the whole script before anything runs.</p>
+          <p className="start-qa-a">Paste it in and ask your ai to check it first.</p>
         </div>
       </div>
     </section>

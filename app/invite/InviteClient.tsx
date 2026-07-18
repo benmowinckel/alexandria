@@ -52,11 +52,14 @@ export default function InviteClient({ refCode }: { refCode?: string }) {
             <>A friend sent you alexandria.</>
           )}
         </h1>
+        {/* Texture over block (founder 2026-07-17): short beats, one
+            italic stress, the sample-on-a-plate image — rhythm, not a
+            wall. */}
         <p className="invite-lede">
-          They&rsquo;ve already vetted it, and they sent it because they
-          think it&rsquo;s for you. It&rsquo;s free &mdash; a sample, not a
-          purchase &mdash; so just take it now, and talk to them after about
-          using it together.
+          They&rsquo;ve already vetted it. They know you, they know what
+          this is &mdash; and they put the two together. It&rsquo;s free: a
+          sample on a plate, not a purchase. Take it now &mdash; then work
+          out what it can do, <em>together</em>.
         </p>
 
         <Link className="invite-btn" href={startHref}>
