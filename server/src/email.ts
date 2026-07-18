@@ -244,10 +244,10 @@ export async function sendWeekOneCheckIn(
   const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${emailToken}`;
   const html = emailShell(`<p style="margin: 0 0 1.4rem;">hey :)</p>
   <p style="margin: 0 0 1.4rem;">you signed up to alexandria a week ago &mdash; just dropping in.</p>
-  <p style="margin: 0 0 1.4rem;">it's like the gym &mdash; the more you put in, the more you get out. and the unusual part is it molds to you. so anything you want &mdash; say it. anything you don't &mdash; say it. anything confusing &mdash; just ask.</p>
-  <p style="margin: 0 0 2.2rem;">what's going well, what's not, what you like, what you don't &mdash; reply to this, or call: <a href="tel:+14155038178" style="color: #3d3630;">+1 (415) 503-8178</a>. you're early, so what you tell me actually shapes this. i read all of it. anything annoying &mdash; i'll cut it. anything missing &mdash; i'll add it.</p>
-  <p style="margin: 0 0 1.4rem;">if you want to follow along more closely (and support the work), there's <a href="${WEBSITE_URL}/follow" style="color: #3d3630;">keep me posted</a>.</p>
-  <p style="margin: 0 0 1.8rem;">ok, that's all for now.</p>`, unsubscribeUrl);
+  <p style="margin: 0 0 1.4rem;">it&rsquo;s like the gym &mdash; the more you put in, the more you get out. and the unusual part is it molds to you. so anything you want &mdash; say it. anything you don&rsquo;t &mdash; say it. anything confusing &mdash; just ask.</p>
+  <p style="margin: 0 0 2.2rem;">what&rsquo;s going well, what&rsquo;s not, what you like, what you don&rsquo;t &mdash; reply to this, or call: <a href="tel:+14155038178" style="color: #3d3630;">+1 (415) 503-8178</a>. you&rsquo;re early, so what you tell me actually shapes this. i read all of it. anything annoying &mdash; i&rsquo;ll cut it. anything missing &mdash; i&rsquo;ll add it.</p>
+  <p style="margin: 0 0 1.4rem;">if you want to follow along more closely (and support the work), there&rsquo;s <a href="${WEBSITE_URL}/follow" style="color: #3d3630;">keep me posted</a>.</p>
+  <p style="margin: 0 0 1.8rem;">ok, that&rsquo;s all for now.</p>`, unsubscribeUrl);
   return await sendEmail(email, 'checking in.', html, { unsubscribeUrl });
 }
 
