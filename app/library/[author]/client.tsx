@@ -391,10 +391,14 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                 <div style={{ margin: '0.9rem -0.98rem 0' }}>
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask me anything…" />
                 </div>
-                {/* One tap to the first question — shows what asking looks
-                    like better than any explainer could. */}
+                {/* One tap to the first question — and each chip TEACHES what
+                    the door is for (founder, round eleven): one for the work,
+                    one for the mind, one that shows it speaks for the LINKED
+                    surfaces — the thing no other page can do. */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.85rem' }}>
-                  {['what are you building?', 'what do you believe?', 'where should i start?'].map((q) => (
+                  {['what are you building?', 'what do you believe?',
+                    routerLinks.some((l) => l.label === 'x') ? 'what’s on your x?'
+                      : author.website ? 'what’s on your website?' : 'where should i start?'].map((q) => (
                     <button key={q} type="button" onClick={() => goAskWith(q)}
                       style={{ ...tagStyle, background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}
                       className="hover:opacity-60">
@@ -430,7 +434,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                       </span>
                     )}
                   </span>
-                  <span aria-hidden style={{ color: 'var(--text-muted)', fontSize: '0.88rem', whiteSpace: 'nowrap' }}>↗</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>public</span>
                 </a>
               ))}
             </div>
