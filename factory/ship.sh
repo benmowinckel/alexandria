@@ -35,6 +35,7 @@ SIGNED_FILES=(
   factory/canon/bookshelf.md
   factory/canon/plm.md
   factory/canon/twin.md
+  factory/canon/marketplace.md
   factory/canon/MODULES.md
   factory/skills/scheduled.md
   factory/skills/machine.md
