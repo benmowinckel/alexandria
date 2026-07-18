@@ -854,7 +854,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     flowing with no dividers between them. A lead paragraph
                     shows; a rotating caret reveals the rest. Accordion (one
                     open at a time) keeps the fixed stage bounded. */}
-                <p className="secs-kicker">On Alexandria</p>
+                <p className="secs-kicker">on alexandria.</p>
                 <div className="secs">
                   {SECTIONS.map((s) => {
                     const isOpen = openPillar === s.title;
@@ -2685,16 +2685,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         /* The back kicker — a faint letter-plate title telling the reader
            what why/what/how refer to: the answer in full (front gives it
            in short). Sits where the sections' top margin was. */
-        /* Essay-title register (2026-07-17): proper caps 'On Alexandria'
-           (the essay convention), bigger than the why/what/how labels so it
-           clearly reads as the section's title, muted ink, on an elegant
-           hairline that spans only the words. */
+        /* House register (founder, 2026-07-18): lowercase with terminal
+           period — 'on alexandria.' — the wordmark's owned move (Taste.md
+           settled boundary; abstract.pdf section titles). Bigger than the
+           why/what/how labels so it reads as the section's title, muted
+           ink, on a hairline underline spanning only the words. The line
+           is currentColor: the old var(--theme-border) was never defined,
+           which invalidated the declaration and the hairline never drew. */
         .secs-kicker {
           display: inline-block;
           align-self: flex-start;
           margin: 40px 0 0;
           padding-bottom: 10px;
-          border-bottom: 1px solid var(--theme-border);
+          border-bottom: 1px solid currentColor;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
           font-size: 16px;
