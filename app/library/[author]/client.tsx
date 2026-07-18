@@ -366,18 +366,15 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             const first = (author.display_name || author.id).split(' ')[0];
             return (
               <div style={{ margin: '0 0 3rem' }}>
-                {/* One "ask" on the page: the title names the door, the
-                    placeholder completes its sentence, the button is the act.
-                    (founder, round four: no saying the same thing three times.) */}
-                <p style={{ color: 'var(--text-primary)', fontSize: '1.05rem', margin: '0 0 0.75rem' }}>ask my mind.</p>
-                <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="anything…" />
-                {/* ONE explainer line (founder, round three: title, placeholder
-                    and subline were saying the same thing three times) — it does
-                    the real work instead: what this is, and that its reach spans
-                    the page AND the declared links above. Status sits below,
-                    "open in chat" visibly pressable. */}
+                {/* The door, one job per element (founder, round five): the
+                    title names the thing in full — personal language model —
+                    the placeholder speaks in the mind's own voice, and the
+                    subline gets to use "PLM" and state the reach: the page and
+                    the declared links above. */}
+                <p style={{ color: 'var(--text-primary)', fontSize: '1.05rem', margin: '0 0 0.75rem' }}>personal language model.</p>
+                <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask me anything…" />
                 <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.5, margin: '0.55rem 0 0' }}>
-                  it answers as {first} — from everything on this page and everything linked above.
+                  a PLM — {first}&rsquo;s mind, modeled on everything published here and everything linked above; it answers as {first}.
                 </p>
                 <p style={{ fontSize: '0.82rem', margin: '0.3rem 0 0' }}>
                   <span style={{ color: 'var(--text-muted)' }}>{online ? 'online' : 'offline'}</span>

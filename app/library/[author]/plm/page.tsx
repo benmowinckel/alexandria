@@ -51,10 +51,14 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [authorName, setAuthorName] = useState('');
   const [signedIn, setSignedIn] = useState(false);
   // Which depth THIS viewer's questions get (server-computed, structural):
-  // 'invite' = the deeper mind, else the public one. Shown so the deeper tier
-  // is discoverable — and requestable — instead of invisible.
+  // 'invite' = premium (the deeper mind), else free (the public one). Surfaced
+  // as the free|premium toggle; toggling premium without a grant morphs the
+  // word into an invite-code field (founder, round five) — the tier is
+  // discoverable, its price is obvious, and codes have a place to go.
   const [depth, setDepth] = useState<'public' | 'paid' | 'invite'>('public');
   const [contact, setContact] = useState('');
+  const [showCode, setShowCode] = useState(false);
+  const [codeDraft, setCodeDraft] = useState('');
   const [files, setFiles] = useState<FileMeta[]>([]);
   const [variants, setVariants] = useState<TwinVariantSummary[]>([]);
   const [activeVariant, setActiveVariant] = useState<'weights' | 'context'>('context');
@@ -243,10 +247,18 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       const answer = (res.ok && b.answer) ? b.answer : (b.error || 'the mind could not answer just now.');
       setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'twin', text: answer }] } : c)));
       // A valid code binds a grant server-side — re-read the directory so the
-      // gated mind unlocks (the field falls away) for the rest of the session.
+      // unlocked state (variants + depth) reflects it: premium lights up and
+      // the code field falls away for the rest of the session.
       if (res.ok && b.answer && invite) {
         fetch(`/api/library/${encodeURIComponent(author)}`, { credentials: 'include' })
-          .then((r) => r.json()).then((d) => { if (Array.isArray(d?.twin?.variants)) setVariants(d.twin.variants); }).catch(() => { /* */ });
+          .then((r) => r.json()).then((d) => {
+            if (Array.isArray(d?.twin?.variants)) setVariants(d.twin.variants);
+            const nd = d?.twin?.depth;
+            if (nd === 'public' || nd === 'paid' || nd === 'invite') {
+              setDepth(nd);
+              if (nd === 'invite') { setShowCode(false); setCodeDraft(''); }
+            }
+          }).catch(() => { /* */ });
       }
     } catch {
       setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'twin', text: 'could not reach the mind.' }] } : c)));
@@ -327,20 +339,41 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="hover:opacity-60">{LinesIcon}</button>
               <span style={{ ...label, marginLeft: '-0.45rem' }}>chat</span>
-              {usable.length > 1 && (
-                <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'baseline', marginLeft: 'auto' }}>
-                  {usable.map((v) => (
-                    <button key={v.variant} type="button" onClick={() => setActiveVariant(v.variant)}
-                      style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', padding: '0 0 0.15rem',
-                        color: activeVariant === v.variant ? 'var(--text-primary)' : 'var(--text-ghost)',
-                        borderBottom: activeVariant === v.variant ? '1px solid var(--accent)' : '1px solid transparent' }}>
-                      {v.variant === 'weights' ? 'free' : 'premium'}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* free | premium — the two DEPTHS of the one mind (not model
+                  variants). Your level is underlined. Toggling premium without
+                  a grant morphs the word into an invite-code field; a valid
+                  code binds on the next question and premium lights up. */}
+              <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'baseline', marginLeft: 'auto' }}>
+                <button type="button" onClick={() => setShowCode(false)}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', padding: '0 0 0.15rem',
+                    color: depth !== 'invite' && !showCode ? 'var(--text-primary)' : 'var(--text-ghost)',
+                    borderBottom: depth !== 'invite' && !showCode ? '1px solid var(--accent)' : '1px solid transparent' }}>
+                  free
+                </button>
+                {depth === 'invite' ? (
+                  <span style={{ fontSize: '0.82rem', color: 'var(--text-primary)', borderBottom: '1px solid var(--accent)', padding: '0 0 0.15rem' }}>premium</span>
+                ) : showCode ? (
+                  <input
+                    autoFocus
+                    value={codeDraft}
+                    onChange={(e) => setCodeDraft(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { const code = codeDraft.trim(); if (code) setInvite(code); } if (e.key === 'Escape') { setShowCode(false); setCodeDraft(''); } }}
+                    placeholder="invite code"
+                    spellCheck={false}
+                    autoCapitalize="off"
+                    style={{ width: '7.5rem', border: 'none', borderBottom: '1px solid var(--border-light)', background: 'none', outline: 'none',
+                      color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: '0.82rem', padding: '0 0 0.15rem' }}
+                  />
+                ) : (
+                  <button type="button" onClick={() => setShowCode(true)}
+                    style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', padding: '0 0 0.15rem',
+                      color: 'var(--text-ghost)', borderBottom: '1px solid transparent' }}>
+                    premium
+                  </button>
+                )}
+              </div>
               {(active?.messages.length ?? 0) > 0 && (
-                <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={{ ...iconBtn, marginLeft: usable.length > 1 ? '0.4rem' : 'auto' }} className="hover:opacity-60" />
+                <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={{ ...iconBtn, marginLeft: '0.4rem' }} className="hover:opacity-60" />
               )}
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
@@ -418,33 +451,38 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             )}
             <div style={{ flex: 'none', padding: '0.9rem 1.2rem 0.7rem', borderTop: locked ? 'none' : '1px solid var(--border-light)' }}>
               <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading placeholder="ask anything…" />
-              {/* Which mind you're speaking with — always visible, so the deeper
-                  tier is discoverable and REQUESTABLE (founder, round four: if
-                  the visitor can't see it exists, they never ask the Author for
-                  the invite, and the Author never learns they wanted in). */}
-              <p style={{ color: 'var(--text-ghost)', fontSize: '0.78rem', margin: '0.5rem 0 0' }}>
-                {depth === 'invite' ? (
-                  <>the deeper mind — you&rsquo;re invited.</>
-                ) : (
-                  <>
-                    the public mind · a deeper, more personal one opens by invite
-                    {contact && (
-                      <>
-                        {' '}—{' '}
-                        <a
-                          href={contact.includes('@') && !contact.startsWith('mailto:')
-                            ? `mailto:${contact}?subject=${encodeURIComponent('an invite to your deeper mind')}`
-                            : contact}
-                          style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px' }}
-                          className="hover:opacity-60"
-                        >
-                          ask {(authorName || author).split(' ')[0]} for one
-                        </a>
-                      </>
-                    )}
-                  </>
-                )}
-              </p>
+              {/* Contextual helper — only while the invite-code field is open:
+                  how codes work, the sign-in requirement, and the REQUEST path
+                  (the Author never learns someone wanted in unless there's a
+                  way to ask). Invisible the rest of the time. */}
+              {showCode && depth !== 'invite' && (
+                <p style={{ color: 'var(--text-ghost)', fontSize: '0.78rem', margin: '0.5rem 0 0' }}>
+                  {!signedIn ? (
+                    <>
+                      <a href={librarySignInUrlHere()} style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px' }} className="hover:opacity-60">sign in</a>
+                      {' '}to use an invite code — it binds to your account.
+                    </>
+                  ) : invite ? (
+                    <>code set — premium unlocks on your next question.</>
+                  ) : (
+                    <>enter your code, then ask.</>
+                  )}
+                  {contact && (
+                    <>
+                      {' '}no code?{' '}
+                      <a
+                        href={contact.includes('@') && !contact.startsWith('mailto:')
+                          ? `mailto:${contact}?subject=${encodeURIComponent('an invite to your premium mind')}`
+                          : contact}
+                        style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                        className="hover:opacity-60"
+                      >
+                        ask {(authorName || author).split(' ')[0]} for one
+                      </a>
+                    </>
+                  )}
+                </p>
+              )}
             </div>
           </section>
 
