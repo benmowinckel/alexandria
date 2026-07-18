@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="alexandria — ask my mind">
+  <!-- The square mark for bio link lists — the alexandria "a." the way a
+       platform icon sits beside an instagram or x logo. Pairs with
+       /ask/{author} (the ask-my-mind door) and /ask-badge.svg (the wide badge). -->
+  <rect x="0.5" y="0.5" width="63" height="63" rx="14" fill="#faf8f4" stroke="#1f1d1a" stroke-opacity="0.16"/>
+  <text x="30" y="43" text-anchor="middle" font-family="'EB Garamond', Georgia, 'Times New Roman', serif" font-size="38" fill="#1f1d1a"><tspan font-style="italic">a</tspan><tspan font-style="normal">.</tspan></text>
+</svg>

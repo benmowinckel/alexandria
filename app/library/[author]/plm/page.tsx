@@ -52,16 +52,16 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [authorName, setAuthorName] = useState('');
   const [signedIn, setSignedIn] = useState(false);
   // Which depth THIS viewer's questions get (server-computed, structural):
-  // 'invite' = premium (the deeper mind), else free (the public one). Surfaced
-  // as the free|premium toggle; toggling premium without a grant morphs the
-  // word into an invite-code field (founder, round five) — the tier is
-  // discoverable, its price is obvious, and codes have a place to go.
+  // 'invite' = the deeper mind, else the public one. Surfaced as the
+  // public|invite toggle — named like the pieces' own visibility tags;
+  // toggling invite without a grant morphs the word into a code field, so
+  // the tier is discoverable and codes have a place to go.
   const [depth, setDepth] = useState<'public' | 'paid' | 'invite'>('public');
   // The SELECTED side of the toggle — a real selector, not just an indicator
-  // (founder, round six: an invited viewer must be able to switch to free and
-  // preview what a stranger gets). Asks at 'free' request the public depth;
-  // the server only ever honors depth requests downward.
-  const [sel, setSel] = useState<'free' | 'premium'>('free');
+  // (an invited viewer can switch to public and preview what a stranger
+  // gets). Asks at 'public' request that depth; the server only ever honors
+  // depth requests downward.
+  const [sel, setSel] = useState<'public' | 'invite'>('public');
   const [contact, setContact] = useState('');
   // The declared graph (website + socials) — shown in the pieces pane so it's
   // CLEAR the mind can be asked about the linked surfaces too, not only the
@@ -109,9 +109,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
 
   const who = authorName || author;
   // One public mind; DEPTH is structural per querier (public shadow for anyone,
-  // the deeper invite shadow for granted friends — server-side, no toggle). The
-  // header shows the sidecar's online state instead of a variant label; the
-  // free/premium tab pair only renders in the rare two-variant config.
+  // the deeper invite shadow for granted friends — server-side). The header
+  // shows the sidecar's online state; the public|invite toggle carries depth.
   const [online, setOnline] = useState(false);
   const usable = useMemo(() => variants.filter((v) => v.enabled && (v.accessible || v.needsInvite)), [variants]);
   const activeCfg = useMemo(() => variants.find((v) => v.variant === activeVariant), [variants, activeVariant]);
@@ -133,7 +132,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       setAuthorName(dir?.author?.display_name || '');
       setSignedIn(sess?.signed_in === true);
       setOnline(dir?.twin?.online === true);
-      const d = dir?.twin?.depth; if (d === 'public' || d === 'paid' || d === 'invite') { setDepth(d); if (d === 'invite') setSel('premium'); }
+      const d = dir?.twin?.depth; if (d === 'public' || d === 'paid' || d === 'invite') { setDepth(d); if (d === 'invite') setSel('invite'); }
       setContact(typeof dir?.author?.contact === 'string' ? dir.author.contact : '');
       const cleanUrl = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`);
       const site = typeof dir?.author?.website === 'string' && dir.author.website.trim()
@@ -267,7 +266,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           variant: activeVariant,
           // The free toggle: an invited viewer asking at 'free' previews the
           // public depth (server honors depth requests downward only).
-          ...(depth === 'invite' && sel === 'free' ? { depth: 'public' } : {}),
+          ...(depth === 'invite' && sel === 'public' ? { depth: 'public' } : {}),
           ...(invite ? { invite } : {}),
           ...(focus ? { focus } : {}),
         }),
@@ -285,7 +284,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             const nd = d?.twin?.depth;
             if (nd === 'public' || nd === 'paid' || nd === 'invite') {
               setDepth(nd);
-              if (nd === 'invite') { setShowCode(false); setCodeDraft(''); setSel('premium'); }
+              if (nd === 'invite') { setShowCode(false); setCodeDraft(''); setSel('invite'); }
             }
           }).catch(() => { /* */ });
       }
@@ -368,23 +367,24 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="hover:opacity-60">{LinesIcon}</button>
               <span style={{ ...label, marginLeft: '-0.45rem' }}>chat</span>
-              {/* free | premium — the two DEPTHS of the one mind (not model
-                  variants). Your level is underlined. Toggling premium without
-                  a grant morphs the word into an invite-code field; a valid
-                  code binds on the next question and premium lights up. */}
+              {/* public | invite — the two DEPTHS of the one mind, named like
+                  the pieces' own visibility tags (founder: most queriers are
+                  public; the names must carry the model). Your level is
+                  underlined. Toggling invite without a grant morphs the word
+                  into a code field; a valid code binds on the next question. */}
               <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'baseline', marginLeft: 'auto' }}>
-                <button type="button" onClick={() => { setSel('free'); setShowCode(false); }}
+                <button type="button" onClick={() => { setSel('public'); setShowCode(false); }}
                   style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.88rem', padding: '0 0 0.15rem',
-                    color: sel === 'free' && !showCode ? 'var(--text-primary)' : 'var(--text-ghost)',
-                    borderBottom: sel === 'free' && !showCode ? '1px solid var(--accent)' : '1px solid transparent' }}>
-                  free
+                    color: sel === 'public' && !showCode ? 'var(--text-primary)' : 'var(--text-ghost)',
+                    borderBottom: sel === 'public' && !showCode ? '1px solid var(--accent)' : '1px solid transparent' }}>
+                  public
                 </button>
                 {depth === 'invite' ? (
-                  <button type="button" onClick={() => setSel('premium')}
+                  <button type="button" onClick={() => setSel('invite')}
                     style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.88rem', padding: '0 0 0.15rem',
-                      color: sel === 'premium' ? 'var(--text-primary)' : 'var(--text-ghost)',
-                      borderBottom: sel === 'premium' ? '1px solid var(--accent)' : '1px solid transparent' }}>
-                    premium
+                      color: sel === 'invite' ? 'var(--text-primary)' : 'var(--text-ghost)',
+                      borderBottom: sel === 'invite' ? '1px solid var(--accent)' : '1px solid transparent' }}>
+                    invite
                   </button>
                 ) : showCode ? (
                   <input
@@ -402,7 +402,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                   <button type="button" onClick={() => setShowCode(true)}
                     style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', padding: '0 0 0.15rem',
                       color: 'var(--text-ghost)', borderBottom: '1px solid transparent' }}>
-                    premium
+                    invite
                   </button>
                 )}
               </div>
@@ -497,7 +497,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                       {' '}to use an invite code — it binds to your account.
                     </>
                   ) : invite ? (
-                    <>code set — premium unlocks on your next question.</>
+                    <>code set — the invite mind unlocks on your next question.</>
                   ) : (
                     <>enter your code, then ask.</>
                   )}
@@ -506,7 +506,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                       {' '}no code?{' '}
                       <a
                         href={contact.includes('@') && !contact.startsWith('mailto:')
-                          ? `mailto:${contact}?subject=${encodeURIComponent('an invite to your premium mind')}`
+                          ? `mailto:${contact}?subject=${encodeURIComponent('an invite to your deeper mind')}`
                           : contact}
                         style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px' }}
                         className="hover:opacity-60"

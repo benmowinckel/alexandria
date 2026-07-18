@@ -146,12 +146,13 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   };
 
   // The door's question rides to the chat page, which auto-fires it (?q=).
-  const goAsk = () => {
-    const q = doorQ.trim();
-    if (!q || doorGoing) return;
+  const goAskWith = (q: string) => {
+    const text = q.trim();
+    if (!text || doorGoing) return;
     setDoorGoing(true);
-    router.push(`/library/${encodeURIComponent(authorId)}/plm?q=${encodeURIComponent(q)}`);
+    router.push(`/library/${encodeURIComponent(authorId)}/plm?q=${encodeURIComponent(text)}`);
   };
+  const goAsk = () => goAskWith(doorQ);
 
   if (loading) return (
     <main style={{ maxWidth: '560px', margin: '0 auto', padding: '40vh 2rem', fontFamily: 'var(--font-eb-garamond)', textAlign: 'center' }}>
@@ -361,16 +362,31 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             const online = data.twin.online === true;
             const first = (author.display_name || author.id).split(' ')[0];
             return (
-              <div style={{ margin: '0 0 2.6rem' }}>
-                {/* Section one of five: mind. The head names the PLM; the box
-                    speaks in the mind's voice; the subline gives concept →
-                    reach → behavior; status closes. Box outdented by its text
-                    inset so the ghost text aligns with the lines around it. */}
+              // The mind is the ONE elevated object on the page (founder: the
+              // page read flat — a cold visitor must see what to do without
+              // reading). A quiet card lifts the door above everything else;
+              // example questions make the first move a single tap.
+              <div style={{
+                margin: '0 0 2.6rem', padding: '1.3rem 1.4rem 1.2rem',
+                border: '1px solid var(--border-light)', borderRadius: '14px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 6px 18px rgba(0,0,0,0.04)',
+              }}>
                 {sectionHead('mind', 'a personal language model')}
                 <div style={{ margin: '0.75rem -0.98rem 0' }}>
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask me anything…" />
                 </div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.5, margin: '0.55rem 0 0' }}>
+                {/* One tap to the first question — shows what asking looks
+                    like better than any explainer could. */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.7rem' }}>
+                  {['what are you building?', 'what do you believe?', 'where should i start?'].map((q) => (
+                    <button key={q} type="button" onClick={() => goAskWith(q)}
+                      style={{ ...tagStyle, background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}
+                      className="hover:opacity-60">
+                      {q}
+                    </button>
+                  ))}
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.5, margin: '0.8rem 0 0' }}>
                   an ai built from {first}&rsquo;s mind — everything published and linked on this page; it answers as {first} would.
                 </p>
                 <p style={{ fontSize: '0.88rem', margin: '0.3rem 0 0' }}>
