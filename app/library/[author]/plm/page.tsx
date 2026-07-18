@@ -89,10 +89,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   }, []);
 
   const who = authorName || author;
-  // free = the weights twin (the floor, included for everyone); premium = the
-  // frontier context twin. Renamed from quick/deep (founder, 2026-07-17: the
-  // weights twin is NOT quick — speed was the wrong axis, tier is the honest one).
-  const mindLabel = activeVariant === 'weights' ? 'free' : 'premium';
+  // One public mind; DEPTH is structural per querier (public shadow for anyone,
+  // the deeper invite shadow for granted friends — server-side, no toggle). The
+  // header shows the sidecar's online state instead of a variant label; the
+  // free/premium tab pair only renders in the rare two-variant config.
+  const [online, setOnline] = useState(false);
   const usable = useMemo(() => variants.filter((v) => v.enabled && (v.accessible || v.needsInvite)), [variants]);
   const activeCfg = useMemo(() => variants.find((v) => v.variant === activeVariant), [variants, activeVariant]);
   // Either mind can be invite-gated (which one is the Author's call). Show the
@@ -112,6 +113,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       if (!live) return;
       setAuthorName(dir?.author?.display_name || '');
       setSignedIn(sess?.signed_in === true);
+      setOnline(dir?.twin?.online === true);
       setFiles(Array.isArray(dir?.files) ? dir.files : []);
       const vs: TwinVariantSummary[] = Array.isArray(dir?.twin?.variants) ? dir.twin.variants : [];
       setVariants(vs);
@@ -276,7 +278,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           <Link href={`/library/${encodeURIComponent(author)}`} aria-label="back to the library" title="library"
             style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
           <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>{who}</span>
-          <span style={{ ...label }}>{mindLabel}</span>
+          <span style={{ ...label }}>{online ? 'online' : 'offline'}</span>
         </header>
 
         <div className="plm-tabs" style={{ display: 'none', flex: 'none', borderBottom: '1px solid var(--border-light)' }}>
@@ -297,6 +299,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 0.9rem 0.5rem' }}>
               <button type="button" onClick={() => setLeftOpen(false)} aria-label="collapse history" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneLeftIcon}</button>
+              <span style={{ ...label, marginLeft: '0.55rem' }}>history</span>
               <button type="button" onClick={newChat} aria-label="new conversation" title="new conversation"
                 style={{ marginLeft: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: 1, padding: 0 }} className="hover:opacity-60">＋</button>
             </div>
@@ -316,6 +319,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="hover:opacity-60">{LinesIcon}</button>
+              <span style={{ ...label, marginLeft: '-0.45rem' }}>chat</span>
               {usable.length > 1 && (
                 <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'baseline', marginLeft: 'auto' }}>
                   {usable.map((v) => (
@@ -334,9 +338,19 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
               {who && (active?.messages.length ?? 0) === 0 && !asking && (
+                // The first-timer explainer (founder, round three: "radically
+                // simple, super intuitive — people have never seen anything like
+                // this"): what this is, how far its reach goes, how the pieces
+                // pane relates, and how depth works. Short declarative lines.
                 <div style={{ padding: '0.6rem 0 0.2rem', color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.65 }}>
                   <p style={{ margin: '0 0 0.9rem' }}>
-                    this is <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{who}</strong>’s mind — built with alexandria from their own writing. ask it anything.
+                    this is <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{who}</strong>’s mind — a personal language model, speaking from everything published and linked on this profile.
+                  </p>
+                  <p style={{ margin: '0 0 0.9rem' }}>
+                    ask it anything. when it mentions a piece, pull it up and read along.
+                  </p>
+                  <p style={{ color: 'var(--text-ghost)', fontSize: '0.88rem', margin: '0 0 0.9rem' }}>
+                    free to ask · an invite opens the deeper, more personal mind.
                   </p>
                   <p style={{ margin: 0 }}>
                     <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>make your own →</Link>
@@ -408,7 +422,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.7rem 1.4rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
               {open && <button type="button" onClick={() => setOpen(null)} aria-label="back to pieces" title="back" style={iconBtn} className="hover:opacity-60">{ChevronIcon}</button>}
-              <span style={{ ...(open ? { color: 'var(--text-primary)', fontSize: '0.98rem' } : label) }}>{open ? open.nice : `${who}’s pieces`}</span>
+              <span style={{ ...(open ? { color: 'var(--text-primary)', fontSize: '0.98rem' } : label) }}>{open ? open.nice : 'pieces'}</span>
               {open && (
                 <>
                   <ActionButton icon={CopyIcon} onAction={copyPiece} title="copy text" style={{ ...iconBtn, marginLeft: 'auto' }} className="hover:opacity-60" />
@@ -421,6 +435,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               {!open && (
                 <div style={{ padding: '1.4rem clamp(1.4rem, 4vw, 3rem)' }}>
                   {files.length === 0 && <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem' }}>nothing to show yet.</p>}
+                  {files.length > 0 && (
+                    <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', margin: '0 0 0.9rem' }}>
+                      the published pieces — open one and the mind can discuss it as you read.
+                    </p>
+                  )}
                   {files.map((f) => (
                     <button key={f.name} type="button" onClick={() => void openPiece(f.name)}
                       style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', width: '100%', textAlign: 'left',

@@ -253,8 +253,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       gap: '1.25rem',
       width: '100%',
       padding: '0.55rem 0',
+      // No hairline per item (founder, round three: "too many lines") — the
+      // one zone divider above carries the structure; whitespace does the rest.
       border: 'none',
-      borderBottom: '1px solid var(--border-light)',
       background: 'none',
       color: 'inherit',
       textDecoration: 'none',
@@ -366,12 +367,14 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             return (
               <div style={{ margin: '0 0 3rem' }}>
                 <p style={{ color: 'var(--text-primary)', fontSize: '1.05rem', margin: '0 0 0.75rem' }}>ask my mind.</p>
-                <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder={`ask ${first} anything…`} />
-                {/* PLM named in full (founder: "say personal language model
-                    somewhere"); status + the chat door on their own line below,
-                    plain "online"/"offline", "open in chat" visibly pressable. */}
+                <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask anything…" />
+                {/* ONE explainer line (founder, round three: title, placeholder
+                    and subline were saying the same thing three times) — it does
+                    the real work instead: what this is, and that its reach spans
+                    the page AND the declared links above. Status sits below,
+                    "open in chat" visibly pressable. */}
                 <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.5, margin: '0.55rem 0 0' }}>
-                  {first}&rsquo;s personal language model — built with alexandria from everything published here.
+                  it answers as {first} — from everything on this page and everything linked above.
                 </p>
                 <p style={{ fontSize: '0.82rem', margin: '0.3rem 0 0' }}>
                   <span style={{ color: 'var(--text-muted)' }}>{online ? 'online' : 'offline'}</span>
