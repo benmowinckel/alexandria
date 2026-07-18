@@ -173,7 +173,7 @@ function HomeInstall() {
         free sample
       </Link>
       <span className="cta-sub">
-        even slightly interested? just try it
+        even slightly curious? just try it
       </span>
     </div>
   );
