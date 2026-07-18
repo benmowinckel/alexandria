@@ -153,8 +153,10 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">Add the shortcut</a>
       </p>
       <p className="step-agents">
-        Share anything to it &mdash; an article, a voice note, a thought &mdash;
-        and it&rsquo;s waiting in your Alexandria.
+        Open that link on your phone and tap Add. From then on, share
+        anything to it &mdash; an article, a voice note, a thought &mdash;
+        and it lands in your Alexandria, picked up automatically the next
+        time you open a session.
       </p>
 
       <p className="step-line step-two">

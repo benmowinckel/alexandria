@@ -93,7 +93,12 @@ const styles = `
     font-size: 17px; line-height: 1.6; color: var(--text-secondary);
     text-wrap: pretty;
   }
-  .invite-lede em { font-style: italic; color: var(--text-primary); }
+  /* Italic correction (founder 2026-07-17): the serif italic's slant
+     overhangs its advance width, so the space after an inline italic word
+     reads as missing. A small margin restores the visual gap. */
+  .invite-lede em, .invite-more em {
+    font-style: italic; color: var(--text-primary); margin-right: 0.06em;
+  }
   .invite-btn {
     display: inline-flex; align-items: center; justify-content: center;
     padding: 13px 28px; border-radius: 9px;

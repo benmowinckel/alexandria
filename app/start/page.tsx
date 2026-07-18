@@ -56,6 +56,12 @@ export default async function StartPage({
         {/* No lede (2026-07-16, radical simplicity): the two steps are the
             page; the lede's privacy line lives in the fine print below. */}
         <h1 className="primer-h1">Becoming an Alexandrian</h1>
+        {/* The grab line (founder 2026-07-17): send them for both devices
+            before the 2×2 — one is enough, but both is the point. */}
+        <p className="start-grab">
+          Grab your computer and your phone &mdash; you&rsquo;ll use both.
+          Only one within reach? Do that half now.
+        </p>
 
         {/* ONE consolidated layout for every device (founder 2026-07-17 —
             most visitors have both devices in reach, so ask for both
@@ -310,6 +316,13 @@ export default async function StartPage({
           margin: 28px 0 0; text-align: left; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 20px; font-style: italic; color: var(--text-primary);
           letter-spacing: 0.005em; opacity: 0.72;
+        }
+
+        .start-grab {
+          margin: -6px 0 30px; max-width: 480px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 16px; line-height: 1.6; color: var(--text-secondary);
+          text-wrap: pretty;
         }
 
         /* The 2×2 section labels — computer / phone. Small-caps, a notch
