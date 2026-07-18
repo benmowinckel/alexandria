@@ -132,7 +132,7 @@ export async function sendPatronWelcome(
   </p>
   <p style="margin: 0 0 1.4rem;">
     feel free to reply any time, i&rsquo;ll read them all!<br>
-    and if you know anyone else who might want to follow along, send them to <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a> &mdash; they can press keep me posted, or just follow.
+    and if you know anyone else who might want to follow along, send them to <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a> &mdash; they can follow along from there.
   </p>
   <p style="margin: 0 0 1.8rem;">ok, that&rsquo;s all for now :)</p>`, unsubscribeUrl);
 
@@ -151,7 +151,7 @@ export async function sendFollowerWelcome(email: string, unsubscribeToken?: stri
   </p>
   <p style="margin: 0 0 1.4rem;">
     feel free to reply whenever you want. i&rsquo;ll read all of them!<br>
-    and if there are others you think might want to follow along, send them to <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a> &mdash; they can try it free, or just press keep me posted.
+    and if there are others you think might want to follow along, send them to <a href="${WEBSITE_URL}" style="color: #3d3630;">alexandria-library.com</a> &mdash; they can try it free, or just follow along.
   </p>
   <p style="margin: 0 0 1.8rem;">ok, that&rsquo;s all. bye for now :)</p>`, unsubscribeUrl);
 
@@ -246,7 +246,7 @@ export async function sendWeekOneCheckIn(
   <p style="margin: 0 0 1.4rem;">you signed up to alexandria a week ago &mdash; just dropping in.</p>
   <p style="margin: 0 0 1.4rem;">it&rsquo;s like the gym &mdash; the more you put in, the more you get out. and the unusual part is it molds to you. so anything you want &mdash; say it. anything you don&rsquo;t &mdash; say it. anything confusing &mdash; just ask.</p>
   <p style="margin: 0 0 2.2rem;">what&rsquo;s going well, what&rsquo;s not, what you like, what you don&rsquo;t &mdash; reply to this, or call: <a href="tel:+14155038178" style="color: #3d3630;">+1 (415) 503-8178</a>. you&rsquo;re early, so what you tell me actually shapes this. i read all of it. anything annoying &mdash; i&rsquo;ll cut it. anything missing &mdash; i&rsquo;ll add it.</p>
-  <p style="margin: 0 0 1.4rem;">if you want to follow along more closely (and support the work), there&rsquo;s <a href="${WEBSITE_URL}/follow" style="color: #3d3630;">keep me posted</a>.</p>
+  <p style="margin: 0 0 1.4rem;">if you want to follow along more closely (and support the work), you can <a href="${WEBSITE_URL}/follow" style="color: #3d3630;">follow along here</a>.</p>
   <p style="margin: 0 0 1.8rem;">ok, that&rsquo;s all for now.</p>`, unsubscribeUrl);
   return await sendEmail(email, 'checking in.', html, { unsubscribeUrl });
 }

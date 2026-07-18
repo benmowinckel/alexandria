@@ -4,7 +4,7 @@ import { randomBytes } from 'crypto';
 import type { Context, Hono } from 'hono';
 import { logEvent } from './analytics.js';
 import { countActiveKin, createCheckoutSession, createConnectOnboardingLink, createPortalSession, ensurePayoutsReady, getOrCreateConnectAccount, getStripe, recalculateKinPricing, resolveActiveSubscription } from './billing.js';
-import { authErrorHtml, callbackPageHtml, welcomeHandoffUrl } from './templates.js';
+import { authErrorHtml, callbackPageHtml, miniPageHtml, welcomeHandoffUrl } from './templates.js';
 import { getDB, getR2 } from './db.js';
 import { deleteAllProtocolR2 } from './file-access.js';
 import { loadAccounts, loadAccount, saveAccount, setAuthIndex, deleteAccount, getKV, setEmailTokenIndex, getEmailTokenIndex, getAuthIndex, getLoginIndex } from './kv.js';
@@ -1186,10 +1186,7 @@ export function registerRoutes(app: Hono) {
   app.on(['GET', 'POST'], '/email/stop', async (c) => {
     const token = c.req.query('t');
     if (!token) return c.text('missing token', 400);
-    const stoppedHtml = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 420px; margin: 80px auto; padding: 20px; color: #3d3630; text-align: center;">
-  <p style="font-size: 1.1rem; line-height: 1.9;">stopped. we&rsquo;ll be here when you&rsquo;re ready.</p>
-  <p style="font-size: 0.85rem; color: #8a8078; margin-top: 1rem;">a.</p>
-</div>`;
+    const stoppedHtml = miniPageHtml(`<p>stopped. we&rsquo;ll be here when you&rsquo;re ready.</p>`);
 
     const storeKey = await getEmailTokenIndex(token);
     if (storeKey) {

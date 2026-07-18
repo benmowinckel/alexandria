@@ -40,10 +40,13 @@ const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
 const ICON_SHARE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
 
 // ---------------------------------------------------------------------------
-// Auth error page — shown when OAuth callback can't complete
+// Mini page shell — the branded wrapper for tiny Worker pages (auth errors,
+// the unsubscribe confirmation, the API root). Paper/ink in EB Garamond with
+// the same dark-mode support as the welcome page, so no edge surface ever
+// blasts an off-brand or light-only screen (2026-07-17 edge-page sweep).
 // ---------------------------------------------------------------------------
 
-export function authErrorHtml(message: string): string {
+export function miniPageHtml(bodyHtml: string): string {
   const WEBSITE_URL = getWebsiteUrl();
   return `<!DOCTYPE html>
 <html lang="en">
@@ -51,15 +54,40 @@ export function authErrorHtml(message: string): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>alexandria.</title>
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400&display=swap" rel="stylesheet">
+<link rel="icon" href="${WEBSITE_URL}/favicon.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+  :root { --paper: #f5f0e8; --ink: #3d3630; --ink-muted: #8a8078; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #2b2a27; --ink: #ece8e1; --ink-muted: #9b9690; }
+  }
+  body {
+    font-family: 'EB Garamond', Georgia, serif; background: var(--paper);
+    color: var(--ink); display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; margin: 0; padding: 2rem; text-align: center;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mini { max-width: 420px; }
+  .mini p { font-size: 1.05rem; line-height: 1.9; margin: 0 0 1.5rem; }
+  .mini .muted { color: var(--ink-muted); }
+  .mini a { color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--ink-muted); padding-bottom: 1px; }
+  .mini .mark { font-style: italic; color: var(--ink-muted); margin: 2rem 0 0; }
+</style>
 </head>
-<body style="font-family:'EB Garamond',Georgia,serif;background:#f5f0e8;color:#3d3630;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:2rem;text-align:center">
-<div style="max-width:420px">
-<p style="font-size:1.05rem;line-height:1.9;color:#8a8078;margin:0 0 1.5rem">${message}</p>
-<p style="font-size:1.05rem;line-height:1.9;margin:0"><a href="${WEBSITE_URL}/signup" style="color:#3d3630;text-decoration:none">start again</a></p>
+<body>
+<div class="mini">
+${bodyHtml}
+<p class="mark">a.</p>
 </div>
 </body>
 </html>`;
+}
+
+// Auth error page — shown when OAuth callback can't complete.
+export function authErrorHtml(message: string): string {
+  const WEBSITE_URL = getWebsiteUrl();
+  return miniPageHtml(`<p class="muted">${message}</p>
+<p><a href="${WEBSITE_URL}/join">start again</a></p>`);
 }
 
 // ---------------------------------------------------------------------------

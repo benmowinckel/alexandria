@@ -21,6 +21,7 @@ import { sendFollowerWelcome, sendOnboardCommand } from './email.js';
 import { generateToken } from './crypto.js';
 import { getAllowedOrigins } from './cors.js';
 import { formatPT } from './time.js';
+import { miniPageHtml } from './templates.js';
 
 // ---------------------------------------------------------------------------
 // Hono app
@@ -301,21 +302,11 @@ app.get('/audit/head', async (c) => {
 // ---------------------------------------------------------------------------
 
 app.get('/', (c) => {
-  return c.html(`<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Alexandria</title>
-<link rel="icon" type="image/png" href="https://alexandria-library.com/favicon.png">
-</head>
-<body style="font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#0a0a0a;color:#fff">
-<div style="text-align:center">
-<h1 style="margin:1rem 0 0.5rem;font-weight:300">Alexandria</h1>
-<p style="color:#888;font-size:0.9rem">Greek philosophy infrastructure</p>
-<p style="color:#555;font-size:0.8rem;margin-top:2rem"><a href="/health" style="color:#555">health</a></p>
-</div>
-</body>
-</html>`);
+  // The API root — someone poking at api.alexandria-library.com directly.
+  // Branded mini page (2026-07-17 edge sweep; was an off-brand black
+  // system-font card): name it, point at the website, link health.
+  return c.html(miniPageHtml(`<p>alexandria &mdash; the api.</p>
+<p class="muted">the website is at <a href="https://alexandria-library.com">alexandria-library.com</a> &middot; <a href="/health">health</a></p>`));
 });
 
 // ---------------------------------------------------------------------------
