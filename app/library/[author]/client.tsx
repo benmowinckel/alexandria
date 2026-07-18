@@ -195,7 +195,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     const l = label.toLowerCase();
     if (l === 'x' || l.includes('twitter')) return 'personal audience';
     if (l.includes('linkedin')) return 'personal network';
-    if (l.includes('instagram')) return 'personal life';
+    if (l.includes('instagram')) return 'personal aesthetic';
     if (l.includes('github')) return 'personal code';
     if (l.includes('substack') || l.includes('medium')) return 'personal writing';
     if (l.includes('youtube')) return 'personal channel';
