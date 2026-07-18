@@ -237,6 +237,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     lineHeight: 1,
     padding: '0.32rem 0.58rem',
     textDecoration: 'none',
+    textTransform: 'lowercase',
   };
 
   // Entry row — title left, tier right, on one baseline, with a bottom hairline.
@@ -312,7 +313,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             {author.alexandria_id}
           </p>
           {profileText && (
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.02rem', lineHeight: 1.6, margin: '0.75rem 0 0', maxWidth: '34rem' }}>
+            // Rendered lowercase (brand voice — trying it, founder 2026-07-17);
+            // the stored text stays as typed, this is presentation only.
+            <p style={{ color: 'var(--text-muted)', fontSize: '1.02rem', lineHeight: 1.6, margin: '0.75rem 0 0', maxWidth: '34rem', textTransform: 'lowercase' }}>
               {profileText}
             </p>
           )}
