@@ -74,14 +74,17 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const dlExtRef = useRef('md');
 
   // Optional deep-link: ?variant=weights|context lands on a mind (quick|deep in
-  // the UI), ?invite=CODE seeds the unlock code so an invited link opens deep.
+  // the UI), ?invite=CODE seeds the unlock code so an invited link opens deep,
+  // ?q=… carries the profile door's question in (auto-fired once, below).
   const [invite, setInvite] = useState('');
   const [inviteDraft, setInviteDraft] = useState('');
+  const [pendingQ, setPendingQ] = useState('');
   useEffect(() => {
     try {
       const q = new URLSearchParams(window.location.search);
       const v = q.get('variant'); if (v === 'weights' || v === 'context') setActiveVariant(v);
       const inv = q.get('invite')?.trim(); if (inv) { setInvite(inv); setInviteDraft(inv); }
+      const asked = q.get('q')?.trim(); if (asked) setPendingQ(asked);
     } catch { /* */ }
   }, []);
 
@@ -118,6 +121,23 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   }, [author]);
 
   useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [active?.messages, asking]);
+
+  // The profile door's question (?q=) fires once the mind is loaded, then the
+  // param is stripped so refresh/back doesn't re-ask. The chat opens already
+  // answering — the door and the room feel like one motion.
+  const firedRef = useRef(false);
+  useEffect(() => {
+    if (!pendingQ || !author || variants.length === 0 || firedRef.current) return;
+    firedRef.current = true;
+    setPendingQ('');
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.delete('q');
+      window.history.replaceState({}, '', u.pathname + u.search + u.hash);
+    } catch { /* */ }
+    void ask(pendingQ);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingQ, author, variants]);
 
   // Drop the cursor in the composer whenever the chat pane is visible (this page
   // opens chat-first, and again each time it's re-expanded) so you can just type.
@@ -173,8 +193,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     setQuestion('');
   };
 
-  const ask = async () => {
-    const text = question.trim();
+  const ask = async (textArg?: string) => {
+    const text = (textArg ?? question).trim();
     if (!text || asking) return;
     const targetId = activeId;
     setAsking(true);

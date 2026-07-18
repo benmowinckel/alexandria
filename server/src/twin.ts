@@ -385,6 +385,13 @@ export interface TwinInferenceRequest {
   author?: string | null;
   /** Pre-gated published works for the `search_my_works` tool (context only). */
   works?: TwinWork[];
+  /** The Author's declared links out — website + socials, as shown on the
+   *  profile's links section (context only). The links DECLARE the routed
+   *  graph; the sidecar's capture corpus FILLS it. Passing the declaration on
+   *  every query means the twin can always ROUTE ("that's on my instagram —
+   *  here's the link") even for surfaces with no capture — the graceful floor
+   *  for locked platforms. Public data by definition (it's on the page). */
+  links?: { label: string; url: string }[];
   /** The twin's visibility tier (context only). The sidecar loads ONLY the
    *  shadow published at this tier as substrate — never the raw constitution —
    *  so it's a structural ceiling on what the twin can reveal (plm.md § tiered
@@ -541,6 +548,8 @@ export async function runTwinInference(
       if (req.focus && req.focus.content) body.focus = req.focus;
       // Pre-gated published works for search_my_works (the Worker is the gate).
       if (req.works && req.works.length) body.works = req.works;
+      // The declared links-out graph — routing floor for linked surfaces.
+      if (req.links && req.links.length) body.links = req.links;
     }
 
     const res = await fetch(target, {

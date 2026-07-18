@@ -4,6 +4,13 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: '/patron', destination: '/follow', permanent: true },
+      // The standardized ask-my-mind door: alexandria-library.com/ask/{author}
+      // is the one recognizable URL an Author pastes into every bio — X,
+      // Instagram, their website (a2 § Library V1: the twin is why the link
+      // spreads). Lands on the profile, which leads with the ask box.
+      // NON-permanent so the landing surface stays movable (e.g. straight to
+      // the chat later) without breaking the link everyone already pasted.
+      { source: '/ask/:author', destination: '/library/:author', permanent: false },
       // The install one-liner: `curl -fsSL alexandria-library.com/a | bash`.
       // `/a` is the protocol's name (lowercase, like git). Redirects to the raw
       // setup.sh on GitHub; curl -fsSL follows it (-L). NON-permanent (307) so the

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="176" height="36" viewBox="0 0 176 36" role="img" aria-label="ask my mind — alexandria">
+  <!-- The standardized ask-my-mind badge. Authors embed it on their own sites,
+       linking to alexandria-library.com/ask/{author} — the door in every bio. -->
+  <rect x="0.5" y="0.5" width="175" height="35" rx="17.5" fill="#faf8f4" stroke="#1f1d1a" stroke-opacity="0.18"/>
+  <text x="88" y="22.5" text-anchor="middle" font-family="'EB Garamond', Georgia, 'Times New Roman', serif" font-size="14.5" fill="#1f1d1a">ask my mind &#183; <tspan font-style="italic">alexandria</tspan>.</text>
+</svg>

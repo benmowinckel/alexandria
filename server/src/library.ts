@@ -948,11 +948,32 @@ export function registerLibraryRoutes(app: Hono): void {
     if (cfg.variant === 'context' && cfg.tools?.works) {
       works = await fetchTwinWorks(p.authorId, p.authorAccount.github_id, p.accessor ?? null, { inviteValid: grantValid });
     }
+    // The declared links-out graph (website + socials — the profile's router
+    // section), passed on every context query. The links DECLARE the graph so
+    // the twin can always route a visitor onward ("that's on my instagram —
+    // here's the link") even for surfaces with no capture; the sidecar's
+    // capture corpus FILLS the graph with actual content. Public by definition
+    // — this is exactly what the profile page already shows everyone.
+    let links: { label: string; url: string }[] | undefined;
+    if (cfg.variant === 'context') {
+      const website = stringSlot(p.settings, 'website');
+      const socials = Array.isArray(p.settings.socials)
+        ? (p.settings.socials as unknown[])
+            .map((s) => (s && typeof s === 'object' ? s as Record<string, unknown> : {}))
+            .filter((s) => typeof s.label === 'string' && typeof s.url === 'string')
+            .map((s) => ({ label: (s.label as string).trim(), url: (s.url as string).trim() }))
+        : [];
+      links = [
+        ...(website ? [{ label: 'website', url: website }] : []),
+        ...socials,
+      ];
+      if (!links.length) links = undefined;
+    }
     const sidecar = await getSidecar(p.authorId);
     const result = await runTwinInference(
       cfg.variant === 'weights'
         ? { variant: 'weights', question: p.question, system, maxTokens: 512, checkpoint: cfg.checkpoint, base: cfg.base }
-        : { variant: 'context', question: p.question, system, maxTokens: 512, model: cfg.model, tools: cfg.tools, author: p.authorId, works, tier: queryTier, focus: p.focus },
+        : { variant: 'context', question: p.question, system, maxTokens: 512, model: cfg.model, tools: cfg.tools, author: p.authorId, works, links, tier: queryTier, focus: p.focus },
       { url: sidecar?.url, secret: sidecar?.secret },
     );
 

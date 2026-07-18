@@ -3,8 +3,10 @@
 import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import StartJoinCTA from '../../components/StartJoinCTA';
+import PromptBox from '../../components/PromptBox';
 import { FETCH_TIMEOUT_MS, SERVER_URL, librarySignInUrlHere } from '../../lib/config';
 import { safeUrl } from '../../lib/url';
 import { type TwinVariantSummary } from './types';
@@ -112,10 +114,15 @@ function WebsiteUrlLine({ website, style }: { website: string; style?: CSSProper
 }
 
 export default function AuthorPageClient({ params }: { params: Promise<{ author: string }> }) {
+  const router = useRouter();
   const [authorId, setAuthorId] = useState('');
   const [data, setData] = useState<AuthorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // The ask-me door — the question typed here rides to the chat page, which
+  // auto-fires it (?q=). The door owns no chat state; the chat is the room.
+  const [doorQ, setDoorQ] = useState('');
+  const [doorGoing, setDoorGoing] = useState(false);
 
   useEffect(() => {
     params.then(({ author }) => {
@@ -136,6 +143,14 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       return;
     }
     window.location.href = `/library/${encodeURIComponent(authorId)}/open/${encodeURIComponent(file.name)}`;
+  };
+
+  // The door's question rides to the chat page, which auto-fires it (?q=).
+  const goAsk = () => {
+    const q = doorQ.trim();
+    if (!q || doorGoing) return;
+    setDoorGoing(true);
+    router.push(`/library/${encodeURIComponent(authorId)}/plm?q=${encodeURIComponent(q)}`);
   };
 
   if (loading) return (
@@ -165,14 +180,23 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     .map((cat) => ({ cat, items: files.filter((f) => (f.category || 'shadows') === cat) }))
     .filter((g) => g.items.length > 0);
 
-  // Socials as clean links: the author's linked accounts (X, LinkedIn, …) plus
-  // their website, shown plainly — never as buttons/pills.
   // General account sign-in — lives at the top of the page, not tied to the twin.
   const signedIn = data.twin?.signed_in === true;
   const signInUrl = librarySignInUrlHere();
+  // The router — the bio's links out as one first-class block: website leads,
+  // socials follow, contact closes. This is the ground-truth pointer set the
+  // node resolves onward to (the profile is a router first — a2 § Library V1);
+  // the same declared graph is what feeds the twin's linked-surface context.
   const cleanUrl = (u: string) => (u.startsWith('http') ? u : `https://${u}`);
-  const socialLinks: { label: string; url: string }[] = (author.socials || []).filter((s) => s && s.label && s.url).map((s) => ({ label: s.label, url: safeUrl(cleanUrl(s.url)) }));
-  const websiteLink = author.website ? { label: author.website.replace(/^https?:\/\//, '').replace(/\/$/, ''), url: safeUrl(cleanUrl(author.website)) } : null;
+  const routerLinks: { label: string; url: string; external: boolean }[] = [
+    ...(author.website ? [{ label: websiteLabel(author.website), url: safeUrl(cleanUrl(author.website)), external: true }] : []),
+    ...(author.socials || [])
+      .filter((s) => s && s.label && s.url)
+      .map((s) => ({ label: s.label.trim().toLowerCase(), url: safeUrl(cleanUrl(s.url)), external: true })),
+    ...(author.contact
+      ? [{ label: contactForm(author.contact).toLowerCase(), url: contactHref(author.contact), external: author.contact.startsWith('http') }]
+      : []),
+  ];
   const renderLinkedText = (text: string) =>
     text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
       /^https?:\/\//.test(part) ? (
@@ -294,60 +318,57 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               {profileText}
             </p>
           )}
-          {/* Alexandria features — location + contact as pills. */}
-          {(author.location || author.contact) && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.9rem' }}>
-              {author.location && author.location_key && (
-                <Link href={`/library?locations=${encodeURIComponent(author.location_key)}`} style={tagStyle} className="hover:opacity-60">
-                  {author.location}
-                </Link>
-              )}
-              {author.contact && (
-                <a href={contactHref(author.contact)}
-                  target={author.contact.startsWith('http') ? '_blank' : undefined}
-                  rel={author.contact.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  style={tagStyle} className="hover:opacity-60">
-                  {contactForm(author.contact)}
-                </a>
-              )}
+          {/* The links out — the router, one visible line under the bio. */}
+          {routerLinks.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.45rem 0.6rem', marginTop: '0.9rem', fontSize: '0.95rem' }}>
+              {routerLinks.map((l, i) => (
+                <span key={l.url} style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.6rem' }}>
+                  {i > 0 && <span aria-hidden style={{ color: 'var(--text-ghost)' }}>·</span>}
+                  <a href={l.url}
+                    target={l.external ? '_blank' : undefined}
+                    rel={l.external ? 'noopener noreferrer' : undefined}
+                    className="hover:opacity-60"
+                    style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+                    {l.label}
+                  </a>
+                </span>
+              ))}
             </div>
           )}
-          {/* Socials on one line (dot-separated); the website link on the next. */}
-          {(socialLinks.length > 0 || websiteLink) && (
-            <div style={{ marginTop: '0.7rem', fontSize: '0.9rem' }}>
-              {socialLinks.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
-                  {socialLinks.map((s, i) => (
-                    <span key={s.url} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                      {i > 0 && <span aria-hidden style={{ color: 'var(--text-ghost)' }}>·</span>}
-                      <a href={s.url} target="_blank" rel="noopener noreferrer" className="hover:opacity-60" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>{s.label}</a>
-                    </span>
-                  ))}
-                </div>
-              )}
-              {websiteLink && (
-                <div style={{ marginTop: '0.35rem' }}>
-                  <a href={websiteLink.url} target="_blank" rel="noopener noreferrer" className="hover:opacity-60" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>{websiteLink.label}</a>
-                </div>
-              )}
+          {/* Alexandria-native pill — location filters the directory. */}
+          {author.location && author.location_key && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.9rem' }}>
+              <Link href={`/library?locations=${encodeURIComponent(author.location_key)}`} style={tagStyle} className="hover:opacity-60">
+                {author.location}
+              </Link>
             </div>
           )}
         </header>
 
         <section>
           {data.twin?.enabled && (() => {
-            // One mind, one line. The PLM page carries the quick/deep toggle (and
-            // the invite gate for deep) — the bio just opens it, kept clean.
+            // The ask-me door — the clearest thing on the page (a2 § Library V1:
+            // the twin is why the link spreads). The question rides to the chat
+            // page (?q= auto-fires there); the door itself holds no chat state.
+            // The PLM page still carries the quick/deep toggle + invite gate.
             const anyOn = (data.twin.variants || []).some((v) => v.enabled);
             if (!anyOn) return null;
             const online = data.twin.online === true;
+            const first = (author.display_name || author.id).split(' ')[0];
             return (
-              <Link href={`/library/${encodeURIComponent(authorId)}/plm`} className="hover:opacity-60"
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem', width: '100%',
-                  padding: '0.72rem 0', borderBottom: '1px solid var(--border-light)', textDecoration: 'none', color: 'inherit' }}>
-                <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>personal language model</span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{online ? 'online' : 'offline'}</span>
-              </Link>
+              <div style={{ margin: '0 0 3rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', margin: '0 0 0.75rem' }}>
+                  <p style={{ color: 'var(--text-primary)', fontSize: '1.05rem', margin: 0 }}>ask my mind.</p>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{online ? 'online' : 'offline'}</span>
+                </div>
+                <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder={`ask ${first} anything…`} />
+                <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.5, margin: '0.55rem 0 0' }}>
+                  {first}&rsquo;s twin — built with alexandria from everything they&rsquo;ve published; it answers as them.{' '}
+                  <Link href={`/library/${encodeURIComponent(authorId)}/plm`} style={{ color: 'var(--text-muted)', textDecoration: 'none' }} className="hover:opacity-60">
+                    or open the chat →
+                  </Link>
+                </p>
+              </div>
             );
           })()}
           {grouped.length === 0 ? (
