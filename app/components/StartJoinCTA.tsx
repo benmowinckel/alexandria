@@ -59,7 +59,7 @@ export default function StartJoinCTA({
         </p>
       )}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.9rem 1.4rem', alignItems: 'center', justifyContent: align === 'center' ? 'center' : 'flex-start', marginTop: compact ? '0.9rem' : 0 }}>
-        <Link href="/start" style={primary} className="hover:opacity-80">try it free →</Link>
+        <Link href="/start" style={primary} className="hover:opacity-80">build your own</Link>
       </div>
     </div>
   );

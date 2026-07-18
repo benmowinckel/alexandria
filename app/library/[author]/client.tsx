@@ -189,11 +189,24 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // node resolves onward to (the profile is a router first — a2 § Library V1);
   // the same declared graph is what feeds the twin's linked-surface context.
   const cleanUrl = (u: string) => (u.startsWith('http') ? u : `https://${u}`);
-  const routerLinks: { label: string; url: string; external: boolean }[] = [
-    ...(author.website ? [{ label: websiteLabel(author.website), url: safeUrl(cleanUrl(author.website)), external: true }] : []),
+  // Each link carries a whisper of what it IS to this person (founder: the
+  // links stack like everything else, with subtitles — personal projects /
+  // audience / network). Defaults by platform; unknown platforms go bare.
+  const linkWhisper = (label: string): string | null => {
+    const l = label.toLowerCase();
+    if (l === 'x' || l.includes('twitter')) return 'personal audience';
+    if (l.includes('linkedin')) return 'personal network';
+    if (l.includes('instagram')) return 'personal life';
+    if (l.includes('github')) return 'personal code';
+    if (l.includes('substack') || l.includes('medium')) return 'personal writing';
+    if (l.includes('youtube')) return 'personal channel';
+    return null;
+  };
+  const routerLinks: { label: string; url: string; sub: string | null; external: boolean }[] = [
+    ...(author.website ? [{ label: websiteLabel(author.website), url: safeUrl(cleanUrl(author.website)), sub: 'personal projects', external: true }] : []),
     ...(author.socials || [])
       .filter((s) => s && s.label && s.url)
-      .map((s) => ({ label: s.label.trim().toLowerCase(), url: safeUrl(cleanUrl(s.url)), external: true })),
+      .map((s) => ({ label: s.label.trim().toLowerCase(), url: safeUrl(cleanUrl(s.url)), sub: linkWhisper(s.label), external: true })),
   ];
   const renderLinkedText = (text: string) =>
     text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
@@ -392,13 +405,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.5, margin: '1rem 0 0' }}>
                   an ai built from {first}&rsquo;s mind — everything published and linked on this page; it answers as {first} would.
                 </p>
-                <p style={{ fontSize: '0.92rem', margin: '0.35rem 0 0' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>{online ? 'online' : 'offline'}</span>
-                  <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem' }}>·</span>
-                  <Link href={`/library/${encodeURIComponent(authorId)}/plm`} style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '3px' }} className="hover:opacity-60">
-                    open in chat
-                  </Link>
-                </p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', margin: '0.35rem 0 0' }}>{online ? 'online' : 'offline'}</p>
               </div>
             );
           })()}
@@ -406,22 +413,26 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               provides context for (founder: links as its own section; the
               primary thing is that the mind speaks for them). */}
           {routerLinks.length > 0 && (
-            <div style={{ margin: '0 0 2.6rem' }}>
-              {sectionHead('links', 'what this connects to')}
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.45rem 0.6rem', marginTop: '0.7rem', fontSize: '1.05rem' }}>
-                {routerLinks.map((l, i) => (
-                  <span key={l.url} style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.6rem' }}>
-                    {i > 0 && <span aria-hidden style={{ color: 'var(--text-ghost)' }}>·</span>}
-                    <a href={l.url}
-                      target={l.external ? '_blank' : undefined}
-                      rel={l.external ? 'noopener noreferrer' : undefined}
-                      className="hover:opacity-60"
-                      style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
-                      {l.label}
-                    </a>
+            <div style={{ margin: '0 0 3rem' }}>
+              {sectionHead('links', 'what’s been connected')}
+              {routerLinks.map((l) => (
+                <a key={l.url} href={l.url}
+                  target={l.external ? '_blank' : undefined}
+                  rel={l.external ? 'noopener noreferrer' : undefined}
+                  className="hover:opacity-60"
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem', width: '100%',
+                    padding: '0.55rem 0', textDecoration: 'none' }}>
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ color: 'var(--text-primary)', fontSize: '1.06rem' }}>{l.label}</span>
+                    {l.sub && (
+                      <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
+                        {l.sub}
+                      </span>
+                    )}
                   </span>
-                ))}
-              </div>
+                  <span aria-hidden style={{ color: 'var(--text-muted)', fontSize: '0.88rem', whiteSpace: 'nowrap' }}>↗</span>
+                </a>
+              ))}
             </div>
           )}
           {grouped.length === 0 ? (
@@ -436,7 +447,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             // items lineless. Whispers person-free and parallel.
             <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '0.4rem' }}>
               {grouped.map(({ cat, items }) => (
-                <div key={cat} style={{ marginTop: '2rem' }}>
+                <div key={cat} style={{ marginTop: '2.6rem' }}>
                   {sectionHead(cat, cat === 'works' ? 'what’s been made' : cat === 'projects' ? 'what’s being built' : 'what’s being thought')}
                   {items.map(fileRow)}
                 </div>
