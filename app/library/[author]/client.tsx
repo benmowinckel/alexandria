@@ -475,7 +475,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             whole pitch). */}
         <footer style={{ borderTop: '1px solid var(--border-light)', textAlign: 'center', margin: '4rem 0 0', padding: '1.6rem 0 0' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', margin: 0 }}>
-            want your own?{' '}
+            want a mind like this?{' '}
             <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">build your own</Link>
           </p>
           <p style={{ margin: '1.4rem 0 0' }}>
