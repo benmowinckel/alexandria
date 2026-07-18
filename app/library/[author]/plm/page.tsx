@@ -56,6 +56,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   // word into an invite-code field (founder, round five) — the tier is
   // discoverable, its price is obvious, and codes have a place to go.
   const [depth, setDepth] = useState<'public' | 'paid' | 'invite'>('public');
+  // The SELECTED side of the toggle — a real selector, not just an indicator
+  // (founder, round six: an invited viewer must be able to switch to free and
+  // preview what a stranger gets). Asks at 'free' request the public depth;
+  // the server only ever honors depth requests downward.
+  const [sel, setSel] = useState<'free' | 'premium'>('free');
   const [contact, setContact] = useState('');
   const [showCode, setShowCode] = useState(false);
   const [codeDraft, setCodeDraft] = useState('');
@@ -123,7 +128,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       setAuthorName(dir?.author?.display_name || '');
       setSignedIn(sess?.signed_in === true);
       setOnline(dir?.twin?.online === true);
-      const d = dir?.twin?.depth; if (d === 'public' || d === 'paid' || d === 'invite') setDepth(d);
+      const d = dir?.twin?.depth; if (d === 'public' || d === 'paid' || d === 'invite') { setDepth(d); if (d === 'invite') setSel('premium'); }
       setContact(typeof dir?.author?.contact === 'string' ? dir.author.contact : '');
       setFiles(Array.isArray(dir?.files) ? dir.files : []);
       const vs: TwinVariantSummary[] = Array.isArray(dir?.twin?.variants) ? dir.twin.variants : [];
@@ -241,7 +246,15 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ question: text, variant: activeVariant, ...(invite ? { invite } : {}), ...(focus ? { focus } : {}) }),
+        body: JSON.stringify({
+          question: text,
+          variant: activeVariant,
+          // The free toggle: an invited viewer asking at 'free' previews the
+          // public depth (server honors depth requests downward only).
+          ...(depth === 'invite' && sel === 'free' ? { depth: 'public' } : {}),
+          ...(invite ? { invite } : {}),
+          ...(focus ? { focus } : {}),
+        }),
       });
       const b = await res.json().catch(() => ({}));
       const answer = (res.ok && b.answer) ? b.answer : (b.error || 'the mind could not answer just now.');
@@ -256,7 +269,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             const nd = d?.twin?.depth;
             if (nd === 'public' || nd === 'paid' || nd === 'invite') {
               setDepth(nd);
-              if (nd === 'invite') { setShowCode(false); setCodeDraft(''); }
+              if (nd === 'invite') { setShowCode(false); setCodeDraft(''); setSel('premium'); }
             }
           }).catch(() => { /* */ });
       }
@@ -273,7 +286,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     }
   };
 
-  const label = { color: 'var(--text-ghost)', fontSize: '0.72rem', letterSpacing: '0.08em' } as const;
+  const label = { color: 'var(--text-ghost)', fontSize: '0.78rem', letterSpacing: '0.08em' } as const;
   const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
 
   const copyText = (t: string) => { try { void navigator.clipboard?.writeText(t); } catch { /* */ } };
@@ -344,14 +357,19 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                   a grant morphs the word into an invite-code field; a valid
                   code binds on the next question and premium lights up. */}
               <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'baseline', marginLeft: 'auto' }}>
-                <button type="button" onClick={() => setShowCode(false)}
-                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', padding: '0 0 0.15rem',
-                    color: depth !== 'invite' && !showCode ? 'var(--text-primary)' : 'var(--text-ghost)',
-                    borderBottom: depth !== 'invite' && !showCode ? '1px solid var(--accent)' : '1px solid transparent' }}>
+                <button type="button" onClick={() => { setSel('free'); setShowCode(false); }}
+                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.88rem', padding: '0 0 0.15rem',
+                    color: sel === 'free' && !showCode ? 'var(--text-primary)' : 'var(--text-ghost)',
+                    borderBottom: sel === 'free' && !showCode ? '1px solid var(--accent)' : '1px solid transparent' }}>
                   free
                 </button>
                 {depth === 'invite' ? (
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text-primary)', borderBottom: '1px solid var(--accent)', padding: '0 0 0.15rem' }}>premium</span>
+                  <button type="button" onClick={() => setSel('premium')}
+                    style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.88rem', padding: '0 0 0.15rem',
+                      color: sel === 'premium' ? 'var(--text-primary)' : 'var(--text-ghost)',
+                      borderBottom: sel === 'premium' ? '1px solid var(--accent)' : '1px solid transparent' }}>
+                    premium
+                  </button>
                 ) : showCode ? (
                   <input
                     autoFocus
@@ -456,7 +474,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                   (the Author never learns someone wanted in unless there's a
                   way to ask). Invisible the rest of the time. */}
               {showCode && depth !== 'invite' && (
-                <p style={{ color: 'var(--text-ghost)', fontSize: '0.78rem', margin: '0.5rem 0 0' }}>
+                <p style={{ color: 'var(--text-ghost)', fontSize: '0.84rem', margin: '0.5rem 0 0' }}>
                   {!signedIn ? (
                     <>
                       <a href={librarySignInUrlHere()} style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px' }} className="hover:opacity-60">sign in</a>
@@ -505,7 +523,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 <div style={{ padding: '1.4rem clamp(1.4rem, 4vw, 3rem)' }}>
                   {files.length === 0 && <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem' }}>nothing to show yet.</p>}
                   {files.length > 0 && (
-                    <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', margin: '0 0 0.9rem' }}>
+                    <p style={{ color: 'var(--text-ghost)', fontSize: '0.86rem', margin: '0 0 0.9rem' }}>
                       the published pieces — open one and the mind can discuss it as you read.
                     </p>
                   )}
@@ -514,11 +532,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                       style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', width: '100%', textAlign: 'left',
                         border: 'none', borderBottom: '1px solid var(--border-light)', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.7rem 0' }}
                       className="hover:opacity-60">
-                      <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{f.title || displayName(f.name)}</span>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{f.visibility || 'public'}</span>
+                      <span style={{ color: 'var(--text-primary)', fontSize: '1.02rem' }}>{f.title || displayName(f.name)}</span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{f.visibility || 'public'}</span>
                     </button>
                   ))}
-                  {!signedIn && <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', marginTop: '1.6rem' }}>sign in for more of this mind.</p>}
+                  {!signedIn && <p style={{ color: 'var(--text-ghost)', fontSize: '0.86rem', marginTop: '1.6rem' }}>sign in for more of this mind.</p>}
                 </div>
               )}
               {open && open.loading && <p style={{ color: 'var(--text-ghost)', padding: '2rem' }}>loading…</p>}

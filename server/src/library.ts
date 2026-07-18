@@ -893,6 +893,11 @@ export function registerLibraryRoutes(app: Hono): void {
     requestedVariant: TwinVariant | null;
     accessor: Account | null;
     inviteValid: boolean;
+    /** Caller-requested DOWNGRADE to the public depth (the free toggle). Only
+     *  ever honored downward — an invited viewer previewing the free mind. The
+     *  structural ceiling (grant/payment) is computed server-side regardless;
+     *  a request can never raise depth. */
+    requestedDepth?: 'public' | null;
     focus?: { name: string; content: string };
     surface: 'library' | 'api';
   }): Promise<TwinQueryOutcome> {
@@ -942,7 +947,10 @@ export function registerLibraryRoutes(app: Hono): void {
     // querier gets the 'paid' shadow; everyone else the 'public' shadow. Depth is no
     // longer a binary that collapsed every deep querier onto the most intimate tier —
     // so "they pay" can never surface friends.md; that requires a real invite.
-    const queryTier: TwinVisibility = grantValid ? 'invite' : isPaying ? 'paid' : 'public';
+    let queryTier: TwinVisibility = grantValid ? 'invite' : isPaying ? 'paid' : 'public';
+    // Free-toggle downgrade: an entitled viewer may ASK SHALLOW (preview what a
+    // stranger gets). Down only — the ceiling above is structural.
+    if (p.requestedDepth === 'public') queryTier = 'public';
     const deep = grantValid || isPaying; // gates only the works tool (each work is separately visibility-gated)
 
     const system = cfg.system || `You are ${p.displayName}. Speak as yourself.`;
@@ -1041,11 +1049,13 @@ export function registerLibraryRoutes(app: Hono): void {
       return c.json({ error: 'This twin has answered its limit for today — try again tomorrow.' }, 429);
     }
 
-    const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown; focus?: unknown };
+    const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown; focus?: unknown; depth?: unknown };
     const question = typeof body.question === 'string' ? body.question.trim() : '';
     if (!question) return c.json({ error: 'Ask a question.' }, 400);
     if (question.length > 2000) return c.json({ error: 'Question too long (2000 chars max).' }, 400);
     const requestedVariant: TwinVariant | null = body.variant === 'weights' || body.variant === 'context' ? body.variant : null;
+    // The free toggle: an entitled viewer may request the PUBLIC depth (down only).
+    const requestedDepth = body.depth === 'public' ? 'public' as const : null;
     // The piece being read (reader workspace), if any — bounded so it can't blow the payload.
     const fRaw = body.focus && typeof body.focus === 'object' ? body.focus as Record<string, unknown> : null;
     const focus = fRaw && typeof fRaw.content === 'string' && fRaw.content.trim()
@@ -1066,7 +1076,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const inviteValid = await resolveInviteAccess(authorId, accessor, inviteCode);
 
     const outcome = await runTwinQuery({
-      authorId, authorAccount, displayName, settings, question, requestedVariant, accessor, inviteValid, focus, surface: 'library',
+      authorId, authorAccount, displayName, settings, question, requestedVariant, accessor, inviteValid, requestedDepth, focus, surface: 'library',
     });
     if (!outcome.ok) return c.json(outcome.body, outcome.status as 401 | 402 | 403 | 404 | 502 | 503 | 504);
     return c.json({

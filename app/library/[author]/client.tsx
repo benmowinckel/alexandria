@@ -213,7 +213,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     );
   const sectionLabelStyle: CSSProperties = {
     color: 'var(--text-ghost)',
-    fontSize: '0.78rem',
+    fontSize: '0.85rem',
     letterSpacing: '0.08em',
     margin: '0 0 0.45rem',
   };
@@ -267,14 +267,14 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     const inner = (
       <>
         <span style={{ minWidth: 0 }}>
-          <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{file.title || fileDisplayName(file.name)}</span>
+          <span style={{ color: 'var(--text-primary)', fontSize: '1.02rem' }}>{file.title || fileDisplayName(file.name)}</span>
           {preview && (
-            <span style={{ display: 'block', color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
+            <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
               {preview}
             </span>
           )}
         </span>
-        <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', letterSpacing: '0.04em', flex: 'none', whiteSpace: 'nowrap' }}>
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.04em', flex: 'none', whiteSpace: 'nowrap' }}>
           {visibilityLabel(file.visibility)}
         </span>
       </>
@@ -318,7 +318,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           )}
           {/* The links out — the router, one visible line under the bio. */}
           {routerLinks.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.45rem 0.6rem', marginTop: '0.9rem', fontSize: '0.95rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.45rem 0.6rem', marginTop: '0.9rem', fontSize: '1rem' }}>
               {routerLinks.map((l, i) => (
                 <span key={l.url} style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.6rem' }}>
                   {i > 0 && <span aria-hidden style={{ color: 'var(--text-ghost)' }}>·</span>}
@@ -371,12 +371,17 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                     the placeholder speaks in the mind's own voice, and the
                     subline gets to use "PLM" and state the reach: the page and
                     the declared links above. */}
-                <p style={{ color: 'var(--text-primary)', fontSize: '1.05rem', margin: '0 0 0.75rem' }}>personal language model.</p>
-                <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask me anything…" />
-                <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.5, margin: '0.55rem 0 0' }}>
-                  a PLM — {first}&rsquo;s mind, modeled on everything published here and everything linked above; it answers as {first}.
+                <p style={{ color: 'var(--text-primary)', fontSize: '1.1rem', margin: '0 0 0.75rem' }}>personal language model.</p>
+                {/* Outdented by the input's text inset so the ghost text sits
+                    flush with the title above and the lines below (founder,
+                    round six: the indent read as misalignment). */}
+                <div style={{ margin: '0 -0.98rem' }}>
+                  <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask me anything…" />
+                </div>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.5, margin: '0.55rem 0 0' }}>
+                  {first}&rsquo;s PLM — an ai modeled on everything published and linked on this page. it answers as {first} would.
                 </p>
-                <p style={{ fontSize: '0.82rem', margin: '0.3rem 0 0' }}>
+                <p style={{ fontSize: '0.88rem', margin: '0.3rem 0 0' }}>
                   <span style={{ color: 'var(--text-muted)' }}>{online ? 'online' : 'offline'}</span>
                   <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem' }}>·</span>
                   <Link href={`/library/${encodeURIComponent(authorId)}/plm`} style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '3px' }} className="hover:opacity-60">
