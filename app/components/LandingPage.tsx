@@ -3350,8 +3350,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             background: linear-gradient(
               to bottom,
               #f7f2ec 0,
-              #f7f2ec 100svh,
-              var(--theme-bg) 100svh,
+              #f7f2ec 112svh,
+              var(--theme-bg) 112svh,
               var(--theme-bg) 100%
             ) !important;
           }
@@ -3373,6 +3373,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           }
           .top-slide {
             padding: 152px clamp(20px, 5vw, 64px) 96px;
+            /* Taller than the viewport (founder, 2026-07-18): at 100svh
+               the answer line overlapped the arch top on phone heights —
+               the epigraph is pixel-anchored (top 112px) while the arch
+               rides the cover-scaled scene (top ≈ 0.366 × slide height).
+               112svh drops the arch ~4.4svh clear of the text; the scene,
+               plate, and everything beneath move down with it. Keep the
+               body gradient stop and the film-invite anchor (56svh centre,
+               112svh wall units) in sync with this height. */
+            min-height: 112svh;
             /* Mobile gets its OWN scene asset — the desktop 16:9 wall
                cropped to portrait made the window wider than the phone
                screen ("too big", founder 2026-07-08). The square asset
@@ -3650,10 +3659,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              line 0.619; caption anchor 0.644. Wall units for a square
              image under cover: both dimensions = max(100vw, 100svh). */
           .film-invite {
-            --wall-w: max(100vw, 100svh);
-            --wall-h: max(100vw, 100svh);
+            /* Wall units + centre track the 112svh slide, not the
+               viewport — the slide is taller than 100svh on mobile. */
+            --wall-w: max(100vw, 112svh);
+            --wall-h: max(100vw, 112svh);
             left: calc(50vw + 0.005 * var(--wall-w));
-            top: calc(50svh + 0.144 * var(--wall-h));
+            top: calc(56svh + 0.144 * var(--wall-h));
             transform: translate(-50%, -50%);
           }
           .film-invite-btn {
