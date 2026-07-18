@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { SERVER_URL } from '../lib/config';
+import { SERVER_URL, SHORTCUT_URL } from '../lib/config';
 import { ArrowIcon, TickIcon } from '../join/DoorIcons';
 
 const EMAIL_GHOST = 'your email';
@@ -142,64 +142,83 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         </p>
       )}
 
-      {/* The do-it-later net — SECOND section (founder 2026-07-17), in the
-          same door idiom as /join: small-caps question, underline field, the
-          send-arrow appearing only once they type, tick on sent, shake on an
-          empty/invalid submit. */}
-      <div className="start-later">
-        <label className="join-door-q" htmlFor="start-later-email">
-          not at your computer?
-        </label>
-        <form className="join-door-field" onSubmit={sendEmail}>
-          <input
-            id="start-later-email"
-            key={shakeKey}
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            size={Math.max(EMAIL_GHOST.length, email.length) + 1}
-            placeholder={EMAIL_GHOST}
-            aria-label="your email"
-            data-shake={shakeKey > 0 ? 'on' : 'off'}
-            value={email}
-            readOnly={mailState === 'sent'}
-            onChange={(e) => { setEmail(e.target.value); if (mailState === 'error' || mailState === 'sent') setMailState('idle'); }}
-          />
-          {(email.trim() || mailState === 'sent') && (
-            <button
-              type="submit"
-              className={`join-door-go${mailState === 'sent' ? ' is-done' : ''}`}
-              aria-label={mailState === 'sent' ? 'sent' : 'send'}
-              disabled={mailState === 'sending' || mailState === 'sent'}
-            >
-              {mailState === 'sent' ? (
-                <TickIcon />
-              ) : (
-                <>
-                  <span className="join-go-word">send</span>
-                  <ArrowIcon />
-                </>
-              )}
-            </button>
-          )}
-        </form>
-        <p className="join-door-hint">
-          {mailState === 'error'
-            ? 'couldn’t send — try again.'
-            : mailState === 'sent'
-              ? 'sent — the line’s in your inbox.'
-              : 'we’ll send you the line for later.'}
-        </p>
+      {/* SECTION TWO — the phone (founder 2026-07-17, consolidated: one
+          layout for every device, computer first). Most visitors have both
+          devices in reach, so this asks for BOTH phone actions: add the
+          shortcut now (always valuable — capture starts today), and the
+          email reminder for whoever isn't at their computer. */}
+      <div className="start-phone">
+        <div className="start-phone-door">
+          <p className="join-door-q">on your phone</p>
+          <p className="start-shortcut-line">
+            <a href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">add the shortcut</a>
+          </p>
+          <p className="join-door-hint">
+            then share anything to it &mdash; an article, a voice note, a
+            thought &mdash; and it&rsquo;s waiting in your alexandria when you
+            start.
+          </p>
+        </div>
+        <div className="start-phone-door">
+          <p className="join-door-q">not at your computer?</p>
+          <form className="join-door-field" onSubmit={sendEmail}>
+            <input
+              id="start-later-email"
+              key={shakeKey}
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              size={Math.max(EMAIL_GHOST.length, email.length) + 1}
+              placeholder={EMAIL_GHOST}
+              aria-label="your email"
+              data-shake={shakeKey > 0 ? 'on' : 'off'}
+              value={email}
+              readOnly={mailState === 'sent'}
+              onChange={(e) => { setEmail(e.target.value); if (mailState === 'error' || mailState === 'sent') setMailState('idle'); }}
+            />
+            {(email.trim() || mailState === 'sent') && (
+              <button
+                type="submit"
+                className={`join-door-go${mailState === 'sent' ? ' is-done' : ''}`}
+                aria-label={mailState === 'sent' ? 'sent' : 'send'}
+                disabled={mailState === 'sending' || mailState === 'sent'}
+              >
+                {mailState === 'sent' ? (
+                  <TickIcon />
+                ) : (
+                  <>
+                    <span className="join-go-word">send</span>
+                    <ArrowIcon />
+                  </>
+                )}
+              </button>
+            )}
+          </form>
+          <p className="join-door-hint">
+            {mailState === 'error'
+              ? 'couldn’t send — try again.'
+              : mailState === 'sent'
+                ? 'sent — the line’s in your inbox.'
+                : 'we’ll send you the line for later.'}
+          </p>
+        </div>
       </div>
 
-      {/* The fine print — compressed to the three things a reader might
-          actually need (founder 2026-07-17: the six-line block was noise):
-          chat apps won't work, cowork has a small detour, and the
-          unsure-about-security answer. */}
+      {/* The fine print — three question/answer pairs in the door idiom
+          (founder 2026-07-17: the flat text block read lazy). */}
       <div className="start-details">
-        <p>a plain chat app won&rsquo;t work &mdash; it has to be one of the coding agents above.</p>
-        <p>using cowork? switch to the code tab just for this one line &mdash; it&rsquo;ll walk you through using cowork as normal after.</p>
-        <p>hesitant to run it? paste it in and ask your ai to check it first &mdash; it&rsquo;ll read the whole script before anything runs.</p>
+        <div className="start-qa">
+          <p className="start-qa-q">on a plain chat app?</p>
+          <p className="start-qa-a">it won&rsquo;t work &mdash; it has to be one of the coding agents above.</p>
+        </div>
+        <div className="start-qa">
+          <p className="start-qa-q">using cowork?</p>
+          <p className="start-qa-a">switch to the code tab just for this one line &mdash; it&rsquo;ll walk you through using cowork as normal after.</p>
+        </div>
+        <div className="start-qa">
+          <p className="start-qa-q">hesitant to run it?</p>
+          <p className="start-qa-a">paste it in and ask your ai to check it first &mdash; it&rsquo;ll read the whole script before anything runs.</p>
+        </div>
       </div>
     </section>
   );

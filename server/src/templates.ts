@@ -37,6 +37,7 @@ function jsLiteral(value: string): string {
 
 const ICON_COPY = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
 const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const ICON_SHARE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
 
 // ---------------------------------------------------------------------------
 // Auth error page — shown when OAuth callback can't complete
@@ -114,21 +115,35 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400&display=swap" rel="stylesheet">
 <style>
   /* Themed to match the site (/start · /join · /follow): the same cream/ink
-     palette as CSS vars, PLUS a dark override so a dark-mode member doesn't
-     get a bright page straight after signup. Standalone Worker page, so the
-     theme rides prefers-color-scheme (no toggle available here). */
+     palette as CSS vars, a prefers-color-scheme dark default, AND a manual
+     toggle (founder 2026-07-17: the toggle on every page) — data-theme on
+     <html> overrides the system preference, persisted under the same
+     localStorage key the site uses so the choice follows them across. */
   :root {
     --paper: #f5f0e8; --ink: #3d3630; --ink-secondary: #4d4640;
     --ink-muted: #8a8078; --ink-faint: #bbb4aa; --accent: #5B1F47;
     --rule: rgba(61, 54, 48, 0.14); --tip-bg: #3d3630; --tip-fg: #f5f0e8;
   }
+  :root[data-theme="dark"] {
+    --paper: #2b2a27; --ink: #ece8e1; --ink-secondary: #cdc8c0;
+    --ink-muted: #9b9690; --ink-faint: #6b6660; --accent: #9F87C5;
+    --rule: rgba(236, 232, 225, 0.14); --tip-bg: #ece8e1; --tip-fg: #2b2a27;
+  }
   @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
       --paper: #2b2a27; --ink: #ece8e1; --ink-secondary: #cdc8c0;
       --ink-muted: #9b9690; --ink-faint: #6b6660; --accent: #9F87C5;
       --rule: rgba(236, 232, 225, 0.14); --tip-bg: #ece8e1; --tip-fg: #2b2a27;
     }
   }
+  .theme-toggle {
+    position: fixed; top: 4px; right: 4px; z-index: 30;
+    width: 44px; height: 44px; display: inline-flex;
+    align-items: center; justify-content: center;
+    background: none; border: none; cursor: pointer;
+    color: var(--ink); opacity: 0.3; transition: opacity 0.15s;
+  }
+  .theme-toggle:hover { opacity: 0.5; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
@@ -259,6 +274,18 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
 </style>
 </head>
 <body>
+<script>
+// Apply the saved theme before paint (same key as the site: alexandria-theme).
+(function() {
+  try {
+    var t = localStorage.getItem('alexandria-theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) {}
+})();
+</script>
+<button type="button" class="theme-toggle" onclick="toggleTheme()" aria-label="switch theme">
+  <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle id="themeDot" cx="5" cy="5" r="4" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+</button>
 <a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
 <main class="wrap">
   <p class="eyebrow">your membership</p>
@@ -271,13 +298,13 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
     <p class="lostkey">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a> &mdash; your old key stops working.</p>` : ''}`}
     ${inviteUrl ? `<div class="invite">
     <p class="invite-q">your invite link</p>
-    <p class="invite-line"><a href="${inviteUrl}">${inviteDisplay}</a> <button type="button" class="copybtn" onclick="copyInvite(this)" aria-label="copy your invite link"><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button></p>
-    <p class="invite-note">send it now, before you forget &mdash; and to as many as you can. not everyone will join; three who do, and yours is free for good.</p>
+    <p class="invite-line"><a href="${inviteUrl}">${inviteDisplay}</a> <button type="button" class="copybtn" onclick="copyInvite(this)" aria-label="copy your invite link"><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> <button type="button" class="copybtn" onclick="shareInvite(this)" aria-label="share your invite link"><span class="icon"><span class="icon-copy">${ICON_SHARE}</span><span class="icon-check">${ICON_CHECK}</span></span></button></p>
+    <p class="invite-note">send it now, before you forget &mdash; and to as many as you can. not everyone will join; three who do, and yours is free for good. your code is just your github username &mdash; the link carries it.</p>
     </div>` : ''}
     <div class="invite">
     <p class="invite-q">on your phone</p>
     <p class="invite-line"><a href="${SHORTCUT_URL}" target="_blank" rel="noopener noreferrer">add the shortcut</a></p>
-    <p class="invite-note">save anything you read, hear, or think, straight from your phone &mdash; it becomes part of your thinking.</p>
+    <p class="invite-note">open that link on your phone and tap <em>add</em>. from then on, share anything to it &mdash; an article, a voice note, a thought &mdash; and it lands in your alexandria, picked up automatically the next time you open a session.</p>
     </div>
   </div>
   <div class="fineprint">
@@ -312,6 +339,31 @@ function manualCopy(text, el) {
 }
 function copyCmd(el) { copyText(${jsLiteral(curlCmd)}, el); }
 function copyInvite(el) { copyText(${jsLiteral(inviteUrl)}, el); }
+function shareInvite(el) {
+  var url = ${jsLiteral(inviteUrl)};
+  // Native share sheet where available (it includes copy-to-clipboard);
+  // desktop fallback copies and flashes the check.
+  if (navigator.share) { navigator.share({ url: url }).catch(function() {}); return; }
+  copyText(url, el);
+}
+function effectiveTheme() {
+  var t = document.documentElement.dataset.theme;
+  if (t === 'dark' || t === 'light') return t;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+function paintThemeDot() {
+  var dot = document.getElementById('themeDot');
+  if (!dot) return;
+  if (effectiveTheme() === 'dark') { dot.setAttribute('fill', 'currentColor'); dot.removeAttribute('stroke'); }
+  else { dot.setAttribute('fill', 'none'); dot.setAttribute('stroke', 'currentColor'); }
+}
+function toggleTheme() {
+  var next = effectiveTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem('alexandria-theme', next); } catch (e) {}
+  paintThemeDot();
+}
+paintThemeDot();
 </script>
 </body>
 </html>`;
