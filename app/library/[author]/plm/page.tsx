@@ -556,7 +556,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                       {linked.map((l) => (
                         <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer"
                           style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', width: '100%',
-                            borderBottom: '1px solid var(--border-light)', textDecoration: 'none', padding: '0.7rem 0' }}
+                            textDecoration: 'none', padding: '0.55rem 0' }}
                           className="hover:opacity-60">
                           <span style={{ color: 'var(--text-primary)', fontSize: '1.02rem' }}>{l.label}</span>
                           <span aria-hidden style={{ color: 'var(--text-muted)', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>↗</span>
@@ -576,7 +576,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                         {items.map((f) => (
                           <button key={f.name} type="button" onClick={() => void openPiece(f.name)}
                             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', width: '100%', textAlign: 'left',
-                              border: 'none', borderBottom: '1px solid var(--border-light)', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.7rem 0' }}
+                              border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.55rem 0' }}
                             className="hover:opacity-60">
                             <span style={{ color: 'var(--text-primary)', fontSize: '1.02rem' }}>{f.title || displayName(f.name)}</span>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{f.visibility || 'public'}</span>

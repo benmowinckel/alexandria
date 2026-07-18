@@ -214,7 +214,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     );
   const sectionLabelStyle: CSSProperties = {
     color: 'var(--text-ghost)',
-    fontSize: '0.85rem',
+    fontSize: '0.9rem',
     letterSpacing: '0.08em',
     margin: '0 0 0.45rem',
   };
@@ -222,10 +222,10 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // shadows (founder: the five things on the profile). Word underlined (short,
   // not page-wide), whisper italic behind a symmetric middot.
   const sectionHead = (word: string, whisper: string) => (
-    <p style={{ ...sectionLabelStyle, color: 'var(--text-muted)' }}>
+    <p style={{ ...sectionLabelStyle, color: 'var(--text-secondary)' }}>
       <span style={{ borderBottom: '1px solid var(--text-ghost)', paddingBottom: '3px' }}>{word}</span>
       <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem' }}>·</span>
-      <span style={{ color: 'var(--text-ghost)', letterSpacing: 0, fontStyle: 'italic' }}>{whisper}</span>
+      <span style={{ color: 'var(--text-muted)', letterSpacing: 0, fontStyle: 'italic' }}>{whisper}</span>
     </p>
   );
   const textSection = (label: string, file: ProtocolFile | null) =>
@@ -243,8 +243,8 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     alignItems: 'center',
     border: '1px solid var(--border-light)',
     borderRadius: '999px',
-    color: 'var(--text-ghost)',
-    fontSize: '0.88rem',
+    color: 'var(--text-muted)',
+    fontSize: '0.92rem',
     lineHeight: 1,
     padding: '0.32rem 0.58rem',
     textDecoration: 'none',
@@ -279,14 +279,14 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     const inner = (
       <>
         <span style={{ minWidth: 0 }}>
-          <span style={{ color: 'var(--text-primary)', fontSize: '1.02rem' }}>{file.title || fileDisplayName(file.name)}</span>
+          <span style={{ color: 'var(--text-primary)', fontSize: '1.06rem' }}>{file.title || fileDisplayName(file.name)}</span>
           {preview && (
-            <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
+            <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
               {preview}
             </span>
           )}
         </span>
-        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.04em', flex: 'none', whiteSpace: 'nowrap' }}>
+        <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem', letterSpacing: '0.04em', flex: 'none', whiteSpace: 'nowrap' }}>
           {visibilityLabel(file.visibility)}
         </span>
       </>
@@ -320,13 +320,13 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 500, letterSpacing: '-0.012em', margin: '2rem 0 0.35rem' }}>
             {author.display_name || author.id}
           </h1>
-          <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', letterSpacing: '0.02em', margin: '0.35rem 0 0' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.35rem 0 0' }}>
             {author.alexandria_id}
           </p>
           {profileText && (
             // Rendered lowercase (brand voice — trying it, founder 2026-07-17);
             // the stored text stays as typed, this is presentation only.
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.02rem', lineHeight: 1.6, margin: '0.75rem 0 0', maxWidth: '34rem', textTransform: 'lowercase' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.08rem', lineHeight: 1.6, margin: '0.75rem 0 0', maxWidth: '34rem', textTransform: 'lowercase' }}>
               {profileText}
             </p>
           )}
@@ -367,17 +367,20 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               // reading). A quiet card lifts the door above everything else;
               // example questions make the first move a single tap.
               <div style={{
-                margin: '0 0 2.6rem', padding: '1.3rem 1.4rem 1.2rem',
+                // Text inside sits on the PAGE's left edge (one text line for
+                // the whole profile); the card's borders protrude symmetrically
+                // instead — margin mirrors padding (founder, round nine).
+                margin: '0 -1.5rem 3.2rem', padding: '1.6rem 1.5rem 1.4rem',
                 border: '1px solid var(--border-light)', borderRadius: '14px',
                 boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 6px 18px rgba(0,0,0,0.04)',
               }}>
                 {sectionHead('mind', 'a personal language model')}
-                <div style={{ margin: '0.75rem -0.98rem 0' }}>
+                <div style={{ margin: '0.9rem -0.98rem 0' }}>
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask me anything…" />
                 </div>
                 {/* One tap to the first question — shows what asking looks
                     like better than any explainer could. */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.7rem' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.85rem' }}>
                   {['what are you building?', 'what do you believe?', 'where should i start?'].map((q) => (
                     <button key={q} type="button" onClick={() => goAskWith(q)}
                       style={{ ...tagStyle, background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)' }}
@@ -386,10 +389,10 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                     </button>
                   ))}
                 </div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', lineHeight: 1.5, margin: '0.8rem 0 0' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.5, margin: '1rem 0 0' }}>
                   an ai built from {first}&rsquo;s mind — everything published and linked on this page; it answers as {first} would.
                 </p>
-                <p style={{ fontSize: '0.88rem', margin: '0.3rem 0 0' }}>
+                <p style={{ fontSize: '0.92rem', margin: '0.35rem 0 0' }}>
                   <span style={{ color: 'var(--text-muted)' }}>{online ? 'online' : 'offline'}</span>
                   <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem' }}>·</span>
                   <Link href={`/library/${encodeURIComponent(authorId)}/plm`} style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '3px' }} className="hover:opacity-60">
@@ -405,7 +408,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           {routerLinks.length > 0 && (
             <div style={{ margin: '0 0 2.6rem' }}>
               {sectionHead('links', 'what this connects to')}
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.45rem 0.6rem', marginTop: '0.7rem', fontSize: '1rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.45rem 0.6rem', marginTop: '0.7rem', fontSize: '1.05rem' }}>
                 {routerLinks.map((l, i) => (
                   <span key={l.url} style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.6rem' }}>
                     {i > 0 && <span aria-hidden style={{ color: 'var(--text-ghost)' }}>·</span>}
@@ -413,7 +416,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                       target={l.external ? '_blank' : undefined}
                       rel={l.external ? 'noopener noreferrer' : undefined}
                       className="hover:opacity-60"
-                      style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+                      style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>
                       {l.label}
                     </a>
                   </span>
