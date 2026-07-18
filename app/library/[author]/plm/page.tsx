@@ -50,6 +50,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
 
   const [authorName, setAuthorName] = useState('');
   const [signedIn, setSignedIn] = useState(false);
+  // Which depth THIS viewer's questions get (server-computed, structural):
+  // 'invite' = the deeper mind, else the public one. Shown so the deeper tier
+  // is discoverable — and requestable — instead of invisible.
+  const [depth, setDepth] = useState<'public' | 'paid' | 'invite'>('public');
+  const [contact, setContact] = useState('');
   const [files, setFiles] = useState<FileMeta[]>([]);
   const [variants, setVariants] = useState<TwinVariantSummary[]>([]);
   const [activeVariant, setActiveVariant] = useState<'weights' | 'context'>('context');
@@ -114,6 +119,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       setAuthorName(dir?.author?.display_name || '');
       setSignedIn(sess?.signed_in === true);
       setOnline(dir?.twin?.online === true);
+      const d = dir?.twin?.depth; if (d === 'public' || d === 'paid' || d === 'invite') setDepth(d);
+      setContact(typeof dir?.author?.contact === 'string' ? dir.author.contact : '');
       setFiles(Array.isArray(dir?.files) ? dir.files : []);
       const vs: TwinVariantSummary[] = Array.isArray(dir?.twin?.variants) ? dir.twin.variants : [];
       setVariants(vs);
@@ -349,9 +356,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                   <p style={{ margin: '0 0 0.9rem' }}>
                     ask it anything. when it mentions a piece, pull it up and read along.
                   </p>
-                  <p style={{ color: 'var(--text-ghost)', fontSize: '0.88rem', margin: '0 0 0.9rem' }}>
-                    free to ask · an invite opens the deeper, more personal mind.
-                  </p>
                   <p style={{ margin: 0 }}>
                     <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>make your own →</Link>
                   </p>
@@ -412,8 +416,35 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 )}
               </div>
             )}
-            <div style={{ flex: 'none', padding: '0.9rem 1.2rem', borderTop: locked ? 'none' : '1px solid var(--border-light)' }}>
+            <div style={{ flex: 'none', padding: '0.9rem 1.2rem 0.7rem', borderTop: locked ? 'none' : '1px solid var(--border-light)' }}>
               <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading placeholder="ask anything…" />
+              {/* Which mind you're speaking with — always visible, so the deeper
+                  tier is discoverable and REQUESTABLE (founder, round four: if
+                  the visitor can't see it exists, they never ask the Author for
+                  the invite, and the Author never learns they wanted in). */}
+              <p style={{ color: 'var(--text-ghost)', fontSize: '0.78rem', margin: '0.5rem 0 0' }}>
+                {depth === 'invite' ? (
+                  <>the deeper mind — you&rsquo;re invited.</>
+                ) : (
+                  <>
+                    the public mind · a deeper, more personal one opens by invite
+                    {contact && (
+                      <>
+                        {' '}—{' '}
+                        <a
+                          href={contact.includes('@') && !contact.startsWith('mailto:')
+                            ? `mailto:${contact}?subject=${encodeURIComponent('an invite to your deeper mind')}`
+                            : contact}
+                          style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                          className="hover:opacity-60"
+                        >
+                          ask {(authorName || author).split(' ')[0]} for one
+                        </a>
+                      </>
+                    )}
+                  </>
+                )}
+              </p>
             </div>
           </section>
 

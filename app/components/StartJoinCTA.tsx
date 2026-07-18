@@ -5,23 +5,24 @@ import type { CSSProperties } from 'react';
 
 /**
  * StartJoinCTA — the ONE conversion block, shared by every surface that would
- * otherwise dead-end (the profile, the PLM, the info + video pages). It keeps
- * (named for its two doors — distinct from app/join/JoinCTA, the join page's
- * own OAuth/referral cluster.)
- * the funnel coherent: two doors in one fixed order —
- *   1. start free  → /start  (the tool: free, yours, runs on your own files)
- *   2. join the community → /join  (the tribe: the library beside everyone else's)
- * Kept in a single component so the copy and the look can never diverge page to
- * page, and so every route reinforces the same next step instead of trailing off.
+ * otherwise dead-end (the profile, the PLM, the info + video pages). Kept in a
+ * single component so the copy and the look can never diverge page to page.
+ * (Named historically for its two doors — distinct from app/join/JoinCTA, the
+ * join page's own OAuth/referral cluster.)
+ *
+ * ONE door now (founder, 2026-07-17: "no one would join the community without
+ * having started" — the second door only split attention): try it free →
+ * /start. The sentiment is the free sample, not the signup — you just try it,
+ * build your own; the rest of the funnel happens from inside.
  *
  * `lead`/`sub` let a surface tune the framing (a profile says "one like this",
- * an info page says "ready to start") while the doors stay identical. `align`
+ * an info page says "ready to start") while the door stays identical. `align`
  * left for prose columns, center for standalone footers. `compact` drops the
  * sub line for tight, app-like contexts.
  */
 export default function StartJoinCTA({
   lead = 'make your own.',
-  sub = 'the tool is free — one line adds it to the ai you already use, and your mind lives in a folder you own. join the community to put it in the library, beside everyone else’s.',
+  sub = 'one line adds it to the ai you already use — free, and your mind lives in a folder you own. build it, and a page like this comes with it.',
   align = 'center',
   compact = false,
 }: {
@@ -47,12 +48,6 @@ export default function StartJoinCTA({
     fontSize: '1rem',
     textDecoration: 'none',
   };
-  const secondary: CSSProperties = {
-    color: 'var(--text-muted)',
-    fontSize: '1rem',
-    textDecoration: 'none',
-  };
-
   return (
     <div style={wrap}>
       <p style={{ color: 'var(--text-primary)', fontSize: '1.25rem', fontWeight: 500, letterSpacing: '-0.01em', margin: '0 0 0.5rem' }}>
@@ -64,8 +59,7 @@ export default function StartJoinCTA({
         </p>
       )}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.9rem 1.4rem', alignItems: 'center', justifyContent: align === 'center' ? 'center' : 'flex-start', marginTop: compact ? '0.9rem' : 0 }}>
-        <Link href="/start" style={primary} className="hover:opacity-80">start free →</Link>
-        <Link href="/join" style={secondary} className="hover:opacity-60">or join the community →</Link>
+        <Link href="/start" style={primary} className="hover:opacity-80">try it free →</Link>
       </div>
     </div>
   );

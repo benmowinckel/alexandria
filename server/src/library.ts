@@ -511,12 +511,18 @@ export function registerLibraryRoutes(app: Hono): void {
     }).allowed;
 
     const twinSummary = twinPublicSummary(twinVariants, twinAccessible);
+    // The depth THIS viewer's questions will get (mirrors runTwinQuery's
+    // structural tiering: grant → invite shadow, paying → paid, else public).
+    // Surfaced so the chat can tell the visitor which mind they're speaking
+    // with and that a deeper one exists to be invited into — without it the
+    // invite tier is invisible and nobody knows to ask for it.
+    const twinDepth: TwinVisibility = twinGranted ? 'invite' : viewer?.subscription_status === 'active' ? 'paid' : 'public';
     // Online/offline: only ping the sidecar when the Author actually has a twin
     // enabled (skip the round-trip for the overwhelming majority who don't).
     // `signed_in` lets the client pick "log in" vs "you're not on the list".
     const twinOut = twinSummary.enabled
-      ? { ...twinSummary, online: await twinOnline(authorId), signed_in: !!viewer }
-      : { ...twinSummary, online: false, signed_in: !!viewer };
+      ? { ...twinSummary, online: await twinOnline(authorId), signed_in: !!viewer, depth: twinDepth }
+      : { ...twinSummary, online: false, signed_in: !!viewer, depth: twinDepth };
     // Per-file "kind" (works/projects/shadows/other) so the page can lay entries
     // out in neat categories like the demo. Stored in a dedicated KV map the
     // owner sets; untagged files fall to 'shadows'.

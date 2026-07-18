@@ -366,8 +366,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             const first = (author.display_name || author.id).split(' ')[0];
             return (
               <div style={{ margin: '0 0 3rem' }}>
+                {/* One "ask" on the page: the title names the door, the
+                    placeholder completes its sentence, the button is the act.
+                    (founder, round four: no saying the same thing three times.) */}
                 <p style={{ color: 'var(--text-primary)', fontSize: '1.05rem', margin: '0 0 0.75rem' }}>ask my mind.</p>
-                <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask anything…" />
+                <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="anything…" />
                 {/* ONE explainer line (founder, round three: title, placeholder
                     and subline were saying the same thing three times) — it does
                     the real work instead: what this is, and that its reach spans
@@ -401,11 +404,14 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '0.4rem' }}>
               {grouped.map(({ cat, items }) => (
                 <div key={cat} style={{ marginTop: '2rem' }}>
-                  <p style={sectionLabelStyle}>
-                    {cat}
-                    <span aria-hidden style={{ margin: '0 0.45rem' }}>·</span>
-                    <span style={{ letterSpacing: 0, fontStyle: 'italic' }}>
-                      {cat === 'works' ? 'what’s been made' : cat === 'projects' ? 'what’s being built' : 'how the mind thinks'}
+                  {/* Section word carries a short underline (just the word, not
+                      a page-wide rule) and reads a shade darker than ghost —
+                      the items below stay lineless. */}
+                  <p style={{ ...sectionLabelStyle, color: 'var(--text-muted)' }}>
+                    <span style={{ borderBottom: '1px solid var(--text-ghost)', paddingBottom: '3px' }}>{cat}</span>
+                    <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem' }}>·</span>
+                    <span style={{ color: 'var(--text-ghost)', letterSpacing: 0, fontStyle: 'italic' }}>
+                      {cat === 'works' ? 'what’s been made' : cat === 'projects' ? 'what’s being built' : 'what’s being thought'}
                     </span>
                   </p>
                   {items.map(fileRow)}
