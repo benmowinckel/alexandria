@@ -215,7 +215,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     color: 'var(--text-ghost)',
     fontSize: '0.78rem',
     letterSpacing: '0.08em',
-    margin: '0 0 0.7rem',
+    margin: '0 0 0.45rem',
   };
   const textSection = (label: string, file: ProtocolFile | null) =>
     file ? (
@@ -252,7 +252,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       alignItems: 'baseline',
       gap: '1.25rem',
       width: '100%',
-      padding: '0.72rem 0',
+      padding: '0.55rem 0',
       border: 'none',
       borderBottom: '1px solid var(--border-light)',
       background: 'none',
@@ -367,15 +367,17 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               <div style={{ margin: '0 0 3rem' }}>
                 <p style={{ color: 'var(--text-primary)', fontSize: '1.05rem', margin: '0 0 0.75rem' }}>ask my mind.</p>
                 <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder={`ask ${first} anything…`} />
-                {/* PLM named in full here (founder: "say personal language model
-                    somewhere"); the online state lives in this line too — as a
-                    fact among facts, not a floating badge. */}
+                {/* PLM named in full (founder: "say personal language model
+                    somewhere"); status + the chat door on their own line below,
+                    plain "online"/"offline", "open in chat" visibly pressable. */}
                 <p style={{ color: 'var(--text-ghost)', fontSize: '0.82rem', lineHeight: 1.5, margin: '0.55rem 0 0' }}>
-                  {first}&rsquo;s personal language model — built with alexandria from everything they&rsquo;ve published; it answers as them.
-                  {' '}<span style={{ color: online ? 'var(--text-muted)' : 'var(--text-ghost)' }}>{online ? 'online now' : 'offline right now'}</span>
-                  {' '}·{' '}
-                  <Link href={`/library/${encodeURIComponent(authorId)}/plm`} style={{ color: 'var(--text-muted)', textDecoration: 'none' }} className="hover:opacity-60">
-                    open the chat →
+                  {first}&rsquo;s personal language model — built with alexandria from everything published here.
+                </p>
+                <p style={{ fontSize: '0.82rem', margin: '0.3rem 0 0' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>{online ? 'online' : 'offline'}</span>
+                  <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem' }}>·</span>
+                  <Link href={`/library/${encodeURIComponent(authorId)}/plm`} style={{ color: 'var(--text-muted)', textDecoration: 'underline', textUnderlineOffset: '3px' }} className="hover:opacity-60">
+                    open in chat
                   </Link>
                 </p>
               </div>
@@ -389,16 +391,18 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             )
           ) : (
             // The library zone — a clear break from the bio + PLM above (founder,
-            // 2026-07-17): one hairline, then the atoms. Each section label
-            // carries a whisper of what it is; "shadows" especially is a term
-            // no visitor arrives knowing.
+            // 2026-07-17): one hairline, then the atoms, kept vertically tight.
+            // Section labels carry a whisper of what each is ("shadows" is a term
+            // no visitor arrives knowing): person-free, parallel, same depth;
+            // the descriptor differentiates by italic + a symmetric middot.
             <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '0.4rem' }}>
               {grouped.map(({ cat, items }) => (
-                <div key={cat} style={{ marginTop: '2.8rem' }}>
+                <div key={cat} style={{ marginTop: '2rem' }}>
                   <p style={sectionLabelStyle}>
                     {cat}
-                    <span style={{ letterSpacing: 0, marginLeft: '0.6rem' }}>
-                      · {cat === 'works' ? 'what they’ve made' : cat === 'projects' ? 'what they’re building' : 'how they think — published fragments of the mind'}
+                    <span aria-hidden style={{ margin: '0 0.45rem' }}>·</span>
+                    <span style={{ letterSpacing: 0, fontStyle: 'italic' }}>
+                      {cat === 'works' ? 'what’s been made' : cat === 'projects' ? 'what’s being built' : 'how the mind thinks'}
                     </span>
                   </p>
                   {items.map(fileRow)}
