@@ -233,18 +233,26 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   .invite-line { font-size: 0.98rem; line-height: 1.6; color: var(--ink-secondary); max-width: 520px; display: flex; align-items: center; gap: 8px; }
   .invite-line a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); padding-bottom: 1px; transition: border-color 0.15s; }
   .invite-line a:hover { border-bottom-color: var(--ink-muted); }
-  .copybtn {
-    display: inline-flex; align-items: center; flex: none;
-    padding: 0; background: none; border: none; cursor: pointer;
-    color: var(--ink-faint); transition: color 0.15s;
-  }
-  .copybtn:hover { color: var(--ink); }
-  .copybtn.done { color: var(--ink); }
-  .copybtn .icon { display: inline-flex; align-items: center; }
-  .copybtn .icon .icon-check { display: none; }
-  .copybtn.done .icon .icon-copy { display: none; }
-  .copybtn.done .icon .icon-check { display: inline; }
   .invite-note { margin: 8px 0 0; font-size: 0.85rem; line-height: 1.65; color: var(--ink-muted); max-width: 480px; font-style: italic; }
+  /* Share row — the invite link, made immediately actionable: a filled
+     share button (native sheet, includes copy) + a copy-link button. Both
+     flash a tick. The plain URL sits below for selecting/pasting anywhere. */
+  .sharerow { display: flex; gap: 10px; margin: 14px 0 12px; flex-wrap: wrap; }
+  .sharebtn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: 'EB Garamond', Georgia, serif; font-size: 0.95rem;
+    padding: 9px 18px; border-radius: 8px; cursor: pointer;
+    background: var(--ink); color: var(--paper); border: 1px solid var(--ink);
+    transition: opacity 0.15s;
+  }
+  .sharebtn:hover { opacity: 0.88; }
+  .sharebtn.secondary { background: transparent; color: var(--ink); border-color: var(--rule); }
+  .sharebtn .icon { display: inline-flex; align-items: center; }
+  .sharebtn .icon .icon-check { display: none; }
+  .sharebtn.done .icon .icon-copy { display: none; }
+  .sharebtn.done .icon .icon-check { display: inline; }
+  .invite-link { font-size: 0.82rem; color: var(--ink-muted); margin: 0 0 4px; word-break: break-all; }
+  .invite-link a { color: var(--ink-muted); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); }
   /* Fine print — one hairline, everything else. */
   .fineprint {
     margin-top: 36px; padding-top: 26px; max-width: 520px;
@@ -327,18 +335,19 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   <p class="lostkey">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a> &mdash; your old key stops working.</p>` : ''}` : `<div class="steps">
     ${curlCmd ? `<p class="step"><span class="step-num">1 &mdash;</span> <button type="button" class="action" onclick="copyCmd(this)" aria-label="copy connect command">copy your connect command <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button></p>
     <p class="step"><span class="step-num">2 &mdash;</span> paste it into your coding agent and hit enter</p>
-    <p class="step"><span class="step-num">3 &mdash;</span> from then on: open a new tab, type <code class="cmd">/a</code>, and leave it &mdash; that&rsquo;s a session</p>
-    <p class="step-note">it links your install to your membership &mdash; your thinking stays on your machine.</p>` : `<p class="line">you're in. open a new tab and type <code class="cmd">/a</code> &mdash; that&rsquo;s a session.</p>${rotateUrl ? `
+    <p class="step"><span class="step-num">3 &mdash;</span> from then on: open a new tab, type <code class="cmd">/a</code>, and leave it running &mdash; whenever you&rsquo;ve got a minute</p>
+    <p class="step-note">it links your install to your membership &mdash; your thinking stays on your machine.</p>` : `<p class="line">you're in. open a new tab and type <code class="cmd">/a</code> whenever you want to think something through.</p>${rotateUrl ? `
     <p class="lostkey">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a> &mdash; your old key stops working.</p>` : ''}`}
     ${inviteUrl ? `<div class="invite">
-    <p class="invite-q">your invite link</p>
-    <p class="invite-line"><a href="${inviteUrl}">${inviteDisplay}</a> <button type="button" class="copybtn" onclick="copyInvite(this)" aria-label="copy your invite link"><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button> <button type="button" class="copybtn" onclick="shareInvite(this)" aria-label="share your invite link"><span class="icon"><span class="icon-copy">${ICON_SHARE}</span><span class="icon-check">${ICON_CHECK}</span></span></button></p>
-    <p class="invite-note">send it now, before you forget &mdash; and to as many as you can. not everyone will join; three who do, and yours is free for good. your code is just your github username &mdash; the link carries it.</p>
+    <p class="invite-q">share your link &mdash; do it now</p>
+    <p class="invite-note" style="margin-top: 0;">get three friends on and your membership is free while they stay. share with more than three and you&rsquo;ve got a cushion &mdash; you stay free even if one drops off. so send it wide, right now:</p>
+    <div class="sharerow"><button type="button" class="sharebtn" onclick="shareInvite(this)"><span class="icon"><span class="icon-copy">${ICON_SHARE}</span><span class="icon-check">${ICON_CHECK}</span></span> share</button><button type="button" class="sharebtn secondary" onclick="copyInvite(this)"><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span> copy link</button></div>
+    <p class="invite-link"><a href="${inviteUrl}">${inviteDisplay}</a></p>
     </div>` : ''}
     <div class="invite">
-    <p class="invite-q">on your phone</p>
+    <p class="invite-q">grab your phone &mdash; do this too</p>
     <p class="invite-line"><a href="${SHORTCUT_URL}" target="_blank" rel="noopener noreferrer">add the shortcut</a></p>
-    <p class="invite-note">open that link on your phone and tap <em>add</em>. from then on, share anything to it &mdash; an article, a voice note, a thought &mdash; and it lands in your alexandria, picked up automatically the next time you open a session.</p>
+    <p class="invite-note">worth it even at your desk. open that link on your phone and tap <em>add</em>. from then on, share anything to it &mdash; an article, a voice note, a thought &mdash; and it lands in your alexandria, picked up automatically the next time you open a <code class="cmd">/a</code>.</p>
     </div>
   </div>
   <div class="fineprint">

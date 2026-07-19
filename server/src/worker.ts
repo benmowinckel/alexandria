@@ -303,10 +303,11 @@ app.get('/audit/head', async (c) => {
 
 app.get('/', (c) => {
   // The API root — someone poking at api.alexandria-library.com directly.
-  // Branded mini page (2026-07-17 edge sweep; was an off-brand black
-  // system-font card): name it, point at the website, link health.
-  return c.html(miniPageHtml(`<p>alexandria &mdash; the api.</p>
-<p class="muted">the website is at <a href="https://alexandria-library.com">alexandria-library.com</a> &middot; <a href="/health">health</a></p>`));
+  // Branded mini page (2026-07-17 edge sweep). The /health link was dropped
+  // 2026-07-18 (founder: internal noise) — /health still answers for uptime
+  // monitors, it's just not advertised on the human-facing page.
+  return c.html(miniPageHtml(`<p>alexandria &mdash; the api behind the website.</p>
+<p class="muted">nothing to see here &mdash; head to <a href="https://alexandria-library.com">alexandria-library.com</a>.</p>`));
 });
 
 // ---------------------------------------------------------------------------

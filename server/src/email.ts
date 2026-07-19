@@ -187,12 +187,12 @@ export async function sendWelcomeEmail(email: string, githubLogin: string, email
     ? `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">welcome to alexandria &mdash; you&rsquo;re in.</p>
   <p style="margin: 0 0 0.7rem;">one thing to finish: paste this into your coding agent (claude code, cursor, codex, factory) and hit enter.</p>
   ${emailCmd(connectCmd)}
-  <p style="margin: 0 0 1.6rem;">then open a new tab, type ${emailKbd('/a')}, and leave it &mdash; that&rsquo;s a session. do it whenever.</p>
-  <p style="margin: 0 0 0.5rem; color: #8a8078;">your invite link &mdash; three friends who join make your membership free for good:</p>
+  <p style="margin: 0 0 1.6rem;">then open a new tab, type ${emailKbd('/a')}, and leave it running &mdash; whenever you&rsquo;ve got a minute.</p>
+  <p style="margin: 0 0 0.5rem; color: #8a8078;">your invite link &mdash; send it to a few people now. three who join keeps your membership free while they stay:</p>
   ${emailLinkLine(kinLink, kinLinkDisplay)}`
     : `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">welcome to alexandria &mdash; you&rsquo;re in.</p>
-  <p style="margin: 0 0 1.6rem;">open a new tab, type ${emailKbd('/a')}, and leave it &mdash; that&rsquo;s a session. do it whenever.</p>
-  <p style="margin: 0 0 0.5rem; color: #8a8078;">your invite link &mdash; three friends who join make your membership free for good:</p>
+  <p style="margin: 0 0 1.6rem;">open a new tab, type ${emailKbd('/a')}, and leave it running &mdash; whenever you&rsquo;ve got a minute.</p>
+  <p style="margin: 0 0 0.5rem; color: #8a8078;">your invite link &mdash; send it to a few people now. three who join keeps your membership free while they stay:</p>
   ${emailLinkLine(kinLink, kinLinkDisplay)}`;
   await sendEmail(email, 'welcome to alexandria.', emailShell(body, unsubscribeUrl),
     unsubscribeUrl ? { unsubscribeUrl } : undefined);
@@ -212,8 +212,8 @@ export async function sendKinFreeUnlocked(
   const kinLink = `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}`;
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
   const html = emailShell(`<p style="font-size: 1.15rem; margin: 0 0 1.4rem;">you&rsquo;re free.</p>
-  <p style="margin: 0 0 1.4rem; color: #8a8078;">three friends joined through you and stayed &mdash; so your membership is free for good. no more $10, ever. thank you for building the community.</p>
-  <p style="margin: 0 0 0.5rem;">it&rsquo;s already done &mdash; but keep sending it. every one after just grows the tribe:</p>
+  <p style="margin: 0 0 1.4rem; color: #8a8078;">three friends joined through you &mdash; so your membership is free while they stay members. no $10 for you. thank you for building the community.</p>
+  <p style="margin: 0 0 0.5rem;">keep sending it. every extra friend is a cushion &mdash; you stay free even if one drops off, and every one after that just grows the tribe:</p>
   ${emailLinkLine(kinLink, kinLink.replace(/^https?:\/\//, ''))}`, unsubscribeUrl);
   return await sendEmail(email, 'alexandria. — you’re free.', html,
     unsubscribeUrl ? { unsubscribeUrl } : undefined);

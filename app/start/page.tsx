@@ -59,9 +59,9 @@ export default async function StartPage({
         {/* The grab line (founder 2026-07-17): send them for both devices
             before the 2×2 — one is enough, but both is the point. */}
         <p className="start-grab">
-          You&rsquo;ll need your computer for the first two steps. Only your
-          phone on you? Steps 3 and 4 work from anywhere &mdash; do those
-          now.
+          Best with your computer and your phone both in reach: 1 and 2 are
+          on the computer, 3 is on your phone (do it either way). Only your
+          phone right now? Do 3 and 4.
         </p>
 
         {/* ONE consolidated layout for every device (founder 2026-07-17 —

@@ -1262,8 +1262,8 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
       echo "to your own GitHub + iCloud) — it stays free forever because it's just a local file you"
       echo "own. After it drafts a first reflection of you it'll show you how to become a founding"
       echo "member of the collective at alexandria-library.com/join — the thing being built: the"
-      echo "library, the marketplace, the people. First month free, free for good if three friends"
-      echo "join through you, otherwise \$10/month — and if that's a stretch, message me and I'll"
+      echo "library, the marketplace, the people. First month free, then free while three friends"
+      echo "you brought stay on, otherwise \$10/month — and if that's a stretch, message me and I'll"
       echo "waive it."
     fi
   fi

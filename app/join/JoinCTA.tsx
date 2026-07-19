@@ -105,7 +105,7 @@ export default function JoinCTA({
         </p>
         <p className="join-offer-line">
           If you like it, get three friends to join, and it&rsquo;s{' '}
-          <span className="join-emph">free for good</span>.
+          <span className="join-emph">free while they&rsquo;re on</span>.
         </p>
       </div>
 
