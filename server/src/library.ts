@@ -1082,7 +1082,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown; focus?: unknown; depth?: unknown };
     const question = typeof body.question === 'string' ? body.question.trim() : '';
     if (!question) return c.json({ error: 'Ask a question.' }, 400);
-    if (question.length > 2000) return c.json({ error: 'Question too long (2000 chars max).' }, 400);
+    if (question.length > 20000) return c.json({ error: `Question too long — ${question.length} chars, 20000 max. Trim it or paste less.` }, 400);
     const requestedVariant: TwinVariant | null = body.variant === 'weights' || body.variant === 'context' ? body.variant : null;
     // The free toggle: an entitled viewer may request the PUBLIC depth (down only).
     const requestedDepth = body.depth === 'public' ? 'public' as const : null;
@@ -1142,7 +1142,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const body = await c.req.json().catch(() => ({})) as { question?: unknown };
     const question = typeof body.question === 'string' ? body.question.trim() : '';
     if (!question) return c.json({ error: 'Ask a question.' }, 400);
-    if (question.length > 2000) return c.json({ error: 'Question too long (2000 chars max).' }, 400);
+    if (question.length > 20000) return c.json({ error: `Question too long — ${question.length} chars, 20000 max. Trim it or paste less.` }, 400);
 
     // The guide runs on the founder's always-on sidecar (env fallback if not
     // separately registered). getSidecar → the same relay every other twin uses.
@@ -1223,7 +1223,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown };
     const question = typeof body.question === 'string' ? body.question.trim() : '';
     if (!question) return c.json({ error: 'Provide a question.' }, 400);
-    if (question.length > 2000) return c.json({ error: 'Question too long (2000 chars max).' }, 400);
+    if (question.length > 20000) return c.json({ error: `Question too long — ${question.length} chars, 20000 max. Trim it or paste less.` }, 400);
     const requestedVariant: TwinVariant | null = body.variant === 'weights' || body.variant === 'context' ? body.variant : null;
 
     const profile = await getDB().prepare('SELECT display_name, settings FROM authors WHERE id = ?')
