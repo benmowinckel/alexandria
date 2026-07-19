@@ -434,13 +434,10 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 // flashes then vanishes — reads as a glitch; founder 2026-07-18).
                 <div style={{ padding: '0.6rem 0 0.2rem', color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.65 }}>
                   <p style={{ margin: '0 0 0.9rem' }}>
-                    this is a <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>mirror of {who}’s mind</strong> — a reflection built from everything {firstName} has published and linked here. it speaks <em>about</em> {firstName}, in {firstName}’s own thinking — not as {firstName}.
+                    this is a <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>mirror of {who}’s mind</strong> — built from what they’ve published. it speaks about them, not as them.
                   </p>
                   <p style={{ margin: '0 0 0.9rem' }}>
-                    ask what {firstName} thinks, or how {firstName} would approach something. when it names a piece, pull it up and read alongside.
-                  </p>
-                  <p style={{ margin: '0 0 0.9rem' }}>
-                    where {firstName}’s mind isn’t filled in yet, it says so plainly rather than guess — so treat a gap as an honest one, not a dead end.
+                    ask about their work or how they think. when it names a piece, pull it up to read alongside; where it doesn’t have their take, it says so plainly.
                   </p>
                   <p style={{ margin: 0 }}>
                     <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>make your own →</Link>

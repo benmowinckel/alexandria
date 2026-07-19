@@ -123,6 +123,13 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   const [doorQ, setDoorQ] = useState('');
   const [doorGoing, setDoorGoing] = useState(false);
   const [beliCopied, setBeliCopied] = useState(false);
+  // Rotating door placeholder — smart example questions cycle through the ghost
+  // text instead of rigid hardcoded chips (founder 2026-07-19).
+  const [phIdx, setPhIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setPhIdx((i) => i + 1), 3600);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     params.then(({ author }) => {
@@ -256,18 +263,6 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       </div>
     ) : null;
   const profileText = normalizePreviewText(author.text);
-  const tagStyle: CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    border: '1px solid var(--border-light)',
-    borderRadius: '999px',
-    color: 'var(--text-muted)',
-    fontSize: '0.92rem',
-    lineHeight: 1,
-    padding: '0.32rem 0.58rem',
-    textDecoration: 'none',
-    textTransform: 'lowercase',
-  };
 
   // Entry row — title left, tier right, on one baseline, with a bottom hairline.
   const fileRow = (file: ProtocolFile) => {
@@ -338,65 +333,48 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 500, letterSpacing: '-0.012em', margin: '2rem 0 0.35rem' }}>
             {author.display_name || author.id}
           </h1>
+          {/* Identity line — number · location · contact on one plain line, same
+              style as the member number; cleaner than pills (founder 2026-07-19). */}
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.35rem 0 0' }}>
             {author.alexandria_id}
-          </p>
-          {profileText && (
-            // Rendered lowercase (brand voice — trying it, founder 2026-07-17);
-            // the stored text stays as typed, this is presentation only.
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.08rem', lineHeight: 1.6, margin: '0.75rem 0 0', maxWidth: '34rem', textTransform: 'lowercase' }}>
-              {profileText}
-            </p>
-          )}
-          {/* Alexandria-native pills — location (filters the directory) and
-              contact, side by side in the same form (founder, 2026-07-17). */}
-          {(author.location || author.contact) && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.9rem' }}>
-              {author.location && author.location_key && (
-                <Link href={`/library?locations=${encodeURIComponent(author.location_key)}`} style={tagStyle} className="hover:opacity-60">
-                  {author.location}
-                </Link>
-              )}
-              {author.contact && (
+            {author.location && author.location_key && (
+              <>{' '}<span style={{ color: 'var(--text-ghost)' }}>·</span>{' '}
+                <Link href={`/library?locations=${encodeURIComponent(author.location_key)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link></>
+            )}
+            {author.contact && (
+              <>{' '}<span style={{ color: 'var(--text-ghost)' }}>·</span>{' '}
                 <a href={contactHref(author.contact)}
                   target={author.contact.startsWith('http') ? '_blank' : undefined}
                   rel={author.contact.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  style={tagStyle} className="hover:opacity-60">
-                  {contactForm(author.contact)}
-                </a>
-              )}
-            </div>
+                  style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{contactForm(author.contact)}</a></>
+            )}
+          </p>
+          {/* Optional bio — subtle, between the identity line and the links. */}
+          {profileText && (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.55, margin: '0.6rem 0 0', maxWidth: '34rem', textTransform: 'lowercase' }}>
+              {profileText}
+            </p>
           )}
-          {/* Links live in the bio as plain hyperlinks — everyone knows what these
-              surfaces are, so no dropdown section and no explanation (founder,
-              2026-07-19). Each just takes you there. Beli is the exception: it has
-              no web page, so instead of a dead link it surfaces the copyable
-              handle + the app. (The mirror can't read these; it answers from what
-              the Author has said about them — the pane explainer says so.) */}
+          {/* Links, slightly underlined so they read as links (founder 2026-07-19).
+              Beli has no web page → a click-to-reveal of the copyable handle rather
+              than a dead navigation; no extra inline text. */}
           {routerLinks.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.3rem 1rem', marginTop: '0.85rem', fontSize: '0.98rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.3rem 1.15rem', marginTop: '0.85rem', fontSize: '0.98rem' }}>
               {routerLinks.map((l) => {
+                const linkStyle: CSSProperties = { color: 'var(--text-primary)', textDecoration: 'underline', textDecorationColor: 'var(--border-light)', textUnderlineOffset: '3px' };
                 if (/beliapp\.co/i.test(l.url)) {
                   const handle = l.url.replace(/\/+$/, '').split('/').pop() || '';
                   return (
-                    <span key={l.url} style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.35rem', color: 'var(--text-muted)' }}>
-                      <span style={{ color: 'var(--text-primary)' }}>beli</span>
-                      <button type="button" title="copy username — beli has no web page"
-                        onClick={() => { try { navigator.clipboard?.writeText('@' + handle); } catch { /* */ } setBeliCopied(true); setTimeout(() => setBeliCopied(false), 1500); }}
-                        style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', color: 'var(--text-muted)' }}
-                        className="hover:opacity-60">
-                        {beliCopied ? 'copied ✓' : `@${handle}`}
-                      </button>
-                      <a href="https://beliapp.co" target="_blank" rel="noopener noreferrer" title="no web app — get the iOS app"
-                        style={{ color: 'var(--text-ghost)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">
-                        get the app&nbsp;↗
-                      </a>
-                    </span>
+                    <button key={l.url} type="button" title="beli has no web page — click to copy the username"
+                      onClick={() => { try { navigator.clipboard?.writeText('@' + handle); } catch { /* */ } setBeliCopied(true); setTimeout(() => setBeliCopied(false), 1800); }}
+                      style={{ ...linkStyle, border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
+                      className="hover:opacity-60">
+                      {beliCopied ? `@${handle} · copied ✓` : 'beli'}
+                    </button>
                   );
                 }
                 return (
-                  <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="hover:opacity-60"
-                    style={{ color: 'var(--text-primary)', textDecoration: 'none' }}>
+                  <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="hover:opacity-60" style={linkStyle}>
                     {l.label}
                   </a>
                 );
@@ -415,6 +393,17 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             if (!anyOn) return null;
             const online = data.twin.online === true;
             const first = (author.display_name || author.id).split(' ')[0];
+            const askExamples = [
+              (() => {
+                const proj = grouped.find((g) => g.cat === 'projects')?.items[0];
+                const t = proj ? (proj.title || fileDisplayName(proj.name)).toLowerCase() : null;
+                return t ? `what is ${t}?` : `what is ${first} building?`;
+              })(),
+              `what does ${first} believe?`,
+              `what’s ${first} like?`,
+              routerLinks.some((l) => l.label === 'x') ? `what’s on ${first}’s x?` : (author.website ? `what’s on ${first}’s website?` : 'where should i start?'),
+              'ask anything…',
+            ];
             return (
               // The mind is the ONE elevated object on the page (founder: the
               // page read flat — a cold visitor must see what to do without
@@ -437,31 +426,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                   </span>
                 </div>
                 <div style={{ margin: '0.9rem -0.98rem 0' }}>
-                  <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing} placeholder="ask anything…" />
+                  <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing}
+                    placeholder={doorQ ? 'ask anything…' : askExamples[phIdx % askExamples.length]} />
                 </div>
-                {/* One tap to the first question — and each chip TEACHES what
-                    the door is for (founder, round eleven): one for the work,
-                    one for the mind, one that shows it speaks for the LINKED
-                    surfaces — the thing no other page can do. */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', margin: '0.85rem -0.98rem 0' }}>
-                  {[
-                    (() => {
-                      const proj = grouped.find((g) => g.cat === 'projects')?.items[0];
-                      const t = proj ? (proj.title || fileDisplayName(proj.name)).toLowerCase() : null;
-                      return t ? `what is ${t}?` : `what is ${first} building?`;
-                    })(),
-                    `what does ${first} believe?`,
-                    routerLinks.some((l) => l.label === 'x') ? `what’s on ${first}’s x?`
-                      : author.website ? `what’s on ${first}’s website?` : 'where should i start?'].map((q) => (
-                    <button key={q} type="button" onClick={() => goAskWith(q)}
-                      style={{ ...tagStyle, background: 'none', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--text-muted)', padding: '0.34rem 0.95rem' }}
-                      className="hover:opacity-60">
-                      {q}
-                    </button>
-                  ))}
-                </div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.5, margin: '1rem 0 0' }}>
-                  a mirror of {first}&rsquo;s mind — built from everything published and linked here. it speaks about {first}, in {first}&rsquo;s own thinking, never as {first}; where the mind isn&rsquo;t filled in yet, it says so plainly rather than guess.
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0.8rem 0 0' }}>
+                  a mirror of {first}&rsquo;s published mind — ask it anything; it answers from what they&rsquo;ve written, and says so plainly where it can&rsquo;t.
                 </p>
               </div>
             );
