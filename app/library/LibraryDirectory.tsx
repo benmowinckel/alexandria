@@ -179,11 +179,8 @@ export function LibraryDirectory({
                   </span>
                 </div>
               </Link>
-              {author.text && (
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0.8rem 0 0' }}>
-                  {author.text.replace(/\uFFFD/g, '-')}
-                </p>
-              )}
+              {/* No bio \u2014 a one-line bio isn't enough to sense-check a person and just
+                  adds noise; the name + location + the mind are the signal (founder 2026-07-19). */}
               {(author.location || author.contact) && (
                 <div
                   style={{

@@ -262,7 +262,6 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
         </div>
       </div>
     ) : null;
-  const profileText = normalizePreviewText(author.text);
 
   // Entry row — title left, tier right, on one baseline, with a bottom hairline.
   const fileRow = (file: ProtocolFile) => {
@@ -349,12 +348,8 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                   style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{contactForm(author.contact)}</a></>
             )}
           </p>
-          {/* Optional bio — subtle, between the identity line and the links. */}
-          {profileText && (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.55, margin: '0.6rem 0 0', maxWidth: '34rem', textTransform: 'lowercase' }}>
-              {profileText}
-            </p>
-          )}
+          {/* No bio — nobody gets a bio (founder 2026-07-19): a line isn't enough to
+              sense-check a person; the name, location, and the mind carry it. */}
           {/* Links, slightly underlined so they read as links (founder 2026-07-19).
               Beli has no web page → a click-to-reveal of the copyable handle rather
               than a dead navigation; no extra inline text. */}
