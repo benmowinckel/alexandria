@@ -49,7 +49,7 @@ const CompressIcon = <svg width="17" height="17" {...svgProps}><path d="M8 3v3a2
  * which on iOS Safari shows a zoomed, pan-in-all-directions, first-page-only
  * preview (the letter bug). Re-renders on width change (pane resize / rotate).
  */
-function PdfView({ url }: { url: string }) {
+export function PdfView({ url }: { url: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [err, setErr] = useState(false);
   const widthRef = useRef(0);

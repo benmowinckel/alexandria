@@ -1,9 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
 import Link from 'next/link';
-import { safeUrl } from '../lib/url';
 
 export interface DirectoryAuthor {
   id: string;
@@ -21,27 +19,14 @@ interface LocationOption {
   label: string;
 }
 
-const tagStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  border: '1px solid var(--border-light)',
-  borderRadius: '999px',
-  color: 'var(--text-ghost)',
-  fontSize: '0.88rem',
-  lineHeight: 1,
-  // Tap target — was 0.32rem×0.58rem ≈ 26px tall, below HIG floor.
-  // 0.6rem×0.85rem brings the chip to ~33px without breaking the
-  // dense filter-bar rhythm.
-  padding: '0.6rem 0.85rem',
-  textDecoration: 'none',
-};
+const svgProps = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
+// Filter glyph (decreasing lines) — the location filter lives behind this icon on
+// the right of the search bar, instead of an always-on wall of location pills.
+const FilterIcon = <svg width="18" height="18" {...svgProps}><path d="M3 5h18M6 12h12M10 19h4" /></svg>;
+const CheckIcon = <svg width="14" height="14" {...svgProps}><path d="M20 6L9 17l-5-5" /></svg>;
 
 function normalize(value: string | null | undefined): string {
   return (value || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
-}
-
-function contactHref(contact: string): string {
-  return contact.includes('@') && !contact.startsWith('mailto:') ? `mailto:${contact}` : safeUrl(contact);
 }
 
 export function LibraryDirectory({
@@ -53,6 +38,8 @@ export function LibraryDirectory({
 }) {
   const [nameQuery, setNameQuery] = useState('');
   const [locationFilters, setLocationFilters] = useState<string[]>(Array.from(new Set(initialLocationKeys)));
+  const [filterOpen, setFilterOpen] = useState(false);
+  const activeCount = locationFilters.length;
 
   const sortedAuthors = useMemo(() => {
     return [...authors].sort((a, b) => b.id.localeCompare(a.id, undefined, { sensitivity: 'base' }));
@@ -90,60 +77,105 @@ export function LibraryDirectory({
 
   return (
     <>
-      <input
-        type="search"
-        value={nameQuery}
-        onChange={(event) => setNameQuery(event.target.value)}
-        placeholder="search names"
-        aria-label="Search Authors by name"
-        style={{
-          width: '100%',
-          marginTop: '1rem',
-          border: 'none',
-          borderBottom: '1px solid var(--border-light)',
-          background: 'transparent',
-          color: 'var(--text-primary)',
-          fontFamily: 'var(--font-eb-garamond)',
-          fontSize: '0.95rem',
-          outline: 'none',
-          padding: '0 0 0.45rem',
-        }}
-      />
-
-      {locationOptions.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '1rem' }}>
-          {locationOptions.map((location) => {
-            const active = locationFilters.includes(location.key);
-            return (
-              <button
-                key={location.key}
-                type="button"
-                onClick={() => toggleLocation(location.key)}
-                style={{
-                  ...tagStyle,
-                  cursor: 'pointer',
-                  background: active ? 'var(--text-primary)' : 'transparent',
-                  color: active ? 'var(--bg-primary)' : 'var(--text-ghost)',
-                  borderColor: active ? 'var(--text-primary)' : 'var(--border-light)',
-                }}
-                className="hover:opacity-60"
-              >
-                {location.label}
-              </button>
-            );
-          })}
-          {locationFilters.length > 0 && (
+      {/* Search names, with the location filter tucked behind an icon on the right
+          — one clean bar instead of a wall of always-on location pills. */}
+      <div style={{ position: 'relative', marginTop: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-light)' }}>
+          <input
+            type="search"
+            value={nameQuery}
+            onChange={(event) => setNameQuery(event.target.value)}
+            placeholder="search names"
+            aria-label="Search Authors by name"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--text-primary)',
+              fontFamily: 'var(--font-eb-garamond)',
+              fontSize: '0.95rem',
+              outline: 'none',
+              padding: '0 0 0.45rem',
+            }}
+          />
+          {locationOptions.length > 0 && (
             <button
               type="button"
-              onClick={() => setLocationFilters([])}
-              style={{ ...tagStyle, cursor: 'pointer', background: 'transparent' }}
+              onClick={() => setFilterOpen((v) => !v)}
+              aria-label="Filter by location"
+              aria-expanded={filterOpen}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+                border: 'none', background: 'none', cursor: 'pointer',
+                padding: '0 0.1rem 0.45rem',
+                color: activeCount > 0 ? 'var(--text-primary)' : 'var(--text-ghost)',
+              }}
               className="hover:opacity-60"
             >
-              clear filters
+              {FilterIcon}
+              {activeCount > 0 && <span style={{ fontSize: '0.82rem', letterSpacing: '0.02em' }}>{activeCount}</span>}
             </button>
           )}
         </div>
-      )}
+
+        {filterOpen && (
+          <>
+            {/* click-away backdrop */}
+            <button
+              type="button" aria-hidden tabIndex={-1} onClick={() => setFilterOpen(false)}
+              style={{ position: 'fixed', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 10 }}
+            />
+            <div
+              role="listbox" aria-label="Locations"
+              style={{
+                position: 'absolute', right: 0, top: 'calc(100% + 0.4rem)', zIndex: 11,
+                minWidth: '12rem', maxHeight: '18rem', overflowY: 'auto',
+                background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
+                borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.08)', padding: '0.35rem',
+              }}
+            >
+              {locationOptions.map((location) => {
+                const active = locationFilters.includes(location.key);
+                return (
+                  <button
+                    key={location.key}
+                    type="button"
+                    role="option" aria-selected={active}
+                    onClick={() => toggleLocation(location.key)}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem',
+                      width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left',
+                      padding: '0.5rem 0.6rem', borderRadius: '7px',
+                      color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                      fontFamily: 'var(--font-eb-garamond)', fontSize: '0.9rem',
+                    }}
+                    className="hover:opacity-60"
+                  >
+                    <span>{location.label.toLowerCase()}</span>
+                    <span style={{ display: 'inline-flex', opacity: active ? 1 : 0, color: 'var(--text-primary)' }}>{CheckIcon}</span>
+                  </button>
+                );
+              })}
+              {activeCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setLocationFilters([])}
+                  style={{
+                    display: 'block', width: '100%', border: 'none', borderTop: '1px solid var(--border-light)',
+                    background: 'none', cursor: 'pointer', textAlign: 'left', marginTop: '0.25rem',
+                    padding: '0.5rem 0.6rem', color: 'var(--text-ghost)',
+                    fontFamily: 'var(--font-eb-garamond)', fontSize: '0.85rem',
+                  }}
+                  className="hover:opacity-60"
+                >
+                  clear
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
       {filtered.length === 0 ? (
         <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', marginTop: '2rem' }}>
@@ -179,42 +211,11 @@ export function LibraryDirectory({
                   </span>
                 </div>
               </Link>
-              {/* No bio \u2014 a one-line bio isn't enough to sense-check a person and just
-                  adds noise; the name + location + the mind are the signal (founder 2026-07-19). */}
-              {(author.location || author.contact) && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '0.45rem',
-                    marginTop: '0.75rem',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  {author.location && author.location_key && (
-                    <button
-                      type="button"
-                      onClick={() => toggleLocation(author.location_key || '')}
-                      style={{ ...tagStyle, cursor: 'pointer', background: 'none' }}
-                      className="hover:opacity-60"
-                    >
-                      {author.location}
-                    </button>
-                  )}
-                  {author.contact && (
-                    <a
-                      href={contactHref(author.contact)}
-                      target={author.contact.startsWith('http') ? '_blank' : undefined}
-                      rel={author.contact.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      style={tagStyle}
-                      className="hover:opacity-60"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      contact
-                    </a>
-                  )}
-                </div>
-              )}
+              {/* Just the name \u2014 no bio, no location/contact line. A row is only
+                  noise to sense-check a person; location + contact live on the
+                  profile you click into, and location is how the filter finds
+                  them (fill-to-appear). The name + the mind carry the directory
+                  (founder 2026-07-19). */}
             </article>
           ))}
         </section>

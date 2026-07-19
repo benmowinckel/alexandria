@@ -8,6 +8,7 @@ import { ThemeToggle } from '../../../components/ThemeToggle';
 import PromptBox from '../../../components/PromptBox';
 import ActionButton from '../../../components/ActionButton';
 import TwinText from '../../../components/TwinText';
+import { PdfView } from '../../../components/ReaderShell';
 import { librarySignInUrlHere } from '../../../lib/config';
 import { type TwinVariantSummary } from '../types';
 
@@ -44,6 +45,8 @@ const LinesIcon = <svg width="19" height="19" {...svgProps}><line x1="4" y1="7" 
 const PaneRightIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
 const CopyIcon = <svg width="17" height="17" {...svgProps}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
 const DownloadIcon = <svg width="17" height="17" {...svgProps}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>;
+const ExpandIcon = <svg width="17" height="17" {...svgProps}><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M21 16v3a2 2 0 0 1-2 2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /></svg>;
+const CompressIcon = <svg width="17" height="17" {...svgProps}><path d="M8 3v3a2 2 0 0 1-2 2H3" /><path d="M21 8h-3a2 2 0 0 1-2-2V3" /><path d="M3 16h3a2 2 0 0 1 2 2v3" /><path d="M16 21v-3a2 2 0 0 1 2-2h3" /></svg>;
 
 export default function PlmPage({ params }: { params: Promise<{ author: string }> }) {
   const [author, setAuthor] = useState('');
@@ -78,6 +81,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [rightOpen, setRightOpen] = useState(true);
   const [open, setOpen] = useState<OpenPiece | null>(null);
   const [mtab, setMtab] = useState<'chat' | 'pieces'>('chat'); // mobile
+  const [expanded, setExpanded] = useState(false);             // full-screen the open piece
 
   const idRef = useRef(2);
   const [convos, setConvos] = useState<Convo[]>([{ id: '1', messages: [] }]);
@@ -188,6 +192,31 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     const id = requestAnimationFrame(() => promptRef.current?.focus());
     return () => cancelAnimationFrame(id);
   }, [midOpen, mtab]);
+
+  // Full-screen the open piece: CSS immersive (fills the viewport, works on every
+  // device incl. iOS which has no element Fullscreen API) + true browser
+  // fullscreen on desktop as a bonus. The request must run in the click's
+  // user-gesture, so it lives in the handler, not an effect. Mirrors ReaderShell.
+  const toggleExpand = () => {
+    const next = !expanded;
+    setExpanded(next);
+    try {
+      const el = document.documentElement;
+      if (next) el.requestFullscreen?.().catch(() => {});
+      else if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    } catch { /* iOS Safari / denied: the CSS immersive layer still applies */ }
+  };
+  // Drop out of the immersive layer when the piece closes, or on ESC / leaving
+  // native fullscreen (F11 / OS chrome).
+  useEffect(() => { if (!open) setExpanded(false); }, [open]);
+  useEffect(() => {
+    if (!expanded) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setExpanded(false); };
+    const onFs = () => { if (!document.fullscreenElement) setExpanded(false); };
+    window.addEventListener('keydown', onKey);
+    document.addEventListener('fullscreenchange', onFs);
+    return () => { window.removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs); };
+  }, [expanded]);
 
   const openPiece = async (fileName: string) => {
     const nice = files.find((x) => x.name === fileName)?.title || displayName(fileName);
@@ -339,7 +368,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   return (
     <>
       <ThemeToggle />
-      <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
+      <div className="plm-shell" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
         <header style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.9rem', padding: '0.85rem 3.6rem 0.85rem 1.2rem', borderBottom: '1px solid var(--border-light)' }}>
           <Link href={`/library/${encodeURIComponent(author)}`} aria-label="back to the library" title="library"
             style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
@@ -361,7 +390,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           ))}
         </div>
 
-        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-mtab={mtab}
+        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-mtab={mtab} data-expanded={expanded ? 'true' : 'false'}
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
@@ -388,8 +417,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open chat" title="chat">{LinesIcon}</button>
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
-              <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="hover:opacity-60">{LinesIcon}</button>
-              <span style={{ ...label, marginLeft: '-0.45rem' }}>chat</span>
+              <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
+              <span className="chat-label" style={{ ...label, marginLeft: '-0.45rem' }}>chat</span>
               {/* public | invite — the two DEPTHS of the one mind, named like
                   the pieces' own visibility tags (founder: most queriers are
                   public; the names must carry the model). Your level is
@@ -553,16 +582,21 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           {/* the piece — slot 3 */}
           <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece pane" title="pieces">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
-            <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.7rem 1.4rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
+            <div className="piece-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.7rem 1.4rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
               {open && <button type="button" onClick={() => setOpen(null)} aria-label="back to pieces" title="back" style={iconBtn} className="hover:opacity-60">{ChevronIcon}</button>}
-              <span style={{ ...(open ? { color: 'var(--text-primary)', fontSize: '0.98rem' } : label) }}>{open ? open.nice : 'pieces'}</span>
+              {open
+                ? <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{open.nice}</span>
+                : <span className="pieces-label" style={{ ...label }}>pieces</span>}
               {open && (
                 <>
                   <ActionButton icon={CopyIcon} onAction={copyPiece} title="copy text" style={{ ...iconBtn, marginLeft: 'auto' }} className="hover:opacity-60" />
                   <ActionButton icon={DownloadIcon} onAction={downloadPiece} title="download" style={iconBtn} className="hover:opacity-60" />
+                  {/* Full-screen the open piece — mobile only (desktop has the 3
+                      panes for this). Sits with copy/download. */}
+                  <button type="button" onClick={toggleExpand} aria-label={expanded ? 'exit full screen' : 'full screen'} title={expanded ? 'exit full screen' : 'full screen'} style={iconBtn} className="piece-expand hover:opacity-60">{expanded ? CompressIcon : ExpandIcon}</button>
                 </>
               )}
-              <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece pane" title="collapse" style={{ ...iconBtn, ...(open ? {} : { marginLeft: 'auto' }) }} className="hover:opacity-60">{PaneRightIcon}</button>
+              <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece pane" title="collapse" style={{ ...iconBtn, ...(open ? {} : { marginLeft: 'auto' }) }} className="piece-collapse hover:opacity-60">{PaneRightIcon}</button>
             </div>
             <div style={{ flex: 1, overflow: open?.pdfUrl ? 'hidden' : 'auto', minHeight: 0 }}>
               {!open && (
@@ -634,7 +668,10 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 </>
               )}
               {open && open.loading && <p style={{ color: 'var(--text-ghost)', padding: '2rem' }}>loading…</p>}
-              {open && !open.loading && open.pdfUrl && <iframe src={open.pdfUrl} title={open.nice} style={{ width: '100%', height: '100%', border: 'none' }} />}
+              {/* Fit-to-width canvas pages (shared with ReaderShell) — scrolls
+                  DOWN like a document, no horizontal pan/slide on mobile, unlike
+                  a raw <iframe src=pdf> (founder 2026-07-19). */}
+              {open && !open.loading && open.pdfUrl && <PdfView url={open.pdfUrl} />}
               {open && !open.loading && !open.pdfUrl && (
                 <div className="reader-prose" style={{ padding: '2rem clamp(1.4rem, 4vw, 3rem)' }}><ReactMarkdown remarkPlugins={[remarkGfm]}>{open.content}</ReactMarkdown></div>
               )}
@@ -665,6 +702,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         @media (min-width: 901px) {
           .reader-strip { display: none; }
           .reader-pane { display: none; }
+          /* Full-screen expand is a mobile-only affordance; desktop uses the 3 panes. */
+          .piece-expand { display: none !important; }
           main[data-left="closed"] .strip-history { display: flex; }
           main[data-left="open"] .pane-history { display: flex; }
           main[data-mid="closed"] .strip-chat { display: flex; }
@@ -674,12 +713,26 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         }
         @media (max-width: 900px) {
           .reader-strip, .pane-history { display: none !important; }
+          /* On mobile the "chat"/"pieces" tabs are the only pane labelling, and
+             there are no side-by-side panes to collapse — so the pane-toggle
+             icons + duplicate labels drop out (founder 2026-07-19). */
+          .chat-collapse, .chat-label, .pieces-label, .piece-collapse { display: none !important; }
           .plm-tabs { display: flex !important; }
           main { flex-direction: column !important; }
           .pane-chat, .pane-piece { display: none !important; order: 0 !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; border-right: none !important; }
           main[data-mtab="chat"] .pane-chat { display: flex !important; }
           main[data-mtab="pieces"] .pane-piece { display: flex !important; }
         }
+
+        /* Full screen — the open piece fills the whole viewport on every device;
+           the tabs, other pane, and footer drop out. Wins both media queries. */
+        main[data-expanded="true"] .pane-piece {
+          display: flex !important; position: fixed !important;
+          top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important;
+          min-width: 0 !important; z-index: 120; background: var(--bg-primary);
+        }
+        .plm-shell:has(main[data-expanded="true"]) .plm-tabs,
+        .plm-shell:has(main[data-expanded="true"]) > footer { display: none !important; }
       `}</style>
     </>
   );
