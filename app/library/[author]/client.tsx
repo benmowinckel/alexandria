@@ -122,6 +122,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // auto-fires it (?q=). The door owns no chat state; the chat is the room.
   const [doorQ, setDoorQ] = useState('');
   const [doorGoing, setDoorGoing] = useState(false);
+  const [beliCopied, setBeliCopied] = useState(false);
 
   useEffect(() => {
     params.then(({ author }) => {
@@ -366,6 +367,42 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               )}
             </div>
           )}
+          {/* Links live in the bio as plain hyperlinks — everyone knows what these
+              surfaces are, so no dropdown section and no explanation (founder,
+              2026-07-19). Each just takes you there. Beli is the exception: it has
+              no web page, so instead of a dead link it surfaces the copyable
+              handle + the app. (The mirror can't read these; it answers from what
+              the Author has said about them — the pane explainer says so.) */}
+          {routerLinks.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.3rem 1rem', marginTop: '0.85rem', fontSize: '0.98rem' }}>
+              {routerLinks.map((l) => {
+                if (/beliapp\.co/i.test(l.url)) {
+                  const handle = l.url.replace(/\/+$/, '').split('/').pop() || '';
+                  return (
+                    <span key={l.url} style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.35rem', color: 'var(--text-muted)' }}>
+                      <span style={{ color: 'var(--text-primary)' }}>beli</span>
+                      <button type="button" title="copy username — beli has no web page"
+                        onClick={() => { try { navigator.clipboard?.writeText('@' + handle); } catch { /* */ } setBeliCopied(true); setTimeout(() => setBeliCopied(false), 1500); }}
+                        style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', color: 'var(--text-muted)' }}
+                        className="hover:opacity-60">
+                        {beliCopied ? 'copied ✓' : `@${handle}`}
+                      </button>
+                      <a href="https://beliapp.co" target="_blank" rel="noopener noreferrer" title="no web app — get the iOS app"
+                        style={{ color: 'var(--text-ghost)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">
+                        get the app&nbsp;↗
+                      </a>
+                    </span>
+                  );
+                }
+                return (
+                  <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="hover:opacity-60"
+                    style={{ color: 'var(--text-primary)', textDecoration: 'none' }}>
+                    {l.label}
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </header>
 
         <section>
@@ -429,32 +466,8 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               </div>
             );
           })()}
-          {/* Section two: links — the router out, and the surfaces the mind
-              provides context for (founder: links as its own section; the
-              primary thing is that the mind speaks for them). */}
-          {routerLinks.length > 0 && (
-            <div style={{ margin: '0 0 3rem' }}>
-              {sectionHead('links', 'what’s been connected')}
-              {routerLinks.map((l) => (
-                <a key={l.url} href={l.url}
-                  target={l.external ? '_blank' : undefined}
-                  rel={l.external ? 'noopener noreferrer' : undefined}
-                  className="hover:opacity-60"
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem', width: '100%',
-                    padding: '0.55rem 0', textDecoration: 'none' }}>
-                  <span style={{ minWidth: 0 }}>
-                    <span style={{ color: 'var(--text-primary)', fontSize: '1.06rem' }}>{l.label}</span>
-                    {l.sub && (
-                      <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
-                        {l.sub}
-                      </span>
-                    )}
-                  </span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>public</span>
-                </a>
-              ))}
-            </div>
-          )}
+          {/* links now live in the bio (above) as plain hyperlinks — the profile
+              body is works / projects / shadows only. */}
           {grouped.length === 0 ? (
             !data.twin?.enabled && (
               <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>

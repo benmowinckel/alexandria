@@ -562,47 +562,18 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             </div>
             <div style={{ flex: 1, overflow: open?.pdfUrl ? 'hidden' : 'auto', minHeight: 0 }}>
               {!open && (
-                // Everything the mind speaks from, structured like the profile:
-                // the published pieces by section, then the LINKED surfaces —
-                // so it's clear you can ask about those too, not only the works
-                // (founder: the links are the point; the pane shouldn't read as
-                // a list of random things).
+                // The pieces pane is the Author's readable ARTIFACTS only — works,
+                // projects, shadows. Links live in the bio on the profile now, not
+                // here (founder, 2026-07-19): the pane is for things the mirror can
+                // open beside you; links just take you out. The note says you can
+                // still ask the mirror about the linked surfaces — it answers from
+                // what the Author has shared, even the ones it can't open itself.
                 <div style={{ padding: '1.4rem clamp(1.4rem, 4vw, 3rem)' }}>
-                  {files.length === 0 && linked.length === 0 && <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem' }}>nothing to show yet.</p>}
-                  {(files.length > 0 || linked.length > 0) && (
+                  {files.length === 0 && <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem' }}>nothing to show yet.</p>}
+                  {files.length > 0 && (
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.55, margin: '0 0 1.9rem' }}>
-                      everything this mirror speaks from. open a piece to read it here and talk it through together; links open in a new tab.
+                      everything this mirror speaks from. open a piece to read it here and talk it through together. you can also ask about {firstName}’s linked surfaces — it knows what {firstName} has shared about them, even the ones it can’t open itself.
                     </p>
-                  )}
-                  {/* Links FIRST — providing context for the linked surfaces is
-                      the primary thing (founder); the published sections follow. */}
-                  {linked.length > 0 && (
-                    <div style={{ margin: '0 0 1.5rem' }}>
-                      <p style={{ ...label, margin: '0 0 0.15rem' }}>links</p>
-                      {linked.map((l) => {
-                        // App-only surfaces (Beli) have no usable web page — the
-                        // profile deep-link is a dead tap in a browser. Show the
-                        // handle to look up + send them to the app's own site to
-                        // get it, instead of a link that only opens inside the app.
-                        const appOnly = /beliapp\.co/i.test(l.url);
-                        const handle = appOnly ? (l.url.replace(/\/+$/, '').split('/').pop() || '') : '';
-                        const href = appOnly ? 'https://beliapp.co' : l.url;
-                        return (
-                          <a key={l.url} href={href} target="_blank" rel="noopener noreferrer"
-                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', width: '100%',
-                              textDecoration: 'none', padding: '0.55rem 0' }}
-                            className="hover:opacity-60">
-                            <span style={{ color: 'var(--text-primary)', fontSize: '1.02rem' }}>
-                              {l.label}
-                              {appOnly && handle && (
-                                <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}> · @{handle} · get the app</span>
-                              )}
-                            </span>
-                            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>open&nbsp;↗</span>
-                          </a>
-                        );
-                      })}
-                    </div>
                   )}
                   {(['works', 'projects', 'shadows'] as const).map((cat) => {
                     const items = files.filter((f) => (f.category || 'shadows') === cat);
