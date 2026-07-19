@@ -231,7 +231,14 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   // can't render in the pane, so these open in a new tab).
   const referencedLinks = (text: string) => {
     const lc = text.toLowerCase();
-    return linked.filter((l) => lc.includes(l.label.toLowerCase()) || lc.includes(l.url.replace(/^https?:\/\//, '').split('/')[0]));
+    return linked.filter((l) => {
+      const label = l.label.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const domain = l.url.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
+      // Whole-word match on the label so a one-letter label like "x" doesn't match
+      // every answer that merely contains the letter x (the 'always open x' bug,
+      // founder 2026-07-19). Domain match stays substring (it's specific enough).
+      return new RegExp(`(^|[^a-z0-9])${label}([^a-z0-9]|$)`).test(lc) || lc.includes(domain);
+    });
   };
 
   const newChat = () => {
@@ -565,37 +572,13 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 // open beside you; links just take you out. The note says you can
                 // still ask the mirror about the linked surfaces — it answers from
                 // what the Author has shared, even the ones it can't open itself.
-                <div style={{ padding: '1.4rem clamp(1.4rem, 4vw, 3rem)' }}>
-                  {files.length === 0 && linked.length === 0 && <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem' }}>nothing to show yet.</p>}
-                  {(files.length > 0 || linked.length > 0) && (
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.55, margin: '0 0 1.9rem' }}>
-                      open a piece to read it beside the chat.
-                    </p>
-                  )}
-                  {(['works', 'projects', 'shadows'] as const).map((cat) => {
-                    const items = files.filter((f) => (f.category || 'shadows') === cat);
-                    if (items.length === 0) return null;
-                    return (
-                      <div key={cat} style={{ margin: '0 0 1.5rem' }}>
-                        <p style={{ ...label, margin: '0 0 0.15rem' }}>{cat}</p>
-                        {items.map((f) => (
-                          <button key={f.name} type="button" onClick={() => void openPiece(f.name)}
-                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', width: '100%', textAlign: 'left',
-                              border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.55rem 0' }}
-                            className="hover:opacity-60">
-                            <span style={{ color: 'var(--text-primary)', fontSize: '1.02rem' }}>{f.title || displayName(f.name)}</span>
-                            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{f.visibility || 'public'}</span>
-                          </button>
-                        ))}
-                      </div>
-                    );
-                  })}
-                  {/* Links — one line, underlined; a reference you can ask the mirror
-                      about, or tap to open yourself (founder 2026-07-19). */}
+                <>
+                  {/* Links PINNED at the top — always visible, since they're the key
+                      value; artifacts scroll below (founder 2026-07-19). */}
                   {linked.length > 0 && (
-                    <div style={{ margin: '1.7rem 0 0' }}>
-                      <p style={{ color: 'var(--text-ghost)', fontSize: '0.8rem', letterSpacing: '0.08em', margin: '0 0 0.35rem' }}>links</p>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0 0 0.65rem' }}>
+                    <div style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-light)', padding: '1.2rem clamp(1.4rem, 4vw, 3rem) 1rem' }}>
+                      <p style={{ color: 'var(--text-ghost)', fontSize: '0.8rem', letterSpacing: '0.08em', margin: '0 0 0.3rem' }}>links</p>
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0 0 0.6rem' }}>
                         ask the mirror about these, or tap to open them.
                       </p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.3rem 1.15rem', fontSize: '0.98rem' }}>
@@ -621,8 +604,34 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                       </div>
                     </div>
                   )}
-                  {!signedIn && <p style={{ color: 'var(--text-ghost)', fontSize: '0.86rem', marginTop: '1.2rem' }}>sign in for more of this mind.</p>}
-                </div>
+                  <div style={{ padding: '1.4rem clamp(1.4rem, 4vw, 3rem)' }}>
+                    {files.length === 0 && linked.length === 0 && <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem' }}>nothing to show yet.</p>}
+                    {files.length > 0 && (
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.55, margin: '0 0 1.9rem' }}>
+                        open a piece to read it beside the chat.
+                      </p>
+                    )}
+                    {(['works', 'projects', 'shadows'] as const).map((cat) => {
+                      const items = files.filter((f) => (f.category || 'shadows') === cat);
+                      if (items.length === 0) return null;
+                      return (
+                        <div key={cat} style={{ margin: '0 0 1.5rem' }}>
+                          <p style={{ ...label, margin: '0 0 0.15rem' }}>{cat}</p>
+                          {items.map((f) => (
+                            <button key={f.name} type="button" onClick={() => void openPiece(f.name)}
+                              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', width: '100%', textAlign: 'left',
+                                border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.55rem 0' }}
+                              className="hover:opacity-60">
+                              <span style={{ color: 'var(--text-primary)', fontSize: '1.02rem' }}>{f.title || displayName(f.name)}</span>
+                              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{f.visibility || 'public'}</span>
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })}
+                    {!signedIn && <p style={{ color: 'var(--text-ghost)', fontSize: '0.86rem', marginTop: '1.2rem' }}>sign in for more of this mind.</p>}
+                  </div>
+                </>
               )}
               {open && open.loading && <p style={{ color: 'var(--text-ghost)', padding: '2rem' }}>loading…</p>}
               {open && !open.loading && open.pdfUrl && <iframe src={open.pdfUrl} title={open.nice} style={{ width: '100%', height: '100%', border: 'none' }} />}
