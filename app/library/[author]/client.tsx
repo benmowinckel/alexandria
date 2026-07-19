@@ -39,6 +39,14 @@ interface AuthorData {
   };
   twin?: { enabled: boolean; label: string | null; variants?: TwinVariantSummary[]; online?: boolean; signed_in?: boolean };
   files?: ProtocolFile[];
+  // Optional per-Author profile config — reorder/subset the emergent sections
+  // and rename a section's word + whisper. Absent → defaults. The profile is a
+  // router over whatever the Author published, not a fixed template.
+  profile?: {
+    order?: string[];
+    hidden?: string[];
+    labels?: Record<string, { word?: string; whisper?: string }>;
+  };
 }
 
 function normalizePreviewText(value: string | null | undefined): string | null {
@@ -181,12 +189,38 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // there is no backend for any of them. `works` / `projects` / `other` are open
   // text sections rendered inline with clickable URLs; `other` is the freeform
   // catch-all (invisible until the Author publishes it). Everything else is a
-  // Group entries into category sections. 'other' is a low-key bucket that is NOT
-  // shown here — it holds files not meant for the router (uncategorised/internal).
-  const VISIBLE_CATEGORIES = ['works', 'projects', 'shadows'] as const;
-  const grouped = VISIBLE_CATEGORIES
-    .map((cat) => ({ cat, items: files.filter((f) => (f.category || 'shadows') === cat) }))
-    .filter((g) => g.items.length > 0);
+  // The profile is a ROUTER over whatever the Author published — emergent, not a
+  // fixed template. Visible sections = the categories that actually have files,
+  // in the Author's order (or the default works → projects → shadows → other).
+  // `other` shows when filled and hides when empty (a2 § Library V1), same as
+  // every other section. The 4-category vocabulary is fixed; everything about how
+  // the sections render is Author-controllable via the optional profile config.
+  const CATEGORY_VOCAB = ['works', 'projects', 'shadows', 'other'] as const;
+  const DEFAULT_WHISPER: Record<string, string> = {
+    works: 'what’s been made',
+    projects: 'what’s being built',
+    shadows: 'what’s being thought',
+    other: 'everything else',
+  };
+  const profile = data.profile || {};
+  const hiddenCats = new Set((profile.hidden || []).filter((c) => (CATEGORY_VOCAB as readonly string[]).includes(c)));
+  const byCat = new Map<string, ProtocolFile[]>();
+  for (const f of files) {
+    const cat = (CATEGORY_VOCAB as readonly string[]).includes(f.category || '') ? (f.category as string) : 'shadows';
+    (byCat.get(cat) || byCat.set(cat, []).get(cat)!).push(f);
+  }
+  // Author order first (valid entries only), then any remaining categories in the
+  // default order — so a newly-published section never silently disappears.
+  const orderPref = (profile.order || []).filter((c) => (CATEGORY_VOCAB as readonly string[]).includes(c));
+  const effectiveOrder = [...orderPref, ...CATEGORY_VOCAB.filter((c) => !orderPref.includes(c))];
+  const grouped = effectiveOrder
+    .filter((cat) => (byCat.get(cat)?.length || 0) > 0 && !hiddenCats.has(cat))
+    .map((cat) => ({
+      cat,
+      word: (profile.labels?.[cat]?.word || '').trim() || cat,
+      whisper: profile.labels?.[cat]?.whisper ?? DEFAULT_WHISPER[cat] ?? '',
+      items: byCat.get(cat) as ProtocolFile[],
+    }));
 
   // General account sign-in — lives at the top of the page, not tied to the twin.
   const signedIn = data.twin?.signed_in === true;
@@ -447,9 +481,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             // above; the three content sections follow, vertically tight,
             // items lineless. Whispers person-free and parallel.
             <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '0.4rem' }}>
-              {grouped.map(({ cat, items }) => (
+              {grouped.map(({ cat, word, whisper, items }) => (
                 <div key={cat} style={{ marginTop: '2.6rem' }}>
-                  {sectionHead(cat, cat === 'works' ? 'what’s been made' : cat === 'projects' ? 'what’s being built' : 'what’s being thought')}
+                  {sectionHead(word, whisper)}
                   {items.map(fileRow)}
                 </div>
               ))}

@@ -74,6 +74,17 @@ export function registerProtocol(app: Hono) {
     const title = typeof body.title === 'string' ? (body.title.trim().slice(0, 200) || null) : null;
     const visibility = ['authors', 'public', 'invite', 'paid'].includes(body.visibility) ? body.visibility : 'authors';
 
+    // Per-file library category (works/projects/shadows/other) — the section
+    // the library page groups this file under. Absent → don't change. The
+    // Artifact Loop's classify step flows here: the reconcile hook derives a
+    // file's kind locally (a `<name>.category` sidecar, or structurally — a
+    // stem that names a folder in files/projects/ IS a project) and sends it
+    // on the PUT, so a project lands as a project instead of defaulting to a
+    // shadow. Stored in the same file_categories:{login} KV map the bulk
+    // PUT /file-categories endpoint and the library page read. See below.
+    const category = typeof body.category === 'string' && ['works', 'projects', 'shadows', 'other'].includes(body.category)
+      ? body.category : null;
+
     // Just-in-time payout gate: marking a file `paid` is the moment the Author
     // needs payouts. Surface a nudge in the response (the agent prompts them to
     // POST /account/connect); the hard backstop is the fail-closed 409 at
@@ -138,6 +149,25 @@ export function registerProtocol(app: Hono) {
     // actually changed — keeps reconciliation cheap and the event log clean.
     const hashBuf = await crypto.subtle.digest('SHA-256', bodyBytes);
     const contentHash = [...new Uint8Array(hashBuf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+
+    // Apply the category BEFORE the unchanged-content short-circuit below, so a
+    // category-only change (identical bytes, a newly-added `.category` sidecar)
+    // still lands. Read-modify-write touches ONLY this file's key in the map —
+    // it can never wipe another file's category (the footgun of the old "send
+    // the complete map" flow, which is why projects silently reverted to
+    // shadows when a step got forgotten). Non-fatal: a KV hiccup never blocks a
+    // publish — the file still ships, only its section grouping is deferred.
+    if (category && auth.account.github_login) {
+      const catKey = `file_categories:${auth.account.github_login}`;
+      try {
+        const raw = await getKV().get(catKey);
+        const map = raw ? JSON.parse(raw) as Record<string, string> : {};
+        if (map[name] !== category) {
+          map[name] = category;
+          await getKV().put(catKey, JSON.stringify(map));
+        }
+      } catch { /* non-fatal — see note above */ }
+    }
 
     await ensureFilePriceColumn();
     await ensureFileTitleColumn();

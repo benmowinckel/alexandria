@@ -115,6 +115,48 @@ async function getFileCategories(authorId: string): Promise<Record<string, strin
   return {};
 }
 
+// The fixed 4-category vocabulary the library page groups files under. Fixed
+// scaffolding (a values decision, not intelligence): the vocab is constant even
+// though everything about how the sections render is Author-controllable.
+const LIBRARY_CATEGORIES = ['works', 'projects', 'shadows', 'other'] as const;
+function isLibraryCategory(v: unknown): v is (typeof LIBRARY_CATEGORIES)[number] {
+  return typeof v === 'string' && (LIBRARY_CATEGORIES as readonly string[]).includes(v);
+}
+
+// When a file has no category in the map yet (published before the category
+// flowed, or a KV miss), render it sensibly instead of dumping everything into
+// 'shadows': a shadow-named file → shadows, else → works (finished output is the
+// common case). Once the reconcile lands its real category this is never hit.
+function categoryFallback(name: string): string {
+  return /^shadow/i.test(name) ? 'shadows' : 'works';
+}
+
+// The Author's optional profile config: how the /library page routes over the
+// categories they've published — an ordering, a subset to hide, and per-section
+// renames (word + whisper). Read-side sanitizer: pulls settings.profile into a
+// clean shape the page can trust. Absent/garbage → empty, and the page falls
+// back to the emergent default (all populated categories, default order +
+// whispers). Schemaless and permissive: unknown keys are dropped, never
+// rejected, so a smarter Engine can enrich the blob without a migration.
+function normalizeProfile(settings: Record<string, unknown>): {
+  order: string[]; hidden: string[]; labels: Record<string, { word?: string; whisper?: string }>;
+} {
+  const p = (settings.profile && typeof settings.profile === 'object') ? settings.profile as Record<string, unknown> : {};
+  const cats = (v: unknown): string[] => Array.isArray(v) ? [...new Set(v.filter(isLibraryCategory))] : [];
+  const labels: Record<string, { word?: string; whisper?: string }> = {};
+  if (p.labels && typeof p.labels === 'object') {
+    for (const [cat, val] of Object.entries(p.labels as Record<string, unknown>)) {
+      if (!isLibraryCategory(cat) || !val || typeof val !== 'object') continue;
+      const v = val as Record<string, unknown>;
+      const entry: { word?: string; whisper?: string } = {};
+      if (typeof v.word === 'string' && v.word.trim()) entry.word = v.word.trim().slice(0, 40);
+      if (typeof v.whisper === 'string' && v.whisper.trim()) entry.whisper = v.whisper.trim().slice(0, 80);
+      if (entry.word || entry.whisper) labels[cat] = entry;
+    }
+  }
+  return { order: cats(p.order), hidden: cats(p.hidden), labels };
+}
+
 // Owner-authored public teaser line per file — the browse-list subtitle. Kept
 // separate from the file's `text` blurb ON PURPOSE: `text` is suppressed for
 // authors/invite files (audit M1), so gated pieces would otherwise show a bare
@@ -558,9 +600,13 @@ export function registerLibraryRoutes(app: Hono): void {
     const fileSubs = await getFileSubtitles(authorId);
     const fileOrder = await getFileOrder(authorId);
     const orderedFiles = applyFileOrder(protocolFiles, fileOrder);
+    // The Author's optional section config (order / hidden / labels). The page
+    // is a router over what they published: emergent by default, curatable here.
+    const profileCfg = normalizeProfile(librarySettings(legacyAuthor));
     return c.json({
       author: directoryAuthor(account!, legacyAuthor, fallbackIndex),
       twin: twinOut,
+      profile: profileCfg,
       files: orderedFiles.map(file => ({
         name: file.name,
         title: file.title ?? null,
@@ -575,7 +621,7 @@ export function registerLibraryRoutes(app: Hono): void {
         // `text` blurb. Empty for files the Author hasn't set one on.
         subtitle: fileSubs[file.name] || null,
         visibility: file.visibility,
-        category: fileCats[file.name] || 'shadows',
+        category: fileCats[file.name] || categoryFallback(file.name),
         updated_at: file.updated_at,
         url: fileAccessUrl(authorId, file.name),
       })),
@@ -1947,6 +1993,59 @@ export function registerLibraryRoutes(app: Hono): void {
     await getKV().put(`file_subtitles:${authorId}`, JSON.stringify(clean));
     logEvent('file_subtitles_set', { author: authorId, count: String(Object.keys(clean).length) });
     return c.json({ ok: true, subtitles: clean });
+  });
+
+  // Owner-only profile config — how the /library page routes over the categories
+  // the Author has published: `order` (section order), `hidden` (categories to
+  // keep off the page even when populated), and `labels` (rename a section's word
+  // + whisper). All three optional and merged PER FIELD, so a partial write (just
+  // labels) never wipes the rest. Agent-driven, same posture as file-order.
+  // Stored in the authors.settings blob via read-merge-upsert (mirroring the twin
+  // config); the public read rides GET /library/:author. The 4-category
+  // vocabulary and the fixed scaffolding (name, identity line, mind door, footer,
+  // visibility tiers) are NOT configurable here — only how the emergent sections
+  // present.
+  app.put('/library/:author/profile', async (c) => {
+    const authorId = c.req.param('author');
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
+
+    const body = await c.req.json().catch(() => ({})) as { order?: unknown; hidden?: unknown; labels?: unknown };
+
+    const db = getDB();
+    const row = await db.prepare('SELECT settings FROM authors WHERE id = ?')
+      .bind(authorId).first<{ settings: string | null }>().catch(() => null);
+    const settings = parseJson<Record<string, unknown>>(row?.settings, {});
+    const profile = (settings.profile && typeof settings.profile === 'object')
+      ? settings.profile as Record<string, unknown> : {};
+
+    const cats = (v: unknown): string[] => Array.isArray(v) ? [...new Set(v.filter(isLibraryCategory))] : [];
+    if ('order' in body) profile.order = cats(body.order);
+    if ('hidden' in body) profile.hidden = cats(body.hidden);
+    if ('labels' in body && body.labels && typeof body.labels === 'object') {
+      const curLabels = (profile.labels && typeof profile.labels === 'object')
+        ? profile.labels as Record<string, { word?: string; whisper?: string }> : {};
+      for (const [cat, val] of Object.entries(body.labels as Record<string, unknown>)) {
+        if (!isLibraryCategory(cat)) continue;
+        if (!val || typeof val !== 'object') { delete curLabels[cat]; continue; } // null/empty clears
+        const v = val as Record<string, unknown>;
+        const entry: { word?: string; whisper?: string } = {};
+        if (typeof v.word === 'string' && v.word.trim()) entry.word = v.word.trim().slice(0, 40);
+        if (typeof v.whisper === 'string' && v.whisper.trim()) entry.whisper = v.whisper.trim().slice(0, 80);
+        if (entry.word || entry.whisper) curLabels[cat] = entry; else delete curLabels[cat];
+      }
+      profile.labels = curLabels;
+    }
+    settings.profile = profile;
+
+    const now = new Date().toISOString();
+    await db.prepare(
+      `INSERT INTO authors (id, settings, published_at, updated_at) VALUES (?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET settings = excluded.settings, updated_at = excluded.updated_at`
+    ).bind(authorId, JSON.stringify(settings), now, now).run();
+
+    logEvent('library_profile_set', { author: authorId });
+    return c.json({ ok: true, profile: normalizeProfile(settings) });
   });
 
   app.get('/library/:author/grants', async (c) => {
