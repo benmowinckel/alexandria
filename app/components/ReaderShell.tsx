@@ -243,7 +243,7 @@ export default function ReaderShell({
   return (
     <>
       <ThemeToggle />
-      <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
+      <div className="reader-shell" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
         <header style={{ flex: 'none', display: 'flex', alignItems: 'baseline', gap: '0.9rem', padding: '0.85rem 3.6rem 0.85rem 1.2rem', borderBottom: '1px solid var(--border-light)' }}>
           <Link href={backHref} aria-label={`back to ${backTitle}`} title={backTitle}
             style={{ color: 'var(--text-muted)', display: 'flex', alignSelf: 'center', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
@@ -386,6 +386,13 @@ export default function ReaderShell({
             </div>
           </article>
         </main>
+        {/* Slim footer to frame the reader even with the panes open — the one
+            CTA (build your own) + the wordmark home, matching the profile and
+            PLM three-pane pages (founder 2026-07-19). Drops out in full screen. */}
+        <footer style={{ flex: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.6rem', padding: '1rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
+          <Link href="/start" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">build your own</Link>
+          <Link href="/library" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">alexandria<span style={{ fontStyle: 'normal' }}>.</span></Link>
+        </footer>
       </div>
 
       <style>{`
@@ -437,6 +444,7 @@ export default function ReaderShell({
         main[data-expanded="true"] .pane-chat,
         main[data-expanded="true"] .piece-collapse { display: none !important; }
         main[data-expanded="true"] .piece-head { padding-right: 3.4rem; }
+        .reader-shell:has(main[data-expanded="true"]) > footer { display: none !important; }
       `}</style>
     </>
   );
