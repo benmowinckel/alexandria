@@ -8,20 +8,44 @@ export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 BASE="$HOME/alexandria/system"; SCR="$BASE/scripts"
 LOG="$BASE/.imsg_daemon_log"; CONV="$BASE/.imsg_conversation_log"; TMP="$BASE/.imsg_inbound_tmp"
 maxrow="${1:?need maxrow}"
-reply_to="${2:-}"   # the handle Ben texted from → reply there (same thread)
+reply_to="${2:-}"   # the handle the Author texted from → reply there (same thread)
 log(){ printf '%s %s\n' "$(date -Iseconds)" "$*" >> "$LOG"; }
 
 [ -f "$TMP" ] || exit 0
-texts=$(cut -f2- "$TMP" | paste -sd'~' - | sed 's/~/ | /g')
+texts=$(cut -f2 "$TMP" | paste -sd'~' - | sed 's/~/ | /g; s/^ *| *//; s/ *| *$//')
+attach=$(cut -f3 "$TMP" | grep -v '^[[:space:]]*$' | head -1)   # first file he attached, if any
 rm -f "$TMP"
-[ -n "$texts" ] || exit 0
-log "IN [$maxrow]: $texts"
-printf '%s\tBEN\t%s\n' "$(date -Iseconds)" "$texts" >> "$CONV"
+[ -n "$texts$attach" ] || exit 0                                 # proceed if EITHER text OR a file
+log "IN [$maxrow]: ${texts}${attach:+ [+file: $(basename "$attach")]}"
+printf '%s\tBEN\t%s\n' "$(date -Iseconds)" "${texts:-[sent a file]}" >> "$CONV"
 
-reply=$("$SCR/agent_reply.sh" "$texts" 2>>"$LOG")
+reply=$("$SCR/agent_reply.sh" "$texts" "$attach" 2>>"$LOG")
 if [ -z "$reply" ]; then
   log "ERR: brain returned empty for [$maxrow] — no reply sent (he can re-text)"
   exit 0
+fi
+
+# ── Tool adapters (pixel/acoustic × in/out). The caged brain emits [[VERB: payload]] on its own line;
+# this handler is privileged (terminal context → can actuate), so it runs tools/<verb>.sh "payload" and
+# substitutes the adapter's output back into the reply he sees. Add a tool = drop one tools/<verb>.sh
+# that takes "$1" and echoes what he sees. Unknown verb → marker left as-is (harmless). See tools/README.md.
+if printf '%s' "$reply" | grep -q '\[\['; then
+  TOOLS="$BASE/tools"; out=""
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^\[\[([A-Za-z_]+):[[:space:]]*(.*)\]\]$ ]]; then
+      verb="$(printf '%s' "${BASH_REMATCH[1]}" | tr '[:upper:]' '[:lower:]')"
+      payload="${BASH_REMATCH[2]}"
+      if [ -x "$TOOLS/$verb.sh" ]; then
+        rep="$("$TOOLS/$verb.sh" "$payload" 2>>"$LOG")" || rep="(couldn't run $verb)"
+        out+="$rep"$'\n'
+      else
+        out+="$line"$'\n'
+      fi
+    else
+      out+="$line"$'\n'
+    fi
+  done < <(printf '%s\n' "$reply")
+  reply="${out%$'\n'}"
 fi
 
 # Send with a small bounded retry (Messages can be transiently un-launchable → -10810).

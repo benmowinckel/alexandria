@@ -26,14 +26,14 @@ CFG    = os.path.join(BASE, ".imsg_config")
 PAUSE  = os.path.join(BASE, ".imsg_paused")
 TMP    = os.path.join(BASE, ".imsg_inbound_tmp")
 LOCK   = os.path.join(BASE, ".imsg_reader.lock")
-AISENT = os.path.join(BASE, ".imsg_ai_sent")   # ROWIDs the AI sent — everything else in-thread is Ben
+AISENT = os.path.join(BASE, ".imsg_ai_sent")   # ROWIDs the AI sent — everything else in-thread is the Author
 HANDLE = os.path.join(BASE, "scripts/imsg_handle.sh")
 
 def err(m): sys.stderr.write(m + "\n"); sys.stderr.flush()
 
 def decode_attributed_body(data):
     """Extract plain text from a Messages `attributedBody` typedstream blob.
-    Some of Ben's texts (emoji, formatting, mentions) store their text here with m.text NULL.
+    Some of the Author's texts (emoji, formatting, mentions) store their text here with m.text NULL.
     Heuristic: after the 'NSString' marker comes an inline-string marker ('+'), then a
     typedstream variable-length int, then the UTF-8 bytes. Covers the overwhelming majority."""
     if not data:
@@ -68,9 +68,11 @@ if not EMAIL or not NUMBER:
     err("no handles in .imsg_config"); sys.exit(1)
 
 # All self-thread messages since the watermark; the AI's own sends are filtered out in Python via
-# .imsg_ai_sent (is_from_me is no longer a reliable signal — the saved contact made Ben's replies
+# .imsg_ai_sent (is_from_me is no longer a reliable signal — the saved contact made the Author's replies
 # is_from_me=1, identical to AI sends).
-Q = ("SELECT m.ROWID, m.text, m.attributedBody, c.chat_identifier "
+Q = ("SELECT m.ROWID, m.text, m.attributedBody, c.chat_identifier, "
+     "(SELECT GROUP_CONCAT(a.filename, '|') FROM message_attachment_join maj "
+     " JOIN attachment a ON maj.attachment_id=a.ROWID WHERE maj.message_id=m.ROWID) AS attachments "
      "FROM message m JOIN chat_message_join j ON m.ROWID=j.message_id JOIN chat c ON j.chat_id=c.ROWID "
      "WHERE c.chat_identifier IN (?,?) AND m.ROWID>? "
      "ORDER BY m.ROWID ASC")
@@ -109,16 +111,23 @@ while True:
             ai_sent = {int(x) for x in open(AISENT).read().split()}
         except Exception:
             pass
-        ben = [r for r in rows if r[0] not in ai_sent]   # everything not an AI send is Ben
+        mine = [r for r in rows if r[0] not in ai_sent]   # everything not an AI send is the Author
         open(WM, "w").write(str(maxrow))              # advance BEFORE handoff — no reprocess loop possible
-        if ben:
+        if mine:
             with open(TMP, "w") as tf:
-                for rid, text, abody, chat_id in ben:
+                for rid, text, abody, chat_id, attachments in mine:
                     if not text:
-                        text = decode_attributed_body(abody) or "[unreadable message]"
-                    text = text.replace("\n", " ").replace("\r", " ")
-                    tf.write(f"{rid}\t{text}\n")
-            # Reply to Ben's NUMBER. Paired with him disabling the email handles in Send & Receive, his
+                        text = decode_attributed_body(abody) or ""
+                    text = text.replace("\n", " ").replace("\r", " ").replace("\t", " ")
+                    apath = ""
+                    if attachments:
+                        first = attachments.split("|")[0].strip()
+                        if first:
+                            apath = os.path.expanduser(first)   # ~ → absolute, so the brain can Read it
+                    if not text and not apath:
+                        text = "[unreadable message]"
+                    tf.write(f"{rid}\t{text}\t{apath}\n")
+            # Reply to the Author's NUMBER. Paired with him disabling the email handles in Send & Receive, his
             # account collapses to ONE identity (the number) → one thread, deterministic, no alternation.
             # Blue (self), but reliable — the trade he chose over messy-grey.
             subprocess.run(["/bin/bash", HANDLE, str(maxrow), NUMBER])
