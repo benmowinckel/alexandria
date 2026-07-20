@@ -850,9 +850,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 <div className="action-close">
                   <p className="statement-beat action-beat action-beat-final">
                     <em>See it as a free sample at a supermarket. It&rsquo;s being
-                    handed straight to you &mdash; as long as you&rsquo;re
-                    not allergic, just take it, try it, and move on. Should
-                    be the smallest decision you make all day.</em>
+                    handed straight to you &mdash; as long as you&rsquo;re not
+                    allergic, just take it and give it a try. It should be the
+                    smallest decision you make all day.</em>
                   </p>
                 </div>
 
@@ -2876,13 +2876,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           font-size: 36px;
           line-height: 1.26;
           letter-spacing: -0.004em;
-          /* HAZE = opacity (veil) + blur (fog) + multiply (warm wash). Half
-             the haze of the 0.4 version (founder 2026-07-20: "too much haze,
-             half that") — opacity up to 0.7, blur down to 0.5, midway to
-             crisp. Lower opacity / more blur = hazier. */
-          color: rgba(46, 30, 38, 0.7);
+          /* NO BLUR — blur softened the letter edges and made it hard to
+             read (founder 2026-07-20: "it's not about the color, it's about
+             the clarity of reading … too hard to read"). Letterforms stay
+             sharp; the soft "fade into the wall" comes from opacity alone,
+             which keeps it legible. Dial that feeling with opacity here —
+             lower = more faded, still crisp. */
+          color: rgba(46, 30, 38, 0.72);
           mix-blend-mode: multiply;
-          filter: blur(0.5px);
           text-wrap: balance;
         }
         /* The answer (2026-07-17, direction B — restraint): the front is
@@ -2902,11 +2903,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           font-size: 20px;
           line-height: 1.4;
           letter-spacing: 0.006em;
-          /* Hazed to harmonise with the question, but kept clearer (higher
-             opacity, less blur) so the underlined name stays legible. */
-          color: rgba(46, 30, 38, 0.76);
+          /* Sharp, no blur — the underlined name reads clearly; slightly
+             more present than the question. */
+          color: rgba(46, 30, 38, 0.8);
           mix-blend-mode: multiply;
-          filter: blur(0.2px);
         }
         /* The name in the answer, underlined (founder 2026-07-20) — a quiet
            text-decoration line (always renders, unlike a color-mix border)
