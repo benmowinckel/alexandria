@@ -394,6 +394,34 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     // mobileScene remounts the <video> (key), so re-wire on flip too.
   }, [showBreeze, mobileScene]);
 
+  // bfcache restore fix (founder 2026-07-20: "leave and come back and the
+  // arch/ocean is blown up really big… refresh fixes it"). iOS Safari can
+  // restore a back-forward-cached page with the scene <video> painted at its
+  // native resolution, ignoring object-fit: cover, so it balloons over the
+  // frame until a repaint. On pageshow(persisted) — the bfcache-restore
+  // signal — re-init the video (reapplies cover sizing) and force a reflow of
+  // the top slide so the cover-scaled background recomputes too.
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (!e.persisted) return;
+      const top = topRef.current;
+      if (top) {
+        top.style.display = 'none';
+        void top.offsetHeight; // reflow — drops the stale layout
+        top.style.display = '';
+      }
+      const v = videoRef.current;
+      if (v) {
+        v.muted = true;
+        v.load();
+        v.play().catch(() => {});
+      }
+      window.dispatchEvent(new Event('resize'));
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
+
   // Peel mechanic — top slide translates up as user scrolls; revealing bottom.
   // Disabled on mobile: slides flow naturally, no peel, no fixed positioning.
   // Scroll handler short-circuits on mobile so no DOM writes happen on every
@@ -3309,8 +3337,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             background: linear-gradient(
               to bottom,
               #f7f2ec 0,
-              #f7f2ec 116svh,
-              var(--theme-bg) 116svh,
+              #f7f2ec 122svh,
+              var(--theme-bg) 122svh,
               var(--theme-bg) 100%
             ) !important;
           }
@@ -3337,9 +3365,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                the epigraph is pixel-anchored (top 112px) while the arch
                rides the cover-scaled scene (top ≈ 0.366 × slide height).
                a taller slide drops the arch clear of the text; the scene,
-               plate, and everything beneath move down with it. 116svh
-               (founder, 2026-07-18) drops the arch a touch further still. */
-            min-height: 116svh;
+               plate, and everything beneath move down with it. 122svh
+               (founder, 2026-07-20: the taller answer reveal overlapped the
+               arch — text moved up, scene dropped further). */
+            min-height: 122svh;
             /* Mobile gets its OWN scene asset — the desktop 16:9 wall
                cropped to portrait made the window wider than the phone
                screen ("too big", founder 2026-07-08). The square asset
@@ -3497,10 +3526,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              centred reads cleaner on phone. */
           .front-epigraph {
             left: 50%;
-            /* Sits in the open cream above the arch, balanced between the
-               nav and the window (founder 2026-07-20: nice spacing, must
-               not cover the arch, must read well). */
-            top: 132px;
+            /* Sits in the open cream above the arch (founder 2026-07-20:
+               moved up + scene dropped so the answer reveal never overlaps
+               the arch on shorter phones). */
+            top: 104px;
             transform: translateX(-50%);
             width: 84vw;
             max-width: 420px;
