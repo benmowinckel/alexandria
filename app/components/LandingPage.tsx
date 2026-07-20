@@ -191,17 +191,13 @@ const FILMS = [
   },
 ];
 
-function FrontFilm() {
-  const [idx, setIdx] = useState(0);
+// The demo now lives at the foot of the back slide (founder, 2026-07-19):
+// it's not a perfect demo, so it doesn't belong pinned to the hero as a
+// caption on the art — a quiet secondary link in the action zone is the
+// honest home. A plain text trigger; the film lifts into the same lightbox.
+function DemoFilm() {
   const [open, setOpen] = useState(false);
-  // Shared hover — the window hit-area and the caption wake each other
-  // (hovering the art inks the caption; hovering the caption cues the art).
-  const [hot, setHot] = useState(false);
-  const film = FILMS[idx];
-  const step = (d: number) => {
-    setIdx((idx + d + FILMS.length) % FILMS.length);
-    setOpen(false);
-  };
+  const film = FILMS[0];
   // Lightbox plumbing — Esc closes, page scroll locks while open. The
   // lock removes the scrollbar, which would shift the whole page left by
   // its width (visible on Windows / mac-with-mouse); compensate with
@@ -223,52 +219,14 @@ function FrontFilm() {
     };
   }, [open]);
   return (
-    <figure className={`film-invite${hot ? ' is-hot' : ''}`} role="group" aria-label="films">
-      {/* The window IS the player — an invisible hit-area over the arch
-          (same wall-cover geometry as the plate, see CSS) opens the
-          lightbox; hovering it raises a quiet play cue in the window and
-          inks the caption. The caption returns to the museum whisper: it
-          is the label OF the art, not the sole affordance (the ringed
-          placard restyle was tried 2026-07-08 and reverted — founder).
-          Arrows appear when the rotation has more than one film. */}
+    <>
       <button
         type="button"
-        className="film-window-hit"
+        className="demo-link"
         onClick={() => setOpen(true)}
-        onMouseEnter={() => setHot(true)}
-        onMouseLeave={() => setHot(false)}
-        aria-label={`play ${film.label}`}
-        tabIndex={-1}
       >
-        <span className="film-window-cue" aria-hidden>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5.5v13l11-6.5z" />
-          </svg>
-        </span>
+        <em>watch the demo</em>
       </button>
-      {FILMS.length > 1 && (
-        <button type="button" className="film-arrow" onClick={() => step(-1)} aria-label="previous film">&larr;</button>
-      )}
-      <button
-        type="button"
-        className="film-invite-btn"
-        onClick={() => setOpen(true)}
-        onMouseEnter={() => setHot(true)}
-        onMouseLeave={() => setHot(false)}
-        aria-label={`play ${film.label}`}
-      >
-        {/* The title is the centered object; the glyph hangs outside it
-            (absolute) so the optical centre is the words, not
-            words+glyph — founder caught "the m is the thing in the
-            middle". */}
-        <em>{film.label}</em>
-        <svg className="film-play-glyph" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M8 5.5v13l11-6.5z" />
-        </svg>
-      </button>
-      {FILMS.length > 1 && (
-        <button type="button" className="film-arrow" onClick={() => step(1)} aria-label="next film">&rarr;</button>
-      )}
       {/* The lightbox portals to <body> — .stage-top is transform-scaled,
           which would make position:fixed resolve against the stage. */}
       {open && typeof document !== 'undefined' && createPortal(
@@ -293,7 +251,7 @@ function FrontFilm() {
         </div>,
         document.body,
       )}
-    </figure>
+    </>
   );
 }
 
@@ -737,11 +695,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         {/* Frontispiece composition — the wall + arch + fresco ARE the
             slide (restored 2026-07-01 after a framed-card detour: the
             painting is the image the launch film re-authors, so it
-            stays). The film plate beneath the arch is the one quiet
-            affordance; it lives OUTSIDE the stage because the stage
-            scales by min(vw/1440, vh/900) while the wall scales by
-            cover — the plate tracks the wall's own geometry instead. */}
-        <FrontFilm />
+            stays). The demo trigger moved OFF the hero to the back-slide
+            foot (2026-07-19) — the arch is now pure scenery, no caption
+            stuck on the art. */}
         <div className="stage-top">
         <span className="alpha-mark">san francisco · mmxxvi</span>
         {/* Front-slide opening (2026-07-12, founder-directed): the letter
@@ -769,7 +725,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               and labels all explained what the words already say, so they
               are gone; hierarchy is size and air alone. */}
           <p className="front-lead">When ai can do everything humans can, what do we do?</p>
-          <p className="front-answer">our answer is alexandria<span className="front-answer-dot">.</span></p>
+          <p className="front-answer">our answer is <span className="front-answer-name">alexandria</span><span className="front-answer-dot">.</span></p>
         </div>
         <div className="top-inner" />
         </div>
@@ -893,7 +849,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     the frame / the punch / the action. */}
                 <div className="action-close">
                   <p className="statement-beat action-beat action-beat-final">
-                    <em>See it as a free sample at a shop. It&rsquo;s being
+                    <em>See it as a free sample at a supermarket. It&rsquo;s being
                     handed straight to you &mdash; as long as you&rsquo;re
                     not allergic, just take it, try it, and move on. Should
                     be the smallest decision you make all day.</em>
@@ -917,6 +873,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     </span>
                   </div>
                 </div>
+
+                {/* The demo — a quiet tertiary line under the two CTAs
+                    (founder, 2026-07-19). Off the hero, where the not-yet-
+                    perfect demo reads as an honest "see it first" option
+                    rather than a caption stuck on the art. */}
+                <p className="demo-line">
+                  <DemoFilm />
+                </p>
 
               </div>
 
@@ -1040,15 +1004,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         }
 
         .nav-brand {
-          /* Garamond italic at faint ink (founder 2026-07-18: picked
-             H·72 from the wordmark compare — supersedes the 07-16
-             upright note). The mark is a frontispiece hand, rhyming
-             with the mentes-aeternae motto below it; 34px because
-             Garamond runs smaller than Spectral at equal size. */
-          font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+          /* Spectral italic (founder 2026-07-19: keep the wordmark and the
+             Garamond hero question in DIFFERENT faces). This matches the
+             big back-slide "alexandria." (also Spectral), so the brand name
+             reads as one face everywhere and the hero question owns Garamond
+             as its distinct voice. 30px because Spectral runs larger than
+             the old Garamond at equal size. */
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
           font-weight: 500;
-          font-size: 34px;
+          font-size: 30px;
           line-height: 1;
           text-decoration: none;
           letter-spacing: -0.01em;
@@ -1438,123 +1403,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         @media (prefers-reduced-motion: reduce) {
           .breeze-video { display: none; }
         }
-        /* FILM PLATE — the quiet line beneath the arch ("the demo ▸").
-           Anchored to the WALL's cover geometry, not the stage:
-           --wall-w/--wall-h reproduce background-size: cover for the
-           2246×1264 sea image (AR 1.7771, same as the old wall); x
-           sits on the window's centre (image-fraction 0.514, measured
-           off the inner side edges, with the 75% crop position) and y
-           below the outer ledge line (0.711 + margin) at every aspect
-           ratio. Type scales gently with the scene. */
-        .film-invite {
-          position: absolute;
-          --wall-w: max(100vw, 177.71vh);
-          --wall-h: max(100vh, 56.27vw);
-          left: calc(75vw - 0.236 * var(--wall-w));
-          top: calc(50vh + 0.238 * var(--wall-h));
-          transform: translate(-50%, -50%);
-          margin: 0;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          z-index: 2;
-        }
-        /* WINDOW HIT-AREA — the art itself is the button. Invisible zone
-           over the arch's inner window (image fractions: centre x 0.514,
-           y 0.285→0.649), expressed as offsets from the plate's anchor
-           point in the same wall units. Hover raises a quiet play cue at
-           the window's centre and inks the caption (shared .is-hot). */
-        .film-window-hit {
-          position: absolute;
-          left: 50%;
-          top: calc(50% - 0.271 * var(--wall-h));
-          width: calc(0.273 * var(--wall-w));
-          height: calc(0.364 * var(--wall-h));
-          transform: translate(-50%, -50%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0;
-          border: none;
-          background: transparent;
-          cursor: pointer;
-          /* arch-ish top so the cursor zone hugs the window's shape */
-          border-radius: 42% 42% 2% 2% / 34% 34% 2% 2%;
-        }
-        .film-window-cue {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 56px;
-          height: 56px;
-          border-radius: 50%;
-          /* Hairline ring over frosted glass — the heavy dark disc read
-             as a UI sticker on the faint water; this one sits IN the
-             scene, like a lens of the view itself. Ink triangle. */
-          border: 1px solid rgba(26, 19, 24, 0.38);
-          background: rgba(245, 240, 232, 0.28);
-          backdrop-filter: blur(7px);
-          -webkit-backdrop-filter: blur(7px);
-          color: rgba(26, 19, 24, 0.68);
-          opacity: 0;
-          /* nudged below the window's centre so it floats on the water,
-             beneath the horizon line */
-          position: relative;
-          top: 13%;
-          transform: scale(0.94);
-          transition: opacity 260ms ease, transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .film-window-cue svg { width: 14px; height: 14px; margin-left: 3px; }
-        .film-window-hit:hover .film-window-cue,
-        .film-invite.is-hot .film-window-cue {
-          opacity: 1;
-          transform: scale(1);
-        }
-        .film-window-hit:active .film-window-cue { transform: scale(0.96); }
-        @media (hover: none) {
-          /* touch: the window stays tappable, the hover cue never shows */
-          .film-window-cue { display: none; }
-        }
-        .film-invite-btn {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          padding: 10px 14px;
-          margin: -10px -14px;
-          border: none;
-          background: none;
-          cursor: pointer;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          /* Museum-caption register (the alpha-mark's family): small,
-             tracked, faint — the arch is the art, the plate whispers.
-             Hover (or hovering the art) wakes it to full ink. */
-          font-size: clamp(12.5px, calc(0.0095 * var(--wall-w)), 20px);
-          letter-spacing: 0.12em;
-          color: rgba(26, 19, 24, 0.46);
-          transition: color 200ms ease;
-        }
-        .film-invite-btn em { font-style: italic; }
-        .film-invite-btn:hover,
-        .film-invite.is-hot .film-invite-btn { color: #1a1318; }
-        .film-play-glyph {
-          position: absolute;
-          left: 100%;
-          top: 50%;
-          margin-left: -4px;
-          width: 0.55em;
-          height: 0.55em;
-          color: rgba(26, 19, 24, 0.35);
-          transform: translateY(-50%);
-          transition: color 200ms ease, transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .film-invite-btn:hover .film-play-glyph,
-        .film-invite.is-hot .film-play-glyph {
-          color: #1a1318;
-          transform: translate(2px, -50%);
-        }
-        .film-invite-btn:active .film-play-glyph {
-          transform: translate(1px, -50%) scale(0.96);
-        }
         /* Lightbox — the film lifts out and plays over a dimmed room.
            Backdrop or × or Esc closes. Portalled to <body>. */
         .film-lightbox {
@@ -1604,17 +1452,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           .film-lightbox,
           .film-lightbox-video { animation: none; }
         }
-        .film-arrow {
-          padding: 4px 8px;
-          margin: -4px -8px;
-          border: none;
-          background: none;
-          font: inherit;
-          color: rgba(26, 19, 24, 0.45);
-          cursor: pointer;
-          transition: color 180ms ease;
-        }
-        .film-arrow:hover { color: rgba(26, 19, 24, 0.85); }
         /* Stage — pixel-locked 1440×900 canvas, centred, uniformly scaled.
            Everything inside is absolute pixels at this design size, so
            layout never reflows. JS sets --stage-scale-top from viewport. */
@@ -2878,6 +2715,25 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           /* The library·marketplace row is peripheral chrome — it yields
              during focus so a long open body's slide never collides. */
           .right-col:has(.sec.is-open) .quiet-links { opacity: 0; }
+          /* The demo line is peripheral chrome too — it must yield its
+             HEIGHT during focus, not just fade. Without this it eats the
+             fixed stage's slack, so mid-expand the flex column overflows
+             by ~1px, flex-shrink compresses the block, and the CTAs
+             shudder (the 2026-07-19 jitter). Collapsing it on the leads'
+             curve frees the room in sync with the body's grow. */
+          .demo-line {
+            max-height: 44px;
+            overflow: hidden;
+            transition:
+              max-height 520ms cubic-bezier(0.33, 0, 0.2, 1),
+              opacity 380ms ease,
+              margin 520ms cubic-bezier(0.33, 0, 0.2, 1);
+          }
+          .right-col:has(.sec.is-open) .demo-line {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+          }
         }
         /* The expand itself — is-open on every input (mouseenter via JS on
            desktop, tap toggle on touch). */
@@ -2957,7 +2813,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           left: 118px;
           top: 50%;
           transform: translateY(-50%);
-          width: 402px;
+          /* Narrower so the wrapped lines never reach the arch (founder
+             2026-07-19: "don't want it overlapping the arch"). Sits in the
+             open cream to the left of the window. */
+          width: 372px;
           text-align: left;
           z-index: 3;
         }
@@ -3002,11 +2861,28 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            losing doors dimmed, the way through alive. ─── */
         .front-lead {
           margin: 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 23px;
-          line-height: 1.42;
-          letter-spacing: 0.002em;
-          color: rgba(26, 19, 24, 0.78);
+          /* EB Garamond, not Spectral (founder 2026-07-19: "not sure on
+             the font … feels like it's sitting on top, not integrated").
+             Spectral is a sharp, high-contrast modern serif — it pops off a
+             soft painterly scene. Garamond is the warm old-style face the
+             wordmark already uses; a low-contrast humanist serif melts into
+             the marble instead of sitting over it. multiply soaks the ink
+             into the wall; lower opacity lets the surface read through so it
+             recedes rather than dominates (heavier/darker was "too
+             dominating"). */
+          font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+          font-weight: 500;
+          font-style: italic;
+          font-size: 36px;
+          line-height: 1.26;
+          letter-spacing: -0.004em;
+          /* HAZE = opacity (veil) + blur (fog) + multiply (warm wash). Half
+             the haze of the 0.4 version (founder 2026-07-20: "too much haze,
+             half that") — opacity up to 0.7, blur down to 0.5, midway to
+             crisp. Lower opacity / more blur = hazier. */
+          color: rgba(46, 30, 38, 0.7);
+          mix-blend-mode: multiply;
+          filter: blur(0.5px);
           text-wrap: balance;
         }
         /* The answer (2026-07-17, direction B — restraint): the front is
@@ -3015,13 +2891,30 @@ export default function LandingPage({ brandClassName = '' }: Props) {
            reveal after the roman question; a generous breath sets it
            apart. The dot is the wordmark's — roman, tight to the name. */
         .front-answer {
-          margin: 40px 0 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 21px;
+          margin: 32px 0 0;
+          font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+          /* Roman, not italic (founder 2026-07-20: "the answer in non
+             italics … a different something") — the upright reply reads as
+             settled against the question's searching italic; same Garamond
+             hand, just a different posture. */
+          font-style: normal;
+          font-weight: 500;
+          font-size: 20px;
           line-height: 1.4;
-          letter-spacing: 0.004em;
-          color: rgba(26, 19, 24, 0.66);
+          letter-spacing: 0.006em;
+          /* Hazed to harmonise with the question, but kept clearer (higher
+             opacity, less blur) so the underlined name stays legible. */
+          color: rgba(46, 30, 38, 0.76);
+          mix-blend-mode: multiply;
+          filter: blur(0.2px);
+        }
+        /* The name in the answer, underlined (founder 2026-07-20) — a quiet
+           text-decoration line (always renders, unlike a color-mix border)
+           marks "alexandria" as THE answer. */
+        .front-answer-name {
+          text-decoration: underline;
+          text-decoration-thickness: 1px;
+          text-underline-offset: 3px;
         }
         .front-answer-dot {
           font-style: normal;
@@ -3167,6 +3060,36 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           line-height: 1.35;
           padding-left: 0;
         }
+        /* Demo — quiet tertiary action beneath the two CTAs. Off the hero
+           (2026-07-19); an honest "see it first" text link, not a button
+           competing with install. Theme-aware so it rides the colophon
+           palette; underline wakes on hover. */
+        .demo-line {
+          margin: 20px 0 0;
+        }
+        .demo-link {
+          border: none;
+          background: none;
+          padding: 0;
+          margin: 0;
+          cursor: pointer;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 14px;
+          font-style: italic;
+          color: var(--theme-fg-muted);
+          letter-spacing: 0.012em;
+          /* Plain text-decoration underline — always renders and falls
+             back to the text colour, unlike the color-mix border that
+             silently vanished in some browsers (founder, 2026-07-19:
+             "not underlined … I have refreshed"). Deepens with the text
+             on hover (decoration-color follows currentColor). */
+          text-decoration: underline;
+          text-decoration-thickness: 1px;
+          text-underline-offset: 3px;
+          transition: color 200ms ease;
+        }
+        .demo-link em { font-style: italic; }
+        .demo-link:hover { color: var(--theme-fg); }
         /* WORDMARK + DICT STACK — Fleet's signature anchor block.
            Wordmark dominates, then phon, then numbered defs, then
            footnote. The stack creates visual gravity at bottom-left. */
@@ -3394,9 +3317,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                rides the cover-scaled scene (top ≈ 0.366 × slide height).
                a taller slide drops the arch clear of the text; the scene,
                plate, and everything beneath move down with it. 116svh
-               (founder, 2026-07-18) drops the arch a touch further still.
-               Keep the body gradient stop and the film-invite anchor
-               (58svh centre, 116svh wall units) in sync with this height. */
+               (founder, 2026-07-18) drops the arch a touch further still. */
             min-height: 116svh;
             /* Mobile gets its OWN scene asset — the desktop 16:9 wall
                cropped to portrait made the window wider than the phone
@@ -3555,10 +3476,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              centred reads cleaner on phone. */
           .front-epigraph {
             left: 50%;
-            top: 112px;
+            /* Sits in the open cream above the arch, balanced between the
+               nav and the window (founder 2026-07-20: nice spacing, must
+               not cover the arch, must read well). */
+            top: 132px;
             transform: translateX(-50%);
             width: 84vw;
-            max-width: 440px;
+            max-width: 420px;
             text-align: center;
           }
           .front-salutation {
@@ -3571,10 +3495,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             font-size: 16.5px;
             line-height: 1.52;
           }
-          /* Pull the answer up a touch under the question (founder,
-             2026-07-18) — tighter than the desktop 40px breath. */
+          /* Mobile: the question is the hero, at hero scale — a big
+             confident italic that commands the top of the screen and hands
+             the eye down through the arch to the sea (form is content).
+             The timid 20px caption was the pasted-on tell (founder
+             2026-07-19: "really go for it"). */
+          .front-lead {
+            font-size: 29px;
+            line-height: 1.3;
+            letter-spacing: -0.004em;
+          }
           .front-answer {
-            margin-top: 24px;
+            font-size: 18px;
+            margin-top: 16px;
           }
 
           /* Mobile spacing — the two-slide peel format is gone here;
@@ -3663,6 +3596,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             order: 5;
             margin-top: 4px;
           }
+          /* Demo link sits just under the CTAs (order 5) — without an
+             explicit order the flattened child defaults to 0 and leaps
+             above the ornament (the display:contents order trap). Pull it
+             back against the 64px flat gap so it hugs the buttons. */
+          .demo-line {
+            order: 5;
+            margin-top: -42px;
+          }
           .wordmark-block {
             order: 6;
             margin-left: 0;
@@ -3678,41 +3619,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             align-self: auto;
             padding-left: 0;
             margin: 0;
-          }
-
-          /* Film plate on mobile — geometry for the SQUARE mobile asset
-             (sea-arch-mobile.jpg, bg center/center cover). Measured
-             fractions of the full-dapple canvas (2026-07-09): window
-             centre x 0.5045, y 0.4705; window 0.253w × 0.209h; ledge
-             line 0.619; caption anchor 0.644. Wall units for a square
-             image under cover: both dimensions = max(100vw, 100svh). */
-          .film-invite {
-            /* Wall units + centre track the 116svh slide, not the
-               viewport — the slide is taller than 100svh on mobile. */
-            --wall-w: max(100vw, 116svh);
-            --wall-h: max(100vw, 116svh);
-            left: calc(50vw + 0.005 * var(--wall-w));
-            /* 0.150 (was 0.144) — nudge 'the demo' a hair lower down the
-               wall (founder, 2026-07-18). */
-            top: calc(58svh + 0.150 * var(--wall-h));
-            transform: translate(-50%, -50%);
-          }
-          .film-invite-btn {
-            font-size: 13.5px;
-            /* Fainter than desktop's 0.46 (founder, 2026-07-18) — the
-               caption whispers harder on the phone. */
-            color: rgba(26, 19, 24, 0.34);
-          }
-          .film-play-glyph {
-            color: rgba(26, 19, 24, 0.24);
-          }
-          /* Window hit-area on mobile — offsets from the plate's anchor
-             in the same wall units. Tap-to-play; the hover cue is
-             already display:none. */
-          .film-window-hit {
-            top: calc(50% - 0.1735 * var(--wall-h));
-            width: calc(0.26 * var(--wall-w));
-            height: calc(0.215 * var(--wall-h));
           }
 
           /* Statement — drop the absolute roman numerals (they hang in
