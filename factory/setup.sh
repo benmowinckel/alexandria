@@ -184,6 +184,14 @@ for _s in imsg_ctl.sh imsg_run.sh imsg_send.sh imsg_handle.sh agent_reply.sh; do
   chmod +x "$ALEX_DIR/system/scripts/$_s" 2>/dev/null
 done
 fetch_factory "scripts/imsg_daemon.py" "$ALEX_DIR/system/scripts/imsg_daemon.py" "scripts/imsg_daemon.py"
+# Proactive capture digest — the one surface that reaches OUT (a2 § The Proactive Medium).
+# The daily 5pm iMessage that pulls the Author back into a session. Ships INERT: it needs the
+# same Messages grant + self-handle as the presence, so `imsg_ctl.sh enable` installs its
+# launchd job. Nothing here starts it. Logic overwrites (bug-fixes reach Authors); the accretion
+# fragment pool seeds-if-missing so the Author's own edits to their empty-state hooks survive.
+fetch_factory "scripts/capture_digest.py" "$ALEX_DIR/system/scripts/capture_digest.py" "scripts/capture_digest.py" yes
+chmod +x "$ALEX_DIR/system/scripts/capture_digest.py" 2>/dev/null
+fetch_factory "scripts/digest_fragments.md" "$ALEX_DIR/system/.digest_fragments.md" "scripts/digest_fragments.md"
 # Tool adapters (the pixel/acoustic in/out plugs the texting brain drives via [[VERB:]] markers).
 # Seed-if-missing so the Author's own edits survive a re-sync. Inert until they text a command + grant
 # Automation once per app. Add a tool = drop one tools/<verb>.sh (see tools/README.md).
