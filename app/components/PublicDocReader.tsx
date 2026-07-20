@@ -16,7 +16,7 @@ import { FOUNDER_LIBRARY_ID, FOUNDER_PROFILE_PATH } from '../lib/config';
  * public shadow + public product facts (no private substrate in reach).
  */
 export default function PublicDocReader({
-  title, mdSrc, pdfSrc, txtSrc, numbered, plain,
+  title, mdSrc, pdfSrc, txtSrc, numbered, plain, askQuestions,
 }: {
   title: string;
   mdSrc?: string;   // markdown to fetch + render (the whitepaper)
@@ -24,6 +24,7 @@ export default function PublicDocReader({
   txtSrc?: string;  // the PDF's text (for the copy button)
   numbered?: boolean; // book setting — TOC + hanging numerals + colophon plate
   plain?: boolean;    // with numbered: the plain (ragged-right) variant
+  askQuestions?: string[]; // this doc's own suggested questions → the rotation
 }) {
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [markdown, setMarkdown] = useState('');
@@ -75,17 +76,23 @@ export default function PublicDocReader({
     return (res.ok && b.answer) ? b.answer : (b.error || 'the mind could not answer just now.');
   };
 
-  // The chat empty-state: name who you're talking to (a live proof of the
-  // product), and give the two conversion doors — make your own · his library.
+  // The chat empty-state: name what you're talking to — a MIRROR of his mind,
+  // not a twin or a stand-in (canon: "Alexandria builds a mirror, not a clone";
+  // it thinks WITH you, not for you). The framing must read as reflection, never
+  // replacement (founder 2026-07-20). Then the two quiet conversion doors.
+  // Sentence-cased and spaced for the reader's serif register; no arrows.
   const intro = (
-    <div style={{ color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.65 }}>
-      <p style={{ margin: '0 0 0.9rem' }}>
-        you’re reading this with <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Benjamin</strong> — his
-        actual mind, built with alexandria from his own writing. ask it about this piece, about alexandria, or about him.
+    <div style={{ color: 'var(--text-muted)', fontSize: '1.02rem', lineHeight: 1.78, textWrap: 'pretty' }}>
+      <p style={{ margin: '0 0 1.5rem', textWrap: 'pretty' }}>
+        You’re reading this alongside a mirror of{' '}
+        <span style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>Benjamin</span>’s
+        {' '}mind — the founder of alexandria. His own thinking, reflected from what he’s
+        written, not a stand-in for him. Ask it about this piece, about alexandria, or about him.
       </p>
-      <p style={{ margin: 0, display: 'flex', flexWrap: 'wrap', gap: '0.35rem 1.1rem' }}>
-        <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>make your own →</Link>
-        <Link href={FOUNDER_PROFILE_PATH} style={{ color: 'var(--accent)', textDecoration: 'none' }}>his library →</Link>
+      <p style={{ margin: 0, display: 'flex', alignItems: 'baseline', gap: '0.95rem', fontSize: '0.95rem' }}>
+        <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">make your own</Link>
+        <span aria-hidden style={{ color: 'var(--text-ghost)' }}>·</span>
+        <Link href={FOUNDER_PROFILE_PATH} style={{ color: 'var(--text-muted)', textDecoration: 'none' }} className="hover:opacity-70">his library</Link>
       </p>
     </div>
   );
@@ -107,6 +114,7 @@ export default function PublicDocReader({
       downloadExt={pdfSrc ? 'pdf' : 'md'}
       who="Benjamin"
       askPlaceholder={'ask benjamin about this…'}
+      askQuestions={askQuestions}
       askFn={askFn}
       intro={intro}
     />

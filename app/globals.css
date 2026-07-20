@@ -469,10 +469,15 @@ html.app-shell input:focus {
   font-size: clamp(3.6rem, 7vw, 5.4rem);
   line-height: 0.96;
   letter-spacing: -0.028em;
-  color: var(--text-primary);
+  /* A softened warm gray, not the harsh near-black of the body — the title
+     reads more elegant and quiet at display size (founder 2026-07-20). No
+     underline. */
+  color: #6a615a;
   margin: 5.5rem 0 0.6rem;
   text-wrap: balance;
 }
+
+.dark .pdoc-longform .pdoc-h1 { color: #b4ada4; }
 
 /* H2 immediately after the title H1 — the frontispiece subtitle.
    Italic, small, muted; reads as a literary epigraph beneath the title
@@ -1827,4 +1832,38 @@ html.app-shell input:focus {
   .cancel-confirm {
     font-size: 18px;
   }
+}
+
+/* The composer's own caret — a slow, soft fade instead of the OS blink
+   (founder 2026-07-20). Shown only when the box is empty + focused. */
+@keyframes pb-caret-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.05; } }
+@media (prefers-reduced-motion: reduce) { @keyframes pb-caret-blink { 0%, 100% { opacity: 0.75; } } }
+
+/* Chat history rows (reader + PLM) — quiet by default; on hover the row lifts
+   and reveals rename + delete, which stay hidden otherwise so the pane never
+   clutters (founder 2026-07-20). The actions overlay the row's right edge with
+   a fade so a long title dissolves under them instead of colliding. */
+.chat-hist-row { background: transparent; transition: background 0.14s ease; }
+.chat-hist-row:hover { background: var(--bg-secondary); }
+.chat-hist-row.is-active { background: var(--bg-secondary); }
+.chat-hist-actions {
+  position: absolute; top: 0; right: 0.4rem; bottom: 0; z-index: 1;
+  display: flex; align-items: center; gap: 0.1rem;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.14s ease;
+}
+.chat-hist-row:hover .chat-hist-actions,
+.chat-hist-row:focus-within .chat-hist-actions { opacity: 1; pointer-events: auto; }
+.chat-hist-act {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer; padding: 0.28rem;
+  color: var(--text-ghost); transition: color 0.14s ease;
+}
+.chat-hist-act:hover { color: var(--text-primary); }
+/* Widen the hit area without changing the visual size (Fitts). */
+.chat-hist-act::after { content: ''; position: absolute; inset: -6px; }
+/* Touch devices have no hover — keep the actions always visible there so they
+   remain reachable. */
+@media (hover: none) {
+  .chat-hist-actions { opacity: 1; pointer-events: auto; }
 }

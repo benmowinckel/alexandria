@@ -47,6 +47,28 @@ const PromptBox = forwardRef<PromptBoxHandle, {
   const recRef = useRef<SpeechRec | null>(null);
   useEffect(() => { setVoiceOn(!!getSpeechRecognition()); }, []);
 
+  // Ghost text as a soft overlay (not the native placeholder) so a rotating
+  // suggestion crossfades instead of snapping (founder 2026-07-20 — "too quick,
+  // too abrupt; slow it down, make it flow"). When the placeholder changes we
+  // fade the old line out, swap, fade the new one in; it shows only while the
+  // box is empty. The native placeholder stays empty so the two never collide.
+  const [ghost, setGhost] = useState(placeholder);
+  const [ghostShown, setGhostShown] = useState(true);
+  // A calmer caret: the OS caret blink rate isn't controllable, so when the box
+  // is empty + focused we hide the native caret and draw our own, blinking
+  // slowly with a soft fade (founder 2026-07-20). Once you type, the native
+  // caret takes over so it tracks the cursor normally.
+  const [focused, setFocused] = useState(false);
+  const showOwnCaret = focused && !value;
+  useEffect(() => {
+    if (placeholder === ghost) return;
+    // Schedule both steps (never setState synchronously in the effect): fade the
+    // current line out, then swap to the new one and fade it back in.
+    const fadeOut = setTimeout(() => setGhostShown(false), 30);
+    const swap = setTimeout(() => { setGhost(placeholder); setGhostShown(true); }, 430);
+    return () => { clearTimeout(fadeOut); clearTimeout(swap); };
+  }, [placeholder, ghost]);
+
   // Let callers drop the cursor in the box (e.g. when a collapsed chat pane
   // expands) so you can start typing immediately.
   useImperativeHandle(ref, () => ({ focus: () => taRef.current?.focus() }), []);
@@ -133,6 +155,7 @@ const PromptBox = forwardRef<PromptBoxHandle, {
     cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1, transition: 'opacity 0.15s', whiteSpace: 'nowrap',
   };
 
+  const ghostRight = voiceOn ? '2.6rem' : '0.95rem';
   return (
     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
       <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -142,16 +165,38 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           disabled={loading && !typeWhileLoading}
-          placeholder={placeholder}
+          placeholder=""
           aria-label={ariaLabel || placeholder}
           style={{
             width: '100%', resize: 'none', overflow: 'auto', minHeight: '2.85rem', maxHeight: '160px', boxSizing: 'border-box',
             border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-secondary)',
             color: 'var(--text-primary)', fontFamily: 'var(--font-eb-garamond)', fontSize: '1rem', lineHeight: 1.45,
             outline: 'none', padding: `0.62rem ${voiceOn ? '2.6rem' : '0.95rem'} 0.62rem 0.95rem`,
+            // Quieter, greyer caret; hidden entirely while our slow caret shows.
+            caretColor: showOwnCaret ? 'transparent' : 'var(--text-muted)',
           }}
         />
+        {showOwnCaret && (
+          <span aria-hidden style={{
+            position: 'absolute', left: '0.98rem', top: '0.78rem',
+            width: '1.5px', height: '1.05rem', background: 'var(--text-muted)', borderRadius: '1px',
+            pointerEvents: 'none', animation: 'pb-caret-blink 1.5s ease-in-out infinite',
+          }} />
+        )}
+        {/* the rotating suggestion — nudged right of the caret so the blinking
+            cursor never sits on the first letter (founder 2026-07-20) */}
+        <div aria-hidden style={{
+          position: 'absolute', left: 0, top: 0, right: ghostRight,
+          padding: '0.62rem 0 0.62rem 1.35rem',
+          pointerEvents: 'none', color: 'var(--text-ghost)',
+          fontFamily: 'var(--font-eb-garamond)', fontSize: '1rem', lineHeight: 1.45,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          opacity: (!value && ghostShown) ? 1 : 0,
+          transition: 'opacity 0.4s ease',
+        }}>{ghost}</div>
         {voiceOn && (
           <button
             type="button"

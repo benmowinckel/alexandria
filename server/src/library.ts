@@ -171,6 +171,30 @@ async function getFileSubtitles(authorId: string): Promise<Record<string, string
   return {};
 }
 
+// Per-file suggested questions — the artifact's own `.questions` sidecar (the
+// Artifact Loop), a few short prompts per file that seed the rotating ask on the
+// profile door, the PLM chat, and the reader on the piece. Generated FROM the
+// artifact so the PLM context is guaranteed to answer them; always public like
+// the subtitle (they are teasers). Keyed by author slug, mirroring
+// file_subtitles. Empty until the publish flow populates it — surfaces then fall
+// back to generic prompts.
+async function getFileQuestions(authorId: string): Promise<Record<string, string[]>> {
+  try {
+    const raw = await getKV().get(`file_questions:${authorId}`);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const out: Record<string, string[]> = {};
+      for (const [name, v] of Object.entries(parsed)) {
+        if (!Array.isArray(v)) continue;
+        const qs = v.filter((q): q is string => typeof q === 'string' && !!q.trim()).map((q) => q.trim());
+        if (qs.length) out[name] = qs;
+      }
+      return out;
+    }
+  } catch { /* ignore */ }
+  return {};
+}
+
 // Owner-set display order (array of file names). Custom order WINS where set;
 // anything not named falls BELOW the ordered items, by recency — so a curated
 // page holds its shape and a fresh publish lands at the bottom instead of
@@ -598,18 +622,28 @@ export function registerLibraryRoutes(app: Hono): void {
     // owner sets; untagged files fall to 'shadows'.
     const fileCats = await getFileCategories(authorId);
     const fileSubs = await getFileSubtitles(authorId);
+    const fileQs = await getFileQuestions(authorId);
     const fileOrder = await getFileOrder(authorId);
     const orderedFiles = applyFileOrder(protocolFiles, fileOrder);
+    // Aggregate every piece's suggested questions into the twin object so the
+    // profile/PLM ask composer can rotate them (deduped, capped). Per-file
+    // questions ride with each file for the reader on that specific piece.
+    const twinQuestions = Array.from(
+      new Set(orderedFiles.flatMap((f) => fileQs[f.name] || [])),
+    ).slice(0, 12);
     // The Author's optional section config (order / hidden / labels). The page
     // is a router over what they published: emergent by default, curatable here.
     const profileCfg = normalizeProfile(librarySettings(legacyAuthor));
     return c.json({
       author: directoryAuthor(account!, legacyAuthor, fallbackIndex),
-      twin: twinOut,
+      twin: { ...twinOut, questions: twinQuestions },
       profile: profileCfg,
       files: orderedFiles.map(file => ({
         name: file.name,
         title: file.title ?? null,
+        // The piece's own suggested questions (always public, like subtitle) —
+        // seed the reader's rotating ask on this specific piece.
+        questions: fileQs[file.name] || null,
         // This route is unauthenticated (public directory). Don't leak the
         // author's private preview blurb for non-public files: public = open,
         // paid = sales listing (preview is the teaser), authors/invite =
@@ -1993,6 +2027,30 @@ export function registerLibraryRoutes(app: Hono): void {
     await getKV().put(`file_subtitles:${authorId}`, JSON.stringify(clean));
     logEvent('file_subtitles_set', { author: authorId, count: String(Object.keys(clean).length) });
     return c.json({ ok: true, subtitles: clean });
+  });
+
+  // Owner sets the per-file suggested questions (the `.questions` sidecar). A
+  // short array of questions per file — unstructured, no schema; generated FROM
+  // the artifact so the PLM answers them, feeding the rotating ask. Mirrors
+  // file-subtitles. Empty/missing array clears a file. Capped to keep it a
+  // teaser set, not a body dump. Always public (see getFileQuestions rationale).
+  app.put('/library/:author/file-questions', async (c) => {
+    const authorId = c.req.param('author');
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
+    const body = await c.req.json<{ questions?: Record<string, unknown> }>().catch(() => ({} as { questions?: Record<string, unknown> }));
+    const clean: Record<string, string[]> = {};
+    for (const [name, value] of Object.entries(body.questions || {})) {
+      if (!Array.isArray(value)) continue;
+      const qs = value
+        .filter((q): q is string => typeof q === 'string' && !!q.trim())
+        .map((q) => q.replace(/\s+/g, ' ').trim().slice(0, 160))
+        .slice(0, 8);
+      if (qs.length) clean[name] = qs;
+    }
+    await getKV().put(`file_questions:${authorId}`, JSON.stringify(clean));
+    logEvent('file_questions_set', { author: authorId, count: String(Object.keys(clean).length) });
+    return c.json({ ok: true, questions: clean });
   });
 
   // Owner-only profile config — how the /library page routes over the categories

@@ -132,10 +132,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   const [doorGoing, setDoorGoing] = useState(false);
   const [beliCopied, setBeliCopied] = useState(false);
   // Rotating door placeholder — smart example questions cycle through the ghost
-  // text instead of rigid hardcoded chips (founder 2026-07-19).
+  // text instead of rigid hardcoded chips (founder 2026-07-19). Unhurried cadence
+  // + the crossfade in PromptBox so it flows, not snaps (founder 2026-07-20).
   const [phIdx, setPhIdx] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setPhIdx((i) => i + 1), 3600);
+    const id = setInterval(() => setPhIdx((i) => i + 1), 5200);
     return () => clearInterval(id);
   }, []);
 
@@ -462,7 +463,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing}
                     placeholder={doorQ ? 'ask anything…' : askExamples[phIdx % askExamples.length]} />
                 </div>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0.8rem 0 0' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0.8rem 0 0', textWrap: 'pretty' }}>
                   a mirror of {first}&rsquo;s published mind — ask it anything; it answers from what they&rsquo;ve written, and says so plainly where it can&rsquo;t.
                 </p>
               </div>

@@ -32,8 +32,22 @@ export const metadata: Metadata = {
   },
 };
 
+// The whitepaper's own suggested questions — drawn from its actual argument, so
+// the mirror (loaded with the whitepaper as focus) is guaranteed to answer them.
+// The Artifact Loop generates these per piece automatically; the whitepaper is a
+// frozen genesis artifact, so its set is authored here rather than regenerated.
+const WHITEPAPER_QUESTIONS = [
+  'what is a person for when a machine can do everything?',
+  'what actually survives automation?',
+  'why write your mind down?',
+  'what does it mean to think *with* ai, not have it think for you?',
+  'why a mirror of your mind, and not a twin?',
+  'what is the library of minds?',
+  'what’s the strongest objection to this argument?',
+];
+
 export default function WhitepaperPage() {
   // numbered + plain — the genesis book setting (TOC, hanging numerals,
   // colophon plate) inside the reader, matching the approved standalone form.
-  return <PublicDocReader title="whitepaper" mdSrc="/docs/Whitepaper.md" numbered plain />;
+  return <PublicDocReader title="whitepaper" mdSrc="/docs/Whitepaper.md" numbered plain askQuestions={WHITEPAPER_QUESTIONS} />;
 }

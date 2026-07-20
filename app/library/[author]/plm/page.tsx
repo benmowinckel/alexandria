@@ -8,7 +8,9 @@ import { ThemeToggle } from '../../../components/ThemeToggle';
 import PromptBox from '../../../components/PromptBox';
 import ActionButton from '../../../components/ActionButton';
 import TwinText from '../../../components/TwinText';
+import ChatHistoryItem from '../../../components/ChatHistoryItem';
 import { PdfView } from '../../../components/ReaderShell';
+import { useRotatingPlaceholder, authorExamples, pieceExamples } from '../../../lib/useRotatingPlaceholder';
 import { librarySignInUrlHere } from '../../../lib/config';
 import { type TwinVariantSummary } from '../types';
 
@@ -27,16 +29,10 @@ function displayName(name: string): string {
 }
 
 type Msg = { role: 'you' | 'twin'; text: string };
-type Convo = { id: string; messages: Msg[] };
+type Convo = { id: string; messages: Msg[]; title?: string };
 type FileMeta = { name: string; visibility?: string; title?: string | null; category?: string };
 type LinkedSurface = { label: string; url: string };
 type OpenPiece = { name: string; nice: string; content: string; pdfUrl: string; loading: boolean };
-
-function convoTitle(c: Convo): string {
-  const first = c.messages.find((m) => m.role === 'you')?.text.trim();
-  if (!first) return 'Untitled';
-  return first.length > 34 ? `${first.slice(0, 34)}…` : first;
-}
 
 const svgProps = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
 const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6-6 6-6" /></svg>;
@@ -73,12 +69,20 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [showCode, setShowCode] = useState(false);
   const [codeDraft, setCodeDraft] = useState('');
   const [files, setFiles] = useState<FileMeta[]>([]);
+  // Suggested questions the Author's published artifacts carry (the Artifact
+  // Loop's `.questions` sidecars, aggregated server-side into twin.questions).
+  // Empty until the pipeline emits them → the rotation falls back to generic.
+  const [askQuestions, setAskQuestions] = useState<string[]>([]);
   const [variants, setVariants] = useState<TwinVariantSummary[]>([]);
   const [activeVariant, setActiveVariant] = useState<'weights' | 'context'>('context');
 
   const [leftOpen, setLeftOpen] = useState(false);
   const [midOpen, setMidOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
+  // Big "peek" sway only until the ask pane has been opened once (founder
+  // 2026-07-20). Here the chat opens by default, so it effectively never sways.
+  const [chatSeen, setChatSeen] = useState(false);
+  useEffect(() => { if (midOpen) setChatSeen(true); }, [midOpen]);
   const [open, setOpen] = useState<OpenPiece | null>(null);
   const [mtab, setMtab] = useState<'chat' | 'pieces'>('chat'); // mobile
   const [expanded, setExpanded] = useState(false);             // full-screen the open piece
@@ -155,6 +159,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         : [];
       setLinked([...site, ...socials]);
       setFiles(Array.isArray(dir?.files) ? dir.files : []);
+      const tq = dir?.twin?.questions;
+      setAskQuestions(Array.isArray(tq) ? tq.filter((q: unknown): q is string => typeof q === 'string') : []);
       const vs: TwinVariantSummary[] = Array.isArray(dir?.twin?.variants) ? dir.twin.variants : [];
       setVariants(vs);
       // Open on a mind the viewer can actually use; fall back to the first
@@ -276,6 +282,28 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     setActiveId(id);
     setQuestion('');
   };
+  // Rename sets a reader-owned title (empty → derived first-line); delete drops
+  // the chat, minting a fresh empty one if it was the last so the pane is never
+  // bare. The effect below realigns the active id after a delete.
+  const renameChat = (id: string, title: string) =>
+    setConvos((cs) => cs.map((c) => (c.id === id ? { ...c, title } : c)));
+  const deleteChat = (id: string) =>
+    setConvos((cs) => {
+      const next = cs.filter((c) => c.id !== id);
+      return next.length ? next : [{ id: String(idRef.current++), messages: [] }];
+    });
+  useEffect(() => {
+    if (!convos.some((c) => c.id === activeId)) setActiveId(convos[0]?.id ?? '1');
+  }, [convos, activeId]);
+
+  // Ghost text rotates through example questions: piece-specific when a work is
+  // open in the right pane, otherwise general questions about this Author's
+  // mind. Pauses the instant the reader starts typing.
+  const askExamples = useMemo(
+    () => (open ? pieceExamples(who) : authorExamples(who, askQuestions)),
+    [open, who, askQuestions],
+  );
+  const rotatingPlaceholder = useRotatingPlaceholder(askExamples, !question.trim());
 
   // Mid-thought questions QUEUE instead of bouncing (founder, 2026-07-17): the
   // composer stays typable while the mind is answering (typeWhileLoading), the
@@ -390,7 +418,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           ))}
         </div>
 
-        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-mtab={mtab} data-expanded={expanded ? 'true' : 'false'}
+        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-mtab={mtab} data-expanded={expanded ? 'true' : 'false'} data-chat-seen={chatSeen ? 'true' : 'false'}
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
@@ -404,17 +432,14 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '0.2rem 0.6rem 1rem' }}>
               {convos.map((c) => (
-                <button key={c.id} type="button" onClick={() => setActiveId(c.id)}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer', borderRadius: '8px',
-                    background: c.id === activeId ? 'var(--bg-secondary)' : 'transparent', color: c.id === activeId ? 'var(--text-primary)' : 'var(--text-muted)',
-                    fontFamily: 'inherit', fontSize: '0.9rem', lineHeight: 1.4, padding: '0.5rem 0.6rem', margin: '0 0 0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                  className="hover:opacity-80">{convoTitle(c)}</button>
+                <ChatHistoryItem key={c.id} convo={c} active={c.id === activeId}
+                  onOpen={setActiveId} onRename={renameChat} onDelete={deleteChat} />
               ))}
             </div>
           </aside>
 
           {/* chat — slot 2 */}
-          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open chat" title="chat">{LinesIcon}</button>
+          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open chat — ask the mind" title="ask">{LinesIcon}</button>
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
@@ -543,7 +568,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               </div>
             )}
             <div style={{ flex: 'none', padding: '0.9rem 1.2rem 0.7rem', borderTop: locked ? 'none' : '1px solid var(--border-light)' }}>
-              <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading placeholder="ask anything…" />
+              <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading placeholder={rotatingPlaceholder || 'ask anything…'} />
               {/* Contextual helper — only while the invite-code field is open:
                   how codes work, the sign-in requirement, and the REQUEST path
                   (the Author never learns someone wanted in unless there's a
@@ -698,6 +723,21 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
         .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
+        /* Organic sway — an uneven, wind-like drift on load, then a slow gentle
+           ongoing sway like cotton in a light breeze (founder 2026-07-20). */
+        @keyframes strip-peek {
+          0% { transform: translateX(0); } 18% { transform: translateX(8px); }
+          36% { transform: translateX(3px); } 58% { transform: translateX(9px); }
+          80% { transform: translateX(2px); } 100% { transform: translateX(0); }
+        }
+        @keyframes strip-sway {
+          0% { transform: translateX(0); } 28% { transform: translateX(2.5px); }
+          52% { transform: translateX(0.5px); } 76% { transform: translateX(3px); }
+          100% { transform: translateX(0); }
+        }
+        main:not([data-chat-seen="true"]) .reader-strip.strip-chat { animation: strip-peek 2.6s ease-in-out 0.8s 1 both; }
+        .reader-strip.strip-chat svg { animation: strip-sway 9s ease-in-out 4s infinite; }
+        @media (prefers-reduced-motion: reduce) { .reader-strip.strip-chat, .reader-strip.strip-chat svg { animation: none; } }
 
         @media (min-width: 901px) {
           .reader-strip { display: none; }

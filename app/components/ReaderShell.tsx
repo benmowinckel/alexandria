@@ -8,6 +8,8 @@ import { ThemeToggle } from './ThemeToggle';
 import PromptBox from './PromptBox';
 import ActionButton from './ActionButton';
 import TwinText from './TwinText';
+import ChatHistoryItem from './ChatHistoryItem';
+import { useRotatingPlaceholder, pieceExamples } from '../lib/useRotatingPlaceholder';
 import {
   processNumbered, TocBlock,
   MD_COMPONENTS, MD_COMPONENTS_NUMBERED, MD_COMPONENTS_NUMBERED_PRE, MD_COMPONENTS_ABSTRACT,
@@ -26,12 +28,7 @@ import {
  */
 
 type Msg = { role: 'you' | 'twin'; text: string };
-type Convo = { id: string; messages: Msg[] };
-function convoTitle(c: Convo): string {
-  const first = c.messages.find((m) => m.role === 'you')?.text.trim();
-  if (!first) return 'Untitled';
-  return first.length > 34 ? `${first.slice(0, 34)}…` : first;
-}
+type Convo = { id: string; messages: Msg[]; title?: string };
 
 const svgProps = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
 const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6-6 6-6" /></svg>;
@@ -128,6 +125,10 @@ export type ReaderShellProps = {
   checkoutUrl?: string;
   who?: string;                                   // whose piece (signin/pay copy)
   askPlaceholder?: string;
+  /** Suggested questions this piece carries (the Artifact Loop's `.questions`
+   *  sidecar) — they lead the rotating ghost text so the prompts are true to
+   *  the piece and answerable from the same context. Falls back to generic. */
+  askQuestions?: string[];
   askFn: (question: string) => Promise<string>;   // the twin call (wrapper decides which)
   intro?: React.ReactNode;                        // chat empty-state (who you're talking to + CTAs)
 };
@@ -136,7 +137,7 @@ export default function ReaderShell({
   name, backHref, backTitle, visibility = 'public', status, pdfUrl, markdown,
   numbered = false, plain = false,
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
-  signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askFn,
+  signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
   intro,
 }: ReaderShellProps) {
   const book = useMemo(
@@ -146,6 +147,11 @@ export default function ReaderShell({
   const [leftOpen, setLeftOpen] = useState(false);   // history
   const [midOpen, setMidOpen] = useState(false);     // chat
   const [rightOpen, setRightOpen] = useState(true);  // the piece
+  // The big "peek" sway plays only until the reader has opened the ask pane
+  // once — after that they know it's there, so re-closing it doesn't sway again
+  // (founder 2026-07-20). The gentle ongoing sway continues regardless.
+  const [chatSeen, setChatSeen] = useState(false);
+  useEffect(() => { if (midOpen) setChatSeen(true); }, [midOpen]);
   const [tab, setTab] = useState<'piece' | 'ask'>('piece'); // mobile
   const [expanded, setExpanded] = useState(false);   // full-screen the piece
 
@@ -205,6 +211,26 @@ export default function ReaderShell({
     setMidOpen(true);
     if (typeof window !== 'undefined' && window.innerWidth <= 900) setTab('ask');
   };
+  // Rename sets a title the reader owns; an empty name falls back to the
+  // derived first-line. Delete drops the chat, minting a fresh empty one if it
+  // was the last so the pane is never bare.
+  const renameChat = (id: string, title: string) =>
+    setConvos((cs) => cs.map((c) => (c.id === id ? { ...c, title } : c)));
+  const deleteChat = (id: string) =>
+    setConvos((cs) => {
+      const next = cs.filter((c) => c.id !== id);
+      return next.length ? next : [{ id: String(idRef.current++), messages: [] }];
+    });
+  // Keep the active id valid after a delete (the render already falls back to
+  // convos[0], this just realigns the highlight).
+  useEffect(() => {
+    if (!convos.some((c) => c.id === activeId)) setActiveId(convos[0]?.id ?? '1');
+  }, [convos, activeId]);
+
+  // The composer's ghost text rotates through example questions about the piece
+  // in view; it pauses the moment the reader starts typing.
+  const askExamples = useMemo(() => pieceExamples(who, askQuestions), [who, askQuestions]);
+  const rotatingPlaceholder = useRotatingPlaceholder(askExamples, !question.trim());
 
   const ask = async () => {
     const text = question.trim();
@@ -261,7 +287,7 @@ export default function ReaderShell({
           ))}
         </div>
 
-        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-tab={tab} data-expanded={expanded ? 'true' : 'false'}
+        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-tab={tab} data-expanded={expanded ? 'true' : 'false'} data-chat-seen={chatSeen ? 'true' : 'false'}
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
@@ -274,17 +300,16 @@ export default function ReaderShell({
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '0.2rem 0.6rem 1rem' }}>
               {convos.map((c) => (
-                <button key={c.id} type="button" onClick={() => openChat(c.id)}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer', borderRadius: '8px',
-                    background: c.id === activeId ? 'var(--bg-secondary)' : 'transparent', color: c.id === activeId ? 'var(--text-primary)' : 'var(--text-muted)',
-                    fontFamily: 'inherit', fontSize: '0.9rem', lineHeight: 1.4, padding: '0.5rem 0.6rem', margin: '0 0 0.15rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                  className="hover:opacity-80">{convoTitle(c)}</button>
+                <ChatHistoryItem key={c.id} convo={c} active={c.id === activeId}
+                  onOpen={openChat} onRename={renameChat} onDelete={deleteChat} />
               ))}
             </div>
           </aside>
 
-          {/* chat — slot 2 */}
-          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open chat" title="chat">{LinesIcon}</button>
+          {/* chat — slot 2. Labeled + gently pulsed so it's obvious on desktop
+              that this is where you ask the mind about the piece (founder
+              2026-07-20 — mobile has the read/ask tabs, desktop needs the cue). */}
+          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open chat — ask about this piece" title="ask">{LinesIcon}</button>
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 1rem 0.4rem' }}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
@@ -311,12 +336,12 @@ export default function ReaderShell({
               {asking && <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem' }}>thinking…</p>}
             </div>
             <div style={{ flex: 'none', padding: '0.9rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
-              <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder={askPlaceholder} />
+              <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder={rotatingPlaceholder || askPlaceholder} />
             </div>
           </section>
 
           {/* the piece — slot 3 */}
-          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="piece">{PaneRightIcon}</button>
+          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
             <div className="piece-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.7rem 1rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
               <span style={{ ...label, marginRight: 'auto' }}>{name}</span>
@@ -397,7 +422,7 @@ export default function ReaderShell({
 
       <style>{`
         .reader-book { max-width: 680px; margin: 0 auto; }
-        .reader-prose { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.75; max-width: 42rem; margin: 0 auto; }
+        .reader-prose { color: var(--text-secondary); font-size: 1.05rem; line-height: 1.75; max-width: 42rem; margin: 0 auto; text-wrap: pretty; }
         .reader-prose h1, .reader-prose h2, .reader-prose h3 { color: var(--text-primary); font-weight: 500; line-height: 1.25; margin: 2.2rem 0 0.8rem; }
         .reader-prose h1 { font-size: 1.9rem; } .reader-prose h2 { font-size: 1.4rem; } .reader-prose h3 { font-size: 1.15rem; }
         .reader-prose p { margin: 0 0 1.1rem; } .reader-prose a { color: var(--accent); }
@@ -410,6 +435,23 @@ export default function ReaderShell({
           border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
         .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
+        /* The ask pane announces itself with motion, not a label: on load it
+           sways out and settles — an uneven, wind-like drift, not a rigid
+           left-right — then the icon keeps a slow, gentle sway going, like
+           cotton in a light breeze (founder 2026-07-20). */
+        @keyframes strip-peek {
+          0% { transform: translateX(0); } 18% { transform: translateX(8px); }
+          36% { transform: translateX(3px); } 58% { transform: translateX(9px); }
+          80% { transform: translateX(2px); } 100% { transform: translateX(0); }
+        }
+        @keyframes strip-sway {
+          0% { transform: translateX(0); } 28% { transform: translateX(2.5px); }
+          52% { transform: translateX(0.5px); } 76% { transform: translateX(3px); }
+          100% { transform: translateX(0); }
+        }
+        main:not([data-chat-seen="true"]) .reader-strip.strip-chat { animation: strip-peek 2.6s ease-in-out 0.8s 1 both; }
+        .reader-strip.strip-chat svg { animation: strip-sway 9s ease-in-out 4s infinite; }
+        @media (prefers-reduced-motion: reduce) { .reader-strip.strip-chat, .reader-strip.strip-chat svg { animation: none; } }
 
         @media (min-width: 901px) {
           .reader-tabs { display: none !important; }
