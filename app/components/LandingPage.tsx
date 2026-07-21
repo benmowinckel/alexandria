@@ -290,36 +290,35 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       }, 160),
     };
   };
-  // The founder's own text (2026-07-16) — his why/what/how, set verbatim
-  // (mechanical cleanup only: typos, punctuation; no word choices touched).
-  // Lead = each section's opening line as he wrote it; body = his remaining
-  // paragraphs, rendered as paragraphs.
+  // The founder's own text (2026-07-20) — his why/what/how, polished with him
+  // line by line and confirmed. Lead = each section's opening line; body = his
+  // remaining paragraphs, rendered as paragraphs.
   const SECTIONS = [
     {
       title: 'why',
-      lead: 'Cultures must choose to value humans, but humans must choose to value themselves.',
+      lead: 'Cultures must choose to value humans, but humans must first choose to value themselves.',
       body: [
-        'Human chess is more popular than ever — even though ai plays better — because humans value humans; but only if they can still play.',
-        'Let ai think for you, and your mind — like any muscle you don’t use — begins to fade. Technology is a multiplier — it will take you down the path you point it down: continue to let it think for you, and you’ll end up like the humans in Wall-E; align it to think with you, and you can master anything.',
+        'Machines are infinitely better at chess than we are, and yet human chess is more popular than it has ever been — because we still love to watch humans play. But only the ones who can still play the game.',
+        'Let ai do your thinking for you, and your mind — like any muscle you stop using — slowly begins to fade. Left without direction, it drifts where it wants to go, not where you want to go. Technology is a multiplier: it will carry you further down whatever path you point it. Keep letting it think for you, and one day you wake up as one of the humans in Wall-E. But choose instead to align it to think with you, right from the start, and there is no limit to how far the two of you can go.',
         'Alexandrians are defined by this choice alone.',
       ],
     },
     {
       title: 'what',
-      lead: 'We help humans build systems to keep thinking and not lose our minds.',
+      lead: 'We help people build systems to keep thinking — so that we never lose our minds.',
       body: [
-        'Alexandrians choose growth over emptiness — aligning their ai to act as a thought partner. But personal alignment requires personal context: your ai needs to know where you are now to help you get where you want to go.',
-        'ai can’t read your mind, but it can read words. Think out loud, and it builds a full mirror of what and how you think.',
-        'The founder has made his entire system free to download — anybody can start, if they make the choice for themselves.',
+        'An Alexandrian chooses growth over emptiness: they align their ai to be a partner in their thinking, never a replacement for it. But that kind of alignment asks for something personal — your ai has to understand where you are today before it can help you reach where you want to be tomorrow.',
+        'It can’t read your mind, but it can read your words. So think out loud, and slowly it builds a full mirror of what you think and how you think it — a system that holds onto where you’re going, understands where you are, and pours its endless intelligence into helping you grow, right alongside it.',
+        'The founder has made his entire system free to download, so that anyone can begin — but the choice to begin has to be your own. We’re here to explain the why, to gather the ones who choose it, and to build the tools for anyone who wants to try.',
       ],
     },
     {
       title: 'how',
-      lead: 'Connect an Alexandria folder to your ai so it knows your thinking and how to use it.',
+      lead: 'Connect your Alexandria folder to any ai, and it comes to know how you think and what to do with it.',
       body: [
-        'A private folder on your own computer holds what and how you think. Dump everything you have into it, and your ai ties it into one unified map of your mind — then works with you to fill the gaps, sharpen it, and get what only you know out into the world.',
-        'Privacy is simple: the folder is just files on your computer. There’s no server, no account, and nothing is ever sent to anyone. It works with any ai, and it’s completely free.',
-        'The community is where alexandrians share their systems and what they’ve made with them. It’s free when you bring friends.',
+        'It’s a private folder that lives on your own computer, holding what you think and how you think it. Pour everything you have into it, and your ai draws it all into a single, living map of your mind. That map is a mirror — one it can look into to see exactly where you are, and keep looking, so that as you move and change, it stays in tune with you. That constant tuning is the thread between you and it: the connection that lets the two of you ride forward together — refining the map, growing it, and turning it, slowly, toward making you the best version of yourself.',
+        'Privacy is simple, because there’s almost nothing to it: the tool is just a folder of files on your computer, yours to ignore, edit, or delete however you like. No server, no account, nothing ever leaving your machine. We’ve made it open and free to download, so the moment it’s yours, it’s completely detached from us — yours and yours alone. Think of it like a free sample of food: we can’t take it back, we ask for nothing in return, we just hope you’ll taste it, and maybe come tell us how you liked it.',
+        'And for those who come to love what they’ve built, and want to find the other Alexandrians out there, we’ve built a community — a place to share the systems you’ve made, to learn from one another, and to publish everything those systems have helped you create.',
       ],
     },
   ];
