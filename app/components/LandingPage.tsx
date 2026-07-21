@@ -316,9 +316,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     },
     {
       title: 'how',
-      lead: 'Connect your Alexandria folder to any ai, and it comes to know how you think and what to do with it.',
+      lead: 'The Alexandria folder teaches any ai to map how you think — and to think with you, not for you.',
       body: [
-        'It’s a private folder on your own computer, holding what you think and how you think it. Pour everything you have into it, and your ai draws it into a single, living map of your mind — a mirror it can look into to see where you are, and keep looking, so that as you change, it stays in tune with you. That tuning is the thread between you and it: the connection that lets the two of you ride forward together, turning the map, slowly, toward making you the best version of yourself.',
+        'It’s a private folder on your own computer, holding what you think and how you think it. Pour everything you have into it, and your ai draws it into a single, living map of your mind — a mirror it can look into to see where you are, and keep looking, so that as you change, it stays in tune with you. That mirror is the thread between you and it: the connection that keeps the two of you pulling in the same direction — refining the map, growing it, and turning it, slowly, toward making you the best version of yourself.',
         'Privacy is simple, because there’s almost nothing to it: just files on your own computer, yours to ignore, edit, or delete. No server, no account, nothing ever leaving your machine. It’s free to download, so the moment it’s yours, it’s detached from us — yours and yours alone. Think of it like a free sample: we can’t take it back, we ask for nothing in return, we just hope you’ll taste it, and maybe tell us how you liked it.',
         'And for those who come to love what they’ve built, we’ve made a community — a place to share your systems, learn from one another, and publish everything they’ve helped you create.',
       ],
