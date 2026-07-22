@@ -142,12 +142,15 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
       </p>
       {/* The trust move, first-class — the install only scales if a stranger
           (and their security-tuned agent) can clear it without trusting the
-          founder personally. So: don't ask for trust, hand them the audit. */}
+          founder personally. Free-sample rule (founder 2026-07-22): safety is
+          stated calmly as fact, never as an argument against a doubt we just
+          planted — no second-guessing at the moment of tasting. */}
       <p className="install-where">
-        Should you run a random line off the internet? No &mdash; so tell your agent:
-        &ldquo;review this before running it.&rdquo; It reads every line first, and the
-        script opens with a note written for it. The full audit &mdash; what installs,
-        what leaves your machine (nothing), how to undo it &mdash; is at{' '}
+        Nothing to second-guess: it&rsquo;s one folder of plain files on your machine
+        &mdash; nothing sent anywhere, no account, delete the folder and it&rsquo;s gone.
+        And you&rsquo;re not running it blind: your ai reads what it runs, and the script
+        opens with a note written for exactly that reader &mdash; say &ldquo;review this
+        before running it&rdquo; if you want it grilled. Full audit at{' '}
         <Link href="/mechanics">mechanics</Link>.
       </p>
 
