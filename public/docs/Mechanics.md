@@ -5,7 +5,7 @@ You are about to run a curl command that puts files on your machine, modifies yo
 ## TL;DR for the auditor
 
 - **What runs:** plain bash and markdown. No binaries, no daemons, no launchd/cron jobs, no shell-rc edits, no root.
-- **What the install does NOT do:** no push to any remote, no repo creation, no key upload, nothing scheduled. Backup (to your **own** GitHub), the iMessage bridge, and marketplace publishing are opt-in add-ons — each needs a separate explicit yes after install (`~/alexandria/system/.optional` documents every one: what it touches, what leaves the machine, its off switch).
+- **What the install does NOT do:** no push to any remote, no repo creation, no key upload, nothing scheduled. Backups (to your **own** GitHub/iCloud), the iMessage bridge, and marketplace publishing are opt-in add-ons — each needs a separate explicit yes after install (`~/alexandria/system/.optional` documents every one: what it touches, what leaves the machine, its off switch).
 - **Source of truth:** `github.com/benmowinckel/alexandria` (public). Auditable line by line.
 - **Trust model:** every session, the shim refuses to run any payload whose SHA-256 doesn't match an entry in a manifest signed by the maintainer's offline ed25519 key. Compromise of the GitHub account alone does not yield code execution. Full mechanism in [`TRUST.md`](https://github.com/benmowinckel/alexandria/blob/main/TRUST.md).
 - **What our server holds:** your email, GitHub user ID, hashed API key, a 60-day event log of which endpoints you hit, and any files you explicitly publish to the Library. Nothing else.
@@ -89,7 +89,7 @@ The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your o
 | `~/.codex/instructions.md` | Only if Codex detected. Appends a marked block (`<!-- alexandria:start -->` … `<!-- alexandria:end -->`). | `cat ~/.codex/instructions.md` |
 | `~/.factory/droids/a.md` | Only if Factory droid CLI detected. Plain markdown skill. | `cat ~/.factory/droids/a.md` |
 
-**Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system `PATH`, sudoers, system services, launchd, cron, anything outside `~/alexandria/`, `~/.claude/`, `~/.cursor/`, `~/.codex/`, `~/.factory/`. The repo-local git config inside `~/alexandria/` is set; your global git config is not. The install schedules nothing and creates no background processes — scheduled jobs exist only inside opt-in add-ons (`io.alexandria.publish` for marketplace publishing, the texting bridge's digest job), each installed only on your explicit yes and each with a one-line off switch listed in `~/alexandria/system/.optional`.
+**Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system `PATH`, sudoers, system services, launchd, cron, anything outside `~/alexandria/`, `~/.claude/`, `~/.cursor/`, `~/.codex/`, `~/.factory/`. The repo-local git config inside `~/alexandria/` is set; your global git config is not. The install schedules nothing and creates no background processes — scheduled jobs exist only inside opt-in add-ons (`io.alexandria.publish` for marketplace publishing, `io.alexandria.icloud-backup` for the iCloud mirror, the texting bridge's digest job), each installed only on your explicit yes and each with a one-line off switch listed in `~/alexandria/system/.optional`.
 
 ### How each surface is wired
 

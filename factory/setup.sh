@@ -1112,10 +1112,10 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
   # pointer, no pitch; the agent reads .optional and each add-on is one
   # explicit yes. Authors with their own version of any of these keep theirs.
   echo ""
-  echo "Add-ons (all optional, none installed yet): backup to your own GitHub, texting"
-  echo "it from your phone, marketplace publishing. Ask your agent about any of them —"
-  echo "each is one yes, explained in ~/alexandria/system/.optional, and if you already"
-  echo "have your own version of one, keep yours."
+  echo "Add-ons (all optional, none installed yet): backup to your own GitHub, iCloud"
+  echo "mirror, texting it from your phone, marketplace publishing. Ask your agent"
+  echo "about any of them — each is one yes, explained in ~/alexandria/system/.optional,"
+  echo "and if you already have your own version of one, keep yours."
   # Cowork / the Claude app / plain chat can't run hooks or the /a skill on
   # their own — but one paste makes them Alexandria-aware.
   echo ""
