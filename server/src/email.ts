@@ -185,8 +185,9 @@ export async function sendWelcomeEmail(email: string, githubLogin: string, email
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
   const body = connectCmd
     ? `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">welcome to alexandria &mdash; you&rsquo;re in.</p>
-  <p style="margin: 0 0 0.7rem;">one thing to finish: paste this into your coding agent (claude code, cursor, codex, factory) and hit enter.</p>
+  <p style="margin: 0 0 0.7rem;">one thing to finish: paste this into your coding agent (claude code, cursor, codex, factory &mdash; or any ai agent with a terminal) and hit enter.</p>
   ${emailCmd(connectCmd)}
+  <p style="margin: 0 0 0.7rem; color: #8a8078;">unsure about running it? right instinct &mdash; tell your agent to review it before running it. the full audit is at <a href="https://alexandria-library.com/mechanics" style="color: #8a8078;">alexandria-library.com/mechanics</a>.</p>
   <p style="margin: 0 0 1.6rem;">then open a new tab, type ${emailKbd('/a')}, and leave it running &mdash; whenever you&rsquo;ve got a minute.</p>
   <p style="margin: 0 0 0.5rem; color: #8a8078;">your invite link &mdash; send it to a few people now. three who join keeps your membership free while they stay:</p>
   ${emailLinkLine(kinLink, kinLinkDisplay)}`
@@ -272,7 +273,7 @@ export async function sendInstallNudge(
   // yours" mechanics link were cut (founder 2026-07-18) — they distract from
   // the single action; the referral ask comes later, once they're in.
   const html = emailShell(`<p style="margin: 0 0 1.2rem; color: #8a8078;">ready when you are.</p>
-  <p style="margin: 0 0 1.2rem;">one thing left: open your install page and run the one line in your coding agent (claude code, cursor, codex, factory). everything stays on your machine.</p>
+  <p style="margin: 0 0 1.2rem;">one thing left: open your install page and run the one line in your coding agent (claude code, cursor, codex, factory &mdash; or any ai agent with a terminal). everything stays on your machine.</p>
   ${emailCta('open your install page', installUrl)}
   <p style="margin: 0 0 1.8rem; color: #8a8078; font-size: 0.95rem;">on your phone? <a href="${SHORTCUT_URL}" style="color: #8a8078;">add the shortcut</a> and start saving things now &mdash; they&rsquo;re waiting the next time you type ${emailKbd('/a')}.</p>`, unsubscribeUrl);
   return await sendEmail(email, 'alexandria. — finish setup.', html, { unsubscribeUrl });
@@ -299,8 +300,9 @@ export async function sendOnboardCommand(
   ref?: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${unsubscribeToken}`;
-  const html = emailShell(`<p style="margin: 0 0 1.2rem;">here it is. when you&rsquo;re at your computer, paste this into your coding agent (claude code, cursor, codex, factory):</p>
+  const html = emailShell(`<p style="margin: 0 0 1.2rem;">here it is. when you&rsquo;re at your computer, paste this into your coding agent (claude code, cursor, codex, factory &mdash; or any ai agent with a terminal):</p>
   ${emailCmd(onboardCmd(installToken, ref))}
+  <p style="margin: 0 0 0.7rem; color: #8a8078;">unsure about running it? right instinct &mdash; tell your agent to review it before running it. the full audit is at <a href="https://alexandria-library.com/mechanics" style="color: #8a8078;">alexandria-library.com/mechanics</a>.</p>
   <p style="margin: 0 0 1.6rem; color: #8a8078;">it picks up everything you&rsquo;ve been saving. then open a new tab and type ${emailKbd('/a')}.</p>
   <p style="margin: 0 0 1.8rem;">on your phone until then? <a href="${SHORTCUT_URL}" style="color: #3d3630;">add the shortcut</a> &mdash; save anything, anywhere.</p>`, unsubscribeUrl);
   return await sendEmail(email, 'alexandria. — your install command', html, { unsubscribeUrl });

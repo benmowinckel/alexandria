@@ -46,6 +46,7 @@ SIGNED_FILES=(
   factory/scripts/capture_resolver.py
   factory/systems/capture-pipeline.md
   factory/systems/texting-presence.md
+  factory/optional.md
   factory/scripts/imsg_daemon.py
   factory/scripts/imsg_run.sh
   factory/scripts/imsg_send.sh

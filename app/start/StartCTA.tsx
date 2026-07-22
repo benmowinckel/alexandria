@@ -134,10 +134,21 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
       </button>
 
       <p className="step-line step-two">
-        <span className="step-num">2 &mdash;</span> Paste it into your coding agent
+        <span className="step-num">2 &mdash;</span> Paste it into your coding agent&rsquo;s chat
       </p>
       <p className="step-agents">
-        Claude Code &middot; Cursor &middot; Codex &middot; Factory &mdash; it walks you through the rest.
+        Claude Code &middot; Cursor &middot; Codex &middot; Factory &mdash; or any ai agent
+        with a terminal. It runs the line and walks you through the rest.
+      </p>
+      {/* The trust move, first-class — the install only scales if a stranger
+          (and their security-tuned agent) can clear it without trusting the
+          founder personally. So: don't ask for trust, hand them the audit. */}
+      <p className="install-where">
+        Should you run a random line off the internet? No &mdash; so tell your agent:
+        &ldquo;review this before running it.&rdquo; It reads every line first, and the
+        script opens with a note written for it. The full audit &mdash; what installs,
+        what leaves your machine (nothing), how to undo it &mdash; is at{' '}
+        <Link href="/mechanics">mechanics</Link>.
       </p>
 
       {validRef && (
@@ -220,8 +231,8 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
           <p className="start-qa-a">Switch to the code tab just for this one line &mdash; it walks you through the rest.</p>
         </div>
         <div className="start-qa">
-          <p className="start-qa-q">hesitant to run it?</p>
-          <p className="start-qa-a">Paste it in and ask your ai to check it first.</p>
+          <p className="start-qa-q">what actually installs?</p>
+          <p className="start-qa-a">One folder of plain markdown you own, plus session hooks. No account needed, nothing sent to us, no background jobs &mdash; add-ons like backup (to your own GitHub) are separate explicit yeses later.</p>
         </div>
       </div>
     </section>

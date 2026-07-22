@@ -4,7 +4,8 @@ You are about to run a curl command that puts files on your machine, modifies yo
 
 ## TL;DR for the auditor
 
-- **What runs:** plain bash and markdown. No binaries, no daemons, no shell-rc edits, no root.
+- **What runs:** plain bash and markdown. No binaries, no daemons, no launchd/cron jobs, no shell-rc edits, no root.
+- **What the install does NOT do:** no push to any remote, no repo creation, no key upload, nothing scheduled. Backups (to your **own** GitHub/iCloud), the iMessage bridge, and marketplace publishing are opt-in add-ons — each needs a separate explicit yes after install (`~/alexandria/system/.optional` documents every one: what it touches, what leaves the machine, its off switch).
 - **Source of truth:** `github.com/benmowinckel/alexandria` (public). Auditable line by line.
 - **Trust model:** every session, the shim refuses to run any payload whose SHA-256 doesn't match an entry in a manifest signed by the maintainer's offline ed25519 key. Compromise of the GitHub account alone does not yield code execution. Full mechanism in [`TRUST.md`](https://github.com/benmowinckel/alexandria/blob/main/TRUST.md).
 - **What our server holds:** your email, GitHub user ID, hashed API key, a 60-day event log of which endpoints you hit, and any files you explicitly publish to the Library. Nothing else.
@@ -54,25 +55,26 @@ The setup is one bash script. The hooks payload is one bash script. The shim is 
 | `system/canon/` | The canon modules, cached locally. **Foundation:** `foundation.md` (the incompressible core — the minimal closed-loop system). **Founder module** (Author #1's default, forkable): `axioms.md`, `methodology.md`, `editor.md`, `mercury.md`, `publisher.md`, `library.md`, `filter.md`, `bookshelf.md`, `plm.md`, `twin.md`. Plus `MODULES.md` (the tier map). **Sovereign and never auto-written** — seeded once at install; after that nothing is auto-applied. Each session checks upstream, **verifies it against the signed manifest**, and surfaces any update as a notice; you pull it (verified) or ignore it. |
 | `system/.api_key` | Your API key, mode 0600. |
 | `system/.block` | One-time onboarding instructions cached locally. |
+| `system/.optional` | The add-ons menu — what each opt-in add-on does, touches, and how to turn it off. |
 | `system/.*` (other) | Ephemeral state — session ID markers, sync logs, the error log, autoloop dedup, account-status cache, last-maintenance timestamps. All readable. None leave the machine. |
 
 **`~/.claude/skills/alexandria/SKILL.md`** — the `/a` skill. Plain markdown. `cat` it.
 
 **`~/.claude/scheduled-tasks/alexandria/SKILL.md`** — optional scheduled task. Plain markdown. `cat` it.
 
-**`~/alexandria-fork/`** — only if you have `gh` authenticated. A sparse-checkout of your own GitHub fork of the public `alexandria` repo, used for publishing skills or canon contributions you write.
+**`~/alexandria-fork/`** — **not created at install.** Part of the opt-in `publish` add-on (marketplace contribution): a sparse-checkout of your own GitHub fork of the public `alexandria` repo, created only when you enable that add-on.
 
 ### The Git substrate and commit signing
 
 `~/alexandria/` is initialised as a local Git repository. Your worldline IS a commit history — every Constitution edit, marginalia drain, and vault drop you preserve becomes a commit. The repo is yours; you can push to any Git remote (GitHub is the default if you have `gh` authenticated; any host works).
 
-**How signing works.** `setup.sh` detects an existing SSH public key under `~/.ssh/*.pub` (first one found, any type — Ed25519, RSA, ECDSA). If found and you have `gh` authenticated, it (a) registers that key with GitHub as a *signing* key via `gh ssh-key add --type signing` (idempotent — re-runs and multi-machine setups quietly do the right thing), (b) configures git inside `~/alexandria/` to sign with that key, repo-local — your global git config and other repos are untouched, (c) writes the key + your email to `~/.config/git/allowed_signers` so `git verify-commit` and `git log --show-signature` work locally, and (d) signs the genesis commit. Every subsequent commit is signed automatically. GitHub will display "Verified" badges on your signed commits.
+**How signing works.** `setup.sh` detects an existing SSH public key under `~/.ssh/*.pub` (first one found, any type — Ed25519, RSA, ECDSA). If found, it (a) configures git inside `~/alexandria/` to sign with that key, repo-local — your global git config and other repos are untouched, (b) writes the key + your email to `~/.config/git/allowed_signers` so `git verify-commit` and `git log --show-signature` work locally, and (c) signs the genesis commit. Every subsequent commit is signed automatically. **All of this is local and offline — nothing is uploaded at install.** Registering the key with GitHub (for the "Verified" badge) happens only when you enable the `backup` add-on, which is also the only step that creates the private `alexandria-private` repo on your own account and pushes to it.
 
 The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your own commits) is **not** the same file as `~/alexandria/system/allowed_signers` (used by the shim to verify the maintainer's payload signature). Same file format, different purposes.
 
-**Soft fallback.** If you have no SSH key or `gh` isn't authenticated, setup prints `signing: skipped (...)` with the reason and the genesis commit goes through unsigned. The worldline still works — you just don't get the verified-ledger property. Run `ssh-keygen -t ed25519` or `gh auth login` and re-run setup to enable signing later.
+**Soft fallback.** If you have no SSH key, setup prints `signing: skipped (...)` with the reason and the genesis commit goes through unsigned. The worldline still works — you just don't get the verified-ledger property. Run `ssh-keygen -t ed25519` and re-run setup to enable signing later.
 
-**OAuth scope.** Alexandria's GitHub OAuth requests `admin:ssh_signing_key` at signup so `setup.sh` can register the key without a separate scope-refresh step. Existing pre-scope users see a one-time re-authorize prompt at next web login.
+**OAuth scope.** Alexandria's GitHub OAuth requests `admin:ssh_signing_key` at signup so the `backup` add-on can register your signing key without a separate scope-refresh step when you enable it. Existing pre-scope users see a one-time re-authorize prompt at next web login.
 
 **What you can verify yourself.** `git -C ~/alexandria log --show-signature` shows the signature on each commit. `git -C ~/alexandria verify-commit HEAD` returns "Good signature" if signing is configured. On GitHub, the commit history page shows the green "Verified" badge on each commit. The signing key never leaves your machine; only the public key is uploaded to GitHub.
 
@@ -86,10 +88,8 @@ The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your o
 | `~/.cursor/rules/alexandria.mdc` | Only if Cursor detected. Plain markdown rule. | `cat ~/.cursor/rules/alexandria.mdc` |
 | `~/.codex/instructions.md` | Only if Codex detected. Appends a marked block (`<!-- alexandria:start -->` … `<!-- alexandria:end -->`). | `cat ~/.codex/instructions.md` |
 | `~/.factory/droids/a.md` | Only if Factory droid CLI detected. Plain markdown skill. | `cat ~/.factory/droids/a.md` |
-| `~/Library/LaunchAgents/io.alexandria.publish.plist` | macOS only, only if `gh` authenticated. Hourly publish job for your fork. | `cat ~/Library/LaunchAgents/io.alexandria.publish.plist` |
-| User crontab | Linux only, only if `gh` authenticated. One hourly line. | `crontab -l` |
 
-**Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system `PATH`, sudoers, system services, anything outside `~/alexandria/`, `~/.claude/`, `~/.cursor/`, `~/.codex/`, `~/.factory/`, and the launchd/cron entries above. The repo-local git config inside `~/alexandria/` is set; your global git config is not.
+**Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system `PATH`, sudoers, system services, launchd, cron, anything outside `~/alexandria/`, `~/.claude/`, `~/.cursor/`, `~/.codex/`, `~/.factory/`. The repo-local git config inside `~/alexandria/` is set; your global git config is not. The install schedules nothing and creates no background processes — scheduled jobs exist only inside opt-in add-ons (`io.alexandria.publish` for marketplace publishing, `io.alexandria.icloud-backup` for the iCloud mirror, the texting bridge's digest job), each installed only on your explicit yes and each with a one-line off switch listed in `~/alexandria/system/.optional`.
 
 ### How each surface is wired
 
@@ -182,8 +182,8 @@ Every outbound call the install or hooks make. Complete list.
 | `DELETE api.alexandria-library.com/file/<name>` | Session start, for any server file you no longer have locally | API key | 200/4xx |
 | `GET api.alexandria-library.com/library/<slug>/shadow/{authors,free}` | Once per day, only if you created `files/network.md` | API key (for authors-tier), the slug from your network file | shadow content |
 | `POST api.alexandria-library.com/feedback` | Install (one install status report, attributed to your account, no file content) + session end (only if YOU typed into `~/alexandria/system/.session_feedback`) | API key, the text being submitted | 200/4xx |
-| `git push` / `git pull --rebase` against your own `alexandria-private` GitHub repo | Session start (pull then push) + session end (push) | the tracked contents of `~/alexandria/` — gitignored paths excluded: `system/canon/`, `system/hooks/`, `system/.*`, `files/library/`, `node_modules/` | git ref data |
-| `gh` CLI: `gh ssh-key add`, `gh repo create alexandria-private`, `gh repo fork benmowinckel/alexandria` | Install, only if `gh` is authenticated | your separate `gh` OAuth token (not your Alexandria API key) | success/failure |
+| `git push` / `git pull --rebase` against your own `alexandria-private` GitHub repo | Session start (pull then push) + session end (push) — **only if the `backup` add-on is enabled** (i.e. a git remote exists; the install itself creates none) | the tracked contents of `~/alexandria/` — gitignored paths excluded: `system/canon/`, `system/hooks/`, `system/.*`, `files/library/`, `node_modules/` | git ref data |
+| `gh` CLI: `gh ssh-key add`, `gh repo create alexandria-private`, `gh repo fork benmowinckel/alexandria` | **Never at install.** Only when you enable the `backup` or `publish` add-on, on your explicit yes | your separate `gh` OAuth token (not your Alexandria API key) | success/failure |
 
 That is all. No telemetry pings, no error reporters, no third-party CDNs, no analytics SDKs, no DNS callbacks beyond what's listed. You can confirm by `grep -E 'curl|wget|http' ~/alexandria/system/.hooks_payload`.
 
@@ -290,10 +290,18 @@ rm -rf ~/.claude/skills/alexandria ~/.claude/scheduled-tasks/alexandria
 rm -f  ~/.cursor/rules/alexandria.mdc ~/.cursor/hooks/alexandria-*.py
 rm -f  ~/.factory/droids/a.md
 # ~/.cursor/hooks.json: edit by hand to remove the three alexandria entries
-launchctl unload ~/Library/LaunchAgents/io.alexandria.publish.plist 2>/dev/null
-rm -f  ~/Library/LaunchAgents/io.alexandria.publish.plist
-# Linux: `crontab -e` and remove the publish-fork.sh line
 sed -i '' '/alexandria:start/,/alexandria:end/d' ~/.codex/instructions.md 2>/dev/null
+
+# Add-on jobs — only present if you enabled the matching add-on
+launchctl unload ~/Library/LaunchAgents/io.alexandria.publish.plist 2>/dev/null
+launchctl unload ~/Library/LaunchAgents/io.alexandria.icloud-backup.plist 2>/dev/null
+launchctl bootout gui/$(id -u)/com.alexandria.imsg-daemon 2>/dev/null
+launchctl unload ~/Library/LaunchAgents/com.alexandria.capture-digest.plist 2>/dev/null
+rm -f  ~/Library/LaunchAgents/io.alexandria.publish.plist \
+       ~/Library/LaunchAgents/io.alexandria.icloud-backup.plist \
+       ~/Library/LaunchAgents/com.alexandria.capture-digest.plist
+# Linux publish add-on: `crontab -e` and remove the publish-fork.sh line
+# Texting add-on: remove the imsg_run.sh block from ~/.zshrc (added only at enable)
 
 # Revoke server-side (removes account record, events, feedback, published files,
 # and any Stripe subscription)
