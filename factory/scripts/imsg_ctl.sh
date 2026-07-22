@@ -16,8 +16,46 @@ case "${1:-status}" in
   enable)
     # First-time setup. Idempotent — safe to re-run. macOS forbids scripting the FDA/Automation
     # grants (user consent only), so those are opened-to + instructed, never auto-clicked.
+    #
+    # 0. Self-fetch — setup.sh deliberately seeds NONE of the texting machinery
+    # (opt-in add-on, 2026-07-22): fetch any missing piece here, at enable time,
+    # through verify-fetch.sh so every file is checked against the offline-signed
+    # manifest before it lands. Seed-if-missing — the Author's own edits survive.
+    VF="$BASE/scripts/verify-fetch.sh"
+    if [ ! -f "$VF" ]; then
+      echo "✗ verify-fetch.sh missing ($VF) — re-run the install line first: curl -fsSL alexandria-library.com/a | bash"
+      exit 1
+    fi
+    for _p in scripts/imsg_run.sh scripts/imsg_send.sh scripts/imsg_handle.sh scripts/agent_reply.sh \
+              scripts/imsg_daemon.py scripts/capture_digest.py \
+              tools/show.sh tools/remind.sh tools/note.sh tools/music.sh tools/scene.sh tools/README.md; do
+      _dest="$BASE/$_p"
+      [ -f "$_dest" ] && continue
+      mkdir -p "$(dirname "$_dest")"
+      if bash "$VF" "$_p" > "$_dest" 2>/dev/null && [ -s "$_dest" ]; then
+        case "$_dest" in *.sh|*.py) chmod +x "$_dest" 2>/dev/null;; esac
+      else
+        rm -f "$_dest"
+        echo "✗ Could not fetch+verify $_p — check network, then re-run: imsg_ctl.sh enable"
+        exit 1
+      fi
+    done
+    # digest fragment pool (empty-state texts) — seed-if-missing, dotfile dest
+    if [ ! -f "$BASE/.digest_fragments.md" ]; then
+      bash "$VF" scripts/digest_fragments.md > "$BASE/.digest_fragments.md" 2>/dev/null || rm -f "$BASE/.digest_fragments.md"
+    fi
     CFG="$BASE/.imsg_config"
-    if [ ! -f "$CFG" ] || ! grep -q '^IMSG_NUMBER=..*' "$CFG" 2>/dev/null; then
+    if [ ! -f "$CFG" ]; then
+      # Config template — no handles ship (never PII); the Author fills their own.
+      cat > "$CFG" <<'IMSGCFG_END'
+# Alexandria texting presence — self-handles (single source of truth; sourced by every imsg_* script).
+# Set IMSG_NUMBER to your OWN iMessage number (the self-thread the presence reads). IMSG_EMAIL is an
+# optional second self-handle (grey rendering). Then run:  bash ~/alexandria/system/scripts/imsg_ctl.sh enable
+IMSG_NUMBER=
+IMSG_EMAIL=
+IMSGCFG_END
+    fi
+    if ! grep -q '^IMSG_NUMBER=..*' "$CFG" 2>/dev/null; then
       echo "✗ Set your self-handle first: put  IMSG_NUMBER=+1XXXXXXXXXX  (your iMessage number) in $CFG, then re-run."
       exit 1
     fi
