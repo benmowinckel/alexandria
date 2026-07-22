@@ -168,7 +168,15 @@ check "shim.sh executable"         [ -x "$HOME/alexandria/system/hooks/shim.sh" 
 check "shim.sh non-empty"          [ -s "$HOME/alexandria/system/hooks/shim.sh" ]
 check "SKILL.md exists"            [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ]
 check "SKILL.md has Alexandria"    grep -q "Alexandria" "$HOME/.claude/skills/alexandria/SKILL.md"
-check "scheduled task exists"      [ -f "$HOME/.claude/scheduled-tasks/alexandria/SKILL.md" ]
+# Inverted 2026-07-22: the scheduled-task bootstrap (retired cloud autoloop)
+# must NOT install — the core installs nothing scheduled.
+check "no scheduled task installed" bash -c '[ ! -f "$HOME/.claude/scheduled-tasks/alexandria/SKILL.md" ]'
+# 2026-07-22 reviewer-gate properties — regression-locked:
+# core installs pinned+verified payload, ships the add-ons menu, seeds no add-on machinery.
+check "payload pinned + verified"  [ -f "$HOME/alexandria/system/.payload_verified_sha" ]
+check "add-ons menu cached"        [ -f "$HOME/alexandria/system/.optional" ]
+check "no imsg machinery seeded"   bash -c '[ ! -f "$HOME/alexandria/system/scripts/imsg_ctl.sh" ]'
+check "no publish fork created"    bash -c '[ ! -d "$HOME/alexandria-fork" ]'
 check "canon cached"               [ -f "$HOME/alexandria/system/canon/methodology.md" ]
 
 # settings.json integrity
