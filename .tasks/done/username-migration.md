@@ -68,3 +68,10 @@ Website (Vercel) auto-deploys from pushed `main`.
 
 ## Rollback
 Every step is a git revert + redeploy. The GitHub rename itself reverses by renaming back (only if `mowinckelb` hasn't been re-claimed — another reason to squat it).
+
+## Post-migration gap found 2026-07-23 (marketplace ghost dupes)
+The migration missed the **call layer**, so the marketplace showed every module twice (`mowinckelb` + `benmowinckel`) and `optimise` doubled + broken. Two causes, both now fixed:
+- **Local `~/alexandria/.call_manifest` still held old-handle IDs** — the founder's own machine kept POSTing `github:mowinckelb/...` (and `alexandria-systems#optimise`, the pre-rename repo name → 404) on every `/call`, regenerating ghost catalog rows. The migration checklist patched repos/Worker/site but not this local file.
+- **Existing `protocol_calls` rows are immutable history** — the marketplace catalog is `SELECT DISTINCT module_id`, so it has NO notion of identity across a handle/repo rename. Old rows persist as permanent dupes until rewritten. Fixed by `UPDATE protocol_calls SET module_id = replace(...)` on remote D1 (`mowinckelb`→`benmowinckel`, `alexandria-systems#optimise`→`alexandria-modules#optimise`); dupes collapse via DISTINCT, counts preserved. All 2227 affected rows were account `233047998` (founder) — no other users touched.
+
+**Add to any future rename checklist:** (1) rewrite `~/alexandria/.call_manifest` IDs, (2) rewrite `protocol_calls.module_id` on remote D1, (3) confirm the *canonical current repo name* resolves on `raw.githubusercontent.com` (repo renames don't always redirect on raw — `alexandria-systems` 404s, `alexandria-modules` 200s). General gap worth a product fix if a non-founder ever renames: the catalog can't self-heal a renamed author.
