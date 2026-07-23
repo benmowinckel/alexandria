@@ -819,10 +819,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 lost forever.
               </p>
               <p className="dict-line">
-                <em>II. n.</em> its rebuilding; a library of
-                human minds, written by their authors so ai
-                thinks with them, not for them; this time, it
-                cannot burn.
+                <em>II. n.</em> refounded two thousand years
+                later; a library not of human knowledge but of
+                human minds, written by their authors; this
+                time, it cannot burn.
               </p>
             </div>
           </div>
