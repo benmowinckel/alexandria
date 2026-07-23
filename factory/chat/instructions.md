@@ -1,6 +1,14 @@
 # instructions — standing-instruction vehicles (chat tier)
 
-*Reference card for the three ways a chat comes to know the protocol, strength-ordered. All exist on every plan including Free (verified 2026-07-23). The bootstrap seeds memory automatically and recommends the Project; the Skill is optional extra.*
+*Reference card for the ways a chat comes to know the protocol, strength-ordered. All exist on every plan including Free (verified 2026-07-23). The bootstrap seeds memory automatically and recommends the account instruction + Project; the Skill is optional extra.*
+
+## 0. Account instructions (strongest — account-wide, every surface)
+
+Settings → Personalization → "Instructions for Claude" (~1,500 chars, all plans). Two lines:
+
+> I keep my alexandria — my thinking practice — in the "alexandria" folder of my Google Drive. When I say "a", find the doc "_start" there via the Drive connector, read it, and run the session it describes.
+
+This is the same mechanism that carries the Cowork attach-nudge in Bucket 1 (a3 § delivery models): ambient, account-wide, reaches chat AND Cowork, no per-Project setup. The one vehicle that makes bare "a" work in any fresh chat.
 
 ## 1. Project (guaranteed injection, per-Project)
 
