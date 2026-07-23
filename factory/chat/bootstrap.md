@@ -18,7 +18,7 @@ Set up alexandria — a thinking practice that lives in my own Google Drive — 
 
 5. Save to memory: when I say "a", find "_start" in my Drive alexandria folder, read it, and run the session it describes.
 
-6. Tell me to set three things: (a) Settings → Connectors → Google Drive → Tool permissions: read tools (search, read, download, metadata) on "Always allow", file creation left on "Needs approval" — reads frictionless, writes visible; (b) Settings → Personalization → Instructions: add the two lines from "account instructions" at the very bottom, so "a" works in any chat; (c) optionally, a Project named "alexandria" with the "project instructions" lines below, as a dedicated home.
+6. Tell me to set three things: (a) Settings → Connectors → Google Drive → Tool permissions: read tools (search, read, download, metadata) on "Always allow", file creation left on "Needs approval" — reads frictionless, writes visible; (b) the account instructions field (Settings → General → Instructions): add the two lines from "account instructions" at the very bottom, so "a" works in any chat; (c) optionally, a Project named "alexandria" with the "project instructions" lines below, as a dedicated home.
 
 7. Then start my first session: interview me — short questions, one at a time, no lists — about what I've been thinking about lately and what I hold to be true that most people around me don't. After a handful of answers, draft my first constitution doc ("Core") in my own words, show me, and create it in constitution/ once I confirm. Then close the session the way _start describes.
 

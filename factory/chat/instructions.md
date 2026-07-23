@@ -4,7 +4,7 @@
 
 ## 0. Account instructions (strongest — account-wide, every surface)
 
-Settings → Personalization → "Instructions for Claude" (~1,500 chars, all plans). Two lines:
+the account instructions field (claude.ai: Settings → General → Instructions; location varies by app version) (~1,500 chars, all plans). Two lines:
 
 > I keep my alexandria — my thinking practice — in the "alexandria" folder of my Google Drive. When I say "a", find the doc "_start" there via the Drive connector, read it, and run the session it describes.
 
