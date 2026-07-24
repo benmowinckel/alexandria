@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-// Door 2's single primary action: copy the bootstrap, paste it into claude.
-// Mirrors /start's install-block idiom — one block, one click, copied state.
 export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -12,26 +10,22 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
       await navigator.clipboard.writeText(bootstrap);
       setCopied(true);
       setTimeout(() => setCopied(false), 2400);
-    } catch {
-      /* clipboard denied — the textarea fallback below stays selectable */
-    }
+    } catch {}
   }
 
   return (
     <div className="cta-section">
       <p className="step-line">
-        <span className="step-num">1.</span> in claude, turn on the Google
-        Drive connector <span className="chat-where">(Settings → Connectors)</span>
+        <span className="step-num">1.</span> in claude, turn on Google Drive{' '}
+        <span className="chat-where">(Settings → Connectors)</span>
       </p>
       <p className="step-line">
-        <span className="step-num">2.</span> copy the bootstrap and paste it
-        into a new chat — it does the rest, including writing the first draft
-        of you
+        <span className="step-num">2.</span> copy this, paste it into a new chat
       </p>
 
       <button className="install-block chat-block" onClick={copy} aria-label="copy the bootstrap">
         <span className="chat-block-label">
-          {copied ? 'copied — now paste it into claude' : 'the bootstrap — click to copy'}
+          {copied ? 'copied — now paste it into claude' : 'click to copy'}
         </span>
         <span className="install-copy" aria-hidden="true">
           {copied ? (
@@ -42,11 +36,7 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
         </span>
       </button>
 
-      <p className="step-line step-two">
-        <span className="step-num">3.</span> after that, two settings once —
-        then the whole thing is one letter: type <em>a</em> in any chat, on any
-        device
-      </p>
+      <p className="chat-rest">claude does the rest.</p>
     </div>
   );
 }

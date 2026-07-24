@@ -1,41 +1,24 @@
-# onboarding page — copy draft (the two doors)
+# onboarding page — /chat (final copy, live in app/chat/page.tsx on this branch)
 
-*DRAFT — founder-taste surface; his pass required before any deploy. THE ONBOARDING ARCHITECTURE (founder, 2026-07-24): exactly two onboardings, split by one question — can you run a terminal command? Door 1 = the curl (full engine, existing /start flow). Door 2 = the chat bootstrap below. There is no third door; Cowork is a surface, not a door (terminal people attach their local folder there; everyone else's Cowork reads their Drive folder via the connector, no attach). At fire time this merges into the site's start flow as the one question + two paths; the copy below is door 2's page. Voice: lowercase, plain, no hype.*
-
----
-
-## the one question (top of the start flow)
-
-do you work in a terminal?
-
-- **yes** → the full engine: one command, runs on your own files, everything automatic. [the existing /start flow]
-- **no** → alexandria in chat: no install, your Drive, five minutes. [below]
+*The page IS app/chat/page.tsx — this file mirrors its copy for reference. Radically simple by founder direction (2026-07-24: "way too much text… idiot proof"): hook, one line, two actions, two lines of fine print. Claude does everything after the paste — the model is the wizard. The two-door rule stands: /start opens with "do you work in a terminal?"; no → here.*
 
 ---
 
-## alexandria in chat
+**the tool — in chat**
 
-claude already knows you. now you own it.
+## claude already knows you. now you own it.
 
-add this and three things happen. **one — it externalises your personalisation:** everything your ai has learned about you across every conversation gets drained, at full fidelity, into ordinary Google Docs in your own Drive. yours to open, edit, or walk away with — nothing touches our servers; there is no "our servers" in this at all. **two — it gets 10x better:** flat memory becomes a living constitution — structured, corrected by you, deepened in real sessions, saving what matters from every conversation as you go (one tap per save). **three — it unlocks what flat memory can't do:** share any article, video, or half-thought from your phone straight into your folder (the Drive share sheet is the shortcut), and your next session turns it into learning matched to how you actually think — not generic summaries, fragments that land because it knows what you already hold.
+your thinking, in files you own, in your own Google Drive — built from every conversation you've already had.
 
-phone included. free plan included. no install. and not just claude — paste the same two lines into chatgpt, gemini, anything with an instructions field: one folder, every ai. your mind stops being locked in any one vendor.
+1. in claude, turn on Google Drive (Settings → Connectors)
+2. copy this, paste it into a new chat
 
-**three steps**
+[the bootstrap — click to copy]
 
-1. in claude, enable the Google Drive connector (Settings → Connectors).
-2. copy the bootstrap below, paste it into a new chat, follow along (~5 minutes).
-3. from then on: say "a".
+*claude does the rest.*
 
-[bootstrap block — copy-to-clipboard]
+nothing touches our servers — your files live in your Drive, yours to open, edit, or walk away with.
 
-**the honest print**
+work in a terminal? the full engine is one command: start here.
 
-- the Drive connector's permission is read-across-your-Drive (Google's scope, not ours). the method confines itself to the alexandria folder, and tells claude to never carry your files into any other tool.
-- claude can create and read docs in your Drive but not edit them in place — so every revision of your constitution is a new version, full history kept. you can edit anything by hand in the Docs app; your hands outrank the machine's.
-- built for claude. other ais with a Drive connector can read your folder too — but writing new docs works on claude today, so that's where the practice lives.
-- nothing runs between sessions. the full engine — automatic capture, overnight processing, the library of other authors — runs where an agent can reach your files directly: [get the full install].
-
----
-
-*Fire checklist when this goes live: founder copy pass → wire /chat route → regenerate bootstrap block from start.md → deploy → run the real-chat smoke test from the checklist in private/chat.md §9.*
+*keep thinking.*
