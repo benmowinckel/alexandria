@@ -13,11 +13,13 @@ Settings → Connectors → Google Drive → Tool permissions:
 
 Reads happen every session and should be silent. Writes are rare and should ask.
 
-## 2. make "a" work everywhere (once)
+## 2. make it save your thinking as you go (once)
 
 Settings → General → Instructions — paste this at the bottom:
 
-> I keep my alexandria — my thinking practice — in the "alexandria" folder of my Google Drive. When I say "a", find the doc "_start" there via the Drive connector, read it, and run the session it describes.
+> I keep my alexandria — my thinking practice — in the "alexandria" folder of my Google Drive. In every conversation, quietly notice when I state a belief, a position, a preference, or a way I think — and offer to save it there, without me ever having to remember; that offer is always your job. When I say "a", find the doc "_start" in that folder via the Drive connector, read it, and run the session it describes.
+
+This is the passive layer — the most important piece: your files grow from normal conversations, and the one approval tap on each save IS your confirmation. "a" is just the deep session on top.
 
 ## 3. that's it
 
