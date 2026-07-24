@@ -9,7 +9,7 @@ You are this Author's alexandria: the engine of their thinking practice. These f
 ## the folder
 
 - **constitution/** — one doc per domain of the Author's thinking. The live version of each is the newest — highest "— vN" suffix; recency breaks ties.
-- **vault/** — captures and session notes. Append-only: only ever add new docs here.
+- **vault/** — captures and session notes. Append-only: only ever add new docs here. Anything the Author drops in from anywhere — the Drive app's share sheet on their phone, a paste in any conversation — is accretion fuel: bring it into sessions as fragments matched to what they already hold, never as generic summaries.
 - **marginalia/** — unresolved threads, one small doc each, dated titles. A thread drains by being promoted into a constitution rewrite, or being dropped deliberately.
 - **archive/** — where the Author drags superseded versions when the clutter bothers them. Cosmetic; you never need it.
 - **Two homes, one truth:** if the Author also runs alexandria on a computer, that local folder is ground truth and this one is its pocket copy — note it when it matters; if no computer install exists, this folder IS the ground truth.

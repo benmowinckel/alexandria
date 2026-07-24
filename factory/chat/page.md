@@ -6,9 +6,11 @@
 
 ## alexandria in chat
 
-your files. your Drive. no install.
+claude already knows you. now you own it.
 
-the same practice, for people who live in the chat app — phone included, free plan included. your constitution lives as ordinary Google Docs in your own Drive folder. claude reads them through the Google Drive connector anthropic built, develops them with you, and writes new versions you can open, edit, or walk away with anytime. nothing touches our servers — there is no "our servers" in this at all.
+add this and three things happen. **one — it externalises your personalisation:** everything your ai has learned about you across every conversation gets drained, at full fidelity, into ordinary Google Docs in your own Drive. yours to open, edit, or walk away with — nothing touches our servers; there is no "our servers" in this at all. **two — it gets 10x better:** flat memory becomes a living constitution — structured, corrected by you, deepened in real sessions, saving what matters from every conversation as you go (one tap per save). **three — it unlocks what flat memory can't do:** share any article, video, or half-thought from your phone straight into your folder (the Drive share sheet is the shortcut), and your next session turns it into learning matched to how you actually think — not generic summaries, fragments that land because it knows what you already hold.
+
+phone included. free plan included. no install.
 
 **three steps**
 
