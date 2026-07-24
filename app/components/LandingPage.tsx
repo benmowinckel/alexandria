@@ -324,6 +324,64 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       ],
     },
   ];
+  // ── Front-slide feature rotation (founder, 2026-07-24: "the front
+  // slide be ad rotation / feature rotation things elegantly"). Each
+  // frame is ONE feature told hook-register (the 07-17 hero-is-the-hook
+  // lock governs the frames, not just the slide): a lead + one quiet
+  // sub-line, no carousel furniture. The rotation plays ONCE through
+  // the features and rests on the brand frame (the locked question →
+  // alexandrian), so the page settles into the cathedral instead of
+  // looping like a metronome. Copy is canon verbatim where it exists:
+  // "a file for how you think" (a4 four-beat ladder), "plugs into /
+  // replaces nothing" (dominant-strategy frame), the saved-pile ad
+  // concept (a4 2026-07-22), the stranger + switching lines (a4 THE
+  // THREE TESTS, 2026-07-23).
+  const FRONT_FRAMES: Array<
+    { kind: 'feature'; lead: string; sub: string } | { kind: 'brand' }
+  > = [
+    {
+      kind: 'feature',
+      lead: 'A file for how you think.',
+      sub: 'Every ai you use reads it — and stops treating you like a stranger.',
+    },
+    {
+      kind: 'feature',
+      lead: 'Already have a system? Keep it.',
+      sub: 'Alexandria plugs into what you already use. It replaces nothing.',
+    },
+    {
+      kind: 'feature',
+      lead: 'Saved 400 posts you’ll never read?',
+      sub: 'Your ai reads them all — and threads what matters into your file.',
+    },
+    {
+      kind: 'feature',
+      lead: 'Your ai knows you. Do you own that?',
+      sub: 'With Alexandria it’s a file you own — switch ai tomorrow, lose nothing.',
+    },
+    { kind: 'brand' },
+  ];
+  const [frameIdx, setFrameIdx] = useState(0);
+  const [frameHold, setFrameHold] = useState(false);
+  useEffect(() => {
+    // Reduced motion: no auto-rotation — rest on the brand frame (the
+    // pre-rotation hero). Read the media query directly: showBreeze is
+    // false for one mount tick even for motion users, so keying off it
+    // would kill the rotation for everyone.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setFrameIdx(FRONT_FRAMES.length - 1);
+      return;
+    }
+    if (frameHold || frameIdx >= FRONT_FRAMES.length - 1) return;
+    // First frame lingers a beat longer — arrival absorption.
+    const t = setTimeout(
+      () => setFrameIdx((i) => Math.min(i + 1, FRONT_FRAMES.length - 1)),
+      frameIdx === 0 ? 7200 : 6400,
+    );
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frameIdx, frameHold]);
+
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
   // Default (no param) keeps the existing CSS-built window. Read on
   // mount so the data-attribute picks up the correct CSS branch.
@@ -745,26 +803,43 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         {/* The why — the frame/hook, on the front slide (2026-07-13,
             founder): the cold visitor meets the argument on arrival, before
             the peel. what / how + the decision live on the back slide. */}
-        <div className="front-epigraph">
-          {/* The frontispiece plate — the block reads as the opening of a
-              letter, not floating lines: a small salutation over a hairline
-              anchors the composition (background layer: "what kind of thing
-              is this"); the beats below carry the argument (foreground). */}
-          {/* The front as two mini-sections (founder, 2026-07-16): a plate
-              pair — the question / our answer — so the two halves visibly
-              fit together; the answer is the name over its three functions,
-              each under a faint mini header. All copy his, verbatim. */}
-          {/* Zero apparatus (2026-07-17, zero-inertia derivation): the
-              text performs its own structure — the question mark announces
-              the question, the founding line announces a list of three,
-              and three parallel verb-lines ARE the list. Plates, rules,
-              and labels all explained what the words already say, so they
-              are gone; hierarchy is size and air alone. */}
-          <p className="front-lead">When ai can do everything humans can, what do we do?</p>
-          <p className="front-answer">
-            <span className="front-answer-lead">our answer is becoming an</span>
-            <span className="front-answer-nameline"><span className="front-answer-name">alexandrian</span><span className="front-answer-dot">.</span></span>
-          </p>
+        <div
+          className="front-epigraph"
+          onMouseEnter={() => setFrameHold(true)}
+          onMouseLeave={() => setFrameHold(false)}
+          onClick={() => setFrameIdx((i) => (i + 1) % FRONT_FRAMES.length)}
+        >
+          {/* Feature rotation (2026-07-24) — the frames grid-stack in one
+              cell (constant height, zero layout shift; the optical centre
+              never moves) and cross-fade opacity-only: no blur (founder's
+              blur threshold is zero), no translate, no dots/arrows — the
+              apparatus rule. Hover pauses; click quietly advances (and can
+              cycle again after the rotation rests). Each frame keeps the
+              zero-apparatus hierarchy: size and air alone. */}
+          {FRONT_FRAMES.map((f, i) => (
+            <div
+              key={i}
+              className={`front-frame${i === frameIdx ? ' is-live' : ''}`}
+              aria-hidden={i !== frameIdx}
+            >
+              {f.kind === 'brand' ? (
+                <>
+                  {/* The brand frame — the locked 07-17 hero, verbatim; the
+                      rotation's resting state. */}
+                  <p className="front-lead">When ai can do everything humans can, what do we do?</p>
+                  <p className="front-answer">
+                    <span className="front-answer-lead">our answer is becoming an</span>
+                    <span className="front-answer-nameline"><span className="front-answer-name">alexandrian</span><span className="front-answer-dot">.</span></span>
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="front-lead">{f.lead}</p>
+                  <p className="front-frame-sub">{f.sub}</p>
+                </>
+              )}
+            </div>
+          ))}
         </div>
         <div className="top-inner" />
         </div>
@@ -2873,6 +2948,37 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           width: 372px;
           text-align: left;
           z-index: 3;
+          /* Rotation stack — every frame in the same grid cell, so the
+             block's height (and the translateY(-50%) optical centre) is
+             constant across frames: zero layout shift. */
+          display: grid;
+        }
+        .front-frame {
+          grid-area: 1 / 1;
+          align-self: center;
+          opacity: 0;
+          /* Opacity-only cross-fade — S-tier, crisp letterforms (no blur,
+             no movement). Slow enough to read as breath, not slideshow. */
+          transition: opacity 1150ms cubic-bezier(0.22, 1, 0.36, 1);
+          pointer-events: none;
+        }
+        .front-frame.is-live {
+          opacity: 1;
+        }
+        /* Feature-frame sub-line — the quiet second voice under the hook,
+           same Garamond italic family as the answer lead-in but sized to
+           carry a full sentence. Proper-grammar prose (lowercase is for
+           marks, not sentences). */
+        .front-frame-sub {
+          margin: 20px 0 0;
+          font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-weight: 500;
+          font-size: 17px;
+          line-height: 1.5;
+          letter-spacing: 0.01em;
+          color: rgba(46, 30, 38, 0.52);
+          text-wrap: pretty;
         }
         /* Orientation robustness — the wall scales by cover while the stage
            scales by min(), so as the viewport squares up (below ~10:7) the
@@ -3585,6 +3691,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           }
           .front-answer-lead { font-size: 13.5px; }
           .front-answer-nameline { font-size: 26px; }
+          .front-frame-sub {
+            font-size: 14.5px;
+            margin-top: 14px;
+          }
 
           /* Mobile spacing — the two-slide peel format is gone here;
              everything flows naturally. Give every block more
