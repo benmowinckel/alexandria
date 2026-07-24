@@ -1,0 +1,230 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import Link from 'next/link';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { pageMetadata } from '../lib/config';
+import ChatCTA from './ChatCTA';
+
+export const metadata = pageMetadata({
+  path: '/chat',
+  title: 'alexandria in chat.',
+  description:
+    'claude already knows you. now you own it — your thinking in ordinary Google Docs in your own Drive, developed in chat, on any device, free plan included. no install.',
+});
+
+// Door 2 of the two-door onboarding (can you run a terminal command? no → here).
+// The bootstrap block is read at build time from factory/chat/bootstrap.md —
+// one source, zero hand-sync (the start.md↔bootstrap drift lesson, 2026-07-23).
+function readBootstrap(): string {
+  const raw = fs.readFileSync(
+    path.join(process.cwd(), 'factory', 'chat', 'bootstrap.md'),
+    'utf8',
+  );
+  const m = raw.match(/---PROMPT START---\n([\s\S]*?)\n---PROMPT END---/);
+  return m ? m[1].trim() : '';
+}
+
+export default function ChatPage() {
+  const bootstrap = readBootstrap();
+
+  return (
+    <div className="primer-page">
+      <ThemeToggle />
+
+      <header className="primer-header">
+        <Link href="/" className="primer-brand">
+          alexandria<span className="primer-brand-dot">.</span>
+        </Link>
+      </header>
+
+      <main className="primer-main">
+        <p className="primer-eyebrow">the tool — in chat</p>
+        <h1 className="primer-h1">claude already knows you. now you own it.</h1>
+
+        <p className="start-grab">
+          add this and three things happen. it <strong>externalises</strong>{' '}
+          everything your ai has learned about you — at full fidelity, into
+          ordinary Google Docs in your own Drive. it gets{' '}
+          <strong>10x better</strong> — flat memory becomes a living
+          constitution, saving what matters from every conversation as you go.
+          and it <strong>unlocks</strong>{' '}what memory can&apos;t do — share
+          anything from your phone into your folder, and learn it through your
+          own map.
+        </p>
+
+        <ChatCTA bootstrap={bootstrap} />
+
+        <div className="start-details">
+          <div className="start-qa">
+            <p className="start-qa-q">do you work in a terminal?</p>
+            <p className="start-qa-a">
+              then skip this page — the full engine is one command:{' '}
+              <Link href="/start" className="start-shortcut-a">start here</Link>.
+              this page is the same practice for everyone else.
+            </p>
+          </div>
+          <div className="start-qa">
+            <p className="start-qa-q">whose servers?</p>
+            <p className="start-qa-a">
+              nobody&apos;s. your files live in your Drive; claude reads them
+              through the connector anthropic built. there is no
+              &ldquo;our servers&rdquo; in this at all — open the folder in
+              Google Docs anytime, edit anything by hand, walk away whole.
+            </p>
+          </div>
+          <div className="start-qa">
+            <p className="start-qa-q">what can&apos;t it do yet?</p>
+            <p className="start-qa-a">
+              claude can create and read your docs but not edit them in place —
+              every revision is a new version, full history kept. and nothing
+              runs between sessions: the automatic engine — capture, overnight
+              processing, the library of other authors — lives at the{' '}
+              <Link href="/start" className="start-shortcut-a">full install</Link>.
+            </p>
+          </div>
+          <div className="start-qa">
+            <p className="start-qa-q">only claude?</p>
+            <p className="start-qa-a">
+              paste the same two instruction lines into chatgpt, gemini —
+              anything that can read your Drive joins your practice (read-only
+              where they can&apos;t write yet). one folder, every ai. your mind
+              stops being locked in any one vendor.
+            </p>
+          </div>
+        </div>
+
+        <p className="primer-coda"><em>keep thinking.</em></p>
+      </main>
+
+      <style>{`
+        .primer-page {
+          background: var(--bg-primary);
+          color: var(--text-primary);
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          background-image:
+            radial-gradient(ellipse 120% 80% at 30% 20%, rgba(91, 31, 71, 0.025) 0%, transparent 60%),
+            radial-gradient(ellipse 100% 70% at 70% 80%, rgba(74, 50, 30, 0.020) 0%, transparent 60%);
+          animation: primerFadeIn 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        }
+        @keyframes primerFadeIn {
+          0% { opacity: 0; transform: translateY(6px); }
+          100% { opacity: 1; transform: translateY(0); }
+        }
+        .primer-header { padding: 28px 32px 0; }
+        .primer-brand {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-weight: 400; font-size: 21px;
+          color: var(--text-primary); text-decoration: none;
+          letter-spacing: 0.005em; transition: opacity 220ms ease;
+          display: inline-block; padding: 10px 8px; margin: -10px -8px;
+        }
+        .primer-brand:hover { opacity: 0.6; }
+        .primer-brand-dot { font-style: normal; }
+
+        .primer-main {
+          flex: 1;
+          display: flex; flex-direction: column;
+          align-items: flex-start; justify-content: center;
+          max-width: 540px; margin: 0 auto; padding: 3rem 32px 6rem; width: 100%;
+          text-align: left;
+        }
+        .primer-eyebrow {
+          margin: 0 0 18px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-weight: 500; font-size: 11px; letter-spacing: 0.3em;
+          text-transform: lowercase; font-variant-caps: all-small-caps;
+          font-feature-settings: "smcp" 1, "kern" 1;
+          color: var(--accent); line-height: 1;
+        }
+        .primer-h1 {
+          margin: 0 0 26px; font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+          font-style: italic; font-weight: 500;
+          font-size: clamp(27px, 1.5rem + 1.4vw, 34px); line-height: 1.2;
+          letter-spacing: -0.01em; color: var(--text-primary); text-wrap: balance;
+          font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "calt" 1, "swsh" 1;
+        }
+        .start-grab {
+          margin: -6px 0 30px; max-width: 480px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 16px; line-height: 1.6; color: var(--text-secondary);
+          text-wrap: pretty;
+        }
+        .start-grab strong { font-weight: 600; color: var(--text-primary); }
+
+        .cta-section { display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin: 12px 0 0; width: 100%; }
+        .step-line {
+          margin: 0 0 12px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 17px; letter-spacing: 0.01em;
+          color: var(--text-primary);
+        }
+        .step-two { margin: 28px 0 6px; }
+        .step-num { color: var(--text-muted, rgba(26, 19, 24, 0.45)); font-variant-numeric: lining-nums; }
+        .chat-where {
+          font-size: 14px; color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
+
+        .install-block {
+          display: flex; align-items: center; justify-content: space-between; gap: 16px;
+          width: 100%; max-width: 460px; background: var(--bg-secondary);
+          border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.14)); border-radius: 9px;
+          padding: 16px 18px; cursor: pointer; font: inherit; text-align: left;
+          transition: border-color 200ms, transform 120ms;
+        }
+        .install-block:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
+        .install-block:active { transform: scale(0.992); }
+        .chat-block { margin: 6px 0 0; }
+        .chat-block-label {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 15px; letter-spacing: 0.02em;
+          color: var(--text-primary);
+        }
+        .install-copy {
+          display: inline-flex; align-items: center; flex-shrink: 0;
+          color: var(--text-muted, rgba(26, 19, 24, 0.5)); transition: color 200ms;
+        }
+        .install-block:hover .install-copy { color: var(--text-primary); }
+
+        .start-details {
+          margin: 36px 0 0; padding-top: 24px; width: 100%; max-width: 460px;
+          border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
+          display: flex; flex-direction: column; gap: 16px;
+        }
+        .start-qa { margin: 0; }
+        .start-qa-q {
+          margin: 0 0 5px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-weight: 500; font-size: 11px; letter-spacing: 0.12em;
+          text-transform: lowercase; font-variant-caps: all-small-caps;
+          font-feature-settings: "smcp" 1, "kern" 1;
+          color: var(--text-muted, rgba(26, 19, 24, 0.5)); line-height: 1;
+        }
+        .start-qa-a {
+          margin: 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 13.5px; line-height: 1.6; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.62));
+        }
+        .start-shortcut-a {
+          color: var(--text-primary);
+          text-decoration: underline; text-decoration-color: var(--text-muted, rgba(26, 19, 24, 0.4));
+          text-underline-offset: 3px; text-decoration-thickness: 1px;
+          transition: text-decoration-color 200ms;
+        }
+        .start-shortcut-a:hover { text-decoration-color: var(--text-primary); }
+
+        .primer-coda {
+          margin: 28px 0 0; text-align: left; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 20px; font-style: italic; color: var(--text-primary);
+          letter-spacing: 0.005em; opacity: 0.72;
+        }
+
+        @media (max-width: 640px) {
+          .primer-main { padding: 2rem 24px 4rem; }
+          .primer-h1 { font-size: 28px; line-height: 1.3; margin-bottom: 18px; }
+          .primer-coda { font-size: 18px; margin-top: 52px; }
+        }
+      `}</style>
+    </div>
+  );
+}
