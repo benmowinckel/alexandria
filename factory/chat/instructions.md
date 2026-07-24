@@ -25,6 +25,6 @@ This is the passive layer — the most important piece: your files grow from nor
 
 New chat, any device: type **a**.
 
-## 4. add it to everything
+## 4. one folder, any ai
 
-The folder is the brain; every ai is a reader. Paste the same block from step 2 into **every ai you use** — ChatGPT (Settings → Personalization → Custom instructions), Gemini (Settings → Saved info), and whatever ships next. Any ai that can reach your Drive joins your practice; ones that can read but not write will say so and work read-only. Your mind stops being locked in any one vendor — that is the point.
+The same block works in any ai that can read your Drive — claude is where it's fully supported today. Your files aren't locked to any vendor either way: they're ordinary Google Docs.
