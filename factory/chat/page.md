@@ -19,7 +19,7 @@ claude already knows you. now you own it.
 
 add this and three things happen. **one — it externalises your personalisation:** everything your ai has learned about you across every conversation gets drained, at full fidelity, into ordinary Google Docs in your own Drive. yours to open, edit, or walk away with — nothing touches our servers; there is no "our servers" in this at all. **two — it gets 10x better:** flat memory becomes a living constitution — structured, corrected by you, deepened in real sessions, saving what matters from every conversation as you go (one tap per save). **three — it unlocks what flat memory can't do:** share any article, video, or half-thought from your phone straight into your folder (the Drive share sheet is the shortcut), and your next session turns it into learning matched to how you actually think — not generic summaries, fragments that land because it knows what you already hold.
 
-phone included. free plan included. no install.
+phone included. free plan included. no install. and not just claude — paste the same two lines into chatgpt, gemini, anything with an instructions field: one folder, every ai. your mind stops being locked in any one vendor.
 
 **three steps**
 
