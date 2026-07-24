@@ -226,10 +226,6 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
           founder 2026-07-17). */}
       <div className="start-details">
         <div className="start-qa">
-          <p className="start-qa-q">on a plain chat app?</p>
-          <p className="start-qa-a">That works now &mdash; no install, your own Google Drive: <a className="start-shortcut-a" href="/chat">alexandria in chat</a>.</p>
-        </div>
-        <div className="start-qa">
           <p className="start-qa-q">using cowork?</p>
           <p className="start-qa-a">Then you already have the app &mdash; the command above is yours. After it runs, attach ~/alexandria in any cowork session and type /a.</p>
         </div>

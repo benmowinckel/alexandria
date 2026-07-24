@@ -5,9 +5,9 @@ import Link from 'next/link';
 import StartCTA from './StartCTA';
 
 // The one question that splits all customers (founder, 2026-07-24: two doors,
-// nothing else). The split is CAPABILITY, not habit (founder): many chat-lovers
-// have Claude Code; every Cowork user has the app — so cowork = yes-door. The
-// question is literal: can you paste a command, or no idea what that means. Stressed-user rule: show only the step in front of them —
+// nothing else). Final wording (founder, 4th iteration): POSSESSION, zero jargon —
+// the yes-button IS the app list; no "terminal" anywhere (pasting into cursor or
+// the claude code app isn't 'a terminal' to its user, and the install works there). Stressed-user rule: show only the step in front of them —
 // the question first, then only the chosen door's content. A kin invite
 // (?ref=) auto-opens the terminal door: invited people came to install.
 export default function StartDoor({ refCode }: { refCode?: string }) {
@@ -27,18 +27,17 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
 
   return (
     <div className="door-block">
-      <p className="door-q">can you paste a command into a terminal?</p>
+      <p className="door-q">do you use any of these?</p>
       <div className="door-answers">
         <button className="door-btn" onClick={() => setDoor('terminal')}>
-          yes — give me the command
+          claude code · cursor · codex · cowork
         </button>
         <Link href="/chat" className="door-btn door-btn-link">
-          no idea what that means — take me to chat
+          no — i just use the chat app
         </Link>
       </div>
       <p className="door-hint">
-        use claude code, cursor, codex, or cowork? that&rsquo;s a yes. yes is the
-        full product; no is the light version &mdash; upgrade anytime.
+        the first is the full product. chat is the light version &mdash; upgrade anytime.
       </p>
     </div>
   );
