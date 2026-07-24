@@ -340,6 +340,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   const FRONT_FRAMES: Array<
     { kind: 'feature'; lead: string; sub: string } | { kind: 'brand' }
   > = [
+    // The cycle is a staircase, not five separate ads: i asks the
+    // question (why), ii names the thing (what — plants "file"), iii
+    // shows the felt gain (proof — leans on "your file"), iv removes
+    // the cost (fit), v closes on ownership (freedom — pays "file"
+    // off). Each frame stands alone for the visitor who catches only
+    // one; in sequence they compound. Desire before objection-handling,
+    // close on sovereignty. Sub-line rhythm deliberately varied (dash /
+    // plain sentences / comma / full stops) — an identical cadence
+    // across frames is the machine tell.
     { kind: 'brand' },
     {
       kind: 'feature',
@@ -348,18 +357,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     },
     {
       kind: 'feature',
+      lead: 'Saved 400 posts you’ll never read?',
+      sub: 'Your ai finally reads them, and threads what matters into your file.',
+    },
+    {
+      kind: 'feature',
       lead: 'Already have a system? Keep it.',
       sub: 'Alexandria plugs into what you already use. It replaces nothing.',
     },
     {
       kind: 'feature',
-      lead: 'Saved 400 posts you’ll never read?',
-      sub: 'Your ai reads them all — and threads what matters into your file.',
-    },
-    {
-      kind: 'feature',
       lead: 'Your ai knows you. Do you own that?',
-      sub: 'With Alexandria it’s a file you own — switch ai tomorrow, lose nothing.',
+      sub: 'Make it a file you own. Switch ai tomorrow, lose nothing.',
     },
   ];
   const FRAME_NUMERALS = ['i', 'ii', 'iii', 'iv', 'v'];
@@ -831,12 +840,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         >
           {/* Feature rotation (2026-07-24) — the frames grid-stack in one
               cell (constant height, zero layout shift; the optical centre
-              never moves) and cross-fade opacity-only: no blur (founder's
-              blur threshold is zero), no translate. Hover holds the
-              current frame; ‹ › appear on hover (hidden on touch, where
-              swipe does the job); the numeral row is the it-rotates
-              indicator in the site's own roman-numeral hand — the house
-              mark, not carousel dots. */}
+              never moves). Sequenced dissolve: exit, an empty breath,
+              then enter (see .front-frame CSS). Hover holds the current
+              frame; swipe steps it on touch, ← → on keyboard; the
+              numeral row is both the it-rotates indicator and the
+              navigation — the site's own roman-numeral hand, not
+              carousel dots (arrows were tried and cut, 2026-07-24:
+              redundant beside clickable numerals). */}
           <div className="front-frames">
             {FRONT_FRAMES.map((f, i) => (
               <div
@@ -863,22 +873,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               </div>
             ))}
           </div>
-          <button
-            type="button"
-            className="front-nav front-nav-prev"
-            aria-label="Previous"
-            onClick={() => stepFrame(-1)}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            className="front-nav front-nav-next"
-            aria-label="Next"
-            onClick={() => stepFrame(1)}
-          >
-            ›
-          </button>
           <div className="front-numerals" aria-label="Slides">
             {FRONT_FRAMES.map((_, i) => (
               <button
@@ -3012,55 +3006,32 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           grid-area: 1 / 1;
           align-self: center;
           opacity: 0;
-          /* Opacity-only cross-fade — S-tier, crisp letterforms (no blur,
-             no movement). Long symmetric curve so the dissolve reads as
-             breath, not a slide change (founder 2026-07-24: "smoother"). */
-          transition: opacity 2000ms cubic-bezier(0.44, 0, 0.56, 1);
+          transform: translateY(7px);
+          /* Sequenced dissolve, not a cross-fade (founder 2026-07-24:
+             the overlap "just blurs and looks messy"). EXIT: the leaving
+             frame fades out in place — no movement on the way out; its
+             transform snaps back invisibly after the fade so it's staged
+             for re-entry. The wall then breathes empty for a beat. */
+          transition:
+            opacity 850ms cubic-bezier(0.65, 0, 0.35, 1),
+            transform 0ms linear 850ms;
           pointer-events: none;
         }
         .front-frame.is-live {
           opacity: 1;
+          transform: translateY(0);
+          /* ENTER: waits for the outgoing frame to clear (900ms), then
+             eases in with a whisper of rise. Never two texts on the wall
+             at once. */
+          transition:
+            opacity 1150ms cubic-bezier(0.22, 1, 0.36, 1) 900ms,
+            transform 1150ms cubic-bezier(0.22, 1, 0.36, 1) 900ms;
         }
-        /* ‹ › — the left/right hand, Garamond glyphs in the colophon's
-           faded ink, revealed only while the reader is engaged with the
-           block (hover). Hidden on touch — swipe does the job there. */
-        .front-nav {
-          position: absolute;
-          top: 42%;
-          transform: translateY(-50%);
-          appearance: none;
-          background: none;
-          border: none;
-          padding: 6px 10px;
-          font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
-          font-size: 30px;
-          line-height: 1;
-          color: rgba(46, 30, 38, 0.38);
-          opacity: 0;
-          transition: opacity 500ms ease, color 300ms ease;
-          cursor: pointer;
-          user-select: none;
-        }
-        .front-epigraph:hover .front-nav {
-          opacity: 1;
-        }
-        .front-nav:hover {
-          color: rgba(46, 30, 38, 0.62);
-        }
-        .front-nav:focus-visible {
-          opacity: 1;
-          outline: 1px solid rgba(46, 30, 38, 0.4);
-          outline-offset: 2px;
-        }
-        .front-nav-prev {
-          left: -46px;
-        }
-        .front-nav-next {
-          right: -46px;
-        }
-        @media (hover: none) {
-          .front-nav {
-            display: none;
+        @media (prefers-reduced-motion: reduce) {
+          .front-frame,
+          .front-frame.is-live {
+            transform: none;
+            transition: opacity 600ms ease;
           }
         }
         /* The it-rotates indicator — lowercase roman numerals in the
