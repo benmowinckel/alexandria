@@ -231,7 +231,7 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         </div>
         <div className="start-qa">
           <p className="start-qa-q">using cowork?</p>
-          <p className="start-qa-a">Switch to the code tab just for this one line &mdash; it walks you through the rest.</p>
+          <p className="start-qa-a">Cowork counts as chat &mdash; <a className="start-shortcut-a" href="/chat">same door</a>, nothing to install. (Already installed here? Just attach ~/alexandria.)</p>
         </div>
         <div className="start-qa">
           <p className="start-qa-q">what actually installs?</p>

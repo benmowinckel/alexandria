@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { pageMetadata } from '../lib/config';
-import StartCTA from './StartCTA';
+import StartDoor from './StartDoor';
 
 // Own metadata (2026-07-17 SEO sweep) — the highest-priority page after
 // the homepage was inheriting the root title and description.
@@ -56,20 +56,11 @@ export default async function StartPage({
         {/* No lede (2026-07-16, radical simplicity): the two steps are the
             page; the lede's privacy line lives in the fine print below. */}
         <h1 className="primer-h1">Becoming an Alexandrian</h1>
-        {/* The grab line (founder 2026-07-19): never send someone away from
-            their computer — 1 and 2 need a computer, 3 and 4 work on any
-            device, so a computer does all four. Phone-only does the last two. */}
-        <p className="start-grab">
-          At your computer, you can do all four. Only your phone right now?
-          Just do steps 3 and 4.
-        </p>
 
-        {/* ONE consolidated layout for every device (founder 2026-07-17 —
-            most visitors have both devices in reach, so ask for both
-            actions): the computer steps first, then the phone section
-            (shortcut + email reminder), then the fine-print Q&A. The old
-            input-method switch (separate MobileStart flow) is retired. */}
-        <StartCTA refCode={ref} />
+        {/* Two doors, one question (founder 2026-07-24: radical simplicity for
+            stressed/cowork/chat users) — only the chosen door's content shows.
+            The old consolidated layout lives untouched behind the yes-door. */}
+        <StartDoor refCode={ref} />
 
         <p className="primer-coda"><em>keep thinking.</em></p>
       </main>
@@ -323,6 +314,34 @@ export default async function StartPage({
           letter-spacing: 0.005em; opacity: 0.72;
         }
 
+        .door-block { margin: 4px 0 0; width: 100%; }
+        .door-q {
+          margin: 0 0 16px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 19px; letter-spacing: 0.01em; color: var(--text-primary);
+        }
+        .door-answers { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; }
+        .door-btn {
+          display: block; width: 100%; text-align: left;
+          background: var(--bg-secondary);
+          border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.14)); border-radius: 9px;
+          padding: 15px 18px; cursor: pointer;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 16px; letter-spacing: 0.01em; color: var(--text-primary);
+          text-decoration: none;
+          transition: border-color 200ms, transform 120ms;
+        }
+        .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
+        .door-btn:active { transform: scale(0.992); }
+        .door-hint {
+          margin: 14px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 13px; letter-spacing: 0.02em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
+        .door-switch {
+          margin: 26px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 13px; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
         .start-grab {
           margin: -6px 0 30px; max-width: 480px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
