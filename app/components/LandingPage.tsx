@@ -325,13 +325,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     },
   ];
   // ── Front-slide feature rotation (founder, 2026-07-24: "the front
-  // slide be ad rotation / feature rotation things elegantly"). Each
-  // frame is ONE feature told hook-register (the 07-17 hero-is-the-hook
-  // lock governs the frames, not just the slide): a lead + one quiet
-  // sub-line, no carousel furniture. The rotation plays ONCE through
-  // the features and rests on the brand frame (the locked question →
-  // alexandrian), so the page settles into the cathedral instead of
-  // looping like a metronome. Copy is canon verbatim where it exists:
+  // slide be ad rotation / feature rotation things elegantly"; second
+  // pass same day: fixed rotation starting on the original hero,
+  // smoother fades, hover holds the frame, subtle left/right controls,
+  // an elegant it-rotates indicator). Each frame is ONE feature told
+  // hook-register (the 07-17 hero-is-the-hook lock governs the frames):
+  // a lead + one quiet sub-line. The cycle opens on the brand frame
+  // (the locked question → alexandrian) and loops continuously; hover
+  // pauses it indefinitely. Copy is canon verbatim where it exists:
   // "a file for how you think" (a4 four-beat ladder), "plugs into /
   // replaces nothing" (dominant-strategy frame), the saved-pile ad
   // concept (a4 2026-07-22), the stranger + switching lines (a4 THE
@@ -339,6 +340,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   const FRONT_FRAMES: Array<
     { kind: 'feature'; lead: string; sub: string } | { kind: 'brand' }
   > = [
+    { kind: 'brand' },
     {
       kind: 'feature',
       lead: 'A file for how you think.',
@@ -359,28 +361,38 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       lead: 'Your ai knows you. Do you own that?',
       sub: 'With Alexandria it’s a file you own — switch ai tomorrow, lose nothing.',
     },
-    { kind: 'brand' },
   ];
+  const FRAME_NUMERALS = ['i', 'ii', 'iii', 'iv', 'v'];
   const [frameIdx, setFrameIdx] = useState(0);
   const [frameHold, setFrameHold] = useState(false);
+  const frameCount = FRONT_FRAMES.length;
+  const stepFrame = (d: number) =>
+    setFrameIdx((i) => (i + d + frameCount) % frameCount);
+  // Touch swipe — left/right through the frames on coarse pointers.
+  const frameTouchX = useRef<number | null>(null);
   useEffect(() => {
-    // Reduced motion: no auto-rotation — rest on the brand frame (the
-    // pre-rotation hero). Read the media query directly: showBreeze is
+    // Reduced motion: no auto-rotation — the page rests on the brand
+    // frame (index 0), which is exactly the pre-rotation hero. Manual
+    // controls still work. Read the media query directly: showBreeze is
     // false for one mount tick even for motion users, so keying off it
     // would kill the rotation for everyone.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setFrameIdx(FRONT_FRAMES.length - 1);
-      return;
-    }
-    if (frameHold || frameIdx >= FRONT_FRAMES.length - 1) return;
-    // First frame lingers a beat longer — arrival absorption.
-    const t = setTimeout(
-      () => setFrameIdx((i) => Math.min(i + 1, FRONT_FRAMES.length - 1)),
-      frameIdx === 0 ? 7200 : 6400,
-    );
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (frameHold) return;
+    const t = setTimeout(() => setFrameIdx((i) => (i + 1) % frameCount), 7500);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameIdx, frameHold]);
+  // Keyboard ← → steps the rotation (vertical arrows keep scrolling the
+  // page; horizontal are unclaimed on this layout).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') stepFrame(1);
+      else if (e.key === 'ArrowLeft') stepFrame(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // A/B variant for the slide-1 centerpiece. URL: ?v=arch | ?v=frame
   // Default (no param) keeps the existing CSS-built window. Read on
@@ -807,39 +819,80 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           className="front-epigraph"
           onMouseEnter={() => setFrameHold(true)}
           onMouseLeave={() => setFrameHold(false)}
-          onClick={() => setFrameIdx((i) => (i + 1) % FRONT_FRAMES.length)}
+          onTouchStart={(e) => {
+            frameTouchX.current = e.touches[0].clientX;
+          }}
+          onTouchEnd={(e) => {
+            if (frameTouchX.current == null) return;
+            const dx = e.changedTouches[0].clientX - frameTouchX.current;
+            frameTouchX.current = null;
+            if (Math.abs(dx) > 44) stepFrame(dx < 0 ? 1 : -1);
+          }}
         >
           {/* Feature rotation (2026-07-24) — the frames grid-stack in one
               cell (constant height, zero layout shift; the optical centre
               never moves) and cross-fade opacity-only: no blur (founder's
-              blur threshold is zero), no translate, no dots/arrows — the
-              apparatus rule. Hover pauses; click quietly advances (and can
-              cycle again after the rotation rests). Each frame keeps the
-              zero-apparatus hierarchy: size and air alone. */}
-          {FRONT_FRAMES.map((f, i) => (
-            <div
-              key={i}
-              className={`front-frame${i === frameIdx ? ' is-live' : ''}`}
-              aria-hidden={i !== frameIdx}
-            >
-              {f.kind === 'brand' ? (
-                <>
-                  {/* The brand frame — the locked 07-17 hero, verbatim; the
-                      rotation's resting state. */}
-                  <p className="front-lead">When ai can do everything humans can, what do we do?</p>
-                  <p className="front-answer">
-                    <span className="front-answer-lead">our answer is becoming an</span>
-                    <span className="front-answer-nameline"><span className="front-answer-name">alexandrian</span><span className="front-answer-dot">.</span></span>
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="front-lead">{f.lead}</p>
-                  <p className="front-frame-sub">{f.sub}</p>
-                </>
-              )}
-            </div>
-          ))}
+              blur threshold is zero), no translate. Hover holds the
+              current frame; ‹ › appear on hover (hidden on touch, where
+              swipe does the job); the numeral row is the it-rotates
+              indicator in the site's own roman-numeral hand — the house
+              mark, not carousel dots. */}
+          <div className="front-frames">
+            {FRONT_FRAMES.map((f, i) => (
+              <div
+                key={i}
+                className={`front-frame${i === frameIdx ? ' is-live' : ''}`}
+                aria-hidden={i !== frameIdx}
+              >
+                {f.kind === 'brand' ? (
+                  <>
+                    {/* The brand frame — the locked 07-17 hero, verbatim;
+                        the rotation opens here. */}
+                    <p className="front-lead">When ai can do everything humans can, what do we do?</p>
+                    <p className="front-answer">
+                      <span className="front-answer-lead">our answer is becoming an</span>
+                      <span className="front-answer-nameline"><span className="front-answer-name">alexandrian</span><span className="front-answer-dot">.</span></span>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="front-lead">{f.lead}</p>
+                    <p className="front-frame-sub">{f.sub}</p>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="front-nav front-nav-prev"
+            aria-label="Previous"
+            onClick={() => stepFrame(-1)}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            className="front-nav front-nav-next"
+            aria-label="Next"
+            onClick={() => stepFrame(1)}
+          >
+            ›
+          </button>
+          <div className="front-numerals" aria-label="Slides">
+            {FRONT_FRAMES.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`front-numeral${i === frameIdx ? ' is-live' : ''}`}
+                aria-label={`Slide ${i + 1}`}
+                aria-current={i === frameIdx}
+                onClick={() => setFrameIdx(i)}
+              >
+                {FRAME_NUMERALS[i]}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="top-inner" />
         </div>
@@ -2948,9 +3001,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           width: 372px;
           text-align: left;
           z-index: 3;
-          /* Rotation stack — every frame in the same grid cell, so the
-             block's height (and the translateY(-50%) optical centre) is
-             constant across frames: zero layout shift. */
+        }
+        /* Rotation stack — every frame in the same grid cell, so the
+           block's height (and the translateY(-50%) optical centre) is
+           constant across frames: zero layout shift. */
+        .front-frames {
           display: grid;
         }
         .front-frame {
@@ -2958,12 +3013,89 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           align-self: center;
           opacity: 0;
           /* Opacity-only cross-fade — S-tier, crisp letterforms (no blur,
-             no movement). Slow enough to read as breath, not slideshow. */
-          transition: opacity 1150ms cubic-bezier(0.22, 1, 0.36, 1);
+             no movement). Long symmetric curve so the dissolve reads as
+             breath, not a slide change (founder 2026-07-24: "smoother"). */
+          transition: opacity 2000ms cubic-bezier(0.44, 0, 0.56, 1);
           pointer-events: none;
         }
         .front-frame.is-live {
           opacity: 1;
+        }
+        /* ‹ › — the left/right hand, Garamond glyphs in the colophon's
+           faded ink, revealed only while the reader is engaged with the
+           block (hover). Hidden on touch — swipe does the job there. */
+        .front-nav {
+          position: absolute;
+          top: 42%;
+          transform: translateY(-50%);
+          appearance: none;
+          background: none;
+          border: none;
+          padding: 6px 10px;
+          font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+          font-size: 30px;
+          line-height: 1;
+          color: rgba(46, 30, 38, 0.38);
+          opacity: 0;
+          transition: opacity 500ms ease, color 300ms ease;
+          cursor: pointer;
+          user-select: none;
+        }
+        .front-epigraph:hover .front-nav {
+          opacity: 1;
+        }
+        .front-nav:hover {
+          color: rgba(46, 30, 38, 0.62);
+        }
+        .front-nav:focus-visible {
+          opacity: 1;
+          outline: 1px solid rgba(46, 30, 38, 0.4);
+          outline-offset: 2px;
+        }
+        .front-nav-prev {
+          left: -46px;
+        }
+        .front-nav-next {
+          right: -46px;
+        }
+        @media (hover: none) {
+          .front-nav {
+            display: none;
+          }
+        }
+        /* The it-rotates indicator — lowercase roman numerals in the
+           site's own hand (the dict-lines and letter sections already
+           speak roman numerals), never carousel dots. Active numeral
+           carries the ink; the rest sit at ghost. Each is a quiet jump
+           target. */
+        .front-numerals {
+          margin-top: 30px;
+          display: flex;
+          gap: 18px;
+        }
+        .front-numeral {
+          appearance: none;
+          background: none;
+          border: none;
+          padding: 2px 0;
+          font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 13px;
+          letter-spacing: 0.08em;
+          color: rgba(46, 30, 38, 0.28);
+          transition: color 400ms ease;
+          cursor: pointer;
+          user-select: none;
+        }
+        .front-numeral:hover {
+          color: rgba(46, 30, 38, 0.5);
+        }
+        .front-numeral.is-live {
+          color: rgba(46, 30, 38, 0.62);
+        }
+        .front-numeral:focus-visible {
+          outline: 1px solid rgba(46, 30, 38, 0.4);
+          outline-offset: 2px;
         }
         /* Feature-frame sub-line — the quiet second voice under the hook,
            same Garamond italic family as the answer lead-in but sized to
@@ -3694,6 +3826,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           .front-frame-sub {
             font-size: 14.5px;
             margin-top: 14px;
+          }
+          /* Mobile — the block is centred text, so the numerals centre
+             beneath it; a touch tighter than desktop. */
+          .front-numerals {
+            justify-content: center;
+            margin-top: 20px;
+            gap: 15px;
           }
 
           /* Mobile spacing — the two-slide peel format is gone here;
