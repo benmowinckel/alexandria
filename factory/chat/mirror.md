@@ -1,20 +1,19 @@
-# mirror — Tier A recipe (CLI + chat, one canon)
+# mirror — Door 1's phone/chat satellite (the shipped design)
 
-*For Authors who already run the full engine locally and want chat as a satellite surface. Local `~/alexandria` stays primary and `.md`; the local agent stays the only editor of canon. Chat reads everything and writes captures only. No new server, no new format. THE LADDER (anti-distortion rule, all surfaces): local is ground truth, Drive is its pocket copy — any session that can reach local ignores Drive canon entirely; never load both homes in one session.*
+*Reference implementation live on user-zero since 2026-07-24: `~/alexandria/system/scripts/drive_sync.sh`, called nightly from the backup job. This is the design the factory module generalizes when Door 1 ships the satellite. THE LADDER (anti-distortion rule, all surfaces): local is ground truth, the Drive folder is its pocket copy — a session that can reach local ignores Drive canon entirely; never load both homes in one session.*
 
-## The two one-way flows (default: rclone)
+## the projection (up — nightly, in place)
 
-Two one-way flows beat bidirectional sync complexity:
+Not a file mirror — a projection. The position-layer derivative (`_constitution.md`) is split per domain and rclone **updates the Google Docs in place** (`--drive-export-formats md --drive-import-formats md`; verified same-Doc-ID, 2026-07-24). Chat always reads current canon as native Docs; no version clutter; the raw sources (10–20x larger, full reasoning and evidence) never leave the Author's machine.
 
-1. **Canon up** (mirror, local → Drive): `rclone sync ~/alexandria/files drive:alexandria --exclude ".git/**" --exclude "vault/input/**"` — on the nightly backup schedule (same pattern as the existing backup job). Drive's copy is a read mirror; nothing edits it from the cloud side except chat's capture writes, which flow down, not up.
-2. **Captures down** (drain, Drive → local): `rclone copy drive:alexandria/vault/input ~/alexandria/files/vault/input` before each `/a` (or on the same schedule). The local session drains them like any capture; the next canon-up pass reflects the drained state.
+## the drain (down — runs FIRST; order matters)
 
-Setup: `brew install rclone && rclone config` (new remote, type `drive`, own OAuth). **Never symlink `~/alexandria` into a Drive-for-desktop folder** — symlinks are unsupported and break on macOS. Alternative to rclone: Google Drive for desktop with the folder physically inside the Drive mirror (`.md` syncs bidirectionally in both its modes; Docs would appear as unreadable `.gdoc` pointers, which is fine because Tier A never creates Docs).
+Before projecting up, pull chat's writings home: `vault/`, `marginalia/`, and any "— vN" constitution proposals → `~/alexandria/files/vault/input/chat/` for the next `/a` to drain. Down-first prevents the up-sync's delete pass from clobbering chat writes that haven't been captured yet.
 
-## The Tier-A `_start` variant
+## setup (per Author — the module's one interactive step)
 
-The mirror carries the Author's real `.md` canon, so chat's protocol differs from the chat-only tier in three lines — the bootstrap detects an `.md` canon (any `.md` files in constitution/) and writes this variant of the relevant `_start` sections:
+`brew install rclone && rclone config create alexandria drive scope=drive` (browser OAuth — inherently the Author's), then the nightly call from their scheduler. Watch-item: rclone's shared Google client_id retires during 2026 — the module should ship own-client-id instructions before then.
 
-- **Reading:** canon here is plain markdown. `read_file_content` returns empty for `.md` — read via `download_file_content` and decode; use search snippets to navigate before downloading.
-- **Writing:** captures only — create plain `.md` files (conversion to Google Docs disabled) in `vault/input/`, date-titled. **Never write to constitution/ or anything else** — development happens on the Author's machine, where the full engine and the git history live.
-- Everything else (session shape, manifest, guards) is identical.
+## why not Drive for desktop, and why no .md in Drive
+
+Plain `.md` in Drive is unreadable to the chat connector's reader (returns empty; base64 download only) — Google Docs are the chat-native format, and only rclone's full-API access can update them in place. Drive for desktop syncs Docs as `.gdoc` pointers local tools can't read, and symlinks into its folder break on macOS. The projection replaces the earlier copy-forward + hand-fold-back Tier-A design entirely.
