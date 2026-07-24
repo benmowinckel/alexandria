@@ -54,7 +54,8 @@ export default function ChatPage() {
             to open, edit, or walk away with.
           </p>
           <p className="start-qa-a">
-            work in a terminal? the full engine is one command:{' '}
+            this is the light version. the full one — automatic capture,
+            overnight processing, the library — is one command:{' '}
             <Link href="/start" className="start-shortcut-a">start here</Link>.
           </p>
         </div>

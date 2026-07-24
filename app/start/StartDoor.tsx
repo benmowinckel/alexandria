@@ -5,8 +5,9 @@ import Link from 'next/link';
 import StartCTA from './StartCTA';
 
 // The one question that splits all customers (founder, 2026-07-24: two doors,
-// nothing else). Wording rule (same day): never say "terminal" to users — Cursor
-// and the Claude Code app aren't terminals in their users' heads; name the apps. Stressed-user rule: show only the step in front of them —
+// nothing else). The split is CAPABILITY, not habit (founder): many chat-lovers
+// have Claude Code; every Cowork user has the app — so cowork = yes-door. The
+// question is literal: can you paste a command, or no idea what that means. Stressed-user rule: show only the step in front of them —
 // the question first, then only the chosen door's content. A kin invite
 // (?ref=) auto-opens the terminal door: invited people came to install.
 export default function StartDoor({ refCode }: { refCode?: string }) {
@@ -26,17 +27,18 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
 
   return (
     <div className="door-block">
-      <p className="door-q">where do you work with ai?</p>
+      <p className="door-q">can you paste a command into a terminal?</p>
       <div className="door-answers">
         <button className="door-btn" onClick={() => setDoor('terminal')}>
-          in a coding tool — claude code, cursor, codex…
+          yes — give me the command
         </button>
         <Link href="/chat" className="door-btn door-btn-link">
-          in chat — claude.ai (or cowork)
+          no idea what that means — take me to chat
         </Link>
       </div>
       <p className="door-hint">
-        that&rsquo;s the whole decision. either way it&rsquo;s about five minutes.
+        use claude code, cursor, codex, or cowork? that&rsquo;s a yes. yes is the
+        full product; no is the light version &mdash; upgrade anytime.
       </p>
     </div>
   );

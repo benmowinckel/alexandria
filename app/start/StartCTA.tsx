@@ -231,7 +231,7 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         </div>
         <div className="start-qa">
           <p className="start-qa-q">using cowork?</p>
-          <p className="start-qa-a">Cowork counts as chat &mdash; <a className="start-shortcut-a" href="/chat">same door</a>, nothing to install. (Already installed here? Just attach ~/alexandria.)</p>
+          <p className="start-qa-a">Then you already have the app &mdash; the command above is yours. After it runs, attach ~/alexandria in any cowork session and type /a.</p>
         </div>
         <div className="start-qa">
           <p className="start-qa-q">what actually installs?</p>
