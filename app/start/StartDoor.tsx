@@ -5,7 +5,8 @@ import Link from 'next/link';
 import StartCTA from './StartCTA';
 
 // The one question that splits all customers (founder, 2026-07-24: two doors,
-// nothing else). Stressed-user rule: show only the step in front of them —
+// nothing else). Wording rule (same day): never say "terminal" to users — Cursor
+// and the Claude Code app aren't terminals in their users' heads; name the apps. Stressed-user rule: show only the step in front of them —
 // the question first, then only the chosen door's content. A kin invite
 // (?ref=) auto-opens the terminal door: invited people came to install.
 export default function StartDoor({ refCode }: { refCode?: string }) {
@@ -16,7 +17,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
       <>
         <StartCTA refCode={refCode} />
         <p className="door-switch">
-          no terminal after all?{' '}
+          actually just use chat?{' '}
           <Link href="/chat" className="start-shortcut-a">alexandria in chat</Link>
         </p>
       </>
@@ -25,13 +26,13 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
 
   return (
     <div className="door-block">
-      <p className="door-q">do you work in a terminal?</p>
+      <p className="door-q">where do you work with ai?</p>
       <div className="door-answers">
         <button className="door-btn" onClick={() => setDoor('terminal')}>
-          yes — show me the command
+          in a coding tool — claude code, cursor, codex…
         </button>
         <Link href="/chat" className="door-btn door-btn-link">
-          no — i use chat (or cowork)
+          in chat — claude.ai (or cowork)
         </Link>
       </div>
       <p className="door-hint">
