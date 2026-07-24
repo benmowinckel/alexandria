@@ -337,6 +337,11 @@ export default async function StartPage({
           font-style: italic; font-size: 13px; letter-spacing: 0.02em;
           color: var(--text-muted, rgba(26, 19, 24, 0.55));
         }
+        .chat-rest {
+          margin: 14px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 14px; letter-spacing: 0.02em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
         .door-next { margin-top: 30px; max-width: 460px; }
         .door-switch {
           margin: 26px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;

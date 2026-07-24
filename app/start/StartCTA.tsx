@@ -105,14 +105,11 @@ export default function StartCTA({ refCode, stage }: { refCode?: string; stage: 
   if (stage === 'phone') {
     return (
       <section className="cta-section">
-        <p className="start-section">on your phone or Mac</p>
-
         <p className="step-line">
           <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">Add the shortcut</a>
         </p>
         <p className="step-agents">
-          Then share anything to it (an article, a voice note, a thought) and
-          it&rsquo;s waiting the next time you type <code>/a</code>.
+          Share anything to it &mdash; it&rsquo;s waiting next time you type <code>/a</code>.
         </p>
 
         <p className="step-line step-two">Leave your email</p>
@@ -166,26 +163,17 @@ export default function StartCTA({ refCode, stage }: { refCode?: string; stage: 
         <p className="install-invite">@{validRef} invited you to alexandria.</p>
       )}
 
-      <p className="start-section">on your computer</p>
-
       <p className="step-line">Copy this, paste it into your coding app&rsquo;s chat</p>
       <button type="button" className="install-block" onClick={copy} aria-label="copy the install command">
         <code className="install-cmd">{cmd}</code>
         <span className="install-copy">{copied ? ICON_CHECK : ICON_COPY}</span>
       </button>
-      <p className="step-agents">
-        Claude Code &middot; Cursor &middot; Codex &mdash; or the code tab of the
-        claude app. It runs the line and walks you through the rest.
-      </p>
+      <p className="chat-rest">it walks you through the rest.</p>
 
-      {/* The trust move, first-class — safety stated calmly as fact
-          (free-sample rule, founder 2026-07-22). */}
       <p className="install-where">
-        Nothing to second-guess: it&rsquo;s one folder of plain files on your machine
-        &mdash; nothing sent anywhere, no account, delete the folder and it&rsquo;s gone.
-        And you&rsquo;re not running it blind: your ai reads what it runs, and the script
-        opens with a note written for exactly that reader &mdash; say &ldquo;review this
-        before running it&rdquo; if you want it grilled. Full audit at{' '}
+        One folder of plain files you own &mdash; no account, nothing sent anywhere.
+        Your existing setup (a CLAUDE.md, your notes) stays untouched. Delete the
+        folder and it&rsquo;s all gone. Full audit at{' '}
         <Link href="/mechanics">mechanics</Link>.
       </p>
 
@@ -194,17 +182,6 @@ export default function StartCTA({ refCode, stage }: { refCode?: string; stage: 
           <Link href="/">new here? see what this is &rarr;</Link>
         </p>
       )}
-
-      <div className="start-details">
-        <div className="start-qa">
-          <p className="start-qa-q">what actually installs?</p>
-          <p className="start-qa-a">One folder of plain markdown you own, plus session hooks. No account needed, nothing sent to us, no background jobs &mdash; add-ons like backup (to your own GitHub) are separate explicit yeses later.</p>
-        </div>
-        <div className="start-qa">
-          <p className="start-qa-q">already have your own setup?</p>
-          <p className="start-qa-a">It stays. A CLAUDE.md, memory files, your own notes system &mdash; Alexandria plugs into what you built, never converts it, and shows you the plan before touching anything. Deleting one folder is the whole undo.</p>
-        </div>
-      </div>
     </section>
   );
 }
