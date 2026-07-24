@@ -340,39 +340,45 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   const FRONT_FRAMES: Array<
     { kind: 'feature'; lead: string; sub: string } | { kind: 'brand' }
   > = [
-    // Conversion ladder (re-derived 2026-07-24, maximand = conversion;
-    // prior set read "boring and unclear"): i the hook (why) → ii the
-    // pain + the product ("doesn't know you" / one folder, every ai
-    // reads it) → iii the payoff (the dream state: known-you-for-years)
-    // → iv the proof (the saved-pile demo) → v the ledger close (free /
-    // plugs in / portable / deletable — the non-decision laid bare).
-    // The knows-you arc runs through the cycle: doesn't know you →
-    // known you for years → part of what it knows about you. The old
-    // "keep your system" frame was a reassurance clause, not an ad —
-    // folded into v. Each frame still stands alone.
+    // Third pass (founder, 2026-07-24: "it's not really clear what the
+    // features are… make the value really clear"): frames are the a4
+    // ad portfolio, one concrete named feature per frame, per the
+    // THREE TESTS directive ("concretely enumerate/rotate the features
+    // on the front slide"). ii the personalisation core ("stop
+    // introducing yourself to AI"), iii accretion (the saved-pile ad —
+    // extraction-into-you, never summarisation), iv capture (the "a"
+    // shortcut; same string as the digest CTA), v sovereignty-as-
+    // switching-freedom (canon's trapped line, now also carrying the
+    // free/portable/deletable ledger), vi the library (publish your
+    // mind). Each frame stands alone — visitors land mid-cycle.
     { kind: 'brand' },
     {
       kind: 'feature',
-      lead: 'Your ai still doesn’t know you.',
-      sub: 'One folder on your computer fixes that — every ai you use reads it.',
-    },
-    {
-      kind: 'feature',
-      lead: 'An ai that’s known you for years.',
-      sub: 'Your projects, your taste, your voice — it answers like someone who was there.',
+      lead: 'Stop introducing yourself to your ai.',
+      sub: 'Alexandria keeps a file of who you are — your projects, your taste, how you think. Every ai you use reads it first.',
     },
     {
       kind: 'feature',
       lead: 'Saved 400 posts you’ll never read?',
-      sub: 'It reads them all. What matters becomes part of what it knows about you.',
+      sub: 'Alexandria reads every one — and what matters becomes part of what your ai knows about you.',
     },
     {
       kind: 'feature',
-      lead: 'Free, and yours for good.',
-      sub: 'Plugs into what you already use, moves with you to any ai, gone if you ever delete it.',
+      lead: 'Your best thoughts die in your notes app.',
+      sub: 'Save them to “a” from your phone instead — one tap, straight into the file your ai reads.',
+    },
+    {
+      kind: 'feature',
+      lead: 'Feel trapped by the ai that knows you?',
+      sub: 'Alexandria is a folder you own — free, moves with you to any ai, gone the day you delete it.',
+    },
+    {
+      kind: 'feature',
+      lead: 'Publish your mind.',
+      sub: 'Your page in the library — where people, and their ai, can read how you actually think.',
     },
   ];
-  const FRAME_NUMERALS = ['i', 'ii', 'iii', 'iv', 'v'];
+  const FRAME_NUMERALS = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
   const [frameIdx, setFrameIdx] = useState(0);
   const [frameHold, setFrameHold] = useState(false);
   const frameCount = FRONT_FRAMES.length;
