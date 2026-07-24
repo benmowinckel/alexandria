@@ -1,36 +1,56 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import StartCTA from './StartCTA';
 
-// The one question that splits all customers (founder, 2026-07-24: two doors,
-// nothing else). Final wording (founder, 4th iteration): POSSESSION, zero jargon —
-// the yes-button IS the app list; no "terminal" anywhere (pasting into cursor or
-// the claude code app isn't 'a terminal' to its user, and the install works there). Stressed-user rule: show only the step in front of them —
-// the question first, then only the chosen door's content. A kin invite
-// (?ref=) auto-opens the terminal door: invited people came to install.
-export default function StartDoor({ refCode }: { refCode?: string }) {
-  const [door, setDoor] = useState<'terminal' | null>(refCode ? 'terminal' : null);
+type Screen = 'q' | 'command' | 'phone';
 
-  if (door === 'terminal') {
+// The click-through door (founder, 2026-07-24): one screen, one action, and
+// browser-back / swipe-back walks BACKWARDS through the sequence, never out
+// of the site — each advance pushes a history entry; popstate rewinds it.
+// Wording: possession, zero jargon — the yes-button IS the app list. "cowork"
+// is deliberately absent from this page (the concept is post-install; the
+// "code tab of the claude app" clause inside routes those users invisibly).
+export default function StartDoor({ refCode }: { refCode?: string }) {
+  const [screen, setScreen] = useState<Screen>(refCode ? 'command' : 'q');
+
+  useEffect(() => {
+    // Invited installs land straight on the command — seed history so back
+    // still behaves (back from phone → command → question).
+    if (refCode) window.history.replaceState({ s: 'command' }, '', '#go');
+    const onPop = (e: PopStateEvent) =>
+      setScreen(((e.state && e.state.s) as Screen) || 'q');
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [refCode]);
+
+  const go = (s: Exclude<Screen, 'q'>) => {
+    window.history.pushState({ s }, '', s === 'command' ? '#go' : '#phone');
+    setScreen(s);
+  };
+
+  if (screen === 'command') {
     return (
       <>
-        <StartCTA refCode={refCode} />
-        <p className="door-switch">
-          actually just use chat?{' '}
-          <Link href="/chat" className="start-shortcut-a">alexandria in chat</Link>
-        </p>
+        <StartCTA refCode={refCode} stage="command" />
+        <button className="door-btn door-next" onClick={() => go('phone')}>
+          next — your phone
+        </button>
       </>
     );
+  }
+
+  if (screen === 'phone') {
+    return <StartCTA refCode={refCode} stage="phone" />;
   }
 
   return (
     <div className="door-block">
       <p className="door-q">do you use any of these?</p>
       <div className="door-answers">
-        <button className="door-btn" onClick={() => setDoor('terminal')}>
-          claude code · cursor · codex · cowork
+        <button className="door-btn" onClick={() => go('command')}>
+          claude code · cursor · codex …
         </button>
         <Link href="/chat" className="door-btn door-btn-link">
           no — i just use the chat app
