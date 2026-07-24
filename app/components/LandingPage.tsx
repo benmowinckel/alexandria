@@ -344,22 +344,26 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     // features are… make the value really clear"): frames are the a4
     // ad portfolio, one concrete named feature per frame, per the
     // THREE TESTS directive ("concretely enumerate/rotate the features
-    // on the front slide"). ii the personalisation core ("stop
-    // introducing yourself to AI"), iii accretion (the saved-pile ad —
-    // extraction-into-you, never summarisation), iv capture (the "a"
-    // shortcut; same string as the digest CTA), v sovereignty-as-
-    // switching-freedom (canon's trapped line, now also carrying the
-    // free/portable/deletable ledger), vi the library (publish your
-    // mind). Each frame stands alone — visitors land mid-cycle.
+    // on the front slide"). After the a. hero: i the personalisation
+    // core (the locked stranger line), ii accretion (the saved-pile ad
+    // — extraction-into-you, never summarisation; 400→200, founder:
+    // "400 is a bit much"), iii capture (the "a" shortcut; same string
+    // as the digest CTA), iv sovereignty-as-switching-freedom (canon's
+    // trapped line, now also carrying the free/portable/deletable
+    // ledger), v coexistence (the plugs-in-never-converts reassurance,
+    // added from the pitch-loop session), vi the library (publish your
+    // mind). Each frame stands alone — visitors land mid-cycle. The
+    // numeral row leads with the brand mark: the hero indexes as a.,
+    // features as i–vi (founder, 2026-07-24: "so the hero is with a.").
     { kind: 'brand' },
     {
       kind: 'feature',
-      lead: 'Stop introducing yourself to your ai.',
+      lead: 'Your ai still treats you like a stranger.',
       sub: 'Alexandria keeps a file of who you are — your projects, your taste, how you think. Every ai you use reads it first.',
     },
     {
       kind: 'feature',
-      lead: 'Saved 400 posts you’ll never read?',
+      lead: 'Saved 200 posts you’ll never read?',
       sub: 'Alexandria reads every one — and what matters becomes part of what your ai knows about you.',
     },
     {
@@ -383,7 +387,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       sub: 'Your page in the library — where people, and their ai, can read how you actually think.',
     },
   ];
-  const FRAME_NUMERALS = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
+  const FRAME_NUMERALS = ['a.', 'i', 'ii', 'iii', 'iv', 'v', 'vi'];
   const [frameIdx, setFrameIdx] = useState(0);
   const [frameHold, setFrameHold] = useState(false);
   const frameCount = FRONT_FRAMES.length;
