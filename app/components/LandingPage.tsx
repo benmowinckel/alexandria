@@ -340,35 +340,36 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   const FRONT_FRAMES: Array<
     { kind: 'feature'; lead: string; sub: string } | { kind: 'brand' }
   > = [
-    // The cycle is a staircase, not five separate ads: i asks the
-    // question (why), ii names the thing (what — plants "file"), iii
-    // shows the felt gain (proof — leans on "your file"), iv removes
-    // the cost (fit), v closes on ownership (freedom — pays "file"
-    // off). Each frame stands alone for the visitor who catches only
-    // one; in sequence they compound. Desire before objection-handling,
-    // close on sovereignty. Sub-line rhythm deliberately varied (dash /
-    // plain sentences / comma / full stops) — an identical cadence
-    // across frames is the machine tell.
+    // Conversion ladder (re-derived 2026-07-24, maximand = conversion;
+    // prior set read "boring and unclear"): i the hook (why) → ii the
+    // pain + the product ("doesn't know you" / one folder, every ai
+    // reads it) → iii the payoff (the dream state: known-you-for-years)
+    // → iv the proof (the saved-pile demo) → v the ledger close (free /
+    // plugs in / portable / deletable — the non-decision laid bare).
+    // The knows-you arc runs through the cycle: doesn't know you →
+    // known you for years → part of what it knows about you. The old
+    // "keep your system" frame was a reassurance clause, not an ad —
+    // folded into v. Each frame still stands alone.
     { kind: 'brand' },
     {
       kind: 'feature',
-      lead: 'A file for how you think.',
-      sub: 'Every ai you use reads it — and stops treating you like a stranger.',
+      lead: 'Your ai still doesn’t know you.',
+      sub: 'One folder on your computer fixes that — every ai you use reads it.',
+    },
+    {
+      kind: 'feature',
+      lead: 'An ai that’s known you for years.',
+      sub: 'Your projects, your taste, your voice — it answers like someone who was there.',
     },
     {
       kind: 'feature',
       lead: 'Saved 400 posts you’ll never read?',
-      sub: 'Your ai finally reads them, and threads what matters into your file.',
+      sub: 'It reads them all. What matters becomes part of what it knows about you.',
     },
     {
       kind: 'feature',
-      lead: 'Already have a system? Keep it.',
-      sub: 'Alexandria plugs into what you already use. It replaces nothing.',
-    },
-    {
-      kind: 'feature',
-      lead: 'Your ai knows you. Do you own that?',
-      sub: 'Make it a file you own. Switch ai tomorrow, lose nothing.',
+      lead: 'Free, and yours for good.',
+      sub: 'Plugs into what you already use, moves with you to any ai, gone if you ever delete it.',
     },
   ];
   const FRAME_NUMERALS = ['i', 'ii', 'iii', 'iv', 'v'];
@@ -387,7 +388,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     // would kill the rotation for everyone.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (frameHold) return;
-    const t = setTimeout(() => setFrameIdx((i) => (i + 1) % frameCount), 7500);
+    const t = setTimeout(() => setFrameIdx((i) => (i + 1) % frameCount), 6000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameIdx, frameHold]);
@@ -3013,19 +3014,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              transform snaps back invisibly after the fade so it's staged
              for re-entry. The wall then breathes empty for a beat. */
           transition:
-            opacity 850ms cubic-bezier(0.65, 0, 0.35, 1),
-            transform 0ms linear 850ms;
+            opacity 700ms cubic-bezier(0.65, 0, 0.35, 1),
+            transform 0ms linear 700ms;
           pointer-events: none;
         }
         .front-frame.is-live {
           opacity: 1;
           transform: translateY(0);
-          /* ENTER: waits for the outgoing frame to clear (900ms), then
+          /* ENTER: waits for the outgoing frame to clear (750ms), then
              eases in with a whisper of rise. Never two texts on the wall
              at once. */
           transition:
-            opacity 1150ms cubic-bezier(0.22, 1, 0.36, 1) 900ms,
-            transform 1150ms cubic-bezier(0.22, 1, 0.36, 1) 900ms;
+            opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1) 750ms,
+            transform 1000ms cubic-bezier(0.22, 1, 0.36, 1) 750ms;
         }
         @media (prefers-reduced-motion: reduce) {
           .front-frame,
