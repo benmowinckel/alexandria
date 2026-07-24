@@ -233,6 +233,10 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
           <p className="start-qa-q">what actually installs?</p>
           <p className="start-qa-a">One folder of plain markdown you own, plus session hooks. No account needed, nothing sent to us, no background jobs &mdash; add-ons like backup (to your own GitHub) are separate explicit yeses later.</p>
         </div>
+        <div className="start-qa">
+          <p className="start-qa-q">already have your own setup?</p>
+          <p className="start-qa-a">It stays. A CLAUDE.md, memory files, your own notes system &mdash; Alexandria plugs into what you built, never converts it, and shows you the plan before touching anything. Deleting one folder is the whole undo.</p>
+        </div>
       </div>
     </section>
   );

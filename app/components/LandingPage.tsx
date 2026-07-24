@@ -374,11 +374,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     },
     {
       kind: 'feature',
+      lead: 'Already have a system?',
+      sub: 'A CLAUDE.md, memory files, your own vault — it stays. Alexandria plugs in, never converts; delete one folder and it’s all undone.',
+    },
+    {
+      kind: 'feature',
       lead: 'Publish your mind.',
       sub: 'Your page in the library — where people, and their ai, can read how you actually think.',
     },
   ];
-  const FRAME_NUMERALS = ['i', 'ii', 'iii', 'iv', 'v', 'vi'];
+  const FRAME_NUMERALS = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
   const [frameIdx, setFrameIdx] = useState(0);
   const [frameHold, setFrameHold] = useState(false);
   const frameCount = FRONT_FRAMES.length;
