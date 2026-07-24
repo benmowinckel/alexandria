@@ -343,6 +343,18 @@ export default async function StartPage({
           color: var(--text-muted, rgba(26, 19, 24, 0.55));
         }
         .door-next { margin-top: 30px; max-width: 460px; }
+        .start-footnote {
+          margin: 44px 0 0; padding-top: 18px; max-width: 460px;
+          border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 12.5px; line-height: 1.65; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.5));
+        }
+        .start-footnote a {
+          color: var(--text-secondary, rgba(26, 19, 24, 0.7));
+          text-decoration: underline; text-decoration-color: var(--text-muted, rgba(26, 19, 24, 0.35));
+          text-underline-offset: 3px; text-decoration-thickness: 1px;
+        }
         .door-switch {
           margin: 26px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 13px; letter-spacing: 0.01em;

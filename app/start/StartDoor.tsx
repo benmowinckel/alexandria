@@ -37,6 +37,13 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
         <button className="door-btn door-next" onClick={() => go('phone')}>
           next — your phone
         </button>
+        {/* The read-if-you-want zone — below every action, footer-ish (founder
+            2026-07-24: "they're not reading anything"). */}
+        <p className="start-footnote">
+          one folder of plain files you own — no account, nothing sent anywhere.
+          your CLAUDE.md and notes stay untouched; delete the folder and it&rsquo;s
+          gone. full audit: <Link href="/mechanics">mechanics</Link>.
+        </p>
       </>
     );
   }

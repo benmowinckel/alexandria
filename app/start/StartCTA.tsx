@@ -163,19 +163,12 @@ export default function StartCTA({ refCode, stage }: { refCode?: string; stage: 
         <p className="install-invite">@{validRef} invited you to alexandria.</p>
       )}
 
-      <p className="step-line">Copy this, paste it into your coding app&rsquo;s chat</p>
+      <p className="step-line">Copy this, paste it into your coding app</p>
       <button type="button" className="install-block" onClick={copy} aria-label="copy the install command">
         <code className="install-cmd">{cmd}</code>
         <span className="install-copy">{copied ? ICON_CHECK : ICON_COPY}</span>
       </button>
       <p className="chat-rest">it walks you through the rest.</p>
-
-      <p className="install-where">
-        One folder of plain files you own &mdash; no account, nothing sent anywhere.
-        Your existing setup (a CLAUDE.md, your notes) stays untouched. Delete the
-        folder and it&rsquo;s all gone. Full audit at{' '}
-        <Link href="/mechanics">mechanics</Link>.
-      </p>
 
       {validRef && (
         <p className="install-new">

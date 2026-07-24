@@ -381,10 +381,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       lead: 'Already have a system?',
       sub: 'A CLAUDE.md, memory files, your own vault — it stays. Alexandria plugs in, never converts; delete one folder and it’s all undone.',
     },
+    // Resharpened at thread-close 2026-07-24: "Publish your mind."
+    // needed its sub-line to land; the democratised-biography angle
+    // (a4 — "the oldest prestige form, historically rationed to the
+    // famous and the rich") hooks alone.
     {
       kind: 'feature',
-      lead: 'Publish your mind.',
-      sub: 'Your page in the library — where people, and their ai, can read how you actually think.',
+      lead: 'Biographies used to be for the famous.',
+      sub: 'Alexandria writes yours as you go — a living page in the library where anyone can read how you actually think.',
     },
   ];
   const FRAME_NUMERALS = ['a.', 'i', 'ii', 'iii', 'iv', 'v', 'vi'];

@@ -106,6 +106,7 @@ factory/
 - **Design reference:** `~/alexandria/files/core/design.md` — craft substrate (900 lines of concrete CSS physics, anti-patterns, thresholds). Read before any frontend work. Not taste — that's `~/alexandria/files/constitution/Taste.md`.
 - Screenshots save to `.see/` at repo root (gitignored), auto-cleaned to last 30.
 - **Loop:** build → screenshot → evaluate against design.md → fix → screenshot → ship.
+- **Production may serve a "Vercel Security Checkpoint" to automation** (verified 2026-07-24: curl 403s even with a browser UA; headless Playwright gets the challenge page — "Failed to verify your browser, Code 21"). This is Vercel's platform-managed bot mitigation, NOT a project setting (firewall config and project security are empty — nothing to toggle); real browsers and verified search crawlers pass. So: do visual verification against localhost, and verify production deploys by deployment state (`npx vercel list code --yes` — newest row READY, commit SHA matches), not by curling the live page. Don't burn time re-diagnosing the checkpoint.
 
 ## Style
 
