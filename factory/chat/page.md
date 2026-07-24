@@ -1,6 +1,15 @@
-# /chat page — copy draft
+# onboarding page — copy draft (the two doors)
 
-*DRAFT — founder-taste surface; his pass required before any deploy. Route wiring (app/ page at /chat) happens at fire time — minutes of work, deliberately not done while armed. Voice: lowercase, plain, no hype.*
+*DRAFT — founder-taste surface; his pass required before any deploy. THE ONBOARDING ARCHITECTURE (founder, 2026-07-24): exactly two onboardings, split by one question — can you run a terminal command? Door 1 = the curl (full engine, existing /start flow). Door 2 = the chat bootstrap below. There is no third door; Cowork is a surface, not a door (terminal people attach their local folder there; everyone else's Cowork reads their Drive folder via the connector, no attach). At fire time this merges into the site's start flow as the one question + two paths; the copy below is door 2's page. Voice: lowercase, plain, no hype.*
+
+---
+
+## the one question (top of the start flow)
+
+do you work in a terminal?
+
+- **yes** → the full engine: one command, runs on your own files, everything automatic. [the existing /start flow]
+- **no** → alexandria in chat: no install, your Drive, five minutes. [below]
 
 ---
 
