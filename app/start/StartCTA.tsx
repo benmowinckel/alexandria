@@ -227,7 +227,7 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
       <div className="start-details">
         <div className="start-qa">
           <p className="start-qa-q">on a plain chat app?</p>
-          <p className="start-qa-a">It won&rsquo;t work &mdash; it has to be one of the coding agents above.</p>
+          <p className="start-qa-a">That works now &mdash; no install, your own Google Drive: <a className="start-shortcut-a" href="/chat">alexandria in chat</a>.</p>
         </div>
         <div className="start-qa">
           <p className="start-qa-q">using cowork?</p>
