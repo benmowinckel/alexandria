@@ -22,6 +22,7 @@ the same practice, for people who live in the chat app — phone included, free 
 
 - the Drive connector's permission is read-across-your-Drive (Google's scope, not ours). the method confines itself to the alexandria folder, and tells claude to never carry your files into any other tool.
 - claude can create and read docs in your Drive but not edit them in place — so every revision of your constitution is a new version, full history kept. you can edit anything by hand in the Docs app; your hands outrank the machine's.
+- built for claude. other ais with a Drive connector can read your folder too — but writing new docs works on claude today, so that's where the practice lives.
 - nothing runs between sessions. the full engine — automatic capture, overnight processing, the library of other authors — runs where an agent can reach your files directly: [get the full install].
 
 ---

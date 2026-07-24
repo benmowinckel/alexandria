@@ -1,6 +1,6 @@
 # mirror — Tier A recipe (CLI + chat, one canon)
 
-*For Authors who already run the full engine locally and want chat as a satellite surface. Local `~/alexandria` stays primary and `.md`; the local agent stays the only editor of canon. Chat reads everything and writes captures only. No new server, no new format.*
+*For Authors who already run the full engine locally and want chat as a satellite surface. Local `~/alexandria` stays primary and `.md`; the local agent stays the only editor of canon. Chat reads everything and writes captures only. No new server, no new format. THE LADDER (anti-distortion rule, all surfaces): local is ground truth, Drive is its pocket copy — any session that can reach local ignores Drive canon entirely; never load both homes in one session.*
 
 ## The two one-way flows (default: rclone)
 
