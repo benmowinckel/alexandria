@@ -96,15 +96,10 @@ export default function JoinCTA({
       </a>
 
       <p className="join-terms">
-        think about it: first month free &middot; free with three friends on &middot;
-        then 33&cent; a day &mdash; less than an uber a month. cancel anytime.
+        free for a month &middot; free with three friends on &middot; then 33&cent; a day, cancel anytime.
       </p>
       <p className="join-terms">
-        and it goes to something good &mdash; your people, thinking together.
-      </p>
-      <p className="join-terms">
-        still don&rsquo;t want to pay? message me and I&rsquo;ll waive it. so there&rsquo;s
-        literally zero reason &mdash; it&rsquo;s only a no if you don&rsquo;t want it even free.
+        still too much? message me &mdash; I&rsquo;ll waive it. the only no left is not wanting it free.
       </p>
 
       <div className="join-exits">
