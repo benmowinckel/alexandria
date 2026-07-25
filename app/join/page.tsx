@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: '/join',
   title: 'join alexandria.',
   description:
-    'keep thinking, together — the library, the marketplace, the tribe. first month free; free with three friends on; then 33¢ a day, and I\u2019ll waive it if you ask.',
+    'keep thinking, together — the library, the marketplace, the tribe. first month free; free with three friends on; then a dollar a day, and I\u2019ll waive it if you ask.',
 });
 
 // The founding-member JOIN — the paid half of the two things. The tool (the run)

@@ -70,7 +70,7 @@ yes. the install is one command that drops a folder on your machine and pulls co
 
 the tool is free, always. you paste one line, it lives in a folder you own, and we can't take it back — you never pay to think. open source, runs on your own ai, on your own machine.
 
-what you pay for is the tribe. joining the community makes you a founding member with your own number — alexandrian #14, yours for good. that's $10/month, and the first month is free. or, if three friends *join the community* through you — actually in, not just running the free tool — yours is free for good. or, if that's a stretch, just email and we'll waive it. you're never paying for the tool; you're backing the thing and taking your place in it. said plainly: free to read the library, you pay to add your own mind to it.
+what you pay for is the tribe. joining the community makes you a founding member with your own number — alexandrian #14, yours for good. that's a dollar a day ($30/month), and the first month is free. or, if three friends *join the community* through you — actually in, not just running the free tool — yours is free for good. or, if that's a stretch, just email and we'll waive it. you're never paying for the tool; you're backing the thing and taking your place in it. said plainly: free to read the library, you pay to add your own mind to it.
 
 ## what's a founding member.
 

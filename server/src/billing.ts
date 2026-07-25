@@ -25,7 +25,7 @@ import { safeEqual, hashApiKey } from './crypto.js';
 // change edits this one constant; the two can't drift apart.
 // ---------------------------------------------------------------------------
 
-const MEMBERSHIP_PRICE_CENTS = 1000; // $10/mo
+const MEMBERSHIP_PRICE_CENTS = 3000; // $30/mo — 'a dollar a day' (founder experiment 2026-07-25, reversing PRICING CLOSED with eyes open; was 1000. Existing subs keep their old price object — grandfathered by Stripe's own mechanics).
 
 // ---------------------------------------------------------------------------
 // Stripe client — lazy init (needs env to be populated)
@@ -137,7 +137,7 @@ function extractSubscriptionId(invoice: Stripe.Invoice): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// Price ID — one price, $10/month. Free with 3+ active kin (coupon).
+// Price ID — one price, $30/month ('a dollar a day'). Free with 3+ active kin (coupon).
 // ---------------------------------------------------------------------------
 
 const KIN_THRESHOLD = parseInt(process.env.KIN_THRESHOLD || '3', 10);
@@ -220,7 +220,7 @@ async function ensurePrice(): Promise<string> {
   const stripe = getStripe();
   const productCopy = {
     name: 'The Examined Life',
-    description: 'a tribe of humans who put their minds into writing, so ai thinks with them, not for them. free with three friends who join through you and stay active. otherwise $10 a month, first month free.',
+    description: 'a tribe of humans who put their minds into writing, so ai thinks with them, not for them. free with three friends who join through you and stay active. otherwise a dollar a day ($30/month), first month free.',
   };
 
   const products = await stripe.products.list({ limit: 10 });
@@ -237,7 +237,9 @@ async function ensurePrice(): Promise<string> {
   }
 
   const prices = await stripe.prices.list({ product: product.id, limit: 10 });
-  let price = prices.data.find(p => p.metadata.tier === 'standard' && p.active);
+  // Match tier AND amount — else a price change would keep finding the old
+  // object forever and the constant above would be decorative.
+  let price = prices.data.find(p => p.metadata.tier === 'standard' && p.active && p.unit_amount === MEMBERSHIP_PRICE_CENTS);
 
   if (!price) {
     price = await stripe.prices.create({

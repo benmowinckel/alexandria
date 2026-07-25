@@ -221,7 +221,7 @@ export async function sendKinFreeUnlocked(
 }
 
 // Kin-lapse warning — fired once when a member drops BELOW KIN_THRESHOLD active
-// kin and the free-for-good discount is removed, so $10/month resumes. The honest
+// kin and the free-for-good discount is removed, so $30/month resumes. The honest
 // counterpart to the carrot: the re-charge is never silent. The crossing is
 // detected where kin pricing recalcs run. resumeDate = the next charge date.
 export async function sendKinLapseWarning(
@@ -237,7 +237,7 @@ export async function sendKinLapseWarning(
   const when = resumeDate
     ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(resumeDate).toLowerCase()
     : null;
-  const resumeLine = when ? `$10/month resumes on ${when}` : `$10/month resumes at your next renewal`;
+  const resumeLine = when ? `$30/month (a dollar a day) resumes on ${when}` : `$30/month (a dollar a day) resumes at your next renewal`;
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
   const html = emailShell(`<p style="margin: 0 0 1.4rem;">heads up &mdash; your free membership paused.</p>
   <p style="margin: 0 0 0.6rem; color: #8a8078;">you dropped below three active friends, so ${resumeLine}. add one more and it&rsquo;s free again:</p>

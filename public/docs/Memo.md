@@ -18,7 +18,7 @@ Most AI products are transition assets — value decays into the model with each
 
 A structured record of who each user is — whatever they choose to put in it: worldview, values, mental models, taste, personal thoughts, decisions, blind spots, anything. **The product is the framework; the practice is theirs** (daily Socratic sessions, journals, decision logs, any system works). Local files the user owns. Portable across every AI provider. *The record cannot be back-filled: inbox-scraping reaches what the user does, never what they mean.* **The compounding is the years.**
 
-*Engineering is done. One curl command. The tool is free and yours; $10/month joins the community as a founding member — your own number — free with three active friends, slider open above.* The only open question is whether enough people want it.
+*Engineering is done. One curl command. The tool is free and yours; a dollar a day ($30/month) joins the community as a founding member — your own number — free with three active friends, slider open above.* The only open question is whether enough people want it.
 
 ---
 
@@ -36,7 +36,7 @@ A structured record of who each user is — whatever they choose to put in it: w
 
 ## the business.
 
-**Membership.** *The tool and methodology are free; $10/month joins the community as a founding member, slider open above, no cap.* Stands alone. Break-even at 10 paying members.
+**Membership.** *The tool and methodology are free; $30/month (a dollar a day) joins the community as a founding member, slider open above, no cap.* Stands alone. Break-even at 4 paying members.
 
 **Platform.** *Users grant other services permissioned access to their Alexandria record — opt-in, revocable.* AI labs pay for alignment and personalisation data. Consumer apps pay to know users who want to be known (meditation, therapy, dating, productivity). **The user monetises their own frame; Alexandria captures a clearing fee.** *Independent of membership count.*
 

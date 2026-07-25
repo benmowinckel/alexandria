@@ -496,7 +496,7 @@ export function registerRoutes(app: Hono) {
         // FOUNDING-MEMBER JOIN (Strava-for-thought, ground truth e1cd27f): the
         // local tool is free and keyless (no account); JOINING the community is
         // the one paid thing. So a NEW account carries NO active status — it falls
-        // through to the Stripe-trial checkout below ($10/mo, first month free,
+        // through to the Stripe-trial checkout below ($30/mo — a dollar a day, first month free,
         // free with 3 active kin, or email-to-waive as a manual comp). The webhook
         // sets `trialing` on checkout completion. Existing statuses ride the
         // `...existing` spread: the grandfathered seeding-stage `free` cohort
@@ -612,7 +612,7 @@ export function registerRoutes(app: Hono) {
         logEvent('library_signup_referral_dropped_returning', { attempted_ref: ref, source: refSource || 'direct', referred: user.login });
       }
 
-      // Welcome email — carries the deal ($10/month, first month free, or free
+      // Welcome email — carries the deal ($30/month — a dollar a day, first month free, or free
       // with 3 active kin) and the user's invite link so they have a portable
       // reference.
       if (email && isNewAccount) {
@@ -656,7 +656,7 @@ export function registerRoutes(app: Hono) {
         return c.redirect(await welcomeHandoffUrl(kv, librarySessionToken, apiKey, user.login, false, number ?? 0, kinCompliant, rotateUrl));
       }
 
-      // New join → Stripe Checkout ($10/mo, first month free via 30-day trial,
+      // New join → Stripe Checkout ($30/mo via 30-day trial,
       // free with 3 active kin via coupon). The founding-member page (with #N +
       // the connect command) renders at /billing/success after checkout, so
       // stash the freshly-minted key for that round-trip — billing/success can't

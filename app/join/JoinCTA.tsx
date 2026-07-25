@@ -96,7 +96,7 @@ export default function JoinCTA({
       </a>
 
       <p className="join-terms">
-        after the month: 33&cent; a day &mdash; and I&rsquo;ll waive it if you ask.
+        after the month: a dollar a day &mdash; and I&rsquo;ll waive it if you ask.
       </p>
 
       <div className="join-exits">
