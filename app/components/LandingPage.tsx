@@ -351,10 +351,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     // as the digest CTA), iv sovereignty-as-switching-freedom (canon's
     // trapped line, now also carrying the free/portable/deletable
     // ledger), v coexistence (the plugs-in-never-converts reassurance,
-    // added from the pitch-loop session), vi the library (publish your
+    // added from the pitch-loop session), vi the mirror (see your own
     // mind). Each frame stands alone — visitors land mid-cycle. The
-    // numeral row leads with the brand mark: the hero indexes as a.,
-    // features as i–vi (founder, 2026-07-24: "so the hero is with a.").
+    // numeral row leads with the brand mark: the hero indexes as a.
+    // (founder, 2026-07-24: "so the hero is with a."), and the hand is
+    // capped at v — see FRAME_NUMERALS below.
     // Second pass (founder, 2026-07-24 evening): (1) each feature frame
     // carries its NAME as a quiet kicker — lowercase-with-period, the
     // site's section-label hand ("personalisation." not "Personalisation")
@@ -409,21 +410,31 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       lead: 'Already have a system?',
       sub: 'Keep it all — the CLAUDE.md, the memory files, the vault. Alexandria clicks them into one loop; everything you’ve built finally pulls together.',
     },
-    // Resharpened at thread-close 2026-07-24: "Publish your mind."
-    // needed its sub-line to land; the democratised-biography angle
-    // (a4 — "the oldest prestige form, historically rationed to the
-    // famous and the rich") hooks alone.
+    // Reframed biography → the mirror (founder, 2026-07-24: "rephrase the
+    // biography thing to be the mirror" — same day as "its my mirror not
+    // my twin"). The image is canon's own, everywhere: "a living map of
+    // your mind — a mirror" (the colophon), "the mirror held up to your
+    // thinking" (a4 richness mandate), "the labs build better servants;
+    // Alexandria builds a better mirror" (a4). Felt after: self-recognition.
     {
       kind: 'feature',
-      name: 'biography.',
-      lead: 'Biographies used to be for the famous.',
-      sub: 'Alexandria writes yours as you go — a living page of how you actually think, for anyone who ever wants to know you.',
+      name: 'the mirror.',
+      lead: 'You’ve never seen your own mind.',
+      sub: 'Everything you pour in, Alexandria draws into a living mirror of how you think — look in and recognise yourself, clearer every day.',
     },
   ];
-  const FRAME_NUMERALS = ['a.', 'i', 'ii', 'iii', 'iv', 'v', 'vi'];
+  // The numeral hand is CAPPED at a. + i–v (founder, 2026-07-24: "visually
+  // stops at v but continues on or cycles through so that it scales well")
+  // — the row never grows as frames are added. Frames past v wrap the live
+  // highlight back through i–v: the hand shows position-in-lap, not
+  // per-frame identity. Clicking a numeral jumps to its first-lap frame.
+  const FRAME_NUMERALS = ['a.', 'i', 'ii', 'iii', 'iv', 'v'];
   const [frameIdx, setFrameIdx] = useState(0);
   const [frameHold, setFrameHold] = useState(false);
   const frameCount = FRONT_FRAMES.length;
+  const numeralCount = Math.min(frameCount, FRAME_NUMERALS.length);
+  const liveNumeral =
+    frameIdx === 0 ? 0 : 1 + ((frameIdx - 1) % (FRAME_NUMERALS.length - 1));
   const stepFrame = (d: number) =>
     setFrameIdx((i) => (i + d + frameCount) % frameCount);
   // Touch swipe — left/right through the frames on coarse pointers.
@@ -436,7 +447,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     // would kill the rotation for everyone.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (frameHold) return;
-    const t = setTimeout(() => setFrameIdx((i) => (i + 1) % frameCount), 6000);
+    // 8000ms per frame (founder, 2026-07-24: 6000 was "a touch too fast" —
+    // the sequenced dissolve eats ~1.75s, so 8s leaves ~6s of still read).
+    const t = setTimeout(() => setFrameIdx((i) => (i + 1) % frameCount), 8000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameIdx, frameHold]);
@@ -924,16 +937,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             ))}
           </div>
           <div className="front-numerals" aria-label="Slides">
-            {FRONT_FRAMES.map((_, i) => (
+            {FRAME_NUMERALS.slice(0, numeralCount).map((n, s) => (
               <button
-                key={i}
+                key={s}
                 type="button"
-                className={`front-numeral${i === frameIdx ? ' is-live' : ''}`}
-                aria-label={`Slide ${i + 1}`}
-                aria-current={i === frameIdx}
-                onClick={() => setFrameIdx(i)}
+                className={`front-numeral${s === liveNumeral ? ' is-live' : ''}`}
+                aria-label={`Slide ${n}`}
+                aria-current={s === liveNumeral}
+                onClick={() => setFrameIdx(s)}
               >
-                {FRAME_NUMERALS[i]}
+                {n}
               </button>
             ))}
           </div>
