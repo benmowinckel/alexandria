@@ -4,6 +4,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
+import StyledJsxRegistry from "./components/StyledJsxRegistry";
 
 const ebGaramond = EB_Garamond({
   variable: "--font-eb-garamond",
@@ -158,9 +159,11 @@ export default function RootLayout({
       <body
         className={`${ebGaramond.variable} ${spectral.variable} antialiased`}
       >
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <StyledJsxRegistry>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </StyledJsxRegistry>
         <Analytics />
         <Script
           id="org-jsonld"

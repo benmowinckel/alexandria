@@ -344,18 +344,24 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     // features are… make the value really clear"): frames are the a4
     // ad portfolio, one concrete named feature per frame, per the
     // THREE TESTS directive ("concretely enumerate/rotate the features
-    // on the front slide"). After the a. hero: i the personalisation
-    // core (the locked stranger line), ii accretion (the saved-pile ad
-    // — extraction-into-you, never summarisation; 400→200, founder:
-    // "400 is a bit much"), iii capture (the "a" shortcut; same string
-    // as the digest CTA), iv sovereignty-as-switching-freedom (canon's
-    // trapped line, now also carrying the free/portable/deletable
-    // ledger), v coexistence (the plugs-in-never-converts reassurance,
-    // added from the pitch-loop session), vi the mirror (see your own
-    // mind). Each frame stands alone — visitors land mid-cycle. The
-    // numeral row leads with the brand mark: the hero indexes as a.
-    // (founder, 2026-07-24: "so the hero is with a."), and the hand is
-    // capped at v — see FRAME_NUMERALS below.
+    // on the front slide"). Fourth pass (founder, 2026-07-24 night):
+    // + development and one mind, "ensure the sequencing is optimal".
+    // The lap after the a. hero runs promise → purpose → mechanics →
+    // ubiquity → sovereignty → compatibility → reflection:
+    // i personalisation (the locked stranger line — the broadest pain
+    // leads), ii development (answering→developing, canon's locked
+    // phrase — the deepest claim while attention is highest),
+    // iii accretion (the saved-pile ad — extraction-into-you, never
+    // summarisation; 400→200, founder: "400 is a bit much"), iv capture
+    // (the "a" shortcut; same string as the digest CTA), v one mind
+    // (fragmentation — one file every ai reads; sets up vi),
+    // vi sovereignty-as-switching-freedom (canon's trapped line + the
+    // free/portable/deletable ledger), vii coexistence (the
+    // plugs-in-never-converts reassurance), viii the mirror
+    // (self-recognition — the emotional close, wrapping back into the
+    // hero's question). Each frame stands alone — visitors land
+    // mid-cycle. The hero indexes as a. (founder: "so the hero is with
+    // a."), now a fixed mark outside the cycle — see FRAME_NUMERALS.
     // Second pass (founder, 2026-07-24 evening): (1) each feature frame
     // carries its NAME as a quiet kicker — lowercase-with-period, the
     // site's section-label hand ("personalisation." not "Personalisation")
@@ -386,6 +392,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       lead: 'Your ai still treats you like a stranger.',
       sub: 'With Alexandria, every ai opens knowing you like an old friend — your work, your taste, how you think.',
     },
+    // Added 2026-07-24 (founder picked it from the brainstorm): the
+    // deepest claim, previously only gestured at by the hero. Canon's
+    // locked phrase (a4): "its job changes from answering you to
+    // developing you — into the best version of yourself."
+    {
+      kind: 'feature',
+      name: 'development.',
+      lead: 'Your ai answers you. It should be developing you.',
+      sub: 'Alexandria gives every conversation one aim — the best version of you. Months in, you notice you’ve changed.',
+    },
     {
       kind: 'feature',
       name: 'saved posts.',
@@ -397,6 +413,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       name: 'capture.',
       lead: 'Your best thoughts die in your notes app.',
       sub: 'One tap from your phone and it’s kept — days later, mid-conversation, your ai brings it back exactly when it matters.',
+    },
+    // Added 2026-07-24 (founder: "development and mind"): the
+    // fragmentation pain — distinct from i (stranger) and vi (trapped).
+    // Placed before ownership: one-file-everywhere sets up
+    // you-own-the-file.
+    {
+      kind: 'feature',
+      name: 'one mind.',
+      lead: 'Claude knows one you. Cursor another. ChatGPT a third.',
+      sub: 'Alexandria keeps one mind they all read — every ai you open picks up exactly where the last one left off.',
     },
     {
       kind: 'feature',
@@ -423,18 +449,23 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       sub: 'Everything you pour in, Alexandria draws into a living mirror of how you think — look in and recognise yourself, clearer every day.',
     },
   ];
-  // The numeral hand is CAPPED at a. + i–v (founder, 2026-07-24: "visually
-  // stops at v but continues on or cycles through so that it scales well")
-  // — the row never grows as frames are added. Frames past v wrap the live
-  // highlight back through i–v: the hand shows position-in-lap, not
-  // per-frame identity. Clicking a numeral jumps to its first-lap frame.
-  const FRAME_NUMERALS = ['a.', 'i', 'ii', 'iii', 'iv', 'v'];
+  // The hand: a. is a FIXED brand mark (founder, 2026-07-24: "the a.
+  // always stays and its just the numerals that cycle") — steady ink,
+  // outside the rotation, a quiet click target back to the hero. Only
+  // i–v cycle, and the row is CAPPED there (founder: "visually stops at
+  // v but continues on or cycles through so that it scales well"): the
+  // live highlight wraps through i–v lap after lap as the feature
+  // frames advance — position-in-lap, not per-frame identity — so the
+  // row never grows as frames are added. Clicking a numeral jumps to
+  // its first-lap frame. On the hero, the hand rests: no numeral lit,
+  // the a. carries the frame.
+  const FRAME_NUMERALS = ['i', 'ii', 'iii', 'iv', 'v'];
   const [frameIdx, setFrameIdx] = useState(0);
   const [frameHold, setFrameHold] = useState(false);
   const frameCount = FRONT_FRAMES.length;
-  const numeralCount = Math.min(frameCount, FRAME_NUMERALS.length);
+  const numeralCount = Math.min(frameCount - 1, FRAME_NUMERALS.length);
   const liveNumeral =
-    frameIdx === 0 ? 0 : 1 + ((frameIdx - 1) % (FRAME_NUMERALS.length - 1));
+    frameIdx === 0 ? -1 : (frameIdx - 1) % FRAME_NUMERALS.length;
   const stepFrame = (d: number) =>
     setFrameIdx((i) => (i + d + frameCount) % frameCount);
   // Touch swipe — left/right through the frames on coarse pointers.
@@ -448,8 +479,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (frameHold) return;
     // 8000ms per frame (founder, 2026-07-24: 6000 was "a touch too fast" —
-    // the sequenced dissolve eats ~1.75s, so 8s leaves ~6s of still read).
-    const t = setTimeout(() => setFrameIdx((i) => (i + 1) % frameCount), 8000);
+    // the sequenced dissolve eats ~1.75s, so 8s leaves ~6s of still read);
+    // the hero dwells 10s (founder, same night: "have 10s hero") so the
+    // brand question lands before the tour starts.
+    const t = setTimeout(
+      () => setFrameIdx((i) => (i + 1) % frameCount),
+      frameIdx === 0 ? 10000 : 8000,
+    );
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameIdx, frameHold]);
@@ -937,6 +973,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             ))}
           </div>
           <div className="front-numerals" aria-label="Slides">
+            <button
+              type="button"
+              className="front-numeral front-numeral-mark"
+              aria-label="Slide a."
+              aria-current={frameIdx === 0}
+              onClick={() => setFrameIdx(0)}
+            >
+              a.
+            </button>
             {FRAME_NUMERALS.slice(0, numeralCount).map((n, s) => (
               <button
                 key={s}
@@ -944,7 +989,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 className={`front-numeral${s === liveNumeral ? ' is-live' : ''}`}
                 aria-label={`Slide ${n}`}
                 aria-current={s === liveNumeral}
-                onClick={() => setFrameIdx(s)}
+                onClick={() => setFrameIdx(s + 1)}
               >
                 {n}
               </button>
@@ -3125,6 +3170,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           color: rgba(46, 30, 38, 0.5);
         }
         .front-numeral.is-live {
+          color: rgba(46, 30, 38, 0.62);
+        }
+        /* The a. mark — fixed brand ink, outside the cycle; the hand's
+           anchor the way the wax seal anchors mobile. Steady between
+           ghost and live so the cycling numeral still reads as THE
+           highlight. */
+        .front-numeral-mark {
+          color: rgba(46, 30, 38, 0.5);
+        }
+        .front-numeral-mark:hover {
           color: rgba(46, 30, 38, 0.62);
         }
         .front-numeral:focus-visible {
