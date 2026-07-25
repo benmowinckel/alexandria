@@ -37,10 +37,10 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
         {/* The read-if-you-want zone — below every action, footer-ish (founder
             2026-07-24: "they're not reading anything"). */}
         <p className="start-footnote">
-          the line, for the curious: <code>curl -fsSL alexandria-library.com/a | bash</code>.
-          one folder of plain files you own — no account, nothing sent anywhere.
-          your CLAUDE.md and notes stay untouched; delete the folder and it&rsquo;s
-          gone. full audit: <Link href="/mechanics">mechanics</Link>.
+          the command: <code>curl -fsSL alexandria-library.com/a | bash</code>.
+          it makes one folder on your computer. yours. your own setup stays
+          untouched. delete the folder and it&rsquo;s gone.
+          details: <Link href="/mechanics">mechanics</Link>.
         </p>
       </>
     );
@@ -58,7 +58,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
         </Link>
       </div>
       <p className="door-hint">
-        the first is the full product. chat is the light version &mdash; upgrade anytime.
+        first = the full product. chat = the light one. switch anytime.
       </p>
     </div>
   );

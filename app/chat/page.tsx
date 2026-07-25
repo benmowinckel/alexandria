@@ -45,9 +45,8 @@ export default function ChatPage() {
 
         <div className="start-details">
           <p className="start-qa-a">
-            your files, in your own Google Drive — nothing touches our servers.
-            the full version is one command:{' '}
-            <Link href="/start" className="start-shortcut-a">start here</Link>.
+            your files. your Drive. never our servers. the full version is one
+            command: <Link href="/start" className="start-shortcut-a">start here</Link>.
           </p>
         </div>
 

@@ -108,18 +108,20 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         <p className="install-invite">@{validRef} invited you to alexandria.</p>
       )}
 
-      <p className="step-line">Copy the install line, paste it into your coding app</p>
+      <p className="step-line"><span className="step-num">1.</span> copy this</p>
       <button type="button" className="install-block" onClick={copy} aria-label="copy the install command">
-        <span className="chat-block-label">{copied ? 'copied — now paste it' : 'copy'}</span>
+        <span className="chat-block-label">{copied ? 'copied' : 'copy'}</span>
         <span className="install-copy">{copied ? ICON_CHECK : ICON_COPY}</span>
       </button>
-      <p className="chat-rest">it walks you through the rest.</p>
+      <p className="step-line step-two"><span className="step-num">2.</span> paste it into your coding app</p>
+      <p className="chat-rest">it does the rest.</p>
 
-        <p className="step-line">
-          <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">Add the phone shortcut</a>
+        <p className="step-line step-two">
+          <span className="step-num">3.</span>{' '}
+          <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">add the phone shortcut</a>
         </p>
 
-        <p className="step-line step-two">Leave your email</p>
+        <p className="step-line step-two"><span className="step-num">4.</span> leave your email</p>
         <form className="join-door-field" onSubmit={sendEmail}>
           <input
             id="start-later-email"

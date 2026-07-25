@@ -15,10 +15,9 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
 
   return (
     <div className="cta-section">
+      <p className="step-line"><span className="step-num">1.</span> copy this</p>
       <button className="install-block chat-block" onClick={copy} aria-label="copy the bootstrap">
-        <span className="chat-block-label">
-          {copied ? 'copied — now paste it into claude' : 'copy the bootstrap'}
-        </span>
+        <span className="chat-block-label">{copied ? 'copied' : 'copy'}</span>
         <span className="install-copy" aria-hidden="true">
           {copied ? (
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5" /></svg>
@@ -27,8 +26,8 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
           )}
         </span>
       </button>
-
-      <p className="chat-rest">paste it into claude — it does the rest, Drive setup included.</p>
+      <p className="step-line step-two"><span className="step-num">2.</span> paste it into claude</p>
+      <p className="chat-rest">it does the rest.</p>
     </div>
   );
 }
