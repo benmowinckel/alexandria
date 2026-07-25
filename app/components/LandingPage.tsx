@@ -355,9 +355,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     simple: {
       lead: 'It makes your ai actually know you — everything it learns lives in files you own.',
       body: [
-        'Alexandria is ai personalisation you own. Your ai learns you — how you think, what you’re working on, what you like — and all of it lives in files that are yours, not inside Claude. It’s fully private by definition: no server, no account, nothing sent to anyone — the files sit on your computer, and only your permissions decide what touches them.',
-        'And it’s nothing new to learn. It just changes how the ai you already use behaves — like giving it a pep talk before it starts, so it works from who you are. Alexandria is the idea of keeping all of that in one place: a convention, not software. You run it however you like; we give you a working version, free. Your ai reads your files to know you and writes back what it learns, so it develops — deeper the longer you run it.',
-        'Because it’s just your files, it works with every ai and comes with you if you switch. Around it is the community — Strava, but for your mind — people running their own versions and sharing what works. That part’s paid, and free if you bring friends. There’s a lot more inside — this is just the core.',
+        'Alexandria is ai personalisation you own. Your ai learns you — how you think, what you’re working on, what you like — and all of it lives in files that are yours, not inside Claude. It’s fully private by definition: no server, no account, nothing sent to anyone — the files sit on your computer, and only you decide what reads them.',
+        'And it’s nothing new to learn. It just changes how the ai you already use behaves — like giving it a pep talk before it starts, so it works from who you are. Your ai reads your files to know you, and writes back what it learns — so it develops, deeper the longer you run it.',
+        'Alexandria is just the idea of keeping all of that in one place — a method, not an app. You run it however you like; we give you a working version, free.',
+        'And because it’s just your files, it works with every ai and comes with you if you switch. Around it is the community — Strava, but for your mind — people running their own versions and sharing what works. That part’s paid, and free if you bring friends. There’s a lot more inside — this is just the core.',
       ],
     },
     technical: {
