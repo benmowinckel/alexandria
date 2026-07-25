@@ -78,7 +78,7 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
       document.body.removeChild(ta);
     }
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 4000);
   };
 
   const sendEmail = async (e: React.FormEvent) => {
@@ -108,17 +108,13 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         <p className="install-invite">@{validRef} invited you to alexandria.</p>
       )}
 
-      <p className="step-line">
-        <span className="step-num">1.</span>{' '}
-        <button type="button" className="copy-word" onClick={copy} aria-label="copy the install command">
-          {copied ? 'copied' : 'copy this'}{copied ? <span className="install-copy">{ICON_CHECK}</span> : <span className="install-copy">{ICON_COPY}</span>}
-        </button>
-        {' '}&mdash; {copied ? 'now paste it into your coding app.' : 'paste it into your coding app.'}
-      </p>
+      <button type="button" className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the install command">
+        {copied ? 'copied — now paste it into your coding app' : 'copy the install line'}
+      </button>
       <p className="chat-rest">it does the rest.</p>
 
-        <p className="step-line step-two">
-          <span className="step-num">2.</span> on your phone:{' '}
+        <p className="email-line">
+          on your phone:{' '}
           <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">add the shortcut</a>
           {' '}&mdash; save thoughts to your ai from anywhere.
         </p>

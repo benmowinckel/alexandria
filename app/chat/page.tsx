@@ -128,35 +128,22 @@ export default function ChatPage() {
           font-size: 14px; color: var(--text-muted, rgba(26, 19, 24, 0.55));
         }
 
-        .copy-word {
-          background: none; border: none; padding: 0; cursor: pointer;
-          font: inherit; color: var(--text-primary);
-          border-bottom: 1px dotted var(--text-muted, rgba(26, 19, 24, 0.45));
-          transition: border-color 200ms;
-        }
-        .copy-word:hover { border-bottom-color: var(--text-primary); }
-        .copy-word svg { color: var(--text-muted, rgba(26, 19, 24, 0.5)); }
-        .install-block {
-          display: flex; align-items: center; justify-content: space-between; gap: 16px;
-          width: 100%; max-width: 460px; background: var(--bg-secondary);
-          border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.14)); border-radius: 9px;
-          padding: 16px 18px; cursor: pointer; font: inherit; text-align: left;
-          transition: border-color 200ms, transform 120ms;
-        }
-        .install-block:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
-        .install-block:active { transform: scale(0.992); }
-        .chat-block { margin: 6px 0 0; }
-        .chat-block-label {
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic; font-size: 15px; letter-spacing: 0.02em;
-          color: var(--text-primary);
-        }
-        .install-copy {
-          display: inline-flex; align-items: center; flex-shrink: 0;
-          color: var(--text-muted, rgba(26, 19, 24, 0.5)); transition: color 200ms;
-        }
-        .install-block:hover .install-copy { color: var(--text-primary); }
 
+        .door-btn {
+          display: block; width: 100%; max-width: 460px; text-align: left;
+          background: var(--bg-secondary);
+          border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.14)); border-radius: 10px;
+          padding: 17px 20px; cursor: pointer;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary);
+          transition: border-color 220ms, transform 120ms, background 220ms;
+        }
+        .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
+        .door-btn:active { transform: scale(0.992); }
+        .cta-btn.is-copied {
+          border-color: var(--accent); color: var(--text-primary);
+          background: var(--bg-primary);
+        }
         .start-details {
           margin: 36px 0 0; padding-top: 24px; width: 100%; max-width: 460px;
           border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
