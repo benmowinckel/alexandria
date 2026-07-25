@@ -75,7 +75,6 @@ export default async function JoinPage({
             code is confirmed a real member login. */}
         <JoinCTA urlRef={ref} refSource={refSource} />
 
-        <p className="primer-coda"><em>keep thinking.</em></p>
       </main>
 
       <style>{`
@@ -224,6 +223,51 @@ export default async function JoinPage({
         }
         .join-btn:hover { opacity: 0.88; }
         .join-btn:active { transform: scale(0.99); }
+
+        .door-btn {
+          display: block; width: 100%; max-width: 486px; text-align: left;
+          background: var(--bg-secondary);
+          border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.14)); border-radius: 10px;
+          padding: 17px 20px; cursor: pointer;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary);
+          text-decoration: none;
+          transition: border-color 220ms, transform 120ms;
+        }
+        .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
+        .door-btn:active { transform: scale(0.992); }
+        .act-box { display: block; }
+        .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
+        .act-primary {
+          background: var(--text-primary); color: var(--bg-primary);
+          border-color: var(--text-primary); margin-top: 4px;
+        }
+        .act-primary:hover { opacity: 0.9; border-color: var(--text-primary); }
+        .act-why-inverse { color: var(--bg-primary); opacity: 0.65; }
+        .join-terms {
+          margin: 14px 0 0; max-width: 486px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 13.5px; line-height: 1.6; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
+        .join-terms + .join-terms { margin-top: 4px; }
+        .join-exits {
+          margin: 40px 0 0; padding-top: 30px; width: 100%; max-width: 486px;
+          border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
+          display: flex; flex-direction: column; gap: 10px;
+        }
+        .act-email { display: flex; align-items: center; gap: 0; cursor: text; }
+        .act-email input {
+          flex: none; width: 8.2em; min-width: 0; background: transparent; border: none; outline: none;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary);
+          padding: 0;
+        }
+        .act-email input:not(:placeholder-shown) { flex: 1; }
+        .act-email .join-door-go { margin-left: auto; }
+        .act-email input::placeholder { color: var(--text-primary); }
+        .act-email-why { flex: none; font-size: 17px; }
+        .act-sent { font-size: 17px; }
 
         /* THE OTHER DOORS — the three exits under one hairline. Tertiary by
            design: each is a small muted question + an editorial underline
