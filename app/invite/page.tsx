@@ -87,53 +87,48 @@ const styles = `
     letter-spacing: -0.01em; color: var(--text-primary); text-wrap: balance;
     font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "calt" 1, "swsh" 1;
   }
-  .invite-lede {
-    margin: 0 0 32px; max-width: 500px;
+  /* The one grammar (the /join law): bold words — muted why, boxes for
+     every actionable thing. Styles mirror /join's act-box set. */
+  .invite-vouch {
+    margin: 0 0 28px; max-width: 560px;
     font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 17px; line-height: 1.6; color: var(--text-secondary);
-    text-wrap: pretty;
+    font-size: 17px; line-height: 1.55; letter-spacing: 0.005em;
+    color: var(--text-primary); text-wrap: pretty;
   }
-  /* Italic correction (founder 2026-07-17): the serif italic's slant
-     overhangs its advance width, so the space after an inline italic word
-     reads as missing. A small margin restores the visual gap. */
-  .invite-lede em, .invite-more em {
-    font-style: italic; color: var(--text-primary); margin-right: 0.06em;
+  .door-btn {
+    display: block; width: 100%; max-width: 486px; text-align: left;
+    background: var(--bg-secondary);
+    border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.14)); border-radius: 10px;
+    padding: 17px 20px; cursor: pointer;
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary);
+    text-decoration: none;
+    transition: border-color 220ms, transform 120ms;
   }
-  .invite-btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    padding: 13px 28px; border-radius: 9px;
+  .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
+  .door-btn:active { transform: scale(0.992); }
+  .act-box { display: block; }
+  .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
+  .act-primary {
     background: var(--text-primary); color: var(--bg-primary);
-    font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 16px;
-    letter-spacing: 0.01em; text-decoration: none; cursor: pointer;
-    transition: opacity 200ms, transform 120ms;
+    border-color: var(--text-primary); margin-top: 4px;
   }
-  .invite-btn:hover { opacity: 0.88; }
-  .invite-btn:active { transform: scale(0.99); }
-  .invite-hint {
-    margin: 14px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-style: italic; font-size: 13px; letter-spacing: 0.02em;
-    color: var(--text-muted);
+  .act-primary:hover { opacity: 0.9; border-color: var(--text-primary); }
+  .act-why-inverse { color: var(--bg-primary); opacity: 0.65; }
+  .invite-terms {
+    margin: 14px 0 0; max-width: 486px;
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 13.5px; line-height: 1.6; letter-spacing: 0.01em;
+    color: var(--text-muted, rgba(26, 19, 24, 0.55));
   }
-  .invite-more {
-    margin: 36px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 14px; line-height: 1.6; color: var(--text-muted);
-  }
-  .invite-more a {
-    color: var(--text-secondary, rgba(61, 54, 48, 0.82));
-    text-decoration: underline; text-decoration-color: var(--text-muted, rgba(61, 54, 48, 0.4));
-    text-underline-offset: 3px; text-decoration-thickness: 1px;
-    transition: color 200ms, text-decoration-color 200ms;
-  }
-  .invite-more a:hover { color: var(--text-primary); text-decoration-color: var(--text-primary); }
-  .primer-coda {
-    margin: 52px 0 0; text-align: left; font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 20px; font-style: italic; color: var(--text-primary);
-    letter-spacing: 0.005em; opacity: 0.72;
+  .invite-terms + .invite-terms { margin-top: 4px; }
+  .invite-exits {
+    margin: 40px 0 0; padding-top: 30px; width: 100%; max-width: 486px;
+    border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
+    display: flex; flex-direction: column; gap: 10px;
   }
   @media (max-width: 640px) {
     .primer-main { padding: 2rem 24px 4rem; }
     .invite-hero { font-size: 26px; }
-    .invite-lede { font-size: 16px; }
-    .primer-coda { font-size: 18px; margin-top: 44px; }
   }
 `;
