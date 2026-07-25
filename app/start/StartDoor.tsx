@@ -56,13 +56,13 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
 
   return (
     <div className="door-block">
-      <p className="door-q">do you use any of these?</p>
+      <p className="door-q">what do you use?</p>
       <div className="door-answers">
         <button className="door-btn" onClick={() => go('device')}>
-          claude code · cursor · codex …
+          claude code<span className="act-why"> — or cursor, codex, cowork</span>
         </button>
         <Link href="/chat" className="door-btn door-btn-link">
-          no — i just use the chat app
+          just claude<span className="act-why"> — the regular chat app</span>
         </Link>
       </div>
     </div>

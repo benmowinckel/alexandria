@@ -42,7 +42,6 @@ export default function ChatPage() {
 
         <ChatCTA bootstrap={bootstrap} />
 
-        <p className="primer-coda"><em>keep thinking.</em></p>
       </main>
 
       <style>{`

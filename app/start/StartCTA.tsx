@@ -111,7 +111,7 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
       <div className="act-row">
         <span className="act-num">1</span>
         <a className="door-btn act-box" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">
-          add the shortcut<span className="act-why"> — capture anything</span>
+          add the shortcut<span className="act-why"> — catch any thought</span>
         </a>
       </div>
 
@@ -128,13 +128,14 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
                 type="email"
                 inputMode="email"
                 autoComplete="email"
-                placeholder="your email"
-                aria-label="your email"
+                placeholder="leave your email"
+                aria-label="leave your email"
                 data-shake={shakeKey > 0 ? 'on' : 'off'}
+                className={email.trim() ? 'has-val' : ''}
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (mailState === 'error') setMailState('idle'); }}
               />
-              {!email.trim() && <span className="act-why act-email-why">— for the follow-up</span>}
+              {!email.trim() && <span className="act-why act-email-why"> — for the follow-up</span>}
               {email.trim() && (
                 <button type="submit" className="join-door-go" aria-label="send" disabled={mailState === 'sending'}>
                   <span className="join-go-word">{mailState === 'error' ? 'retry' : 'send'}</span>
@@ -151,8 +152,8 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
           <span className="act-num">3</span>
           <button type="button" className={`door-btn act-box cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
             {copied
-              ? 'copied ✓ — now paste it'
-              : (<>copy the setup<span className="act-why"> — then paste it</span></>)}
+              ? 'copied — now paste it in'
+              : (<>copy the setup<span className="act-why"> — then paste it in</span></>)}
           </button>
         </div>
       )}

@@ -61,7 +61,6 @@ export default async function StartPage({
             The old consolidated layout lives untouched behind the yes-door. */}
         <StartDoor refCode={ref} />
 
-        <p className="primer-coda"><em>keep thinking.</em></p>
       </main>
 
       <style>{`
@@ -355,13 +354,15 @@ export default async function StartPage({
         }
         .act-box { flex: 1; max-width: none; text-decoration: none; display: block; }
         .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
-        .act-email { display: flex; align-items: center; gap: 10px; }
+        .act-email { display: flex; align-items: center; gap: 0; }
         .act-email input {
-          flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+          flex: none; width: 7.6em; min-width: 0; background: transparent; border: none; outline: none;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary);
           padding: 0;
         }
+        .act-email input.has-val { flex: 1; }
+        .act-email .join-door-go { margin-left: auto; }
         .act-email input::placeholder { color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .act-email input[data-shake="on"] { animation: startShake 320ms ease-in-out; }
         .act-email-why { flex: none; font-size: 17px; }
