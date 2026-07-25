@@ -364,6 +364,7 @@ export default async function StartPage({
         }
         .act-email input::placeholder { color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .act-email input[data-shake="on"] { animation: startShake 320ms ease-in-out; }
+        .act-email-why { flex: none; font-size: 17px; }
         .act-sent { font-size: 17px; }
         .cta-btn.is-copied {
           border-color: var(--accent); background: var(--bg-primary);

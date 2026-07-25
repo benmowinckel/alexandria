@@ -15,9 +15,10 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
 
   return (
     <div className="cta-section">
-      <p className="step-line">press this, then paste it into claude:</p>
       <button className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
-        {copied ? 'copied — now paste it into claude' : 'copy the setup'}
+        {copied
+          ? 'copied — now paste it into claude'
+          : (<>copy the setup<span className="act-why"> — paste it into claude</span></>)}
       </button>
     </div>
   );

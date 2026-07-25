@@ -132,6 +132,7 @@ export default function ChatPage() {
         }
         .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .door-btn:active { transform: scale(0.992); }
+        .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
         .cta-btn.is-copied {
           border-color: var(--accent); color: var(--text-primary);
           background: var(--bg-primary);

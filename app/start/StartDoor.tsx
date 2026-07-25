@@ -47,7 +47,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
             yes
           </button>
           <button className="door-btn" onClick={() => go('phone')}>
-            only my phone
+            no
           </button>
         </div>
       </div>
@@ -65,9 +65,6 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
           no — i just use the chat app
         </Link>
       </div>
-      <p className="door-hint">
-        first = the full product. chat = the light one. switch anytime.
-      </p>
     </div>
   );
 }
