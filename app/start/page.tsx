@@ -337,6 +337,15 @@ export default async function StartPage({
           font-style: italic; font-size: 13px; letter-spacing: 0.02em;
           color: var(--text-muted, rgba(26, 19, 24, 0.55));
         }
+        .chat-block-label {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 15px; letter-spacing: 0.02em;
+          color: var(--text-primary);
+        }
+        .start-footnote code {
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          font-size: 11px;
+        }
         .chat-rest {
           margin: 14px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic; font-size: 14px; letter-spacing: 0.02em;

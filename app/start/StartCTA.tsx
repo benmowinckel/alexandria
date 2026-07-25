@@ -31,12 +31,12 @@ const ICON_CHECK = (
   </svg>
 );
 
-// Staged (founder 2026-07-24, click-through door): 'command' is the one
-// computer action (old steps 1+2 consolidated); 'phone' is the one phone
-// action pair (shortcut + email). Each screen is one thing — no numerals,
-// no 2×2, nothing competing for attention. `refCode`, not `ref` — `ref` is
-// a reserved React prop name.
-export default function StartCTA({ refCode, stage }: { refCode?: string; stage: 'command' | 'phone' }) {
+// ONE screen after the door (founder 2026-07-24: "no need for another gate…
+// you just autopilot through"): copy → paste → shortcut → email, stacked,
+// each one line. The command TEXT is hidden behind the copy button (noise to
+// an autopilot user; it lives in the footnote for the curious). `refCode`,
+// not `ref` — `ref` is a reserved React prop name.
+export default function StartCTA({ refCode }: { refCode?: string }) {
   const [copied, setCopied] = useState(false);
   const [email, setEmail] = useState('');
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
@@ -102,9 +102,19 @@ export default function StartCTA({ refCode, stage }: { refCode?: string; stage: 
     }
   };
 
-  if (stage === 'phone') {
-    return (
-      <section className="cta-section">
+  return (
+    <section className="cta-section">
+      {validRef && (
+        <p className="install-invite">@{validRef} invited you to alexandria.</p>
+      )}
+
+      <p className="step-line">Copy the install line, paste it into your coding app</p>
+      <button type="button" className="install-block" onClick={copy} aria-label="copy the install command">
+        <span className="chat-block-label">{copied ? 'copied — now paste it' : 'copy'}</span>
+        <span className="install-copy">{copied ? ICON_CHECK : ICON_COPY}</span>
+      </button>
+      <p className="chat-rest">it walks you through the rest.</p>
+
         <p className="step-line">
           <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">Add the shortcut</a>
         </p>
@@ -153,22 +163,6 @@ export default function StartCTA({ refCode, stage }: { refCode?: string; stage: 
               ? 'sent — the line’s in your inbox.'
               : 'we’ll send you the install line, for when you’re at your computer.'}
         </p>
-      </section>
-    );
-  }
-
-  return (
-    <section className="cta-section">
-      {validRef && (
-        <p className="install-invite">@{validRef} invited you to alexandria.</p>
-      )}
-
-      <p className="step-line">Copy this, paste it into your coding app</p>
-      <button type="button" className="install-block" onClick={copy} aria-label="copy the install command">
-        <code className="install-cmd">{cmd}</code>
-        <span className="install-copy">{copied ? ICON_CHECK : ICON_COPY}</span>
-      </button>
-      <p className="chat-rest">it walks you through the rest.</p>
 
       {validRef && (
         <p className="install-new">

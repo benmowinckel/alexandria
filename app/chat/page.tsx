@@ -41,17 +41,13 @@ export default function ChatPage() {
         <p className="primer-eyebrow">the tool — in chat</p>
         <h1 className="primer-h1">claude already knows you. now you own it.</h1>
 
-        <p className="start-grab">
-          your thinking, in files you own, in your own Google Drive — built
-          from every conversation you&apos;ve already had.
-        </p>
-
         <ChatCTA bootstrap={bootstrap} />
 
         <div className="start-details">
           <p className="start-qa-a">
-            nothing touches our servers — your files live in your Drive, yours
-            to open, edit, or walk away with.
+            your thinking, in files you own, in your own Google Drive — built
+            from every conversation you&apos;ve already had. nothing touches our
+            servers; yours to open, edit, or walk away with.
           </p>
           <p className="start-qa-a">
             this is the light version. the full one — automatic capture,

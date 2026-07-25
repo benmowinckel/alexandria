@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import StartCTA from './StartCTA';
 
-type Screen = 'q' | 'command' | 'phone';
+type Screen = 'q' | 'command';
 
 // The click-through door (founder, 2026-07-24): one screen, one action, and
 // browser-back / swipe-back walks BACKWARDS through the sequence, never out
@@ -26,30 +26,24 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
   }, [refCode]);
 
   const go = (s: Exclude<Screen, 'q'>) => {
-    window.history.pushState({ s }, '', s === 'command' ? '#go' : '#phone');
+    window.history.pushState({ s }, '', '#go');
     setScreen(s);
   };
 
   if (screen === 'command') {
     return (
       <>
-        <StartCTA refCode={refCode} stage="command" />
-        <button className="door-btn door-next" onClick={() => go('phone')}>
-          next — your phone
-        </button>
+        <StartCTA refCode={refCode} />
         {/* The read-if-you-want zone — below every action, footer-ish (founder
             2026-07-24: "they're not reading anything"). */}
         <p className="start-footnote">
+          the line, for the curious: <code>curl -fsSL alexandria-library.com/a | bash</code>.
           one folder of plain files you own — no account, nothing sent anywhere.
           your CLAUDE.md and notes stay untouched; delete the folder and it&rsquo;s
           gone. full audit: <Link href="/mechanics">mechanics</Link>.
         </p>
       </>
     );
-  }
-
-  if (screen === 'phone') {
-    return <StartCTA refCode={refCode} stage="phone" />;
   }
 
   return (

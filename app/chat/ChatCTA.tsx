@@ -20,12 +20,12 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
         <span className="chat-where">(Settings → Connectors)</span>
       </p>
       <p className="step-line">
-        <span className="step-num">2.</span> copy this, paste it into a new chat
+        <span className="step-num">2.</span> copy the bootstrap, paste it into a new chat
       </p>
 
       <button className="install-block chat-block" onClick={copy} aria-label="copy the bootstrap">
         <span className="chat-block-label">
-          {copied ? 'copied — now paste it into claude' : 'click to copy'}
+          {copied ? 'copied — now paste it into claude' : 'copy the bootstrap'}
         </span>
         <span className="install-copy" aria-hidden="true">
           {copied ? (
