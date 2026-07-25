@@ -1,62 +1,35 @@
 'use client';
 
-import { useState, useLayoutEffect, useRef } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { SERVER_URL } from '../lib/config';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { ArrowIcon } from '../join/DoorIcons';
 
 const AMOUNT_MIN = 0;
 const AMOUNT_MAX = 200;
-// Opens on free (2026-07-15, warm-lead P0.6a): the homepage ghost CTA promises
-// "just your email", so this page must open as an email capture, not a $ anchor.
-// The pay-what-you-want slider stays — the optional second beat below the email.
 const AMOUNT_DEFAULT = 0;
 
-// /follow — the third door, rebuilt onto the /start + /join skeleton (founder
-// 2026-07-17): the flush-left editorial spine, the CSS-var theme (so dark mode
-// works), the ThemeToggle, the brand header, the coda. This is the low-friction
-// COMPANY door — no GitHub, no tool needed — for someone who likes the mission
-// and wants to follow along, with an optional pay-what-you-want slider to back
-// it. Distinct from /join (founding member, $10, the community) and /start (the
-// free tool). Copy is the founder's, kept; only the structure and style change.
+// /follow — the third door, on the radically-simple law (founder 2026-07-25):
+// hero, one email box (the /join grammar — input inside the box, arrow on type),
+// one optional slider stripped to its mechanic. No eyebrow, no lede, no coda,
+// no tier labels, no drag arrows. The box label carries the money state: it says
+// "follow along" at $0 and "support $X/mo" once the slider moves, so the one
+// action is always self-describing. Slider itself is the founder's 2026-07-15 call.
 export default function FollowForm({ initialDone }: { initialDone: boolean }) {
   const [email, setEmail] = useState('');
   const [amount, setAmount] = useState(AMOUNT_DEFAULT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [shakeKey, setShakeKey] = useState(0);
   const [doneKind, setDoneKind] = useState<null | 'free' | 'paid'>(
     initialDone ? 'paid' : null,
   );
   const done = doneKind !== null;
-  const sliderRef = useRef<HTMLInputElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [hintLeft, setHintLeft] = useState<number | null>(null);
-
-  // Keep the "drag" hint centred under the slider thumb as it moves.
-  useLayoutEffect(() => {
-    const slider = sliderRef.current;
-    const wrap = wrapRef.current;
-    if (!slider || !wrap) return;
-    const update = () => {
-      const sr = slider.getBoundingClientRect();
-      const wr = wrap.getBoundingClientRect();
-      const ratio = (amount - AMOUNT_MIN) / (AMOUNT_MAX - AMOUNT_MIN);
-      const THUMB = 16;
-      const thumbCenterInSlider = THUMB / 2 + ratio * (sr.width - THUMB);
-      setHintLeft(sr.left - wr.left + thumbCenterInSlider);
-    };
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, [amount]);
+  const isHonorary = amount > 0;
 
   const handleSubmit = async () => {
     const trimmed = email.trim();
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setShakeKey((k) => k + 1);
-      return;
-    }
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return;
     setLoading(true);
     setError('');
     try {
@@ -65,15 +38,9 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: trimmed, amount }),
       });
-      const body = await res.json().catch(() => ({} as { url?: string; error?: string; ok?: boolean }));
-      if (!res.ok) {
-        setError(body.error || 'could not sign up');
-        return;
-      }
-      if (body.url) {
-        window.location.href = body.url;
-        return;
-      }
+      const body = await res.json().catch(() => ({} as { url?: string; error?: string }));
+      if (!res.ok) { setError(body.error || 'could not sign up'); return; }
+      if (body.url) { window.location.href = body.url; return; }
       setDoneKind('free');
     } catch {
       setError('could not sign up');
@@ -97,23 +64,13 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
         <ThemeToggle />
         {brand}
         <main className="primer-main">
-          <p className="primer-eyebrow">{paid ? 'thank you' : 'you’re following along'}</p>
-          <h1 className="follow-hero">
-            {paid ? 'Thank you for backing alexandria.' : 'You’re in.'}
-          </h1>
-          <p className="follow-lede">
-            {paid
-              ? 'A note’s on its way — reply any time.'
-              : 'A note’s on its way to your inbox — we’ll keep you posted as we build.'}
-          </p>
-          <p className="primer-coda"><em>keep thinking.</em></p>
+          <h1 className="follow-hero">{paid ? 'Thank you.' : 'You’re in.'}</h1>
+          <p className="follow-note">a note’s on its way — reply any time.</p>
         </main>
         <style>{styles}</style>
       </div>
     );
   }
-
-  const isHonorary = amount > 0;
 
   return (
     <div className="primer-page">
@@ -121,105 +78,50 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
       {brand}
 
       <main className="primer-main">
-        <p className="primer-eyebrow">follow along</p>
-        <h1 className="follow-hero">Not ready for the tool? Follow along as we build.</h1>
-        <p className="follow-lede">
-          Leave your email &mdash; we&rsquo;ll keep you posted as we build.
-        </p>
+        <h1 className="follow-hero">Follow along as we build.</h1>
 
-        {/* Primary action — the email. Underline field to match /join's doors.
-            The button is dynamic: at $0 it's "follow" (email only); once the
-            slider sets an amount it becomes "support $X/mo", so it's obvious
-            THIS is how the money goes through — a real checkout on click
-            (founder 2026-07-17: it was unclear how to actually send money when
-            the button just said "follow"). */}
-        <div className="follow-field">
+        <form className="door-btn act-box act-email" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} onClick={() => document.getElementById('follow-email')?.focus()}>
           <input
-            key={shakeKey}
+            id="follow-email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
-            data-follow-shake={shakeKey > 0 ? 'on' : 'off'}
+            onChange={(e) => { setEmail(e.target.value); if (error) setError(''); }}
             placeholder="your email"
             autoComplete="email"
             spellCheck={false}
             aria-label="email"
           />
-          {/* Fixed min-width + a stable one-word label ("follow" / "support")
-              so the button never resizes as the amount changes — only the word
-              swaps, no reflow of the input beside it (founder 2026-07-17: don't
-              jitter/shift when sliding, just change the CTA seamlessly). The
-              live $ amount lives in the display below, not the button. */}
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={loading}
-            className="follow-cta"
-          >
-            {loading ? '…' : isHonorary ? 'support' : 'follow'}
-          </button>
-        </div>
+          {!email.trim() && (
+            <span className="act-why act-email-why">
+              {isHonorary ? `— support $${amount}/mo` : '— follow along'}
+            </span>
+          )}
+          {email.trim() && (
+            <button type="submit" className="join-door-go" aria-label={isHonorary ? 'support' : 'follow'} disabled={loading}>
+              <ArrowIcon />
+            </button>
+          )}
+        </form>
         {error ? <p className="follow-error">{error}</p> : null}
-        {/* Always rendered (visibility toggled, not mounted) so showing/hiding
-            it never pushes the slider block down. */}
-        <p className="follow-checkout-note" style={{ visibility: isHonorary ? 'visible' : 'hidden' }}>
-          secure checkout on the next screen &mdash; cancel anytime.
-        </p>
 
-        {/* Optional support — free by default; drag the slider to set a monthly
-            amount, and the button above turns into the "support" action. */}
         <div className="follow-support">
-          <p className="follow-support-q">Following is free &mdash; drag the slider if you&rsquo;d like to support the project.</p>
           <div className="follow-amount">
-            {amount === 0 ? (
-              <span className="follow-amount-free"><em>free</em></span>
-            ) : (
-              <>
-                <span className="follow-amount-value">${amount}</span>
-                <span className="follow-amount-unit">/ month</span>
-              </>
-            )}
+            {amount === 0
+              ? <span className="follow-amount-free"><em>free</em> — or slide to back it</span>
+              : <><span className="follow-amount-value">${amount}</span><span className="follow-amount-unit">/ month — checkout next, cancel anytime</span></>}
           </div>
-          <div className="slider-wrap" ref={wrapRef}>
-            <input
-              ref={sliderRef}
-              type="range"
-              min={AMOUNT_MIN}
-              max={AMOUNT_MAX}
-              step={5}
-              value={amount}
-              onChange={(e) => setAmount(parseInt(e.target.value, 10))}
-              className="slider"
-              aria-label="monthly amount"
-              style={{ ['--fill' as string]: `${(amount / AMOUNT_MAX) * 100}%` }}
-            />
-            <p
-              className="slider-hint"
-              aria-hidden
-              style={{
-                left: hintLeft == null ? '50%' : `${hintLeft}px`,
-                visibility: hintLeft == null ? 'hidden' : 'visible',
-                ['--lfade' as string]: amount <= AMOUNT_MIN ? '0' : '1',
-                ['--rfade' as string]: amount >= AMOUNT_MAX ? '0' : '1',
-              }}
-            >
-              <span className="hint-arrow hint-l">←</span>
-              <em>drag</em>
-              <span className="hint-arrow hint-r">→</span>
-            </p>
-          </div>
-          <div className="tier-row" aria-live="polite">
-            <span className={`tier ${isHonorary ? 'is-dim' : 'is-on'}`}>
-              <em>follower of alexandria.</em>
-            </span>
-            <span className={`tier tier-right ${isHonorary ? 'is-on' : 'is-dim'}`}>
-              <em>honorary alexandrian.</em>
-            </span>
-          </div>
+          <input
+            type="range"
+            min={AMOUNT_MIN}
+            max={AMOUNT_MAX}
+            step={5}
+            value={amount}
+            onChange={(e) => setAmount(parseInt(e.target.value, 10))}
+            className="slider"
+            aria-label="monthly support amount"
+            style={{ ['--fill' as string]: `${(amount / AMOUNT_MAX) * 100}%` }}
+          />
         </div>
-
-        <p className="primer-coda"><em>keep thinking.</em></p>
       </main>
 
       <style>{styles}</style>
@@ -255,120 +157,87 @@ const styles = `
   .primer-brand:hover { opacity: 0.6; }
   .primer-brand-dot { font-style: normal; }
 
-  /* Flush-left editorial column, vertically centred — the /start + /join spine. */
   .primer-main {
     flex: 1;
     display: flex; flex-direction: column;
     align-items: flex-start; justify-content: center;
-    max-width: 620px; margin: 0 auto; padding: 3rem 40px 6rem; width: 100%;
+    max-width: 540px; margin: 0 auto; padding: 3rem 40px 6rem; width: 100%;
     text-align: left;
   }
 
-  .primer-eyebrow {
-    margin: 0 0 18px; font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-weight: 500; font-size: 11.5px; letter-spacing: 0.3em;
-    text-transform: lowercase; font-variant-caps: all-small-caps;
-    font-feature-settings: "smcp" 1, "kern" 1;
-    color: var(--accent); line-height: 1;
-  }
-
-  /* Hero in EB Garamond (the calligraphic italic), matching /join. */
   .follow-hero {
-    margin: 0 0 22px; max-width: 560px;
+    margin: 0 0 26px; max-width: 500px;
     font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
     font-style: italic; font-weight: 500;
     font-size: clamp(27px, 1.5rem + 1.4vw, 34px); line-height: 1.22;
     letter-spacing: -0.01em; color: var(--text-primary); text-wrap: balance;
     font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "calt" 1, "swsh" 1;
   }
+  .follow-note {
+    margin: 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 15px; line-height: 1.6; color: var(--text-muted);
+  }
 
-  .follow-lede {
-    margin: 0 0 30px; max-width: 500px;
+  /* The one action — the /join box grammar exactly. */
+  .door-btn {
+    display: block; width: 100%; max-width: 486px; text-align: left;
+    background: var(--bg-secondary);
+    border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.14)); border-radius: 10px;
+    padding: 17px 20px; cursor: pointer;
     font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 16px; line-height: 1.6; color: var(--text-secondary);
-    text-wrap: pretty;
+    font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary);
+    transition: border-color 220ms, transform 120ms;
   }
+  .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
+  .act-email { display: flex; align-items: center; gap: 0.32em; cursor: text; }
+  .act-email input {
+    flex: none; field-sizing: content; width: auto; min-width: 0; background: transparent;
+    border: none; outline: none;
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary); padding: 0;
+  }
+  .act-email input:not(:placeholder-shown) { flex: 1; field-sizing: normal; }
+  .act-email input::placeholder { color: var(--text-primary); }
+  .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
+  .act-email-why { flex: none; font-size: 17px; }
+  .join-door-go {
+    display: inline-flex; align-items: center; margin-left: auto; flex: none;
+    padding: 0; background: none; border: none; color: var(--text-muted);
+    cursor: pointer; transition: color 200ms;
+  }
+  .join-door-go:hover { color: var(--text-primary); }
+  .join-door-go:disabled { opacity: 0.4; cursor: default; }
 
-  /* Email — the primary action. Underline field + inline follow button, in the
-     same editorial idiom as /join's doors. */
-  /* align-items: flex-end so the input's underline (its bottom border) lines
-     up with the bottom edge of the follow button (founder 2026-07-17). */
-  .follow-field {
-    display: flex; align-items: flex-end; gap: 14px;
-    width: 100%; max-width: 460px;
-  }
-  .follow-field input {
-    flex: 1; min-width: 0; height: 40px; padding: 0 2px;
-    font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 18px;
-    color: var(--text-primary); background: transparent;
-    border: none; border-bottom: 1px solid var(--text-muted, rgba(61, 54, 48, 0.32));
-    border-radius: 0; outline: none; transition: border-color 200ms;
-  }
-  .follow-field input::placeholder { color: var(--text-muted, rgba(61, 54, 48, 0.42)); font-style: italic; }
-  .follow-field input:focus { border-bottom-color: var(--text-secondary, rgba(61, 54, 48, 0.7)); }
-  .follow-field input[data-follow-shake="on"] { animation: followShake 320ms ease-in-out; }
-  @keyframes followShake {
-    0%, 100% { transform: translateX(0); }
-    25%      { transform: translateX(-3px); border-bottom-color: #b3261e; }
-    75%      { transform: translateX(3px);  border-bottom-color: #b3261e; }
-  }
-  .follow-cta {
-    flex-shrink: 0; min-width: 112px; text-align: center;
-    padding: 11px 24px; border-radius: 9px;
-    background: var(--text-primary); color: var(--bg-primary);
-    font-family: var(--font-serif), ui-serif, Georgia, serif; font-size: 16px;
-    letter-spacing: 0.01em; border: none; cursor: pointer;
-    transition: opacity 200ms, transform 120ms;
-  }
-  .follow-cta:hover:not(:disabled) { opacity: 0.88; }
-  .follow-cta:active { transform: scale(0.98); }
-  .follow-cta:disabled { opacity: 0.4; cursor: default; }
   .follow-error {
     margin: 12px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
     font-size: 13px; font-style: italic; color: var(--text-muted);
   }
-  /* Appears only once an amount is set — makes clear the button starts a real
-     payment, and de-risks the click. */
-  .follow-checkout-note {
-    margin: 10px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 12.5px; font-style: italic; letter-spacing: 0.01em;
-    color: var(--text-muted, rgba(61, 54, 48, 0.55));
-  }
 
-  /* Optional support — a quiet block beneath the email, clearly secondary. */
+  /* Optional support — the slider, stripped to its mechanic. */
   .follow-support {
-    margin: 40px 0 0; padding-top: 28px; width: 100%; max-width: 500px;
+    margin: 34px 0 0; padding-top: 26px; width: 100%; max-width: 486px;
     border-top: 1px solid var(--bg-tertiary, rgba(61, 54, 48, 0.12));
   }
-  .follow-support-q {
-    margin: 0 0 20px; font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 13.5px; line-height: 1.6; font-style: italic; letter-spacing: 0.01em;
-    color: var(--text-muted, rgba(61, 54, 48, 0.6));
-  }
-  /* min-height reserves the line so switching "free" ↔ "$X / month" never
-     shifts the slider below it. */
   .follow-amount {
-    display: flex; align-items: baseline; gap: 9px; margin: 0 0 14px;
-    min-height: 30px;
+    display: flex; align-items: baseline; gap: 9px; margin: 0 0 16px; min-height: 26px;
   }
   .follow-amount-free {
-    font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
-    font-size: 30px; line-height: 1; font-style: italic; letter-spacing: -0.01em;
-    color: var(--text-primary);
+    font-family: var(--font-serif), ui-serif, Georgia, serif;
+    font-size: 15px; line-height: 1; letter-spacing: 0.01em;
+    color: var(--text-muted, rgba(61, 54, 48, 0.62));
   }
+  .follow-amount-free :global(em) { font-style: italic; color: var(--text-primary); }
   .follow-amount-value {
     font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 30px; line-height: 1; letter-spacing: -0.015em; color: var(--text-primary);
+    font-size: 26px; line-height: 1; letter-spacing: -0.015em; color: var(--text-primary);
     font-variant-numeric: lining-nums;
   }
   .follow-amount-unit {
-    font-size: 13px; font-style: italic; color: var(--text-muted); letter-spacing: 0.02em;
+    font-size: 12.5px; font-style: italic; color: var(--text-muted); letter-spacing: 0.02em;
   }
-
-  .slider-wrap { position: relative; padding-bottom: 42px; max-width: 460px; }
   .slider {
     -webkit-appearance: none; appearance: none;
-    width: 100%; height: 1px;
+    width: 100%; max-width: 486px; height: 1px;
     background: linear-gradient(
       to right,
       var(--text-primary) 0%,
@@ -376,7 +245,7 @@ const styles = `
       var(--text-muted, rgba(61, 54, 48, 0.3)) var(--fill, 0%),
       var(--text-muted, rgba(61, 54, 48, 0.3)) 100%
     );
-    outline: none; cursor: pointer; margin: 4px 0 2px; position: relative; z-index: 1;
+    outline: none; cursor: pointer; margin: 4px 0 2px;
   }
   .slider::-webkit-slider-thumb {
     -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
@@ -388,43 +257,9 @@ const styles = `
     width: 16px; height: 16px; border-radius: 50%;
     background: var(--text-primary); border: none; cursor: grab;
   }
-  .slider-hint {
-    position: absolute; top: 36px; transform: translateX(-50%);
-    display: inline-flex; align-items: center; margin: 0;
-    font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 11px; letter-spacing: 0.04em; color: var(--text-muted);
-    opacity: 0.75; white-space: nowrap; pointer-events: none;
-    transition: left 80ms ease-out;
-  }
-  .slider-hint :global(em) { font-style: italic; }
-  .slider-hint .hint-arrow {
-    display: inline-block; width: 12px; text-align: center; font-style: normal;
-    font-size: 11px; transition: opacity 200ms ease;
-  }
-  .slider-hint .hint-l { margin-right: 8px; opacity: var(--lfade, 1); }
-  .slider-hint .hint-r { margin-left: 8px; opacity: var(--rfade, 1); }
-
-  .tier-row {
-    display: flex; justify-content: space-between; gap: 16px; max-width: 460px;
-    font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 13.5px; letter-spacing: 0.015em; font-style: italic;
-  }
-  .tier { transition: color 320ms ease, opacity 320ms ease; }
-  .tier-right { text-align: right; }
-  .tier.is-on  { color: var(--text-primary); opacity: 1; }
-  .tier.is-dim { color: var(--text-muted); opacity: 0.5; }
-
-  .primer-coda {
-    margin: 52px 0 0; text-align: left; font-family: var(--font-serif), ui-serif, Georgia, serif;
-    font-size: 20px; font-style: italic; color: var(--text-primary);
-    letter-spacing: 0.005em; opacity: 0.72;
-  }
 
   @media (max-width: 640px) {
     .primer-main { padding: 2rem 24px 4rem; }
     .follow-hero { font-size: 25px; }
-    .follow-lede { font-size: 15.5px; }
-    .follow-field input { font-size: 17px; }
-    .primer-coda { font-size: 18px; margin-top: 44px; }
   }
 `;
