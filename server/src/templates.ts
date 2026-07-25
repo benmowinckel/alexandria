@@ -348,14 +348,14 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
     <p class="lostkey">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a> &mdash; your old key stops working.</p>` : ''}`}
     ${inviteUrl ? `<div class="invite">
     <p class="invite-q">share your link &mdash; do it now</p>
-    <p class="invite-note" style="margin-top: 0;">get three friends on and your membership is free while they stay. share with more than three and you&rsquo;ve got a cushion &mdash; you stay free even if one drops off. so send it wide, right now:</p>
+    <p class="invite-note" style="margin-top: 0;">three on = free while they stay &mdash; send it wide.</p>
     <div class="sharerow"><button type="button" class="sharebtn" onclick="shareInvite(this)"><span class="icon"><span class="icon-copy">${ICON_SHARE}</span><span class="icon-check">${ICON_CHECK}</span></span> share</button><button type="button" class="sharebtn secondary" onclick="copyInvite(this)"><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span> copy link</button></div>
     <p class="invite-link"><a href="${inviteUrl}">${inviteDisplay}</a></p>
     </div>` : ''}
     <div class="invite">
     <p class="invite-q">grab your phone &mdash; do this too</p>
     <p class="invite-line"><a href="${SHORTCUT_URL}" target="_blank" rel="noopener noreferrer">add the shortcut</a></p>
-    <p class="invite-note">worth it even at your desk. open that link on your phone and tap <em>add</em>. from then on, share anything to it &mdash; an article, a voice note, a thought &mdash; and it lands in your alexandria, picked up automatically the next time you open a <code class="cmd">/a</code>.</p>
+    <p class="invite-note">share anything to it &mdash; it lands in your alexandria, ready at your next <code class="cmd">/a</code>.</p>
     </div>
   </div>
   <div class="fineprint">
