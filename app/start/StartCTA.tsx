@@ -108,17 +108,18 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         <p className="install-invite">@{validRef} invited you to alexandria.</p>
       )}
 
-      <button type="button" className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the install command">
-        {copied ? 'copied — now paste it into your coding app' : 'copy the install line'}
+      <p className="step-line"><span className="step-num">1.</span> press this, then paste it into your coding app:</p>
+      <button type="button" className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
+        {copied ? 'copied — now paste it' : 'copy the setup'}
       </button>
 
-        <p className="email-line">
-          on your phone:{' '}
+        <p className="step-line step-two">
+          <span className="step-num">2.</span>{' '}
           <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">add the shortcut</a>
-          {' '}&mdash; save thoughts to your ai from anywhere.
+          {' '}&mdash; save thoughts to your ai from anywhere
         </p>
 
-        <p className="email-line">not at your computer? leave your email &mdash; we&rsquo;ll send you the line.</p>
+        <p className="step-line step-two"><span className="step-num">3.</span> leave your email &mdash; so this doesn&rsquo;t get lost</p>
         <form className="join-door-field" onSubmit={sendEmail}>
           <input
             id="start-later-email"
