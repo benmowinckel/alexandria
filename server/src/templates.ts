@@ -277,6 +277,25 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   .lostkey a { color: var(--ink-muted); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); transition: color 0.15s, border-color 0.15s; }
   .lostkey a:hover { color: var(--ink); border-bottom-color: var(--ink-muted); }
   .coda { margin-top: 48px; font-size: 20px; font-style: italic; color: var(--ink); opacity: 0.72; letter-spacing: 0.005em; }
+  .sub { font-size: 1rem; line-height: 1.6; color: var(--ink-muted); margin: 14px 0 30px; }
+  .sub .cmd, .cmd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; }
+  .cta-box {
+    display: flex; align-items: center; width: 100%; max-width: 460px; text-align: left;
+    margin: 0 0 12px; padding: 17px 20px; border-radius: 10px; cursor: pointer;
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--rule); font-family: inherit; font-size: 1.02rem; letter-spacing: 0.005em;
+    transition: border-color 0.2s, transform 0.12s, opacity 0.2s;
+  }
+  .cta-box:hover { border-color: var(--ink-muted); }
+  .cta-box:active { transform: scale(0.992); }
+  .cta-box.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .cta-box.primary .cta-why { color: var(--paper); opacity: 0.6; }
+  .cta-box.primary:hover { opacity: 0.9; }
+  .cta-why { color: var(--ink-muted); }
+  .cta-box .icon { display: inline-flex; align-items: center; margin-left: auto; padding-left: 12px; }
+  .cta-box .icon .icon-check { display: none; }
+  .cta-box.done .icon .icon-copy { display: none; }
+  .cta-box.done .icon .icon-check { display: inline; }
   .action {
     background: none;
     border: none;
@@ -337,32 +356,13 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
 </button>
 <a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
 <main class="wrap">
-  <p class="eyebrow">your membership</p>
-  <h1 class="welcome">${isReturning ? `welcome back.` : `welcome to alexandria.`}</h1>
-  ${isReturning ? `<p class="line">call /alexandria in your coding agent.</p>${rotateUrl ? `
-  <p class="lostkey">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a> &mdash; your old key stops working.</p>` : ''}` : `<div class="steps">
-    ${curlCmd ? `<p class="step"><span class="step-num">1 &mdash;</span> <button type="button" class="action" onclick="copyCmd(this)" aria-label="copy connect command">copy your connect command <span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button></p>
-    <p class="step"><span class="step-num">2 &mdash;</span> paste it into your coding agent and hit enter</p>
-    <p class="step-note">it links your install to your membership &mdash; your thinking stays on your machine.</p>
-    <p class="habit">then, anytime &mdash; open a new tab and type <code class="cmd">/a</code></p>` : `<p class="line">you're in. open a new tab and type <code class="cmd">/a</code> whenever you want to think something through.</p>${rotateUrl ? `
-    <p class="lostkey">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a> &mdash; your old key stops working.</p>` : ''}`}
-    ${inviteUrl ? `<div class="invite">
-    <p class="invite-q">share your link &mdash; do it now</p>
-    <p class="invite-note" style="margin-top: 0;">three on = free while they stay &mdash; send it wide.</p>
-    <div class="sharerow"><button type="button" class="sharebtn" onclick="shareInvite(this)"><span class="icon"><span class="icon-copy">${ICON_SHARE}</span><span class="icon-check">${ICON_CHECK}</span></span> share</button><button type="button" class="sharebtn secondary" onclick="copyInvite(this)"><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span> copy link</button></div>
-    <p class="invite-link"><a href="${inviteUrl}">${inviteDisplay}</a></p>
-    </div>` : ''}
-    <div class="invite">
-    <p class="invite-q">grab your phone &mdash; do this too</p>
-    <p class="invite-line"><a href="${SHORTCUT_URL}" target="_blank" rel="noopener noreferrer">add the shortcut</a></p>
-    <p class="invite-note">share anything to it &mdash; it lands in your alexandria, ready at your next <code class="cmd">/a</code>.</p>
-    </div>
-  </div>
-  <div class="fineprint">
-    <p>wrong account? <a href="https://github.com/logout" target="_blank" rel="noopener noreferrer">sign out of github</a></p>
-  </div>`}
-  ${isReturning ? `<p class="fineprint-solo">wrong account? <a href="https://github.com/logout" target="_blank" rel="noopener noreferrer">sign out of github</a></p>` : ''}
-  <p class="coda">keep thinking.</p>
+  <h1 class="welcome">${isReturning ? `welcome back.` : `you\u2019re in.`}</h1>
+  ${isReturning ? `<p class="sub">open your coding agent and type <code class="cmd">/a</code>.</p>${rotateUrl ? `
+  <p class="fineprint-solo">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a></p>` : ''}` : `${curlCmd ? `<button type="button" class="cta-box primary" onclick="copyCmd(this)" aria-label="copy connect command">connect your account<span class="cta-why"> &mdash; copy, then paste in your agent</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>
+    <p class="sub">then type <code class="cmd">/a</code>.</p>` : `<p class="sub">open a new tab and type <code class="cmd">/a</code>.</p>${rotateUrl ? `
+    <p class="fineprint-solo">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a></p>` : ''}`}
+    ${inviteUrl ? `<button type="button" class="cta-box" onclick="copyInvite(this)" aria-label="copy invite link">copy your invite link<span class="cta-why"> &mdash; three friends on = free</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>` : ''}
+    <p class="fineprint-solo">wrong account? <a href="https://github.com/logout" target="_blank" rel="noopener noreferrer">sign out of github</a></p>`}
 </main>
 <script>
 function flash(el) {
@@ -390,13 +390,6 @@ function manualCopy(text, el) {
 }
 function copyCmd(el) { copyText(${jsLiteral(curlCmd)}, el); }
 function copyInvite(el) { copyText(${jsLiteral(inviteUrl)}, el); }
-function shareInvite(el) {
-  var url = ${jsLiteral(inviteUrl)};
-  // Native share sheet where available (it includes copy-to-clipboard);
-  // desktop fallback copies and flashes the check.
-  if (navigator.share) { navigator.share({ url: url }).catch(function() {}); return; }
-  copyText(url, el);
-}
 function effectiveTheme() {
   var t = document.documentElement.dataset.theme;
   if (t === 'dark' || t === 'light') return t;
