@@ -1867,3 +1867,141 @@ html.app-shell input:focus {
 @media (hover: none) {
   .chat-hist-actions { opacity: 1; pointer-events: auto; }
 }
+
+/* ═══ LANDING FIRST-PAINT (anti-FOUC) ════════════════════════════════
+   Critical mirror of the front-slide rules from LandingPage.tsx. The
+   full styles are styled-jsx, which the app router streams into the
+   BODY after the markup — on production the HTML arrives in chunks, so
+   the browser could paint the hero + every rotation frame as raw
+   stacked text before that style tag arrived (founder, 2026-07-24:
+   "all text on screen for a split second… has to look elegant on
+   refresh"). This block loads render-blocking in the head, so the
+   first paint is already correct: frames overlapped in one grid cell,
+   only the live one visible, container anchored, type in its real
+   hand. KEEP IN SYNC with the source rules in LandingPage.tsx —
+   values only; behaviour (transitions, hover, masks) stays in the
+   source. ═══ */
+.front-epigraph {
+  position: absolute;
+  left: 118px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 372px;
+  text-align: left;
+  z-index: 3;
+}
+@media (min-width: 900px) and (max-aspect-ratio: 10/7) {
+  .front-epigraph { left: auto; right: 108px; }
+}
+.front-frames { display: grid; }
+.front-frame {
+  grid-area: 1 / 1;
+  align-self: center;
+  opacity: 0;
+  pointer-events: none;
+}
+.front-frame.is-live { opacity: 1; }
+.front-lead {
+  margin: 0;
+  font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+  font-weight: 500;
+  font-style: italic;
+  font-size: 36px;
+  line-height: 1.26;
+  letter-spacing: -0.004em;
+  color: rgba(46, 30, 38, 0.62);
+  text-wrap: balance;
+}
+.front-answer {
+  margin: 30px 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+}
+.front-answer-lead {
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: rgba(46, 30, 38, 0.5);
+}
+.front-answer-nameline {
+  font-size: 30px;
+  line-height: 1.05;
+  letter-spacing: -0.004em;
+  color: rgba(58, 15, 61, 0.6);
+}
+.front-answer-name {
+  font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+  font-style: normal;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+}
+.front-answer-dot { font-style: normal; margin-left: -0.01em; }
+.front-frame-name {
+  margin: 0 0 14px;
+  font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+  font-weight: 500;
+  font-size: 13.5px;
+  letter-spacing: 0.14em;
+  color: rgba(46, 30, 38, 0.45);
+}
+.front-frame-sub {
+  margin: 20px 0 0;
+  font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  color: rgba(46, 30, 38, 0.52);
+}
+.front-numerals {
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.front-numeral,
+.front-arrow {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+  font-style: italic;
+  color: rgba(46, 30, 38, 0.28);
+}
+.front-numeral { font-size: 13px; letter-spacing: 0.08em; }
+.front-arrow { font-size: 15px; line-height: 1; }
+.front-numeral-mark { color: rgba(46, 30, 38, 0.5); }
+.front-numeral.is-live { color: rgba(46, 30, 38, 0.62); }
+.front-numeral-window { overflow: hidden; width: 162px; }
+.front-numeral-strip { display: flex; }
+.front-numeral-strip .front-numeral {
+  flex: none;
+  width: 26px;
+  margin-right: 8px;
+  text-align: center;
+}
+@media (max-width: 899px) {
+  .front-epigraph {
+    left: 50%;
+    top: 104px;
+    transform: translateX(-50%);
+    width: 84vw;
+    max-width: 420px;
+    text-align: center;
+  }
+  .front-lead { font-size: 29px; line-height: 1.3; letter-spacing: -0.004em; }
+  .front-answer { align-items: center; margin-top: 16px; }
+  .front-answer-lead { font-size: 13.5px; }
+  .front-answer-nameline { font-size: 26px; }
+  .front-frame-name { font-size: 12px; margin-bottom: 10px; }
+  .front-frame-sub { font-size: 14.5px; margin-top: 14px; }
+  .front-numerals { justify-content: center; margin-top: 20px; gap: 15px; }
+}
