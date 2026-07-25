@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-// Idiot-proof imperatives (founder): number the actions, tell them to press.
-// The button morphs to "copied ✓"; step 2 already names the next move.
 export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -17,11 +15,10 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
 
   return (
     <div className="cta-section">
-      <p className="step-line"><span className="step-num">1.</span> press this:</p>
+      <p className="step-line">press this, then paste it into claude:</p>
       <button className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
-        {copied ? 'copied ✓' : 'copy the setup'}
+        {copied ? 'copied — now paste it into claude' : 'copy the setup'}
       </button>
-      <p className="step-line step-two"><span className="step-num">2.</span> paste it into claude</p>
     </div>
   );
 }

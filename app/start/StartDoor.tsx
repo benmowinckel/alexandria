@@ -4,21 +4,17 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import StartCTA from './StartCTA';
 
-type Screen = 'q' | 'command';
+type Screen = 'q' | 'device' | 'computer' | 'phone';
 
-// The click-through door (founder, 2026-07-24): one screen, one action, and
-// browser-back / swipe-back walks BACKWARDS through the sequence, never out
-// of the site — each advance pushes a history entry; popstate rewinds it.
-// Wording: possession, zero jargon — the yes-button IS the app list. "cowork"
-// is deliberately absent from this page (the concept is post-install; the
-// "code tab of the claude app" clause inside routes those users invisibly).
+// The click-through funnel (founder, 2026-07-24/25): every screen one decision
+// or one small set of numbered imperatives; back/swipe rewinds screens, never
+// exits. Order inside the install screen: shortcut + email BEFORE the paste —
+// after the paste they disappear into the agent for days (founder call).
 export default function StartDoor({ refCode }: { refCode?: string }) {
-  const [screen, setScreen] = useState<Screen>(refCode ? 'command' : 'q');
+  const [screen, setScreen] = useState<Screen>(refCode ? 'device' : 'q');
 
   useEffect(() => {
-    // Invited installs land straight on the command — seed history so back
-    // still behaves (back from phone → command → question).
-    if (refCode) window.history.replaceState({ s: 'command' }, '', '#go');
+    if (refCode) window.history.replaceState({ s: 'device' }, '', '#here');
     const onPop = (e: PopStateEvent) =>
       setScreen(((e.state && e.state.s) as Screen) || 'q');
     window.addEventListener('popstate', onPop);
@@ -26,16 +22,14 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
   }, [refCode]);
 
   const go = (s: Exclude<Screen, 'q'>) => {
-    window.history.pushState({ s }, '', '#go');
+    window.history.pushState({ s }, '', '#' + s);
     setScreen(s);
   };
 
-  if (screen === 'command') {
+  if (screen === 'computer' || screen === 'phone') {
     return (
       <>
-        <StartCTA refCode={refCode} />
-        {/* The read-if-you-want zone — below every action, footer-ish (founder
-            2026-07-24: "they're not reading anything"). */}
+        <StartCTA refCode={refCode} mode={screen} />
         <p className="start-footnote">
           one folder, yours &mdash; your setup stays untouched; delete it, it&rsquo;s gone.
           the command: <code>curl -fsSL alexandria-library.com/a | bash</code> &middot;{' '}
@@ -45,11 +39,27 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
     );
   }
 
+  if (screen === 'device') {
+    return (
+      <div className="door-block">
+        <p className="door-q">at your computer?</p>
+        <div className="door-answers">
+          <button className="door-btn" onClick={() => go('computer')}>
+            yes
+          </button>
+          <button className="door-btn" onClick={() => go('phone')}>
+            no — on my phone
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="door-block">
       <p className="door-q">do you use any of these?</p>
       <div className="door-answers">
-        <button className="door-btn" onClick={() => go('command')}>
+        <button className="door-btn" onClick={() => go('device')}>
           claude code · cursor · codex …
         </button>
         <Link href="/chat" className="door-btn door-btn-link">

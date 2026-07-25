@@ -36,7 +36,7 @@ const ICON_CHECK = (
 // each one line. The command TEXT is hidden behind the copy button (noise to
 // an autopilot user; it lives in the footnote for the curious). `refCode`,
 // not `ref` — `ref` is a reserved React prop name.
-export default function StartCTA({ refCode }: { refCode?: string }) {
+export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'computer' | 'phone' }) {
   const [copied, setCopied] = useState(false);
   const [email, setEmail] = useState('');
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
@@ -108,60 +108,67 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         <p className="install-invite">@{validRef} invited you to alexandria.</p>
       )}
 
-      <p className="step-line"><span className="step-num">1.</span> press this, then paste it into your coding app:</p>
-      <button type="button" className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
-        {copied ? 'copied — now paste it' : 'copy the setup'}
-      </button>
+      <p className="step-line">
+        <span className="step-num">1.</span> add the{' '}
+        <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">shortcut</a>
+        {' '}&mdash; anything you want to think about, send it there
+      </p>
 
-        <p className="step-line step-two">
-          <span className="step-num">2.</span>{' '}
-          <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">add the shortcut</a>
-          {' '}&mdash; save thoughts to your ai from anywhere
-        </p>
-
-        <p className="step-line step-two"><span className="step-num">3.</span> leave your email &mdash; so this doesn&rsquo;t get lost</p>
-        <form className="join-door-field" onSubmit={sendEmail}>
-          <input
-            id="start-later-email"
-            key={shakeKey}
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            size={Math.max(EMAIL_GHOST.length, email.length) + 1}
-            placeholder={EMAIL_GHOST}
-            aria-label="your email"
-            data-shake={shakeKey > 0 ? 'on' : 'off'}
-            value={email}
-            readOnly={mailState === 'sent'}
-            onChange={(e) => { setEmail(e.target.value); if (mailState === 'error' || mailState === 'sent') setMailState('idle'); }}
-          />
-          {(email.trim() || mailState === 'sent') && (
-            <button
-              type="submit"
-              className={`join-door-go${mailState === 'sent' ? ' is-done' : ''}`}
-              aria-label={mailState === 'sent' ? 'sent' : 'send'}
-              disabled={mailState === 'sending' || mailState === 'sent'}
-            >
-              {mailState === 'sent' ? (
-                <TickIcon />
-              ) : (
-                <>
-                  <span className="join-go-word">send</span>
-                  <ArrowIcon />
-                </>
-              )}
-            </button>
-          )}
-        </form>
-        {mailState !== 'idle' && (
-          <p className="join-door-hint">
-            {mailState === 'error'
-              ? 'couldn’t send — try again.'
-              : mailState === 'sent'
-                ? 'sent — the line’s in your inbox.'
-                : '…'}
-          </p>
+      <p className="step-line step-two">
+        <span className="step-num">2.</span> leave your email &mdash;{' '}
+        {mode === 'phone' ? 'the line will be waiting at your computer' : 'one check-in, two days in'}
+      </p>
+      <form className="join-door-field" onSubmit={sendEmail}>
+        <input
+          id="start-later-email"
+          key={shakeKey}
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          size={Math.max(EMAIL_GHOST.length, email.length) + 1}
+          placeholder={EMAIL_GHOST}
+          aria-label="your email"
+          data-shake={shakeKey > 0 ? 'on' : 'off'}
+          value={email}
+          readOnly={mailState === 'sent'}
+          onChange={(e) => { setEmail(e.target.value); if (mailState === 'error' || mailState === 'sent') setMailState('idle'); }}
+        />
+        {(email.trim() || mailState === 'sent') && (
+          <button
+            type="submit"
+            className={`join-door-go${mailState === 'sent' ? ' is-done' : ''}`}
+            aria-label={mailState === 'sent' ? 'sent' : 'send'}
+            disabled={mailState === 'sending' || mailState === 'sent'}
+          >
+            {mailState === 'sent' ? (
+              <TickIcon />
+            ) : (
+              <>
+                <span className="join-go-word">send</span>
+                <ArrowIcon />
+              </>
+            )}
+          </button>
         )}
+      </form>
+      {mailState !== 'idle' && (
+        <p className="join-door-hint">
+          {mailState === 'error'
+            ? 'couldn’t send — try again.'
+            : mailState === 'sent'
+              ? (mode === 'phone' ? 'sent — it’ll be waiting.' : 'sent ✓')
+              : '…'}
+        </p>
+      )}
+
+      {mode === 'computer' && (
+        <>
+          <p className="step-line step-two"><span className="step-num">3.</span> press this, then paste it into your coding app:</p>
+          <button type="button" className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
+            {copied ? 'copied — now paste it' : 'copy the setup'}
+          </button>
+        </>
+      )}
 
       {validRef && (
         <p className="install-new">
