@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { SERVER_URL, SHORTCUT_URL } from '../lib/config';
 import { ArrowIcon } from '../join/DoorIcons';
@@ -39,6 +39,7 @@ const ICON_CHECK = (
 export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'computer' | 'phone' }) {
   const [copied, setCopied] = useState(false);
   const [email, setEmail] = useState('');
+  const emailRef = useRef<HTMLInputElement>(null);
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [shakeKey, setShakeKey] = useState(0);
 
@@ -114,15 +115,20 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
           add the shortcut<span className="act-why"> — catch any thought</span>
         </a>
       </div>
+      <p className="act-sub">
+        then drop in literally anything &mdash; thoughts, links, things you&rsquo;ll
+        never get time to read. it all lands in your files.
+      </p>
 
       <div className="act-row">
         <span className="act-num">2</span>
-        <form className="door-btn act-box act-email" onSubmit={sendEmail}>
+        <form className="door-btn act-box act-email" onSubmit={sendEmail} onClick={() => emailRef.current?.focus()}>
           {mailState === 'sent' ? (
             <span className="act-sent">sent<span className="act-why"> ✓</span></span>
           ) : (
             <>
               <input
+                ref={emailRef}
                 id="start-later-email"
                 key={shakeKey}
                 type="email"

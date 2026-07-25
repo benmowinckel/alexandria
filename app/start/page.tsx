@@ -354,7 +354,13 @@ export default async function StartPage({
         }
         .act-box { flex: 1; max-width: none; text-decoration: none; display: block; }
         .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
-        .act-email { display: flex; align-items: center; gap: 0; }
+        .act-sub {
+          margin: -2px 0 14px 46px; max-width: 420px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 13px; line-height: 1.55; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.5));
+        }
+        .act-email { display: flex; align-items: center; gap: 0; cursor: text; }
         .act-email input {
           flex: none; width: 7.6em; min-width: 0; background: transparent; border: none; outline: none;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
