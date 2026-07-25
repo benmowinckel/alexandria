@@ -38,7 +38,7 @@ export default function ChatPage() {
       </header>
 
       <main className="primer-main">
-        <h1 className="primer-h1">claude already knows you. now you own it.</h1>
+        <h1 className="primer-h1">Becoming an Alexandrian</h1>
 
         <ChatCTA bootstrap={bootstrap} />
 
