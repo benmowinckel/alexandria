@@ -88,7 +88,7 @@ export default function JoinCTA({
       {validUrlRef && <p className="join-invite">@{validUrlRef} invited you in.</p>}
 
       <h1 className="join-hero">
-        The tool was the free sample &mdash; the community is the main course.
+        Keep thinking, together.
       </h1>
 
       <a className="door-btn act-box act-primary" href={joinUrl}>
@@ -96,10 +96,15 @@ export default function JoinCTA({
       </a>
 
       <p className="join-terms">
-        then: three friends on = free &middot; otherwise <span className="usd">$</span>10 a month &mdash; two coffees.
+        think about it: first month free &middot; free with three friends on &middot;
+        then 33&cent; a day &mdash; less than an uber a month. cancel anytime.
       </p>
       <p className="join-terms">
-        no friends, no dollars? message me and I&rsquo;ll waive it &mdash; keep thinking, together.
+        and it goes to something good &mdash; your people, thinking together.
+      </p>
+      <p className="join-terms">
+        still don&rsquo;t want to pay? message me and I&rsquo;ll waive it. so there&rsquo;s
+        literally zero reason &mdash; it&rsquo;s only a no if you don&rsquo;t want it even free.
       </p>
 
       <div className="join-exits">
@@ -121,6 +126,7 @@ export default function JoinCTA({
                 data-lpignore="true"
                 data-form-type="other"
                 placeholder="have a code?"
+                style={{ width: '6.5em' }}
                 aria-label="referral code"
                 value={typedRef}
                 onChange={(e) => setTypedRef(e.target.value)}
@@ -141,6 +147,7 @@ export default function JoinCTA({
                 inputMode="email"
                 autoComplete="email"
                 placeholder="not joining yet?"
+                style={{ width: '8.2em' }}
                 aria-label="your email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (mailState === 'error') setMailState('idle'); }}
