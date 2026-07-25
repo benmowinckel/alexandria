@@ -11,7 +11,7 @@ import { loadAccounts, loadAccount, saveAccount, setAuthIndex, deleteAccount, ge
 import { hashApiKey, generateToken } from './crypto.js';
 import { ACTIVE_AUTHOR_STATUSES, Account, AccountStore, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
 import { assignAuthorNumber, generateApiKey, getAccounts, getAccountByLogin, requireAdmin, updateAccountBilling } from './accounts.js';
-import { sendEmail, sendEmailsBatched, sendWelcomeEmail, sendInstallNudge, FOUNDER_EMAIL } from './email.js';
+import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL } from './email.js';
 import { runHealthDigest, runWeekOneCheckIns, runOnboardFollowups } from './cron.js';
 import { publishFeedback } from './marketplace.js';
 import { handleGithubPushWebhook } from './marketplace-catalog.js';
@@ -1311,28 +1311,6 @@ export function registerRoutes(app: Hono) {
       followups_sent: followupsSent,
       conversion_rate: captured > 0 ? Number((installed / captured).toFixed(3)) : 0,
     });
-  });
-
-  // Test send — fires one install nudge to the founder, using real template +
-  // real email_token (so the unsubscribe link works). Bypasses the cron filter
-  // (founder doesn't qualify). Doesn't update any nudge state. For email
-  // template visual verification.
-  app.post('/admin/test/install-nudge', async (c) => {
-    const auth = await requireAdmin(c);
-    if (!auth) return c.text('Unauthorized', 403);
-    if (await checkAdminRateLimit('test-nudge', 5, 60)) return c.json({ error: 'Rate limited (5/min)' }, 429);
-    if (!auth.account.email) return c.text('admin account has no email', 404);
-    // Test path: store a short-lived install token with placeholder key so the
-    // email's link works (renders the install page) without regenerating the
-    // admin's real key. 10-min TTL keeps the KV clean.
-    const testToken = generateToken();
-    await getKV().put(
-      `install:${testToken}`,
-      JSON.stringify({ api_key: 'TEST_KEY_NOT_RUNNABLE', github_login: auth.account.github_login }),
-      { expirationTtl: 600 },
-    );
-    const result = await sendInstallNudge(auth.account.email, auth.account.email_token, testToken, auth.account.github_login);
-    return c.json({ ok: result.ok, error: result.error, to: auth.account.email, install_url: `${getServerUrl()}/install/${testToken}` });
   });
 
   // Magic-link install — email nudges link here so the user gets the actual

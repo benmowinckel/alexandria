@@ -398,9 +398,9 @@ export async function runWeekOneCheckIns(
 // longer a reachable state. Its admin trigger (/admin/cron/install-nudges) was
 // removed too. This is distinct from runOnboardFollowups below (mobile keyless
 // email-capture 2d/5d nudges), which is a different, still-valid pull the user
-// explicitly asked for. The sendInstallNudge email template is kept (still used
-// by the /admin/test/install-nudge founder-only preview endpoint); only the
-// account-scanning loop is gone.
+// explicitly asked for. The sendInstallNudge template + its /admin/test preview
+// endpoint were fully removed 2026-07-25 (a template never sent, kept only to
+// preview itself — deleted at close).
 
 // ---------------------------------------------------------------------------
 // Onboard follow-ups — for mobile "send it to my computer" captures (keyless,

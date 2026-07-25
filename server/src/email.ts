@@ -76,9 +76,6 @@ function emailShell(inner: string, unsubscribeUrl?: string): string {
 // element, not buried in prose — the email version of the pages' clear CTAs). ---
 
 // A filled pill link — the primary action for URL-based asks.
-function emailCta(label: string, url: string): string {
-  return `<p style="margin: 0 0 1.6rem;"><a href="${url}" style="display: inline-block; background: #3d3630; color: #f5f0e8; font-size: 1rem; letter-spacing: 0.01em; text-decoration: none; padding: 11px 26px; border-radius: 9px;">${label}</a></p>`;
-}
 // The command to paste — the action, as a monospace card.
 function emailCmd(cmd: string): string {
   return `<p style="margin: 0 0 1.4rem; background: rgba(61,54,48,0.06); border-radius: 8px; padding: 14px 16px; word-break: break-all;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; color: #3d3630;">${cmd}</code></p>`;
@@ -249,25 +246,6 @@ export async function sendWeekOneCheckIn(
   <p style="margin: 0 0 1.4rem;">a week in &mdash; how&rsquo;s it going? the more you put into it, the more it becomes yours.</p>
   <p style="margin: 0 0 0;">just hit reply and tell me one thing: what&rsquo;s working, or what isn&rsquo;t. you&rsquo;re early enough that it actually changes what i build.</p>`, unsubscribeUrl);
   return await sendEmail(email, 'checking in.', html, { unsubscribeUrl });
-}
-
-export async function sendInstallNudge(
-  email: string,
-  emailToken: string,
-  installToken: string,
-  githubLogin: string,
-): Promise<{ ok: boolean; error?: string }> {
-  void githubLogin; // referral link cut from this email — see below
-  const installUrl = `${SERVER_URL}/install/${installToken}`;
-  const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${emailToken}`;
-  // One job: get them installed. The referral link + "how your data stays
-  // yours" mechanics link were cut (founder 2026-07-18) — they distract from
-  // the single action; the referral ask comes later, once they're in.
-  const html = emailShell(`<p style="margin: 0 0 1.2rem; color: #8a8078;">ready when you are.</p>
-  <p style="margin: 0 0 1.2rem;">one thing left: open your install page and run the one line in your coding agent (claude code, cursor, codex, factory &mdash; or any ai agent with a terminal). everything stays on your machine.</p>
-  ${emailCta('open your install page', installUrl)}
-  <p style="margin: 0 0 1.8rem; color: #8a8078; font-size: 0.95rem;">on your phone? <a href="${SHORTCUT_URL}" style="color: #8a8078;">add the shortcut</a> and start saving things now &mdash; they&rsquo;re waiting the next time you type ${emailKbd('/a')}.</p>`, unsubscribeUrl);
-  return await sendEmail(email, 'alexandria. — finish setup.', html, { unsubscribeUrl });
 }
 
 // --- Mobile onboarding — command delivery + follow-ups ---
