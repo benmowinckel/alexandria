@@ -14,7 +14,13 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
   const [screen, setScreen] = useState<Screen>(refCode ? 'device' : 'q');
 
   useEffect(() => {
-    if (refCode) window.history.replaceState({ s: 'device' }, '', '#here');
+    // Deep-links + refresh mid-sequence: the hash IS the screen.
+    const h = window.location.hash.slice(1) as Screen;
+    if (h === 'device' || h === 'computer' || h === 'phone') {
+      window.history.replaceState({ s: h }, '', '#' + h);
+      setScreen(h);
+    } else if (refCode) window.history.replaceState({ s: 'device' }, '', '#device');
+
     const onPop = (e: PopStateEvent) =>
       setScreen(((e.state && e.state.s) as Screen) || 'q');
     window.addEventListener('popstate', onPop);
@@ -28,14 +34,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
 
   if (screen === 'computer' || screen === 'phone') {
     return (
-      <>
-        <StartCTA refCode={refCode} mode={screen} />
-        <p className="start-footnote">
-          one folder, yours &mdash; your setup stays untouched; delete it, it&rsquo;s gone.
-          the command: <code>curl -fsSL alexandria-library.com/a | bash</code> &middot;{' '}
-          <Link href="/mechanics">mechanics</Link>
-        </p>
-      </>
+<StartCTA refCode={refCode} mode={screen} />
     );
   }
 
@@ -48,7 +47,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
             yes
           </button>
           <button className="door-btn" onClick={() => go('phone')}>
-            no — on my phone
+            only my phone
           </button>
         </div>
       </div>

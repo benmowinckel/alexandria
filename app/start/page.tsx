@@ -343,6 +343,28 @@ export default async function StartPage({
         }
         .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .door-btn:active { transform: scale(0.992); }
+        .act-row {
+          display: flex; align-items: center; gap: 14px;
+          width: 100%; max-width: 486px; margin: 0 0 10px;
+        }
+        .act-num {
+          flex: none; width: 12px; text-align: right;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 13px; color: var(--text-muted, rgba(26, 19, 24, 0.4));
+          font-variant-numeric: lining-nums;
+        }
+        .act-box { flex: 1; max-width: none; text-decoration: none; display: block; }
+        .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
+        .act-email { display: flex; align-items: center; gap: 10px; }
+        .act-email input {
+          flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary);
+          padding: 0;
+        }
+        .act-email input::placeholder { color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
+        .act-email input[data-shake="on"] { animation: startShake 320ms ease-in-out; }
+        .act-sent { font-size: 17px; }
         .cta-btn.is-copied {
           border-color: var(--accent); background: var(--bg-primary);
         }

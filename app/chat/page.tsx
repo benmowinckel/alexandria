@@ -42,13 +42,6 @@ export default function ChatPage() {
 
         <ChatCTA bootstrap={bootstrap} />
 
-        <div className="start-details">
-          <p className="start-qa-a">
-            your files, your Drive &mdash; never ours.{' '}
-            <Link href="/start" className="start-shortcut-a">the full version &rarr;</Link>
-          </p>
-        </div>
-
         <p className="primer-coda"><em>keep thinking.</em></p>
       </main>
 
