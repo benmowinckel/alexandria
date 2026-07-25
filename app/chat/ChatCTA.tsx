@@ -15,14 +15,6 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
 
   return (
     <div className="cta-section">
-      <p className="step-line">
-        <span className="step-num">1.</span> in claude, turn on Google Drive{' '}
-        <span className="chat-where">(Settings → Connectors)</span>
-      </p>
-      <p className="step-line">
-        <span className="step-num">2.</span> copy the bootstrap, paste it into a new chat
-      </p>
-
       <button className="install-block chat-block" onClick={copy} aria-label="copy the bootstrap">
         <span className="chat-block-label">
           {copied ? 'copied — now paste it into claude' : 'copy the bootstrap'}
@@ -36,7 +28,7 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
         </span>
       </button>
 
-      <p className="chat-rest">claude does the rest.</p>
+      <p className="chat-rest">paste it into claude — it does the rest, Drive setup included.</p>
     </div>
   );
 }

@@ -116,10 +116,7 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
       <p className="chat-rest">it walks you through the rest.</p>
 
         <p className="step-line">
-          <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">Add the shortcut</a>
-        </p>
-        <p className="step-agents">
-          Share anything to it &mdash; it&rsquo;s waiting next time you type <code>/a</code>.
+          <a className="start-shortcut-a" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">Add the phone shortcut</a>
         </p>
 
         <p className="step-line step-two">Leave your email</p>
@@ -156,13 +153,15 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
             </button>
           )}
         </form>
-        <p className="join-door-hint">
-          {mailState === 'error'
-            ? 'couldn’t send — try again.'
-            : mailState === 'sent'
-              ? 'sent — the line’s in your inbox.'
-              : 'we’ll send you the install line, for when you’re at your computer.'}
-        </p>
+        {mailState !== 'idle' && (
+          <p className="join-door-hint">
+            {mailState === 'error'
+              ? 'couldn’t send — try again.'
+              : mailState === 'sent'
+                ? 'sent — the line’s in your inbox.'
+                : '…'}
+          </p>
+        )}
 
       {validRef && (
         <p className="install-new">

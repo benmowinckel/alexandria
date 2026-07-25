@@ -45,13 +45,8 @@ export default function ChatPage() {
 
         <div className="start-details">
           <p className="start-qa-a">
-            your thinking, in files you own, in your own Google Drive — built
-            from every conversation you&apos;ve already had. nothing touches our
-            servers; yours to open, edit, or walk away with.
-          </p>
-          <p className="start-qa-a">
-            this is the light version. the full one — automatic capture,
-            overnight processing, the library — is one command:{' '}
+            your files, in your own Google Drive — nothing touches our servers.
+            the full version is one command:{' '}
             <Link href="/start" className="start-shortcut-a">start here</Link>.
           </p>
         </div>
