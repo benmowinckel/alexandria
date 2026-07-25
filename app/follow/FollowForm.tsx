@@ -107,7 +107,7 @@ export default function FollowForm({ initialDone }: { initialDone: boolean }) {
         <div className="follow-support">
           <div className="follow-amount">
             {amount === 0
-              ? <span className="follow-amount-free"><em>free</em> — or slide to back it</span>
+              ? <span className="follow-amount-free"><em>free</em> — or slide to support us</span>
               : <><span className="follow-amount-value">${amount}</span><span className="follow-amount-unit">/ month — checkout next, cancel anytime</span></>}
           </div>
           <input

@@ -44,7 +44,6 @@ export default function InviteClient({ refCode }: { refCode?: string }) {
           them about it after. Rough what-it-is + website link for whoever
           wants to see for themselves first. */}
       <main className="primer-main">
-        <p className="primer-eyebrow">an invitation</p>
         <h1 className="invite-hero">
           {validRef ? (
             <>@{validRef} sent you alexandria.</>
@@ -78,8 +77,6 @@ export default function InviteClient({ refCode }: { refCode?: string }) {
           so it thinks <em>with</em> you, not for you. Rather see for
           yourself first? <Link href="/">alexandria-library.com</Link>
         </p>
-
-        <p className="primer-coda"><em>keep thinking.</em></p>
       </main>
     </>
   );
