@@ -112,13 +112,9 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
       <div className="act-row">
         <span className="act-num">1</span>
         <a className="door-btn act-box" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">
-          add the shortcut<span className="act-why"> — catch any thought</span>
+          add the shortcut<span className="act-why"> — drop in anything</span>
         </a>
       </div>
-      <p className="act-sub">
-        then drop in literally anything &mdash; thoughts, links, things you&rsquo;ll
-        never get time to read. it all lands in your files.
-      </p>
 
       <div className="act-row">
         <span className="act-num">2</span>
@@ -144,7 +140,6 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
               {!email.trim() && <span className="act-why act-email-why"> — for the follow-up</span>}
               {email.trim() && (
                 <button type="submit" className="join-door-go" aria-label="send" disabled={mailState === 'sending'}>
-                  <span className="join-go-word">{mailState === 'error' ? 'retry' : 'send'}</span>
                   <ArrowIcon />
                 </button>
               )}
