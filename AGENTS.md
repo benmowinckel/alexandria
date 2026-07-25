@@ -22,7 +22,7 @@ The code maps to four layers:
 
 ## Code
 
-- **Website:** `app/` (Next.js, Vercel). Landing page: `app/components/LandingPage.tsx`.
+- **Website:** `app/` (Next.js, Vercel). Landing page: `app/components/LandingPage.tsx`; its styles live in `app/components/landing.css` (head-loaded, render-blocking). Never move styles back into inline `<style>` tags or CSS-in-JS on this page — body-streamed styles paint after the markup on chunked production HTML (the 2026-07-24 refresh-flash; physics in `~/alexandria/files/core/design.md § Performance`).
 - **Server:** `server/src/` (Hono, Cloudflare Workers). One file per concern:
   - `worker.ts` (entry + middleware), `protocol.ts` (the collective plumbing — file, call, library, marketplace; "protocol" is the internal code name), `routes.ts` (company HTTP handlers), `auth.ts` (accounts + API keys), `accounts.ts` (account management + admin), `email.ts` (Resend + all templates), `cron.ts` (health digest + followup + engagement), `analytics.ts` (event log + dashboard), `billing.ts` (Stripe), `library.ts` (Library CRUD), `kv.ts` (KV persistence), `templates.ts` (HTML), `cors.ts` (CORS), `crypto.ts` (encryption), `db.ts` (D1/R2 accessor), `file-access.ts` (visibility gate — the only path that reads protocol/shadow/work bytes from R2), `marketplace-catalog.ts` (GitHub module catalog + push-webhook cache busting), `marketplace.ts` (Author-feedback substrate, writes to private GitHub repo), `audit.ts` (tamper-evident access audit mirrored to a hash-chained GitHub repo), `library-signal.ts` (daily funnel/engagement snapshot consumed by the founder), `time.ts` (PT formatter).
   - Stateless server. No private user data stored. KV for accounts/events, D1 for Library metadata + protocol data, R2 for published content.
