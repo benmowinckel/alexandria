@@ -16,7 +16,7 @@ import { FOUNDER_LIBRARY_ID, FOUNDER_PROFILE_PATH } from '../lib/config';
  * public shadow + public product facts (no private substrate in reach).
  */
 export default function PublicDocReader({
-  title, mdSrc, pdfSrc, txtSrc, numbered, plain, askQuestions,
+  title, mdSrc, pdfSrc, txtSrc, numbered, plain, askQuestions, askFirst,
 }: {
   title: string;
   mdSrc?: string;   // markdown to fetch + render (the whitepaper)
@@ -25,6 +25,7 @@ export default function PublicDocReader({
   numbered?: boolean; // book setting — TOC + hanging numerals + colophon plate
   plain?: boolean;    // with numbered: the plain (ragged-right) variant
   askQuestions?: string[]; // this doc's own suggested questions → the rotation
+  askFirst?: boolean;      // open with the mirror pane up (the /features ask page)
 }) {
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [markdown, setMarkdown] = useState('');
@@ -84,10 +85,9 @@ export default function PublicDocReader({
   const intro = (
     <div style={{ color: 'var(--text-muted)', fontSize: '1.02rem', lineHeight: 1.78, textWrap: 'pretty' }}>
       <p style={{ margin: '0 0 1.5rem', textWrap: 'pretty' }}>
-        You’re reading this alongside a mirror of{' '}
+        A mirror of{' '}
         <span style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>Benjamin</span>’s
-        {' '}mind — the founder of alexandria. His own thinking, reflected from what he’s
-        written, not a stand-in for him. Ask it about this piece, about alexandria, or about him.
+        {' '}mind — reflected from what he’s written, not a stand-in for him. Ask it anything.
       </p>
       <p style={{ margin: 0, display: 'flex', alignItems: 'baseline', gap: '0.95rem', fontSize: '0.95rem' }}>
         <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">make your own</Link>
@@ -117,6 +117,8 @@ export default function PublicDocReader({
       askQuestions={askQuestions}
       askFn={askFn}
       intro={intro}
+      askFirst={askFirst}
+      footerCta="free sample"
     />
   );
 }

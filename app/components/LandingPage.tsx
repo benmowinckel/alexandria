@@ -322,12 +322,53 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       title: 'how',
       lead: 'Your Alexandria folder teaches any ai to map how you think — and to think with you, not for you.',
       body: [
-        'It’s a private folder on your own computer, holding what you think and how you think it. Pour everything you have into it, and your ai draws it into a single, living map of your mind — a mirror it can look into to see where you are, and keep looking, so that as you change, it stays in tune with you. That mirror is the thread between you and it: the connection that keeps the two of you pulling in the same direction — refining the map, growing it, and turning it, slowly, toward making you the best version of yourself.',
-        'Privacy is simple, because there’s almost nothing to it: just files on your own computer, yours to ignore, edit, or delete. No server, no account, nothing ever leaving your machine. It’s free to download, so the moment it’s yours, it’s detached from us — yours and yours alone. Think of it like a free sample: we can’t take it back, we ask for nothing in return, we just hope you’ll taste it, and maybe tell us how you liked it.',
-        'And for those who come to love what they’ve built, we’ve made a community — a place to share your systems, learn from one another, and publish everything they’ve helped you create.',
+        'It’s a private folder on your own computer, holding what you think and how you think it. Pour everything you have into it, and your ai draws it into a single, living map of your mind — a mirror it keeps looking into, so that as you change, it stays in tune with you — and the two of you keep pulling in the same direction: refining the map, growing it, turning it, slowly, toward making you the best version of yourself.',
+        'Privacy is simple, because there’s almost nothing to it: just files on your own computer, yours to ignore, edit, or delete. No server, no account, nothing ever leaving your machine. And it’s free — the moment it’s yours, it’s detached from us, yours and yours alone.',
+        'And for those who come to love what they’ve built, we’ve made a community — a place to share your systems, learn from one another, and publish what they’ve helped you create.',
       ],
     },
   ];
+  // ── Back-slide pitch tabs (founder-iterated 2026-07-24/25): "the
+  // product." holds the simple/technical explanations (one-line preview +
+  // expansion, same accordion grammar as why/what/how); "the company."
+  // holds the existing why/what/how. Copy locked line-by-line in-session;
+  // canon record in alexandria-inc truth/a4.md (back-slide entry).
+  const [backPanel, setBackPanel] = useState<'pitch' | 'about'>('pitch');
+  // Hover-intent for the tabs — same dwell pattern as the sections so a
+  // transit across the row can't false-fire; click stays for touch and
+  // impatience. The tabs themselves never move on switch, so
+  // enter/leave boundaries are layout-shift-safe here.
+  const tabHover = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverTab = (p: 'pitch' | 'about') => {
+    if (backPanel === p) return;
+    if (tabHover.current) clearTimeout(tabHover.current);
+    tabHover.current = setTimeout(() => {
+      setBackPanel(p);
+      setOpenPillar(null);
+    }, 170);
+  };
+  const cancelTabHover = () => {
+    if (tabHover.current) clearTimeout(tabHover.current);
+  };
+  useEffect(() => cancelTabHover, []);
+  const PITCHES = {
+    simple: {
+      lead: 'It makes your ai actually know you — everything it learns lives in files you own.',
+      body: [
+        'Alexandria is ai personalisation you own. Your ai learns you — how you think, what you’re working on, what you like — and all of it lives in files that are yours, not inside Claude. It’s fully private by definition: no server, no account, nothing sent to anyone — the files sit on your computer, and only your permissions decide what touches them.',
+        'And it’s nothing new to learn. It just changes how the ai you already use behaves — like giving it a pep talk before it starts, so it works from who you are. Alexandria is the idea of keeping all of that in one place: a convention, not software. You run it however you like; we give you a working version, free. Your ai reads your files to know you and writes back what it learns, so it develops — deeper the longer you run it.',
+        'Because it’s just your files, it works with every ai and comes with you if you switch. Around it is the community — Strava, but for your mind — people running their own versions and sharing what works. That part’s paid, and free if you bring friends. There’s a lot more inside — this is just the core.',
+      ],
+    },
+    technical: {
+      lead: 'agents.md, but for you — your context in files you own, that every ai reads and develops.',
+      body: [
+        'If the stack is model, harness, tools, files — Alexandria is the files. Context today is scattered and locked: ChatGPT memory, Claude memory, Cursor rules, a CLAUDE.md — each partial, none yours. Alexandria is the convention of putting it all in one place: one corpus of markdown you own, that every model and harness reads and writes back to. Maintenance becomes the ai’s job, so every session leaves it deeper — on your machine, under your permissions, nothing sent anywhere.',
+        'It’s designed for people who already run something — a CLAUDE.md, a rules file, a notes system — because you’ve already internalised the value. You’ve closed the inner loop; we give you the infrastructure to close the outermost one: capture from everywhere, development over time, everything draining into one sovereign, unified, rich place. We give you a polished working version, free — but it’s a convention, not software: run it however you want, as long as your ai reads and develops files you own.',
+        'What that opens: one setup that follows you across every tool, a map of your thinking you can read and build on, a mirror of you any ai can be pointed at. And the community: publish your mind to the Library beside everyone else’s — comparing setups, browsing minds, forking what works. There’s much more — this is the core.',
+      ],
+    },
+  } as const;
   // ── Front-slide feature rotation (founder, 2026-07-24: "the front
   // slide be ad rotation / feature rotation things elegantly"; second
   // pass same day: fixed rotation starting on the original hero,
@@ -1126,7 +1167,70 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     flowing with no dividers between them. A lead paragraph
                     shows; a rotating caret reveals the rest. Accordion (one
                     open at a time) keeps the fixed stage bounded. */}
-                <p className="secs-kicker">on alexandria.</p>
+                {/* The kicker as two hover-flick tabs — the pitch panel
+                    (default) and the on-alexandria depth; panels shift
+                    laterally, hover-intent dwell prevents transit fires. */}
+                <div className="back-tabs">
+                  <button
+                    type="button"
+                    className={`back-tab${backPanel === 'pitch' ? ' is-active' : ''}`}
+                    onClick={() => { setBackPanel('pitch'); setOpenPillar(null); }}
+                    onMouseEnter={() => hoverTab('pitch')}
+                    onMouseLeave={cancelTabHover}
+                  >
+                    the product.
+                  </button>
+                  <span className="back-tab-sep" aria-hidden>·</span>
+                  <button
+                    type="button"
+                    className={`back-tab${backPanel === 'about' ? ' is-active' : ''}`}
+                    onClick={() => { setBackPanel('about'); setOpenPillar(null); }}
+                    onMouseEnter={() => hoverTab('about')}
+                    onMouseLeave={cancelTabHover}
+                  >
+                    the company.
+                  </button>
+                </div>
+                <div className="back-panels">
+                <div className={`back-panel${backPanel === 'pitch' ? ' is-live' : ''}`} aria-hidden={backPanel !== 'pitch'}>
+                  {/* Same accordion machinery as on-alexandria: two
+                      sections, one-line preview, hover/click expands;
+                      everything below the rule stays pinned by the
+                      stage's auto-margin turn. */}
+                  <div className="secs pitch-secs">
+                    {(['simple', 'technical'] as const).map((key) => {
+                      const p = PITCHES[key];
+                      const isOpen = openPillar === key;
+                      return (
+                        <div
+                          key={key}
+                          data-sec={key}
+                          className={`sec${isOpen ? ' is-open' : ''}`}
+                          onClick={() => {
+                            const touch = window.matchMedia('(hover: none)').matches;
+                            setOpenPillar(touch ? (isOpen ? null : key) : key);
+                          }}
+                        >
+                          <button
+                            type="button"
+                            className="sec-head"
+                            aria-expanded={isOpen}
+                          >
+                            <span className="sec-title">{key}</span>
+                            <span className="sec-caret" aria-hidden />
+                          </button>
+                          <p className="sec-lead">{p.lead}</p>
+                          <div className="sec-body">
+                            <div className="sec-body-inner">
+                              {p.body.map((para, i) => <p key={i}>{para}</p>)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className={`back-panel${backPanel === 'about' ? ' is-live' : ''}`} aria-hidden={backPanel !== 'about'}>
                 <div className="secs">
                   {SECTIONS.map((s) => {
                     const isOpen = openPillar === s.title;
@@ -1153,6 +1257,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       </div>
                     );
                   })}
+                </div>
+                </div>
                 </div>
 
                 {/* The line break — one rule between the sections and the
@@ -1195,6 +1301,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     rather than a caption stuck on the art. */}
                 <p className="demo-line">
                   <DemoFilm />
+                  <span className="demo-line-sep" aria-hidden>·</span>
+                  <a href="/features" className="demo-link">
+                    <em>ask about alexandria</em>
+                  </a>
                 </p>
 
               </div>

@@ -135,6 +135,8 @@ export type ReaderShellProps = {
   askQuestions?: string[];
   askFn: (question: string) => Promise<string>;   // the twin call (wrapper decides which)
   intro?: React.ReactNode;                        // chat empty-state (who you're talking to + CTAs)
+  askFirst?: boolean;                             // open with the ask pane up (mirror-led pages)
+  footerCta?: string;                             // surface-fitting foot label (SiteFooter doctrine)
   /** Library-only: the invite-code entry, slotted under the sign-in CTA when an
    *  invite-gated piece is opened signed-out. The wrapper owns the field + the
    *  unlock submit; the shell just gives it a home on the sign-in wall so a
@@ -148,21 +150,21 @@ export default function ReaderShell({
   numbered = false, plain = false,
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
-  intro, inviteField,
+  intro, inviteField, askFirst = false, footerCta = 'build your own',
 }: ReaderShellProps) {
   const book = useMemo(
     () => (numbered && markdown ? processNumbered(markdown) : null),
     [numbered, markdown]
   );
   const [leftOpen, setLeftOpen] = useState(false);   // history
-  const [midOpen, setMidOpen] = useState(false);     // chat
+  const [midOpen, setMidOpen] = useState(askFirst);  // chat (askFirst pages open on it)
   const [rightOpen, setRightOpen] = useState(true);  // the piece
   // The big "peek" sway plays only until the reader has opened the ask pane
   // once — after that they know it's there, so re-closing it doesn't sway again
   // (founder 2026-07-20). The gentle ongoing sway continues regardless.
   const [chatSeen, setChatSeen] = useState(false);
   useEffect(() => { if (midOpen) setChatSeen(true); }, [midOpen]);
-  const [tab, setTab] = useState<'piece' | 'ask'>('piece'); // mobile
+  const [tab, setTab] = useState<'piece' | 'ask'>(askFirst ? 'ask' : 'piece'); // mobile
   const [expanded, setExpanded] = useState(false);   // full-screen the piece
 
   // Full-screen the doc: CSS immersive (fills the viewport, works on every
@@ -263,6 +265,11 @@ export default function ReaderShell({
 
   const label = { color: 'var(--text-ghost)', fontSize: '0.72rem', letterSpacing: '0.08em' } as const;
   const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
+  // One header grammar for all three panes: faint label left, icons right,
+  // collapse always last. Identical metrics so the three border-bottoms
+  // fuse into a single continuous rule across the reader — one line, not
+  // three (founder 2026-07-25: consistent little headers, no line clutter).
+  const paneHead = { flex: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.7rem 1rem 0.4rem', minHeight: '2.4rem', boxSizing: 'border-box', borderBottom: '1px solid var(--border-light)' } as const;
 
   const copyText = (t: string) => { try { void navigator.clipboard?.writeText(t); } catch { /* */ } };
   const copyArtifact = () => copyText(artifactText || '');
@@ -325,10 +332,11 @@ export default function ReaderShell({
           {/* history — slot 1 */}
           <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">{PaneLeftIcon}</button>
           <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
-            <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 0.9rem 0.5rem' }}>
+            <div style={paneHead}>
               <button type="button" onClick={() => setLeftOpen(false)} aria-label="collapse history" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneLeftIcon}</button>
+              <span style={label}>history</span>
               <button type="button" onClick={newChat} aria-label="new conversation" title="new conversation"
-                style={{ marginLeft: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: 1, padding: 0 }} className="hover:opacity-60">＋</button>
+                style={{ ...iconBtn, marginLeft: 'auto', fontSize: '1.05rem', lineHeight: 1 }} className="hover:opacity-60">＋</button>
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '0.2rem 0.6rem 1rem' }}>
               {convos.map((c) => (
@@ -343,8 +351,12 @@ export default function ReaderShell({
               2026-07-20 — mobile has the read/ask tabs, desktop needs the cue). */}
           <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open chat — ask about this piece" title="ask">{LinesIcon}</button>
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
-            <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 1rem 0.4rem' }}>
-              <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
+            <div style={paneHead}>
+              <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse the mirror" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
+              {/* Not "ask benjamin" — the product is a MIRROR of a mind,
+                  never a twin or stand-in (canon; founder 2026-07-25:
+                  "this is so key. its the mirror"). One universal label. */}
+              <span style={label}>the mirror</span>
               {(active?.messages.length ?? 0) > 0 && (
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={{ ...iconBtn, marginLeft: 'auto' }} className="hover:opacity-60" />
               )}
@@ -375,7 +387,7 @@ export default function ReaderShell({
           {/* the piece — slot 3 */}
           <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
-            <div className="piece-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.7rem 1rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
+            <div className="piece-head" style={paneHead}>
               <span style={{ ...label, marginRight: 'auto' }}>{name}</span>
               {status === 'ok' && (
                 <>
@@ -455,7 +467,7 @@ export default function ReaderShell({
             CTA (build your own) + the wordmark home, matching the profile and
             PLM three-pane pages (founder 2026-07-19). Drops out in full screen. */}
         <footer style={{ flex: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.6rem', padding: '1rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
-          <Link href="/start" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">build your own</Link>
+          <Link href="/start" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">{footerCta}</Link>
           <Link href="/" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">alexandria<span style={{ fontStyle: 'normal' }}>.</span></Link>
         </footer>
       </div>
