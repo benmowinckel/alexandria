@@ -368,35 +368,46 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     // (a4, atomic WHAT / fan-shaped WHY); the plugs-in frame keeps its
     // jargon deliberately — its persona IS the CLAUDE.md-keeper.
     { kind: 'brand' },
+    // Third pass (founder, 2026-07-24, same evening): "they have to FEEL
+    // it" — the subs were still describing the product (spec register:
+    // "keeps one file of who you are") when the ad's whole job is the
+    // felt after: put the reader inside the moment the value lands.
+    // Taste.md Mode 1 applied to conversion copy — evoke, don't tell;
+    // the reader IS the content. Each sub is now a moment, not a
+    // mechanism: the first message that already knows you / the saved
+    // pile becoming things you know / the lost thought coming back
+    // exactly when it matters / no one holding you / everything you've
+    // built finally pulling together / being knowable. Spec survives
+    // only where the spec itself is the feeling (the folder you own).
     {
       kind: 'feature',
       name: 'personalisation.',
       lead: 'Your ai still treats you like a stranger.',
-      sub: 'Alexandria keeps one file of who you are — your projects, your taste, how you think. Every ai you use reads it first.',
+      sub: 'With Alexandria, every ai opens knowing you like an old friend — your work, your taste, how you think.',
     },
     {
       kind: 'feature',
       name: 'saved posts.',
       lead: 'Saved 200 posts you’ll never read?',
-      sub: 'Alexandria reads every one and keeps what matters — so your ai remembers them all, as if you’d actually read them.',
+      sub: 'Alexandria reads every one and keeps what spoke to you — the things you saved become things you know.',
     },
     {
       kind: 'feature',
       name: 'capture.',
       lead: 'Your best thoughts die in your notes app.',
-      sub: 'Tap share on anything — a thought, a screenshot, a post — and your ai has read it before you’re home.',
+      sub: 'One tap from your phone and it’s kept — days later, mid-conversation, your ai brings it back exactly when it matters.',
     },
     {
       kind: 'feature',
       name: 'ownership.',
       lead: 'Feel trapped by the ai that knows you?',
-      sub: 'Everything your ai knows about you lives in a folder you own — free, moves to any ai, gone the day you delete it.',
+      sub: 'Your mind becomes a folder you own — move it to the next great ai in a minute, or delete it outright. No one holds you.',
     },
     {
       kind: 'feature',
       name: 'plugs in.',
       lead: 'Already have a system?',
-      sub: 'A CLAUDE.md, memory files, your own vault — it all stays. Alexandria plugs in beside it; delete one folder and it’s undone.',
+      sub: 'Keep it all — the CLAUDE.md, the memory files, the vault. Alexandria clicks them into one loop; everything you’ve built finally pulls together.',
     },
     // Resharpened at thread-close 2026-07-24: "Publish your mind."
     // needed its sub-line to land; the democratised-biography angle
@@ -406,7 +417,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'biography.',
       lead: 'Biographies used to be for the famous.',
-      sub: 'Alexandria writes yours as you go — a living page in the library where anyone can read how you actually think.',
+      sub: 'Alexandria writes yours as you go — a living page of how you actually think, for anyone who ever wants to know you.',
     },
   ];
   const FRAME_NUMERALS = ['a.', 'i', 'ii', 'iii', 'iv', 'v', 'vi'];
