@@ -118,12 +118,12 @@ export default function JoinCTA({
                 data-lpignore="true"
                 data-form-type="other"
                 placeholder="have a code?"
-                style={{ width: '6.5em' }}
+                className="w-code"
                 aria-label="referral code"
                 value={typedRef}
                 onChange={(e) => setTypedRef(e.target.value)}
               />
-              {!typedRef.trim() && <span className="act-why act-email-why"> — from a friend</span>}
+              {!typedRef.trim() && <span className="act-why act-email-why">— from a friend</span>}
             </>
           )}
         </div>
@@ -139,12 +139,12 @@ export default function JoinCTA({
                 inputMode="email"
                 autoComplete="email"
                 placeholder="not joining yet?"
-                style={{ width: '8.2em' }}
+                className="w-mail"
                 aria-label="your email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (mailState === 'error') setMailState('idle'); }}
               />
-              {!email.trim() && <span className="act-why act-email-why"> — leave your email</span>}
+              {!email.trim() && <span className="act-why act-email-why">— leave your email</span>}
               {email.trim() && (
                 <button type="submit" className="join-door-go" aria-label="send" disabled={mailState === 'sending'}>
                   <ArrowIcon />

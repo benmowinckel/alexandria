@@ -256,14 +256,14 @@ export default async function JoinPage({
           border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
           display: flex; flex-direction: column; gap: 10px;
         }
-        .act-email { display: flex; align-items: center; gap: 0; cursor: text; }
+        .act-email { display: flex; align-items: center; gap: 0.32em; cursor: text; }
         .act-email input {
-          flex: none; width: 8.2em; min-width: 0; background: transparent; border: none; outline: none;
+          flex: none; field-sizing: content; width: auto; min-width: 0; background: transparent; border: none; outline: none;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary);
           padding: 0;
         }
-        .act-email input:not(:placeholder-shown) { flex: 1; }
+        .act-email input:not(:placeholder-shown) { flex: 1; field-sizing: normal; }
         .act-email .join-door-go { margin-left: auto; }
         .act-email input::placeholder { color: var(--text-primary); }
         .act-email-why { flex: none; font-size: 17px; }
