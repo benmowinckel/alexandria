@@ -194,6 +194,18 @@ export default async function StartPage({
           font-size: 14px; letter-spacing: 0.02em; font-style: italic;
           color: var(--accent); line-height: 1;
         }
+        .copy-word {
+          background: none; border: none; padding: 0; cursor: pointer;
+          font: inherit; color: var(--text-primary);
+          border-bottom: 1px dotted var(--text-muted, rgba(26, 19, 24, 0.45));
+          transition: border-color 200ms;
+        }
+        .copy-word:hover { border-bottom-color: var(--text-primary); }
+        .email-line {
+          margin: 30px 0 10px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 14px; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.6));
+        }
         .install-block {
           display: flex; align-items: center; justify-content: space-between; gap: 16px;
           width: 100%; max-width: 460px; background: var(--bg-secondary);

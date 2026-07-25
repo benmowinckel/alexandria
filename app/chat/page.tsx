@@ -128,6 +128,14 @@ export default function ChatPage() {
           font-size: 14px; color: var(--text-muted, rgba(26, 19, 24, 0.55));
         }
 
+        .copy-word {
+          background: none; border: none; padding: 0; cursor: pointer;
+          font: inherit; color: var(--text-primary);
+          border-bottom: 1px dotted var(--text-muted, rgba(26, 19, 24, 0.45));
+          transition: border-color 200ms;
+        }
+        .copy-word:hover { border-bottom-color: var(--text-primary); }
+        .copy-word svg { color: var(--text-muted, rgba(26, 19, 24, 0.5)); }
         .install-block {
           display: flex; align-items: center; justify-content: space-between; gap: 16px;
           width: 100%; max-width: 460px; background: var(--bg-secondary);
