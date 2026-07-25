@@ -114,6 +114,7 @@ factory/
 
 ## Design Constraints
 
+- **Radically simple UX (onboarding law).** Any do-this-now flow: one decision or action per screen; every actionable thing is the same box (one grammar: bold words — muted why, inputs inside boxes); a page line is only legal if the model can't carry it at the moment of need; numerals not prose for sequence; small asks before the point-of-no-return action. Full physics: ~/alexandria/files/core/design.md § Conversion & Sales. Forged on /start + /chat + /join, 2026-07-24/25.
 - **Pure marginal value add.** Alexandria must never override, compete with, or degrade the user's existing workflows, memory, or tools. Passive mode is read-only context + optional marginalia writes. Active mode (/a) is opt-in. The user's existing system is the floor — Alexandria only adds.
 - **All .md files maximise total net signal for the model.** This is THE governing principle for every file an agent reads. Everything downstream is capped at file fidelity. Self-contained (0 to 100 with zero prior context). Max signal, not min length. But net, not gross (overwhelm the model and total received signal drops). Never compress signal. Only delete noise or true redundancy.
 - **Data and intent, not intelligence.** Alexandria ships data (the Author's files) and intent (axioms, philosophy, developmental objective). Never intelligence. The host LLM IS the intelligence. Every structure must be optimizable by the model — unstructured markdown, no schemas, no prescribed formats. When models improve, the same data yields more. Zero workflow changes.
