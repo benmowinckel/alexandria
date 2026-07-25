@@ -19,9 +19,8 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
   return (
     <div className="cta-section">
       <button className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the bootstrap">
-        {copied ? 'copied — now paste it into claude' : 'copy the bootstrap'}
+        {copied ? 'copied — now paste it into claude' : 'copy the setup'}
       </button>
-      <p className="chat-rest">claude does the rest.</p>
     </div>
   );
 }

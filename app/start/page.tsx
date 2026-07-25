@@ -52,7 +52,6 @@ export default async function StartPage({
       </header>
 
       <main className="primer-main">
-        <p className="primer-eyebrow">the tool</p>
         {/* No lede (2026-07-16, radical simplicity): the two steps are the
             page; the lede's privacy line lives in the fine print below. */}
         <h1 className="primer-h1">Becoming an Alexandrian</h1>

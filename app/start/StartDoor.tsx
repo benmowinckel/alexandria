@@ -37,10 +37,9 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
         {/* The read-if-you-want zone — below every action, footer-ish (founder
             2026-07-24: "they're not reading anything"). */}
         <p className="start-footnote">
-          the command: <code>curl -fsSL alexandria-library.com/a | bash</code>.
-          it makes one folder on your computer. yours. your own setup stays
-          untouched. delete the folder and it&rsquo;s gone.
-          details: <Link href="/mechanics">mechanics</Link>.
+          one folder, yours &mdash; your setup stays untouched; delete it, it&rsquo;s gone.
+          the command: <code>curl -fsSL alexandria-library.com/a | bash</code> &middot;{' '}
+          <Link href="/mechanics">mechanics</Link>
         </p>
       </>
     );

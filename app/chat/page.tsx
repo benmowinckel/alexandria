@@ -38,15 +38,14 @@ export default function ChatPage() {
       </header>
 
       <main className="primer-main">
-        <p className="primer-eyebrow">the tool — in chat</p>
         <h1 className="primer-h1">claude already knows you. now you own it.</h1>
 
         <ChatCTA bootstrap={bootstrap} />
 
         <div className="start-details">
           <p className="start-qa-a">
-            your files. your Drive. never our servers. the full version is one
-            command: <Link href="/start" className="start-shortcut-a">start here</Link>.
+            your files, your Drive &mdash; never ours.{' '}
+            <Link href="/start" className="start-shortcut-a">the full version &rarr;</Link>
           </p>
         </div>
 

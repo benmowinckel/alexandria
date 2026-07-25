@@ -111,7 +111,6 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
       <button type="button" className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the install command">
         {copied ? 'copied — now paste it into your coding app' : 'copy the install line'}
       </button>
-      <p className="chat-rest">it does the rest.</p>
 
         <p className="email-line">
           on your phone:{' '}
