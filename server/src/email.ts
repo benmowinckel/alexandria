@@ -240,7 +240,7 @@ export async function sendKinLapseWarning(
   <p style="margin: 0 0 0.6rem; color: #8a8078;">you dropped below three active friends, so ${resumeLine}. add one more and it&rsquo;s free again:</p>
   ${emailLinkLine(kinLink, kinLink.replace(/^https?:\/\//, ''))}
   <p style="margin: 0 0 1.8rem; color: #8a8078; font-size: 0.95rem;">can&rsquo;t find anyone and can&rsquo;t pay right now? just reply and i&rsquo;ll waive it.</p>`, unsubscribeUrl);
-  return await sendEmail(email, 'alexandria. — back to $10', html,
+  return await sendEmail(email, 'alexandria. — back to a dollar a day', html,
     unsubscribeUrl ? { unsubscribeUrl } : undefined);
 }
 
