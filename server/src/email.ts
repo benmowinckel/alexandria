@@ -230,13 +230,13 @@ export async function sendKinLapseWarning(
   const when = resumeDate
     ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(resumeDate).toLowerCase()
     : null;
-  const resumeLine = when ? `$30/month (a dollar a day) resumes on ${when}` : `$30/month (a dollar a day) resumes at your next renewal`;
+  const resumeLine = when ? `it goes back to a dollar a day on ${when}` : `it goes back to a dollar a day at your next renewal`;
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
   const html = emailShell(`<p style="margin: 0 0 1.2rem;">heads up &mdash; your free membership paused.</p>
   <p style="margin: 0 0 0.6rem; color: #8a8078;">you dropped below three active friends, so ${resumeLine}. add one back and it&rsquo;s free again:</p>
   ${emailLinkLine(kinLink, kinLink.replace(/^https?:\/\//, ''))}
-  <p style="margin: 0 0 0; color: #8a8078; font-size: 0.95rem;">can&rsquo;t right now? reply and i&rsquo;ll waive it.</p>`, unsubscribeUrl);
-  return await sendEmail(email, 'alexandria. — back to a dollar a day', html,
+  <p style="margin: 0 0 0; color: #8a8078; font-size: 0.95rem;">don&rsquo;t want to pay right now? just reply and i&rsquo;ll waive it.</p>`, unsubscribeUrl);
+  return await sendEmail(email, 'alexandria. — back to a dollar a day', html,  // subject unchanged
     unsubscribeUrl ? { unsubscribeUrl } : undefined);
 }
 
@@ -246,8 +246,8 @@ export async function sendWeekOneCheckIn(
 ): Promise<{ ok: boolean; error?: string }> {
   const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${emailToken}`;
   const html = emailShell(`<p style="margin: 0 0 1.4rem;">hey :)</p>
-  <p style="margin: 0 0 1.4rem;">a week in &mdash; just checking in. it&rsquo;s like the gym: the more you put in, the more you get out, and it molds to you.</p>
-  <p style="margin: 0 0 0;">so tell me: what&rsquo;s working, what isn&rsquo;t? you&rsquo;re early &mdash; what you say actually shapes what i build. just reply.</p>`, unsubscribeUrl);
+  <p style="margin: 0 0 1.4rem;">a week in &mdash; how&rsquo;s it going? the more you put into it, the more it becomes yours.</p>
+  <p style="margin: 0 0 0;">just hit reply and tell me one thing: what&rsquo;s working, or what isn&rsquo;t. you&rsquo;re early enough that it actually changes what i build.</p>`, unsubscribeUrl);
   return await sendEmail(email, 'checking in.', html, { unsubscribeUrl });
 }
 
