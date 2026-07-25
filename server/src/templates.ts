@@ -270,7 +270,8 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   .fineprint p:last-child { margin-bottom: 0; }
   .fineprint a { color: var(--ink-muted); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); transition: color 0.15s, border-color 0.15s; }
   .fineprint a:hover { color: var(--ink); border-bottom-color: var(--ink-muted); }
-  .fineprint-solo { font-size: 0.78rem; line-height: 1.7; color: var(--ink-faint); margin-top: 34px; }
+  .footer { margin-top: 40px; }
+  .fineprint-solo { font-size: 0.8rem; line-height: 1.7; color: var(--ink-faint); margin: 0 0 6px; }
   .fineprint-solo a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--ink-faint); transition: color 0.15s, border-color 0.15s; }
   .fineprint-solo a:hover { color: var(--ink-muted); border-bottom-color: var(--ink-muted); }
   .lostkey { font-size: 0.78rem; line-height: 1.7; color: var(--ink-faint); margin-top: 16px; }
@@ -357,12 +358,17 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
 <a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
 <main class="wrap">
   <h1 class="welcome">${isReturning ? `welcome back.` : `you\u2019re in.`}</h1>
-  ${isReturning ? `<p class="sub">open your coding agent and type <code class="cmd">/a</code>.</p>${rotateUrl ? `
-  <p class="fineprint-solo">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a></p>` : ''}` : `${curlCmd ? `<button type="button" class="cta-box primary" onclick="copyCmd(this)" aria-label="copy connect command">connect your account<span class="cta-why"> &mdash; copy, then paste in your agent</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>
-    <p class="sub">then type <code class="cmd">/a</code>.</p>` : `<p class="sub">open a new tab and type <code class="cmd">/a</code>.</p>${rotateUrl ? `
-    <p class="fineprint-solo">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a></p>` : ''}`}
-    ${inviteUrl ? `<button type="button" class="cta-box" onclick="copyInvite(this)" aria-label="copy invite link">copy your invite link<span class="cta-why"> &mdash; three friends on = free</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>` : ''}
-    <p class="fineprint-solo">wrong account? <a href="https://github.com/logout" target="_blank" rel="noopener noreferrer">sign out of github</a></p>`}
+  ${isReturning
+    ? `<p class="sub">open your coding agent and type <code class="cmd">/a</code>.</p>`
+    : `${curlCmd
+        ? `<button type="button" class="cta-box primary" onclick="copyCmd(this)" aria-label="copy connect command">connect your account<span class="cta-why"> &mdash; copy, then paste in your agent</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>
+    <p class="sub">then type <code class="cmd">/a</code>.</p>`
+        : `<p class="sub">open a new tab and type <code class="cmd">/a</code>.</p>`}`}
+  ${inviteUrl ? `<button type="button" class="cta-box" onclick="copyInvite(this)" aria-label="copy invite link">copy your invite link<span class="cta-why"> &mdash; send it wide, every friend keeps you free longer</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>` : ''}
+  <div class="footer">
+    ${rotateUrl ? `<p class="fineprint-solo">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a></p>` : ''}
+    <p class="fineprint-solo">wrong account? <a href="https://github.com/logout" target="_blank" rel="noopener noreferrer">sign out of github</a></p>
+  </div>
 </main>
 <script>
 function flash(el) {
