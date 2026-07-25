@@ -449,23 +449,38 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       sub: 'Everything you pour in, Alexandria draws into a living mirror of how you think — look in and recognise yourself, clearer every day.',
     },
   ];
-  // The hand: a. is a FIXED brand mark (founder, 2026-07-24: "the a.
-  // always stays and its just the numerals that cycle") — steady ink,
-  // outside the rotation, a quiet click target back to the hero. Only
-  // i–v cycle, and the row is CAPPED there (founder: "visually stops at
-  // v but continues on or cycles through so that it scales well"): the
-  // live highlight wraps through i–v lap after lap as the feature
-  // frames advance — position-in-lap, not per-frame identity — so the
-  // row never grows as frames are added. Clicking a numeral jumps to
-  // its first-lap frame. On the hero, the hand rests: no numeral lit,
-  // the a. carries the frame.
-  const FRAME_NUMERALS = ['i', 'ii', 'iii', 'iv', 'v'];
+  // The hand (corrected, founder 2026-07-24 night: "when i say rotate
+  // through, i mean that it goes to vi vii viii etc… each numeral has
+  // to consistently refer to the same thing ofc"): every feature keeps
+  // its OWN numeral for good — vi is always vi — and the row is a
+  // five-slot WINDOW that slides along the full strip as the live frame
+  // advances, so it still reads a.–v at rest and never grows as frames
+  // are added. The a. stays a fixed brand mark outside the window
+  // (founder: "the a. always stays"). The slide begins when v goes live;
+  // the next numeral peeks in through the edge fade (the it-continues
+  // cue), and the live numeral never sits inside a faded edge (the
+  // window math below guarantees it). Arrows are BACK (founder: "maybe
+  // we need to bring the arrows back so they can really steer it") —
+  // they were cut as redundant when every numeral was visible; with a
+  // window they're how you steer past it, so the cut reversed.
+  const FRAME_NUMERALS = [
+    'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii',
+  ];
   const [frameIdx, setFrameIdx] = useState(0);
   const [frameHold, setFrameHold] = useState(false);
   const frameCount = FRONT_FRAMES.length;
-  const numeralCount = Math.min(frameCount - 1, FRAME_NUMERALS.length);
-  const liveNumeral =
-    frameIdx === 0 ? -1 : (frameIdx - 1) % FRAME_NUMERALS.length;
+  const featureCount = frameCount - 1;
+  // Five slots visible; each slot advances 34px (26px numeral + 8px gap
+  // — fixed-width slots so the strip's translate is pure arithmetic;
+  // keep in sync with the .front-numeral-strip CSS).
+  const NUMERAL_SLOTS = 5;
+  const NUMERAL_ADVANCE = 34;
+  const windowMax = Math.max(0, featureCount - NUMERAL_SLOTS);
+  const liveFeature = frameIdx - 1; // -1 on the hero
+  const windowStart =
+    liveFeature < 0
+      ? 0
+      : Math.min(Math.max(liveFeature - (NUMERAL_SLOTS - 2), 0), windowMax);
   const stepFrame = (d: number) =>
     setFrameIdx((i) => (i + d + frameCount) % frameCount);
   // Touch swipe — left/right through the frames on coarse pointers.
@@ -478,14 +493,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     // would kill the rotation for everyone.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (frameHold) return;
-    // 8000ms per frame (founder, 2026-07-24: 6000 was "a touch too fast" —
-    // the sequenced dissolve eats ~1.75s, so 8s leaves ~6s of still read);
-    // the hero dwells 10s (founder, same night: "have 10s hero") so the
-    // brand question lands before the tour starts.
-    const t = setTimeout(
-      () => setFrameIdx((i) => (i + 1) % frameCount),
-      frameIdx === 0 ? 10000 : 8000,
-    );
+    // 8000ms per frame, hero included (founder, 2026-07-24: 6000 was "a
+    // touch too fast"; a 10s hero dwell was tried the same night and
+    // pulled back to a uniform 8s — the sequenced dissolve eats ~1.75s,
+    // so 8s leaves ~6s of still read).
+    const t = setTimeout(() => setFrameIdx((i) => (i + 1) % frameCount), 8000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameIdx, frameHold]);
@@ -943,8 +955,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               frame; swipe steps it on touch, ← → on keyboard; the
               numeral row is both the it-rotates indicator and the
               navigation — the site's own roman-numeral hand, not
-              carousel dots (arrows were tried and cut, 2026-07-24:
-              redundant beside clickable numerals). */}
+              carousel dots. Arrows returned 2026-07-24 night with the
+              sliding window (no longer redundant: they steer past it). */}
           <div className="front-frames">
             {FRONT_FRAMES.map((f, i) => (
               <div
@@ -975,6 +987,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           <div className="front-numerals" aria-label="Slides">
             <button
               type="button"
+              className="front-arrow"
+              aria-label="Previous slide"
+              onClick={() => stepFrame(-1)}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
               className="front-numeral front-numeral-mark"
               aria-label="Slide a."
               aria-current={frameIdx === 0}
@@ -982,18 +1002,41 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             >
               a.
             </button>
-            {FRAME_NUMERALS.slice(0, numeralCount).map((n, s) => (
-              <button
-                key={s}
-                type="button"
-                className={`front-numeral${s === liveNumeral ? ' is-live' : ''}`}
-                aria-label={`Slide ${n}`}
-                aria-current={s === liveNumeral}
-                onClick={() => setFrameIdx(s + 1)}
+            <div
+              className={`front-numeral-window${
+                windowStart > 0 ? ' has-before' : ''
+              }${windowStart < windowMax ? ' has-after' : ''}`}
+            >
+              <div
+                className="front-numeral-strip"
+                style={{
+                  transform: `translateX(-${windowStart * NUMERAL_ADVANCE}px)`,
+                }}
               >
-                {n}
-              </button>
-            ))}
+                {FRONT_FRAMES.slice(1).map((_, f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    className={`front-numeral${
+                      f === liveFeature ? ' is-live' : ''
+                    }`}
+                    aria-label={`Slide ${FRAME_NUMERALS[f]}`}
+                    aria-current={f === liveFeature}
+                    onClick={() => setFrameIdx(f + 1)}
+                  >
+                    {FRAME_NUMERALS[f]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="front-arrow"
+              aria-label="Next slide"
+              onClick={() => stepFrame(1)}
+            >
+              ›
+            </button>
           </div>
         </div>
         <div className="top-inner" />
@@ -3141,6 +3184,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             transform: none;
             transition: opacity 600ms ease;
           }
+          .front-numeral-strip {
+            transition: none;
+          }
         }
         /* The it-rotates indicator — lowercase roman numerals in the
            site's own hand (the dict-lines and letter sections already
@@ -3150,7 +3196,63 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         .front-numerals {
           margin-top: 30px;
           display: flex;
+          align-items: center;
           gap: 18px;
+        }
+        /* The sliding window — five fixed-width slots over the full
+           numeral strip; the strip translates by whole slots (34px
+           advance — keep in sync with NUMERAL_ADVANCE). Edge fades
+           appear only on sides that actually continue; the window math
+           keeps the live numeral out of the faded edges. */
+        .front-numeral-window {
+          overflow: hidden;
+          width: 162px; /* 5 slots × 34px − trailing 8px gap */
+        }
+        .front-numeral-window.has-before {
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px);
+          mask-image: linear-gradient(90deg, transparent, #000 16px);
+        }
+        .front-numeral-window.has-after {
+          -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 16px), transparent);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 16px), transparent);
+        }
+        .front-numeral-window.has-before.has-after {
+          -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+        }
+        .front-numeral-strip {
+          display: flex;
+          transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .front-numeral-strip .front-numeral {
+          flex: none;
+          width: 26px;
+          margin-right: 8px;
+          text-align: center;
+        }
+        /* The steering arrows — returned with the window (cut earlier as
+           redundant when every numeral was visible; with a window they
+           are how you reach past it). The numerals' own ghost hand. */
+        .front-arrow {
+          appearance: none;
+          background: none;
+          border: none;
+          padding: 2px 0;
+          font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 15px;
+          line-height: 1;
+          color: rgba(46, 30, 38, 0.28);
+          transition: color 400ms ease;
+          cursor: pointer;
+          user-select: none;
+        }
+        .front-arrow:hover {
+          color: rgba(46, 30, 38, 0.55);
+        }
+        .front-arrow:focus-visible {
+          outline: 1px solid rgba(46, 30, 38, 0.4);
+          outline-offset: 2px;
         }
         .front-numeral {
           appearance: none;
