@@ -338,7 +338,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // concept (a4 2026-07-22), the stranger + switching lines (a4 THE
   // THREE TESTS, 2026-07-23).
   const FRONT_FRAMES: Array<
-    { kind: 'feature'; lead: string; sub: string } | { kind: 'brand' }
+    { kind: 'feature'; name: string; lead: string; sub: string } | { kind: 'brand' }
   > = [
     // Third pass (founder, 2026-07-24: "it's not really clear what the
     // features are… make the value really clear"): frames are the a4
@@ -355,31 +355,48 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     // mind). Each frame stands alone — visitors land mid-cycle. The
     // numeral row leads with the brand mark: the hero indexes as a.,
     // features as i–vi (founder, 2026-07-24: "so the hero is with a.").
+    // Second pass (founder, 2026-07-24 evening): (1) each feature frame
+    // carries its NAME as a quiet kicker — lowercase-with-period, the
+    // site's section-label hand ("personalisation." not "Personalisation")
+    // — so the rotation reads as a features tour, not anonymous slogans;
+    // (2) every sub rewritten to the COLD-AD bar: "someone completely
+    // randomly just reads it and is like, oh, thats sick, what is that,
+    // i want that" — each frame self-contained, the mechanism stated in
+    // the frame itself, zero reliance on the other frames (the old
+    // capture sub failed this: "the file your ai reads" only lands after
+    // you've internalised the system). One persona × one pain per frame
+    // (a4, atomic WHAT / fan-shaped WHY); the plugs-in frame keeps its
+    // jargon deliberately — its persona IS the CLAUDE.md-keeper.
     { kind: 'brand' },
     {
       kind: 'feature',
+      name: 'personalisation.',
       lead: 'Your ai still treats you like a stranger.',
-      sub: 'Alexandria keeps a file of who you are — your projects, your taste, how you think. Every ai you use reads it first.',
+      sub: 'Alexandria keeps one file of who you are — your projects, your taste, how you think. Every ai you use reads it first.',
     },
     {
       kind: 'feature',
+      name: 'saved posts.',
       lead: 'Saved 200 posts you’ll never read?',
-      sub: 'Alexandria reads every one — and what matters becomes part of what your ai knows about you.',
+      sub: 'Alexandria reads every one and keeps what matters — so your ai remembers them all, as if you’d actually read them.',
     },
     {
       kind: 'feature',
+      name: 'capture.',
       lead: 'Your best thoughts die in your notes app.',
-      sub: 'Save them to “a” from your phone instead — one tap, straight into the file your ai reads.',
+      sub: 'Tap share on anything — a thought, a screenshot, a post — and your ai has read it before you’re home.',
     },
     {
       kind: 'feature',
+      name: 'ownership.',
       lead: 'Feel trapped by the ai that knows you?',
-      sub: 'Alexandria is a folder you own — free, moves with you to any ai, gone the day you delete it.',
+      sub: 'Everything your ai knows about you lives in a folder you own — free, moves to any ai, gone the day you delete it.',
     },
     {
       kind: 'feature',
+      name: 'plugs in.',
       lead: 'Already have a system?',
-      sub: 'A CLAUDE.md, memory files, your own vault — it stays. Alexandria plugs in, never converts; delete one folder and it’s all undone.',
+      sub: 'A CLAUDE.md, memory files, your own vault — it all stays. Alexandria plugs in beside it; delete one folder and it’s undone.',
     },
     // Resharpened at thread-close 2026-07-24: "Publish your mind."
     // needed its sub-line to land; the democratised-biography angle
@@ -387,6 +404,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     // famous and the rich") hooks alone.
     {
       kind: 'feature',
+      name: 'biography.',
       lead: 'Biographies used to be for the famous.',
       sub: 'Alexandria writes yours as you go — a living page in the library where anyone can read how you actually think.',
     },
@@ -886,6 +904,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   </>
                 ) : (
                   <>
+                    <p className="front-frame-name">{f.name}</p>
                     <p className="front-lead">{f.lead}</p>
                     <p className="front-frame-sub">{f.sub}</p>
                   </>
@@ -3088,6 +3107,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           outline: 1px solid rgba(46, 30, 38, 0.4);
           outline-offset: 2px;
         }
+        /* Feature-frame name — the kicker above the hook (founder,
+           2026-07-24: "do we add the actual title names"). The site's
+           lowercase-with-period label hand, set small and tracked wide so
+           it reads as a section label, not a second headline; ink matches
+           the numeral row so kicker and indicator read as one system. */
+        .front-frame-name {
+          margin: 0 0 14px;
+          font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+          font-weight: 500;
+          font-size: 13.5px;
+          letter-spacing: 0.14em;
+          color: rgba(46, 30, 38, 0.45);
+        }
         /* Feature-frame sub-line — the quiet second voice under the hook,
            same Garamond italic family as the answer lead-in but sized to
            carry a full sentence. Proper-grammar prose (lowercase is for
@@ -3814,6 +3846,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
           }
           .front-answer-lead { font-size: 13.5px; }
           .front-answer-nameline { font-size: 26px; }
+          .front-frame-name {
+            font-size: 12px;
+            margin-bottom: 10px;
+          }
           .front-frame-sub {
             font-size: 14.5px;
             margin-top: 14px;
