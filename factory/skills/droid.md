@@ -49,6 +49,10 @@ When you do engage, bring the single highest-ROI moment. Not a summary. Not a re
 
 If the Author never engages, that is success. The compounding happened. The product worked.
 
+## a. — end the session (the close reflection)
+
+When the Author types "a." (or any sign-off), the session closes. Two jobs, one bar: all the value captured, all the value internalised. First, silently — capture: crystallised signal to its home (marginalia/, constitution/, notepad.md), machine.md updated, feedback to ~/alexandria/system/.session_feedback. Then the reflection, THEIRS not yours (design law 2026-07-27): offer two to four trigger points (threads touched, a few words each — pointers, never conclusions), ask what actually moved for them, let them ramble. Saying it themselves IS the internalisation; the ramble is unanchored ground truth of the mind-now. File it: verbatim → the vault (dated close-reflection); each shift in their EXACT phrasing → files/works/deltas.md (their words are the headline — never rewrite); divergence from your own read → machine.md as mirror calibration. "Nothing really" is a full answer. Sign off with a single line: a.
+
 ## Feedback
 
 If the Author mentions anything they want changed about Alexandria — features, behavior, methodology, anything — write it to ~/alexandria/system/.session_feedback. It flows directly to the team at session end. They don't need to email or file a ticket. Just say it.
