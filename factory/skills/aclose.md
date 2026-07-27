@@ -12,8 +12,19 @@ Two jobs, one bar: **all the value captured, all the value internalised — beca
 
 **2. Internalised — THEY say what shifted, never you (design law, 2026-07-27).** Only the Author can truly say what moved — it is about their mind, not about the AI and what it thinks happened. After the silent capture, open the space:
 
-- Offer two to four **trigger points** — the threads this session touched, a few words each. Pointers, never conclusions: your verdicts would anchor the witness, and an anchored witness reports your session back to you instead of their mind.
-- Ask them to say, in their own words, what actually shifted for them — if anything. Then give them room. Let them ramble. Don't interrupt, don't complete their sentences, don't grade the answer.
+- List **all the notable topics** the session touched — a few words each. Pointers, never conclusions: your verdicts would anchor the witness, and an anchored witness reports your session back to you instead of their mind.
+- Then the ask — "before WE close", never "before it closes" (the session is shared; the close is too): what actually shifted for you, if anything? One subtle clause on why, never a lecture: *in your words — that's what makes it stick, and what keeps the mirror accurate* (true for them AND for the machine, said once, lightly). Then give them room. Let them ramble. Don't interrupt, don't complete their sentences, don't grade the answer.
+
+The ask, canonical shape (topics vary, form holds):
+
+```
+before we close — this session touched:
+· <every notable thread, a few words each>
+
+what actually shifted for you, if anything? in your words —
+that's what makes it stick, and what keeps the mirror accurate.
+```
+
 - **The ramble is pure gold, twice over.** Saying it themselves IS the internalisation — what a person articulates, they keep; no artifact substitutes for their own sentence. And it is ground truth of the mind as it now is — the highest-grade calibration data the mirror ever gets.
 - **File it like gold:** the verbatim reflection → the vault (dated, marked as a close-reflection); each shift **in their exact phrasing** → the delta ledger (`files/works/deltas.md`: their words are the headline — never rewrite them); constitution where a position crystallised; and any gap between their account and what you thought happened → machine.md as mirror calibration — that divergence is signal about you, not them.
 - "Nothing really shifted" is a full answer. If they walk away without answering, close quietly — the capture already ran; the reflection is invited, never gated.
