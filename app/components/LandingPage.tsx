@@ -282,9 +282,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   const PITCH = {
     lead: 'The better ai knows you, the better it helps you. But the most important part of you — how you think — is stuck in your head.',
     body: [
-      'Your email, your calendar, your files — all of that can be plugged in. How you think can’t. It only comes out if you put it out — and nobody can do that for you.',
-      'That’s the Alexandria loop: your ai writes what it learns about you into private files, and reads them to know you. It runs itself. Without it, every ai starts from zero. With it, every ai — even the much better ones coming — knows you 10x better, and helps you 10x better.',
-      'The whole loop is free, takes minutes, and fits whatever you already use — a CLAUDE.md, memory files, notes all click in. Nothing leaves your computer, and the files are yours for good — with any ai you ever choose.',
+      'Your email, your calendar, your files — all of that can be plugged in. How you think can’t. It only comes out if you choose to get it out — and nobody can make that choice for you.',
+      'That’s the Alexandria loop: your ai writes what it learns about you into private files, and reads them to know you. Without the loop, every ai starts from zero. With it, every ai — even the much better ones coming — knows you 10x better, and helps you 10x better.',
+      'Most of it is automatic: just use ai like you already do, and the loop quietly writes down what it learns. The deepest parts need you — think out loud with it, on purpose, and that’s where the real 10x is. You get out what you put in; the loop just makes putting in easy.',
+      'The whole loop is free, takes minutes, and fits whatever you already use — a CLAUDE.md, memory files, notes all click in. Nothing leaves your computer, and the files are yours for good.',
       'And everyone running a loop is connected — Strava, but for your mind — comparing loops and sharing what works.',
     ],
     aside: 'for the technical: agents.md, but for you.',
