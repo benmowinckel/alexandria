@@ -14,7 +14,7 @@ export const metadata = pageMetadata({
 
 // The founding-member JOIN — the paid half of the two things. The tool (the run)
 // is free and keyless; this is the community (the Strava): the library, the
-// marketplace, the tribe. Signing in with GitHub starts the trial ($10/mo, first
+// marketplace, the tribe. Signing in with GitHub starts the trial (a dollar a day, first
 // month free, free with 3 kin, or email-to-waive) and assigns your number.
 //
 // The copy is FOUNDER-WRITTEN (2026-07-17, fifth pass — he dictated the

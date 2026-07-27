@@ -1,7 +1,7 @@
 /**
  * Billing — Stripe subscription management + Library payment
  *
- * Subscription: $10/mo (first month free), or free with 3+ active kin. Binary. Slider open above floor.
+ * Subscription: a dollar a day — $30/mo (first month free), or free with 3+ active kin. Binary. Slider open above floor.
  * Library: monthly tab billing (micro-transactions settled monthly via Stripe Billing Meters).
  * Non-Author: instant payment via Stripe Checkout.
  */
@@ -220,7 +220,7 @@ async function ensurePrice(): Promise<string> {
   const stripe = getStripe();
   const productCopy = {
     name: 'The Examined Life',
-    description: 'a tribe of humans who put their minds into writing, so ai thinks with them, not for them. free with three friends who join through you and stay active. otherwise a dollar a day ($30/month), first month free.',
+    description: 'a tribe of humans who put their minds into writing, so ai thinks with them, not for them. free with three friends who join through you and stay active. otherwise a dollar a day, first month free.',
   };
 
   const products = await stripe.products.list({ limit: 10 });
@@ -592,7 +592,7 @@ export async function createCheckoutSession(opts: {
       },
       metadata: { kind: 'author', github_login: opts.githubLogin },
       custom_text: {
-        submit: { message: 'free if three friends join through you and stay active. otherwise $10/month after your first month free.' },
+        submit: { message: 'free if three friends join through you and stay active. otherwise a dollar a day after your first month free.' },
       },
       success_url: `${SERVER_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${WEBSITE_URL}/signup?billing=cancel`,

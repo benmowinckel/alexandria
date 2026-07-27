@@ -117,7 +117,7 @@ export async function requireAuth(c: { req: { header: (name: string) => string |
 
 /**
  * Gate write endpoints (PUT /file, DELETE /file, POST /call) on an active
- * subscription. The deal is "$10/month (first month free) or 3 active kin":
+ * subscription. The deal is "a dollar a day (first month free) or 3 active kin":
  * new GitHub sign-ins go through Stripe checkout at the OAuth callback (the
  * founding-member join). A cancelled/unpaid sub means neither condition is met, so writes
  * are blocked at 402 with a reactivate link. Reads remain open (see

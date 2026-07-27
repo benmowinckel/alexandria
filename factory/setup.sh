@@ -1131,7 +1131,7 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
       echo "it'll show you how to become a founding member of the collective at"
       echo "alexandria-library.com/join — the thing being built: the"
       echo "library, the marketplace, the people. First month free, then free while three friends"
-      echo "you brought stay on, otherwise \$10/month — and if that's a stretch, message me and I'll"
+      echo "you brought stay on, otherwise a dollar a day — and if that's a stretch, message me and I'll"
       echo "waive it."
     fi
   fi
