@@ -288,30 +288,21 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       'Our only job is to make sure your loop is closed. If you have nothing, we hand you a complete one, free. If you have pieces — notes, a CLAUDE.md, memories — we click into yours. If you’ve built your own, ours makes it stronger. And a loop is just text files on your computer: once it’s yours, it has nothing to do with us — we’re only the place loops connect.',
     ],
   };
-  // ── The second tab — "on alexandria." (founder, 2026-07-27: the
-  // shift-right tab stays, renamed; "it goes through the why what how").
-  // Each section compressed to its lead + ONE paragraph, with every beat
-  // the pitch tab already carries (folder, privacy, free, community) cut
-  // — so the two tabs never say the same thing. The why survives nearly
-  // whole: it is the one argument the pitch doesn't make. Static text —
-  // the tab flick is the only control on the slide.
-  const ABOUT = [
-    {
-      title: 'why',
-      lead: 'Cultures must choose to value humans, but humans must first choose to value themselves.',
-      body: 'Machines are infinitely better at chess than we are, yet human chess is more popular than ever — we still love to watch humans play, but only the ones who can still play. Let ai think for you, and your mind — like any muscle you stop using — begins to fade. Align it to think with you, and there is no limit to how far the two of you can go. Alexandrians are defined by this choice alone.',
-    },
-    {
-      title: 'what',
-      lead: 'We help people build systems to keep thinking — so that we never lose our minds.',
-      body: 'Think out loud, and your ai slowly builds a full mirror of what you think and how you think it — a partner in your thinking, never a replacement for it.',
-    },
-    {
-      title: 'how',
-      lead: 'Your Alexandria folder teaches any ai to think with you, not for you.',
-      body: 'The founder’s entire system is free to download, so that anyone can begin — but the choice to begin has to be your own.',
-    },
-  ];
+  // ── The second tab — "on alexandria." Rebuilt 2026-07-27 (founder:
+  // "completely rethink... considering this new product text"): with the
+  // loop text carrying folder/free/mirror/choice mechanics, the old
+  // what/how sections became pure duplication — so this tab is now the
+  // MANIFESTO alone: the chess argument, the muscle argument, and the
+  // identity, ending by tying the identity back to the loop. The
+  // why/what/how plates are gone; one aphorism, three short paragraphs.
+  const MANIFESTO = {
+    lead: 'Cultures must choose to value humans, but humans must first choose to value themselves.',
+    body: [
+      'Machines are infinitely better at chess than we are, yet human chess is more popular than it has ever been — we still love to watch humans play. But only the ones who can still play.',
+      'Let ai think for you, and your mind — like any muscle you stop using — begins to fade. Align it to think with you, and there is no limit to how far the two of you can go.',
+      'Alexandrians are defined by this choice alone — the loop is just how we keep it.',
+    ],
+  };
   const [backPanel, setBackPanel] = useState<'pitch' | 'about'>('pitch');
   // Hover-intent for the tabs — 170ms dwell so a transit across the row
   // can't false-fire; click stays for touch and impatience. The tabs
@@ -1137,7 +1128,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     onMouseEnter={() => hoverTab('pitch')}
                     onMouseLeave={cancelTabHover}
                   >
-                    the product.
+                    the loop.
                   </button>
                   <span className="back-tab-sep" aria-hidden>·</span>
                   <button
@@ -1161,12 +1152,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 </div>
                 <div className={`back-panel${backPanel === 'about' ? ' is-live' : ''}`} aria-hidden={backPanel !== 'about'}>
                   <div className="pitch">
-                    {ABOUT.map((s) => (
-                      <div key={s.title} className="about-sec">
-                        <span className="about-title">{s.title}</span>
-                        <p className="pitch-lead about-lead">{s.lead}</p>
-                        <p className="pitch-para about-para">{s.body}</p>
-                      </div>
+                    <p className="pitch-lead">{MANIFESTO.lead}</p>
+                    {MANIFESTO.body.map((para, i) => (
+                      <p key={i} className="pitch-para">{para}</p>
                     ))}
                   </div>
                 </div>
@@ -1182,11 +1170,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     the frame / the punch / the action. */}
                 <div className="action-close">
                   <p className="statement-beat action-beat action-beat-final">
-                    <em>The loop compounds &mdash; every day you wait is
-                    value you never get back. Most minds will average out;
-                    yours doesn&rsquo;t have to. It&rsquo;s free, it takes
-                    five minutes, and if you don&rsquo;t like it, just
-                    delete it. The sample is below &mdash; take it.</em>
+                    <em>Every day you wait, the loop isn&rsquo;t
+                    compounding. Most minds will average out &mdash; yours
+                    doesn&rsquo;t have to. The sample is below: five
+                    minutes, and if you don&rsquo;t like it, delete
+                    it.</em>
                   </p>
                 </div>
 

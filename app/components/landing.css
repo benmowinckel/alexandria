@@ -1750,32 +1750,6 @@
           color: var(--theme-fg);
           max-width: 660px;
         }
-        /* ── "on alexandria." — why / what / how, each a plate + lead +
-           one paragraph. A step quieter than the pitch tab so three
-           sections read as one page, not three walls. */
-        .about-sec {
-          display: flex;
-          flex-direction: column;
-        }
-        .about-sec:first-child { margin-top: 18px; }
-        .about-sec + .about-sec { margin-top: 16px; }
-        .about-title {
-          margin: 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 11.5px;
-          letter-spacing: 0.16em;
-          color: var(--theme-fg-faint);
-        }
-        .pitch-lead.about-lead {
-          margin-top: 5px;
-          font-size: 16.5px;
-        }
-        .pitch-para.about-para {
-          margin-top: 8px;
-          font-size: 14.5px;
-          line-height: 1.58;
-        }
         .secs-rule {
           height: 1px;
           background: var(--theme-border-soft);
