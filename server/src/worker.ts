@@ -640,6 +640,11 @@ app.post('/onboard', async (c) => {
   // the community grows; NO install email and NO nudge thread (they're at the
   // join step, not the install step — many already run the tool).
   const isJoinDecline = body?.source === 'join';
+  // The /join page's second path (2026-07-27): "join anyway, but waive the
+  // month for me." Same capture, distinct source string so the founder can
+  // tell a waive ASK apart from a plain not-now — one is a person who wants
+  // in, the other is a person who didn't.
+  const isWaiveAsk = isJoinDecline && body?.intent === 'waive';
   // Referral attribution — sanitised like /join does (GitHub logins are
   // [A-Za-z0-9-]). Honored on EVERY source, not just join declines: install
   // intents (/start, mobile) store it on the KV record so the emailed command
@@ -685,7 +690,9 @@ app.post('/onboard', async (c) => {
     ).bind(
       normalizedEmail,
       isJoinDecline ? 'join' : 'onboard',
-      isJoinDecline ? (ref ? `ref:${ref}` : 'join_page') : 'public',
+      isJoinDecline
+        ? `${isWaiveAsk ? 'waive' : 'join_page'}${ref ? `:ref:${ref}` : ''}`
+        : 'public',
       new Date().toISOString(),
       newToken,
     ).first<{ unsubscribe_token: string | null }>();
@@ -694,7 +701,11 @@ app.post('/onboard', async (c) => {
     // confirmation email (nothing was requested), no onboard KV record (no
     // install-nudge sequence).
     if (isJoinDecline) {
-      logEvent('join_email_captured', { ref: ref ? 'yes' : 'no', upserted: upserted ? 'true' : 'false' });
+      logEvent('join_email_captured', {
+        ref: ref ? 'yes' : 'no',
+        intent: isWaiveAsk ? 'waive' : 'not_now',
+        upserted: upserted ? 'true' : 'false',
+      });
       return c.json({ ok: true });
     }
 

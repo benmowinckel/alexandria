@@ -1114,7 +1114,9 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
     echo "Synced — you're up to date. Nothing else to do."
     echo ""
     echo "AGENT: existing install refreshed — do NOT read the block or start onboarding."
-    echo "Tell the Author they're synced and carry on with their session."
+    echo "Tell the Author they're synced. If you're already mid-session, carry on. If this"
+    echo "paste is the first thing in a fresh tab, offer to start a session right now"
+    echo "(follow ~/alexandria/system/canon/methodology.md) so they never have to type /a."
   else
     echo "Installed — your agent takes it from here. Nothing else to copy or click."
     echo ""

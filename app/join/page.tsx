@@ -236,14 +236,57 @@ export default async function JoinPage({
         }
         .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .door-btn:active { transform: scale(0.992); }
-        .act-box { display: block; }
-        .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
-        .act-primary {
-          background: var(--text-primary); color: var(--bg-primary);
-          border-color: var(--text-primary); margin-top: 4px;
+        /* THE PITCH (2026-07-27). Nothing upstream of this page explains the
+           collective — block.md states the join in one line and is forbidden
+           from pitching it — so the whole argument lands here. Flowing prose,
+           not a bulleted feature list: the list read as thin ("that's
+           nothing") and bullets make three sentences look like three
+           specs. Each paragraph opens on a bolded claim and the rest is the
+           reason; the last line stands alone, quieter. */
+        .join-pitch { max-width: 470px; margin: 0 0 40px; }
+        .join-pitch section { margin: 0 0 26px; }
+        /* Each beat is a claim on its own line — EB Garamond italic, the same
+           display face as the hero, so the three claims read as one voice and
+           the eye has three places to land instead of one block. */
+        .join-beat {
+          margin: 0 0 5px;
+          font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+          font-style: italic; font-weight: 500;
+          font-size: 20px; line-height: 1.3; letter-spacing: 0.005em;
+          color: var(--text-primary); text-wrap: balance;
+          font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "calt" 1;
         }
-        .act-primary:hover { opacity: 0.9; border-color: var(--text-primary); }
-        .act-why-inverse { color: var(--bg-primary); opacity: 0.65; }
+        /* The reason under it — body serif, smaller, quieter, short measure. */
+        .join-sub {
+          margin: 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 15px; line-height: 1.6; letter-spacing: 0.01em;
+          color: var(--text-secondary, rgba(26, 19, 24, 0.72)); text-wrap: pretty;
+        }
+        .join-pitch .join-pitch-last {
+          margin: 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic; font-size: 14.5px; letter-spacing: 0.02em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
+
+        .act-box { display: block; }
+        /* The two ways in, stacked as peers — same box, only the fill differs. */
+        .act-primary + .act-email { margin-top: 10px; }
+        .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
+        /* Filled, but not the near-black ink slab it was — that read as harsh
+           (founder 2026-07-27). A warm mid-taupe: still unmistakably the
+           primary, no hue. (The plum tried in between was rejected — "no
+           colours".) Dark mode inverts to a warm light fill with dark type. */
+        .act-primary {
+          background: #57504a; color: #f5f0e8;
+          border-color: #57504a; margin-top: 4px;
+        }
+        .dark .act-primary {
+          background: #d9d4cc; color: #2b2a27; border-color: #d9d4cc;
+        }
+        .act-primary:hover { opacity: 0.9; }
+        .act-why-inverse { color: currentColor; opacity: 0.68; }
         .join-terms {
           margin: 14px 0 0; max-width: 486px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -256,7 +299,9 @@ export default async function JoinPage({
           border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
           display: flex; flex-direction: column; gap: 10px;
         }
-        .act-email { display: flex; align-items: center; gap: 0.32em; cursor: text; }
+        /* flex-wrap so a longer trailing "why" drops to a second line inside
+           the box instead of overflowing off-screen on narrow viewports. */
+        .act-email { display: flex; align-items: center; gap: 0.32em; cursor: text; flex-wrap: wrap; }
         .act-email input {
           flex: none; field-sizing: content; width: auto; min-width: 0; background: transparent; border: none; outline: none;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -266,7 +311,7 @@ export default async function JoinPage({
         .act-email input:not(:placeholder-shown) { flex: 1; field-sizing: normal; }
         .act-email .join-door-go { margin-left: auto; }
         .act-email input::placeholder { color: var(--text-primary); }
-        .act-email-why { flex: none; font-size: 17px; }
+        .act-email-why { flex: 0 1 auto; min-width: 0; font-size: 17px; }
         .act-sent { font-size: 17px; }
 
         /* THE OTHER DOORS — the three exits under one hairline. Tertiary by

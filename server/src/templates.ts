@@ -99,9 +99,16 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   const host = WEBSITE_URL.replace(/^https?:\/\//, '');
   // The founding-member page (Strava-for-thought, ground truth e1cd27f). You've
   // just JOINED the community — the local tool was already free. The page leads
-  // with belonging (you're in), then the two actions: the connect command (links
-  // your local install so you can publish + be seen) and your invite link (carries
-  // your code; three friends through it = free for good). A founding number IS
+  // with belonging (you're in), then two boxes in this order: share your invite
+  // link — "send it to everyone", NOT "three friends" (founder 2026-07-27: the
+  // three-kin threshold is how the bill goes away, but it is not the ask; the
+  // ask is share as wide as possible, and naming a number caps it at three) —
+  // then
+  // connect the command that links your local install so you can publish + be
+  // seen. Both states — fresh join and returning — are the same two boxes; only
+  // the second differs. No step numerals, no notes under the boxes: the order
+  // IS the sequence and each box says the whole thing (founder 2026-07-27,
+  // "radically simplify"). A founding number IS
   // assigned server-side, but it is NOT the pitch — nobody cares which number they
   // are, so the page doesn't headline it.
   // `isReturning` is the bare re-login fallback — nothing minted, not a fresh join.
@@ -124,9 +131,14 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   // member's kin code, so there's no separate code line to explain.
   const inviteUrl = githubLogin ? `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}` : '';
   const inviteDisplay = githubLogin ? `${host}/invite?ref=${githubLogin}` : '';
-  // (Kin progress + the Web Share sheet were cut 2026-07-17 — the count is
-  // ~always 0 on this page, and two buttons with mixed icons read messy. One
-  // visible link, one copy icon.)
+  // (Kin progress was cut 2026-07-17 — the count is ~always 0 on this page.
+  // The Web Share sheet, cut at the same time, is BACK as of 2026-07-27 and is
+  // now the whole of step 1: a copy button parks the link on a clipboard nobody
+  // pastes, a share sheet puts it one tap from a real conversation. Sharing is
+  // deliberately ahead of connecting — the moment right after joining is the
+  // only one where they'll actually send it. Tradeoff accepted knowingly: some
+  // fraction will share and never come back for step 2; the connect line is
+  // also in their welcome email, so that path isn't lost.)
   // Inline Mechanics.md so its copy button runs synchronously inside the click handler.
   // Async fetch + clipboard.writeText loses user activation and falls back to opening the raw URL.
   // (block.md is no longer copied here — the agent reads the locally-cached .block after install
@@ -151,17 +163,20 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
     --paper: #f5f0e8; --ink: #3d3630; --ink-secondary: #4d4640;
     --ink-muted: #8a8078; --ink-faint: #bbb4aa; --accent: #5B1F47;
     --rule: rgba(61, 54, 48, 0.14); --tip-bg: #3d3630; --tip-fg: #f5f0e8;
+    --btn-bg: #57504a; --btn-fg: #f5f0e8;
   }
   :root[data-theme="dark"] {
     --paper: #2b2a27; --ink: #ece8e1; --ink-secondary: #cdc8c0;
     --ink-muted: #9b9690; --ink-faint: #6b6660; --accent: #9F87C5;
     --rule: rgba(236, 232, 225, 0.14); --tip-bg: #ece8e1; --tip-fg: #2b2a27;
+      --btn-bg: #d9d4cc; --btn-fg: #2b2a27;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --paper: #2b2a27; --ink: #ece8e1; --ink-secondary: #cdc8c0;
       --ink-muted: #9b9690; --ink-faint: #6b6660; --accent: #9F87C5;
       --rule: rgba(236, 232, 225, 0.14); --tip-bg: #ece8e1; --tip-fg: #2b2a27;
+      --btn-bg: #d9d4cc; --btn-fg: #2b2a27;
     }
   }
   .theme-toggle {
@@ -219,8 +234,15 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
     background: var(--rule); border-radius: 4px; padding: 1px 6px;
   }
   .step-note {
-    margin: 14px 0 0; font-size: 0.85rem; line-height: 1.65;
+    margin: -4px 0 26px; font-size: 0.85rem; line-height: 1.65;
     color: var(--ink-muted); max-width: 480px; font-style: italic;
+  }
+  /* Numbered step label — small-caps spine above each box, so the two moves
+     read as an order (share first, then connect) and not as two peers. */
+  .step-label {
+    margin: 0 0 10px; font-size: 0.72rem; letter-spacing: 0.12em;
+    text-transform: lowercase; font-variant-caps: all-small-caps;
+    color: var(--ink-muted); line-height: 1;
   }
   /* The /a habit — NOT a numbered step (it's an ongoing thing, not a
      one-time action); differentiated by a plum keyline so it reads as the
@@ -289,7 +311,17 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   }
   .cta-box:hover { border-color: var(--ink-muted); }
   .cta-box:active { transform: scale(0.992); }
-  .cta-box.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  /* A step that is a statement, not an action (the /a line) — same box so the
+     two steps share one grammar, but nothing to click. */
+  .cta-box.static { cursor: default; }
+  .cta-box.static:hover { border-color: var(--rule); }
+  .cta-box.static:active { transform: none; }
+  /* Filled, but not the near-black ink slab it was — that read as harsh
+     (founder 2026-07-27). A warm mid-taupe: still unmistakably the first thing
+     to press, no hue. (A plum fill was tried in between and rejected — "no
+     colours".) Dark mode inverts to a warm light fill with dark type. */
+  .cta-box.primary { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+  .cta-why-inverse { color: var(--btn-fg); opacity: 0.68; }
   .cta-box.primary .cta-why { color: var(--paper); opacity: 0.6; }
   .cta-box.primary:hover { opacity: 0.9; }
   .cta-why { color: var(--ink-muted); }
@@ -357,14 +389,13 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
 </button>
 <a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
 <main class="wrap">
-  <h1 class="welcome">${isReturning ? `welcome back.` : `you\u2019re in.`}</h1>
-  ${isReturning
-    ? `<p class="sub">open your coding agent and type <code class="cmd">/a</code>.</p>`
-    : `${curlCmd
-        ? `<button type="button" class="cta-box primary" onclick="copyCmd(this)" aria-label="copy connect command">connect your account<span class="cta-why"> &mdash; copy, then paste in your agent</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>
-    <p class="sub">then type <code class="cmd">/a</code>.</p>`
-        : `<p class="sub">open a new tab and type <code class="cmd">/a</code>.</p>`}`}
-  ${inviteUrl ? `<button type="button" class="cta-box" onclick="copyInvite(this)" aria-label="copy invite link">copy your invite link<span class="cta-why"> &mdash; send it wide, every friend keeps you free longer</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>` : ''}
+  <h1 class="welcome">${isReturning ? `welcome back.` : `you\u2019re one of us now.`}</h1>
+  ${inviteUrl
+    ? `<button type="button" class="cta-box primary" onclick="shareInvite(this)" aria-label="share your invite link">share your link<span class="cta-why cta-why-inverse">&nbsp;&mdash; bring people, stay free</span><span class="icon"><span class="icon-copy">${ICON_SHARE}</span><span class="icon-check">${ICON_CHECK}</span></span></button>`
+    : ''}
+  ${isReturning || !curlCmd
+    ? `<div class="cta-box static">start /a in a new tab<span class="cta-why">&nbsp;&mdash; refine yourself between tasks</span></div>`
+    : `<button type="button" class="cta-box" onclick="copyCmd(this)" aria-label="copy connect command">copy this line<span class="cta-why">&nbsp;&mdash; paste it in your agent</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>`}
   <div class="footer">
     ${rotateUrl ? `<p class="fineprint-solo">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a></p>` : ''}
     <p class="fineprint-solo">wrong account? <a href="https://github.com/logout" target="_blank" rel="noopener noreferrer">sign out of github</a></p>
@@ -395,7 +426,20 @@ function manualCopy(text, el) {
   }
 }
 function copyCmd(el) { copyText(${jsLiteral(curlCmd)}, el); }
-function copyInvite(el) { copyText(${jsLiteral(inviteUrl)}, el); }
+// Share, not copy (founder 2026-07-27): the native sheet puts the link one tap
+// from a real conversation — Messages, WhatsApp, wherever they'd actually send
+// it — instead of parking it on a clipboard they never paste. Desktop browsers
+// without navigator.share fall back to the copy behaviour (and the tick flash).
+function shareInvite(el) {
+  var url = ${jsLiteral(inviteUrl)};
+  if (navigator.share) {
+    navigator.share({ title: 'alexandria.', text: 'thinking, together — come in with me.', url: url })
+      .then(function() { flash(el); })
+      .catch(function() {});
+    return;
+  }
+  copyText(url, el);
+}
 function effectiveTheme() {
   var t = document.documentElement.dataset.theme;
   if (t === 'dark' || t === 'light') return t;
