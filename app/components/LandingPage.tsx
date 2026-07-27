@@ -271,20 +271,21 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // /features (the ask page) answers any question; the letter +
   // whitepaper (nav) carry the company story. The cut essays are
   // preserved in git and in a4's back-slide entry.
-  // The loop frame (founder, 2026-07-27): the value is "your ai knows
-  // you 10x better and helps you 10x better"; the mechanism is the
-  // Alexandria LOOP — auto read/write of personal context to private
-  // files — not an alexandria.md. The shell concept: we give the full
-  // loop; existing pieces (a CLAUDE.md, memory, a vault) click in;
-  // an existing loop takes our components. Every Alexandrian ends up
-  // with the same closed loop, whoever's parts it's made of.
+  // The marginal-value argument (founder, 2026-07-27, second pass): the
+  // pitch must be structural so it cannot age — connectors exist for
+  // every piece of personal data EXCEPT the internal thought space;
+  // nothing can extract that for you, so it takes an active choice; the
+  // Alexandria loop exists for exactly that extraction; the company
+  // exists to make the choice as easy as possible; the collective
+  // connects everyone who makes it. The delta stated as unlooped vs
+  // looped, with the 10x value line as the "with us" side.
   const PITCH = {
-    lead: 'Your ai knows you 10x better — so it helps you 10x better. And everything it learns lives in files you own.',
+    lead: 'The more ai knows you, the more it can do for you — and soon it can do everything. But the most valuable piece of you has no connector: how you think.',
     body: [
-      'Alexandria is a loop: every ai you use reads your files to know you — your work, your taste, how you think — and writes back what it learns, automatically. Every session starts further ahead than the last.',
-      'We give you the full loop, free. Already have pieces — a CLAUDE.md, memory files, a notes vault? They click in. Already run your own loop? Take just the components you’re missing. Every Alexandrian ends up in the same place: a closed loop, whoever’s parts it’s made of.',
-      'No server, no account, nothing sent to anyone. The files sit on your own computer, work with every ai, and come with you if you ever switch.',
-      'Around it is the community — Strava, but for your mind — people running their own loops, comparing setups, and sharing what works.',
+      'Your mail, your calendar, your files — everything about you plugs in. Your thought space doesn’t. It only gets out if you choose to extract it — and nobody can do that for you.',
+      'That extraction is the entire purpose of the Alexandria loop: your ai writes what it learns about you into private files you own, and reads them to know you — automatic, compounding. Unlooped, how you think stays in your head. Looped, every ai you’ll ever use — including the far better ones coming — knows you 10x better, and helps you 10x better.',
+      'Our whole company exists to make that choice easy: a full working loop, free, moulding into whatever you already run — a CLAUDE.md, memory files, a vault click straight in. No server, no account — yours, on your own computer, with you if you switch.',
+      'And we connect everyone who chooses it — Strava, but for your mind — people running their own loops, comparing setups, and sharing what works.',
     ],
     aside: 'for the technical: agents.md, but for you.',
   };
