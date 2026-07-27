@@ -1665,7 +1665,7 @@
           margin: 40px 0 0;
         }
         @media (min-width: 900px) {
-          .back-tabs { margin-top: 64px; }
+          .back-tabs { margin-top: 46px; }
         }
         .back-tab {
           background: none;
@@ -1732,7 +1732,7 @@
            old section leads used, a step up in size now that it opens
            the whole column alone. */
         .pitch-lead {
-          margin: 22px 0 0;
+          margin: 18px 0 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
           font-size: 18px;
@@ -1749,15 +1749,6 @@
           letter-spacing: 0.004em;
           color: var(--theme-fg);
           max-width: 660px;
-        }
-        /* The aside — the technical one-liner in the quiet italic hand. */
-        .pitch-aside {
-          margin: 14px 0 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 14px;
-          font-style: italic;
-          letter-spacing: 0.012em;
-          color: var(--theme-fg-muted);
         }
         /* ── "on alexandria." — why / what / how, each a plate + lead +
            one paragraph. A step quieter than the pitch tab so three
@@ -1794,13 +1785,13 @@
              so the break always sits naturally just above it. Bottom
              margin lifted (22→34, 2026-07-17): the rule sits higher and
              the closing sections breathe. */
-          margin: auto 0 36px;
+          margin: auto 0 30px;
         }
         /* Extra air between the close beats and the buttons — the two
            closing sections read as separate breaths (2026-07-17), taking
            the space the lifted rule opens up. */
         .right-lower > .cta-pair {
-          margin-top: 18px;
+          margin-top: 16px;
         }
         .action-beat {
           margin: 0;

@@ -283,12 +283,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     lead: 'The better ai knows you, the better it helps you. But the most important part of you — how you think — is stuck in your head.',
     body: [
       'Your email, your calendar, your files — all of that can be plugged in. How you think can’t. It only comes out if you choose to get it out — and nobody can make that choice for you.',
-      'That’s the Alexandria loop: your ai writes what it learns about you into private files, and reads them to know you. Without the loop, every ai starts from zero. With it, every ai — even the much better ones coming — knows you 10x better, and helps you 10x better.',
-      'Most of it is automatic: just use ai like you already do, and the loop quietly writes down what it learns. The deepest parts need you — think out loud with it, on purpose, and that’s where the real 10x is. You get out what you put in; the loop just makes putting in easy.',
-      'The whole loop is free, takes minutes, and fits whatever you already use — a CLAUDE.md, memory files, notes all click in. Nothing leaves your computer, and the files are yours for good.',
-      'And everyone running a loop is connected — Strava, but for your mind — comparing loops and sharing what works.',
+      'The Alexandria loop is a simple standard: your ai writes what it learns about you into private files, and every conversation starts from them. Without it, that learning stays scattered and locked inside other people’s apps. With it, it’s in one place, every ai reads it, it’s yours — so ai knows you 10x better, and helps you 10x better.',
+      'Most of it is automatic: just use ai like you already do, and the loop quietly writes down what it learns. The deepest parts need you — think out loud with it, on purpose. You get out what you put in; the loop just makes putting in easy.',
+      'Closing your loop is the one thing we do: a working version, free, moulding to you — nothing yet? It’s everything. Missing a piece? It clicks in. Running your own? Make it stronger. Nothing leaves your computer, and the files are yours for good.',
+      'And everyone who closes the loop is connected — Strava, but for your mind — comparing loops, sharing what works, getting better together.',
     ],
-    aside: 'for the technical: agents.md, but for you.',
   };
   // ── The second tab — "on alexandria." (founder, 2026-07-27: the
   // shift-right tab stays, renamed; "it goes through the why what how").
@@ -1159,9 +1158,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     {PITCH.body.map((para, i) => (
                       <p key={i} className="pitch-para">{para}</p>
                     ))}
-                    <p className="pitch-aside">
-                      <em>{PITCH.aside}</em>
-                    </p>
                   </div>
                 </div>
                 <div className={`back-panel${backPanel === 'about' ? ' is-live' : ''}`} aria-hidden={backPanel !== 'about'}>
@@ -1187,9 +1183,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     the frame / the punch / the action. */}
                 <div className="action-close">
                   <p className="statement-beat action-beat action-beat-final">
-                    <em>See it as a free sample at a supermarket, handed
-                    straight to you. Just take it and give it a try &mdash;
-                    the smallest decision you&rsquo;ll make all day.</em>
+                    <em>The loop compounds, and ai only gets stronger
+                    &mdash; the sooner you start, the further ahead you
+                    are. Most minds will average out; keeping and growing
+                    yours is a choice only you can make. We made it as easy
+                    as a free sample at a supermarket.</em>
                   </p>
                 </div>
 
