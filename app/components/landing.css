@@ -1652,16 +1652,77 @@
           letter-spacing: 0.02em;
           color: var(--theme-fg-muted);
         }
-        /* ─── THE PITCH — one static text (2026-07-27) ───
-           The tabs + accordion machinery (hover-intent, focus mode,
-           grid-rows reveals, :has choreography) deleted with the
-           sections they operated: the pitch is now something you READ,
-           not something you work. Kicker plate → locked lead line →
-           three one-beat paragraphs → quiet technical aside. */
+        /* ─── THE PITCH — two tabs, both static texts (2026-07-27) ───
+           The accordion machinery (focus mode, grid-rows reveals, :has
+           choreography) stays deleted: both panels are something you
+           READ, not something you work — the hover-flick between them
+           is the only control on the slide. */
+        .back-tabs {
+          display: inline-flex;
+          align-items: baseline;
+          gap: 12px;
+          align-self: flex-start;
+          margin: 40px 0 0;
+        }
         @media (min-width: 900px) {
-          .secs-kicker {
-            margin-top: 92px;
-          }
+          .back-tabs { margin-top: 92px; }
+        }
+        .back-tab {
+          background: none;
+          border: none;
+          padding: 0 0 10px;
+          cursor: pointer;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 16px;
+          letter-spacing: 0.02em;
+          color: var(--theme-fg-faint);
+          border-bottom: 1px solid transparent;
+          transition: color 220ms ease, border-color 220ms ease;
+        }
+        .back-tab.is-active {
+          color: var(--theme-fg);
+          border-bottom-color: var(--theme-border-soft);
+        }
+        .back-tab:hover { color: var(--theme-fg-muted); }
+        .back-tab-sep {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 15px;
+          color: var(--theme-fg-faint);
+        }
+        /* Panels stack in one grid cell and crossfade with a small
+           lateral slide; the container's height is the taller panel's,
+           so the rule below never moves on switch. */
+        .back-panels {
+          display: grid;
+          margin-top: 4px;
+        }
+        .back-panels > .back-panel {
+          grid-area: 1 / 1;
+          opacity: 0;
+          transform: translateX(34px);
+          visibility: hidden;
+          pointer-events: none;
+          transition:
+            opacity 420ms ease,
+            transform 620ms cubic-bezier(0.33, 0, 0.2, 1),
+            visibility 0s linear 420ms;
+        }
+        .back-panels > .back-panel.is-live {
+          opacity: 1;
+          transform: none;
+          visibility: visible;
+          pointer-events: auto;
+          transition:
+            opacity 460ms ease 120ms,
+            transform 620ms cubic-bezier(0.33, 0, 0.2, 1) 120ms,
+            visibility 0s;
+        }
+        @media (max-width: 899px) {
+          /* Mobile flows naturally — no crossfade stack; the inactive
+             panel is simply gone so it can't reserve ghost height. */
+          .back-panels > .back-panel:not(.is-live) { display: none; }
         }
         .pitch {
           display: flex;
@@ -1697,6 +1758,32 @@
           font-style: italic;
           letter-spacing: 0.012em;
           color: var(--theme-fg-muted);
+        }
+        /* ── "on alexandria." — why / what / how, each a plate + lead +
+           one paragraph. A step quieter than the pitch tab so three
+           sections read as one page, not three walls. */
+        .about-sec {
+          display: flex;
+          flex-direction: column;
+        }
+        .about-sec:first-child { margin-top: 18px; }
+        .about-sec + .about-sec { margin-top: 16px; }
+        .about-title {
+          margin: 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 11.5px;
+          letter-spacing: 0.16em;
+          color: var(--theme-fg-faint);
+        }
+        .pitch-lead.about-lead {
+          margin-top: 5px;
+          font-size: 16.5px;
+        }
+        .pitch-para.about-para {
+          margin-top: 8px;
+          font-size: 14.5px;
+          line-height: 1.58;
         }
         .secs-rule {
           height: 1px;
@@ -2840,13 +2927,17 @@
             font-size: clamp(11.5px, 1.1vw, 13px);
             margin-top: -4px;
           }
-          /* Back-slide kicker on mobile (founder, 2026-07-18): nudge the
-             plate up a touch and bring its underline closer to the text.
-             The pitch is ONE div (not flattened), so its internal rhythm
-             carries over from desktop untouched. */
-          .secs-kicker {
+          /* Back-slide tabs on mobile: nudge the row up a touch, and pull
+             the panels tight under it (the flattened bottom-inner puts a
+             64px flex GAP between them — cancel most of it) so the tabs
+             read as the panel's header, not a floating line. The panels
+             are plain divs (not flattened), so the pitch's internal
+             rhythm carries over from desktop untouched. */
+          .back-tabs {
             margin-top: 22px;
-            padding-bottom: 4px;
+          }
+          .back-panels {
+            margin-top: -46px;
           }
 
         }

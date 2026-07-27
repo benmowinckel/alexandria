@@ -280,6 +280,44 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     ],
     aside: 'for the technical: agents.md, but for you.',
   };
+  // ── The second tab — "on alexandria." (founder, 2026-07-27: the
+  // shift-right tab stays, renamed; "it goes through the why what how").
+  // Each section compressed to its lead + ONE paragraph, with every beat
+  // the pitch tab already carries (folder, privacy, free, community) cut
+  // — so the two tabs never say the same thing. The why survives nearly
+  // whole: it is the one argument the pitch doesn't make. Static text —
+  // the tab flick is the only control on the slide.
+  const ABOUT = [
+    {
+      title: 'why',
+      lead: 'Cultures must choose to value humans, but humans must first choose to value themselves.',
+      body: 'Machines are infinitely better at chess than we are, yet human chess is more popular than ever — we still love to watch humans play, but only the ones who can still play. Let ai think for you, and your mind — like any muscle you stop using — begins to fade. Align it to think with you, and there is no limit to how far the two of you can go. Alexandrians are defined by this choice alone.',
+    },
+    {
+      title: 'what',
+      lead: 'We help people build systems to keep thinking — so that we never lose our minds.',
+      body: 'Think out loud, and your ai slowly builds a full mirror of what you think and how you think it — a partner in your thinking, never a replacement for it.',
+    },
+    {
+      title: 'how',
+      lead: 'Your Alexandria folder teaches any ai to think with you, not for you.',
+      body: 'The founder’s entire system is free to download, so that anyone can begin — but the choice to begin has to be your own.',
+    },
+  ];
+  const [backPanel, setBackPanel] = useState<'pitch' | 'about'>('pitch');
+  // Hover-intent for the tabs — 170ms dwell so a transit across the row
+  // can't false-fire; click stays for touch and impatience. The tabs
+  // never move on switch, so enter/leave boundaries are shift-safe.
+  const tabHover = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverTab = (p: 'pitch' | 'about') => {
+    if (backPanel === p) return;
+    if (tabHover.current) clearTimeout(tabHover.current);
+    tabHover.current = setTimeout(() => setBackPanel(p), 170);
+  };
+  const cancelTabHover = () => {
+    if (tabHover.current) clearTimeout(tabHover.current);
+  };
+  useEffect(() => cancelTabHover, []);
   // ── Front-slide feature rotation (founder, 2026-07-24: "the front
   // slide be ad rotation / feature rotation things elegantly"; second
   // pass same day: fixed rotation starting on the original hero,
@@ -1078,19 +1116,55 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     flowing with no dividers between them. A lead paragraph
                     shows; a rotating caret reveals the rest. Accordion (one
                     open at a time) keeps the fixed stage bounded. */}
-                {/* ONE pitch, read top to bottom — the kicker plate, the
-                    locked lead line, three one-beat paragraphs, and the
-                    technical one-liner as a quiet linked aside. No tabs,
-                    no accordions: nothing on this slide needs operating. */}
-                <div className="pitch">
-                  <span className="secs-kicker">what it is.</span>
-                  <p className="pitch-lead">{PITCH.lead}</p>
-                  {PITCH.body.map((para, i) => (
-                    <p key={i} className="pitch-para">{para}</p>
-                  ))}
-                  <p className="pitch-aside">
-                    <em>{PITCH.aside}</em>
-                  </p>
+                {/* Two hover-flick tabs, both STATIC texts — no accordions,
+                    nothing to operate beyond the flick. "the product." is
+                    the short pitch; "on alexandria." goes through the
+                    why / what / how, compressed so the tabs never repeat
+                    each other. */}
+                <div className="back-tabs">
+                  <button
+                    type="button"
+                    className={`back-tab${backPanel === 'pitch' ? ' is-active' : ''}`}
+                    onClick={() => setBackPanel('pitch')}
+                    onMouseEnter={() => hoverTab('pitch')}
+                    onMouseLeave={cancelTabHover}
+                  >
+                    the product.
+                  </button>
+                  <span className="back-tab-sep" aria-hidden>·</span>
+                  <button
+                    type="button"
+                    className={`back-tab${backPanel === 'about' ? ' is-active' : ''}`}
+                    onClick={() => setBackPanel('about')}
+                    onMouseEnter={() => hoverTab('about')}
+                    onMouseLeave={cancelTabHover}
+                  >
+                    on alexandria.
+                  </button>
+                </div>
+                <div className="back-panels">
+                <div className={`back-panel${backPanel === 'pitch' ? ' is-live' : ''}`} aria-hidden={backPanel !== 'pitch'}>
+                  <div className="pitch">
+                    <p className="pitch-lead">{PITCH.lead}</p>
+                    {PITCH.body.map((para, i) => (
+                      <p key={i} className="pitch-para">{para}</p>
+                    ))}
+                    <p className="pitch-aside">
+                      <em>{PITCH.aside}</em>
+                    </p>
+                  </div>
+                </div>
+                <div className={`back-panel${backPanel === 'about' ? ' is-live' : ''}`} aria-hidden={backPanel !== 'about'}>
+                  <div className="pitch">
+                    {ABOUT.map((s) => (
+                      <div key={s.title} className="about-sec">
+                        <span className="about-title">{s.title}</span>
+                        <p className="pitch-lead about-lead">{s.lead}</p>
+                        <p className="pitch-para about-para">{s.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 </div>
 
                 {/* The line break — one rule between the sections and the
@@ -1113,29 +1187,30 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   <HomeInstall />
                   <div className="cta-block">
                     {/* The ghost CTA — the ASK door (founder, 2026-07-27:
-                        "the ask about alexandria is too hidden"). Promoted
-                        from the tertiary line to the decision point: the
-                        one question standing between a visitor and the
-                        sample gets answered right here, instantly, by the
-                        mirror on /features. The spectator door (show
-                        support) moved down to the quiet line. */}
+                        promoted from the tertiary line; label "ask
+                        anything" locked same day). The one question
+                        standing between a visitor and the sample gets
+                        answered right here, instantly, on /features. Subs
+                        are a matched pair: curious→try it / unsure→ask it. */}
                     <Link href="/features" className="lr-cta lr-cta-ghost">
-                      ask about alexandria
+                      ask anything
                     </Link>
                     <span className="cta-sub">
-                      even slightly unsure? ask anything
+                      even slightly unsure? just ask it
                     </span>
                   </div>
                 </div>
 
                 {/* The quiet tertiary line — the demo (2026-07-19: honest
                     "see it first", off the hero) and the spectator door
-                    (friends, family, fans — stay updated on /follow). */}
+                    (friends, family, fans — /follow). Both three words,
+                    both verb-first (founder, 2026-07-27: "same word
+                    length"). */}
                 <p className="demo-line">
                   <DemoFilm />
                   <span className="demo-line-sep" aria-hidden>·</span>
                   <a href="/follow" className="demo-link">
-                    <em>show support</em>
+                    <em>show your support</em>
                   </a>
                 </p>
 
