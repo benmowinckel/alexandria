@@ -283,9 +283,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     lead: 'The better ai knows you, the better it helps you. But the most important part of you — how you think — is stuck in your head.',
     body: [
       'Your email, your calendar, your files — all of that can be plugged in. How you think can’t. It only comes out if you choose to get it out — and nobody can make that choice for you.',
-      'The Alexandria loop is a simple standard: your ai writes what it learns about you into private files, and every conversation starts from them. Without the loop, what ai knows about you stays shallow, scattered, and locked inside other people’s apps — you can’t read it, can’t shape it, can’t take it with you. With the loop, it’s deep, it’s in one place, and it’s yours.',
-      'Most of it is automatic: just use ai like you already do, and the loop quietly writes down what it learns. The deepest parts of you need real thought — and the more you put in, the more you get out. The loop makes putting in easy.',
-      'Closing your loop is the one thing we do. We give you a complete loop, free and working — and it moulds to you: start from nothing and it’s all there, ready to run; keep notes or a CLAUDE.md and they click in; run your own loop and ours makes it stronger. Nothing leaves your computer, and the files are yours for good.',
+      'The Alexandria loop is a simple standard: your ai writes what it learns about you into private files, and every conversation starts from them. Without the loop, what ai knows about you stays shallow, scattered, and locked inside other people’s apps — you can’t read it, can’t shape it, can’t take it with you. With the loop, it’s private, it’s unified, and it’s you in full resolution.',
+      'Most of it is automatic: just use ai like you already do, and the loop quietly writes down what it learns. The deepest parts of you need real thought — and the more you put in, the more you get out. The loop makes putting in easy, and getting out automatic.',
+      'Our only job is to make sure your loop is closed. We hand you a complete one — free, working, ready in minutes. If you have nothing, it’s everything you need. If you have pieces — notes, a CLAUDE.md, memories — they click in. If you’ve built your own, ours makes it stronger. Nothing leaves your computer, and the files are yours for good.',
     ],
   };
   // ── The second tab — "on alexandria." (founder, 2026-07-27: the
@@ -1184,10 +1184,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   <p className="statement-beat action-beat action-beat-final">
                     <em>The loop compounds, and ai only gets stronger
                     &mdash; the sooner you start, the further ahead you
-                    are. Most minds will average out; keeping and growing
-                    yours is a choice only you can make. We made it the
-                    smallest choice there is: a free sample, handed to you
-                    &mdash; take it.</em>
+                    are. Most minds will average out. Yours doesn&rsquo;t
+                    have to: the sample below is free and takes five
+                    minutes &mdash; take it, and your loop runs from
+                    today.</em>
                   </p>
                 </div>
 
