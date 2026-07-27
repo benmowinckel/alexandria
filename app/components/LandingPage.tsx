@@ -176,9 +176,6 @@ function HomeInstall() {
       <Link href="/start" className="install-cta">
         start your loop
       </Link>
-      <span className="cta-sub">
-        even slightly curious? just try it
-      </span>
     </div>
   );
 }
@@ -305,7 +302,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     lead: 'Cultures must choose to value humans, but humans must first choose to value themselves.',
     body: [
       'Machines are infinitely better at chess than we are, yet human chess is more popular than it has ever been — we still love to watch humans play. But only the ones who can still play.',
-      'Let ai think for you, and your mind — like any muscle you stop using — begins to fade. Align it to think with you, and there is no limit to how far the two of you can go.',
+      'Technology is a multiplier: it carries you further down whatever path you point it. Let ai think for you, and your mind — like any muscle you stop using — begins to fade. Align it to think with you, and there is no limit to how far the two of you can go.',
+      'That is what Alexandria is for: helping people build systems to keep thinking — so that we never lose our minds.',
       'Alexandrians are defined by this choice alone — the loop is just how we keep it.',
     ],
   };
@@ -1204,26 +1202,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         answered right here, instantly, on /features. Subs
                         are a matched pair: curious→try it / unsure→ask it. */}
                     <Link href="/features" className="lr-cta lr-cta-ghost">
-                      ask anything
+                      ask us anything
                     </Link>
-                    <span className="cta-sub">
-                      even slightly unsure? just ask it
-                    </span>
                   </div>
                 </div>
-
-                {/* The quiet tertiary line — the demo (2026-07-19: honest
-                    "see it first", off the hero) and the spectator door
-                    (friends, family, fans — /follow). Both three words,
-                    both verb-first (founder, 2026-07-27: "same word
-                    length"). */}
-                <p className="demo-line">
-                  <DemoFilm />
-                  <span className="demo-line-sep" aria-hidden>·</span>
-                  <a href="/follow" className="demo-link">
-                    <em>show your support</em>
-                  </a>
-                </p>
 
               </div>
 
@@ -1234,9 +1216,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   (period marks, 15px medium, spaced). right-col's
                   space-between drops it to the bottom; matching right-lower's
                   752px flex-end box keeps it under the CTAs. */}
+              {/* The shelf — two pairs with a hairline divider (founder,
+                  2026-07-27): the places, then the doors. The demo lives
+                  in the archway now; here it keeps a one-word echo. */}
               <p className="quiet-links">
                 <Link href="/library" className="quiet-link">library<span className="shelf-dot">.</span></Link>
                 <Link href="/marketplace" className="quiet-link">marketplace<span className="shelf-dot">.</span></Link>
+                <span className="quiet-div" aria-hidden />
+                <DemoFilm className="quiet-link">demo<span className="shelf-dot">.</span></DemoFilm>
+                <Link href="/follow" className="quiet-link">support<span className="shelf-dot">.</span></Link>
               </p>
           </div>
 

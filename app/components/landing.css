@@ -1727,6 +1727,26 @@
         .pitch {
           display: flex;
           flex-direction: column;
+          counter-reset: pbeat;
+        }
+        /* The margin hand — each paragraph carries a faint lower-roman
+           numeral in the left margin (the manuscript-folio device the
+           letter used), so the text reads as a numbered argument, not
+           a wall. */
+        .pitch-para {
+          position: relative;
+          counter-increment: pbeat;
+        }
+        .pitch-para::before {
+          content: counter(pbeat, lower-roman);
+          position: absolute;
+          left: -30px;
+          top: 0.18em;
+          font-size: 0.68em;
+          font-style: italic;
+          letter-spacing: 0.06em;
+          color: var(--theme-fg-faint);
+          font-variant-numeric: lining-nums;
         }
         /* The lead — the locked one-liner in the aphorism register the
            old section leads used, a step up in size now that it opens
@@ -1743,7 +1763,7 @@
         }
         /* The body — three paragraphs, one beat each, generous read. */
         .pitch-para {
-          margin: 10px 0 0;
+          margin: 13px 0 0;
           font-size: 15.5px;
           line-height: 1.62;
           letter-spacing: 0.004em;
@@ -1834,10 +1854,7 @@
           vertical-align: 1px;
         }
         .arch-demo:hover .arch-demo-label {
-          color: rgba(38, 44, 72, 0.92);
-          text-decoration: underline;
-          text-decoration-thickness: 1px;
-          text-underline-offset: 3px;
+          color: rgba(38, 44, 72, 0.85);
         }
         @media (max-width: 899px) {
           .arch-demo { display: none; }
@@ -2200,6 +2217,21 @@
           transition: color 180ms ease;
         }
         .quiet-link:hover { color: var(--theme-fg); }
+        /* Hairline between the two shelf pairs (places | doors). */
+        .quiet-div {
+          width: 1px;
+          height: 13px;
+          background: var(--theme-border-soft);
+          align-self: center;
+        }
+        /* DemoFilm renders the shelf demo as a <button> — strip the
+           button chrome so it sits identical to its Link siblings. */
+        button.quiet-link {
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+        }
         /* The mark — upright period, a breath tighter to the word than the
            tracking sets it, echoing the brand nav-dot (same as the shelf). */
         .quiet-link .shelf-dot { letter-spacing: 0; margin-left: 0.02em; }
