@@ -261,115 +261,25 @@ function DemoFilm() {
 
 export default function LandingPage({ brandClassName = '' }: Props) {
   const [themeIdx, setThemeIdx] = useState(0);
-  // Letter scroll cue — "keep reading" sits at the box's bottom over the
-  // ghost text; it retires once the reader scrolls the box.
-  const [letterCue, setLetterCue] = useState(true);
-  // Expandable overviews (accordion — one open at a time — so the fixed
-  // back-slide stage can never overflow).
-  const [openPillar, setOpenPillar] = useState<string | null>(null);
-  // Hover-intent controller — MOUSEMOVE only (layout shifts are silent to
-  // it, unlike hover-boundary events), 160ms dwell so transit opens
-  // nothing, settle lock through the animation. Touch gets tap-toggle via
-  // onClick; desktop click force-opens as a fallback but never closes.
-  const focusLockUntil = useRef(0);
-  const focusPending = useRef<{ title: string | null; timer: ReturnType<typeof setTimeout> } | null>(null);
-  const handleSecsPointer = (e: React.MouseEvent) => {
-    const el = e.target as HTMLElement;
-    const sec = el.closest?.('.sec');
-    const title = sec?.getAttribute('data-sec') ?? null;
-    if (title === null && el.closest?.('.secs')) return;
-    if (title === openPillar) {
-      if (focusPending.current) { clearTimeout(focusPending.current.timer); focusPending.current = null; }
-      return;
-    }
-    if (Date.now() < focusLockUntil.current) return;
-    if (focusPending.current?.title === title) return;
-    if (focusPending.current) clearTimeout(focusPending.current.timer);
-    focusPending.current = {
-      title,
-      timer: setTimeout(() => {
-        focusPending.current = null;
-        // Hold past the 700ms expand so a stray mouse-move can't re-trigger a
-        // switch mid-animation (which read as a second shudder).
-        focusLockUntil.current = Date.now() + 760;
-        setOpenPillar(title);
-      }, 160),
-    };
+  // ── THE PITCH — one text, static, nothing to operate (founder,
+  // 2026-07-27: "too complicated with all the different sections… too
+  // long… they kind of say the same thing"). The five essays behind the
+  // product/company tabs (simple/technical + why/what/how) collapsed
+  // into ONE short pitch: the locked simple one-liner as the lead, three
+  // one-beat paragraphs, and the locked technical one-liner as a quiet
+  // aside for the builders. Depth now lives where it already lived —
+  // /features (the ask page) answers any question; the letter +
+  // whitepaper (nav) carry the company story. The cut essays are
+  // preserved in git and in a4's back-slide entry.
+  const PITCH = {
+    lead: 'It makes your ai actually know you — everything it learns lives in files you own.',
+    body: [
+      'Alexandria is one private folder on your own computer, holding what you think and how you think it. Every ai you use reads it to know you, and writes back what it learns — so it grows deeper the longer you run it.',
+      'No server, no account, nothing sent to anyone. It works with every ai, comes with you if you ever switch, and the working version is free.',
+      'Around it is the community — Strava, but for your mind — people running their own versions, comparing setups, and sharing what works.',
+    ],
+    aside: 'for the technical: agents.md, but for you.',
   };
-  // The founder's own text (2026-07-20) — his why/what/how, polished with him
-  // line by line and confirmed. Lead = each section's opening line; body = his
-  // remaining paragraphs, rendered as paragraphs.
-  const SECTIONS = [
-    {
-      title: 'why',
-      lead: 'Cultures must choose to value humans, but humans must first choose to value themselves.',
-      body: [
-        'Machines are infinitely better at chess than we are, and yet human chess is more popular than it has ever been — because we still love to watch humans play. But only the ones who can still play the game.',
-        'Let ai do your thinking for you, and your mind — like any muscle you stop using — slowly begins to fade. Left without direction, it drifts where it wants to go, not where you want to go. Technology is a multiplier: it will carry you further down whatever path you point it. Keep letting it think for you, and one day you wake up as one of the humans in Wall-E. But choose instead to align it to think with you, right from the start, and there is no limit to how far the two of you can go.',
-        'Alexandrians are defined by this choice alone.',
-      ],
-    },
-    {
-      title: 'what',
-      lead: 'We help people build systems to keep thinking — so that we never lose our minds.',
-      body: [
-        'An Alexandrian chooses growth over emptiness: they align their ai to be a partner in their thinking, never a replacement for it. But that kind of alignment asks for something personal — your ai has to understand where you are today before it can help you reach where you want to be tomorrow.',
-        'It can’t read your mind, but it can read your words. So think out loud, and slowly it builds a full mirror of what you think and how you think it — a system that holds onto where you’re going, understands where you are, and pours its endless intelligence into helping you grow, right alongside it.',
-        'The founder has made his entire system free to download, so that anyone can begin — but the choice to begin has to be your own. We’re here to explain the why, to gather the ones who choose it, and to build the tools for anyone who wants to try.',
-      ],
-    },
-    {
-      title: 'how',
-      lead: 'Your Alexandria folder teaches any ai to map how you think — and to think with you, not for you.',
-      body: [
-        'It’s a private folder on your own computer, holding what you think and how you think it. Pour everything you have into it, and your ai draws it into a single, living map of your mind — a mirror it keeps looking into, so that as you change, it stays in tune with you — and the two of you keep pulling in the same direction: refining the map, growing it, turning it, slowly, toward making you the best version of yourself.',
-        'Privacy is simple, because there’s almost nothing to it: just files on your own computer, yours to ignore, edit, or delete. No server, no account, nothing ever leaving your machine. And it’s free — the moment it’s yours, it’s detached from us, yours and yours alone.',
-        'And for those who come to love what they’ve built, we’ve made a community — a place to share your systems, learn from one another, and publish what they’ve helped you create.',
-      ],
-    },
-  ];
-  // ── Back-slide pitch tabs (founder-iterated 2026-07-24/25): "the
-  // product." holds the simple/technical explanations (one-line preview +
-  // expansion, same accordion grammar as why/what/how); "the company."
-  // holds the existing why/what/how. Copy locked line-by-line in-session;
-  // canon record in alexandria-inc truth/a4.md (back-slide entry).
-  const [backPanel, setBackPanel] = useState<'pitch' | 'about'>('pitch');
-  // Hover-intent for the tabs — same dwell pattern as the sections so a
-  // transit across the row can't false-fire; click stays for touch and
-  // impatience. The tabs themselves never move on switch, so
-  // enter/leave boundaries are layout-shift-safe here.
-  const tabHover = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hoverTab = (p: 'pitch' | 'about') => {
-    if (backPanel === p) return;
-    if (tabHover.current) clearTimeout(tabHover.current);
-    tabHover.current = setTimeout(() => {
-      setBackPanel(p);
-      setOpenPillar(null);
-    }, 170);
-  };
-  const cancelTabHover = () => {
-    if (tabHover.current) clearTimeout(tabHover.current);
-  };
-  useEffect(() => cancelTabHover, []);
-  const PITCHES = {
-    simple: {
-      lead: 'It makes your ai actually know you — everything it learns lives in files you own.',
-      body: [
-        'Alexandria is ai personalisation you own. Your ai learns you — how you think, what you’re working on, what you like — and all of it lives in files that are yours, not inside Claude. It’s fully private by definition: no server, no account, nothing sent to anyone — the files sit on your computer, and only you decide what reads them.',
-        'And it’s nothing new to learn. It just changes how the ai you already use behaves — like giving it a pep talk before it starts, so it works from who you are. Your ai reads your files to know you, and writes back what it learns — so it develops, deeper the longer you run it.',
-        'Alexandria is just the idea of keeping all of that in one place — a method, not an app. You run it however you like; we give you a working version, free.',
-        'And because it’s just your files, it works with every ai and comes with you if you switch. Around it is the community — Strava, but for your mind — people running their own versions and sharing what works. That part’s paid, and free if you bring friends. There’s a lot more inside — this is just the core.',
-      ],
-    },
-    technical: {
-      lead: 'agents.md, but for you — your context in files you own, that every ai reads and develops.',
-      body: [
-        'If the stack is model, harness, tools, files — Alexandria is the files. Context today is scattered and locked: ChatGPT memory, Claude memory, Cursor rules, a CLAUDE.md — each partial, none yours. Alexandria is the convention of putting it all in one place: one corpus of markdown you own, that every model and harness reads and writes back to. Maintenance becomes the ai’s job, so every session leaves it deeper — on your machine, under your permissions, nothing sent anywhere.',
-        'It’s designed for people who already run something — a CLAUDE.md, a rules file, a notes system — because you’ve already internalised the value. You’ve closed the inner loop; we give you the infrastructure to close the outermost one: capture from everywhere, development over time, everything draining into one sovereign, unified, rich place. We give you a polished working version, free — but it’s a convention, not software: run it however you want, as long as your ai reads and develops files you own.',
-        'What that opens: one setup that follows you across every tool, a map of your thinking you can read and build on, a mirror of you any ai can be pointed at. And the community: publish your mind to the Library beside everyone else’s — comparing setups, browsing minds, forking what works. There’s much more — this is the core.',
-      ],
-    },
-  } as const;
   // ── Front-slide feature rotation (founder, 2026-07-24: "the front
   // slide be ad rotation / feature rotation things elegantly"; second
   // pass same day: fixed rotation starting on the original hero,
@@ -1120,7 +1030,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               '<!-- with a fleeting thank you to fleetai.com -->',
           }}
         />
-        <div className="bottom-inner" onMouseMove={handleSecsPointer}>
+        <div className="bottom-inner">
           {/* TWO COLUMNS spanning full vertical height.
                 LEFT  : ornament (top, original padding-top preserved)
                         + wordmark/dict (bottom)
@@ -1168,98 +1078,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     flowing with no dividers between them. A lead paragraph
                     shows; a rotating caret reveals the rest. Accordion (one
                     open at a time) keeps the fixed stage bounded. */}
-                {/* The kicker as two hover-flick tabs — the pitch panel
-                    (default) and the on-alexandria depth; panels shift
-                    laterally, hover-intent dwell prevents transit fires. */}
-                <div className="back-tabs">
-                  <button
-                    type="button"
-                    className={`back-tab${backPanel === 'pitch' ? ' is-active' : ''}`}
-                    onClick={() => { setBackPanel('pitch'); setOpenPillar(null); }}
-                    onMouseEnter={() => hoverTab('pitch')}
-                    onMouseLeave={cancelTabHover}
-                  >
-                    the product.
-                  </button>
-                  <span className="back-tab-sep" aria-hidden>·</span>
-                  <button
-                    type="button"
-                    className={`back-tab${backPanel === 'about' ? ' is-active' : ''}`}
-                    onClick={() => { setBackPanel('about'); setOpenPillar(null); }}
-                    onMouseEnter={() => hoverTab('about')}
-                    onMouseLeave={cancelTabHover}
-                  >
-                    the company.
-                  </button>
-                </div>
-                <div className="back-panels">
-                <div className={`back-panel${backPanel === 'pitch' ? ' is-live' : ''}`} aria-hidden={backPanel !== 'pitch'}>
-                  {/* Same accordion machinery as on-alexandria: two
-                      sections, one-line preview, hover/click expands;
-                      everything below the rule stays pinned by the
-                      stage's auto-margin turn. */}
-                  <div className="secs pitch-secs">
-                    {(['simple', 'technical'] as const).map((key) => {
-                      const p = PITCHES[key];
-                      const isOpen = openPillar === key;
-                      return (
-                        <div
-                          key={key}
-                          data-sec={key}
-                          className={`sec${isOpen ? ' is-open' : ''}`}
-                          onClick={() => {
-                            const touch = window.matchMedia('(hover: none)').matches;
-                            setOpenPillar(touch ? (isOpen ? null : key) : key);
-                          }}
-                        >
-                          <button
-                            type="button"
-                            className="sec-head"
-                            aria-expanded={isOpen}
-                          >
-                            <span className="sec-title">{key}</span>
-                            <span className="sec-caret" aria-hidden />
-                          </button>
-                          <p className="sec-lead">{p.lead}</p>
-                          <div className="sec-body">
-                            <div className="sec-body-inner">
-                              {p.body.map((para, i) => <p key={i}>{para}</p>)}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className={`back-panel${backPanel === 'about' ? ' is-live' : ''}`} aria-hidden={backPanel !== 'about'}>
-                <div className="secs">
-                  {SECTIONS.map((s) => {
-                    const isOpen = openPillar === s.title;
-                    return (
-                      <div
-                        key={s.title}
-                        data-sec={s.title}
-                        className={`sec${isOpen ? ' is-open' : ''}`}
-                        onClick={() => {
-                          const touch = window.matchMedia('(hover: none)').matches;
-                          setOpenPillar(touch ? (isOpen ? null : s.title) : s.title);
-                        }}
-                      >
-                        <button
-                          type="button"
-                          className="sec-head"
-                          aria-expanded={isOpen}
-                        >
-                          <span className="sec-title">{s.title}</span>
-                          <span className="sec-caret" aria-hidden />
-                        </button>
-                        <p className="sec-lead">{s.lead}</p>
-                        <div className="sec-body"><div className="sec-body-inner">{s.body.map((para, i) => <p key={i}>{para}</p>)}</div></div>
-                      </div>
-                    );
-                  })}
-                </div>
-                </div>
+                {/* ONE pitch, read top to bottom — the kicker plate, the
+                    locked lead line, three one-beat paragraphs, and the
+                    technical one-liner as a quiet linked aside. No tabs,
+                    no accordions: nothing on this slide needs operating. */}
+                <div className="pitch">
+                  <span className="secs-kicker">what it is.</span>
+                  <p className="pitch-lead">{PITCH.lead}</p>
+                  {PITCH.body.map((para, i) => (
+                    <p key={i} className="pitch-para">{para}</p>
+                  ))}
+                  <p className="pitch-aside">
+                    <em>{PITCH.aside}</em>
+                  </p>
                 </div>
 
                 {/* The line break — one rule between the sections and the
@@ -1281,30 +1112,30 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 <div className="cta-pair">
                   <HomeInstall />
                   <div className="cta-block">
-                    {/* The ghost CTA — the SPECTATOR's button (friends,
-                        family, fans of the company), deliberately NOT
-                        offered in the close as a middle door for the
-                        interested-but-not-ready — the sample decision is
-                        binary. Label names the transaction (07-09 field
-                        data: "stay close" was unparseable). */}
-                    <Link href="/follow" className="lr-cta lr-cta-ghost">
-                      show support
+                    {/* The ghost CTA — the ASK door (founder, 2026-07-27:
+                        "the ask about alexandria is too hidden"). Promoted
+                        from the tertiary line to the decision point: the
+                        one question standing between a visitor and the
+                        sample gets answered right here, instantly, by the
+                        mirror on /features. The spectator door (show
+                        support) moved down to the quiet line. */}
+                    <Link href="/features" className="lr-cta lr-cta-ghost">
+                      ask about alexandria
                     </Link>
                     <span className="cta-sub">
-                      even slightly interested? stay updated
+                      even slightly unsure? ask anything
                     </span>
                   </div>
                 </div>
 
-                {/* The demo — a quiet tertiary line under the two CTAs
-                    (founder, 2026-07-19). Off the hero, where the not-yet-
-                    perfect demo reads as an honest "see it first" option
-                    rather than a caption stuck on the art. */}
+                {/* The quiet tertiary line — the demo (2026-07-19: honest
+                    "see it first", off the hero) and the spectator door
+                    (friends, family, fans — stay updated on /follow). */}
                 <p className="demo-line">
                   <DemoFilm />
                   <span className="demo-line-sep" aria-hidden>·</span>
-                  <a href="/features" className="demo-link">
-                    <em>ask about alexandria</em>
+                  <a href="/follow" className="demo-link">
+                    <em>show support</em>
                   </a>
                 </p>
 

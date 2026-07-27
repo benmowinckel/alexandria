@@ -1652,222 +1652,51 @@
           letter-spacing: 0.02em;
           color: var(--theme-fg-muted);
         }
-        /* The kicker hides while a section is open so the open body owns
-           the stage — but it must move as ONE unit: fade the whole plate
-           (text + underline together), never let the collapsing height
-           sweep the border up through the text (that "crash-through" was
-           the 2026-07-18 bug). Fix = asymmetric timing so opacity always
-           leads the VISIBLE transition and the space-reclaim happens while
-           the plate is already transparent, both directions:
-             • hiding  → fade out first, THEN collapse height/margin.
-             • showing → expand height/margin first, THEN fade back in. */
+        /* ─── THE PITCH — one static text (2026-07-27) ───
+           The tabs + accordion machinery (hover-intent, focus mode,
+           grid-rows reveals, :has choreography) deleted with the
+           sections they operated: the pitch is now something you READ,
+           not something you work. Kicker plate → locked lead line →
+           three one-beat paragraphs → quiet technical aside. */
         @media (min-width: 900px) {
           .secs-kicker {
             margin-top: 92px;
-            overflow: hidden;
-            max-height: 40px;
-            /* return-to-visible: space opens (invisible), then unit fades in.
-               Space-reclaim matches the body's 700ms grow so open/close stay
-               height-neutral at every frame; the fast opacity keeps the border
-               transparent before it can sweep through the text. */
-            transition: max-height 700ms cubic-bezier(0.33, 0, 0.2, 1),
-                        margin 700ms cubic-bezier(0.33, 0, 0.2, 1),
-                        opacity 240ms ease 420ms;
-          }
-          .right-col:has(.sec.is-open) .secs-kicker {
-            max-height: 0;
-            opacity: 0;
-            margin: 0;
-            /* going-to-hidden: unit fades out fast, space closes in sync with
-               the opening body (no delay — the delay is what let the body
-               out-run the freed space and shudder the column). */
-            transition: opacity 180ms ease,
-                        max-height 700ms cubic-bezier(0.33, 0, 0.2, 1),
-                        margin 700ms cubic-bezier(0.33, 0, 0.2, 1);
           }
         }
-        .secs {
+        .pitch {
           display: flex;
           flex-direction: column;
-          /* Sits under the kicker now (kicker carries the top offset). */
-          margin-top: 20px;
         }
-        /* Header — small title + rotating caret, a compact click target.
-           No dividers between sections (they flow like the old letter). */
-        .sec-head {
-          display: inline-flex;
-          align-items: center;
-          gap: 9px;
-          align-self: flex-start;
-          padding: 6px 6px 6px 0;
-          margin: 30px 0 0 0;
-          background: none;
-          border: none;
-          cursor: pointer;
-          text-align: left;
-        }
-        .sec:first-child .sec-head { margin-top: 0; }
-        /* Titles back to the whisper register (founder, 2026-07-16 second
-           note) — the LEADS carry the size instead: small plate over a
-           big visible first line, echoing the front's mini headers. */
-        .sec-title {
+        /* The lead — the locked one-liner in the aphorism register the
+           old section leads used, a step up in size now that it opens
+           the whole column alone. */
+        .pitch-lead {
+          margin: 26px 0 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
-          font-size: 12px;
-          letter-spacing: 0.16em;
-          color: var(--theme-fg-faint);
-          transition: color 180ms ease;
-        }
-        .sec-head:hover .sec-title { color: var(--theme-fg-muted); }
-        /* Rotating caret — points down collapsed, flips up open. Replaces
-           the +/− (founder: more elegant). */
-        .sec-caret {
-          width: 6px;
-          height: 6px;
-          border-right: 1.4px solid var(--theme-fg-faint);
-          border-bottom: 1.4px solid var(--theme-fg-faint);
-          transform: translateY(-2px) rotate(45deg);
-          transition: transform 700ms cubic-bezier(0.33, 0, 0.2, 1), border-color 200ms ease;
-        }
-        /* The openers as aphorisms (founder, 2026-07-16: "more interesting
-           styling") — the letter's italic voice at display size, so each
-           section opens on a spoken line rather than body text: faint
-           plate → italic aphorism → small roman depth. */
-        .sec-lead {
-          margin: 8px 0 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          /* 17px + tight tracking so the full-length previews (why, how) each
-             sit on ONE line at the widened right-lower — the leads stay the
-             biggest, italic first line but no longer wrap. */
-          font-size: 17px;
+          font-size: 19px;
           line-height: 1.5;
           letter-spacing: 0.002em;
           color: var(--theme-fg);
+          max-width: 680px;
         }
-        /* Body reveal — grid-rows 0fr→1fr eases to the body's EXACT height
-           (no max-height overshoot), so expand and collapse move at the same
-           real rate. Fixes the cycle-jitter: the old collapse "snapped"
-           because max-height overshot the content and idled through the gap
-           before the real height fell. Slow + gentle so cycling reads fluid. */
-        .sec-body {
-          display: grid;
-          grid-template-rows: 0fr;
-          transition: grid-template-rows 700ms cubic-bezier(0.33, 0, 0.2, 1);
-        }
-        .sec-body-inner {
-          overflow: hidden;
-          min-height: 0;
-          opacity: 0;
-          transition: opacity 520ms ease;
-        }
-        /* NO SCROLLING in the expand (founder, 2026-07-17: "i dont want
-           scrolling… if we need to hide the other sections to make space
-           then we do that, if we need to move the line break then we do
-           that" — supersedes the scroll cap). Desktop strategy: the open
-           body lays out in TWO columns at a quieter size (halving its
-           height), the sibling sections' leads collapse to lend their
-           room, and the rule below may slide within the stage. Mobile
-           keeps the natural single-column flow. */
-        @media (min-width: 900px) {
-          /* Normal paragraphs (founder, 2026-07-17: "don't split it into
-             two sections") — one column, quieter size, capped measure so
-             the long lines stay readable. Higher specificity than the
-             base body rule below it in the sheet (same selector in a
-             media query loses on source order). */
-          .secs .sec .sec-body-inner {
-            max-width: 660px;
-          }
-          .secs .sec .sec-body-inner p {
-            /* Bigger (founder, 2026-07-17: "much bigger… actually fills
-               the space") — the open body now reads as real prose, not a
-               footnote; matches the lead's weight. */
-            font-size: 16.5px;
-            line-height: 1.6;
-          }
-          .sec-lead {
-            max-height: 160px;
-            overflow: hidden;
-            transition:
-              max-height 700ms cubic-bezier(0.33, 0, 0.2, 1),
-              opacity 400ms ease,
-              margin 700ms cubic-bezier(0.33, 0, 0.2, 1);
-          }
-        }
-        @media (min-width: 900px) {
-          /* Focus mode machinery — heads and the block's top margin get
-             transitions so the whole move eases as one gesture. */
-          .sec-head {
-            max-height: 64px;
-            overflow: hidden;
-            transition:
-              max-height 700ms cubic-bezier(0.33, 0, 0.2, 1),
-              opacity 400ms ease,
-              margin 700ms cubic-bezier(0.33, 0, 0.2, 1),
-              padding 700ms cubic-bezier(0.33, 0, 0.2, 1);
-          }
-          .secs {
-            transition: margin-top 700ms cubic-bezier(0.33, 0, 0.2, 1);
-          }
-        }
-        /* FOCUS MODE (desktop) — driven by .is-open, NEVER by :hover:
-           focus mode moves the layout, and a :hover that moves under the
-           cursor revokes itself — the massive expand glitch of 2026-07-17.
-           JS sets is-open on mouseenter; only leaving the whole .secs
-           container (or tapping elsewhere) clears it, so layout shifts
-           can't break the state. */
-        @media (min-width: 900px) {
-          /* CLICK-driven focus (2026-07-17, after every hover variant
-             failed on real hardware — browsers dispatch hover-boundary
-             events on layout shift, and hidden siblings left nothing to
-             reach): heads stay VISIBLE as the switch targets; only the
-             sibling leads collapse; the block rises to make room. Clicks
-             have no cursor coupling, so movement can never cascade. */
-          .secs:has(.sec.is-open) { margin-top: 28px; }
-          .secs:has(.sec.is-open) .sec:not(.is-open) .sec-lead {
-            max-height: 0;
-            opacity: 0;
-            margin: 0;
-          }
-          .sec { cursor: pointer; }
-          /* The library·marketplace row is peripheral chrome — it yields
-             during focus so a long open body's slide never collides. */
-          .right-col:has(.sec.is-open) .quiet-links { opacity: 0; }
-          /* The demo line is peripheral chrome too — it must yield its
-             HEIGHT during focus, not just fade. Without this it eats the
-             fixed stage's slack, so mid-expand the flex column overflows
-             by ~1px, flex-shrink compresses the block, and the CTAs
-             shudder (the 2026-07-19 jitter). Collapsing it on the leads'
-             curve frees the room in sync with the body's grow. */
-          .demo-line {
-            max-height: 44px;
-            overflow: hidden;
-            transition:
-              max-height 700ms cubic-bezier(0.33, 0, 0.2, 1),
-              opacity 400ms ease,
-              margin 700ms cubic-bezier(0.33, 0, 0.2, 1);
-          }
-          .right-col:has(.sec.is-open) .demo-line {
-            max-height: 0;
-            opacity: 0;
-            margin: 0;
-          }
-        }
-        /* The expand itself — is-open on every input (mouseenter via JS on
-           desktop, tap toggle on touch). */
-        .sec.is-open .sec-body { grid-template-rows: 1fr; }
-        .sec.is-open .sec-body-inner { opacity: 1; }
-        .sec.is-open .sec-title { color: var(--theme-fg-muted); }
-        .sec.is-open .sec-caret {
-          border-color: var(--theme-fg-muted);
-          transform: translateY(1px) rotate(-135deg);
-        }
-        .sec-body-inner p {
-          margin: 10px 0 0;
-          font-size: 15px;
-          line-height: 1.62;
+        /* The body — three paragraphs, one beat each, generous read. */
+        .pitch-para {
+          margin: 18px 0 0;
+          font-size: 16px;
+          line-height: 1.68;
           letter-spacing: 0.004em;
           color: var(--theme-fg);
+          max-width: 660px;
+        }
+        /* The aside — the technical one-liner in the quiet italic hand. */
+        .pitch-aside {
+          margin: 22px 0 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 14px;
+          font-style: italic;
+          letter-spacing: 0.012em;
+          color: var(--theme-fg-muted);
         }
         .secs-rule {
           height: 1px;
@@ -3011,22 +2840,13 @@
             font-size: clamp(11.5px, 1.1vw, 13px);
             margin-top: -4px;
           }
-          /* Back-slide kicker on mobile (founder, 2026-07-18):
-             - nudge the whole plate up a touch (margin-top 40->22).
-             - bring its underline closer to the text (padding-bottom
-               10->4), so the rule hugs 'on alexandria.'.
-             - pull the sections up tight under it so it reads as their
-               header, not a floating line. The kicker + sections are
-               flattened (display:contents) into .bottom-inner's flex flow,
-               so a 64px flex GAP sits between them — cancel most of it with
-               a negative margin. No collapse animation runs on mobile
-               (that's the desktop focus mode). */
+          /* Back-slide kicker on mobile (founder, 2026-07-18): nudge the
+             plate up a touch and bring its underline closer to the text.
+             The pitch is ONE div (not flattened), so its internal rhythm
+             carries over from desktop untouched. */
           .secs-kicker {
             margin-top: 22px;
             padding-bottom: 4px;
-          }
-          .secs {
-            margin-top: -50px;
           }
 
         }
@@ -3132,121 +2952,16 @@
    and shift laterally. Inside the pitch panel: a simple/technical
    toggle, a one-line overview in the sec-lead register, expansion
    prose below. */
-.back-tabs {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 12px;
-  align-self: flex-start;
-  margin: 40px 0 0;
-}
-.back-tab {
-  background: none;
-  border: none;
-  padding: 0 0 10px;
-  cursor: pointer;
-  font-family: var(--font-serif), ui-serif, Georgia, serif;
-  font-style: italic;
-  font-size: 16px;
-  letter-spacing: 0.02em;
-  color: var(--theme-fg-faint);
-  border-bottom: 1px solid transparent;
-  transition: color 220ms ease, border-color 220ms ease;
-}
-.back-tab.is-active {
-  color: var(--theme-fg);
-  border-bottom-color: var(--theme-border-soft);
-}
-.back-tab:hover { color: var(--theme-fg-muted); }
-.back-tab-sep {
-  font-family: var(--font-serif), ui-serif, Georgia, serif;
-  font-style: italic;
-  font-size: 15px;
-  color: var(--theme-fg-faint);
-}
-.back-panels {
-  display: grid;
-  /* Fill the slack between tabs and rule; centre the collapsed
-     sections in it so the gap breathes above and below. */
-  flex: 1;
-  align-content: center;
-  margin-top: 4px;
-}
-.back-panels > .back-panel {
-  grid-area: 1 / 1;
-  opacity: 0;
-  transform: translateX(34px);
-  visibility: hidden;
-  pointer-events: none;
-  transition:
-    opacity 420ms ease,
-    transform 620ms cubic-bezier(0.33, 0, 0.2, 1),
-    visibility 0s linear 420ms;
-}
-.back-panels > .back-panel.is-live {
-  opacity: 1;
-  transform: none;
-  visibility: visible;
-  pointer-events: auto;
-  transition:
-    opacity 460ms ease 120ms,
-    transform 620ms cubic-bezier(0.33, 0, 0.2, 1) 120ms,
-    visibility 0s;
-}
-@media (max-width: 899px) {
-  .back-tabs { margin-top: 40px; }
-  /* Mobile flows naturally — no crossfade stack; the inactive panel is
-     simply gone so it can't reserve ghost height under the active one. */
-  .back-panels > .back-panel:not(.is-live) { display: none; }
-}
 /* No orphans — the last line of a paragraph never strands one word.
    Applies at every viewport; browsers without text-wrap:pretty ignore it. */
-.sec-lead,
-.sec-body-inner p {
+.pitch-lead,
+.pitch-para {
   text-wrap: pretty;
 }
 
-/* Focused expand (founder 2026-07-25 — "form is content").
-   An open section owns the whole side: the rule, close, CTAs, demo and
-   quiet links fold away on the house curve; the sibling sections keep
-   their first lines so the reader glides between them; the freed space
-   buys generous, digestible type in the open body. */
 @media (min-width: 900px) {
-  .back-tabs { margin-top: 92px; }
   .secs-rule {
     flex-shrink: 0;
-    transition: opacity 400ms ease;
-  }
-  .right-col:has(.sec.is-open) .secs-rule { opacity: 0; }
-  .action-close,
-  .cta-pair {
-    overflow: hidden;
-    transition:
-      max-height 700ms cubic-bezier(0.33, 0, 0.2, 1),
-      opacity 400ms ease,
-      margin 700ms cubic-bezier(0.33, 0, 0.2, 1);
-  }
-  .action-close { max-height: 120px; }
-  .cta-pair { max-height: 150px; }
-  .right-col:has(.sec.is-open) .action-close,
-  .right-col:has(.sec.is-open) .cta-pair {
-    max-height: 0;
-    opacity: 0;
-    margin: 0;
-  }
-  /* Sibling first lines STAY (production collapses them) — the glide. */
-  .secs:has(.sec.is-open) .sec:not(.is-open) .sec-lead {
-    max-height: 160px;
-    opacity: 1;
-    margin: 8px 0 0;
-  }
-  /* Generous open body — both tabs share it. */
-  .secs .sec .sec-body-inner,
-  .pitch-secs .sec .sec-body-inner { max-width: 690px; }
-  .secs .sec .sec-body-inner p,
-  .pitch-secs .sec .sec-body-inner p {
-    font-size: 16.5px;
-    line-height: 1.7;
-    margin: 18px 0 0;
   }
 }
 
