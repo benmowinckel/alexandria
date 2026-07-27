@@ -271,12 +271,20 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // /features (the ask page) answers any question; the letter +
   // whitepaper (nav) carry the company story. The cut essays are
   // preserved in git and in a4's back-slide entry.
+  // The loop frame (founder, 2026-07-27): the value is "your ai knows
+  // you 10x better and helps you 10x better"; the mechanism is the
+  // Alexandria LOOP — auto read/write of personal context to private
+  // files — not an alexandria.md. The shell concept: we give the full
+  // loop; existing pieces (a CLAUDE.md, memory, a vault) click in;
+  // an existing loop takes our components. Every Alexandrian ends up
+  // with the same closed loop, whoever's parts it's made of.
   const PITCH = {
-    lead: 'It makes your ai actually know you — everything it learns lives in files you own.',
+    lead: 'Your ai knows you 10x better — so it helps you 10x better. And everything it learns lives in files you own.',
     body: [
-      'Alexandria is one private folder on your own computer, holding what you think and how you think it. Every ai you use reads it to know you, and writes back what it learns — so it grows deeper the longer you run it.',
-      'No server, no account, nothing sent to anyone. It works with every ai, comes with you if you ever switch, and the working version is free.',
-      'Around it is the community — Strava, but for your mind — people running their own versions, comparing setups, and sharing what works.',
+      'Alexandria is a loop: every ai you use reads your files to know you — your work, your taste, how you think — and writes back what it learns, automatically. Every session starts further ahead than the last.',
+      'We give you the full loop, free. Already have pieces — a CLAUDE.md, memory files, a notes vault? They click in. Already run your own loop? Take just the components you’re missing. Every Alexandrian ends up in the same place: a closed loop, whoever’s parts it’s made of.',
+      'No server, no account, nothing sent to anyone. The files sit on your own computer, work with every ai, and come with you if you ever switch.',
+      'Around it is the community — Strava, but for your mind — people running their own loops, comparing setups, and sharing what works.',
     ],
     aside: 'for the technical: agents.md, but for you.',
   };
