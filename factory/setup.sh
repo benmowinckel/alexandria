@@ -338,6 +338,15 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
     fi
   fi
 
+  # /a. — the session close (the full stop). Same registered-name pattern as
+  # /a: the skill dir and frontmatter name are literally "a." (harness accepts
+  # it — tested 2026-07-27). Trailing-dot dirs are fine on macOS/Linux; the
+  # install already assumes a Unix machine throughout. Two gestures, one skill:
+  # /a. or the bare message a. — the close that captures everything and hands
+  # the Author what shifted, last thing on screen.
+  mkdir -p "$HOME/.claude/skills/a." 2>/dev/null
+  fetch_factory "skills/aclose.md" "$HOME/.claude/skills/a./SKILL.md" "skills/aclose.md (/a. close)" yes
+
   # (The scheduled-task bootstrap for the cloud autoloop is RETIRED — /a does
   # that processing interactively. Nothing scheduled installs here.)
 
@@ -480,6 +489,8 @@ if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
   else
     fetch_factory "skills/claudecode.md" "$HOME/.cursor/skills/a/SKILL.md" "skills/claudecode.md (cursor /a skill)" yes
   fi
+  mkdir -p "$HOME/.cursor/skills/a." 2>/dev/null
+  fetch_factory "skills/aclose.md" "$HOME/.cursor/skills/a./SKILL.md" "skills/aclose.md (cursor /a. close)" yes
   if fetch_factory "skills/claudecode.md" "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md (cursor /alexandria alias)" yes; then
     if [ "$(uname)" = "Darwin" ]; then
       sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
