@@ -174,7 +174,7 @@ function HomeInstall() {
   return (
     <div className="cta-block">
       <Link href="/start" className="install-cta">
-        free sample
+        start your loop
       </Link>
       <span className="cta-sub">
         even slightly curious? just try it
@@ -199,7 +199,13 @@ const FILMS = [
 // it's not a perfect demo, so it doesn't belong pinned to the hero as a
 // caption on the art — a quiet secondary link in the action zone is the
 // honest home. A plain text trigger; the film lifts into the same lightbox.
-function DemoFilm() {
+function DemoFilm({
+  className = 'demo-link',
+  children,
+}: {
+  className?: string;
+  children?: React.ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const film = FILMS[0];
   // Lightbox plumbing — Esc closes, page scroll locks while open. The
@@ -226,10 +232,10 @@ function DemoFilm() {
     <>
       <button
         type="button"
-        className="demo-link"
+        className={className}
         onClick={() => setOpen(true)}
       >
-        <em>watch the demo</em>
+        {children ?? <em>watch the demo</em>}
       </button>
       {/* The lightbox portals to <body> — .stage-top is transform-scaled,
           which would make position:fixed resolve against the stage. */}
@@ -427,7 +433,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'plugs in.',
       lead: 'Already have a system?',
-      sub: 'Keep it all — the CLAUDE.md, the memory files, the vault. Alexandria clicks them into one loop; everything you’ve built finally pulls together.',
+      sub: 'Keep it all — the CLAUDE.md, the memory files, the vault. Alexandria clicks into them, and everything you’ve built finally pulls together — one closed loop.',
     },
     // Reframed biography → the mirror (founder, 2026-07-24: "rephrase the
     // biography thing to be the mirror" — same day as "its my mirror not
@@ -910,6 +916,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             foot (2026-07-19) — the arch is now pure scenery, no caption
             stuck on the art. */}
         <div className="stage-top">
+        {/* The demo returns to the archway (founder, 2026-07-27: "put the
+            demo back into the water archway... I'm keeping the water") —
+            the window becomes a literal window into the product: the whole
+            arch is the trigger, a quiet plaque line sits at its foot, and
+            the film lifts into the same lightbox as the back-slide link. */}
+        <DemoFilm className="arch-demo">
+          <span className="arch-demo-label">
+            <span className="arch-demo-glyph" aria-hidden>▷</span> watch the demo
+          </span>
+        </DemoFilm>
         {/* The colophon — the front slide signed like a manuscript, the two
             marks bracketing the hero in opposite corners (founder 2026-07-23):
             the maker's name bottom-left, the place + year bottom-right, both in
@@ -1172,9 +1188,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   <p className="statement-beat action-beat action-beat-final">
                     <em>Every day you wait, the loop isn&rsquo;t
                     compounding. Most minds will average out &mdash; yours
-                    doesn&rsquo;t have to. The sample is below: five
-                    minutes, and if you don&rsquo;t like it, delete
-                    it.</em>
+                    doesn&rsquo;t have to. It&rsquo;s free, it takes five
+                    minutes, and it compounds for the rest of your
+                    life.</em>
                   </p>
                 </div>
 

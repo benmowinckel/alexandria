@@ -1800,6 +1800,48 @@
           letter-spacing: 0.012em;
           color: var(--theme-fg-muted);
         }
+        /* The arch as demo door — a hotspot over the window in stage
+           coordinates (scales with the scene), the label a quiet plaque
+           at the window's foot over the sea. Always visible (touch has
+           no hover), waking fully on hover. Mobile keeps the demo on
+           the back slide only — the mobile scene crops differently. */
+        .arch-demo {
+          position: absolute;
+          left: 505px;
+          top: 218px;
+          width: 410px;
+          height: 425px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          z-index: 3;
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          padding: 0 0 18px;
+        }
+        .arch-demo-label {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 13.5px;
+          letter-spacing: 0.015em;
+          color: rgba(38, 44, 72, 0.55);
+          transition: color 200ms ease;
+        }
+        .arch-demo-glyph {
+          font-size: 9px;
+          margin-right: 3px;
+          vertical-align: 1px;
+        }
+        .arch-demo:hover .arch-demo-label {
+          color: rgba(38, 44, 72, 0.92);
+          text-decoration: underline;
+          text-decoration-thickness: 1px;
+          text-underline-offset: 3px;
+        }
+        @media (max-width: 899px) {
+          .arch-demo { display: none; }
+        }
         /* ─── FRONT-SLIDE OPENING ─── */
         /* "to the reader" + the calculator hook, set on the LEFT of the
            hero (founder, 2026-07-12: "on the left and elegant") in the
