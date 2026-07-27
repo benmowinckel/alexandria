@@ -41,13 +41,18 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
   if (screen === 'device') {
     return (
       <div className="door-block">
-        <p className="door-q">at your computer?</p>
+        {/* Not "at your computer?" (founder 2026-07-27): someone on their phone
+            can still walk to the machine — reach, not location. The yes-answer
+            carries the instruction; both answers are three-word imperatives
+            for what happens next, so the pair reads as one shape. Not "do it
+            later" — the no-path still does the shortcut and the email now. */}
+        <p className="door-q">is your computer in reach?</p>
         <div className="door-answers">
           <button className="door-btn" onClick={() => go('computer')}>
-            yes
+            yes<span className="act-why"> — go grab it</span>
           </button>
           <button className="door-btn" onClick={() => go('phone')}>
-            no
+            no<span className="act-why"> — stay on phone</span>
           </button>
         </div>
       </div>
