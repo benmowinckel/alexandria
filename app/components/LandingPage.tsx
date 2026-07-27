@@ -280,12 +280,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // connects everyone who makes it. The delta stated as unlooped vs
   // looped, with the 10x value line as the "with us" side.
   const PITCH = {
-    lead: 'The more ai knows you, the more it can do for you — and soon it can do everything. But the most valuable piece of you has no connector: how you think.',
+    lead: 'The better ai knows you, the better it helps you. But the most important part of you — how you think — is stuck in your head.',
     body: [
-      'Your mail, your calendar, your files — everything about you plugs in. Your thought space doesn’t. It only gets out if you choose to extract it — and nobody can do that for you.',
-      'That extraction is the entire purpose of the Alexandria loop: your ai writes what it learns about you into private files you own, and reads them to know you — automatic, compounding. Unlooped, how you think stays in your head. Looped, every ai you’ll ever use — including the far better ones coming — knows you 10x better, and helps you 10x better.',
-      'Our whole company exists to make that choice easy: a full working loop, free, moulding into whatever you already run — a CLAUDE.md, memory files, a vault click straight in. No server, no account — yours, on your own computer, with you if you switch.',
-      'And we connect everyone who chooses it — Strava, but for your mind — people running their own loops, comparing setups, and sharing what works.',
+      'Your email, your calendar, your files — all of that can be plugged in. How you think can’t. It only comes out if you put it out — and nobody can do that for you.',
+      'That’s the Alexandria loop: your ai writes what it learns about you into private files, and reads them to know you. It runs itself. Without it, every ai starts from zero. With it, every ai — even the much better ones coming — knows you 10x better, and helps you 10x better.',
+      'The whole loop is free, takes minutes, and fits whatever you already use — a CLAUDE.md, memory files, notes all click in. Nothing leaves your computer, and the files are yours for good — with any ai you ever choose.',
+      'And everyone running a loop is connected — Strava, but for your mind — comparing loops and sharing what works.',
     ],
     aside: 'for the technical: agents.md, but for you.',
   };
