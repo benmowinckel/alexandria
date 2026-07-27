@@ -1696,7 +1696,7 @@
            so the rule below never moves on switch. */
         .back-panels {
           display: grid;
-          margin-top: 4px;
+          margin-top: 0;
         }
         .back-panels > .back-panel {
           grid-area: 1 / 1;
@@ -1743,7 +1743,7 @@
         }
         /* The body — three paragraphs, one beat each, generous read. */
         .pitch-para {
-          margin: 12px 0 0;
+          margin: 10px 0 0;
           font-size: 15.5px;
           line-height: 1.62;
           letter-spacing: 0.004em;
@@ -1785,13 +1785,13 @@
              so the break always sits naturally just above it. Bottom
              margin lifted (22→34, 2026-07-17): the rule sits higher and
              the closing sections breathe. */
-          margin: auto 0 30px;
+          margin: auto 0 26px;
         }
         /* Extra air between the close beats and the buttons — the two
            closing sections read as separate breaths (2026-07-17), taking
            the space the lifted rule opens up. */
         .right-lower > .cta-pair {
-          margin-top: 16px;
+          margin-top: 12px;
         }
         .action-beat {
           margin: 0;
@@ -2278,7 +2278,7 @@
            competing with install. Theme-aware so it rides the colophon
            palette; underline wakes on hover. */
         .demo-line {
-          margin: 16px 0 0;
+          margin: 10px 0 0;
         }
         .demo-link {
           border: none;
