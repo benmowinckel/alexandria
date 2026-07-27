@@ -1843,9 +1843,9 @@
         .arch-demo-label {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
-          font-size: 13.5px;
+          font-size: 14.5px;
           letter-spacing: 0.015em;
-          color: rgba(38, 44, 72, 0.55);
+          color: rgba(38, 44, 72, 0.72);
           transition: color 200ms ease;
         }
         .arch-demo-glyph {
@@ -1857,7 +1857,18 @@
           color: rgba(38, 44, 72, 0.85);
         }
         @media (max-width: 899px) {
-          .arch-demo { display: none; }
+          /* Mobile: the stage flattens (display:contents), so the hotspot
+             positions against the flowing top-slide with viewport units.
+             The mobile scene centres the arch; svh keeps the seat stable
+             while the iOS bar collapses. Tap opens the same lightbox. */
+          .arch-demo {
+            left: 50%;
+            top: 46svh;
+            transform: translateX(-50%);
+            width: 66vw;
+            height: 30svh;
+            padding-bottom: 6px;
+          }
         }
         /* ─── FRONT-SLIDE OPENING ─── */
         /* "to the reader" + the calculator hook, set on the LEFT of the
@@ -2231,6 +2242,14 @@
           border: none;
           padding: 0;
           cursor: pointer;
+        }
+        /* The doors pair (demo · support) in the italic hand — a
+           different voice from the roman place-names beside them. */
+        .quiet-door,
+        .quiet-door em {
+          font-style: italic;
+          font-weight: 400;
+          font-size: 14.5px;
         }
         /* The mark — upright period, a breath tighter to the word than the
            tracking sets it, echoing the brand nav-dot (same as the shelf). */
@@ -2898,7 +2917,16 @@
             align-self: auto;
             padding-left: 0;
             margin: 0;
+            flex-wrap: wrap;
+            row-gap: 10px;
           }
+          /* The divider becomes a line break — places row, doors row. */
+          .quiet-div {
+            flex-basis: 100%;
+            height: 0;
+            background: none;
+          }
+          .quiet-link { white-space: nowrap; }
 
           /* Statement — drop the absolute roman numerals (they hang in
              the left margin, no room for that here). More gap between
@@ -2965,6 +2993,14 @@
           .phon {
             font-size: clamp(11.5px, 1.1vw, 13px);
             margin-top: -4px;
+          }
+          /* Margin numerals have no margin on mobile — run them inline
+             at the head of each paragraph instead (the statement's own
+             mobile solution). */
+          .pitch-para::before {
+            position: static;
+            display: inline;
+            margin-right: 0.55em;
           }
           /* Back-slide tabs on mobile: nudge the row up a touch, and pull
              the panels tight under it (the flattened bottom-inner puts a

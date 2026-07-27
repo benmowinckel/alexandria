@@ -118,7 +118,7 @@ export default function PublicDocReader({
       askFn={askFn}
       intro={intro}
       askFirst={askFirst}
-      footerCta="free sample"
+      footerCta="close your loop"
     />
   );
 }

@@ -34,6 +34,7 @@ export const metadata: Metadata = {
 // features doc as focus, so each is guaranteed grounded. Mix of concrete
 // (feature mechanics) and open (company) asks.
 const FEATURES_QUESTIONS = [
+  'what is the alexandria loop?',
   'what would actually change for me in the first week?',
   'how is this different from chatgpt’s memory?',
   'do i have to leave the apps i already use?',

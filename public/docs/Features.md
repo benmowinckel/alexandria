@@ -1,6 +1,6 @@
 # the features.
 
-The eight, plainly — what each one does, and how. The front page shows you the moment each feature lands; this page explains the machine behind it.
+The eight, plainly — what each one does, and how. The front page shows you the moment each feature lands; this page explains the machine behind it. All eight are one machine seen from different sides: **the Alexandria loop** — your ai writing what it learns about you into private files you own, and reading them back before it helps you.
 
 ## i · personalisation.
 

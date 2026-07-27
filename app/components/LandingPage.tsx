@@ -174,7 +174,7 @@ function HomeInstall() {
   return (
     <div className="cta-block">
       <Link href="/start" className="install-cta">
-        start your loop
+        close your loop
       </Link>
     </div>
   );
@@ -302,8 +302,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     lead: 'Cultures must choose to value humans, but humans must first choose to value themselves.',
     body: [
       'Machines are infinitely better at chess than we are, yet human chess is more popular than it has ever been — we still love to watch humans play. But only the ones who can still play.',
-      'Technology is a multiplier: it carries you further down whatever path you point it. Let ai think for you, and your mind — like any muscle you stop using — begins to fade. Align it to think with you, and there is no limit to how far the two of you can go.',
-      'That is what Alexandria is for: helping people build systems to keep thinking — so that we never lose our minds.',
+      'Technology is a multiplier: it carries you further down whatever path you point it. Let ai think for you, and your mind — like any muscle you stop using — begins to fade; left without direction, it drifts where it wants to go, not where you want to go. Keep going, and one day you wake up as one of the humans in Wall-E. Align it to think with you instead, and there is no limit to how far the two of you can go.',
+      'That is what Alexandria is for: helping people build systems to keep thinking — so that we never lose our minds. An Alexandrian aligns their ai to be a partner in their thinking, never a replacement for it. We exist to explain the why, to gather the ones who choose it, and to build the tools for anyone who wants to try.',
       'Alexandrians are defined by this choice alone — the loop is just how we keep it.',
     ],
   };
@@ -424,8 +424,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     {
       kind: 'feature',
       name: 'ownership.',
-      lead: 'Feel trapped by the ai that knows you?',
-      sub: 'Your mind becomes a folder you own — move it to the next great ai in a minute, or delete it outright. No one holds you.',
+      lead: 'Switching ai shouldn’t mean starting over.',
+      sub: 'Your mind is a folder you own — move it to the next great ai in a minute, or delete it outright. No one holds you.',
     },
     {
       kind: 'feature',
@@ -1223,8 +1223,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 <Link href="/library" className="quiet-link">library<span className="shelf-dot">.</span></Link>
                 <Link href="/marketplace" className="quiet-link">marketplace<span className="shelf-dot">.</span></Link>
                 <span className="quiet-div" aria-hidden />
-                <DemoFilm className="quiet-link">demo<span className="shelf-dot">.</span></DemoFilm>
-                <Link href="/follow" className="quiet-link">support<span className="shelf-dot">.</span></Link>
+                <DemoFilm className="quiet-link quiet-door"><em>watch the demo</em></DemoFilm>
+                <Link href="/follow" className="quiet-link quiet-door"><em>show your support</em></Link>
               </p>
           </div>
 
