@@ -301,10 +301,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   const MANIFESTO = {
     lead: 'Cultures must choose to value humans, but humans must first choose to value themselves.',
     body: [
-      'Machines are infinitely better at chess than we are, yet human chess is more popular than it has ever been — we still love to watch humans play. But only the ones who can still play.',
+      'Machines are infinitely better at chess than we are, yet human chess is more popular than it has ever been — we still love to watch humans play. But only the ones who can still play the game.',
       'Technology is a multiplier: it carries you further down whatever path you point it. Let ai think for you, and your mind — like any muscle you stop using — begins to fade; left without direction, it drifts where it wants to go, not where you want to go. Keep going, and one day you wake up as one of the humans in Wall-E. Align it to think with you instead, and there is no limit to how far the two of you can go.',
       'That is what Alexandria is for: helping people build systems to keep thinking — so that we never lose our minds. An Alexandrian aligns their ai to be a partner in their thinking, never a replacement for it. We exist to explain the why, to gather the ones who choose it, and to build the tools for anyone who wants to try.',
-      'Alexandrians are defined by this choice alone — the loop is just how we keep it.',
+      'Because distinctiveness is sacred: if everyone is something, nobody is anything. ai is making every skill common — the one thing it cannot make common is a mind kept distinct, under its own name, on its own ground.',
+      'Alexandrians are defined by this choice alone — the loop is just how we keep it. Keep thinking.',
     ],
   };
   const [backPanel, setBackPanel] = useState<'pitch' | 'about'>('pitch');
