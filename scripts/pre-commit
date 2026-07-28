@@ -3,6 +3,22 @@
 # Install: git config core.hooksPath scripts
 # Order: cheap gates first (fail fast), expensive last.
 
+# Generated-copy gate. CLAUDE.md and .cursorrules are copies of AGENTS.md made
+# by the npm prebuild — which only runs on `npm run build`. So editing AGENTS.md
+# and committing without a full build silently ships a stale CLAUDE.md: the file
+# every Claude Code session actually reads. Silent is the whole problem — nothing
+# fails, the rule just isn't there. This has bitten three times (twice 2026-07-15,
+# again 2026-07-27, when a newly-added copy rule was missing from CLAUDE.md on its
+# first use). Detection is the wrong fix here: the copy is deterministic and holds
+# no judgment, so regenerate and stage it rather than blocking the commit. The
+# error class stops existing instead of getting caught.
+if git diff --cached --name-only | grep -qx 'AGENTS.md'; then
+  cp AGENTS.md CLAUDE.md
+  cp AGENTS.md .cursorrules 2>/dev/null || true   # gitignored, local-only
+  git add CLAUDE.md
+  echo "AGENTS.md changed — regenerated CLAUDE.md (+ local .cursorrules) and staged."
+fi
+
 # Smoke-coverage gate: if this commit deletes an exact-match route, smoke.yml
 # must not still reference the same literal path. Closes the "deleted route
 # + forgotten smoke probe" loop (the 2026-04-26 /library/authors regression).
