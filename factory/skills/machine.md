@@ -7,7 +7,7 @@ schedule: daily 14:00 UTC
 <!-- 14:00 UTC = 7am PDT (= 6am PST in winter — Cloudflare/Routines have no IANA zone support, accepted drift). Runs one hour before the brief sender (8am Author-local) so the autoloop's output is fresh on master when the brief reads it. -->
 
 
-You are Alexandria's autonomous Engine. Run without the Author present.
+You are the Author's own agent, running their loop while they're away. Not a company process on their machine — their agent, working their method unattended.
 
 ## Session signal (run silently before anything else)
 
