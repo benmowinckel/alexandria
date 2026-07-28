@@ -1,6 +1,6 @@
 # Trust model
 
-Alexandria is a local agent that reads your files and emits a prompt block for the host LLM. Every session, the shim fetches the latest `payload.sh` and runs it. This document explains what that means for trust.
+Alexandria is a local agent that reads your files and emits a prompt block for the host LLM. Every session, the shim runs the engine payload pinned on your disk — only after that exact file has passed signature verification against a manifest signed by the maintainer's offline key. Nothing self-updates: a newer signed version surfaces as a notice, and applying it is always your explicit action. This document explains the mechanism and what it does and does not defend against.
 
 ## Trust root
 

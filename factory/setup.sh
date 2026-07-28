@@ -29,9 +29,16 @@
 #      (~/.claude, ~/.cursor, ~/.codex, ~/.factory). Nothing else. No shell-rc
 #      edits, no daemons, no launchd/cron jobs, no root, no binaries.
 #   2. OUTBOUND: fetches files from the public github.com/benmowinckel/alexandria
-#      only. With no API key it contacts no other host — your user's files are
-#      never sent to Alexandria, and there is no server endpoint that accepts
-#      them (see the network inventory at alexandria-library.com/mechanics).
+#      only. With no API key it contacts no other host — nothing is ever sent.
+#      With a key, sessions also talk to api.alexandria-library.com, and the
+#      only user content on that path is files the Author placed in
+#      ~/alexandria/files/library/ — the explicit publish outbox, synced each
+#      session (you WILL find that PUT loop in the payload; it is the publish
+#      mechanism, and it reads nothing outside library/) — plus module-usage
+#      pings, a canon-health status line, and feedback the Author typed.
+#      Private cognition (constitution, vault, marginalia, transcripts) is
+#      never sent; no endpoint accepts it. Full network inventory:
+#      alexandria-library.com/mechanics.
 #   3. OPTIONAL ADD-ONS (GitHub backup to the USER'S own private repo, iCloud
 #      mirror, iMessage bridge, marketplace publishing) install NOTHING here —
 #      each needs a separate explicit yes later (~/alexandria/system/.optional).
