@@ -418,9 +418,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
-          <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">
-            {PaneLeftIcon}<span className="strip-label">history</span>
-          </button>
+          <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">{PaneLeftIcon}</button>
           <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 0.9rem 0.5rem' }}>
               <button type="button" onClick={() => setLeftOpen(false)} aria-label="collapse history" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneLeftIcon}</button>
@@ -436,11 +434,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             </div>
           </aside>
 
-          {/* chat — slot 2. The spine says what opens (see ReaderShell: written
-              word, not a motion cue — founder 2026-07-27). */}
-          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask the mind" title="ask the mirror">
-            {LinesIcon}<span className="strip-label">ask the mirror</span>
-          </button>
+          {/* chat — slot 2. Faint accent wash marks which pane matters; no
+              label and no motion (see ReaderShell, founder 2026-07-27). */}
+          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask the mind" title="ask the mirror">{LinesIcon}</button>
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
@@ -607,9 +603,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           </section>
 
           {/* the piece — slot 3 */}
-          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece pane" title="pieces">
-            {PaneRightIcon}<span className="strip-label">pieces</span>
-          </button>
+          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece pane" title="pieces">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
             <div className="piece-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.7rem 1.4rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
               {open && <button type="button" onClick={() => setOpen(null)} aria-label="back to pieces" title="back" style={iconBtn} className="hover:opacity-60">{ChevronIcon}</button>}
@@ -723,17 +717,15 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         .reader-prose ul, .reader-prose ol { margin: 0 0 1.1rem; padding-left: 1.3rem; } .reader-prose li { margin: 0 0 0.4rem; }
         .reader-prose code { background: var(--bg-secondary); border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.9em; }
 
-        /* A collapsed pane is a spine: icon over a vertical word naming what
-           opens — static, no motion cue to catch (founder 2026-07-27). Kept
-           identical to ReaderShell's so the two readers stay one grammar. */
-        .reader-strip { flex: none; width: 46px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0.85rem; padding-top: 0.85rem;
+        /* Collapsed panes are icon-only; the mirror's strip keeps a faint
+           accent wash — wordless, permanent, the mark of which pane matters.
+           Identical to ReaderShell's so the two readers stay one grammar. */
+        .reader-strip { flex: none; width: 46px; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.85rem;
           border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
         .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
-        .strip-label { writing-mode: vertical-rl; text-orientation: mixed; font-size: 0.78rem; letter-spacing: 0.09em;
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: calc(100% - 3rem); color: inherit; }
-        .reader-strip.strip-chat { color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--bg-secondary)); }
-        .reader-strip.strip-chat:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, var(--bg-secondary)); }
+        .reader-strip.strip-chat { color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--bg-secondary)); }
+        .reader-strip.strip-chat:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-secondary)); }
 
         @media (min-width: 901px) {
           .reader-strip { display: none; }

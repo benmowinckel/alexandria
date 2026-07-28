@@ -325,9 +325,7 @@ export default function ReaderShell({
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
-          <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">
-            {PaneLeftIcon}<span className="strip-label">history</span>
-          </button>
+          <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">{PaneLeftIcon}</button>
           <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={paneHead}>
               <button type="button" onClick={() => setLeftOpen(false)} aria-label="collapse history" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneLeftIcon}</button>
@@ -343,14 +341,10 @@ export default function ReaderShell({
             </div>
           </aside>
 
-          {/* chat — slot 2. The collapsed pane says what it is, on its spine —
-              a written word, not a motion cue (founder 2026-07-27: the glide-out
-              bounce didn't work; make it plainly clear you can ask the mirror and
-              open the middle pane). Accent-coloured so the eye finds it first of
-              the three spines. Mobile keeps the read/ask tabs. */}
-          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask about this piece" title="ask the mirror about this">
-            {LinesIcon}<span className="strip-label">ask the mirror</span>
-          </button>
+          {/* chat — slot 2. The strip carries a faint accent wash so the eye
+              knows which of the three matters; the words that explain it are
+              the whisper in the piece header, which fades on its own. */}
+          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask about this piece" title="ask the mirror about this">{LinesIcon}</button>
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={paneHead}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse the mirror" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
@@ -386,26 +380,23 @@ export default function ReaderShell({
           </section>
 
           {/* the piece — slot 3 */}
-          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">
-            {PaneRightIcon}<span className="strip-label">{name}</span>
-          </button>
+          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
             <div className="piece-head" style={paneHead}>
-              <span style={{ ...label, display: 'flex', alignItems: 'center', gap: '0.7rem', marginRight: 'auto' }}>
-                <span>{name}</span>
-                {/* The one thing this reader does that a PDF can't — said in
-                    words, in the reader's sightline, while the mirror is
-                    closed (founder 2026-07-27). Mobile has the tabs, so this
-                    is desktop-only; it disappears the moment the pane opens. */}
+              <span style={{ ...label, display: 'flex', alignItems: 'baseline', gap: '0.8rem', marginRight: 'auto', minWidth: 0 }}>
+                <span style={{ flex: 'none' }}>{name}</span>
+                {/* The whisper. The one thing this reader does that a PDF can't,
+                    said once in words and then gone — it fades itself out after a
+                    few seconds, so there is nothing to dismiss and nothing left
+                    over on the hundredth visit (founder 2026-07-27: elegant enough
+                    that it's fine even when you already know it). Replaces both
+                    the glide-out bounce and the standing label. It points back at
+                    the strip that opens the pane, and stays clickable while it
+                    shows. Re-mounts (so it replays) whenever the pane is closed. */}
                 {!midOpen && (
-                  <button type="button" onClick={() => setMidOpen(true)} title="ask the mirror about this"
-                    className="ask-cue hover:opacity-75"
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.38rem', cursor: 'pointer', fontFamily: 'inherit',
-                      fontSize: '0.78rem', letterSpacing: '0.02em', lineHeight: 1, color: 'var(--accent)', padding: '0.3rem 0.62rem',
-                      borderRadius: '999px', border: '1px solid color-mix(in srgb, var(--accent) 28%, transparent)',
-                      background: 'color-mix(in srgb, var(--accent) 8%, transparent)' }}>
-                    <svg width="14" height="14" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>
-                    ask the mirror about this
+                  <button type="button" onClick={() => setMidOpen(true)} title="ask the mirror about this" className="ask-whisper">
+                    <svg width="13" height="13" {...svgProps} style={{ flex: 'none' }}><path d="M19 12H5" /><path d="M11 18l-6-6 6-6" /></svg>
+                    <span>ask the mirror about this</span>
                   </button>
                 )}
               </span>
@@ -503,19 +494,27 @@ export default function ReaderShell({
         .reader-prose hr { border: none; border-top: 1px solid var(--border-light); margin: 2.2rem 0; }
         .reader-prose code { background: var(--bg-secondary); border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.9em; }
 
-        /* A collapsed pane is a spine: icon over a vertical word saying what
-           opens. Static — the reader shouldn't need to catch a movement to
-           learn the pane is there. */
-        .reader-strip { flex: none; width: 46px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0.85rem; padding-top: 0.85rem;
+        .reader-strip { flex: none; width: 46px; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.85rem;
           border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
         .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
-        .strip-label { writing-mode: vertical-rl; text-orientation: mixed; font-size: 0.78rem; letter-spacing: 0.09em;
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: calc(100% - 3rem); color: inherit; }
-        /* The mirror's spine is the one the reader must not miss: accent ink,
-           and it stays accent on hover while the other two go quiet. */
-        .reader-strip.strip-chat { color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--bg-secondary)); }
-        .reader-strip.strip-chat:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, var(--bg-secondary)); }
+        /* The mirror's strip keeps a faint accent wash — wordless, permanent,
+           the standing mark of which pane matters. */
+        .reader-strip.strip-chat { color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--bg-secondary)); }
+        .reader-strip.strip-chat:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-secondary)); }
+
+        /* The whisper — arrives, is read, leaves. No box, no close button, no
+           state: a plain italic line that dissolves after ~6s and takes its
+           own space with it (the header row keeps its height regardless). */
+        .ask-whisper { display: inline-flex; align-items: center; gap: 0.4rem; border: none; background: none; padding: 0;
+          cursor: pointer; font-family: var(--font-eb-garamond); font-style: italic; font-size: 0.92rem; letter-spacing: 0;
+          line-height: 1; color: var(--accent); white-space: nowrap; overflow: hidden;
+          animation: ask-whisper 7.4s ease-in-out 0.9s both; }
+        .ask-whisper:hover { opacity: 0.7; }
+        @keyframes ask-whisper {
+          0% { opacity: 0; } 10% { opacity: 1; } 76% { opacity: 1; }
+          100% { opacity: 0; visibility: hidden; }
+        }
 
         @media (min-width: 901px) {
           .reader-tabs { display: none !important; }
@@ -532,7 +531,8 @@ export default function ReaderShell({
           .reader-strip, .pane-history { display: none !important; }
           .chat-collapse, .piece-collapse { display: none !important; }
           .reader-tabs { display: flex !important; }
-          .ask-cue { display: none !important; }
+          /* Mobile's affordance is the tab that says it outright — no whisper. */
+          .ask-whisper { display: none !important; }
           main { flex-direction: column !important; }
           .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; order: 0 !important; }
           main[data-tab="piece"] .pane-piece { display: flex !important; }
