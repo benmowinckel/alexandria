@@ -30,6 +30,11 @@ import {
 type Msg = { role: 'you' | 'twin'; text: string };
 type Convo = { id: string; messages: Msg[]; title?: string };
 
+/** The one breakpoint, shared by the JS that has to know it and mirrored by
+ *  the media queries below — the panes become tabs here. */
+const PANES_MIN = 901;
+const isNarrow = () => typeof window !== 'undefined' && window.innerWidth < PANES_MIN;
+
 const svgProps = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
 const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6-6 6-6" /></svg>;
 const PaneLeftIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
@@ -207,7 +212,7 @@ export default function ReaderShell({
   // When the chat pane becomes visible (expand it on desktop, or switch to the
   // ask tab on mobile), drop the cursor in the composer so you can type at once.
   useEffect(() => {
-    const mobile = typeof window !== 'undefined' && window.innerWidth <= 900;
+    const mobile = isNarrow();
     if (mobile ? tab !== 'ask' : !midOpen) return;
     const id = requestAnimationFrame(() => promptRef.current?.focus());
     return () => cancelAnimationFrame(id);
@@ -223,7 +228,7 @@ export default function ReaderShell({
   const openChat = (id: string) => {
     setActiveId(id);
     setMidOpen(true);
-    if (typeof window !== 'undefined' && window.innerWidth <= 900) setTab('ask');
+    if (isNarrow()) setTab('ask');
   };
   // Rename sets a title the reader owns; an empty name falls back to the
   // derived first-line. Delete drops the chat, minting a fresh empty one if it
@@ -252,7 +257,7 @@ export default function ReaderShell({
   // the first client paint agree.
   const [narrow, setNarrow] = useState(false);
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 900px)');
+    const mq = window.matchMedia(`(max-width: ${PANES_MIN - 1}px)`);
     const sync = () => setNarrow(mq.matches);
     sync();
     mq.addEventListener('change', sync);
@@ -269,7 +274,7 @@ export default function ReaderShell({
     setQuestion('');
     setMidOpen(true);
     setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'you', text }] } : c)));
-    if (typeof window !== 'undefined' && window.innerWidth <= 900) setTab('ask');
+    if (isNarrow()) setTab('ask');
     try {
       const answer = await askFn(text);
       setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'twin', text: answer }] } : c)));
@@ -419,7 +424,7 @@ export default function ReaderShell({
             {/* With the ask docked below, the text fades out as it reaches it
                 rather than being sliced mid-line by the scroll edge — the
                 separation is a dissolve, not another rule. */}
-            <div className={dockedAsk && !midOpen && !pdfUrl ? 'piece-body piece-body-fade' : 'piece-body'}
+            <div className={dockedAsk && !midOpen && !pdfUrl ? 'piece-fade' : undefined}
               style={{ flex: 1, overflow: pdfUrl ? 'hidden' : 'auto', minHeight: 0, padding: pdfUrl ? 0 : '2.2rem clamp(1.4rem, 5vw, 4rem)' }}>
               {status === 'loading' && <p style={{ color: 'var(--text-ghost)' }}>loading…</p>}
               {status === 'signin' && (
@@ -528,7 +533,7 @@ export default function ReaderShell({
         /* The docked ask — held to the text column, separated by space rather
            than a rule (the footer's line already closes the page). */
         .piece-ask { flex: none; width: min(680px, 100% - 2.8rem); margin: 0 auto; padding: 0.55rem 0 1.15rem; }
-        .piece-body-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
+        .piece-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
           mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }
 
         @media (min-width: 901px) {

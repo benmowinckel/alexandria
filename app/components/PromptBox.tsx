@@ -210,7 +210,16 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           padding: bare ? '0.35rem 0 0.5rem 0.4rem' : '0.62rem 0 0.62rem 1.35rem',
           pointerEvents: 'none', color: 'var(--text-ghost)',
           fontFamily: 'var(--font-eb-garamond)', fontSize: bare ? '1.05rem' : '1rem', lineHeight: 1.45,
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap', overflow: 'hidden',
+          // Bare sits on an open line, so a suggestion longer than the line
+          // fades off its edge instead of stopping at an ellipsis — the same
+          // dissolve the document above it uses, and it needs no width budget
+          // to be right on a phone. Boxed keeps the ellipsis: inside a field,
+          // a fade would read as a rendering fault.
+          ...(bare
+            ? { WebkitMaskImage: 'linear-gradient(to right, #000 calc(100% - 2.6rem), transparent)',
+              maskImage: 'linear-gradient(to right, #000 calc(100% - 2.6rem), transparent)' }
+            : { textOverflow: 'ellipsis' }),
           opacity: (!value && ghostShown) ? 1 : 0,
           transition: 'opacity 0.4s ease',
         }}>{ghost}</div>

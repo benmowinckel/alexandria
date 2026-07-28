@@ -73,15 +73,12 @@ export function readingExamples(who?: string, artifactQs?: string[], compact = f
     ? (first ? `ask as you read — ${first}’s mirror` : 'ask as you read — this mind’s mirror')
     : (first ? `ask as you read — a mirror of ${first}’s mind, here to answer`
       : 'ask as you read — a mirror of this mind, here to answer');
-  const qs = pieceExamples(who, artifactQs);
-  // Same reason, applied to the questions: on a phone, rotate through the ones
-  // that fit whole rather than showing any of them half-said. 38 is the budget
-  // on the narrowest phone still worth designing for (375px, minus the margins
-  // and the mic, at the 1.05rem the field must keep — anything smaller makes
-  // iOS zoom the page on focus). If a piece's questions are all longer than
-  // that, keep them all: a clipped suggestion beats an empty rotation.
-  const fits = compact ? qs.filter((q) => q.length <= 38) : qs;
-  return [lead, ...(fits.length ? fits : qs)];
+  // The questions themselves are NOT filtered by length. A character budget is
+  // a proxy for rendered width — wrong the moment the font, the device or the
+  // Author's own questions change — and these are generated per piece for
+  // every Author. A suggestion too long for the line fades off its right edge
+  // instead (PromptBox, bare), which needs no number and never picks wrong.
+  return [lead, ...pieceExamples(who, artifactQs)];
 }
 
 /**
