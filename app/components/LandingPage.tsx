@@ -388,7 +388,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'personalisation.',
       lead: 'Your ai still treats you like a stranger.',
-      sub: 'With Alexandria, every ai opens knowing you like an old friend — your work, your taste, how you think.',
+      sub: 'With an Alexandria loop, every ai opens knowing you like an old friend — your work, your taste, how you think.',
     },
     // Added 2026-07-24 (founder picked it from the brainstorm): the
     // deepest claim, previously only gestured at by the hero. Canon's
@@ -432,7 +432,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'plugs in.',
       lead: 'Already have a system?',
-      sub: 'Keep it all — the CLAUDE.md, the memory files, the vault. The method clicks them together, and everything you’ve built finally pulls together — one closed loop.',
+      sub: 'Keep it all — the CLAUDE.md, the memory files, the vault. The loop clicks into what you have, and everything you’ve built finally pulls together — one closed loop.',
     },
     // Reframed biography → the mirror (founder, 2026-07-24: "rephrase the
     // biography thing to be the mirror" — same day as "its my mirror not
