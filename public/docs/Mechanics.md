@@ -60,7 +60,7 @@ The setup is one bash script. The hooks payload is one bash script. The shim is 
 | `system/.optional` | The add-ons menu — what each opt-in add-on does, touches, and how to turn it off. |
 | `system/.*` (other) | Ephemeral state — session ID markers, sync logs, the error log, autoloop dedup, account-status cache, last-maintenance timestamps. All readable. None leave the machine. |
 
-**`~/.claude/skills/alexandria/SKILL.md`** — the `/a` skill. Plain markdown. `cat` it.
+**`~/.claude/skills/{a,alexandria}/SKILL.md`** — the `/a` skill (and its `/alexandria` alias). **`~/.claude/skills/a./SKILL.md`** — the `/a.` close skill: ends an /a session by capturing everything to your files, then asking what shifted — you say it, in your words; it files them. Plain markdown, all of them. `cat` them. (Cursor gets the same three under `~/.cursor/skills/`.)
 
 **`~/alexandria-fork/`** — **not created at install.** Part of the opt-in `publish` add-on (marketplace contribution): a sparse-checkout of your own GitHub fork of the public `alexandria` repo, created only when you enable that add-on.
 
@@ -285,7 +285,8 @@ jq 'del(.hooks.SessionStart, .hooks.SessionEnd, .hooks.SubagentStart)' \
   && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
 
 # Remove the skill, scheduled task, Cursor / Codex / Factory entries
-rm -rf ~/.claude/skills/alexandria ~/.claude/scheduled-tasks/alexandria
+rm -rf ~/.claude/skills/a ~/.claude/skills/a. ~/.claude/skills/alexandria ~/.claude/scheduled-tasks/alexandria
+rm -rf ~/.cursor/skills/a ~/.cursor/skills/a. ~/.cursor/skills/alexandria
 rm -f  ~/.cursor/rules/alexandria.mdc ~/.cursor/hooks/alexandria-*.py
 rm -f  ~/.factory/droids/a.md
 # ~/.cursor/hooks.json: edit by hand to remove the three alexandria entries
