@@ -136,6 +136,13 @@ export type ReaderShellProps = {
   askFn: (question: string) => Promise<string>;   // the twin call (wrapper decides which)
   intro?: React.ReactNode;                        // chat empty-state (who you're talking to + CTAs)
   askFirst?: boolean;                             // open with the ask pane up (mirror-led pages)
+  /** Dock the composer under the piece while the mirror is collapsed — the
+   *  whitepaper and the letter only. They're the two surfaces that open on a
+   *  closed mirror and a long read, so the ask has to be present without a
+   *  label. Everywhere else already carries it: the mirror-led pages open
+   *  with the pane up, and the Library reader opens on a chosen artifact
+   *  (founder 2026-07-27). */
+  dockedAsk?: boolean;
   footerCta?: string;                             // surface-fitting foot label (SiteFooter doctrine)
   /** Library-only: the invite-code entry, slotted under the sign-in CTA when an
    *  invite-gated piece is opened signed-out. The wrapper owns the field + the
@@ -150,7 +157,7 @@ export default function ReaderShell({
   numbered = false, plain = false,
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
-  intro, inviteField, askFirst = false, footerCta = 'build your own',
+  intro, inviteField, askFirst = false, dockedAsk = false, footerCta = 'build your own',
 }: ReaderShellProps) {
   const book = useMemo(
     () => (numbered && markdown ? processNumbered(markdown) : null),
@@ -394,7 +401,11 @@ export default function ReaderShell({
               )}
               <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece" title="collapse" style={iconBtn} className="piece-collapse hover:opacity-60">{PaneRightIcon}</button>
             </div>
-            <div style={{ flex: 1, overflow: pdfUrl ? 'hidden' : 'auto', minHeight: 0, padding: pdfUrl ? 0 : '2.2rem clamp(1.4rem, 5vw, 4rem)' }}>
+            {/* With the ask docked below, the text fades out as it reaches it
+                rather than being sliced mid-line by the scroll edge — the
+                separation is a dissolve, not another rule. */}
+            <div className={dockedAsk && !midOpen && !pdfUrl ? 'piece-body piece-body-fade' : 'piece-body'}
+              style={{ flex: 1, overflow: pdfUrl ? 'hidden' : 'auto', minHeight: 0, padding: pdfUrl ? 0 : '2.2rem clamp(1.4rem, 5vw, 4rem)' }}>
               {status === 'loading' && <p style={{ color: 'var(--text-ghost)' }}>loading…</p>}
               {status === 'signin' && (
                 <div style={{ maxWidth: '32rem' }}>
@@ -459,17 +470,17 @@ export default function ReaderShell({
             {/* The ask, docked under the document, while the mirror is closed.
                 Not a label about the mirror — the mirror itself, one line of it,
                 sitting under the text the way a question would. Nothing to teach
-                and nothing to dismiss: an empty box with a question already in it
-                is its own instruction, and it stays useful on the hundredth visit
+                and nothing to dismiss: a line with a question already in it is
+                its own instruction, and it stays the tool on the hundredth visit
                 (founder 2026-07-27 — the labels and the fading whisper both read
-                as onboarding; this reads as the tool). Typing here opens the pane
-                with the answer, so it doubles as the way in. Mobile has the tabs. */}
-            {status === 'ok' && !midOpen && (
+                as onboarding). Bare: no box, no button, no rule above it — one
+                hairline under the words, the same width as the text column, so
+                it reads as the next line of the page. Typing here opens the pane
+                with the answer, so it doubles as the way in. */}
+            {dockedAsk && status === 'ok' && !midOpen && (
               <div className="piece-ask">
-                <div style={{ maxWidth: '680px', margin: '0 auto' }}>
-                  <PromptBox value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
-                    placeholder={rotatingPlaceholder || askPlaceholder} />
-                </div>
+                <PromptBox bare value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
+                  placeholder={rotatingPlaceholder || askPlaceholder} ariaLabel="ask about this piece" />
               </div>
             )}
           </article>
@@ -499,9 +510,11 @@ export default function ReaderShell({
         .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
 
-        /* The docked ask — same rule and rhythm as the chat pane's composer, so
-           it reads as part of the reader's furniture, not a promo. */
-        .piece-ask { flex: none; padding: 0.85rem clamp(1.4rem, 5vw, 4rem) 0.95rem; border-top: 1px solid var(--border-light); }
+        /* The docked ask — held to the text column, separated by space rather
+           than a rule (the footer's line already closes the page). */
+        .piece-ask { flex: none; width: min(680px, 100% - 2.8rem); margin: 0 auto; padding: 0.55rem 0 1.15rem; }
+        .piece-body-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
+          mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }
 
         @media (min-width: 901px) {
           .reader-tabs { display: none !important; }

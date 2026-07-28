@@ -118,6 +118,10 @@ export default function PublicDocReader({
       askFn={askFn}
       intro={intro}
       askFirst={askFirst}
+      // The whitepaper and the letter: they open on a closed mirror and a long
+      // read, so the ask is docked under the document. The mirror-led pages
+      // (askFirst) already open with the pane up and need nothing.
+      dockedAsk={!askFirst}
       footerCta="close your loop"
     />
   );

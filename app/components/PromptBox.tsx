@@ -38,8 +38,13 @@ const PromptBox = forwardRef<PromptBoxHandle, {
   placeholder?: string;
   ariaLabel?: string;
   submitLabel?: string;
+  /** Bare — no field box, no submit button: the question sits on one hairline
+   *  and Enter sends it. For the composer docked under a document, where a
+   *  chat-shaped box would read as an app bolted to a page (founder
+   *  2026-07-27). Desktop-only surfaces, since Enter is the only submit. */
+  bare?: boolean;
 }>(function PromptBox({
-  value, onChange, onSubmit, loading = false, typeWhileLoading = false, placeholder = '', ariaLabel, submitLabel = 'ask',
+  value, onChange, onSubmit, loading = false, typeWhileLoading = false, placeholder = '', ariaLabel, submitLabel = 'ask', bare = false,
 }, ref) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const [voiceOn, setVoiceOn] = useState(false);
@@ -175,17 +180,25 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           placeholder=""
           aria-label={ariaLabel || placeholder}
           style={{
-            width: '100%', resize: 'none', overflow: 'auto', minHeight: '2.85rem', maxHeight: '160px', boxSizing: 'border-box',
-            border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-secondary)',
-            color: 'var(--text-primary)', fontFamily: 'var(--font-eb-garamond)', fontSize: '1rem', lineHeight: 1.45,
-            outline: 'none', padding: `0.62rem ${voiceOn ? '2.6rem' : '0.95rem'} 0.62rem 0.95rem`,
+            width: '100%', resize: 'none', overflow: 'auto', maxHeight: '160px', boxSizing: 'border-box',
+            color: 'var(--text-primary)', fontFamily: 'var(--font-eb-garamond)', lineHeight: 1.45,
+            outline: 'none',
             // Quieter, greyer caret; hidden entirely while our slow caret shows.
             caretColor: showOwnCaret ? 'transparent' : 'var(--text-muted)',
+            ...(bare
+              ? {
+                minHeight: '2.2rem', border: 'none', borderBottom: '1px solid var(--border-light)', borderRadius: 0,
+                background: 'none', fontSize: '1.05rem', padding: `0.35rem ${voiceOn ? '1.9rem' : '0'} 0.5rem 0`,
+              }
+              : {
+                minHeight: '2.85rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-secondary)',
+                fontSize: '1rem', padding: `0.62rem ${voiceOn ? '2.6rem' : '0.95rem'} 0.62rem 0.95rem`,
+              }),
           }}
         />
         {showOwnCaret && (
           <span aria-hidden style={{
-            position: 'absolute', left: '0.98rem', top: '0.78rem',
+            position: 'absolute', left: bare ? '1px' : '0.98rem', top: bare ? '0.52rem' : '0.78rem',
             width: '1.5px', height: '1.05rem', background: 'var(--text-muted)', borderRadius: '1px',
             pointerEvents: 'none', animation: 'pb-caret-blink 1.5s ease-in-out infinite',
           }} />
@@ -193,10 +206,10 @@ const PromptBox = forwardRef<PromptBoxHandle, {
         {/* the rotating suggestion — nudged right of the caret so the blinking
             cursor never sits on the first letter (founder 2026-07-20) */}
         <div aria-hidden style={{
-          position: 'absolute', left: 0, top: 0, right: ghostRight,
-          padding: '0.62rem 0 0.62rem 1.35rem',
+          position: 'absolute', left: 0, top: 0, right: bare ? (voiceOn ? '1.9rem' : 0) : ghostRight,
+          padding: bare ? '0.35rem 0 0.5rem 0.4rem' : '0.62rem 0 0.62rem 1.35rem',
           pointerEvents: 'none', color: 'var(--text-ghost)',
-          fontFamily: 'var(--font-eb-garamond)', fontSize: '1rem', lineHeight: 1.45,
+          fontFamily: 'var(--font-eb-garamond)', fontSize: bare ? '1.05rem' : '1rem', lineHeight: 1.45,
           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           opacity: (!value && ghostShown) ? 1 : 0,
           transition: 'opacity 0.4s ease',
@@ -208,7 +221,8 @@ const PromptBox = forwardRef<PromptBoxHandle, {
             aria-label={listening ? 'stop voice input' : 'voice input'}
             title={listening ? 'stop  (⌘D)' : 'speak  (⌘D)'}
             style={{
-              position: 'absolute', right: '0.55rem', bottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              position: 'absolute', right: bare ? 0 : '0.55rem', bottom: bare ? '0.42rem' : '0.5rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem',
               color: listening ? 'var(--accent)' : 'var(--text-ghost)', transition: 'color 0.15s',
             }}
@@ -219,17 +233,21 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           </button>
         )}
       </div>
-      <button type="button" onClick={submit} disabled={disabled}
-        onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.opacity = '0.85'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.opacity = disabled ? '0.5' : '1'; }}
-        style={btn}>
-        {/* Label always reserves the width; the "…" overlays it centered while
-            loading, so the button never resizes between states. */}
-        <span style={{ visibility: loading ? 'hidden' : undefined }}>{submitLabel}</span>
-        {loading && (
-          <span aria-hidden style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>…</span>
-        )}
-      </button>
+      {/* Bare has no button — Enter is the gesture, and the row stays one line
+          of text on one rule. Loading shows as a lone ellipsis in its place. */}
+      {bare ? (loading && <span aria-hidden style={{ flex: 'none', color: 'var(--text-ghost)', paddingBottom: '0.5rem' }}>…</span>) : (
+        <button type="button" onClick={submit} disabled={disabled}
+          onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.opacity = '0.85'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.opacity = disabled ? '0.5' : '1'; }}
+          style={btn}>
+          {/* Label always reserves the width; the "…" overlays it centered while
+              loading, so the button never resizes between states. */}
+          <span style={{ visibility: loading ? 'hidden' : undefined }}>{submitLabel}</span>
+          {loading && (
+            <span aria-hidden style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>…</span>
+          )}
+        </button>
+      )}
     </div>
   );
 });
