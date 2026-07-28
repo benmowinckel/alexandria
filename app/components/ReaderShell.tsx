@@ -9,7 +9,7 @@ import PromptBox from './PromptBox';
 import ActionButton from './ActionButton';
 import TwinText from './TwinText';
 import ChatHistoryItem from './ChatHistoryItem';
-import { useRotatingPlaceholder, pieceExamples } from '../lib/useRotatingPlaceholder';
+import { useRotatingPlaceholder, pieceExamples, readingExamples } from '../lib/useRotatingPlaceholder';
 import {
   processNumbered, TocBlock,
   MD_COMPONENTS, MD_COMPONENTS_NUMBERED, MD_COMPONENTS_NUMBERED_PRE, MD_COMPONENTS_ABSTRACT,
@@ -245,6 +245,11 @@ export default function ReaderShell({
   // in view; it pauses the moment the reader starts typing.
   const askExamples = useMemo(() => pieceExamples(who, askQuestions), [who, askQuestions]);
   const rotatingPlaceholder = useRotatingPlaceholder(askExamples, !question.trim());
+  // The docked line runs its own cycle, led once by what this is — see
+  // readingExamples. Its own hook so opening the pane doesn't inherit the
+  // framing line into the chat composer, which already has the intro.
+  const readExamples = useMemo(() => readingExamples(who, askQuestions), [who, askQuestions]);
+  const readingPlaceholder = useRotatingPlaceholder(readExamples, !question.trim());
 
   const ask = async () => {
     const text = question.trim();
@@ -480,7 +485,7 @@ export default function ReaderShell({
             {dockedAsk && status === 'ok' && !midOpen && (
               <div className="piece-ask">
                 <PromptBox bare value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
-                  placeholder={rotatingPlaceholder || askPlaceholder} ariaLabel="ask about this piece" />
+                  placeholder={readingPlaceholder || askPlaceholder} ariaLabel="ask about this piece" />
               </div>
             )}
           </article>

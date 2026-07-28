@@ -56,6 +56,24 @@ export function pieceExamples(who?: string, artifactQs?: string[]): string[] {
 }
 
 /**
+ * readingExamples — the rotation for the composer docked under a document
+ * (whitepaper, letter). Same prompts as pieceExamples, led once by the line
+ * that names what this is: you can ask as you go, and the thing answering is
+ * the Author's mirror sitting beside you — not the Author, and not a support
+ * bot (founder 2026-07-27: "ask whilst you read… just like the founder was
+ * here with you, but it's a mirror not me"). It leads the cycle rather than
+ * living as a label, so the framing is read once and then replaced by the
+ * questions themselves — nothing standing on the page afterwards.
+ */
+export function readingExamples(who?: string, artifactQs?: string[]): string[] {
+  const first = who ? who.split(' ')[0] : '';
+  const lead = first
+    ? `ask as you read — a mirror of ${first}’s mind, here to answer`
+    : 'ask as you read — a mirror of this mind, here to answer';
+  return [lead, ...pieceExamples(who, artifactQs)];
+}
+
+/**
  * authorExamples — rotating prompts for a general surface pointed at one
  * Author's whole mind (the profile chat), not a single piece. Prefers the
  * artifact-derived questions the Author has published (aggregated across their
