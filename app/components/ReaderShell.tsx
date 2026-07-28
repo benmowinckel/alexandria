@@ -383,23 +383,7 @@ export default function ReaderShell({
           <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
             <div className="piece-head" style={paneHead}>
-              <span style={{ ...label, display: 'flex', alignItems: 'baseline', gap: '0.8rem', marginRight: 'auto', minWidth: 0 }}>
-                <span style={{ flex: 'none' }}>{name}</span>
-                {/* The whisper. The one thing this reader does that a PDF can't,
-                    said once in words and then gone — it fades itself out after a
-                    few seconds, so there is nothing to dismiss and nothing left
-                    over on the hundredth visit (founder 2026-07-27: elegant enough
-                    that it's fine even when you already know it). Replaces both
-                    the glide-out bounce and the standing label. It points back at
-                    the strip that opens the pane, and stays clickable while it
-                    shows. Re-mounts (so it replays) whenever the pane is closed. */}
-                {!midOpen && (
-                  <button type="button" onClick={() => setMidOpen(true)} title="ask the mirror about this" className="ask-whisper">
-                    <svg width="13" height="13" {...svgProps} style={{ flex: 'none' }}><path d="M19 12H5" /><path d="M11 18l-6-6 6-6" /></svg>
-                    <span>ask the mirror about this</span>
-                  </button>
-                )}
-              </span>
+              <span style={{ ...label, marginRight: 'auto' }}>{name}</span>
               {status === 'ok' && (
                 <>
                   <ActionButton icon={CopyIcon} onAction={copyArtifact} title="copy text" style={iconBtn} className="hover:opacity-60" />
@@ -472,6 +456,22 @@ export default function ReaderShell({
                 )
                 : <div className="reader-prose"><ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown || ''}</ReactMarkdown></div>)}
             </div>
+            {/* The ask, docked under the document, while the mirror is closed.
+                Not a label about the mirror — the mirror itself, one line of it,
+                sitting under the text the way a question would. Nothing to teach
+                and nothing to dismiss: an empty box with a question already in it
+                is its own instruction, and it stays useful on the hundredth visit
+                (founder 2026-07-27 — the labels and the fading whisper both read
+                as onboarding; this reads as the tool). Typing here opens the pane
+                with the answer, so it doubles as the way in. Mobile has the tabs. */}
+            {status === 'ok' && !midOpen && (
+              <div className="piece-ask">
+                <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+                  <PromptBox value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
+                    placeholder={rotatingPlaceholder || askPlaceholder} />
+                </div>
+              </div>
+            )}
           </article>
         </main>
         {/* Slim footer to frame the reader even with the panes open — the one
@@ -498,23 +498,10 @@ export default function ReaderShell({
           border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
         .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
-        /* The mirror's strip keeps a faint accent wash — wordless, permanent,
-           the standing mark of which pane matters. */
-        .reader-strip.strip-chat { color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--bg-secondary)); }
-        .reader-strip.strip-chat:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-secondary)); }
 
-        /* The whisper — arrives, is read, leaves. No box, no close button, no
-           state: a plain italic line that dissolves after ~6s and takes its
-           own space with it (the header row keeps its height regardless). */
-        .ask-whisper { display: inline-flex; align-items: center; gap: 0.4rem; border: none; background: none; padding: 0;
-          cursor: pointer; font-family: var(--font-eb-garamond); font-style: italic; font-size: 0.92rem; letter-spacing: 0;
-          line-height: 1; color: var(--accent); white-space: nowrap; overflow: hidden;
-          animation: ask-whisper 7.4s ease-in-out 0.9s both; }
-        .ask-whisper:hover { opacity: 0.7; }
-        @keyframes ask-whisper {
-          0% { opacity: 0; } 10% { opacity: 1; } 76% { opacity: 1; }
-          100% { opacity: 0; visibility: hidden; }
-        }
+        /* The docked ask — same rule and rhythm as the chat pane's composer, so
+           it reads as part of the reader's furniture, not a promo. */
+        .piece-ask { flex: none; padding: 0.85rem clamp(1.4rem, 5vw, 4rem) 0.95rem; border-top: 1px solid var(--border-light); }
 
         @media (min-width: 901px) {
           .reader-tabs { display: none !important; }
@@ -531,8 +518,8 @@ export default function ReaderShell({
           .reader-strip, .pane-history { display: none !important; }
           .chat-collapse, .piece-collapse { display: none !important; }
           .reader-tabs { display: flex !important; }
-          /* Mobile's affordance is the tab that says it outright — no whisper. */
-          .ask-whisper { display: none !important; }
+          /* Mobile asks on its own tab — no second composer under the doc. */
+          .piece-ask { display: none !important; }
           main { flex-direction: column !important; }
           .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; order: 0 !important; }
           main[data-tab="piece"] .pane-piece { display: flex !important; }
@@ -549,6 +536,9 @@ export default function ReaderShell({
         main[data-expanded="true"] .reader-strip,
         main[data-expanded="true"] .pane-history,
         main[data-expanded="true"] .pane-chat,
+        /* Full screen is pure reading — and the mirror pane it would answer
+           into is hidden here, so the composer goes with it. */
+        main[data-expanded="true"] .piece-ask,
         main[data-expanded="true"] .piece-collapse { display: none !important; }
         .reader-shell:has(main[data-expanded="true"]) > footer { display: none !important; }
       `}</style>

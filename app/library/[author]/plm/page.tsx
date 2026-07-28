@@ -434,8 +434,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             </div>
           </aside>
 
-          {/* chat — slot 2. Faint accent wash marks which pane matters; no
-              label and no motion (see ReaderShell, founder 2026-07-27). */}
+          {/* chat — slot 2. Opens by default here, so it needs no cue. */}
           <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask the mind" title="ask the mirror">{LinesIcon}</button>
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
@@ -717,15 +716,12 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         .reader-prose ul, .reader-prose ol { margin: 0 0 1.1rem; padding-left: 1.3rem; } .reader-prose li { margin: 0 0 0.4rem; }
         .reader-prose code { background: var(--bg-secondary); border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.9em; }
 
-        /* Collapsed panes are icon-only; the mirror's strip keeps a faint
-           accent wash — wordless, permanent, the mark of which pane matters.
-           Identical to ReaderShell's so the two readers stay one grammar. */
+        /* Collapsed panes are icon-only, no label and no motion — identical to
+           ReaderShell's so the two readers stay one grammar. */
         .reader-strip { flex: none; width: 46px; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.85rem;
           border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
         .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
-        .reader-strip.strip-chat { color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--bg-secondary)); }
-        .reader-strip.strip-chat:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--bg-secondary)); }
 
         @media (min-width: 901px) {
           .reader-strip { display: none; }
