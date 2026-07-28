@@ -62,13 +62,19 @@ async function putFileToGithub(path: string, content: string, message: string): 
   }
 }
 
-/** Author-explicit feedback. Single substrate: alexandria-feedback GitHub repo. */
-export async function publishFeedback(payload: { author: string; t: string; text: string; context?: string }): Promise<void> {
+/** Author-explicit feedback. Single substrate: alexandria-feedback GitHub repo.
+ *  Returns the item's **id** — `<date>-<hash>` — which is the addressing scheme
+ *  for the return leg: a reply is a signed file named for the id it answers, so
+ *  an unsolicited push has no landing site (see a2 § The bottom line). Without
+ *  an id the channel is structurally one-way, which is what it was until now. */
+export async function publishFeedback(payload: { author: string; t: string; text: string; context?: string }): Promise<string> {
   const hash = await shortHash(payload.text + payload.t);
-  const value = JSON.stringify(payload, null, 2) + '\n';
+  const id = `${payload.t.slice(0, 10)}-${hash.slice(0, 6)}`;
+  const value = JSON.stringify({ ...payload, id }, null, 2) + '\n';
   const path = `feedback/${payload.t.replace(/[:.]/g, '-')}-${hash}.json`;
   await putFileToGithub(path, value, `feedback ${payload.t}`);
   logEvent('feedback_published', { hash });
+  return id;
 }
 
 /** Daily snapshot of library funnel/engagement. Server-computed (no Author

@@ -1152,12 +1152,29 @@ export function registerRoutes(app: Hono) {
 
     const t = new Date().toISOString();
     try {
-      await publishFeedback({
+      // The id is returned to the client so it can stamp its own ledger line —
+      // that is what makes a reply addressable later, and a reply to nothing is
+      // the reason this channel had no return leg at all.
+      const id = await publishFeedback({
         author: account.github_login,
         t,
         text: text.slice(0, 5000),
         context: context?.slice?.(0, 200) || 'direct',
       });
+
+      // Notification, not a dashboard. Without this the repo silently accumulates
+      // files nobody is told about — which is how four days of feedback went
+      // unread (2026-07-27). Non-fatal: a failed notification never fails the POST,
+      // because the item is already durably committed above.
+      try {
+        await sendEmail(
+          FOUNDER_EMAIL,
+          `feedback from ${account.github_login} [${id}]`,
+          `${text.slice(0, 5000)}\n\n---\nfrom: ${account.github_login}\ncontext: ${context || 'direct'}\nid: ${id}\nreply: commit factory/replies/${id}.md and re-sign the manifest`,
+        );
+      } catch (e) {
+        console.error('[feedback] notification email failed:', e);
+      }
 
       logEvent('user_feedback', {
         author: account.github_login,
@@ -1172,7 +1189,7 @@ export function registerRoutes(app: Hono) {
         });
       }
 
-      return c.json({ ok: true });
+      return c.json({ ok: true, id });
     } catch (err) {
       console.error('Feedback relay failed:', err);
       logEvent('user_feedback', { error: 'relay_failed' });
