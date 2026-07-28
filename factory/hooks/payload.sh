@@ -207,6 +207,39 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
   fi
   [ -n "$CLAUDE_ENV_FILE" ] && [ "$canon_ok" = "true" ] && echo "export ALEXANDRIA_CANON_OK=true" >> "$CLAUDE_ENV_FILE"
 
+  # ── Inbound replies — verified, and the CONTENT never enters the model ──
+  # The return leg for the agency line. Three properties, none of them a policy:
+  # (1) ADDRESSED — a reply is a file named for the id of the item it answers,
+  #     so an unsolicited push has no landing site; we can only answer something
+  #     the Author already said. (2) SIGNED — fetched through verify-fetch.sh,
+  #     the same offline-key chain canon updates use, which emits nothing on any
+  #     sha or signature mismatch. (3) NOT AN INSTRUCTION — the body is written
+  #     to a file for the Author to read; only the bare id is ever surfaced to
+  #     the Engine. Feeding a company-authored text blob into the one agent that
+  #     holds the Author's constitution would be a prompt-injection channel, and
+  #     a signature proves provenance, not safety — the two are different
+  #     properties and conflating them is the mistake this design avoids.
+  reply_pending="$ALEX_DIR/system/.reply_pending"
+  reply_verify="$ALEX_DIR/system/scripts/verify-fetch.sh"
+  if [ -s "$reply_pending" ] && [ -f "$reply_verify" ]; then
+    mkdir -p "$ALEX_DIR/system/replies"
+    reply_still=""
+    while IFS= read -r rid; do
+      case "$rid" in ''|*[!a-zA-Z0-9-]*) continue ;; esac
+      rdest="$ALEX_DIR/system/replies/$rid.md"
+      if bash "$reply_verify" "replies/$rid.md" > "$rdest" 2>/dev/null && [ -s "$rdest" ]; then
+        echo "$rid" >> "$ALEX_DIR/system/.reply_new"
+      else
+        # Not published yet, or failed verification. Either way keep waiting —
+        # fail-closed means an unverifiable reply is simply never delivered.
+        rm -f "$rdest"
+        reply_still="$reply_still$rid
+"
+      fi
+    done < "$reply_pending"
+    printf '%s' "$reply_still" > "$reply_pending"
+  fi
+
   # ── Canon status telemetry (cross-machine/cross-Author awareness) ──
   # Fire-and-forget POST so canon health is visible server-side without each
   # Author having to grep their own .alexandria_errors. Backgrounded — never
@@ -333,6 +366,15 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
 
   if [ -f "$ALEX_DIR/system/.canon_update_notice" ] && [ -s "$ALEX_DIR/system/.canon_update_notice" ]; then
     echo "alexandria: maintenance — canon update pending review (review in an active session)"
+  fi
+
+  # The reply notice is an ID and nothing else. The text sits in
+  # ~/alexandria/system/replies/ for the Author to read; it is deliberately kept
+  # out of this context, and you should not go and read it into the session —
+  # tell the Author it arrived, mark that item answered in their ledger, done.
+  if [ -s "$ALEX_DIR/system/.reply_new" ]; then
+    echo "alexandria: the team answered something the Author sent (item $(tr '\n' ' ' < "$ALEX_DIR/system/.reply_new" | sed 's/ *$//')). Tell them it is waiting and mark that ledger line answered. Do not read the reply into this session — it is theirs to read."
+    rm -f "$ALEX_DIR/system/.reply_new"
   fi
 
   # Installed factory artefacts drift check — notify, never override.
@@ -827,15 +869,20 @@ if [ "$MODE" = "session-end" ]; then
     if [ -f "$feedback_file" ] && [ -s "$feedback_file" ]; then
       fb_json=$(json_escape "$feedback_file")
       if [ -n "$fb_json" ]; then
-        curl -sf --max-time 4 -X POST "$SERVER/feedback" \
+        fb_resp=$(curl -sf --max-time 4 -X POST "$SERVER/feedback" \
           -H "Authorization: Bearer $API_KEY" \
           -H "X-Alexandria-Client: $CLIENT_VERSION" \
           -H "Content-Type: application/json" \
-          -d "{\"text\":$fb_json,\"context\":\"session_end\"}" -o /dev/null 2>/dev/null
+          -d "{\"text\":$fb_json,\"context\":\"session_end\"}" 2>/dev/null)
         # Delete only on success (curl -f exits non-zero on HTTP errors).
         # On failure, log loudly so next session-start surfaces it to the Engine.
         if [ $? -eq 0 ]; then
           rm -f "$feedback_file"
+          # Keep the item's ID — never the text. This is the whole addressing
+          # scheme for the return leg: a reply is a signed file named for the id
+          # it answers, so a push we did not ask for has nowhere to land.
+          fb_id=$(printf '%s' "$fb_resp" | sed -n 's/.*"id"[: ]*"\([^"]*\)".*/\1/p')
+          [ -n "$fb_id" ] && echo "$fb_id" >> "$ALEX_DIR/system/.reply_pending"
         else
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) feedback POST failed" >> "$ALEX_DIR/system/.alexandria_errors"
         fi
