@@ -247,8 +247,18 @@ export default function ReaderShell({
   const rotatingPlaceholder = useRotatingPlaceholder(askExamples, !question.trim());
   // The docked line runs its own cycle, led once by what this is — see
   // readingExamples. Its own hook so opening the pane doesn't inherit the
-  // framing line into the chat composer, which already has the intro.
-  const readExamples = useMemo(() => readingExamples(who, askQuestions), [who, askQuestions]);
+  // framing line into the chat composer, which already has the intro. The
+  // narrow-screen check is post-mount (never during render) so the server and
+  // the first client paint agree.
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 900px)');
+    const sync = () => setNarrow(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+  const readExamples = useMemo(() => readingExamples(who, askQuestions, narrow), [who, askQuestions, narrow]);
   const readingPlaceholder = useRotatingPlaceholder(readExamples, !question.trim());
 
   const ask = async () => {
@@ -536,8 +546,13 @@ export default function ReaderShell({
           .reader-strip, .pane-history { display: none !important; }
           .chat-collapse, .piece-collapse { display: none !important; }
           .reader-tabs { display: flex !important; }
-          /* Mobile asks on its own tab — no second composer under the doc. */
-          .piece-ask { display: none !important; }
+          /* Mobile keeps the docked ask too — same model, one thumb away: the
+             tab is for going to the conversation, this is for asking without
+             leaving the page you're reading. Type size is NOT reduced here —
+             iOS zooms the whole page when a focused input is under 16px, and
+             1.05rem clears it. The line fits instead by rotating shorter
+             questions (readingExamples' compact set). */
+          .piece-ask { width: calc(100% - 2.4rem); padding: 0.45rem 0 0.85rem; }
           main { flex-direction: column !important; }
           .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; order: 0 !important; }
           main[data-tab="piece"] .pane-piece { display: flex !important; }

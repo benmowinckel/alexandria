@@ -214,7 +214,28 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           opacity: (!value && ghostShown) ? 1 : 0,
           transition: 'opacity 0.4s ease',
         }}>{ghost}</div>
-        {voiceOn && (
+        {/* Bare has no standing submit button — Enter sends it. But a soft
+            keyboard has no reliable Enter, so once there are words the mic
+            (useless mid-question anyway) gives its slot to a send arrow. One
+            control, always the useful one, and nothing there while idle. */}
+        {bare && value.trim() && (
+          <button
+            type="button"
+            onClick={submit}
+            aria-label="send"
+            title="send"
+            style={{
+              position: 'absolute', right: 0, bottom: '0.4rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem',
+              color: 'var(--accent)', opacity: loading ? 0.45 : 1, transition: 'opacity 0.15s',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 19V5" /><path d="M5 12l7-7 7 7" />
+            </svg>
+          </button>
+        )}
+        {voiceOn && !(bare && value.trim()) && (
           <button
             type="button"
             onClick={toggleVoice}

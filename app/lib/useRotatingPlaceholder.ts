@@ -65,12 +65,23 @@ export function pieceExamples(who?: string, artifactQs?: string[]): string[] {
  * living as a label, so the framing is read once and then replaced by the
  * questions themselves — nothing standing on the page afterwards.
  */
-export function readingExamples(who?: string, artifactQs?: string[]): string[] {
+export function readingExamples(who?: string, artifactQs?: string[], compact = false): string[] {
   const first = who ? who.split(' ')[0] : '';
-  const lead = first
-    ? `ask as you read — a mirror of ${first}’s mind, here to answer`
-    : 'ask as you read — a mirror of this mind, here to answer';
-  return [lead, ...pieceExamples(who, artifactQs)];
+  // A lead line that ends in an ellipsis teaches nothing, so narrow screens get
+  // the sentence with its tail cut rather than the sentence truncated.
+  const lead = compact
+    ? (first ? `ask as you read — ${first}’s mirror` : 'ask as you read — this mind’s mirror')
+    : (first ? `ask as you read — a mirror of ${first}’s mind, here to answer`
+      : 'ask as you read — a mirror of this mind, here to answer');
+  const qs = pieceExamples(who, artifactQs);
+  // Same reason, applied to the questions: on a phone, rotate through the ones
+  // that fit whole rather than showing any of them half-said. 38 is the budget
+  // on the narrowest phone still worth designing for (375px, minus the margins
+  // and the mic, at the 1.05rem the field must keep — anything smaller makes
+  // iOS zoom the page on focus). If a piece's questions are all longer than
+  // that, keep them all: a clipped suggestion beats an empty rotation.
+  const fits = compact ? qs.filter((q) => q.length <= 38) : qs;
+  return [lead, ...(fits.length ? fits : qs)];
 }
 
 /**
