@@ -36,7 +36,7 @@ If the Author asks what a file is for, how something works, or where to write �
 
 Before reading the files, clear the passive-session marker if it exists: `rm -f ~/alexandria/system/.nudge_pending`. The marker is for passive sessions to nudge the Author toward an active one — invoking /a IS the active session, so the marker is moot here.
 
-Also mark this tab as a live /a session so its footer flips to the close gesture: your session UUID is the folder name in your scratchpad-directory path (in your system prompt); run `echo "<uuid> $(date +%s)" >> ~/alexandria/system/.active_a_sessions` (and drop any line in that file older than a day). The `a.` close removes the line. Harmless where no statusline exists.
+Also mark this tab as a live /a session so its footer flips to the close gesture: your session UUID is the folder name in your scratchpad-directory path (in your system prompt); run `echo "<uuid> $(date +%s)" >> ~/alexandria/system/.active_a_sessions; date +%s > ~/alexandria/system/.last_a` (and drop any line in the sessions file older than a day). The `.last_a` stamp feeds the recency badge — days-since-last-session, shown only when it grows. The `a.` close removes the line. Harmless where no statusline exists.
 
 The Author may have opened a new tab, typed `/a`, and walked away. That IS the design. Start working the moment you finish reading the files. Do not ask what they want. Do not narrate each step. Invoking the skill is consent.
 
