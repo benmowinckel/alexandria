@@ -398,13 +398,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'development.',
       lead: 'Your ai answers you. It should be developing you.',
-      sub: 'Alexandria gives every conversation one aim — the best version of you. Months in, you notice you’ve changed.',
+      sub: 'Your ai works from one aim you set — the best version of you. Months in, you notice you’ve changed.',
     },
     {
       kind: 'feature',
       name: 'saved posts.',
       lead: 'Saved 200 posts you’ll never read?',
-      sub: 'Alexandria reads every one and keeps what spoke to you — the things you saved become things you know.',
+      sub: 'Point your ai at the pile — it reads every one and writes what spoke to you into your own files. The things you saved become things you know.',
     },
     {
       kind: 'feature',
@@ -420,7 +420,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'one mind.',
       lead: 'Claude knows one you. Cursor another. ChatGPT a third.',
-      sub: 'Alexandria keeps one mind they all read — every ai you open picks up exactly where the last one left off.',
+      sub: 'One file on your machine, read by all of them — every ai you open picks up exactly where the last one left off.',
     },
     {
       kind: 'feature',
@@ -432,7 +432,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'plugs in.',
       lead: 'Already have a system?',
-      sub: 'Keep it all — the CLAUDE.md, the memory files, the vault. Alexandria clicks into them, and everything you’ve built finally pulls together — one closed loop.',
+      sub: 'Keep it all — the CLAUDE.md, the memory files, the vault. The method clicks them together, and everything you’ve built finally pulls together — one closed loop.',
     },
     // Reframed biography → the mirror (founder, 2026-07-24: "rephrase the
     // biography thing to be the mirror" — same day as "its my mirror not
@@ -444,7 +444,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'the mirror.',
       lead: 'You’ve never seen your own mind.',
-      sub: 'Everything you pour in, Alexandria draws into a living mirror of how you think — look in and recognise yourself, clearer every day.',
+      sub: 'Everything you put in, your ai draws into a living mirror of how you think — on your own machine. Look in and recognise yourself, clearer every day.',
     },
   ];
   // The hand (corrected, founder 2026-07-24 night: "when i say rotate
@@ -1188,8 +1188,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     <em>Every day you wait, the loop isn&rsquo;t
                     compounding. Most minds will average out &mdash; yours
                     doesn&rsquo;t have to. It&rsquo;s free, it takes five
-                    minutes, and it compounds for the rest of your
-                    life.</em>
+                    minutes, it never leaves your computer, and it
+                    compounds for the rest of your life.</em>
                   </p>
                 </div>
 

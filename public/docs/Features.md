@@ -2,11 +2,13 @@
 
 The eight, plainly — what each one does, and how. The front page shows you the moment each feature lands; this page explains the machine behind it. All eight are one machine seen from different sides: **the Alexandria loop** — your ai writing what it learns about you into private files you own, and reading them back before it helps you.
 
+**Where it runs.** On your own computer, inside the ai you already use. There is no Alexandria app, no account, and no upload — there is no endpoint that could receive your files. The only thing hosted is the collective, and only if you join it.
+
 ## i · personalisation.
 
 *Your ai still treats you like a stranger.*
 
-Alexandria keeps a living file of who you are — your work, your taste, how you argue, what you're building — and your ai reads it before it says a word. Instead of re-explaining yourself in every chat, you start every conversation mid-thought, with an ai that already has the context. And because it's written down, you can read exactly what it knows about you — no black-box memory guessing on your behalf.
+Your ai keeps a living file of who you are — your work, your taste, how you argue, what you're building — and reads it before it says a word. Instead of re-explaining yourself in every chat, you start every conversation mid-thought, with an ai that already has the context. And because it's written down, you can read exactly what it knows about you — no black-box memory guessing on your behalf.
 
 ## ii · development.
 
@@ -18,7 +20,7 @@ Your files don't just describe you — they carry where you're trying to go. Eve
 
 *Saved 200 posts you'll never read?*
 
-Point Alexandria at the pile — saved posts, bookmarked articles, screenshots — and your ai reads all of it, pulls out the ideas that made you save each one, and works them into your files. It's not a summary left in another folder you'll never open: the ideas become part of what your ai knows about you, so they resurface exactly when they're relevant.
+Point your ai at the pile — saved posts, bookmarked articles, screenshots — and it reads all of it, pulls out the ideas that made you save each one, and works them into your files. It's not a summary left in another folder you'll never open: the ideas become part of what your ai knows about you, so they resurface exactly when they're relevant.
 
 ## iv · capture.
 
@@ -36,13 +38,13 @@ Your context lives in one folder, and every ai you use reads the same files — 
 
 *Feel trapped by the ai that knows you?*
 
-Everything Alexandria knows about you lives in a folder on your machine — plain files you can open, edit, or delete. Move to a new ai and the folder comes with you; walk away entirely and there's nothing to cancel, nothing held hostage. The better your ai comes to know you, the more that freedom matters.
+Nothing here is ours to know. What your ai learns about you lives in a folder on your machine — plain files you can open, edit, or delete. Move to a new ai and the folder comes with you; walk away entirely and there's nothing to cancel, nothing held hostage. The better your ai comes to know you, the more that freedom matters.
 
 ## vii · plugs in.
 
 *Already have a system?*
 
-Alexandria doesn't replace what you've built — the CLAUDE.md, the memory files, the notes vault all stay. It clicks them into one loop: capture feeding your files, your files feeding every ai, every session writing back. You keep every piece; they finally work as one system.
+None of this replaces what you've built — the CLAUDE.md, the memory files, the notes vault all stay. The loop wires them together: capture feeding your files, your files feeding every ai, every session writing back. You keep every piece; they finally work as one system.
 
 ## viii · the mirror.
 

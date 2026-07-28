@@ -20,6 +20,12 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
           ? 'copied — now paste it into claude'
           : (<>copy the setup<span className="act-why"> — paste it into claude</span></>)}
       </button>
+      {/* The trust line for the chat door — the docs are written into the
+          reader's own Drive, not to anything of ours. Reuses the page's
+          already-styled quiet class. */}
+      <p className="chat-rest">
+        no install, no account, no server of ours — the docs are created in your own Drive.
+      </p>
     </div>
   );
 }

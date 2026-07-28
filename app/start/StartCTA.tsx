@@ -109,15 +109,22 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
         <p className="install-invite">@{validRef} invited you to alexandria.</p>
       )}
 
+      {/* The numerals count only what is required — on the computer path
+          that is two things (shortcut, paste); on the phone path the
+          shortcut is the whole flow, so it carries no numeral at all. The
+          empty gutter keeps every box on the same left spine. */}
       <div className="act-row">
-        <span className="act-num">1</span>
+        <span className="act-num">{mode === 'computer' ? '1' : ''}</span>
         <a className="door-btn act-box" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">
           add the shortcut<span className="act-why"> — drop in anything</span>
         </a>
       </div>
 
+      {/* The email sits OUTSIDE the sequence — numbered, it read as
+          required registration; it is neither. Same box grammar (inputs
+          live in boxes), no numeral, and the why-line says optional. */}
       <div className="act-row">
-        <span className="act-num">2</span>
+        <span className="act-num" aria-hidden />
         <form className="door-btn act-box act-email" onSubmit={sendEmail} onClick={() => emailRef.current?.focus()}>
           {mailState === 'sent' ? (
             <span className="act-sent">sent<span className="act-why"> ✓</span></span>
@@ -137,7 +144,7 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (mailState === 'error') setMailState('idle'); }}
               />
-              {!email.trim() && <span className="act-why act-email-why"> — for the follow-up</span>}
+              {!email.trim() && <span className="act-why act-email-why"> — optional, for the follow-up</span>}
               {email.trim() && (
                 <button type="submit" className="join-door-go" aria-label="send" disabled={mailState === 'sending'}>
                   <ArrowIcon />
@@ -150,7 +157,7 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
 
       {mode === 'computer' && (
         <div className="act-row">
-          <span className="act-num">3</span>
+          <span className="act-num">2</span>
           <button type="button" className={`door-btn act-box cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
             {copied
               ? 'copied — now paste it in'
@@ -158,6 +165,13 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
           </button>
         </div>
       )}
+
+      {/* The one line that answers the curl|bash hesitation: the command
+          installs files, it does not sign you up for anything. Reuses the
+          page's already-styled trust class. */}
+      <p className="primer-trust">
+        no account, no upload — the files land on your computer and stay there.
+      </p>
 
       {validRef && (
         <p className="install-new">
