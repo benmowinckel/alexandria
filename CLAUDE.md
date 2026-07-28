@@ -66,7 +66,7 @@ Operational overhead — OAuth, billing, email, admin:
 | GET | `/account` | Billing portal redirect |
 | DELETE | `/account` | Account deletion (GDPR-ready) |
 | GET | `/account/rotate-key` | Lost-key self-serve rotation (single-use code minted on returning-member OAuth; old key dies atomically) |
-| POST | `/feedback` | Author-explicit feedback (typed into `~/alexandria/system/.session_feedback`, posted at session end, stored in private `benmowinckel/alexandria-feedback` GitHub repo) |
+| POST | `/feedback` | Author-explicit feedback (typed into `~/alexandria/system/.session_feedback`, posted at session end, stored in private `benmowinckel/alexandria-feedback` GitHub repo). Mints a `<date>-<hash>` **id**, returns it so the client can address a reply to it, and emails `FOUNDER_EMAIL` on arrival — except `context: setup`, which is install telemetry and must never notify |
 | GET/POST | `/email/stop` | Email unsubscribe |
 | POST | `/admin/nudge` | Nudge uninstalled users (admin) |
 | POST | `/admin/email` | Send email (admin) |
@@ -111,6 +111,7 @@ factory/
 ## Style
 
 - "ai" is always lowercase unless at the start of a sentence or in a proper noun (e.g. "Apple Intelligence"). This is a brand and taste decision.
+- **The three nouns — never let "Alexandria" do the work of "an Alexandria loop" (founder-locked 2026-07-27; full statement in private `truth/a1.md § THE THREE NOUNS`).** It is not Alexandria — it is *your own ai, with an Alexandria loop*. (1) **your ai** — their Claude, their Cursor, whatever they already opened: theirs, unchanged, never replaced or wrapped, and the only thing that ever acts. (2) **an Alexandria loop** — the method it runs, plain files on their machine, *closer to an AGENTS.md than to software*; no application, no runtime, nothing installed between the person and their ai. (3) **Alexandria** — not an entity: the aggregator, the library and marketplace of private individuals running their own private loops, and the only place a server exists. **The rule for every string a user reads:** Alexandria may be a *condition* ("with an Alexandria loop, every ai opens knowing you") but never the *subject of a custody verb* — never "Alexandria reads / keeps / holds / gives / draws / develops". Put the user's own ai in the subject position. A sentence that fails this describes a service that does not exist, contradicts the architecture (a keyless install makes zero requests to our server — every POST in `factory/hooks/payload.sh` is gated on an API key), and hands a careful reader a reason to stop. This defect was fixed across ~25 strings on 2026-07-27; it recurs because the company name is the shortest available noun, so check it explicitly before shipping copy.
 
 ## Design Constraints
 
