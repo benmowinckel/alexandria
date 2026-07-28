@@ -1166,14 +1166,24 @@ export function registerRoutes(app: Hono) {
       // files nobody is told about — which is how four days of feedback went
       // unread (2026-07-27). Non-fatal: a failed notification never fails the POST,
       // because the item is already durably committed above.
-      try {
-        await sendEmail(
-          FOUNDER_EMAIL,
-          `feedback from ${account.github_login} [${id}]`,
-          `${text.slice(0, 5000)}\n\n---\nfrom: ${account.github_login}\ncontext: ${context || 'direct'}\nid: ${id}\nreply: commit factory/replies/${id}.md and re-sign the manifest`,
-        );
-      } catch (e) {
-        console.error('[feedback] notification email failed:', e);
+      //
+      // Machine-generated contexts are NEVER notified. setup.sh POSTs an install
+      // report through this same endpoint, so notifying unconditionally would mail
+      // a human on every install — turning the one channel where an arriving email
+      // means "a person asked for something" into install telemetry, which is
+      // exactly the failure that killed the daily brief (an email that always
+      // arrives stops carrying information). Install reports already have
+      // logEvent('setup_report') and the health digest.
+      if (context !== 'setup') {
+        try {
+          await sendEmail(
+            FOUNDER_EMAIL,
+            `feedback from ${account.github_login} [${id}]`,
+            `${text.slice(0, 5000)}\n\n---\nfrom: ${account.github_login}\ncontext: ${context || 'direct'}\nid: ${id}\nreply: commit factory/replies/${id}.md and re-sign the manifest`,
+          );
+        } catch (e) {
+          console.error('[feedback] notification email failed:', e);
+        }
       }
 
       logEvent('user_feedback', {

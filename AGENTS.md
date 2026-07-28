@@ -66,7 +66,7 @@ Operational overhead — OAuth, billing, email, admin:
 | GET | `/account` | Billing portal redirect |
 | DELETE | `/account` | Account deletion (GDPR-ready) |
 | GET | `/account/rotate-key` | Lost-key self-serve rotation (single-use code minted on returning-member OAuth; old key dies atomically) |
-| POST | `/feedback` | Author-explicit feedback (typed into `~/alexandria/system/.session_feedback`, posted at session end, stored in private `benmowinckel/alexandria-feedback` GitHub repo) |
+| POST | `/feedback` | Author-explicit feedback (typed into `~/alexandria/system/.session_feedback`, posted at session end, stored in private `benmowinckel/alexandria-feedback` GitHub repo). Mints a `<date>-<hash>` **id**, returns it so the client can address a reply to it, and emails `FOUNDER_EMAIL` on arrival — except `context: setup`, which is install telemetry and must never notify |
 | GET/POST | `/email/stop` | Email unsubscribe |
 | POST | `/admin/nudge` | Nudge uninstalled users (admin) |
 | POST | `/admin/email` | Send email (admin) |
