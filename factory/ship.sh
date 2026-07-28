@@ -66,6 +66,13 @@ SIGNED_FILES=(
   factory/migrate.sh
 )
 
+# Replies are dynamic — one file per answered feedback item — so they cannot sit
+# in the static list above, but they MUST be signed: the client fetches them
+# through verify-fetch.sh and an unsigned reply is simply never delivered.
+for _r in factory/replies/*.md; do
+  [ -e "$_r" ] && SIGNED_FILES+=("$_r")
+done
+
 # ── Coverage enforcement (permanent fix: no executable/steering file ships unsigned) ──
 # Anything that EXECUTES or STEERS the model on a user machine — OR is fetched
 # and "executed literally" by the founder's cloud routines (machine.md daily on
