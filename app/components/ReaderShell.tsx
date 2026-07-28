@@ -159,11 +159,6 @@ export default function ReaderShell({
   const [leftOpen, setLeftOpen] = useState(false);   // history
   const [midOpen, setMidOpen] = useState(askFirst);  // chat (askFirst pages open on it)
   const [rightOpen, setRightOpen] = useState(true);  // the piece
-  // The big "peek" sway plays only until the reader has opened the ask pane
-  // once — after that they know it's there, so re-closing it doesn't sway again
-  // (founder 2026-07-20). The gentle ongoing sway continues regardless.
-  const [chatSeen, setChatSeen] = useState(false);
-  useEffect(() => { if (midOpen) setChatSeen(true); }, [midOpen]);
   const [tab, setTab] = useState<'piece' | 'ask'>(askFirst ? 'ask' : 'piece'); // mobile
   const [expanded, setExpanded] = useState(false);   // full-screen the piece
 
@@ -321,16 +316,18 @@ export default function ReaderShell({
             <button key={t} type="button" onClick={() => setTab(t)}
               style={{ flex: 1, border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.7rem',
                 color: tab === t ? 'var(--text-primary)' : 'var(--text-ghost)', borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent' }}>
-              {t === 'piece' ? 'read' : 'ask'}
+              {t === 'piece' ? 'read' : 'ask the mirror'}
             </button>
           ))}
         </div>
 
-        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-tab={tab} data-expanded={expanded ? 'true' : 'false'} data-chat-seen={chatSeen ? 'true' : 'false'}
+        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-tab={tab} data-expanded={expanded ? 'true' : 'false'}
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
-          <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">{PaneLeftIcon}</button>
+          <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">
+            {PaneLeftIcon}<span className="strip-label">history</span>
+          </button>
           <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={paneHead}>
               <button type="button" onClick={() => setLeftOpen(false)} aria-label="collapse history" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneLeftIcon}</button>
@@ -346,10 +343,14 @@ export default function ReaderShell({
             </div>
           </aside>
 
-          {/* chat — slot 2. Labeled + gently pulsed so it's obvious on desktop
-              that this is where you ask the mind about the piece (founder
-              2026-07-20 — mobile has the read/ask tabs, desktop needs the cue). */}
-          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open chat — ask about this piece" title="ask">{LinesIcon}</button>
+          {/* chat — slot 2. The collapsed pane says what it is, on its spine —
+              a written word, not a motion cue (founder 2026-07-27: the glide-out
+              bounce didn't work; make it plainly clear you can ask the mirror and
+              open the middle pane). Accent-coloured so the eye finds it first of
+              the three spines. Mobile keeps the read/ask tabs. */}
+          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask about this piece" title="ask the mirror about this">
+            {LinesIcon}<span className="strip-label">ask the mirror</span>
+          </button>
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={paneHead}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse the mirror" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
@@ -385,10 +386,29 @@ export default function ReaderShell({
           </section>
 
           {/* the piece — slot 3 */}
-          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">{PaneRightIcon}</button>
+          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">
+            {PaneRightIcon}<span className="strip-label">{name}</span>
+          </button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
             <div className="piece-head" style={paneHead}>
-              <span style={{ ...label, marginRight: 'auto' }}>{name}</span>
+              <span style={{ ...label, display: 'flex', alignItems: 'center', gap: '0.7rem', marginRight: 'auto' }}>
+                <span>{name}</span>
+                {/* The one thing this reader does that a PDF can't — said in
+                    words, in the reader's sightline, while the mirror is
+                    closed (founder 2026-07-27). Mobile has the tabs, so this
+                    is desktop-only; it disappears the moment the pane opens. */}
+                {!midOpen && (
+                  <button type="button" onClick={() => setMidOpen(true)} title="ask the mirror about this"
+                    className="ask-cue hover:opacity-75"
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.38rem', cursor: 'pointer', fontFamily: 'inherit',
+                      fontSize: '0.78rem', letterSpacing: '0.02em', lineHeight: 1, color: 'var(--accent)', padding: '0.3rem 0.62rem',
+                      borderRadius: '999px', border: '1px solid color-mix(in srgb, var(--accent) 28%, transparent)',
+                      background: 'color-mix(in srgb, var(--accent) 8%, transparent)' }}>
+                    <svg width="14" height="14" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>
+                    ask the mirror about this
+                  </button>
+                )}
+              </span>
               {status === 'ok' && (
                 <>
                   <ActionButton icon={CopyIcon} onAction={copyArtifact} title="copy text" style={iconBtn} className="hover:opacity-60" />
@@ -483,27 +503,19 @@ export default function ReaderShell({
         .reader-prose hr { border: none; border-top: 1px solid var(--border-light); margin: 2.2rem 0; }
         .reader-prose code { background: var(--bg-secondary); border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.9em; }
 
-        .reader-strip { flex: none; width: 46px; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.85rem;
+        /* A collapsed pane is a spine: icon over a vertical word saying what
+           opens. Static — the reader shouldn't need to catch a movement to
+           learn the pane is there. */
+        .reader-strip { flex: none; width: 46px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0.85rem; padding-top: 0.85rem;
           border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
         .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
-        /* The ask pane announces itself with motion, not a label: on load it
-           sways out and settles — an uneven, wind-like drift, not a rigid
-           left-right — then the icon keeps a slow, gentle sway going, like
-           cotton in a light breeze (founder 2026-07-20). */
-        @keyframes strip-peek {
-          0% { transform: translateX(0); } 18% { transform: translateX(8px); }
-          36% { transform: translateX(3px); } 58% { transform: translateX(9px); }
-          80% { transform: translateX(2px); } 100% { transform: translateX(0); }
-        }
-        @keyframes strip-sway {
-          0% { transform: translateX(0); } 28% { transform: translateX(2.5px); }
-          52% { transform: translateX(0.5px); } 76% { transform: translateX(3px); }
-          100% { transform: translateX(0); }
-        }
-        main:not([data-chat-seen="true"]) .reader-strip.strip-chat { animation: strip-peek 2.6s ease-in-out 0.8s 1 both; }
-        .reader-strip.strip-chat svg { animation: strip-sway 9s ease-in-out 4s infinite; }
-        @media (prefers-reduced-motion: reduce) { .reader-strip.strip-chat, .reader-strip.strip-chat svg { animation: none; } }
+        .strip-label { writing-mode: vertical-rl; text-orientation: mixed; font-size: 0.78rem; letter-spacing: 0.09em;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: calc(100% - 3rem); color: inherit; }
+        /* The mirror's spine is the one the reader must not miss: accent ink,
+           and it stays accent on hover while the other two go quiet. */
+        .reader-strip.strip-chat { color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--bg-secondary)); }
+        .reader-strip.strip-chat:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, var(--bg-secondary)); }
 
         @media (min-width: 901px) {
           .reader-tabs { display: none !important; }
@@ -520,6 +532,7 @@ export default function ReaderShell({
           .reader-strip, .pane-history { display: none !important; }
           .chat-collapse, .piece-collapse { display: none !important; }
           .reader-tabs { display: flex !important; }
+          .ask-cue { display: none !important; }
           main { flex-direction: column !important; }
           .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; order: 0 !important; }
           main[data-tab="piece"] .pane-piece { display: flex !important; }

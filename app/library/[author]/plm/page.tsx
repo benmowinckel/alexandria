@@ -79,10 +79,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [leftOpen, setLeftOpen] = useState(false);
   const [midOpen, setMidOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
-  // Big "peek" sway only until the ask pane has been opened once (founder
-  // 2026-07-20). Here the chat opens by default, so it effectively never sways.
-  const [chatSeen, setChatSeen] = useState(false);
-  useEffect(() => { if (midOpen) setChatSeen(true); }, [midOpen]);
   const [open, setOpen] = useState<OpenPiece | null>(null);
   const [mtab, setMtab] = useState<'chat' | 'pieces'>('chat'); // mobile
   const [expanded, setExpanded] = useState(false);             // full-screen the open piece
@@ -418,11 +414,13 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           ))}
         </div>
 
-        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-mtab={mtab} data-expanded={expanded ? 'true' : 'false'} data-chat-seen={chatSeen ? 'true' : 'false'}
+        <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-mtab={mtab} data-expanded={expanded ? 'true' : 'false'}
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
-          <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">{PaneLeftIcon}</button>
+          <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">
+            {PaneLeftIcon}<span className="strip-label">history</span>
+          </button>
           <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 0.9rem 0.5rem' }}>
               <button type="button" onClick={() => setLeftOpen(false)} aria-label="collapse history" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneLeftIcon}</button>
@@ -438,8 +436,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             </div>
           </aside>
 
-          {/* chat — slot 2 */}
-          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open chat — ask the mind" title="ask">{LinesIcon}</button>
+          {/* chat — slot 2. The spine says what opens (see ReaderShell: written
+              word, not a motion cue — founder 2026-07-27). */}
+          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask the mind" title="ask the mirror">
+            {LinesIcon}<span className="strip-label">ask the mirror</span>
+          </button>
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
@@ -606,7 +607,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           </section>
 
           {/* the piece — slot 3 */}
-          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece pane" title="pieces">{PaneRightIcon}</button>
+          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece pane" title="pieces">
+            {PaneRightIcon}<span className="strip-label">pieces</span>
+          </button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
             <div className="piece-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.7rem 1.4rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
               {open && <button type="button" onClick={() => setOpen(null)} aria-label="back to pieces" title="back" style={iconBtn} className="hover:opacity-60">{ChevronIcon}</button>}
@@ -720,25 +723,17 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         .reader-prose ul, .reader-prose ol { margin: 0 0 1.1rem; padding-left: 1.3rem; } .reader-prose li { margin: 0 0 0.4rem; }
         .reader-prose code { background: var(--bg-secondary); border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.9em; }
 
-        .reader-strip { flex: none; width: 46px; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.85rem;
+        /* A collapsed pane is a spine: icon over a vertical word naming what
+           opens — static, no motion cue to catch (founder 2026-07-27). Kept
+           identical to ReaderShell's so the two readers stay one grammar. */
+        .reader-strip { flex: none; width: 46px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0.85rem; padding-top: 0.85rem;
           border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
         .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
         .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
-        /* Organic sway — an uneven, wind-like drift on load, then a slow gentle
-           ongoing sway like cotton in a light breeze (founder 2026-07-20). */
-        @keyframes strip-peek {
-          0% { transform: translateX(0); } 18% { transform: translateX(8px); }
-          36% { transform: translateX(3px); } 58% { transform: translateX(9px); }
-          80% { transform: translateX(2px); } 100% { transform: translateX(0); }
-        }
-        @keyframes strip-sway {
-          0% { transform: translateX(0); } 28% { transform: translateX(2.5px); }
-          52% { transform: translateX(0.5px); } 76% { transform: translateX(3px); }
-          100% { transform: translateX(0); }
-        }
-        main:not([data-chat-seen="true"]) .reader-strip.strip-chat { animation: strip-peek 2.6s ease-in-out 0.8s 1 both; }
-        .reader-strip.strip-chat svg { animation: strip-sway 9s ease-in-out 4s infinite; }
-        @media (prefers-reduced-motion: reduce) { .reader-strip.strip-chat, .reader-strip.strip-chat svg { animation: none; } }
+        .strip-label { writing-mode: vertical-rl; text-orientation: mixed; font-size: 0.78rem; letter-spacing: 0.09em;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: calc(100% - 3rem); color: inherit; }
+        .reader-strip.strip-chat { color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--bg-secondary)); }
+        .reader-strip.strip-chat:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, var(--bg-secondary)); }
 
         @media (min-width: 901px) {
           .reader-strip { display: none; }

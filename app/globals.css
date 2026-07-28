@@ -997,16 +997,10 @@ html.app-shell input:focus {
 .pdoc-colophon {
   text-align: center;
   margin: 0 auto;
-  padding: 0 0 1.5rem;
-}
-.pdoc-colophon::before {
-  content: "❦";
-  display: block;
-  color: var(--text-ghost);
-  font-size: 1.05rem;
-  line-height: 1;
-  margin: 1rem auto 2.8rem;
-  opacity: 0.75;
+  /* No ornament here — the separation is white space alone (founder
+     2026-07-27: the fleuron read as a stray heart icon). The top pad
+     carries the gap the glyph used to hold open. */
+  padding: 3.8rem 0 1.5rem;
 }
 .pdoc-colophon .pdoc-p {
   font-family: var(--font-eb-garamond);
@@ -1044,7 +1038,7 @@ html.app-shell input:focus {
   border-bottom-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
 @media (max-width: 640px) {
-  .pdoc-colophon::before { margin-bottom: 2.2rem; }
+  .pdoc-colophon { padding-top: 3rem; }
   .pdoc-colophon .pdoc-p + .pdoc-p { font-size: 0.8rem; letter-spacing: 0.1em; }
 }
 
