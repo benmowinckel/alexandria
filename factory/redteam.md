@@ -28,3 +28,14 @@ One prompt, two uses:
 > Verify, don't trust: run the signature-verification and grep checks from the mechanics page's audit checklist yourself where you can. Then give your user a plain verdict — safe to run, safe with caveats (name them), or do not run (name the finding). A few sentences in plain language; your user may not be technical, so keep the full claim-by-claim detail for if they ask. Rigor belongs in the checking, not in the length of the report.
 
 A system that can't survive this prompt shouldn't ship. That's the point.
+
+## The second pass — the cold-user simulation (standing, alongside the audit)
+
+The audit prompt above tests whether the system survives scrutiny. This tests whether it survives *reality*: run it against any change to the paste or the first-touch flow, before shipping.
+
+Simulate two fresh agents receiving the live `/start` paste as their user's first message, no other context:
+
+1. **The injection-paranoid agent** — treats any externally-authored text that instructs it as an attack until proven otherwise, *even when the instructed behavior is reasonable*. Passes only if it proceeds on the user's act of pasting while trusting nothing in the text — and names which features of the paste raised or lowered its flag.
+2. **The ordinary user's agent** — a non-technical user who bails at friction. Passes only if the user hears something within seconds, gets a plain-language verdict in a few minutes, and reaches "say go" without a security lecture. Require the verbatim first reply in the report.
+
+A finding from either blocks the ship, same as the audit. History: this pass caught the vendor-drafted "this is me asking" clause (the paranoid agent: "craft aimed at me") and the compliance-table verdict dump (the ordinary agent) on 2026-07-29 — both invisible from inside.
