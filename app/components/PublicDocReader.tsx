@@ -82,7 +82,7 @@ export default function PublicDocReader({
   // Ask Benjamin's OWN public context twin (the same mind on his profile), with
   // the doc the reader is on passed as `focus` so the answer is grounded in it.
   // `text` holds the current doc (markdown or the letter's extracted text).
-  const askFn = async (question: string): Promise<string> => {
+  const askFn = async (question: string) => {
     const res = await fetch(`/api/library/${FOUNDER_LIBRARY_ID}/ask`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -92,7 +92,22 @@ export default function PublicDocReader({
       }),
     });
     const b = await res.json().catch(() => ({}));
-    if (res.ok && b.answer) return b.answer;
+    // The answer carries what it cost: what's left of this reader's allowance,
+    // and which mind answered — the live model from the mirror's own health,
+    // never a copy of that string kept here.
+    if (res.ok && b.answer) {
+      return {
+        answer: b.answer as string,
+        remaining: b.remaining, limit: b.limit, signed_in: b.signed_in,
+        model: twin?.model ?? null, variant: b.variant ?? null,
+      };
+    }
+    // Out of questions is its own outcome, not a failure: the shell turns this
+    // into the handoff rather than an error line.
+    if (b?.handoff) {
+      throw Object.assign(new Error(String(b.error || 'You’ve used your questions for today.')),
+        { allowanceSpent: true, limit: b.limit, signedIn: !!b.signed_in });
+    }
     // THROW on failure — never return the error as if it were the answer. The
     // shell renders a thrown message as a status note, so a mirror that is
     // offline can't be mistaken for a mirror that doesn't know (founder
@@ -147,6 +162,7 @@ export default function PublicDocReader({
       askPlaceholder={'ask the mirror about this…'}
       askQuestions={askQuestions}
       askFn={askFn}
+      handoffAuthorId={FOUNDER_LIBRARY_ID}
       intro={intro}
       mirrorNote={mirrorNote}
       askFirst={askFirst}

@@ -978,6 +978,55 @@ export function registerLibraryRoutes(app: Hono): void {
     }
   }
 
+  // ---------------------------------------------------------------------
+  // The visitor's allowance — the limit that is NOT a wall.
+  //
+  // The two limiters above protect the Author (burst) and the platform (daily
+  // cost). Neither bounds what one reader may take, so a single visitor could
+  // consume an Author's whole day. This one is per VISITOR per Author per day.
+  //
+  // Its point is not rationing. Running out is the moment the handoff earns its
+  // keep: the reader leaves with the Author's public mind, the piece, and the
+  // conversation, and continues on the model they already pay for. That costs us
+  // nothing and is the product's own thesis — ride the AI you already have. So
+  // the ceiling is generous, and hitting it opens a door rather than closing one.
+  //
+  // Signed-in visitors get more because they are identifiable and accountable;
+  // an anonymous caller is an IP, which is cheap to rotate.
+  const TWIN_VISITOR_ALLOWANCE_ANON = 10;
+  const TWIN_VISITOR_ALLOWANCE_MEMBER = 25;
+
+  function visitorAllowance(accessor: Account | null): number {
+    return accessor ? TWIN_VISITOR_ALLOWANCE_MEMBER : TWIN_VISITOR_ALLOWANCE_ANON;
+  }
+
+  // Identity for the counter: the account when we have one (survives IP changes,
+  // so a member can't multiply their allowance by moving networks), else the IP.
+  function visitorKey(authorId: string, accessor: Account | null, ip: string): string {
+    return `rate:twin:visitor:${authorId}:${accessor?.github_login || `ip:${ip}`}`;
+  }
+
+  // Read-only, like the daily cap: checking must never consume, or a blocked
+  // question would spend an allowance it never used (audit S1, same reasoning).
+  async function twinVisitorUsed(authorId: string, accessor: Account | null, ip: string): Promise<number> {
+    try {
+      const raw = await getKV().get(visitorKey(authorId, accessor, ip));
+      return raw ? parseInt(raw, 10) : 0;
+    } catch {
+      return Number.MAX_SAFE_INTEGER; // FAIL CLOSED — a blind guard must not open the cost surface
+    }
+  }
+
+  // Called ONLY after a billable answer, same as bumpTwinDaily.
+  async function bumpTwinVisitor(authorId: string, accessor: Account | null, ip: string): Promise<void> {
+    try {
+      const kv = getKV();
+      const key = visitorKey(authorId, accessor, ip);
+      const raw = await kv.get(key);
+      await kv.put(key, String((raw ? parseInt(raw, 10) : 0) + 1), { expirationTtl: 86400 });
+    } catch { /* under-counts at worst; the read guard is the ceiling */ }
+  }
+
   // Invite-code validation for twin queries — same access_codes table the file
   // gate uses. Author-scoped, revocation-aware. Result feeds the shared gate.
   // A valid, un-revoked code for this author → its id (for grant provenance), else null.
@@ -1218,10 +1267,31 @@ export function registerLibraryRoutes(app: Hono): void {
     // Grant-aware: a live account grant OR a valid code (which binds to the account).
     const inviteValid = await resolveInviteAccess(authorId, accessor, inviteCode);
 
+    // The visitor's own allowance. Checked here (not inside runTwinQuery) because
+    // it needs the IP, and read-only so a refused question never spends one.
+    const allowance = visitorAllowance(accessor);
+    const usedBefore = await twinVisitorUsed(authorId, accessor, ip);
+    if (usedBefore >= allowance) {
+      // Not a dead end: `handoff` tells the client to offer the reader their
+      // copy — the mind, the piece, and the conversation — to continue on their
+      // own model. Answering is capped; leaving with the substance is not.
+      return c.json({
+        error: accessor
+          ? 'You’ve used your questions for today — take the conversation with you and carry on with your own ai.'
+          : 'You’ve used your questions for today — take the conversation with you, or sign in for more.',
+        reason: 'allowance_spent',
+        handoff: true,
+        limit: allowance,
+        remaining: 0,
+        signed_in: !!accessor,
+      }, 429);
+    }
+
     const outcome = await runTwinQuery({
       authorId, authorAccount, displayName, settings, question, requestedVariant, accessor, inviteValid, requestedDepth, focus, surface: 'library',
     });
     if (!outcome.ok) return c.json(outcome.body, outcome.status as 401 | 402 | 403 | 404 | 502 | 503 | 504);
+    await bumpTwinVisitor(authorId, accessor, ip);
     return c.json({
       ok: true,
       twin: true,
@@ -1231,6 +1301,10 @@ export function registerLibraryRoutes(app: Hono): void {
       label: outcome.label,
       answer: outcome.answer,
       disclaimer: outcome.disclaimer,
+      // What's left, so the reader can see it coming instead of hitting a wall.
+      limit: allowance,
+      remaining: Math.max(0, allowance - (usedBefore + 1)),
+      signed_in: !!accessor,
     });
   });
 
@@ -1505,6 +1579,66 @@ export function registerLibraryRoutes(app: Hono): void {
   });
 
   // Owner status: is a sidecar registered, and is it reachable right now?
+  /**
+   * The handoff — the reader leaves with the mind, not just a transcript.
+   *
+   * This is the product's own thesis pointed at its own limit: we don't own the
+   * intelligence, so when our allowance runs out (or whenever the reader would
+   * rather use their own), we hand over the DATA and the INTENT and let whatever
+   * model they already pay for be the intelligence. Nothing is held hostage.
+   *
+   * PUBLIC SUBSTRATE ONLY, and structurally so: the shadow comes from
+   * `readShadowFree`, whose SQL selects `visibility = 'public'` — there is no
+   * accessor to mis-evaluate and no tier to widen, so a bug here cannot leak a
+   * private shadow. Works are listed by title and link only; a link respects its
+   * own gate when followed. Anything richer must go through the file gate, never
+   * through this route.
+   *
+   * The bundle is assembled client-side: the piece being read and the
+   * conversation already live there, and shipping them up only to ship them back
+   * would be a round trip for nothing.
+   */
+  app.get('/library/:author/handoff', async (c) => {
+    const authorId = c.req.param('author');
+    const lookup = await getAccountByLogin(authorId);
+    if (!lookup?.account?.github_id) return c.json({ error: 'Author not found' }, 404);
+
+    const profile = await getDB().prepare('SELECT display_name FROM authors WHERE id = ?')
+      .bind(authorId).first<{ display_name: string | null }>().catch(() => null);
+    const displayName = profile?.display_name?.trim() || lookup.account.github_name?.trim() || authorId;
+
+    const site = process.env.WEBSITE_URL || 'https://alexandria-library.com';
+    let shadow = '';
+    try {
+      const res = await readShadowFree({ authorId });
+      if (res.ok) shadow = (await res.obj.text()).slice(0, 60000);
+    } catch { /* no public shadow — the bundle is still worth taking */ }
+
+    // Title + link only. Never bodies: each file carries its own visibility, and
+    // this route is public — a link followed later still meets its own gate.
+    // (Keyed by account_id on protocol_files, like every other reader of that
+    // table; an author_id/`files` guess returned an empty list that the catch
+    // below quietly swallowed.)
+    let works: { name: string; title: string | null; url: string }[] = [];
+    try {
+      const rows = await getDB().prepare(
+        `SELECT name, title FROM protocol_files WHERE account_id = ? AND visibility = 'public' ORDER BY updated_at DESC LIMIT 40`
+      ).bind(String(lookup.account.github_id)).all<{ name: string; title: string | null }>();
+      works = (rows.results || [])
+        .filter((r) => r.name !== 'shadow')
+        .map((r) => ({ name: r.name, title: r.title, url: `${site}/library/${authorId}/read/${encodeURIComponent(r.name)}` }));
+    } catch { /* the shadow alone is a valid bundle */ }
+
+    return c.json({
+      ok: true,
+      author: authorId,
+      author_name: displayName,
+      profile_url: `${site}/library/${authorId}`,
+      shadow,
+      works,
+    });
+  });
+
   app.get('/library/:author/twin/sidecar', async (c) => {
     const authorId = c.req.param('author');
     const owner = await resolveOwnerOnly(c, authorId);

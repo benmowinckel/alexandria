@@ -12,6 +12,7 @@ import ChatHistoryItem from '../../../components/ChatHistoryItem';
 import { PdfView } from '../../../components/ReaderShell';
 import { useRotatingPlaceholder, authorExamples, pieceExamples } from '../../../lib/useRotatingPlaceholder';
 import { librarySignInUrlHere } from '../../../lib/config';
+import { composeHandoff, fetchHandoffContext, type HandoffAuthor } from '../../../lib/handoff';
 import { type TwinVariantSummary } from '../types';
 
 /**
@@ -42,6 +43,9 @@ const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6
 const PaneLeftIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
 const LinesIcon = <svg width="19" height="19" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
 const PaneRightIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
+// Handoff — an arrow leaving a box (identical to ReaderShell's: one gesture,
+// one glyph, wherever a mind can be carried away).
+const HandoffIcon = <svg width="17" height="17" {...svgProps}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /></svg>;
 const CopyIcon = <svg width="17" height="17" {...svgProps}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
 const DownloadIcon = <svg width="17" height="17" {...svgProps}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>;
 const ExpandIcon = <svg width="17" height="17" {...svgProps}><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M21 16v3a2 2 0 0 1-2 2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /></svg>;
@@ -77,6 +81,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   // Empty until the pipeline emits them → the rotation falls back to generic.
   const [askQuestions, setAskQuestions] = useState<string[]>([]);
   const [variants, setVariants] = useState<TwinVariantSummary[]>([]);
+  // Which model is answering — sourced from the mirror's own health via the
+  // directory, so the page never carries a second copy of that string. Paired
+  // with the variant it makes the two kinds of mind legible: a context mirror
+  // reasoning over the Author's writing, or their trained weights.
+  const [twinModel, setTwinModel] = useState<string | null>(null);
   const [activeVariant, setActiveVariant] = useState<'weights' | 'context'>('context');
 
   const [leftOpen, setLeftOpen] = useState(false);
@@ -162,6 +171,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       setAskQuestions(Array.isArray(tq) ? tq.filter((q: unknown): q is string => typeof q === 'string') : []);
       const vs: TwinVariantSummary[] = Array.isArray(dir?.twin?.variants) ? dir.twin.variants : [];
       setVariants(vs);
+      if (typeof dir?.twin?.model === 'string') setTwinModel(dir.twin.model);
       // Open on a mind the viewer can actually use; fall back to the first
       // unlockable one so a fully-gated twin still lands somewhere.
       const first = vs.find((v) => v.enabled && v.accessible) || vs.find((v) => v.enabled && v.needsInvite);
@@ -311,6 +321,29 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const queueRef = useRef<{ text: string; convoId: string }[]>([]);
   const askingRef = useRef(false);
 
+  // The visitor's allowance and the way out of it. Same contract as the reader:
+  // the numbers ride back with the answers, and running out opens the handoff
+  // rather than closing the chat (founder 2026-07-29).
+  const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(null);
+  const [handoffCtx, setHandoffCtx] = useState<HandoffAuthor | null>(null);
+  const spent = budget !== null && budget.remaining <= 0;
+
+  const takeItWithYou = async () => {
+    let ctx = handoffCtx;
+    if (!ctx && author) {
+      ctx = await fetchHandoffContext(author);
+      if (ctx) setHandoffCtx(ctx);
+    }
+    copyText(composeHandoff({
+      ctx,
+      // On the profile there is no single piece — whatever the reader has open.
+      piece: open?.content ? { name: open.nice, content: open.content } : null,
+      messages: active?.messages || [],
+      model: twinModel,
+      variant: activeVariant,
+    }));
+  };
+
   // One line for every failure, and it says offline — a reader has no use for
   // offline-vs-timeout-vs-error, and offline is the true shape of all of them
   // from where they stand (founder 2026-07-28). Never a pronoun for the Author.
@@ -355,8 +388,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       });
       const b = await res.json().catch(() => ({}));
       const failed = !(res.ok && b.answer);
+      if (typeof b?.remaining === 'number' && typeof b?.limit === 'number') {
+        setBudget({ remaining: b.remaining, limit: b.limit, signedIn: !!b.signed_in });
+      }
       setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, failed
-        ? { role: 'note' as const, text: offlineNote }
+        ? { role: 'note' as const, text: b?.handoff ? String(b.error) : offlineNote }
         : { role: 'twin' as const, text: b.answer }] } : c)));
       // A valid code binds a grant server-side — re-read the directory so the
       // unlocked state (variants + depth) reflects it: premium lights up and
@@ -455,6 +491,23 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
               <span className="chat-label" style={{ ...label, marginLeft: '-0.45rem' }}>chat</span>
+              {/* What's answering, and what's left. The model name makes the two
+                  kinds of mind legible — a context mirror reasoning over the
+                  Author's writing vs their trained weights — and the count only
+                  appears once it's worth knowing (founder 2026-07-29). */}
+              {twinModel && (
+                <span className="chat-model" style={{ ...label }}>
+                  {activeVariant === 'weights' ? 'weights' : twinModel}
+                </span>
+              )}
+              {budget && budget.remaining <= 3 && (
+                <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-ghost)' }}>
+                  {spent ? 'no questions left' : `${budget.remaining} left`}
+                </span>
+              )}
+              <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
+                title="take it with you — copies the mind, the open piece and this conversation for your own ai"
+                style={{ ...iconBtn, color: spent ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
               {/* public | invite — the two DEPTHS of the one mind, named like
                   the pieces' own visibility tags (founder: most queriers are
                   public; the names must carry the model). Your level is

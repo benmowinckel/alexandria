@@ -194,7 +194,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
     </div>
   ) : undefined;
 
-  const askFn = async (text: string): Promise<string> => {
+  const askFn = async (text: string) => {
     // Wait for a still-extracting PDF so the mind gets the document, not an empty note.
     let fc = content || pdfTextRef.current;
     if (!fc && pdfUrl && extractRef.current) {
@@ -208,7 +208,15 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
       body: JSON.stringify({ question: text, variant: 'context', focus: { name: nice, content: focusText } }),
     });
     const b = await res.json().catch(() => ({}));
-    if (res.ok && b.answer) return b.answer;
+    if (res.ok && b.answer) {
+      return { answer: b.answer as string, remaining: b.remaining, limit: b.limit,
+               signed_in: b.signed_in, variant: b.variant ?? null };
+    }
+    // Out of questions → the handoff, not an error.
+    if (b?.handoff) {
+      throw Object.assign(new Error(String(b.error || 'You’ve used your questions for today.')),
+        { allowanceSpent: true, limit: b.limit, signedIn: !!b.signed_in });
+    }
     // Throw, don't return: the shell renders a thrown message as a status note
     // rather than as the mirror speaking, so "offline" can't read as "doesn't
     // know" (founder 2026-07-28).
@@ -233,6 +241,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
       who={who}
       askQuestions={questions}
       askFn={askFn}
+      handoffAuthorId={author}
       inviteField={inviteField}
     />
   );

@@ -10,6 +10,7 @@ import ActionButton from './ActionButton';
 import TwinText from './TwinText';
 import ChatHistoryItem from './ChatHistoryItem';
 import { useRotatingPlaceholder, pieceExamples, readingExamples, readingLead } from '../lib/useRotatingPlaceholder';
+import { composeHandoff, fetchHandoffContext, type HandoffAuthor } from '../lib/handoff';
 import {
   processNumbered, TocBlock,
   MD_COMPONENTS, MD_COMPONENTS_NUMBERED, MD_COMPONENTS_NUMBERED_PRE, MD_COMPONENTS_ABSTRACT,
@@ -32,6 +33,16 @@ import {
  *  failure as the mirror speaking makes an unreachable mind look like a mind
  *  that doesn't know (founder 2026-07-28, seen in production). */
 type Msg = { role: 'you' | 'twin' | 'note'; text: string };
+
+/** What an answer came back with, beyond the answer. */
+export type AskResult = {
+  answer: string;
+  remaining?: number;
+  limit?: number;
+  model?: string | null;
+  variant?: string | null;
+  signed_in?: boolean;
+};
 type Convo = { id: string; messages: Msg[]; title?: string };
 
 /** The one breakpoint, shared by the JS that has to know it and mirrored by
@@ -44,6 +55,9 @@ const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6
 const PaneLeftIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
 const LinesIcon = <svg width="19" height="19" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
 const PaneRightIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
+// Handoff — an arrow leaving a box. Deliberately not a copy or download glyph:
+// this is the conversation going somewhere else to be continued, not a file.
+const HandoffIcon = <svg width="17" height="17" {...svgProps}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /></svg>;
 const CopyIcon = <svg width="17" height="17" {...svgProps}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
 const DownloadIcon = <svg width="17" height="17" {...svgProps}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>;
 const ExpandIcon = <svg width="17" height="17" {...svgProps}><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M21 16v3a2 2 0 0 1-2 2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /></svg>;
@@ -142,7 +156,13 @@ export type ReaderShellProps = {
    *  sidecar) — they lead the rotating ghost text so the prompts are true to
    *  the piece and answerable from the same context. Falls back to generic. */
   askQuestions?: string[];
-  askFn: (question: string) => Promise<string>;   // the twin call (wrapper decides which)
+  /** The twin call (the wrapper decides which mind). Returning the richer shape
+   *  lets the reader see what answered and what's left of their allowance; a
+   *  bare string still works. Throw with `allowanceSpent` to trigger the handoff. */
+  askFn: (question: string) => Promise<string | AskResult>;
+  /** Whose mind this is — enables the handoff (their public shadow + works).
+   *  Without it the reader can still take the piece and the conversation. */
+  handoffAuthorId?: string;
   intro?: React.ReactNode;                        // chat empty-state (who you're talking to + CTAs)
   /** One plain line naming what the mirror is, pinned above the thread so it
    *  survives the first question — see the render. Keep it to a sentence. */
@@ -170,6 +190,7 @@ export default function ReaderShell({
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
   intro, mirrorNote, inviteField, askFirst = false, dockedAsk = false, footerCta = 'build your own',
+  handoffAuthorId,
 }: ReaderShellProps) {
   const book = useMemo(
     () => (numbered && markdown ? processNumbered(markdown) : null),
@@ -286,6 +307,35 @@ export default function ReaderShell({
     ? `${who}’s mirror is offline right now — it runs on a personal machine, not a server, so it isn’t always up. your question wasn’t answered.`
     : 'this mirror is offline right now — it runs on a personal machine, not a server, so it isn’t always up. your question wasn’t answered.';
 
+  // What's left of this reader's allowance, and what has been answering. Both
+  // come back with the answers themselves — no extra request, and no number the
+  // client could be wrong about.
+  const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(null);
+  const [answeredBy, setAnsweredBy] = useState<{ model: string | null; variant: string | null } | null>(null);
+  const [handoffCtx, setHandoffCtx] = useState<HandoffAuthor | null>(null);
+  const spent = budget !== null && budget.remaining <= 0;
+
+  // The Author's public half of the handoff, fetched once and only when it's
+  // first wanted — most readers never reach for it.
+  const loadHandoff = async (): Promise<HandoffAuthor | null> => {
+    if (handoffCtx || !handoffAuthorId) return handoffCtx;
+    const ctx = await fetchHandoffContext(handoffAuthorId);
+    if (ctx) setHandoffCtx(ctx);
+    return ctx;
+  };
+
+  // Everything the reader needs to carry on somewhere else, on the clipboard.
+  const takeItWithYou = async () => {
+    const ctx = await loadHandoff();
+    copyText(composeHandoff({
+      ctx,
+      piece: artifactText ? { name, content: artifactText } : null,
+      messages: active?.messages || [],
+      model: answeredBy?.model,
+      variant: answeredBy?.variant,
+    }));
+  };
+
   const ask = async () => {
     const text = question.trim();
     if (!text || asking) return;
@@ -297,9 +347,23 @@ export default function ReaderShell({
     if (isNarrow()) setTab('ask');
     const add = (m: Msg) => setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, m] } : c)));
     try {
-      add({ role: 'twin', text: await askFn(text) });
-    } catch {
-      add({ role: 'note', text: offlineNote });
+      const res = await askFn(text);
+      const out: AskResult = typeof res === 'string' ? { answer: res } : res;
+      add({ role: 'twin', text: out.answer });
+      if (typeof out.remaining === 'number' && typeof out.limit === 'number') {
+        setBudget({ remaining: out.remaining, limit: out.limit, signedIn: !!out.signed_in });
+      }
+      if (out.model) setAnsweredBy({ model: out.model, variant: out.variant ?? null });
+    } catch (e) {
+      // Out of questions is not a failure — it's the handoff moment. The mirror
+      // says so in its own voice and the door is already on screen.
+      const err = e as { allowanceSpent?: boolean; message?: string; limit?: number; signedIn?: boolean };
+      if (err?.allowanceSpent) {
+        setBudget({ remaining: 0, limit: err.limit ?? 0, signedIn: !!err.signedIn });
+        add({ role: 'note', text: err.message || 'You’ve used your questions for today — take the conversation with you.' });
+      } else {
+        add({ role: 'note', text: offlineNote });
+      }
     } finally {
       setAsking(false);
     }
@@ -405,8 +469,21 @@ export default function ReaderShell({
                   never a twin or stand-in (canon; founder 2026-07-25:
                   "this is so key. its the mirror"). One universal label. */}
               <span style={label}>the mirror</span>
+              {/* What's left, shown only once it's worth knowing. A counter that
+                  sits there from question one reads as a meter running down;
+                  silence until the last few reads as room to think, and then as
+                  a heads-up. The handoff is always offered — a reader may want
+                  their own model long before they run out. */}
+              {budget && budget.remaining <= 3 && (
+                <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-ghost)' }}>
+                  {spent ? 'no questions left' : `${budget.remaining} left`}
+                </span>
+              )}
+              <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
+                title="take it with you — copies the mind, the piece and this conversation for your own ai"
+                style={{ ...iconBtn, marginLeft: 'auto', color: spent ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
               {(active?.messages.length ?? 0) > 0 && (
-                <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={{ ...iconBtn, marginLeft: 'auto' }} className="hover:opacity-60" />
+                <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
               )}
             </div>
             {/* What you're talking to, said once and KEPT. It used to live in the
@@ -442,7 +519,26 @@ export default function ReaderShell({
               {asking && <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem' }}>thinking…</p>}
             </div>
             <div style={{ flex: 'none', padding: '0.9rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
-              <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder={rotatingPlaceholder || askPlaceholder} />
+              {spent ? (
+                // A dead input the reader can still type into is a trap. What
+                // replaces it is not an upsell — it's the way out: everything
+                // said, plus the mind behind it, ready for their own model.
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+                  <ActionButton icon={HandoffIcon} label="take it with you" onAction={() => void takeItWithYou()}
+                    title="copies the mind, the piece and this conversation"
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
+                      background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderRadius: '999px', padding: '0.4rem 0.85rem',
+                      color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
+                    className="hover:opacity-75" />
+                  {!budget?.signedIn && signInUrl && (
+                    <a href={signInUrl} style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-70">
+                      or sign in for more
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder={rotatingPlaceholder || askPlaceholder} />
+              )}
             </div>
           </section>
 
