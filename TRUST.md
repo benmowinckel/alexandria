@@ -1,6 +1,6 @@
 # Trust model
 
-Alexandria is a local agent that reads your files and emits a prompt block for the host LLM. Every session, the shim runs the engine payload pinned on your disk — only after that exact file has passed signature verification against a manifest signed by the maintainer's offline key. Nothing self-updates: a newer signed version surfaces as a notice, and applying it is always your explicit action. This document explains the mechanism and what it does and does not defend against.
+Alexandria is not an agent and not a service — it is a method your own ai runs: plain files on your machine, plus a session hook that loads them into your ai's context at each session start. Your ai does the reading, the writing, and the learning; these files only tell it how. Every session, the shim runs the engine payload pinned on your disk — only after that exact file has passed signature verification against a manifest signed by the maintainer's offline key. Nothing self-updates: a newer signed version surfaces as a notice, and applying it is always your explicit action. This document explains the mechanism and what it does and does not defend against.
 
 ## Trust root
 
