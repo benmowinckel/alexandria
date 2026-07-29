@@ -284,6 +284,11 @@ export function registerRoutes(app: Hono) {
       protocol: 'alexandria',
       version: '1.0',
       account: {
+        // github_login: the client's library sync derives its reconciliation
+        // target from this — never from a guessed or hard-coded login (the
+        // 2026-07-28 member-path audit: a benmowinckel fallback made every
+        // other member reconcile against the founder's library).
+        github_login: account.github_login,
         status: account.subscription_status || 'none',
         created: account.created_at,
         installed: account.installed_at || null,

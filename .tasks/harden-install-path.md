@@ -1,4 +1,13 @@
-# Harden the install path — close the hostile audit's four code findings
+# Harden the install path — close the adversarial audits' code findings
+
+**STATUS 2026-07-28, second pass: the payload.sh fixes for the member-path
+audit are ALREADY EDITED in the working tree** — the login-derivation fix
+(the `:-benmowinckel` fallback that made every member reconcile against the
+founder's library: no unpublish, cross-name DELETE hazard), the shadow
+untrusted-content marker, and the file_status/file_due whitelist. The server
+half (github_login in the authed /alexandria response) is deployed. **To ship
+the payload half: `bash factory/ship.sh "payload: member-path audit fixes"`**
+(founder key). Items 1–3 below remain unstarted.
 
 Source: adversarial audit 2026-07-28 (two independent agents, run after the
 read-first paste redesign; both verdicts positive — "SAFE WITH CAVEATS" /

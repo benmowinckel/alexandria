@@ -1143,6 +1143,20 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
     echo "Tell the Author they're synced. If you're already mid-session, carry on. If this"
     echo "paste is the first thing in a fresh tab, offer to start a session right now"
     echo "(follow ~/alexandria/system/canon/methodology.md) so they never have to type /a."
+    if [ "$KEYLESS" != "true" ] && [ "$STATUS_KEY" = "ok" ]; then
+      # The free→join→keyed-rerun funnel lands HERE, not on the fresh-install
+      # branch — so this is the consent moment for what the key turns on.
+      # Without it, the sends go live with zero disclosure (member-path
+      # audit, 2026-07-28).
+      echo ""
+      echo "Your key is live. What that changes: sessions now sync your files/library/"
+      echo "publish folder to the Library, report module usage, ping canon health, and"
+      echo "send anything you type into .session_feedback. Nothing outside those paths"
+      echo "has a route out (full inventory: alexandria-library.com/mechanics)."
+      echo "AGENT: say that to them in your own words — it's their consent moment for"
+      echo "the sends. If they object to any of it, deleting system/.api_key returns"
+      echo "them to the fully-local loop."
+    fi
   else
     echo "Installed — your agent takes it from here. Nothing else to copy or click."
     echo ""

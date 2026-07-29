@@ -143,7 +143,9 @@ export default function JoinCTA({
           point of decision. */}
       <p className="join-terms">
         free for good once three friends join through you. otherwise a dollar a day.
-        the tool on your machine stays free and yours either way — this is the only part we host.
+        the tool on your machine stays free and yours either way — this is the only part
+        we host: joining syncs your publish folder to the library and counts your module
+        use, nothing more.
       </p>
 
       {/* Below the hairline: the two quiet doors. The waive path lives here

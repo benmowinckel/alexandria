@@ -185,6 +185,8 @@ Every outbound call the install or hooks make. Complete list.
 | `GET www.youtube.com/oembed?...` | Same trigger, for a saved YouTube link | the video URL you saved | title/author metadata, local |
 | `GET <a URL you saved>` | Same trigger, for saved links/`.url` drops — fetching what **you** chose to capture | the URL you saved (+ IP) | page content, written locally for your review |
 
+Every authenticated call also carries an `X-Alexandria-Client` header — a client version hash, so a broken client build can be spotted server-side; it identifies the software version, not you (your account is already on the request).
+
 That is all. No telemetry pings, no error reporters, no analytics SDKs, no calls you didn't cause: the last three rows fire only for links you deliberately dropped into your own capture inbox, and everything they fetch lands on your disk, not ours. You can confirm the full surface by `grep -E 'curl|wget|http' ~/alexandria/system/.hooks_payload` and the same grep on `~/alexandria/system/scripts/capture_resolver.py`.
 
 ## What our server holds (specifics)
