@@ -283,22 +283,12 @@ export default function ReaderShell({
   const rotatingPlaceholder = useRotatingPlaceholder(askExamples, !question.trim());
   // The docked line runs its own cycle, led once by what this is — see
   // readingExamples. Its own hook so opening the pane doesn't inherit the
-  // framing line into the chat composer, which already has the intro. The
-  // narrow-screen check is post-mount (never during render) so the server and
-  // the first client paint agree.
-  const [narrow, setNarrow] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${PANES_MIN - 1}px)`);
-    const sync = () => setNarrow(mq.matches);
-    sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
-  }, []);
-  const readExamples = useMemo(() => readingExamples(who, askQuestions, narrow), [who, askQuestions, narrow]);
+  // framing line into the chat composer, which already has the intro.
+  const readExamples = useMemo(() => readingExamples(who, askQuestions), [who, askQuestions]);
   const readingPlaceholder = useRotatingPlaceholder(readExamples, !question.trim());
   // Every line in that rotation is a question you can take with tab — except
   // the lead, which describes the mirror rather than asking it anything.
-  const readingIsQuestion = readingPlaceholder !== readingLead(who, narrow);
+  const readingIsQuestion = readingPlaceholder !== readingLead(who);
 
   // One line for every failure, and it says offline. The server distinguishes
   // offline from timeout from upstream error and keeps that in `reason` for us,
@@ -307,8 +297,8 @@ export default function ReaderShell({
   // where they stand (founder 2026-07-28: "just say its offline. even if it is
   // an error"). Never a pronoun for the Author: a mirror belongs to anyone.
   const offlineNote = who
-    ? `${who}’s mirror is offline right now — it runs on a personal machine, not a server, so it isn’t always up. your question wasn’t answered.`
-    : 'this mirror is offline right now — it runs on a personal machine, not a server, so it isn’t always up. your question wasn’t answered.';
+    ? `${who}’s mirror is offline — your question wasn’t answered. It runs on a personal machine, so it isn’t always up.`
+    : 'This mirror is offline — your question wasn’t answered. It runs on a personal machine, so it isn’t always up.';
 
   // What's left of this reader's allowance, and what has been answering. Both
   // come back with the answers themselves — no extra request, and no number the
@@ -479,9 +469,12 @@ export default function ReaderShell({
                   a heads-up. The handoff is always offered — a reader may want
                   their own model long before they run out. */}
               {budget && budget.remaining <= 3 && (
-                <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-ghost)' }}>
-                  {spent ? 'no questions left' : `${budget.remaining} left`}
-                </span>
+                <>
+                  <span aria-hidden style={{ ...label, margin: '0 0.15rem', color: 'var(--text-ghost)' }}>·</span>
+                  <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-muted)' }}>
+                    {spent ? 'out of questions' : `${budget.remaining} left`}
+                  </span>
+                </>
               )}
               <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
                 title="take it with you — copies the mind, the piece and this conversation for your own ai"
@@ -529,11 +522,15 @@ export default function ReaderShell({
                 // say what the thing does and what to do with it. Two plain
                 // sentences, one button, one alternative (founder 2026-07-29).
                 <div>
-                  <p style={{ margin: '0 0 0.75rem', color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, textWrap: 'pretty' }}>
-                    That’s your questions for today. You can take the whole thing with you:
-                    this conversation, the piece you’re reading, and {who || 'the author'}’s published
-                    writing — copied as text you paste into ChatGPT, Claude, or whatever ai you already use.
-                    It carries on there.
+                  {/* Bold line, muted why, one action — the onboarding grammar.
+                      The long version explained the bundle piece by piece; the
+                      reader doesn't need the manifest, they need to know it all
+                      comes and where to put it (founder 2026-07-29). */}
+                  <p style={{ margin: '0 0 0.25rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
+                    That’s your questions for today.
+                  </p>
+                  <p style={{ margin: '0 0 0.8rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, textWrap: 'pretty' }}>
+                    Take the whole thing — this chat, the piece, {who ? `${who}’s` : 'the author’s'} writing — to any ai.
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
                     <ActionButton icon={HandoffIcon} label="copy it for your ai" doneLabel="copied — now paste it in"

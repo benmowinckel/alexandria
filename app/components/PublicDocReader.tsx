@@ -131,9 +131,9 @@ export default function PublicDocReader({
   // whole pitch: rented mechanism, owned mind — so say which mechanism.
   const mirrorNote = (
     <>
-      A mirror of Benjamin’s mind — reflected from what he’s written, not a stand-in for him.{' '}
+      A mirror of Benjamin’s mind, built from what he’s written.{' '}
       {twin && !twin.online
-        ? <>It’s offline right now — it runs on a personal machine, not a server.</>
+        ? <>Offline right now — it runs on his own machine.</>
         : <>Ask it anything.{twin?.model ? <> Running on {twin.model}.</> : null}</>}
     </>
   );

@@ -352,8 +352,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   // offline-vs-timeout-vs-error, and offline is the true shape of all of them
   // from where they stand (founder 2026-07-28). Never a pronoun for the Author.
   const offlineNote = authorName
-    ? `${authorName}’s mirror is offline right now — it runs on a personal machine, not a server, so it isn’t always up. your question wasn’t answered.`
-    : 'this mirror is offline right now — it runs on a personal machine, not a server, so it isn’t always up. your question wasn’t answered.';
+    ? `${authorName}’s mirror is offline — your question wasn’t answered. It runs on a personal machine, so it isn’t always up.`
+    : 'This mirror is offline — your question wasn’t answered. It runs on a personal machine, so it isn’t always up.';
 
   const ask = async (textArg?: string) => {
     const text = (textArg ?? question).trim();

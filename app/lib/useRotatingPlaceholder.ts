@@ -71,21 +71,16 @@ export function pieceExamples(who?: string, artifactQs?: string[]): string[] {
  * living as a label, so the framing is read once and then replaced by the
  * questions themselves — nothing standing on the page afterwards.
  */
-export function readingLead(who?: string, compact = false): string {
+export function readingLead(who?: string): string {
   const first = who ? who.split(' ')[0] : '';
-  // A lead line that ends in an ellipsis teaches nothing, so narrow screens get
-  // the sentence with its tail cut rather than the sentence truncated.
-  return compact
-    ? (first ? `ask as you read — ${first}’s mirror` : 'ask as you read — this mind’s mirror')
-    : (first ? `ask as you read — a mirror of ${first}’s mind, here to answer`
-      : 'ask as you read — a mirror of this mind, here to answer');
+  return first ? `ask as you read — ${first}’s mirror` : 'ask as you read — this mind’s mirror';
 }
 
 /** Exported so the caller can tell the framing line apart from the questions —
  *  it is the one entry in the rotation that must NOT be takeable with tab: it
  *  describes the mirror, it isn't something to ask it. */
-export function readingExamples(who?: string, artifactQs?: string[], compact = false): string[] {
-  const lead = readingLead(who, compact);
+export function readingExamples(who?: string, artifactQs?: string[]): string[] {
+  const lead = readingLead(who);
   // The questions themselves are NOT filtered by length. A character budget is
   // a proxy for rendered width — wrong the moment the font, the device or the
   // Author's own questions change — and these are generated per piece for
