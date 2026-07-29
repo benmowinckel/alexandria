@@ -37,6 +37,10 @@ The model is **pinned + consent-symmetric**: the shim only ever executes the pay
 1. **Run the pinned payload — verified.** The payload at `~/alexandria/system/.hooks_payload` executes only if its SHA-256 matches the recorded verified hash (`.payload_verified_sha`). When the file is new or changed (fresh install, an update the Author applied), the shim first fetches `manifest.txt` + `manifest.txt.sig` over HTTPS, verifies the signature with the embedded public key, and compares the payload's SHA-256 to the manifest entry — pass → record the hash and run; fail → refuse to run it, loud warning in the AI's context, log to `~/alexandria/system/.alexandria_errors`, bare mode (constitution only, no protocol calls). A payload that has never passed verification never executes.
 2. **Check for updates — notify only.** If `hooks/auto-update` exists, the shim fetches and signature-verifies the current upstream manifest; a different payload hash there surfaces as a "signed update available" notice. Nothing is applied. The Author applies by re-running the install line, and the new payload goes through step 1 before its first run. Deleting `hooks/auto-update` stops even this check — zero contact, pinned forever.
 
+## What the hooks capture — locally
+
+The session hooks archive each session's transcript into `~/alexandria/files/vault/` on the Author's machine. That is the product working — the vault is the Author's own accumulating record, and later sessions read it to know them. It is written locally, owned by the Author, deletable at any time, and transmitted nowhere: the only network calls the hooks make are the signed-manifest fetches described above, plus — for members only — the API-key-gated calls inventoried on [alexandria-library.com/mechanics](https://alexandria-library.com/mechanics). Transcripts appear in neither list.
+
 ## What this defends against
 
 | Threat | Mitigation |

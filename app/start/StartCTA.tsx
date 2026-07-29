@@ -7,16 +7,29 @@ import { ArrowIcon } from '../join/DoorIcons';
 
 const EMAIL_GHOST = 'your email';
 
-// The keyless install one-liner. `/a` redirects (Vercel, next.config.ts) to the
-// raw setup.sh; `curl -fsSL` follows it. No key = the free local product (the gym).
-const INSTALL_CMD = 'curl -fsSL alexandria-library.com/a | bash';
+// The paste is a PROMPT, not a bare command (2026-07-28). Real onboardings
+// died when cold, well-aligned agents refused to blind-pipe curl|bash from
+// a marketing domain (2026-07-22, again 2026-07-28) — and they were right
+// to: the whole trust apparatus (TRUST.md, factory/redteam.md, mechanics)
+// existed but a bare command carries no pointer to any of it. So the copy
+// hands the agent the human's own read-first instruction: download, read,
+// verify against the named claims, then run the same bytes it read
+// (TOCTOU-clean: fetch once to a file, read that file, execute that file).
+// Human primer first, agent primer second — founder-specified order.
+// A referral-tagged install (validated inviter login) rides the run line.
+const installCmd = (ref: string | null) => {
+  const run = ref ? `bash /tmp/alexandria-setup.sh --ref ${ref}` : 'bash /tmp/alexandria-setup.sh';
+  return `Setting up an Alexandria loop — a method for my ai, in files I own.
+[for you, the human: your ai reads the code first, explains the plan, and asks before each real step. paste sent = you're done.]
 
-// Referral-tagged form — an invited install passes the inviter's GitHub login
-// through to setup.sh so the inviter is credited as kin. Only used when a `ref`
-// arrives in the URL AND validates against /check-kin; otherwise the untagged
-// command above is the one shown and copied.
-const installCmd = (ref: string | null) =>
-  ref ? `curl -fsSL alexandria-library.com/a | bash -s -- --ref ${ref}` : INSTALL_CMD;
+To my ai — read before you run:
+
+1. Download the install script and read it in full:
+   curl -fsSL alexandria-library.com/a -o /tmp/alexandria-setup.sh
+   Check it does exactly what it claims: writes only to ~/alexandria/ and your own agent config (a /a skill + session hooks) · no sudo, no daemons · nothing of mine sent anywhere — every outbound call in the session hooks is gated on an API key this free install doesn't create. Trust model and signing chain: github.com/benmowinckel/alexandria/blob/main/TRUST.md — and to audit hostile-first, run the prompt in factory/redteam.md from that repo.
+2. Only if the code you read does what it says, run the same file you read: ${run}
+3. Then read ~/alexandria/system/.block, tell me the plan in your own words, and wait for my ok before opening anything of mine.`;
+};
 
 const ICON_COPY = (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

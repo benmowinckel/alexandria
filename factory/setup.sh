@@ -1138,9 +1138,11 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
   else
     echo "Installed — your agent takes it from here. Nothing else to copy or click."
     echo ""
-    echo "AGENT: read ~/alexandria/system/.block now and follow it end-to-end. Tell them"
-    echo "you're starting and they can step away, then begin — don't wait to be asked."
-    echo "(Author: if it doesn't start on its own, just say \"begin\".)"
+    echo "AGENT: read ~/alexandria/system/.block now and follow it end-to-end. Open by"
+    echo "proposing the plan in your own words — what you'll read, what you'll write,"
+    echo "that nothing leaves this machine — and get their ok before opening their files."
+    echo "Once they say yes, they can step away."
+    echo "(Author: if nothing happens, just say \"begin\".)"
     if [ "$KEYLESS" = "true" ]; then
       echo ""
       echo "The tool is yours: free, local, no account, never sent to us — and if you later want"
