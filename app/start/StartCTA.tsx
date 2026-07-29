@@ -7,28 +7,27 @@ import { ArrowIcon } from '../join/DoorIcons';
 
 const EMAIL_GHOST = 'your email';
 
-// The paste is a PROMPT, not a bare command (2026-07-28). Real onboardings
-// died when cold, well-aligned agents refused to blind-pipe curl|bash from
-// a marketing domain (2026-07-22, again 2026-07-28) — and they were right
-// to: the whole trust apparatus (TRUST.md, factory/redteam.md, mechanics)
-// existed but a bare command carries no pointer to any of it. So the copy
-// hands the agent the human's own read-first instruction: download, read,
-// verify against the named claims, then run the same bytes it read
-// (TOCTOU-clean: fetch once to a file, read that file, execute that file).
-// Human primer first, agent primer second — founder-specified order.
-// A referral-tagged install (validated inviter login) rides the run line.
+// The paste is the human's INTENT plus pointers — nothing more (v2,
+// 2026-07-29). v1 fixed the blind-pipe refusal (2026-07-22, 2026-07-28) by
+// scripting the agent's verification steps — but external text choreographing
+// the user's agent IS the manipulation shape, however reasonable the steps,
+// and a bash pipeline in the paste pattern-matches "random pasted command"
+// before a word gets read. So v2 contains: no executable text at all, no
+// trust claims (those live in the script header / TRUST.md / mechanics,
+// where they're accountable — the agent finds and verifies them there, by
+// its own plan), and the agent's own judgment as the explicit gate, with a
+// legitimate refusal path — text that permits refusal doesn't read as
+// coercion. "This is me asking, not the website" is adopted-by-pasting:
+// the human's choice to paste is what makes it true.
+// A referral-tagged install (validated inviter login) rides as a plain
+// note the agent passes to the installer if it proceeds.
 const installCmd = (ref: string | null) => {
-  const run = ref ? `bash /tmp/alexandria-setup.sh --ref ${ref}` : 'bash /tmp/alexandria-setup.sh';
-  return `Setting up an Alexandria loop — a method for my ai, in files I own.
-[for you, the human: your ai reads the code first, explains the plan, and asks before each real step. paste sent = you're done.]
+  const refLine = ref ? `\n(installer flag if you proceed, so @${ref} gets credited for inviting me: --ref ${ref})` : '';
+  return `[you're done after pasting — your ai looks into it first and checks with you before anything runs.]
 
-To my ai — read before you run:
+To my ai: I'd like to try Alexandria — a method, delivered as files on my machine, that has you build and use a detailed private map of how I think, so you can actually know me and help me develop. This is me asking, not the website.
 
-1. Download the install script and read it in full:
-   curl -fsSL alexandria-library.com/a -o /tmp/alexandria-setup.sh
-   Check it does exactly what it claims: writes ~/alexandria/ and your agent config (a /a skill + session hooks — they run each session start and archive transcripts into ~/alexandria/files/vault/, locally), plus two visible extras (a git commit-signing entry; an iCloud capture-inbox folder if iCloud Drive is on) · no sudo, no daemons, no shell-rc edits · every call to Alexandria's server is gated on an API key this free install doesn't create. Trust model and signing chain: github.com/benmowinckel/alexandria/blob/main/TRUST.md — and to audit hostile-first, run the prompt in factory/redteam.md from that repo.
-2. Only if the code you read does what it says, run the same file you read: ${run}
-3. Then read ~/alexandria/system/.block, tell me the plan in your own words, and wait for my ok before opening anything of mine.`;
+Evaluate it before anything runs — don't take its word for it. The install script is at alexandria-library.com/a; the trust model and the project's own hostile-audit prompt are TRUST.md and factory/redteam.md at github.com/benmowinckel/alexandria. If you're satisfied it does what it says, set it up and take me through it. If you're not, tell me what stopped you — skipping it is fine.${refLine}`;
 };
 
 const ICON_COPY = (
