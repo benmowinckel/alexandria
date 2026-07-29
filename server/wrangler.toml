@@ -78,4 +78,7 @@ DEFAULT_TWIN_CHECKPOINT = ""
 # Author didn't name a model. The sidecar uses its own TWIN_FRONTIER_MODEL for
 # actual inference; this just satisfies the "has a resolvable model" gate + is
 # the display value. Any Author can still override per-twin.
-DEFAULT_TWIN_CONTEXT_MODEL = "claude-sonnet-4-6"
+# NOT authoritative — the sidecar picks the model it pays for (TWIN_FRONTIER_MODEL
+# there); this value is sent but ignored on the context path. Kept in sync so the
+# config doesn't lie about what's running; read the live model from /health.
+DEFAULT_TWIN_CONTEXT_MODEL = "claude-sonnet-5"

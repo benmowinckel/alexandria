@@ -79,17 +79,34 @@ async function getSidecar(authorId: string): Promise<SidecarConn | null> {
   return url ? { url, secret: process.env.TWIN_INFERENCE_SECRET || '' } : null;
 }
 
-// Is the Author's sidecar reachable right now? Cheap `/health` ping, cached ~30s
-// (both online AND offline) so a page load never waits on the tunnel more than
-// once per window. This is what powers the online/offline state on the page.
-async function twinOnline(authorId: string): Promise<boolean> {
+/**
+ * Is the Author's mirror actually able to answer right now? `/health` ping,
+ * cached ~30s (online AND offline) so a page load never waits on the tunnel more
+ * than once per window.
+ *
+ * Reachable is NOT the same as working: this used to report `online: true` off a
+ * 200 alone, so a sidecar whose every model call failed looked perfectly healthy
+ * — which is how the founder's own mirror served three weeks of failures unseen
+ * (2026-07-28). The sidecar now reports the outcome of its last real inference,
+ * and a mirror that cannot answer is reported offline, because that is what it
+ * is from the reader's side. The model name rides along so the page can say what
+ * it's running on without anyone hard-coding a second copy of that string.
+ */
+type TwinStatus = { online: boolean; model: string | null; reason: string | null };
+
+async function twinStatus(authorId: string): Promise<TwinStatus> {
   const kv = getKV();
+  const OFFLINE: TwinStatus = { online: false, model: null, reason: null };
   try {
     const cached = await kv.get(`twin_online:${authorId}`);
-    if (cached !== null) return cached === '1';
-  } catch { /* ignore cache miss */ }
+    // '1'/'0' are the pre-2026-07-28 cache shape — honoured so the rollout
+    // doesn't read them back as garbage during the 30s TTL overlap.
+    if (cached === '1') return { online: true, model: null, reason: null };
+    if (cached === '0') return OFFLINE;
+    if (cached) return JSON.parse(cached) as TwinStatus;
+  } catch { /* ignore cache miss / stale shape */ }
   const conn = await getSidecar(authorId);
-  let online = false;
+  let status: TwinStatus = OFFLINE;
   if (conn?.url) {
     try {
       const ctrl = new AbortController();
@@ -97,11 +114,26 @@ async function twinOnline(authorId: string): Promise<boolean> {
       const t = setTimeout(() => ctrl.abort(), 6000);
       const res = await fetch(healthEndpointFrom(conn.url), { signal: ctrl.signal, headers: accessHeaders() });
       clearTimeout(t);
-      online = res.ok;
-    } catch { online = false; }
+      if (res.ok) {
+        // An older sidecar reports only `{ok:true}` — no `inference` field. Absent
+        // means unknown, and unknown must not read as broken, so only an explicit
+        // 'failing' takes it offline.
+        const body = await res.json().catch(() => ({})) as Record<string, unknown>;
+        const failing = body.inference === 'failing';
+        status = {
+          online: !failing,
+          model: typeof body.model === 'string' ? body.model : null,
+          reason: failing ? String(body.inference_error || 'inference failing') : null,
+        };
+      }
+    } catch { status = OFFLINE; }
   }
-  try { await kv.put(`twin_online:${authorId}`, online ? '1' : '0', { expirationTtl: 30 }); } catch { /* best effort */ }
-  return online;
+  try { await kv.put(`twin_online:${authorId}`, JSON.stringify(status), { expirationTtl: 30 }); } catch { /* best effort */ }
+  return status;
+}
+
+async function twinOnline(authorId: string): Promise<boolean> {
+  return (await twinStatus(authorId)).online;
 }
 
 // Per-file category map (name → 'works'|'projects'|'shadows'|'other'), stored in
@@ -614,9 +646,10 @@ export function registerLibraryRoutes(app: Hono): void {
     // Online/offline: only ping the sidecar when the Author actually has a twin
     // enabled (skip the round-trip for the overwhelming majority who don't).
     // `signed_in` lets the client pick "log in" vs "you're not on the list".
-    const twinOut = twinSummary.enabled
-      ? { ...twinSummary, online: await twinOnline(authorId), signed_in: !!viewer, depth: twinDepth }
-      : { ...twinSummary, online: false, signed_in: !!viewer, depth: twinDepth };
+    const twinLive = twinSummary.enabled ? await twinStatus(authorId) : null;
+    const twinOut = twinLive
+      ? { ...twinSummary, online: twinLive.online, model: twinLive.model, signed_in: !!viewer, depth: twinDepth }
+      : { ...twinSummary, online: false, model: null, signed_in: !!viewer, depth: twinDepth };
     // Per-file "kind" (works/projects/shadows/other) so the page can lay entries
     // out in neat categories like the demo. Stored in a dedicated KV map the
     // owner sets; untagged files fall to 'shadows'.

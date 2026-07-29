@@ -27,6 +27,11 @@ export default function PublicDocReader({
   askQuestions?: string[]; // this doc's own suggested questions → the rotation
   askFirst?: boolean;      // open with the mirror pane up (the /features ask page)
 }) {
+  // What the mirror is running on, and whether it can answer at all — read from
+  // the Author's own directory rather than hard-coded here, so there is exactly
+  // one place the model is decided (the sidecar, which pays for it). Fetched once;
+  // the Worker caches the health probe for 30s, so this is a cheap JSON GET.
+  const [twin, setTwin] = useState<{ online: boolean; model: string | null } | null>(null);
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [markdown, setMarkdown] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
@@ -61,6 +66,19 @@ export default function PublicDocReader({
     return () => { live = false; };
   }, [mdSrc, pdfSrc, txtSrc]);
 
+  useEffect(() => {
+    let live = true;
+    fetch(`/api/library/${FOUNDER_LIBRARY_ID}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!live) return;
+        const t = d?.twin;
+        if (t) setTwin({ online: !!t.online, model: typeof t.model === 'string' ? t.model : null });
+      })
+      .catch(() => { /* the note just stays generic */ });
+    return () => { live = false; };
+  }, []);
+
   // Ask Benjamin's OWN public context twin (the same mind on his profile), with
   // the doc the reader is on passed as `focus` so the answer is grounded in it.
   // `text` holds the current doc (markdown or the letter's extracted text).
@@ -88,8 +106,16 @@ export default function PublicDocReader({
   // (founder 2026-07-20). Pinned above the thread rather than living in the
   // empty state, so it's still there after the first question — which is
   // exactly when someone who asked from the document arrives here.
+  // Saying it's offline BEFORE the reader types beats letting them find out by
+  // asking (founder 2026-07-28). Naming the model is the honest version of the
+  // whole pitch: rented mechanism, owned mind — so say which mechanism.
   const mirrorNote = (
-    <>A mirror of Benjamin’s mind — reflected from what he’s written, not a stand-in for him. Ask it anything.</>
+    <>
+      A mirror of Benjamin’s mind — reflected from what he’s written, not a stand-in for him.{' '}
+      {twin && !twin.online
+        ? <>It’s offline right now — it runs on a personal machine, not a server.</>
+        : <>Ask it anything.{twin?.model ? <> Running on {twin.model}.</> : null}</>}
+    </>
   );
   // The empty state keeps only the two quiet conversion doors.
   const intro = (
