@@ -1146,10 +1146,21 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
   else
     echo "Installed — your agent takes it from here. Nothing else to copy or click."
     echo ""
-    echo "AGENT: read ~/alexandria/system/.block now and follow it end-to-end. Open by"
-    echo "proposing the plan in your own words — what you'll read, what you'll write,"
-    echo "that nothing leaves this machine — and get their ok before opening their files."
-    echo "Once they say yes, they can step away."
+    if [ "$KEYLESS" = "true" ]; then
+      echo "AGENT: read ~/alexandria/system/.block now and follow it end-to-end. Open by"
+      echo "proposing the plan in your own words — what you'll read, what you'll write,"
+      echo "that nothing leaves this machine — and get their ok before opening their files."
+      echo "Once they say yes, they can step away."
+    else
+      echo "AGENT: read ~/alexandria/system/.block now and follow it end-to-end. Open by"
+      echo "proposing the plan in your own words — what you'll read, what you'll write,"
+      echo "and, since they've joined the collective, what sessions now send with their key:"
+      echo "the files/library/ publish outbox syncs, module usage is reported, canon health"
+      echo "pings, and anything they type into .session_feedback goes to the team. Nothing"
+      echo "outside those paths is ever sent — private files have no route out (inventory:"
+      echo "alexandria-library.com/mechanics). Get their ok before opening their files."
+      echo "Once they say yes, they can step away."
+    fi
     echo "(Author: if nothing happens, just say \"begin\".)"
     if [ "$KEYLESS" = "true" ]; then
       echo ""

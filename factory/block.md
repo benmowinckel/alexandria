@@ -124,7 +124,7 @@ Compose the report as a real piece of writing, not a checklist — and **tight**
 
   none of that came from anywhere but this machine — i read the files you'd already given me access to, nothing new, nothing sent anywhere. the only thing that changed is that it's pointed at you now, deliberately. it's all written down in your new alexandria folder — open it, edit it, delete the whole thing; it's yours.
 
-  that's your loop, and it's finished — yours, free, nothing to activate and nothing owed. the one part that isn't on your machine is alexandria itself: the library and marketplace where people running their own loops connect. [see what that is →](JOIN_LINK) — first month free, or stay on your own for good.
+  that's your loop, and it's finished — yours, free, nothing to activate and nothing owed. the one part that isn't on your machine is alexandria itself: the library and marketplace where people running their own loops connect. joining links your loop in — your publish folder syncs and your module use is counted; your private files still have no route out. [see what that is →](JOIN_LINK) — first month free, or stay on your own for good.
 
   and if you're on your phone a lot — [add the shortcut](https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337) — anything you read, hear, or think gets folded into this automatically.
   ```
