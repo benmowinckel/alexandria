@@ -26,10 +26,18 @@
 #
 #   1. INSTALLS: one folder (~/alexandria/ — plain markdown + small scripts, a
 #      local git repo) and session hooks/skills in detected agent configs
-#      (~/.claude, ~/.cursor, ~/.codex, ~/.factory). Nothing else. No shell-rc
-#      edits, no daemons, no launchd/cron jobs, no root, no binaries.
+#      (~/.claude, ~/.cursor, ~/.codex, ~/.factory). Two small extras, both
+#      visible below: if an SSH key exists, one commit-signing entry appended
+#      to ~/.config/git/allowed_signers (local git verify only); on a Mac with
+#      iCloud Drive, an "alexandria" capture-inbox folder in the Author's OWN
+#      iCloud, with files/vault/input symlinked to it (Apple-native capture
+#      drops land there). Nothing else. No shell-rc edits, no daemons, no
+#      launchd/cron jobs, no root, no binaries.
 #   2. OUTBOUND: fetches files from the public github.com/benmowinckel/alexandria
-#      only. With no API key it contacts no other host — nothing is ever sent.
+#      only. With no API key it contacts no other host by default — nothing is
+#      ever sent. (One exception an Author can create later: a files/network.md
+#      follow list makes sessions fetch the public pages of the Authors they
+#      chose to follow — unkeyed reads carrying nothing of theirs.)
 #      With a key, sessions also talk to api.alexandria-library.com, and the
 #      only user content on that path is files the Author placed in
 #      ~/alexandria/files/library/ — the explicit publish outbox, synced each

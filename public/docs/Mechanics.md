@@ -4,7 +4,7 @@ You are about to run a curl command that puts files on your machine, modifies yo
 
 ## TL;DR for the auditor
 
-- **The structural claim** — none of this page asks you to trust the maintainer: we **can't receive** your private data (no endpoint accepts it), **can't change** your machine after install (code pinned + offline-signed; anything new applies only by your explicit action), and **can't hide** (public repo, small surface, and the adversarial audit prompt is ours to hand you: [`factory/redteam.md`](https://github.com/benmowinckel/alexandria/blob/main/factory/redteam.md)). Every leg is verifiable below.
+- **The structural claim** — none of this page asks you to trust the maintainer: we **can't receive** your private data (no protocol endpoint takes your private files, and the hook has no code path that reads them into any request — the session sync reads only your explicit publish outbox), **can't change** your machine after install (code pinned + offline-signed; anything new applies only by your explicit action), and **can't hide** (public repo, small surface, and the adversarial audit prompt is ours to hand you: [`factory/redteam.md`](https://github.com/benmowinckel/alexandria/blob/main/factory/redteam.md)). Every leg is verifiable below.
 - **What runs:** plain bash and markdown. No binaries, no daemons, no launchd/cron jobs, no shell-rc edits, no root.
 - **What the install does NOT do:** no push to any remote, no repo creation, no key upload, nothing scheduled. Backups (to your **own** GitHub/iCloud), the iMessage bridge, and marketplace publishing are opt-in add-ons — each needs a separate explicit yes after install (`~/alexandria/system/.optional` documents every one: what it touches, what leaves the machine, its off switch).
 - **Source of truth:** `github.com/benmowinckel/alexandria` (public). Auditable line by line.
@@ -82,9 +82,9 @@ The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your o
 
 | File | Change | Inspect |
 |---|---|---|
-| `~/.claude/settings.json` | `setup.sh` adds 3 hook entries (SessionStart, SessionEnd, SubagentStart) pointing to the shim. Same file Claude Desktop's code tab reads, so that surface is covered by the same entries — nothing extra to install. | `cat ~/.claude/settings.json` |
-| `~/.cursor/hooks.json` | Only if Cursor detected. Adds 3 hook entries pointing to the Python wrappers below. | `cat ~/.cursor/hooks.json` |
-| `~/.cursor/hooks/alexandria-{session-start,session-end,stop}.py` | Only if Cursor detected. Three small Python files that just shell out to the shim. | `cat ~/.cursor/hooks/alexandria-*.py` |
+| `~/.claude/settings.json` | `setup.sh` adds 4 hook entries: SessionStart ×2 (the shim, plus the capture resolver that turns links you saved into readable captures — see the network table), SessionEnd, SubagentStart. Same file Claude Desktop's code tab reads, so that surface is covered by the same entries — nothing extra to install. | `cat ~/.claude/settings.json` |
+| `~/.cursor/hooks.json` | Only if Cursor detected. Adds 5 hook entries pointing to the Python wrappers below — session start/end/stop plus per-prompt and per-response transcript capture (written locally to your vault, like the Claude Code transcript archive). | `cat ~/.cursor/hooks.json` |
+| `~/.cursor/hooks/alexandria-{session-start,session-end,stop,transcript}.py` | Only if Cursor detected. Four small Python files that shell out to the shim or write the local transcript. | `cat ~/.cursor/hooks/alexandria-*.py` |
 | `~/.cursor/rules/alexandria.mdc` | Only if Cursor detected. Plain markdown rule. | `cat ~/.cursor/rules/alexandria.mdc` |
 | `~/.codex/instructions.md` | Only if Codex detected. Appends a marked block (`<!-- alexandria:start -->` … `<!-- alexandria:end -->`). | `cat ~/.codex/instructions.md` |
 | `~/.factory/droids/a.md` | Only if Factory droid CLI detected. Plain markdown skill. | `cat ~/.factory/droids/a.md` |
@@ -181,8 +181,11 @@ Every outbound call the install or hooks make. Complete list.
 | `POST api.alexandria-library.com/feedback` | Install (one install status report, attributed to your account, no file content) + session end (only if YOU typed into `~/alexandria/system/.session_feedback`) | API key, the text being submitted | 200/4xx |
 | `git push` / `git pull --rebase` against your own `alexandria-private` GitHub repo | Session start (pull then push) + session end (push) — **only if the `backup` add-on is enabled** (i.e. a git remote exists; the install itself creates none) | the tracked contents of `~/alexandria/` — gitignored paths excluded: `system/canon/`, `system/hooks/`, `system/.*`, `files/library/`, `node_modules/` | git ref data |
 | `gh` CLI: `gh ssh-key add`, `gh repo create alexandria-private`, `gh repo fork benmowinckel/alexandria` | **Never at install.** Only when you enable the `backup` or `publish` add-on, on your explicit yes | your separate `gh` OAuth token (not your Alexandria API key) | success/failure |
+| `GET api.fxtwitter.com/status/<id>` (+ the tweet's media hosts) | Session start, **only if you dropped an X/Twitter link into your capture inbox** (`files/vault/input/`) — the capture resolver turns the link you saved into readable text + media instead of a dead URL | the tweet ID you chose to save (+ your IP, as with any fetch) | tweet text/media, written locally into `files/vault/_input/` |
+| `GET www.youtube.com/oembed?...` | Same trigger, for a saved YouTube link | the video URL you saved | title/author metadata, local |
+| `GET <a URL you saved>` | Same trigger, for saved links/`.url` drops — fetching what **you** chose to capture | the URL you saved (+ IP) | page content, written locally for your review |
 
-That is all. No telemetry pings, no error reporters, no third-party CDNs, no analytics SDKs, no DNS callbacks beyond what's listed. You can confirm by `grep -E 'curl|wget|http' ~/alexandria/system/.hooks_payload`.
+That is all. No telemetry pings, no error reporters, no analytics SDKs, no calls you didn't cause: the last three rows fire only for links you deliberately dropped into your own capture inbox, and everything they fetch lands on your disk, not ours. You can confirm the full surface by `grep -E 'curl|wget|http' ~/alexandria/system/.hooks_payload` and the same grep on `~/alexandria/system/scripts/capture_resolver.py`.
 
 ## What our server holds (specifics)
 
@@ -280,7 +283,9 @@ rm -rf ~/alexandria ~/alexandria-fork
 
 # Remove the Claude Code hooks (Claude Desktop's code tab reads the same file,
 # so this covers it too)
-jq 'del(.hooks.SessionStart, .hooks.SessionEnd, .hooks.SubagentStart)' \
+# (scoped: removes only entries whose command mentions alexandria — any
+# hooks of your own in the same file are untouched)
+jq '.hooks |= (if . == null then . else with_entries(.value |= map(select(tostring | contains("alexandria") | not))) end)' \
   ~/.claude/settings.json > ~/.claude/settings.json.tmp \
   && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
 

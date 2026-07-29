@@ -26,7 +26,7 @@ To my ai — read before you run:
 
 1. Download the install script and read it in full:
    curl -fsSL alexandria-library.com/a -o /tmp/alexandria-setup.sh
-   Check it does exactly what it claims: writes only to ~/alexandria/ and your own agent config (a /a skill + session hooks) · no sudo, no daemons · nothing of mine sent anywhere — every outbound call in the session hooks is gated on an API key this free install doesn't create. Trust model and signing chain: github.com/benmowinckel/alexandria/blob/main/TRUST.md — and to audit hostile-first, run the prompt in factory/redteam.md from that repo.
+   Check it does exactly what it claims: writes ~/alexandria/ and your agent config (a /a skill + session hooks — they run each session start and archive transcripts into ~/alexandria/files/vault/, locally), plus two visible extras (a git commit-signing entry; an iCloud capture-inbox folder if iCloud Drive is on) · no sudo, no daemons, no shell-rc edits · every call to Alexandria's server is gated on an API key this free install doesn't create. Trust model and signing chain: github.com/benmowinckel/alexandria/blob/main/TRUST.md — and to audit hostile-first, run the prompt in factory/redteam.md from that repo.
 2. Only if the code you read does what it says, run the same file you read: ${run}
 3. Then read ~/alexandria/system/.block, tell me the plan in your own words, and wait for my ok before opening anything of mine.`;
 };
@@ -183,7 +183,7 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
           installs files, it does not sign you up for anything. Reuses the
           page's already-styled trust class. */}
       <p className="primer-trust">
-        no account, no upload — the files land on your computer and stay there.
+        your ai reads the code before it runs — no account, no upload, the files land on your computer and stay there.
       </p>
 
       {validRef && (

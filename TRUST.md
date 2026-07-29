@@ -15,7 +15,9 @@ A single ed25519 keypair, held offline.
 
 ## What is signed
 
-A single manifest, `factory/manifest.txt`, lists the SHA-256 of every file that runs as code or steers the model — the payload, every canon module, and the signed skills and scripts. The authoritative set is the `SIGNED_FILES` array in `factory/ship.sh`; the manifest itself is one `<sha256>  <path>` line per file. Excerpt (trimmed — read the real file for the full list):
+A single manifest, `factory/manifest.txt`, lists the SHA-256 of the **recurring execution path**: the hook payload, every canon module, and the scheduled skills and scripts. The authoritative set is the `SIGNED_FILES` array in `factory/ship.sh`; the manifest itself is one `<sha256>  <path>` line per file.
+
+Be precise about the boundary, because it is narrower than "everything": install-time artifacts — `setup.sh` itself, the shim it writes, the onboarding block, the per-tool `/a` skills, hook helper scripts, templates — are fetched over HTTPS from the public repo **without** a per-file manifest check at install time. Signing protects the thing that *runs again every session* (the payload) from silent replacement after you've pinned it; the install line itself is trust-on-first-use, every time you run it. If GitHub's `main` were compromised, an existing pinned install refuses the malicious payload — but a fresh install, or a re-run of the install line, would fetch the compromised artifacts. That is the same exposure as every `curl | bash` tool, disclosed here rather than papered over: if it matters to you, read the script each time you re-run it — the paste flow tells your agent to do exactly that. Excerpt (trimmed — read the real file for the full list):
 
 ```
 <sha256>  factory/hooks/payload.sh
@@ -35,7 +37,7 @@ The manifest is signed with the offline key (`factory/manifest.txt.sig`), in the
 The model is **pinned + consent-symmetric**: the shim only ever executes the payload pinned on disk, nothing self-updates, and no code runs before verification.
 
 1. **Run the pinned payload — verified.** The payload at `~/alexandria/system/.hooks_payload` executes only if its SHA-256 matches the recorded verified hash (`.payload_verified_sha`). When the file is new or changed (fresh install, an update the Author applied), the shim first fetches `manifest.txt` + `manifest.txt.sig` over HTTPS, verifies the signature with the embedded public key, and compares the payload's SHA-256 to the manifest entry — pass → record the hash and run; fail → refuse to run it, loud warning in the AI's context, log to `~/alexandria/system/.alexandria_errors`, bare mode (constitution only, no protocol calls). A payload that has never passed verification never executes.
-2. **Check for updates — notify only.** If `hooks/auto-update` exists, the shim fetches and signature-verifies the current upstream manifest; a different payload hash there surfaces as a "signed update available" notice. Nothing is applied. The Author applies by re-running the install line, and the new payload goes through step 1 before its first run. Deleting `hooks/auto-update` stops even this check — zero contact, pinned forever.
+2. **Check for updates — notify only.** If `hooks/auto-update` exists, the shim fetches and signature-verifies the current upstream manifest; a different payload hash there surfaces as a "signed update available" notice. Nothing is applied. The Author applies by re-running the install line, and the new payload goes through step 1 before its first run. Deleting `hooks/auto-update` stops the update notices. It does not make sessions network-silent: the payload's canon drift check still fetches reference copies from the public repo each session start (public files, carrying nothing about the Author), and a keyed member's API calls continue. Full inventory: [alexandria-library.com/mechanics](https://alexandria-library.com/mechanics).
 
 ## What the hooks capture — locally
 
