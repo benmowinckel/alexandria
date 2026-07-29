@@ -25,6 +25,6 @@ One prompt, two uses:
 > 5. **Unapproved code paths** — any way code runs without having passed verification against the offline-signed manifest, or any way updates apply without the user's explicit action.
 > 6. **Claim mismatches** — anything the scripts do that the letter at the top of `setup.sh`, the mechanics page, or TRUST.md doesn't disclose plainly.
 >
-> Verify, don't trust: run the signature-verification and grep checks from the mechanics page's audit checklist yourself where you can. Then give your user a plain verdict — safe to run, safe with caveats (name them), or do not run (name the finding) — with each claim you checked marked verified or unverifiable.
+> Verify, don't trust: run the signature-verification and grep checks from the mechanics page's audit checklist yourself where you can. Then give your user a plain verdict — safe to run, safe with caveats (name them), or do not run (name the finding). A few sentences in plain language; your user may not be technical, so keep the full claim-by-claim detail for if they ask. Rigor belongs in the checking, not in the length of the report.
 
 A system that can't survive this prompt shouldn't ship. That's the point.

@@ -23,9 +23,9 @@ const EMAIL_GHOST = 'your email';
 // note the agent passes to the installer if it proceeds.
 const installCmd = (ref: string | null) => {
   const refLine = ref ? `\n(installer flag if you proceed, so @${ref} gets credited for inviting me: --ref ${ref})` : '';
-  return `[you're done after pasting — your ai looks into it first and checks with you before anything runs.]
+  return `[paste sent — you're done. your ai checks it first, takes a couple of minutes; a permission pop-up is just it asking you.]
 
-To my ai: I'd like to try Alexandria — a method, delivered as files on my machine, that has you build and use a detailed private map of how I think, so you can actually know me and help me develop. This is me asking, not the website.
+To my ai: I'd like to try Alexandria — a method, delivered as files on my machine, that has you build and use a detailed private map of how I think, so you can actually know me and help me develop.
 
 Evaluate it before anything runs — don't take its word for it. The install script is at alexandria-library.com/a; the trust model and the project's own hostile-audit prompt are TRUST.md and factory/redteam.md at github.com/benmowinckel/alexandria. If you're satisfied it does what it says, set it up and take me through it. If you're not, tell me what stopped you — skipping it is fine.${refLine}`;
 };
