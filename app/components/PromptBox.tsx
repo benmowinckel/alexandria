@@ -43,8 +43,12 @@ const PromptBox = forwardRef<PromptBoxHandle, {
    *  chat-shaped box would read as an app bolted to a page (founder
    *  2026-07-27). Desktop-only surfaces, since Enter is the only submit. */
   bare?: boolean;
+  /** Can the CURRENT suggestion be taken with tab? Off for a placeholder that
+   *  isn't a question (e.g. the reader's framing line) — taking it would put a
+   *  sentence about the mirror into a question to the mirror. */
+  fillable?: boolean;
 }>(function PromptBox({
-  value, onChange, onSubmit, loading = false, typeWhileLoading = false, placeholder = '', ariaLabel, submitLabel = 'ask', bare = false,
+  value, onChange, onSubmit, loading = false, typeWhileLoading = false, placeholder = '', ariaLabel, submitLabel = 'ask', bare = false, fillable = true,
 }, ref) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const [voiceOn, setVoiceOn] = useState(false);
@@ -136,7 +140,22 @@ const PromptBox = forwardRef<PromptBoxHandle, {
     onSubmit();
   };
 
+  // Take the suggestion currently showing and put it in the box, ready to send
+  // (or to edit first). Tab is the accepted gesture for accepting a completion,
+  // and the hint beside the line says so; the hint is also a real button, so
+  // touch — which has no Tab — gets there too (founder 2026-07-28).
+  const canFill = fillable && !value && !!ghost && !(loading && !typeWhileLoading);
+  const fillGhost = () => {
+    if (!canFill) return;
+    onChange(ghost);
+    taRef.current?.focus();
+  };
+
   const onKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Tab fills the suggestion instead of leaving the field — but ONLY with a
+    // suggestion showing and nothing typed, so it never traps the keyboard user:
+    // once the box has any text, Tab moves focus as normal.
+    if (e.key === 'Tab' && !e.shiftKey && canFill) { e.preventDefault(); fillGhost(); return; }
     // Cmd/Ctrl+D toggles voice — full keyboard + voice control, no mouse.
     if ((e.metaKey || e.ctrlKey) && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); toggleVoice(); return; }
     // While dictating, ANY key ends it (Enter/other). Enter just ends here; the
@@ -223,6 +242,27 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           opacity: (!value && ghostShown) ? 1 : 0,
           transition: 'opacity 0.4s ease',
         }}>{ghost}</div>
+        {/* The hint that the suggestion is takeable: a quiet key-cap at the end
+            of the line, up whenever a question is showing — hiding it until
+            focus would mean nobody discovers the gesture. It is a real button,
+            so a phone (which has no Tab) taps it for the same result; the label
+            itself swaps to "tap" there, in CSS. */}
+        {canFill && (
+          // pointerdown, not click: a tap would blur the field first, and the
+          // hint unmounts on blur — so the tap would land on nothing. Preventing
+          // default keeps focus where it is and fills in the same gesture.
+          <button type="button" tabIndex={-1} aria-label="use this question"
+            onPointerDown={(e) => { e.preventDefault(); fillGhost(); }}
+            className="pb-fill"
+            style={{ position: 'absolute', right: bare ? (voiceOn ? '1.9rem' : 0) : (voiceOn ? '2.6rem' : '0.95rem'), bottom: bare ? '0.5rem' : '0.72rem',
+              // Rides the suggestion's own crossfade instead of unmounting with
+              // it — the chip belongs to the line, but blinking out of the DOM
+              // every rotation makes it flicker and lose taps mid-fade.
+              opacity: ghostShown ? 1 : 0, pointerEvents: ghostShown ? 'auto' : 'none', transition: 'opacity 0.4s ease' }}>
+            <span className="pb-fill-key">tab</span>
+            <span className="pb-fill-tap">tap</span>
+          </button>
+        )}
         {/* Bare has no standing submit button — Enter sends it. But a soft
             keyboard has no reliable Enter, so once there are words the mic
             (useless mid-question anyway) gives its slot to a send arrow. One

@@ -311,6 +311,13 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const queueRef = useRef<{ text: string; convoId: string }[]>([]);
   const askingRef = useRef(false);
 
+  // One line for every failure, and it says offline — a reader has no use for
+  // offline-vs-timeout-vs-error, and offline is the true shape of all of them
+  // from where they stand (founder 2026-07-28). Never a pronoun for the Author.
+  const offlineNote = authorName
+    ? `${authorName}’s mirror is offline right now — it runs on a personal machine, not a server, so it isn’t always up. your question wasn’t answered.`
+    : 'this mirror is offline right now — it runs on a personal machine, not a server, so it isn’t always up. your question wasn’t answered.';
+
   const ask = async (textArg?: string) => {
     const text = (textArg ?? question).trim();
     if (!text) return;
@@ -349,7 +356,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       const b = await res.json().catch(() => ({}));
       const failed = !(res.ok && b.answer);
       setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, failed
-        ? { role: 'note' as const, text: b.error || 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.' }
+        ? { role: 'note' as const, text: offlineNote }
         : { role: 'twin' as const, text: b.answer }] } : c)));
       // A valid code binds a grant server-side — re-read the directory so the
       // unlocked state (variants + depth) reflects it: premium lights up and
@@ -366,7 +373,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           }).catch(() => { /* */ });
       }
     } catch {
-      setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'note', text: 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.' }] } : c)));
+      setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'note', text: offlineNote }] } : c)));
     } finally {
       const next = queueRef.current.shift();
       if (next) {

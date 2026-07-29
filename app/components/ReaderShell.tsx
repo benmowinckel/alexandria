@@ -9,7 +9,7 @@ import PromptBox from './PromptBox';
 import ActionButton from './ActionButton';
 import TwinText from './TwinText';
 import ChatHistoryItem from './ChatHistoryItem';
-import { useRotatingPlaceholder, pieceExamples, readingExamples } from '../lib/useRotatingPlaceholder';
+import { useRotatingPlaceholder, pieceExamples, readingExamples, readingLead } from '../lib/useRotatingPlaceholder';
 import {
   processNumbered, TocBlock,
   MD_COMPONENTS, MD_COMPONENTS_NUMBERED, MD_COMPONENTS_NUMBERED_PRE, MD_COMPONENTS_ABSTRACT,
@@ -272,6 +272,19 @@ export default function ReaderShell({
   }, []);
   const readExamples = useMemo(() => readingExamples(who, askQuestions, narrow), [who, askQuestions, narrow]);
   const readingPlaceholder = useRotatingPlaceholder(readExamples, !question.trim());
+  // Every line in that rotation is a question you can take with tab — except
+  // the lead, which describes the mirror rather than asking it anything.
+  const readingIsQuestion = readingPlaceholder !== readingLead(who, narrow);
+
+  // One line for every failure, and it says offline. The server distinguishes
+  // offline from timeout from upstream error and keeps that in `reason` for us,
+  // but a reader has no use for the taxonomy — "an error occurred" doesn't tell
+  // them whether to come back. Offline is the true shape of all of them from
+  // where they stand (founder 2026-07-28: "just say its offline. even if it is
+  // an error"). Never a pronoun for the Author: a mirror belongs to anyone.
+  const offlineNote = who
+    ? `${who}’s mirror is offline right now — it runs on a personal machine, not a server, so it isn’t always up. your question wasn’t answered.`
+    : 'this mirror is offline right now — it runs on a personal machine, not a server, so it isn’t always up. your question wasn’t answered.';
 
   const ask = async () => {
     const text = question.trim();
@@ -285,10 +298,8 @@ export default function ReaderShell({
     const add = (m: Msg) => setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, m] } : c)));
     try {
       add({ role: 'twin', text: await askFn(text) });
-    } catch (e) {
-      // The thrown message is the server's own reason (offline / timeout /
-      // error) — surfaced verbatim so the reader learns WHICH happened.
-      add({ role: 'note', text: e instanceof Error && e.message ? e.message : 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.' });
+    } catch {
+      add({ role: 'note', text: offlineNote });
     } finally {
       setAsking(false);
     }
@@ -529,7 +540,8 @@ export default function ReaderShell({
             {dockedAsk && status === 'ok' && !midOpen && (
               <div className="piece-ask">
                 <PromptBox bare value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
-                  placeholder={readingPlaceholder || askPlaceholder} ariaLabel="ask about this piece" />
+                  placeholder={readingPlaceholder || askPlaceholder} fillable={readingIsQuestion}
+                  ariaLabel="ask about this piece" />
               </div>
             )}
           </article>

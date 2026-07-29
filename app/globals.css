@@ -1830,6 +1830,22 @@ html.app-shell input:focus {
 
 /* The composer's own caret — a slow, soft fade instead of the OS blink
    (founder 2026-07-20). Shown only when the box is empty + focused. */
+/* The composer's take-the-suggestion hint: a quiet key-cap at the end of the
+   ghost line. Pointer devices are told "tab" (the gesture they can use); touch
+   devices, which have no Tab key, are told "tap" — the same button either way. */
+.pb-fill {
+  display: flex; align-items: center; border: 1px solid var(--border-light); border-radius: 5px;
+  background: var(--bg-primary); color: var(--text-ghost); cursor: pointer;
+  font-family: var(--font-eb-garamond); font-size: 0.68rem; letter-spacing: 0.06em; line-height: 1;
+  padding: 0.18rem 0.34rem; opacity: 0.85; transition: opacity 0.15s, color 0.15s;
+}
+.pb-fill:hover { opacity: 1; color: var(--text-muted); }
+.pb-fill-tap { display: none; }
+@media (hover: none) {
+  .pb-fill-key { display: none; }
+  .pb-fill-tap { display: inline; }
+}
+
 @keyframes pb-caret-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.05; } }
 @media (prefers-reduced-motion: reduce) { @keyframes pb-caret-blink { 0%, 100% { opacity: 0.75; } } }
 

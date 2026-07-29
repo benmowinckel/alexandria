@@ -32,18 +32,22 @@ export const metadata: Metadata = {
   },
 };
 
-// The whitepaper's own suggested questions — drawn from its actual argument, so
-// the mirror (loaded with the whitepaper as focus) is guaranteed to answer them.
-// The Artifact Loop generates these per piece automatically; the whitepaper is a
-// frozen genesis artifact, so its set is authored here rather than regenerated.
+// The whitepaper's own suggested questions. Written as a reader actually
+// arrives — most haven't read a word yet, so the honest openers are "what is
+// this", "why now", "what's the counter". Balanced deliberately against
+// becoming a substitute for reading: "explain that last bit" only works
+// alongside the text, and "which part should i read first" points back into
+// it. The mirror is a supplement, not a replacement (founder 2026-07-28).
+// The Artifact Loop generates these per piece automatically; the whitepaper is
+// a frozen genesis artifact, so its set is authored here.
 const WHITEPAPER_QUESTIONS = [
-  'what is a person for when a machine can do everything?',
-  'what actually survives automation?',
-  'why write your mind down?',
-  'what does it mean to think *with* ai, not have it think for you?',
-  'why a mirror of your mind, and not a twin?',
-  'what is the library of minds?',
-  'what’s the strongest objection to this argument?',
+  'what’s this actually about?',
+  'why does it matter now?',
+  'what’s the biggest counter to it?',
+  'explain that last bit in plain english',
+  'what does “a mirror, not a twin” mean?',
+  'which part should i read first?',
+  'what is alexandria?',
 ];
 
 export default function WhitepaperPage() {

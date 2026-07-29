@@ -43,14 +43,20 @@ function clean(qs?: string[]): string[] {
 export function pieceExamples(who?: string, artifactQs?: string[]): string[] {
   const fromArtifact = clean(artifactQs);
   if (fromArtifact.length) return [...fromArtifact, 'what is alexandria?', 'ask anything…'];
+  // Written as a reader actually arrives: most haven't read it yet, so the
+  // honest first questions are "what is this", "why does it matter", "what's
+  // the counter". Held deliberately short of becoming a substitute for reading
+  // — "explain that last bit" needs the text open, and "which part should i
+  // read first" sends them into it. Supplement, not replacement (founder
+  // 2026-07-28).
   const first = who ? who.split(' ')[0] : '';
   return [
-    'what’s the core argument here?',
-    'summarise this in three lines.',
-    'what’s the strongest objection to it?',
-    'what should i take away?',
-    first ? `what does ${first} believe?` : 'what does this really mean?',
-    'what is alexandria?',
+    'what’s this actually about?',
+    'why does it matter?',
+    'what’s the biggest counter to it?',
+    'explain that last bit in plain english',
+    first ? `what does ${first} actually think here?` : 'what’s really being claimed here?',
+    'which part should i read first?',
     'ask anything…',
   ];
 }
@@ -65,14 +71,21 @@ export function pieceExamples(who?: string, artifactQs?: string[]): string[] {
  * living as a label, so the framing is read once and then replaced by the
  * questions themselves — nothing standing on the page afterwards.
  */
-export function readingExamples(who?: string, artifactQs?: string[], compact = false): string[] {
+export function readingLead(who?: string, compact = false): string {
   const first = who ? who.split(' ')[0] : '';
   // A lead line that ends in an ellipsis teaches nothing, so narrow screens get
   // the sentence with its tail cut rather than the sentence truncated.
-  const lead = compact
+  return compact
     ? (first ? `ask as you read — ${first}’s mirror` : 'ask as you read — this mind’s mirror')
     : (first ? `ask as you read — a mirror of ${first}’s mind, here to answer`
       : 'ask as you read — a mirror of this mind, here to answer');
+}
+
+/** Exported so the caller can tell the framing line apart from the questions —
+ *  it is the one entry in the rotation that must NOT be takeable with tab: it
+ *  describes the mirror, it isn't something to ask it. */
+export function readingExamples(who?: string, artifactQs?: string[], compact = false): string[] {
+  const lead = readingLead(who, compact);
   // The questions themselves are NOT filtered by length. A character budget is
   // a proxy for rendered width — wrong the moment the font, the device or the
   // Author's own questions change — and these are generated per piece for
