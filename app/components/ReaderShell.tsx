@@ -522,15 +522,22 @@ export default function ReaderShell({
                 // say what the thing does and what to do with it. Two plain
                 // sentences, one button, one alternative (founder 2026-07-29).
                 <div>
-                  {/* Bold line, muted why, one action — the onboarding grammar.
-                      The long version explained the bundle piece by piece; the
-                      reader doesn't need the manifest, they need to know it all
-                      comes and where to put it (founder 2026-07-29). */}
-                  <p style={{ margin: '0 0 0.25rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
-                    That’s your questions for today.
+                  {/* What, why, how — in that order, in plain words. Without
+                      the why the cap reads as arbitrary; the true reason is
+                      simple and worth saying out loud: the Author pays for
+                      their own mirror's answers. And the way on is not "come
+                      back tomorrow", it's "carry on now, somewhere else"
+                      (founder 2026-07-29). */}
+                  <p style={{ margin: '0 0 0.3rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
+                    You’re out of questions for today.
                   </p>
-                  <p style={{ margin: '0 0 0.8rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, textWrap: 'pretty' }}>
-                    Take this chat, the piece, and {who ? `${who}’s` : 'the author’s'} writing to any ai.
+                  <p style={{ margin: '0 0 0.25rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
+                    Every answer costs {who || 'the author'} money to run, so each visitor gets
+                    {budget?.limit ? ` ${budget.limit} ` : ' a few '}a day.
+                  </p>
+                  <p style={{ margin: '0 0 0.85rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
+                    You don’t have to wait — keep going on your own ai. This copies the chat,
+                    the piece, and {who ? `${who}’s` : 'the author’s'} writing. Paste it in and carry on.
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
                     <ActionButton icon={HandoffIcon} label="copy it for your ai" doneLabel="copied — now paste it in"
