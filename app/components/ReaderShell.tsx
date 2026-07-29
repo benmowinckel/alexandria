@@ -530,7 +530,7 @@ export default function ReaderShell({
                     That’s your questions for today.
                   </p>
                   <p style={{ margin: '0 0 0.8rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, textWrap: 'pretty' }}>
-                    Take the whole thing — this chat, the piece, {who ? `${who}’s` : 'the author’s'} writing — to any ai.
+                    Take this chat, the piece, and {who ? `${who}’s` : 'the author’s'} writing to any ai.
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
                     <ActionButton icon={HandoffIcon} label="copy it for your ai" doneLabel="copied — now paste it in"
