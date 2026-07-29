@@ -646,10 +646,19 @@ export function registerLibraryRoutes(app: Hono): void {
     // Online/offline: only ping the sidecar when the Author actually has a twin
     // enabled (skip the round-trip for the overwhelming majority who don't).
     // `signed_in` lets the client pick "log in" vs "you're not on the list".
+    // What this viewer has left, BEFORE they ask. Knowing only by hitting the
+    // wall is the same defect as a mirror that reports itself online while
+    // failing: the state exists, we just weren't telling anyone (founder
+    // 2026-07-29 — "i dont see the no questions left").
+    const twinIp = c.req.header('cf-connecting-ip') || 'unknown';
+    const twinLimit = visitorAllowance(viewer);
+    const twinUsed = twinSummary.enabled ? await twinVisitorUsed(authorId, viewer, twinIp) : 0;
     const twinLive = twinSummary.enabled ? await twinStatus(authorId) : null;
     const twinOut = twinLive
-      ? { ...twinSummary, online: twinLive.online, model: twinLive.model, signed_in: !!viewer, depth: twinDepth }
-      : { ...twinSummary, online: false, model: null, signed_in: !!viewer, depth: twinDepth };
+      ? { ...twinSummary, online: twinLive.online, model: twinLive.model, signed_in: !!viewer, depth: twinDepth,
+          limit: twinLimit, remaining: Math.max(0, twinLimit - twinUsed) }
+      : { ...twinSummary, online: false, model: null, signed_in: !!viewer, depth: twinDepth,
+          limit: twinLimit, remaining: twinLimit };
     // Per-file "kind" (works/projects/shadows/other) so the page can lay entries
     // out in neat categories like the demo. Stored in a dedicated KV map the
     // owner sets; untagged files fall to 'shadows'.

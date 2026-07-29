@@ -172,6 +172,10 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       const vs: TwinVariantSummary[] = Array.isArray(dir?.twin?.variants) ? dir.twin.variants : [];
       setVariants(vs);
       if (typeof dir?.twin?.model === 'string') setTwinModel(dir.twin.model);
+      // Known before the first question, not discovered by hitting the wall.
+      if (typeof dir?.twin?.remaining === 'number' && typeof dir?.twin?.limit === 'number') {
+        setBudget({ remaining: dir.twin.remaining, limit: dir.twin.limit, signedIn: !!dir.twin.signed_in });
+      }
       // Open on a mind the viewer can actually use; fall back to the first
       // unlockable one so a fully-gated twin still lands somewhere.
       const first = vs.find((v) => v.enabled && v.accessible) || vs.find((v) => v.enabled && v.needsInvite);

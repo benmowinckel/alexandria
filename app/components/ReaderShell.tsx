@@ -163,6 +163,9 @@ export type ReaderShellProps = {
   /** Whose mind this is — enables the handoff (their public shadow + works).
    *  Without it the reader can still take the piece and the conversation. */
   handoffAuthorId?: string;
+  /** What this reader has left before they've asked anything. Without it the
+   *  allowance is only discoverable by hitting it. */
+  initialBudget?: { remaining: number; limit: number; signedIn: boolean } | null;
   intro?: React.ReactNode;                        // chat empty-state (who you're talking to + CTAs)
   /** One plain line naming what the mirror is, pinned above the thread so it
    *  survives the first question — see the render. Keep it to a sentence. */
@@ -190,7 +193,7 @@ export default function ReaderShell({
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
   intro, mirrorNote, inviteField, askFirst = false, dockedAsk = false, footerCta = 'build your own',
-  handoffAuthorId,
+  handoffAuthorId, initialBudget = null,
 }: ReaderShellProps) {
   const book = useMemo(
     () => (numbered && markdown ? processNumbered(markdown) : null),
@@ -310,7 +313,8 @@ export default function ReaderShell({
   // What's left of this reader's allowance, and what has been answering. Both
   // come back with the answers themselves — no extra request, and no number the
   // client could be wrong about.
-  const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(null);
+  const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(initialBudget);
+  useEffect(() => { if (initialBudget) setBudget((b) => b ?? initialBudget); }, [initialBudget]);
   const [answeredBy, setAnsweredBy] = useState<{ model: string | null; variant: string | null } | null>(null);
   const [handoffCtx, setHandoffCtx] = useState<HandoffAuthor | null>(null);
   const spent = budget !== null && budget.remaining <= 0;
@@ -520,21 +524,31 @@ export default function ReaderShell({
             </div>
             <div style={{ flex: 'none', padding: '0.9rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
               {spent ? (
-                // A dead input the reader can still type into is a trap. What
-                // replaces it is not an upsell — it's the way out: everything
-                // said, plus the mind behind it, ready for their own model.
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
-                  <ActionButton icon={HandoffIcon} label="take it with you" onAction={() => void takeItWithYou()}
-                    title="copies the mind, the piece and this conversation"
-                    style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
-                      background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderRadius: '999px', padding: '0.4rem 0.85rem',
-                      color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
-                    className="hover:opacity-75" />
-                  {!budget?.signedIn && signInUrl && (
-                    <a href={signInUrl} style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-70">
-                      or sign in for more
-                    </a>
-                  )}
+                // A dead input the reader can still type into is a trap, and a
+                // bare button is a shrug — at the one moment someone is stuck,
+                // say what the thing does and what to do with it. Two plain
+                // sentences, one button, one alternative (founder 2026-07-29).
+                <div>
+                  <p style={{ margin: '0 0 0.75rem', color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.6, textWrap: 'pretty' }}>
+                    That’s your questions for today. You can take the whole thing with you:
+                    this conversation, the piece you’re reading, and {who || 'the author'}’s published
+                    writing — copied as text you paste into ChatGPT, Claude, or whatever ai you already use.
+                    It carries on there.
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+                    <ActionButton icon={HandoffIcon} label="copy it for your ai" doneLabel="copied — now paste it in"
+                      onAction={() => void takeItWithYou()}
+                      title="copies the conversation, the piece and the author's published mind"
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
+                        background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderRadius: '999px', padding: '0.4rem 0.85rem',
+                        color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
+                      className="hover:opacity-75" />
+                    {!budget?.signedIn && signInUrl && (
+                      <a href={signInUrl} style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-70">
+                        or sign in for more
+                      </a>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder={rotatingPlaceholder || askPlaceholder} />

@@ -32,6 +32,7 @@ export default function PublicDocReader({
   // one place the model is decided (the sidecar, which pays for it). Fetched once;
   // the Worker caches the health probe for 30s, so this is a cheap JSON GET.
   const [twin, setTwin] = useState<{ online: boolean; model: string | null } | null>(null);
+  const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(null);
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [markdown, setMarkdown] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
@@ -73,7 +74,11 @@ export default function PublicDocReader({
       .then((d) => {
         if (!live) return;
         const t = d?.twin;
-        if (t) setTwin({ online: !!t.online, model: typeof t.model === 'string' ? t.model : null });
+        if (!t) return;
+        setTwin({ online: !!t.online, model: typeof t.model === 'string' ? t.model : null });
+        if (typeof t.remaining === 'number' && typeof t.limit === 'number') {
+          setBudget({ remaining: t.remaining, limit: t.limit, signedIn: !!t.signed_in });
+        }
       })
       .catch(() => { /* the note just stays generic */ });
     return () => { live = false; };
@@ -163,6 +168,7 @@ export default function PublicDocReader({
       askQuestions={askQuestions}
       askFn={askFn}
       handoffAuthorId={FOUNDER_LIBRARY_ID}
+      initialBudget={budget}
       intro={intro}
       mirrorNote={mirrorNote}
       askFirst={askFirst}
