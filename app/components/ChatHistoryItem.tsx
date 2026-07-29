@@ -14,7 +14,10 @@ import type { KeyboardEvent } from 'react';
  * Rename swaps the title for an inline field; Enter/blur commits, Esc cancels.
  */
 
-export type ChatMsg = { role: 'you' | 'twin'; text: string };
+/** 'note' — a status about a question that never got answered (mirror offline,
+ *  timed out). It titles nothing and speaks for no one; it's here so a thread
+ *  containing one is still a valid conversation to the history list. */
+export type ChatMsg = { role: 'you' | 'twin' | 'note'; text: string };
 export type ChatConvo = { id: string; messages: ChatMsg[]; title?: string };
 
 export function convoTitle(c: ChatConvo): string {

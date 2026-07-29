@@ -74,21 +74,26 @@ export default function PublicDocReader({
       }),
     });
     const b = await res.json().catch(() => ({}));
-    return (res.ok && b.answer) ? b.answer : (b.error || 'the mind could not answer just now.');
+    if (res.ok && b.answer) return b.answer;
+    // THROW on failure — never return the error as if it were the answer. The
+    // shell renders a thrown message as a status note, so a mirror that is
+    // offline can't be mistaken for a mirror that doesn't know (founder
+    // 2026-07-28). The server's own reason is the message.
+    throw new Error(b.error || 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.');
   };
 
-  // The chat empty-state: name what you're talking to — a MIRROR of his mind,
-  // not a twin or a stand-in (canon: "Alexandria builds a mirror, not a clone";
-  // it thinks WITH you, not for you). The framing must read as reflection, never
-  // replacement (founder 2026-07-20). Then the two quiet conversion doors.
-  // Sentence-cased and spaced for the reader's serif register; no arrows.
+  // Name what you're talking to — a MIRROR of his mind, not a twin or a
+  // stand-in (canon: "Alexandria builds a mirror, not a clone"; it thinks WITH
+  // you, not for you). The framing must read as reflection, never replacement
+  // (founder 2026-07-20). Pinned above the thread rather than living in the
+  // empty state, so it's still there after the first question — which is
+  // exactly when someone who asked from the document arrives here.
+  const mirrorNote = (
+    <>A mirror of Benjamin’s mind — reflected from what he’s written, not a stand-in for him. Ask it anything.</>
+  );
+  // The empty state keeps only the two quiet conversion doors.
   const intro = (
     <div style={{ color: 'var(--text-muted)', fontSize: '1.02rem', lineHeight: 1.78, textWrap: 'pretty' }}>
-      <p style={{ margin: '0 0 1.5rem', textWrap: 'pretty' }}>
-        A mirror of{' '}
-        <span style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>Benjamin</span>’s
-        {' '}mind — reflected from what he’s written, not a stand-in for him. Ask it anything.
-      </p>
       <p style={{ margin: 0, display: 'flex', alignItems: 'baseline', gap: '0.95rem', fontSize: '0.95rem' }}>
         <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">make your own</Link>
         <span aria-hidden style={{ color: 'var(--text-ghost)' }}>·</span>
@@ -113,10 +118,11 @@ export default function PublicDocReader({
       downloadName={title.replace(/\s+/g, '-')}
       downloadExt={pdfSrc ? 'pdf' : 'md'}
       who="Benjamin"
-      askPlaceholder={'ask benjamin about this…'}
+      askPlaceholder={'ask the mirror about this…'}
       askQuestions={askQuestions}
       askFn={askFn}
       intro={intro}
+      mirrorNote={mirrorNote}
       askFirst={askFirst}
       // The whitepaper and the letter: they open on a closed mirror and a long
       // read, so the ask is docked under the document. The mirror-led pages

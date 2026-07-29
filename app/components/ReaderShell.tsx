@@ -27,7 +27,11 @@ import {
  * change. Chats are in-memory only.
  */
 
-type Msg = { role: 'you' | 'twin'; text: string };
+/** 'note' is the reader-visible status of a question that never got answered
+ *  — offline, timed out, errored. It is NOT a 'twin' message: rendering a
+ *  failure as the mirror speaking makes an unreachable mind look like a mind
+ *  that doesn't know (founder 2026-07-28, seen in production). */
+type Msg = { role: 'you' | 'twin' | 'note'; text: string };
 type Convo = { id: string; messages: Msg[]; title?: string };
 
 /** The one breakpoint, shared by the JS that has to know it and mirrored by
@@ -140,6 +144,9 @@ export type ReaderShellProps = {
   askQuestions?: string[];
   askFn: (question: string) => Promise<string>;   // the twin call (wrapper decides which)
   intro?: React.ReactNode;                        // chat empty-state (who you're talking to + CTAs)
+  /** One plain line naming what the mirror is, pinned above the thread so it
+   *  survives the first question — see the render. Keep it to a sentence. */
+  mirrorNote?: React.ReactNode;
   askFirst?: boolean;                             // open with the ask pane up (mirror-led pages)
   /** Dock the composer under the piece while the mirror is collapsed — the
    *  whitepaper and the letter only. They're the two surfaces that open on a
@@ -162,7 +169,7 @@ export default function ReaderShell({
   numbered = false, plain = false,
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
-  intro, inviteField, askFirst = false, dockedAsk = false, footerCta = 'build your own',
+  intro, mirrorNote, inviteField, askFirst = false, dockedAsk = false, footerCta = 'build your own',
 }: ReaderShellProps) {
   const book = useMemo(
     () => (numbered && markdown ? processNumbered(markdown) : null),
@@ -275,11 +282,13 @@ export default function ReaderShell({
     setMidOpen(true);
     setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'you', text }] } : c)));
     if (isNarrow()) setTab('ask');
+    const add = (m: Msg) => setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, m] } : c)));
     try {
-      const answer = await askFn(text);
-      setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'twin', text: answer }] } : c)));
-    } catch {
-      setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'twin', text: 'could not reach the mind.' }] } : c)));
+      add({ role: 'twin', text: await askFn(text) });
+    } catch (e) {
+      // The thrown message is the server's own reason (offline / timeout /
+      // error) — surfaced verbatim so the reader learns WHICH happened.
+      add({ role: 'note', text: e instanceof Error && e.message ? e.message : 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.' });
     } finally {
       setAsking(false);
     }
@@ -295,7 +304,13 @@ export default function ReaderShell({
 
   const copyText = (t: string) => { try { void navigator.clipboard?.writeText(t); } catch { /* */ } };
   const copyArtifact = () => copyText(artifactText || '');
-  const copyConvo = () => copyText((active?.messages || []).map((m) => `${m.role === 'you' ? 'You' : (who || 'the mind')}: ${m.text}`).join('\n\n'));
+  // The mirror speaks as the mirror in a paste too — never as the Author
+  // themself (founder 2026-07-28: "its my mirror, not me"). Notes carry no
+  // speaker at all; nobody said them.
+  const speaker = who ? `${who}’s mirror` : 'the mirror';
+  const copyConvo = () => copyText((active?.messages || [])
+    .map((m) => (m.role === 'note' ? `[${m.text}]` : `${m.role === 'you' ? 'You' : speaker}: ${m.text}`))
+    .join('\n\n'));
   const downloadArtifact = () => {
     if (!downloadBlob) return;
     const url = URL.createObjectURL(downloadBlob);
@@ -383,13 +398,27 @@ export default function ReaderShell({
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={{ ...iconBtn, marginLeft: 'auto' }} className="hover:opacity-60" />
               )}
             </div>
+            {/* What you're talking to, said once and KEPT. It used to live in the
+                empty state, so asking from the document — which opens this pane
+                mid-question — erased the only explanation at the exact moment a
+                first-timer needed it (founder 2026-07-28, from production). It
+                sits above the thread now: outside the scroll, never scrolled
+                away, one quiet line. */}
+            {mirrorNote && (
+              <p className="mirror-note">{mirrorNote}</p>
+            )}
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
               {intro && (active?.messages.length ?? 0) === 0 && !asking && (
                 <div style={{ padding: '0.6rem 0 0.2rem' }}>{intro}</div>
               )}
               {active?.messages.map((m, i) => (
                 <div key={i} style={{ margin: '0 0 1.1rem' }}>
-                  {m.role === 'you'
+                  {m.role === 'note'
+                    // Not the mirror talking: no accent rule, no copy button,
+                    // no name — a plain status about what happened to the
+                    // question, so offline never reads as "I don't know".
+                    ? <p className="mirror-status">{m.text}</p>
+                    : m.role === 'you'
                     ? <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>{m.text}</p>
                     : (
                       <>
@@ -532,6 +561,13 @@ export default function ReaderShell({
 
         /* The docked ask — held to the text column, separated by space rather
            than a rule (the footer's line already closes the page). */
+        /* The pinned line above the thread, and the status of a question that
+           never got answered — both quieter than anything either party said. */
+        .mirror-note { flex: none; margin: 0; padding: 0.6rem 1.4rem 0.75rem; color: var(--text-ghost);
+          font-size: 0.86rem; line-height: 1.5; font-style: italic; text-wrap: pretty; }
+        .mirror-status { margin: 0; padding: 0.15rem 0 0.15rem 0.9rem; border-left: 2px solid var(--border-light);
+          color: var(--text-ghost); font-size: 0.9rem; line-height: 1.6; font-style: italic; text-wrap: pretty; }
+
         .piece-ask { flex: none; width: min(680px, 100% - 2.8rem); margin: 0 auto; padding: 0.55rem 0 1.15rem; }
         .piece-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
           mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }

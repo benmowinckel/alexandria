@@ -510,7 +510,10 @@ export async function runTwinInference(
 ): Promise<TwinInferenceResult> {
   const url = opts.url?.trim();
   if (!url) {
-    return { ok: false, status: 503, reason: 'offline', error: 'the mind is offline right now.' };
+    // Offline is NOT "I don't know" — the mirror never ran. Say which, plainly,
+    // because a reader can't tell an unreachable mind from a stumped one and
+    // will read the failure as the answer (founder 2026-07-28, from production).
+    return { ok: false, status: 503, reason: 'offline', error: 'this mirror is offline — it runs on its author’s own machine, and that machine isn’t reachable right now. your question wasn’t answered.' };
   }
 
   // -----------------------------------------------------------------------
@@ -567,19 +570,19 @@ export async function runTwinInference(
     });
 
     if (!res.ok) {
-      return { ok: false, status: 502, reason: 'upstream_error', error: 'the mind could not answer just now.' };
+      return { ok: false, status: 502, reason: 'upstream_error', error: 'the mirror hit an error and couldn’t answer. your question wasn’t answered.' };
     }
     const respBody = (await res.json().catch(() => null)) as { answer?: unknown; error?: unknown } | null;
     const answer = typeof respBody?.answer === 'string' ? respBody.answer.trim() : '';
     if (!answer) {
-      return { ok: false, status: 502, reason: 'empty', error: 'the mind returned nothing.' };
+      return { ok: false, status: 502, reason: 'empty', error: 'the mirror came back empty. your question wasn’t answered.' };
     }
     return { ok: true, answer };
   } catch (e) {
     const aborted = e instanceof Error && e.name === 'AbortError';
     return aborted
-      ? { ok: false, status: 504, reason: 'timeout', error: 'the mind took too long to answer.' }
-      : { ok: false, status: 502, reason: 'fetch_failed', error: 'could not reach the mind.' };
+      ? { ok: false, status: 504, reason: 'timeout', error: 'the mirror took too long and the question timed out. it wasn’t answered.' }
+      : { ok: false, status: 502, reason: 'fetch_failed', error: 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.' };
   } finally {
     clearTimeout(timeout);
   }

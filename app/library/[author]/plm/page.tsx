@@ -28,7 +28,10 @@ function displayName(name: string): string {
   return name.split('-').map((w, i) => (i > 0 && SMALL_WORDS.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
 }
 
-type Msg = { role: 'you' | 'twin'; text: string };
+/** 'note' — the status of a question that never got answered (mirror offline,
+ *  timed out, errored). Never rendered as the mirror speaking: an unreachable
+ *  mind must not read as a mind that doesn't know (founder 2026-07-28). */
+type Msg = { role: 'you' | 'twin' | 'note'; text: string };
 type Convo = { id: string; messages: Msg[]; title?: string };
 type FileMeta = { name: string; visibility?: string; title?: string | null; category?: string };
 type LinkedSurface = { label: string; url: string };
@@ -344,8 +347,10 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         }),
       });
       const b = await res.json().catch(() => ({}));
-      const answer = (res.ok && b.answer) ? b.answer : (b.error || 'the mind could not answer just now.');
-      setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'twin', text: answer }] } : c)));
+      const failed = !(res.ok && b.answer);
+      setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, failed
+        ? { role: 'note' as const, text: b.error || 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.' }
+        : { role: 'twin' as const, text: b.answer }] } : c)));
       // A valid code binds a grant server-side — re-read the directory so the
       // unlocked state (variants + depth) reflects it: premium lights up and
       // the code field falls away for the rest of the session.
@@ -361,7 +366,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           }).catch(() => { /* */ });
       }
     } catch {
-      setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'twin', text: 'could not reach the mind.' }] } : c)));
+      setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'note', text: 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.' }] } : c)));
     } finally {
       const next = queueRef.current.shift();
       if (next) {
@@ -377,7 +382,10 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
 
   const copyText = (t: string) => { try { void navigator.clipboard?.writeText(t); } catch { /* */ } };
-  const copyConvo = () => copyText((active?.messages || []).map((m) => `${m.role === 'you' ? 'You' : who}: ${m.text}`).join('\n\n'));
+  // "its my mirror, not me" (founder 2026-07-28) — the paste says so too.
+  const copyConvo = () => copyText((active?.messages || [])
+    .map((m) => (m.role === 'note' ? `[${m.text}]` : `${m.role === 'you' ? 'You' : `${who}’s mirror`}: ${m.text}`))
+    .join('\n\n'));
   const copyPiece = () => { try { void navigator.clipboard?.writeText(open?.content || openTextRef.current || ''); } catch { /* */ } };
   const downloadPiece = () => {
     const blob = dlBlobRef.current;
@@ -504,7 +512,12 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               )}
               {active?.messages.map((m, i) => (
                 <div key={i} style={{ margin: '0 0 1.1rem' }}>
-                  {m.role === 'you'
+                  {m.role === 'note'
+                    // A status, not the mirror talking: muted rule, no name, no
+                    // copy — so an offline mirror never reads as an answer.
+                    ? <p style={{ margin: 0, padding: '0.15rem 0 0.15rem 0.9rem', borderLeft: '2px solid var(--border-light)',
+                      color: 'var(--text-ghost)', fontSize: '0.9rem', lineHeight: 1.6, fontStyle: 'italic', textWrap: 'pretty' }}>{m.text}</p>
+                    : m.role === 'you'
                     ? <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>{m.text}</p>
                     : (
                       <>

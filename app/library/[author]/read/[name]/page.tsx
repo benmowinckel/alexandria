@@ -208,7 +208,11 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
       body: JSON.stringify({ question: text, variant: 'context', focus: { name: nice, content: focusText } }),
     });
     const b = await res.json().catch(() => ({}));
-    return (res.ok && b.answer) ? b.answer : (b.error || 'the PLM could not answer just now.');
+    if (res.ok && b.answer) return b.answer;
+    // Throw, don't return: the shell renders a thrown message as a status note
+    // rather than as the mirror speaking, so "offline" can't read as "doesn't
+    // know" (founder 2026-07-28).
+    throw new Error(b.error || 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.');
   };
 
   return (
