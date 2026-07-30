@@ -178,6 +178,8 @@ It belongs to you the same way your mind.md does, and for one more reason: you c
 
 This is the loop it all turns on: **you use the AI to put your mind into words, and it uses those words to develop you.** The same tool works both ways — it helps you get your thinking onto the page, then reads what’s there to sharpen your thinking. And the two feed each other: the more you write down, the better it develops you; the more it develops you, the more there is to write down. It’s a wheel that, once pushed, speeds up on its own.
 
+That wheel has a name. An **Alexandria loop** is your AI reading and writing your thinking — on its own as you work, with you when you talk — into files you own. The name is ours; the pattern isn’t. Anyone can build one, shaped however they like, and some people run one today having never heard of us. What we add is a standard anyone can start from: a complete working loop if you have nothing, the missing pieces if you’re halfway there.
+
 And because it compounds, what matters most is *when you start*. Earlier is worth more than anything else you can get right; every later gain rides on what you’ve already written down. There’s no shortcut to a year of your own thinking written down — but it pays you from the very first session, not only at the end.
 
 The clever move here looks like waiting — soon the AI will be good enough to draw all of this out of you in a weekend, so why start now? Because that gets the whole thing backwards. Even a perfect extraction produces a record, and the record was never the point; the point is what the practice does to the mind doing it, and that can’t be extracted — only trained. Wait a year, and the smartest system on earth can write down the mind you have then. It cannot hand you the mind you would have built. No machine can lift the weights for you and leave you with the muscle.
@@ -262,9 +264,9 @@ Most of what this needs already exists, in pieces — the models, the agents, th
 
 What we’re really offering is the philosophy, the path, and the wanting to walk it — honestly, it can be hard — plus the open infrastructure so anyone can walk it their own way.
 
-The mechanics are simple. A personal context plugin — for the AI you already use, an open standard designed to be personalised. As you work, it holds a mirror up to your thinking: it captures what and how you think, quietly in the background, with an active mode when you want a sparring partner. Everything else about you already has its instrument — your steps, your sleep, your work are all measured. The inside of your head never had one; nothing captures your internal monologue. This does — for you, in files you own. We hand you a starter; you’re meant to make it your own.
+The mechanics are simple. You know how your AI remembers a bit about you? This is that, at full depth: a package of instructions you paste into the AI you already use, telling it to write down what it learns about how you think — into plain files on your machine, in as much detail as it can. A mirror of your mind, owned by you. It writes quietly in the background as you work, and for everything it can’t see, it asks — a biographer mode, for when you want a sparring partner. Everything else about you already has its instrument — your steps, your sleep, your work are all measured. The inside of your head never had one; nothing captures your internal monologue. This does — for you, in files you own. We hand you a complete loop; you’re meant to make it your own.
 
-And the part you pay for is the community. The methods travel — everyone’s systems, shared, taken, improved — so the practice sharpens as more people walk it. The minds and their works gather — because the point of knowing is doing — in a library that is read, asked, and added to while its authors are still thinking. A network of the people who chose to keep thinking.
+And the part you pay for is the community — the loop itself stays free, and can, because instructions cost nothing to copy. Picture Strava, if Strava also handed every runner a free pair of shoes: the shoes are yours forever, and the product was never shoes — it’s connecting runners. So it is here. The methods travel — everyone’s systems, shared, taken, improved — so the practice sharpens as more people walk it. The minds and their works gather — because the point of knowing is doing — in a library that is read, asked, and added to while its authors are still thinking. A network of the people who chose to keep thinking.
 
 So: a philosophy, a tribe, and the infrastructure that joins them. Offer the path. Gather the tribe. And keep the door open — so everyone who wants in, gets in.
 
@@ -274,4 +276,4 @@ So: a philosophy, a tribe, and the infrastructure that joins them. Offer the pat
 
 *You don’t need to accept all of it to begin. A few words, five minutes — free, and yours.*
 
-[join the tribe](/join) · [read the letter](/docs/letter.pdf) · [browse the library](/library)
+[try it free](/start) · [read the letter](/docs/letter.pdf) · [browse the library](/library)
