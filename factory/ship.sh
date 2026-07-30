@@ -7,6 +7,13 @@
 # Replaces `git push` for any change in factory/hooks/payload.sh or factory/canon/*.md.
 #
 # Trust root: ~/.alexandria-signing/key (ed25519, passphrase-protected, never in CI).
+#
+# The key must NEVER be loaded into ssh-agent: ssh-keygen -Y sign will use an
+# agent-cached key silently, so signing stops asking for the passphrase and any
+# process running as the user can produce valid signatures — the founder-only
+# property silently deletes itself (found live 2026-07-30). If this script ever
+# signs WITHOUT prompting for the passphrase, the agent has the key again:
+# run `ssh-add -d ~/.alexandria-signing/key` and investigate how it got loaded.
 
 set -euo pipefail
 
