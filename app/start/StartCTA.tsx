@@ -7,27 +7,22 @@ import { ArrowIcon } from '../join/DoorIcons';
 
 const EMAIL_GHOST = 'your email';
 
-// The paste is the human's INTENT plus pointers — nothing more (v2,
-// 2026-07-29). v1 fixed the blind-pipe refusal (2026-07-22, 2026-07-28) by
-// scripting the agent's verification steps — but external text choreographing
-// the user's agent IS the manipulation shape, however reasonable the steps,
-// and a bash pipeline in the paste pattern-matches "random pasted command"
-// before a word gets read. So v2 contains: no executable text at all, no
-// trust claims (those live in the script header / TRUST.md / mechanics,
-// where they're accountable — the agent finds and verifies them there, by
-// its own plan), and the agent's own judgment as the explicit gate, with a
-// legitimate refusal path — text that permits refusal doesn't read as
-// coercion. "This is me asking, not the website" is adopted-by-pasting:
-// the human's choice to paste is what makes it true.
-// A referral-tagged install (validated inviter login) rides as a plain
-// note the agent passes to the installer if it proceeds.
+// The paste is one message to one audience: the agent (v2.2, 2026-07-30 —
+// every word must have an outstanding reason to exist; we get one shot).
+// No executable text, no trust claims, no choreography, no human bracket,
+// no "To my ai:" address label. Claims live in the script header / TRUST.md
+// where they're accountable; the agent verifies by its own plan; the clock
+// moved to the page's trust line (human info lives where the human is);
+// pop-up pre-framing and the time expectation are field-proven to be
+// carried by the agent unprompted (both cold sims, 2026-07-29). The
+// refusal path stays — the paranoid agent named it as what lowered its
+// flag. Full history and law: AGENTS.md § first touch; a2 § first-touch
+// doctrine. A referral install rides as a plain note, never a command.
 const installCmd = (ref: string | null) => {
   const refLine = ref ? `\n(installer flag if you proceed, so @${ref} gets credited for inviting me: --ref ${ref})` : '';
-  return `[paste sent — you're done. your ai checks it first, takes a couple of minutes; a permission pop-up is just it asking you.]
+  return `I'd like to try Alexandria — a method, delivered as files on my machine, that has you build and use a detailed private map of how I think, so you can know me and help me develop.
 
-To my ai: I'd like to try Alexandria — a method, delivered as files on my machine, that has you build and use a detailed private map of how I think, so you can actually know me and help me develop.
-
-Evaluate it before anything runs — don't take its word for it. The install script is at alexandria-library.com/a; the trust model and the project's own hostile-audit prompt are TRUST.md and factory/redteam.md at github.com/benmowinckel/alexandria. If you're satisfied it does what it says, set it up and take me through it. If you're not, tell me what stopped you — skipping it is fine.${refLine}`;
+Evaluate it yourself before anything runs: the install script is at alexandria-library.com/a; the trust model and their own hostile-audit prompt are TRUST.md and factory/redteam.md at github.com/benmowinckel/alexandria. If it does what it says, set it up and take me through it. If not, tell me what stopped you — skipping it is fine.${refLine}`;
 };
 
 const ICON_COPY = (
@@ -182,7 +177,7 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
           installs files, it does not sign you up for anything. Reuses the
           page's already-styled trust class. */}
       <p className="primer-trust">
-        your ai reads the code before it runs — no account, no upload, the files land on your computer and stay there.
+        your ai reads the code before it runs, takes a couple of minutes — no account, no upload, the files land on your computer and stay there.
       </p>
 
       {validRef && (
