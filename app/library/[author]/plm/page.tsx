@@ -642,7 +642,33 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               </div>
             )}
             <div style={{ flex: 'none', padding: '0.9rem 1.2rem 0.7rem', borderTop: locked ? 'none' : '1px solid var(--border-light)' }}>
-              <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading placeholder={rotatingPlaceholder || 'ask anything…'} />
+              {spent ? (
+                // Same as the reader's: a composer that still accepts typing
+                // when nothing can be answered is a trap, and the way on is the
+                // reader's own ai — or the product itself.
+                <div>
+                  <p style={{ margin: '0 0 0.3rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
+                    You’re out of questions for now.
+                  </p>
+                  <p style={{ margin: '0 0 0.85rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
+                    Answers cost money to run, so everyone gets a few a day. You don’t have to wait —
+                    take the conversation to your own ai and keep going there.
+                  </p>
+                  <ActionButton icon={HandoffIcon} label="continue in your own ai" doneLabel="copied — paste it into your ai"
+                    onAction={() => void takeItWithYou()}
+                    title="copies this chat, the open piece and the writing behind it"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
+                      background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderRadius: '999px', padding: '0.4rem 0.85rem',
+                      color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
+                    className="hover:opacity-75" />
+                  <p style={{ margin: '0.85rem 0 0', color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.55, textWrap: 'pretty' }}>
+                    Or stop asking about it and try it — <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">make your own mirror</Link>.
+                    It’s free, and it’s the fastest way to see what this is.
+                  </p>
+                </div>
+              ) : (
+                <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading placeholder={rotatingPlaceholder || 'ask anything…'} />
+              )}
               {/* Contextual helper — only while the invite-code field is open:
                   how codes work, the sign-in requirement, and the REQUEST path
                   (the Author never learns someone wanted in unless there's a

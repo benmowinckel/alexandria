@@ -653,12 +653,11 @@ export function registerLibraryRoutes(app: Hono): void {
     const twinIp = c.req.header('cf-connecting-ip') || 'unknown';
     const twinLimit = visitorAllowance(viewer);
     const twinUsed = twinSummary.enabled ? await twinVisitorUsed(authorId, viewer, twinIp) : 0;
+    const twinBudget = twinUsed === null ? {} : { limit: twinLimit, remaining: Math.max(0, twinLimit - twinUsed) };
     const twinLive = twinSummary.enabled ? await twinStatus(authorId) : null;
     const twinOut = twinLive
-      ? { ...twinSummary, online: twinLive.online, model: twinLive.model, signed_in: !!viewer, depth: twinDepth,
-          limit: twinLimit, remaining: Math.max(0, twinLimit - twinUsed) }
-      : { ...twinSummary, online: false, model: null, signed_in: !!viewer, depth: twinDepth,
-          limit: twinLimit, remaining: twinLimit };
+      ? { ...twinSummary, online: twinLive.online, model: twinLive.model, signed_in: !!viewer, depth: twinDepth, ...twinBudget }
+      : { ...twinSummary, online: false, model: null, signed_in: !!viewer, depth: twinDepth, ...twinBudget };
     // Per-file "kind" (works/projects/shadows/other) so the page can lay entries
     // out in neat categories like the demo. Stored in a dedicated KV map the
     // owner sets; untagged files fall to 'shadows'.
@@ -1003,7 +1002,7 @@ export function registerLibraryRoutes(app: Hono): void {
   // Signed-in visitors get more because they are identifiable and accountable;
   // an anonymous caller is an IP, which is cheap to rotate.
   const TWIN_VISITOR_ALLOWANCE_ANON = 10;
-  const TWIN_VISITOR_ALLOWANCE_MEMBER = 25;
+  const TWIN_VISITOR_ALLOWANCE_MEMBER = 20;
 
   function visitorAllowance(accessor: Account | null): number {
     return accessor ? TWIN_VISITOR_ALLOWANCE_MEMBER : TWIN_VISITOR_ALLOWANCE_ANON;
@@ -1011,18 +1010,34 @@ export function registerLibraryRoutes(app: Hono): void {
 
   // Identity for the counter: the account when we have one (survives IP changes,
   // so a member can't multiply their allowance by moving networks), else the IP.
-  function visitorKey(authorId: string, accessor: Account | null, ip: string): string {
-    return `rate:twin:visitor:${authorId}:${accessor?.github_login || `ip:${ip}`}`;
+  //
+  // The IP is HASHED, never stored raw. A counter only needs to tell visitors
+  // apart, which a digest does exactly as well — and the server holding no
+  // user-specific plaintext is a standing rule here, not a preference. Salted
+  // per author so the same visitor isn't correlatable across Authors by key.
+  async function hashIp(authorId: string, ip: string): Promise<string> {
+    const data = new TextEncoder().encode(`${authorId}:${ip}`);
+    const digest = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(digest).slice(0, 10))
+      .map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  async function visitorKey(authorId: string, accessor: Account | null, ip: string): Promise<string> {
+    const who = accessor?.github_login || `ip:${await hashIp(authorId, ip)}`;
+    return `rate:twin:visitor:${authorId}:${who}`;
   }
 
   // Read-only, like the daily cap: checking must never consume, or a blocked
   // question would spend an allowance it never used (audit S1, same reasoning).
-  async function twinVisitorUsed(authorId: string, accessor: Account | null, ip: string): Promise<number> {
+  async function twinVisitorUsed(authorId: string, accessor: Account | null, ip: string): Promise<number | null> {
     try {
-      const raw = await getKV().get(visitorKey(authorId, accessor, ip));
+      const raw = await getKV().get(await visitorKey(authorId, accessor, ip));
       return raw ? parseInt(raw, 10) : 0;
     } catch {
-      return Number.MAX_SAFE_INTEGER; // FAIL CLOSED — a blind guard must not open the cost surface
+      // null = unknown. The ASK path treats unknown as spent (fail closed — a
+      // blind guard must not open a cost surface); the DISPLAY path shows
+      // nothing rather than telling an innocent visitor they're out.
+      return null;
     }
   }
 
@@ -1034,8 +1049,8 @@ export function registerLibraryRoutes(app: Hono): void {
   // already past its limit by the time they get there.
   async function bumpTwinVisitor(authorId: string, accessor: Account | null, ip: string): Promise<void> {
     const keys = accessor
-      ? [visitorKey(authorId, accessor, ip), visitorKey(authorId, null, ip)]
-      : [visitorKey(authorId, null, ip)];
+      ? await Promise.all([visitorKey(authorId, accessor, ip), visitorKey(authorId, null, ip)])
+      : [await visitorKey(authorId, null, ip)];
     await Promise.all(keys.map(async (key) => {
       try {
         const kv = getKV();
@@ -1288,7 +1303,8 @@ export function registerLibraryRoutes(app: Hono): void {
     // The visitor's own allowance. Checked here (not inside runTwinQuery) because
     // it needs the IP, and read-only so a refused question never spends one.
     const allowance = visitorAllowance(accessor);
-    const usedBefore = await twinVisitorUsed(authorId, accessor, ip);
+    const usedRaw = await twinVisitorUsed(authorId, accessor, ip);
+    const usedBefore = usedRaw ?? Number.MAX_SAFE_INTEGER; // unknown → closed
     if (usedBefore >= allowance) {
       // Not a dead end: `handoff` tells the client to offer the reader their
       // copy — the mind, the piece, and the conversation — to continue on their
