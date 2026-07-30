@@ -1027,13 +1027,22 @@ export function registerLibraryRoutes(app: Hono): void {
   }
 
   // Called ONLY after a billable answer, same as bumpTwinDaily.
+  //
+  // A signed-in visitor spends BOTH their account counter and their IP counter.
+  // Otherwise signing out is a reset button: burn the member's 25, log out, and
+  // collect a fresh anonymous 10. Spending both means the anonymous bucket is
+  // already past its limit by the time they get there.
   async function bumpTwinVisitor(authorId: string, accessor: Account | null, ip: string): Promise<void> {
-    try {
-      const kv = getKV();
-      const key = visitorKey(authorId, accessor, ip);
-      const raw = await kv.get(key);
-      await kv.put(key, String((raw ? parseInt(raw, 10) : 0) + 1), { expirationTtl: 86400 });
-    } catch { /* under-counts at worst; the read guard is the ceiling */ }
+    const keys = accessor
+      ? [visitorKey(authorId, accessor, ip), visitorKey(authorId, null, ip)]
+      : [visitorKey(authorId, null, ip)];
+    await Promise.all(keys.map(async (key) => {
+      try {
+        const kv = getKV();
+        const raw = await kv.get(key);
+        await kv.put(key, String((raw ? parseInt(raw, 10) : 0) + 1), { expirationTtl: 86400 });
+      } catch { /* under-counts at worst; the read guard is the ceiling */ }
+    }));
   }
 
   // Invite-code validation for twin queries — same access_codes table the file

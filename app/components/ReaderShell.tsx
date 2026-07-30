@@ -522,37 +522,32 @@ export default function ReaderShell({
                 // say what the thing does and what to do with it. Two plain
                 // sentences, one button, one alternative (founder 2026-07-29).
                 <div>
-                  {/* What, why, how — in that order, in plain words. Without
-                      the why the cap reads as arbitrary; the true reason is
-                      simple and worth saying out loud: the Author pays for
-                      their own mirror's answers. And the way on is not "come
-                      back tomorrow", it's "carry on now, somewhere else"
-                      (founder 2026-07-29). */}
+                  {/* What, why, then the two ways forward. The why matters —
+                      a cap with no reason reads as arbitrary — but it isn't
+                      about any one Author or an exact number, so it says
+                      neither. And someone who just asked their way through a
+                      day's allowance has already shown the interest: the second
+                      door is the product itself (founder 2026-07-29). */}
                   <p style={{ margin: '0 0 0.3rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
-                    You’re out of questions for today.
-                  </p>
-                  <p style={{ margin: '0 0 0.25rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
-                    Every answer costs {who || 'the author'} money to run, so each visitor gets
-                    {budget?.limit ? ` ${budget.limit} ` : ' a few '}a day.
+                    You’re out of questions for now.
                   </p>
                   <p style={{ margin: '0 0 0.85rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
-                    You don’t have to wait — keep going on your own ai. This copies the chat,
-                    the piece, and {who ? `${who}’s` : 'the author’s'} writing. Paste it in and carry on.
+                    Answers cost money to run, so everyone gets a few a day. You don’t have to wait —
+                    take the conversation to your own ai and keep going there.
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
-                    <ActionButton icon={HandoffIcon} label="copy it for your ai" doneLabel="copied — now paste it in"
+                    <ActionButton icon={HandoffIcon} label="continue in your own ai" doneLabel="copied — paste it into your ai"
                       onAction={() => void takeItWithYou()}
-                      title="copies the conversation, the piece and the author's published mind"
+                      title="copies this chat, the piece and the writing behind it — paste it into ChatGPT, Claude, or whatever you use"
                       style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
                         background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderRadius: '999px', padding: '0.4rem 0.85rem',
                         color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
                       className="hover:opacity-75" />
-                    {!budget?.signedIn && signInUrl && (
-                      <a href={signInUrl} style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-70">
-                        or sign in for more
-                      </a>
-                    )}
                   </div>
+                  <p style={{ margin: '0.85rem 0 0', color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.55, textWrap: 'pretty' }}>
+                    Or stop asking about it and try it — <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">make your own mirror</Link>.
+                    It’s free, and it’s the fastest way to see what this is.
+                  </p>
                 </div>
               ) : (
                 <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder={rotatingPlaceholder || askPlaceholder} />
