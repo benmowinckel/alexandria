@@ -8,12 +8,10 @@
 #
 # Trust root: ~/.alexandria-signing/key (ed25519, passphrase-protected, never in CI).
 #
-# The key must NEVER be loaded into ssh-agent: ssh-keygen -Y sign will use an
-# agent-cached key silently, so signing stops asking for the passphrase and any
-# process running as the user can produce valid signatures — the founder-only
-# property silently deletes itself (found live 2026-07-30). If this script ever
-# signs WITHOUT prompting for the passphrase, the agent has the key again:
-# run `ssh-add -d ~/.alexandria-signing/key` and investigate how it got loaded.
+# Signing must always cost the founder's passphrase — enforced structurally
+# below (agent cut off + unencrypted-key refusal), not by discipline. Found
+# live 2026-07-30: the key sat cached in ssh-agent and ship.sh signed silently,
+# which hands valid signatures to any process running as the user.
 
 set -euo pipefail
 
@@ -26,6 +24,22 @@ SIGNING_KEY="${ALEX_SIGNING_KEY:-$HOME/.alexandria-signing/key}"
 if [ ! -f "$SIGNING_KEY" ]; then
   echo "error: signing key not found at $SIGNING_KEY" >&2
   echo "Generate with: ssh-keygen -t ed25519 -f $SIGNING_KEY -C alexandria-payload-signing" >&2
+  exit 1
+fi
+
+# ── Structural passphrase gate (2026-07-30) ──────────────────────────────────
+# Two silent-signing paths exist and both are closed here, in code:
+# 1) ssh-agent: ssh-keygen -Y sign uses an agent-cached key without prompting,
+#    so a passphrase typed once anywhere makes every later ship free for ANY
+#    process running as this user. Cut the agent off for this script's scope —
+#    the key file must be decrypted directly, which demands the passphrase.
+unset SSH_AUTH_SOCK
+# 2) an unencrypted key file: file-based signing wouldn't prompt either. If the
+#    key opens with an empty passphrase, it is not passphrase-protected —
+#    refuse to ship until it is re-keyed.
+if ssh-keygen -y -P "" -f "$SIGNING_KEY" >/dev/null 2>&1; then
+  echo "error: $SIGNING_KEY opens with an EMPTY passphrase — signing would never require the founder." >&2
+  echo "Re-key it now: ssh-keygen -p -f $SIGNING_KEY   (set a real passphrase), then re-run." >&2
   exit 1
 fi
 
