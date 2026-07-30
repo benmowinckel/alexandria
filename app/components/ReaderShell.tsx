@@ -238,7 +238,21 @@ export default function ReaderShell({
   const threadRef = useRef<HTMLDivElement>(null);
   const promptRef = useRef<{ focus: () => void } | null>(null);
 
-  useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [active?.messages, asking]);
+  // Land a new answer at ITS OWN TOP, not the bottom of the thread. An answer
+  // is read from the first line down, so scrolling past it to the end means
+  // scrolling back up before you can start (founder 2026-07-29). Only the
+  // reader's own turn scrolls to the bottom — there you do want the newest
+  // thing in view while it thinks.
+  const lastMsgRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = threadRef.current;
+    if (!box) return;
+    const msgs = active?.messages || [];
+    const last = msgs[msgs.length - 1];
+    const el = lastMsgRef.current;
+    if (last && last.role !== 'you' && el) box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'smooth' });
+    else box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+  }, [active?.messages, asking]);
 
   // When the chat pane becomes visible (expand it on desktop, or switch to the
   // ask tab on mobile), drop the cursor in the composer so you can type at once.
@@ -492,12 +506,12 @@ export default function ReaderShell({
             {mirrorNote && (
               <p className="mirror-note">{mirrorNote}</p>
             )}
-            <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
+            <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
               {intro && (active?.messages.length ?? 0) === 0 && !asking && (
                 <div style={{ padding: '0.6rem 0 0.2rem' }}>{intro}</div>
               )}
               {active?.messages.map((m, i) => (
-                <div key={i} style={{ margin: '0 0 1.1rem' }}>
+                <div key={i} ref={i === (active.messages.length - 1) ? lastMsgRef : undefined} style={{ margin: '0 0 1.1rem' }}>
                   {m.role === 'note'
                     // Not the mirror talking: no accent rule, no copy button,
                     // no name — a plain status about what happened to the

@@ -61,8 +61,11 @@ export function composeHandoff({ ctx, piece, messages = [], model, variant }: Ha
     out.push('');
     out.push(`Source: ${ctx.profile_url}`);
   }
-  if (model) {
-    out.push(`Answered up to here by: ${model}${variant ? ` (${variant})` : ''}`);
+  // No model name. It named a vendor to the next model, which answered "you're
+  // asking me to pick up where sonnet left off" — a detail that belongs to us,
+  // not to the reader or their ai (founder 2026-07-29).
+  if (variant === 'weights') {
+    out.push('(The answers so far came from the author’s own trained weights, not a general model reading their writing.)');
   }
 
   // Quoted content is fenced, not pasted raw: a shadow or a whitepaper carries

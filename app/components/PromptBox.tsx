@@ -227,10 +227,11 @@ const PromptBox = forwardRef<PromptBoxHandle, {
         <div aria-hidden style={{
           position: 'absolute', left: 0, top: 0, right: bare ? (voiceOn ? '1.9rem' : 0) : ghostRight,
           padding: bare ? '0.35rem 0 0.5rem 0.4rem' : '0.62rem 0 0.62rem 1.35rem',
-          // Ghost, not invisible: --text-ghost is the faintest step on the scale
-          // and a rotating question nobody can read teaches nothing (founder
-          // 2026-07-29). One step up reads as a suggestion rather than a smudge.
-          pointerEvents: 'none', color: 'var(--text-muted)',
+          // Ghost, not invisible. --text-ghost is the faintest step on the scale
+          // and --text-muted still read as a smudge (founder 2026-07-29, twice):
+          // a rotating question nobody reads teaches nothing, so it sits at
+          // --text-secondary — clearly a suggestion, clearly not typed yet.
+          pointerEvents: 'none', color: 'var(--text-secondary)',
           fontFamily: 'var(--font-eb-garamond)', fontSize: bare ? '1.05rem' : '1rem', lineHeight: 1.45,
           whiteSpace: 'nowrap', overflow: 'hidden',
           // Bare sits on an open line, so a suggestion longer than the line

@@ -104,7 +104,7 @@ export default function PublicDocReader({
       return {
         answer: b.answer as string,
         remaining: b.remaining, limit: b.limit, signed_in: b.signed_in,
-        model: twin?.model ?? null, variant: b.variant ?? null,
+        variant: b.variant ?? null,
       };
     }
     // Out of questions is its own outcome, not a failure: the shell turns this
@@ -134,7 +134,7 @@ export default function PublicDocReader({
       A mirror of Benjamin’s mind, built from what he’s written.{' '}
       {twin && !twin.online
         ? <>Offline right now — it runs on his own machine.</>
-        : <>Ask it anything.{twin?.model ? <> Running on {twin.model}.</> : null}</>}
+        : <>Ask it anything.</>}
     </>
   );
   // The empty state keeps only the two quiet conversion doors.

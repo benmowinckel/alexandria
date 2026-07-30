@@ -184,7 +184,18 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     return () => { live = false; };
   }, [author]);
 
-  useEffect(() => { threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' }); }, [active?.messages, asking]);
+  // An answer lands at its own top — see ReaderShell. Only your own turn
+  // scrolls to the bottom.
+  const lastMsgRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = threadRef.current;
+    if (!box) return;
+    const msgs = active?.messages || [];
+    const last = msgs[msgs.length - 1];
+    const el = lastMsgRef.current;
+    if (last && last.role !== 'you' && el) box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'smooth' });
+    else box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+  }, [active?.messages, asking]);
 
   // The profile door's question (?q=) fires once the mind is loaded, then the
   // param is stripped so refresh/back doesn't re-ask. The chat opens already
@@ -343,7 +354,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       // On the profile there is no single piece — whatever the reader has open.
       piece: open?.content ? { name: open.nice, content: open.content } : null,
       messages: active?.messages || [],
-      model: twinModel,
       variant: activeVariant,
     }));
   };
@@ -495,14 +505,14 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
               <span className="chat-label" style={{ ...label, marginLeft: '-0.45rem' }}>chat</span>
-              {/* What's answering, and what's left. The model name makes the two
-                  kinds of mind legible — a context mirror reasoning over the
-                  Author's writing vs their trained weights — and the count only
-                  appears once it's worth knowing (founder 2026-07-29). */}
-              {twinModel && (
-                <span className="chat-model" style={{ ...label }}>
-                  {activeVariant === 'weights' ? 'weights' : twinModel}
-                </span>
+              {/* No model name. Which vendor's model is answering is our
+                  problem, not the reader's — and naming it dates the page and
+                  invites the wrong comparison (founder 2026-07-29: "delete").
+                  The distinction that IS the reader's business — a mirror built
+                  from writing vs the Author's trained weights — is carried by
+                  the depth toggle beside this. */}
+              {activeVariant === 'weights' && (
+                <span className="chat-model" style={{ ...label }}>weights</span>
               )}
               {budget && budget.remaining <= 3 && (
                 <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-ghost)' }}>
@@ -556,7 +566,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={{ ...iconBtn, marginLeft: '0.4rem' }} className="hover:opacity-60" />
               )}
             </div>
-            <div ref={threadRef} style={{ flex: 1, overflow: 'auto', padding: '0.4rem 1.4rem 1.4rem' }}>
+            <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
               {who && (active?.messages.length ?? 0) === 0 && !asking && !cameWithQuestion && (
                 // The first-timer explainer — third-person MIRROR framing (it
                 // reflects the Author, it never IS them) + how to use it and the
@@ -575,7 +585,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 </div>
               )}
               {active?.messages.map((m, i) => (
-                <div key={i} style={{ margin: '0 0 1.1rem' }}>
+                <div key={i} ref={i === (active.messages.length - 1) ? lastMsgRef : undefined} style={{ margin: '0 0 1.1rem' }}>
                   {m.role === 'note'
                     // A status, not the mirror talking: muted rule, no name, no
                     // copy — so an offline mirror never reads as an answer.
