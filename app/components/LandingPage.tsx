@@ -1253,6 +1253,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 <Link href="/marketplace" className="quiet-link">marketplace<span className="shelf-dot">.</span></Link>
                 <span className="quiet-div" aria-hidden />
                 <DemoFilm className="quiet-link quiet-door"><em>watch the demo</em></DemoFilm>
+                <Link href="/features" className="quiet-link quiet-door"><em>the features</em></Link>
                 <Link href="/follow" className="quiet-link quiet-door"><em>show your support</em></Link>
               </p>
           </div>

@@ -24,7 +24,7 @@ the opposite — that's the whole point. hand all your thinking to ai and your o
 
 ## isn't this just my ai's memory.
 
-your ai's memory captures what you happen to tell one product, and keeps it there — rough notes locked in someone else's app: you can't read them, can't shape them, can't take them with you. the loop is the opposite: deliberate depth, in plain files you can read top to bottom, that every ai reads — and that come with you if you ever switch. let the labs win the capture race; the better their memory gets, the more yours has to build on. no vendor caps how much your files hold, you choose what each ai sees, and you can change or revoke any of it whenever. your memory, your terms, every model.
+your ai's memory is genuinely useful, and it will keep getting better — nothing here touches it; it keeps running alongside. the difference is structure: it lives on that product's account, and if you ever move, what you can take is raw material — transcripts, exported notes — that the next ai has to work you out from all over again. the loop builds the understanding itself: deliberate depth, in plain files you can read top to bottom, that every ai you choose reads — and the whole map comes with you if you ever switch. the better their memory gets, the more yours has to build on. no vendor caps how much your files hold, you choose what each ai sees, and you can change or revoke any of it whenever. your memory, your terms, every model.
 
 ## isn't this just a notes app.
 
