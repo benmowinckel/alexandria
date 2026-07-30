@@ -1185,50 +1185,18 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
       echo "Once they say yes, they can step away."
     fi
     echo "(Author: if nothing happens, just say \"begin\".)"
-    if [ "$KEYLESS" = "true" ]; then
-      echo ""
-      echo "The tool is yours: free, local, no account, never sent to us — and if you later want"
-      echo "backups, they go only to your OWN GitHub/iCloud, on your explicit yes. It stays free"
-      echo "forever because it's just a local file you own. After it drafts a first reflection"
-      echo "it'll show you how to become a founding member of the collective at"
-      echo "alexandria-library.com/join — the thing being built: the"
-      echo "library, the marketplace, the people. First month free, then free while three friends"
-      echo "you brought stay on, otherwise a dollar a day — and if that's a stretch, message me and I'll"
-      echo "waive it."
-    fi
   fi
-  # The habit — the one behaviour that makes the product work (founder
-  # 2026-07-17: say it everywhere, make it autopilot-simple).
-  echo ""
-  echo "The habit: open a new tab, type /a, and leave it. That's a session — do it whenever."
-  # The add-ons drip — everything setup deliberately did NOT install. One
-  # pointer, no pitch; the agent reads .optional and each add-on is one
-  # explicit yes. Authors with their own version of any of these keep theirs.
-  echo ""
-  echo "Add-ons (all optional, none installed yet): backup to your own GitHub, iCloud"
-  echo "mirror, texting it from your phone, marketplace publishing. Ask your agent"
-  echo "about any of them — each is one yes, explained in ~/alexandria/system/.optional,"
-  echo "and if you already have your own version of one, keep yours."
-  # Cowork / the Claude app / plain chat can't run hooks or the /a skill on
-  # their own — but one paste makes them Alexandria-aware.
-  echo ""
-  echo "Also use Cowork or the Claude app? Two one-time steps, then it just works:"
-  echo "  1. In Cowork: Add plugins → from repo → benmowinckel/alexandria (gives /a)."
-  echo "  2. Paste ~/alexandria/system/.claude-instructions.md into Claude Settings →"
-  echo "     Profile → \"Instructions for Claude\" (so it prompts you to attach + /a)."
-  echo "Then per session: attach your ~/alexandria folder + type /a. (Full read/write"
-  echo "is desktop Cowork only — mobile and plain chat can't reach your local files.)"
-
-  # Optional extras — offered AFTER the first session, never blocking it. Each
-  # adds a layer (backup, hooks, signing) but the first reflection is reachable
-  # with none of them. If everything optional is present, this prints nothing.
+  # Radical UX rule (founder, 2026-07-30): the installer prints nothing the
+  # agent can carry at a better moment. The habit, the add-ons drip, the
+  # Cowork steps, the free-forever/join framing, and the deferred extras all
+  # used to print here — ~30 lines of wall at a person who hasn't onboarded
+  # yet, duplicating what block.md delivers when it's actually relevant.
+  # They now live in files the agent reads: .optional (add-ons + Cowork),
+  # .deferred (optional extras to offer AFTER the first session), and the
+  # block's own report beats (habit, join). A page line is only legal if the
+  # model can't carry it.
   if [ -n "$DEFERRED" ]; then
-    echo ""
-    echo "Want the full setup? These are optional — the first reflection works without them,"
-    echo "but each one adds a layer. Add any, then re-run the one line:"
-    printf "%b" "$DEFERRED" | while IFS= read -r line; do
-      [ -n "$line" ] && echo "  · $line"
-    done
+    printf "%b" "$DEFERRED" > "$ALEX_DIR/system/.deferred" 2>/dev/null || true
   fi
 elif [ "$KEY_STATUS" = "401" ]; then
   # Rejected key deserves a plain closing, not just a matrix row: the local
