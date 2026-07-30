@@ -176,7 +176,7 @@ export default function PublicDocReader({
       // read, so the ask is docked under the document. The mirror-led pages
       // (askFirst) already open with the pane up and need nothing.
       dockedAsk={!askFirst}
-      footerCta="close your loop"
+      footerCta="try it free"
     />
   );
 }

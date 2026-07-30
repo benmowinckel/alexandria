@@ -167,14 +167,16 @@ const THEMES: Theme[] = [
 // land on /start without ever touching this button again.
 // Label history: "join the tribe" → "try it free" (07-09) → "join the
 // tribe" (07-13) → "take it — it's free" (2026-07-15) → "free sample"
-// (2026-07-16, founder): the button names the thing itself, and the sub
-// carries his even-slightly-interested test — the pair with the ghost
-// CTA covers product-interest and company-interest as parallel doors.
+// (2026-07-16) → "close your loop" (07-27) → "try it free" (07-28
+// proposal): "close your loop" only parses after reading the pitch —
+// opaque at the moment of action on the skim path, the same defect
+// class as "stay close" (field-tested fatal, twice). The label names
+// the action and the cost.
 function HomeInstall() {
   return (
     <div className="cta-block">
       <Link href="/start" className="install-cta">
-        close your loop
+        try it free
       </Link>
     </div>
   );
@@ -264,64 +266,99 @@ function DemoFilm({
 
 export default function LandingPage({ brandClassName = '' }: Props) {
   const [themeIdx, setThemeIdx] = useState(0);
-  // ── THE PITCH — one text, static, nothing to operate (founder,
-  // 2026-07-27: "too complicated with all the different sections… too
-  // long… they kind of say the same thing"). The five essays behind the
-  // product/company tabs (simple/technical + why/what/how) collapsed
-  // into ONE short pitch: the locked simple one-liner as the lead, three
-  // one-beat paragraphs, and the locked technical one-liner as a quiet
-  // aside for the builders. Depth now lives where it already lived —
-  // /features (the ask page) answers any question; the letter +
-  // whitepaper (nav) carry the company story. The cut essays are
-  // preserved in git and in a4's back-slide entry.
-  // The marginal-value argument (founder, 2026-07-27, second pass): the
-  // pitch must be structural so it cannot age — connectors exist for
-  // every piece of personal data EXCEPT the internal thought space;
-  // nothing can extract that for you, so it takes an active choice; the
-  // Alexandria loop exists for exactly that extraction; the company
-  // exists to make the choice as easy as possible; the collective
-  // connects everyone who makes it. The delta stated as unlooped vs
-  // looped, with the 10x value line as the "with us" side.
-  const PITCH = {
-    lead: 'The better ai knows you, the better it helps you. But the most important part of you — how you think — is stuck in your head.',
-    body: [
-      'Your email, your calendar, your files — all of that can be plugged in. How you think can’t. It only comes out if you choose to get it out — and nobody can make that choice for you.',
-      'The Alexandria loop is a simple standard: your ai writes what it learns about you into private files, and every conversation starts from them. Without it, ai holds only rough notes on you, locked away in other people’s apps — notes you can’t read, shape, or take with you. With it, a depth otherwise impossible: private, unified, a full mirror of your mind.',
-      'Most of it is automatic: just use ai like you already do, and the loop quietly writes down what it learns. The deepest parts of you need real thought — the more you put in, the more you get out; the loop just makes putting in easy.',
-      'Our only job is to make sure your loop is closed. If you have nothing, we hand you a complete one, free. If you have pieces — notes, a CLAUDE.md, memories — we click into yours. If you’ve built your own, ours makes it stronger. And a loop is just text files on your computer: once it’s yours, it has nothing to do with us — we’re only the place loops connect.',
-    ],
-  };
-  // ── The second tab — "on alexandria." Rebuilt 2026-07-27 (founder:
-  // "completely rethink... considering this new product text"): with the
-  // loop text carrying folder/free/mirror/choice mechanics, the old
-  // what/how sections became pure duplication — so this tab is now the
-  // MANIFESTO alone: the chess argument, the muscle argument, and the
-  // identity, ending by tying the identity back to the loop. The
-  // why/what/how plates are gone; one aphorism, three short paragraphs.
-  const MANIFESTO = {
-    lead: 'Cultures must choose to value humans, but humans must first choose to value themselves.',
-    body: [
-      'Machines are infinitely better at chess than we are, yet human chess is more popular than it has ever been — we still love to watch humans play. But only the ones who can still play the game.',
-      'Technology is a multiplier: it carries you further down whatever path you point it. Let ai think for you, and your mind — like any muscle you stop using — begins to fade; left without direction, it drifts where it wants to go, not where you want to go. Keep going, and one day you wake up as one of the humans in Wall-E. Align it to think with you instead, and there is no limit to how far the two of you can go.',
-      'That is what Alexandria is for: helping people build systems to keep thinking — so that we never lose our minds. An Alexandrian aligns their ai to be a partner in their thinking, never a replacement for it. We exist to explain the why, to gather the ones who choose it, and to build the tools for anyone who wants to try.',
-      'Because distinctiveness is sacred: if everyone is something, nobody is anything. ai is making every skill common — the one thing it cannot make common is a mind kept distinct, under its own name, on its own ground.',
-      'Alexandrians are defined by this choice alone — the loop is just how we keep it. Keep thinking.',
-    ],
-  };
-  const [backPanel, setBackPanel] = useState<'pitch' | 'about'>('pitch');
-  // Hover-intent for the tabs — 170ms dwell so a transit across the row
-  // can't false-fire; click stays for touch and impatience. The tabs
-  // never move on switch, so enter/leave boundaries are shift-safe.
-  const tabHover = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hoverTab = (p: 'pitch' | 'about') => {
-    if (backPanel === p) return;
-    if (tabHover.current) clearTimeout(tabHover.current);
-    tabHover.current = setTimeout(() => setBackPanel(p), 170);
-  };
-  const cancelTabHover = () => {
-    if (tabHover.current) clearTimeout(tabHover.current);
-  };
-  useEffect(() => cancelTabHover, []);
+  // ── THE BACK SLIDE — three sections, expand/contract (founder,
+  // 2026-07-28: "radically simplify… a super super simple short version
+  // of what it is and why its valuable which passes the 30s skim test").
+  // The closed state IS the site: three one-line leads a half-attention
+  // visitor reads in ~15 seconds — what it is, why it's valuable, how to
+  // try it. Bodies are one short paragraph each, opt-in behind a click
+  // (click-driven, never hover — the 07-17 hover-boundary cascade; no
+  // CSS multicol inside the animated track — the 07-17 WebKit bug).
+  // The manifesto tab is cut from the homepage: the letter (nav)
+  // carries it. Cut texts preserved in git + truth/website.md.
+  // The three beats — rewritten 2026-07-28 from the founder's full
+  // dictation ("the preview text needs to be so radically simple that
+  // its absurdly easy to get what we are doing"). The move that makes
+  // it absurdly easy: anchor on the thing every visitor already knows
+  // (ai memory personalisation), then state the delta — 10x better,
+  // into files you own. Then his stranger-vs-closest-friend line, then
+  // not-software-just-a-prompt + the Strava-shoes frame. Claims in the
+  // display face; reasons quieter beneath; reading only the claims
+  // delivers the whole argument.
+  // THE SIMPLE LEVEL (2026-07-29, three-level site: simple = this
+  // slide · extended = /plainly · infinite = the ask on /plainly).
+  // Copy derived from THE CANONICAL RUN-THROUGH (a4, locked) — edit
+  // canon first, re-derive here. The bar: a 30-second half-attention
+  // skimmer reads three labels + three leads + the close and either
+  // presses "try it free" or knows exactly where the full story is.
+  const SECS: Array<{ id: string; label: string; lead: string; body: string[] }> = [
+    {
+      id: 'what',
+      label: 'what it is.',
+      lead: 'A complete written map of how you think — built by your ai, in files on your own computer, owned by you.',
+      body: [
+        'Paste one package of instructions into whatever ai you already use. It starts a folder and writes down what it learns about your thinking as you talk, in as much detail as it can — a mirror of your mind. Read every line, edit anything, delete it all; every ai you choose reads it, and the built-in memories keep working alongside.',
+      ],
+    },
+    {
+      id: 'why',
+      label: 'why it’s valuable.',
+      lead: 'Every ai you use opens knowing you like a friend of twenty years — and develops your mind instead of quietly replacing it.',
+      body: [
+        'You never re-explain yourself, and it shows you things you’d genuinely love. When it can’t see your thinking, it asks — a biographer mode that gets you to say what you actually think, then writes it down. And it compounds: the models get smarter every month, and all that new intelligence aims itself at you.',
+      ],
+    },
+    {
+      id: 'how',
+      label: 'how to try it.',
+      lead: 'Free, five minutes: paste one line into your ai. Delete the folder and it’s like it never happened.',
+      body: [
+        'No loop yet? You get a complete one, free. Built pieces already — a CLAUDE.md, notes, memory files? It plugs the gaps and closes it. Nothing is installed and nothing is sent to us: it’s a prompt your ai reads, then decides for itself what to take.',
+      ],
+    },
+  ];
+  // One open at a time; null = all closed (the resting, skimmable state).
+  const [openSec, setOpenSec] = useState<string | null>(null);
+  // HOVER + CLICK expansion (founder, 2026-07-28: "it expands when you
+  // click or hover... like we had before"). The July controller rules
+  // apply: drive layout-moving hover states from MOUSEMOVE only (the
+  // sections shift when one opens, and enter/leave boundary events
+  // self-trigger under a moving layout — the 07-17 cascade), 160ms
+  // hover-intent so a pointer in transit opens nothing, a 560ms settle
+  // lock after each switch, and a longer dwell before move-away closes.
+  // Touch keeps tap-toggle via the click handler; coarse pointers skip
+  // the mousemove path entirely.
+  const hoverIntent = useRef<{
+    id: string | null;
+    timer: ReturnType<typeof setTimeout> | null;
+  }>({ id: null, timer: null });
+  const settleLock = useRef(0);
+  useEffect(() => {
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+    const onMove = (e: MouseEvent) => {
+      const sec = (e.target as Element | null)?.closest?.(
+        '.sec',
+      ) as HTMLElement | null;
+      const id = sec?.dataset.sec ?? null;
+      if (Date.now() < settleLock.current) return;
+      const intent = hoverIntent.current;
+      if (id === intent.id) return;
+      if (intent.timer) clearTimeout(intent.timer);
+      intent.id = id;
+      intent.timer = setTimeout(
+        () => {
+          settleLock.current = Date.now() + 560;
+          setOpenSec(id);
+        },
+        id === null ? 420 : 160,
+      );
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      if (hoverIntent.current.timer) clearTimeout(hoverIntent.current.timer);
+    };
+  }, []);
   // ── Front-slide feature rotation (founder, 2026-07-24: "the front
   // slide be ad rotation / feature rotation things elegantly"; second
   // pass same day: fixed rotation starting on the original hero,
@@ -1130,63 +1167,54 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     flowing with no dividers between them. A lead paragraph
                     shows; a rotating caret reveals the rest. Accordion (one
                     open at a time) keeps the fixed stage bounded. */}
-                {/* Two hover-flick tabs, both STATIC texts — no accordions,
-                    nothing to operate beyond the flick. "the product." is
-                    the short pitch; "on alexandria." goes through the
-                    why / what / how, compressed so the tabs never repeat
-                    each other. */}
-                <div className="back-tabs">
-                  <button
-                    type="button"
-                    className={`back-tab${backPanel === 'pitch' ? ' is-active' : ''}`}
-                    onClick={() => setBackPanel('pitch')}
-                    onMouseEnter={() => hoverTab('pitch')}
-                    onMouseLeave={cancelTabHover}
-                  >
-                    the loop.
-                  </button>
-                  <span className="back-tab-sep" aria-hidden>·</span>
-                  <button
-                    type="button"
-                    className={`back-tab${backPanel === 'about' ? ' is-active' : ''}`}
-                    onClick={() => setBackPanel('about')}
-                    onMouseEnter={() => hoverTab('about')}
-                    onMouseLeave={cancelTabHover}
-                  >
-                    on alexandria.
-                  </button>
-                </div>
-                <div className="back-panels">
-                <div className={`back-panel${backPanel === 'pitch' ? ' is-live' : ''}`} aria-hidden={backPanel !== 'pitch'}>
-                  <div className="pitch">
-                    <p className="pitch-lead">{PITCH.lead}</p>
-                    {PITCH.body.map((para, i) => (
-                      <p key={i} className="pitch-para">{para}</p>
-                    ))}
-                  </div>
-                </div>
-                <div className={`back-panel${backPanel === 'about' ? ' is-live' : ''}`} aria-hidden={backPanel !== 'about'}>
-                  <div className="pitch">
-                    <p className="pitch-lead">{MANIFESTO.lead}</p>
-                    {MANIFESTO.body.map((para, i) => (
-                      <p key={i} className="pitch-para">{para}</p>
-                    ))}
-                  </div>
-                </div>
+                {/* The three sections — the leads carry the whole skim
+                    story; bodies open on hover (mousemove-intent) or
+                    click/tap, one at a time. */}
+                <div className="secs">
+                  {SECS.map((s) => (
+                    <section
+                      key={s.id}
+                      data-sec={s.id}
+                      className={`sec${openSec === s.id ? ' is-open' : ''}`}
+                    >
+                      <button
+                        type="button"
+                        className="sec-head"
+                        aria-expanded={openSec === s.id}
+                        onClick={() =>
+                          setOpenSec(openSec === s.id ? null : s.id)
+                        }
+                      >
+                        <span className="sec-label">{s.label}</span>
+                        <span className="sec-lead">
+                          {s.lead}
+                          <span className="sec-caret" aria-hidden>›</span>
+                        </span>
+                      </button>
+                      <div className="sec-body">
+                        <div className="sec-body-inner">
+                          {s.body.map((para, i) => (
+                            <p key={i} className="sec-para">{para}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+                  ))}
                 </div>
 
                 {/* The line break — one rule between the sections and the
                     single action beat below. */}
                 <div className="secs-rule" aria-hidden />
 
-                {/* The close — the founder's sample paragraph, split into
-                    three beats (founder, 2026-07-16: "split up the text
-                    under the line so that its maximally engaging"):
-                    the frame / the punch / the action. */}
+                {/* The close — the skimmer's last beat before the
+                    buttons: urgency (the map compounds), identity (yours
+                    doesn't have to average out), and the cost ledger in
+                    one breath. Derived from the run-through's start-now
+                    paragraph. */}
                 <div className="action-close">
                   <p className="statement-beat action-beat action-beat-final">
-                    <em>Every day you wait, the loop isn&rsquo;t
-                    compounding. Most minds will average out &mdash; yours
+                    <em>Every day you wait, the map isn&rsquo;t being
+                    written. Most minds will average out &mdash; yours
                     doesn&rsquo;t have to. It&rsquo;s free, it takes five
                     minutes, it never leaves your computer, and it
                     compounds for the rest of your life.</em>
@@ -1196,14 +1224,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 <div className="cta-pair">
                   <HomeInstall />
                   <div className="cta-block">
-                    {/* The ghost CTA — the ASK door (founder, 2026-07-27:
-                        promoted from the tertiary line; label "ask
-                        anything" locked same day). The one question
-                        standing between a visitor and the sample gets
-                        answered right here, instantly, on /features. Subs
-                        are a matched pair: curious→try it / unsure→ask it. */}
-                    <Link href="/features" className="lr-cta lr-cta-ghost">
-                      ask us anything
+                    {/* The ghost CTA — the EXTENDED level's door
+                        (2026-07-29): /plainly carries the full
+                        run-through with the ask docked beneath, so one
+                        door serves both the read-more reader and the
+                        ask-first reader. Label pairs 3-and-3 with "try
+                        it free". */}
+                    <Link href="/plainly" className="lr-cta lr-cta-ghost">
+                      the full story
                     </Link>
                   </div>
                 </div>

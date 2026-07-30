@@ -1652,123 +1652,103 @@
           letter-spacing: 0.02em;
           color: var(--theme-fg-muted);
         }
-        /* ─── THE PITCH — two tabs, both static texts (2026-07-27) ───
-           The accordion machinery (focus mode, grid-rows reveals, :has
-           choreography) stays deleted: both panels are something you
-           READ, not something you work — the hover-flick between them
-           is the only control on the slide. */
-        .back-tabs {
-          display: inline-flex;
-          align-items: baseline;
-          gap: 12px;
-          align-self: flex-start;
-          margin: 40px 0 0;
-        }
-        @media (min-width: 900px) {
-          .back-tabs { margin-top: 46px; }
-        }
-        .back-tab {
-          background: none;
-          border: none;
-          padding: 0 0 10px;
-          cursor: pointer;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 16px;
-          letter-spacing: 0.02em;
-          color: var(--theme-fg-faint);
-          border-bottom: 1px solid transparent;
-          transition: color 220ms ease, border-color 220ms ease;
-        }
-        .back-tab.is-active {
-          color: var(--theme-fg);
-          border-bottom-color: var(--theme-border-soft);
-        }
-        .back-tab:hover { color: var(--theme-fg-muted); }
-        .back-tab-sep {
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 15px;
-          color: var(--theme-fg-faint);
-        }
-        /* Panels stack in one grid cell and crossfade with a small
-           lateral slide; the container's height is the taller panel's,
-           so the rule below never moves on switch. */
-        .back-panels {
-          display: grid;
-          margin-top: 0;
-        }
-        .back-panels > .back-panel {
-          grid-area: 1 / 1;
-          opacity: 0;
-          transform: translateX(34px);
-          visibility: hidden;
-          pointer-events: none;
-          transition:
-            opacity 420ms ease,
-            transform 620ms cubic-bezier(0.33, 0, 0.2, 1),
-            visibility 0s linear 420ms;
-        }
-        .back-panels > .back-panel.is-live {
-          opacity: 1;
-          transform: none;
-          visibility: visible;
-          pointer-events: auto;
-          transition:
-            opacity 460ms ease 120ms,
-            transform 620ms cubic-bezier(0.33, 0, 0.2, 1) 120ms,
-            visibility 0s;
-        }
-        @media (max-width: 899px) {
-          /* Mobile flows naturally — no crossfade stack; the inactive
-             panel is simply gone so it can't reserve ghost height. */
-          .back-panels > .back-panel:not(.is-live) { display: none; }
-        }
-        .pitch {
+        /* ─── THE THREE SECTIONS — what / why / how, expand-contract
+           (2026-07-28). Beats, not blocks (design.md § Conversion): the
+           claim in the display face, the reason quieter beneath, and
+           reading only the claims delivers the whole argument — the
+           closed state IS the site, skimmable in ~15s. The group fills
+           the column and centres in it, so the air is composition, not
+           leftover void; opening a body breathes symmetrically around
+           the centre and nothing below the rule moves (the group's
+           height is fixed by flex). Click-driven only (the 07-17
+           hover-boundary cascade); no CSS multicol anywhere near the
+           animated track (the 07-17 WebKit bug). */
+        .secs {
+          flex: 1 1 auto;
+          min-height: 0;
           display: flex;
           flex-direction: column;
-          counter-reset: pbeat;
+          justify-content: center;
+          gap: 54px;
+          margin: 0;
         }
-        /* The margin hand — each paragraph carries a faint lower-roman
-           numeral in the left margin (the manuscript-folio device the
-           letter used), so the text reads as a numbered argument, not
-           a wall. */
-        .pitch-para {
-          position: relative;
-          counter-increment: pbeat;
+        .sec-head {
+          display: block;
+          width: 100%;
+          background: none;
+          border: none;
+          padding: 0;
+          text-align: left;
+          cursor: pointer;
+          color: inherit;
         }
-        .pitch-para::before {
-          content: counter(pbeat, lower-roman);
-          position: absolute;
-          left: -30px;
-          top: 0.18em;
-          font-size: 0.68em;
-          font-style: italic;
-          letter-spacing: 0.06em;
-          color: var(--theme-fg-faint);
-          font-variant-numeric: lining-nums;
-        }
-        /* The lead — the locked one-liner in the aphorism register the
-           old section leads used, a step up in size now that it opens
-           the whole column alone. */
-        .pitch-lead {
-          margin: 18px 0 0;
+        .sec-head:active { opacity: 0.82; }
+        .sec-label {
+          display: block;
+          margin-bottom: 12px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
-          font-size: 18px;
-          line-height: 1.5;
-          letter-spacing: 0.002em;
-          color: var(--theme-fg);
-          max-width: 680px;
+          font-size: 12.5px;
+          letter-spacing: 0.05em;
+          color: var(--theme-fg-faint);
+          transition: color 220ms ease;
         }
-        /* The body — three paragraphs, one beat each, generous read. */
-        .pitch-para {
-          margin: 13px 0 0;
-          font-size: 15.5px;
-          line-height: 1.62;
-          letter-spacing: 0.004em;
+        .sec-head:hover .sec-label,
+        .sec.is-open .sec-label {
+          color: var(--theme-fg-muted);
+        }
+        /* The claim — the display face (the /join two-serif lesson:
+           EB Garamond display against the Spectral body), full ink
+           always; it IS the section for most visitors. */
+        .sec-lead {
+          display: block;
+          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 23px;
+          line-height: 1.42;
+          letter-spacing: 0.002em;
+          font-feature-settings: 'liga', 'dlig';
           color: var(--theme-fg);
           max-width: 660px;
+          text-wrap: pretty;
+        }
+        .sec-caret {
+          display: inline-block;
+          margin-left: 12px;
+          font-style: normal;
+          font-size: 17px;
+          color: var(--theme-fg-faint);
+          transition: transform 300ms ease, color 220ms ease;
+        }
+        .sec-head:hover .sec-caret { color: var(--theme-fg-muted); }
+        .sec.is-open .sec-caret {
+          transform: rotate(90deg);
+          color: var(--theme-fg-muted);
+        }
+        /* The reason — animated 0fr→1fr grid track; the inner wrapper
+           clips. One quieter paragraph, nothing else. Exit runs faster
+           than enter (design.md: always faster out). */
+        .sec-body {
+          display: grid;
+          grid-template-rows: 0fr;
+          transition: grid-template-rows 330ms cubic-bezier(0.33, 0, 0.2, 1);
+        }
+        .sec.is-open .sec-body {
+          grid-template-rows: 1fr;
+          transition: grid-template-rows 440ms cubic-bezier(0.33, 0, 0.2, 1);
+        }
+        .sec-body-inner {
+          overflow: hidden;
+          min-height: 0;
+        }
+        .sec-para {
+          margin: 14px 0 0;
+          font-size: 15.5px;
+          line-height: 1.6;
+          letter-spacing: 0.004em;
+          color: var(--theme-fg-muted);
+          max-width: 620px;
+          text-wrap: pretty;
         }
         .secs-rule {
           height: 1px;
@@ -2994,25 +2974,17 @@
             font-size: clamp(11.5px, 1.1vw, 13px);
             margin-top: -4px;
           }
-          /* Margin numerals have no margin on mobile — run them inline
-             at the head of each paragraph instead (the statement's own
-             mobile solution). */
-          .pitch-para::before {
-            position: static;
-            display: inline;
-            margin-right: 0.55em;
-          }
-          /* Back-slide tabs on mobile: nudge the row up a touch, and pull
-             the panels tight under it (the flattened bottom-inner puts a
-             64px flex GAP between them — cancel most of it) so the tabs
-             read as the panel's header, not a floating line. The panels
-             are plain divs (not flattened), so the pitch's internal
-             rhythm carries over from desktop untouched. */
-          .back-tabs {
+          /* The three sections on mobile: one block (order 0, like the
+             tabs before it — text leads the flattened column), natural
+             flow (no flex-fill), claims scale down with the viewport. */
+          .secs {
+            flex: 0 0 auto;
+            justify-content: flex-start;
             margin-top: 22px;
+            gap: 36px;
           }
-          .back-panels {
-            margin-top: -46px;
+          .sec-lead {
+            font-size: clamp(19px, 2.6vw, 23px);
           }
 
         }
@@ -3111,19 +3083,6 @@
             height: 240px;
           }
         }
-
-/* ─── BACK-SLIDE PITCH TABS (founder-iterated 2026-07-24/25) ───
-   Two tabs in the kicker register: "what it is." (the pitch, default)
-   and "on alexandria." (the existing why/what/how). Panels grid-stack
-   and shift laterally. Inside the pitch panel: a simple/technical
-   toggle, a one-line overview in the sec-lead register, expansion
-   prose below. */
-/* No orphans — the last line of a paragraph never strands one word.
-   Applies at every viewport; browsers without text-wrap:pretty ignore it. */
-.pitch-lead,
-.pitch-para {
-  text-wrap: pretty;
-}
 
 @media (min-width: 900px) {
   .secs-rule {
