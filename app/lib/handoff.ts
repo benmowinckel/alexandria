@@ -29,15 +29,15 @@ export type HandoffInput = {
   piece?: { name: string; content: string } | null;
   /** The conversation so far, in order. Status notes are dropped — nobody said them. */
   messages?: HandoffMsg[];
-  /** What answered up to here, so the next model knows what it is continuing. */
-  model?: string | null;
+  /** Whether the answers came from the Author's own weights — the one thing
+   *  about the machinery the next model benefits from knowing. */
   variant?: string | null;
 };
 
 /** A piece can be book-length; keep the bundle pasteable into any chat box. */
 const PIECE_CAP = 60_000;
 
-export function composeHandoff({ ctx, piece, messages = [], model, variant }: HandoffInput): string {
+export function composeHandoff({ ctx, piece, messages = [], variant }: HandoffInput): string {
   const name = ctx?.author_name || 'this author';
   const out: string[] = [];
 

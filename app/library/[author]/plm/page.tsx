@@ -81,11 +81,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   // Empty until the pipeline emits them → the rotation falls back to generic.
   const [askQuestions, setAskQuestions] = useState<string[]>([]);
   const [variants, setVariants] = useState<TwinVariantSummary[]>([]);
-  // Which model is answering — sourced from the mirror's own health via the
-  // directory, so the page never carries a second copy of that string. Paired
-  // with the variant it makes the two kinds of mind legible: a context mirror
-  // reasoning over the Author's writing, or their trained weights.
-  const [twinModel, setTwinModel] = useState<string | null>(null);
   const [activeVariant, setActiveVariant] = useState<'weights' | 'context'>('context');
 
   const [leftOpen, setLeftOpen] = useState(false);
@@ -171,7 +166,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       setAskQuestions(Array.isArray(tq) ? tq.filter((q: unknown): q is string => typeof q === 'string') : []);
       const vs: TwinVariantSummary[] = Array.isArray(dir?.twin?.variants) ? dir.twin.variants : [];
       setVariants(vs);
-      if (typeof dir?.twin?.model === 'string') setTwinModel(dir.twin.model);
       // Known before the first question, not discovered by hitting the wall.
       if (typeof dir?.twin?.remaining === 'number' && typeof dir?.twin?.limit === 'number') {
         setBudget({ remaining: dir.twin.remaining, limit: dir.twin.limit, signedIn: !!dir.twin.signed_in });
@@ -590,7 +584,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                     // A status, not the mirror talking: muted rule, no name, no
                     // copy — so an offline mirror never reads as an answer.
                     ? <p style={{ margin: 0, padding: '0.15rem 0 0.15rem 0.9rem', borderLeft: '2px solid var(--border-light)',
-                      color: 'var(--text-ghost)', fontSize: '0.9rem', lineHeight: 1.6, fontStyle: 'italic', textWrap: 'pretty' }}>{m.text}</p>
+                      color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6, fontStyle: 'italic', textWrap: 'pretty' }}>{m.text}</p>
                     : m.role === 'you'
                     ? <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>{m.text}</p>
                     : (

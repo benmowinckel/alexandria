@@ -39,7 +39,6 @@ export type AskResult = {
   answer: string;
   remaining?: number;
   limit?: number;
-  model?: string | null;
   variant?: string | null;
   signed_in?: boolean;
 };
@@ -319,7 +318,7 @@ export default function ReaderShell({
   // client could be wrong about.
   const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(initialBudget);
   useEffect(() => { if (initialBudget) setBudget((b) => b ?? initialBudget); }, [initialBudget]);
-  const [answeredBy, setAnsweredBy] = useState<{ model: string | null; variant: string | null } | null>(null);
+  const [answeredVariant, setAnsweredVariant] = useState<string | null>(null);
   const [handoffCtx, setHandoffCtx] = useState<HandoffAuthor | null>(null);
   const spent = budget !== null && budget.remaining <= 0;
 
@@ -339,8 +338,7 @@ export default function ReaderShell({
       ctx,
       piece: artifactText ? { name, content: artifactText } : null,
       messages: active?.messages || [],
-      model: answeredBy?.model,
-      variant: answeredBy?.variant,
+      variant: answeredVariant,
     }));
   };
 
@@ -361,7 +359,7 @@ export default function ReaderShell({
       if (typeof out.remaining === 'number' && typeof out.limit === 'number') {
         setBudget({ remaining: out.remaining, limit: out.limit, signedIn: !!out.signed_in });
       }
-      if (out.model) setAnsweredBy({ model: out.model, variant: out.variant ?? null });
+      if (out.variant) setAnsweredVariant(out.variant);
     } catch (e) {
       // Out of questions is not a failure — it's the handoff moment. The mirror
       // says so in its own voice and the door is already on screen.
@@ -698,10 +696,13 @@ export default function ReaderShell({
            than a rule (the footer's line already closes the page). */
         /* The pinned line above the thread, and the status of a question that
            never got answered — both quieter than anything either party said. */
-        .mirror-note { flex: none; margin: 0; padding: 0.6rem 1.4rem 0.75rem; color: var(--text-ghost);
-          font-size: 0.86rem; line-height: 1.5; font-style: italic; text-wrap: pretty; }
+        /* Both of these are read, not glanced at — what the mirror is, and what
+           happened to a question. --text-ghost made them a smudge (founder
+           2026-07-29). Quieter than an answer, still legible. */
+        .mirror-note { flex: none; margin: 0; padding: 0.6rem 1.4rem 0.75rem; color: var(--text-muted);
+          font-size: 0.88rem; line-height: 1.55; font-style: italic; text-wrap: pretty; }
         .mirror-status { margin: 0; padding: 0.15rem 0 0.15rem 0.9rem; border-left: 2px solid var(--border-light);
-          color: var(--text-ghost); font-size: 0.9rem; line-height: 1.6; font-style: italic; text-wrap: pretty; }
+          color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; font-style: italic; text-wrap: pretty; }
 
         .piece-ask { flex: none; width: min(680px, 100% - 2.8rem); margin: 0 auto; padding: 0.55rem 0 1.15rem; }
         .piece-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
