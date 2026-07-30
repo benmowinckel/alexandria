@@ -113,6 +113,27 @@ fetch_factory() {
   local tmp="${dest}.tmp.$$"
   if curl -fsS --retry 2 --retry-delay 1 --connect-timeout 5 --max-time 20 \
     "$FACTORY_RAW/$rel" -o "$tmp" 2>/dev/null && [ -s "$tmp" ]; then
+    # Manifest gate: when this run holds a signature-verified manifest (set
+    # after the allowed_signers pin below) and the fetched file is listed in
+    # it, the bytes must match the signed sha — fail-closed: the file is not
+    # installed and the existing local copy, if any, stays. Files not listed
+    # in the manifest install as before. No verified manifest available =
+    # the documented install-time TOFU floor (same residual as setup.sh
+    # itself, audit H5). A mismatch can also be a transient CDN lag between
+    # a file push and its manifest re-sign — re-running the install resolves.
+    if [ -n "${VERIFIED_MANIFEST:-}" ] && [ -f "$VERIFIED_MANIFEST" ]; then
+      local want_sha got_sha
+      want_sha=$(awk -v p="factory/$rel" '$2==p{print $1}' "$VERIFIED_MANIFEST")
+      if [ -n "$want_sha" ]; then
+        if command -v shasum >/dev/null 2>&1; then got_sha=$(shasum -a 256 "$tmp" | cut -d' ' -f1)
+        else got_sha=$(sha256sum "$tmp" 2>/dev/null | cut -d' ' -f1); fi
+        if [ "$want_sha" != "$got_sha" ]; then
+          rm -f "$tmp"
+          FETCH_ERRORS="${FETCH_ERRORS}${label}(signature-mismatch) "
+          return 1
+        fi
+      fi
+    fi
     mv "$tmp" "$dest"
     return 0
   fi
@@ -290,12 +311,18 @@ if command -v ssh-keygen >/dev/null 2>&1; then
   _mf=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
   _sg=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
   if [ -n "$_mf" ] && [ -n "$_sg" ]      && curl -fsS --max-time 10 "$FACTORY_RAW/manifest.txt" -o "$_mf" 2>/dev/null      && curl -fsS --max-time 10 "$FACTORY_RAW/manifest.txt.sig" -o "$_sg" 2>/dev/null      && [ -s "$_mf" ] && [ -s "$_sg" ]      && ssh-keygen -Y verify -f "$ALEX_DIR/system/allowed_signers"           -I alexandria-payload-signing -n alexandria -s "$_sg" < "$_mf" >/dev/null 2>&1; then
+    # Signature verified — cache the manifest and arm the fetch_factory
+    # manifest gate for every remaining fetch in this run (canon seed, the
+    # onboarding block, the harness skills, the cursor hooks). Same semantics
+    # as the shim, which caches .canon_manifest on every sig-verify.
+    if cp "$_mf" "$ALEX_DIR/system/.canon_manifest" 2>/dev/null; then
+      VERIFIED_MANIFEST="$ALEX_DIR/system/.canon_manifest"
+    fi
     _expected=$(awk '$2=="factory/hooks/payload.sh" {print $1}' "$_mf")
     if command -v shasum >/dev/null 2>&1; then _actual=$(shasum -a 256 "$ALEX_DIR/system/.hooks_payload" | cut -d' ' -f1)
     else _actual=$(sha256sum "$ALEX_DIR/system/.hooks_payload" 2>/dev/null | cut -d' ' -f1); fi
     if [ -n "$_expected" ] && [ "$_expected" = "$_actual" ]; then
       printf '%s' "$_actual" > "$ALEX_DIR/system/.payload_verified_sha"
-      cp "$_mf" "$ALEX_DIR/system/.canon_manifest" 2>/dev/null
     fi
   fi
   rm -f "$_mf" "$_sg"

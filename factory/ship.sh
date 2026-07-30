@@ -42,6 +42,16 @@ SIGNED_FILES=(
   factory/skills/scheduled.md
   factory/skills/machine.md
   factory/skills/factory.md
+  factory/skills/claudecode.md
+  factory/skills/codex.md
+  factory/skills/droid.md
+  factory/skills/cursor.mdc
+  factory/skills/aclose.md
+  factory/block.md
+  factory/hooks/cursor/alexandria-session-start.py
+  factory/hooks/cursor/alexandria-session-end.py
+  factory/hooks/cursor/alexandria-stop.py
+  factory/hooks/cursor/alexandria-transcript.py
   factory/scripts/brief.py
   factory/scripts/install.sh
   factory/scripts/publish.sh
@@ -83,6 +93,10 @@ done
 MUST_SIGN=(
   factory/hooks/payload.sh factory/skills/scheduled.md
   factory/skills/machine.md factory/skills/factory.md
+  factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md
+  factory/skills/cursor.mdc factory/skills/aclose.md factory/block.md
+  factory/hooks/cursor/alexandria-session-start.py factory/hooks/cursor/alexandria-session-end.py
+  factory/hooks/cursor/alexandria-stop.py factory/hooks/cursor/alexandria-transcript.py
   factory/scripts/brief.py factory/scripts/install.sh factory/scripts/publish.sh
   factory/scripts/capture_resolver.py factory/migrate.sh
   factory/scripts/imsg_daemon.py factory/scripts/imsg_run.sh factory/scripts/imsg_send.sh
@@ -101,8 +115,11 @@ done
 # (same class as shim.sh), not a per-run signature. Their residual risk is the
 # setup.sh bootstrap anchor (audit H5), not per-run tampering.
 #   - shim.sh / setup.sh / ship.sh        — the bootstrap/signer roots
-#   - hooks/cursor/*.py                    — installed to ~/.cursor/hooks once (setup.sh:159)
 #   - scripts/publish-fork.sh             — installed once, run hourly from local copy (setup.sh:405)
+# (hooks/cursor/*.py moved to SIGNED_FILES 2026-07-30 — their "installed once"
+# rationale was stale: setup.sh re-fetches them with overwrite=yes on every
+# sync, same re-fetch class as the harness skills; setup.sh's manifest gate
+# now verifies both against the signed manifest before installing.)
 # NOTE: the warn below STILL fires (correctly) for the FETCHED-AND-RUN scripts
 # (scripts/brief.py, install.sh, publish.sh, migrate.sh) — those are curl'd from
 # GitHub then executed, so they genuinely need a verify gate (audit M5/M6). They
@@ -111,10 +128,6 @@ done
 UNSIGNED_OK=(
   factory/hooks/shim.sh factory/setup.sh factory/ship.sh
   factory/scripts/verify-fetch.sh
-  factory/hooks/cursor/alexandria-session-start.py
-  factory/hooks/cursor/alexandria-session-end.py
-  factory/hooks/cursor/alexandria-stop.py
-  factory/hooks/cursor/alexandria-transcript.py
   factory/scripts/publish-fork.sh
   # Cowork plugin — a skill delivery only (its hooks are inert in Cowork, and
   # the curl path never installs it). Added via Claude's git-clone plugin
