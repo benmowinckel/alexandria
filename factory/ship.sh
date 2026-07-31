@@ -31,9 +31,11 @@ fi
 # Two silent-signing paths exist and both are closed here, in code:
 # 1) ssh-agent: ssh-keygen -Y sign uses an agent-cached key without prompting,
 #    so a passphrase typed once anywhere makes every later ship free for ANY
-#    process running as this user. Cut the agent off for this script's scope —
-#    the key file must be decrypted directly, which demands the passphrase.
-unset SSH_AUTH_SOCK
+#    process running as this user. The sign invocation below runs with
+#    SSH_AUTH_SOCK emptied — agent unreachable for signing only, so the key
+#    file must be decrypted directly, which demands the passphrase. (Scoped to
+#    the sign line, not a global unset: a fork pushing over an ssh remote still
+#    gets its agent for git push.)
 # 2) an unencrypted key file: file-based signing wouldn't prompt either. If the
 #    key opens with an empty passphrase, it is not passphrase-protected —
 #    refuse to ship until it is re-keyed.
@@ -176,7 +178,7 @@ done < <(cd "$REPO_ROOT" && find factory -type f \( -name '*.sh' -o -name '*.py'
 # Sign the manifest. Namespace "alexandria" prevents this signature from
 # being valid in any other ssh-signing context.
 rm -f factory/manifest.txt.sig
-ssh-keygen -Y sign -f "$SIGNING_KEY" -n alexandria factory/manifest.txt >/dev/null
+SSH_AUTH_SOCK= ssh-keygen -Y sign -f "$SIGNING_KEY" -n alexandria factory/manifest.txt >/dev/null
 # ssh-keygen writes to factory/manifest.txt.sig automatically.
 
 echo "Signed manifest:"
