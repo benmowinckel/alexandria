@@ -230,6 +230,39 @@ fi
 touch "$ALEX_DIR/system/.last_processed"
 date +%s > "$ALEX_DIR/system/.last_maintenance"
 
+# ── 1b. Trust root FIRST — armed before any factory fetch ─────────
+# Allowed signers — the trust root for payload signature verification.
+# Embedded here rather than fetched separately so the public key arrives in the
+# same atomic install step as the shim that uses it. To rotate, replace the
+# line below and ship a new setup.sh release.
+# Fingerprint: SHA256:kAas5fUUnV/XcfKoH3Ysm7IZrqY2HcQSuhSaMoAMqnA
+cat > "$ALEX_DIR/system/allowed_signers" <<'EOF'
+alexandria-payload-signing ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHv5jBpDuEg2Nae7QrtNQ9ycclulY8+G4iZOjd2Kdw+9 alexandria-payload-signing
+EOF
+chmod 644 "$ALEX_DIR/system/allowed_signers"
+
+# Fetch + signature-verify the manifest NOW, so fetch_factory's manifest gate
+# is armed for EVERY factory fetch below — payload, resolver, optional.md,
+# canon, block, skills, cursor hooks, anything the manifest lists. Ordering is
+# the point (2026-07-30): fetches that ran before the gate armed were TOFU.
+# No verifiable manifest (offline, no ssh-keygen) = gate stays unarmed and
+# fetches keep the documented install-time TOFU floor (audit H5).
+if command -v ssh-keygen >/dev/null 2>&1; then
+  _mf=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
+  _sg=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
+  if [ -n "$_mf" ] && [ -n "$_sg" ] \
+     && curl -fsS --max-time 10 "$FACTORY_RAW/manifest.txt" -o "$_mf" 2>/dev/null \
+     && curl -fsS --max-time 10 "$FACTORY_RAW/manifest.txt.sig" -o "$_sg" 2>/dev/null \
+     && [ -s "$_mf" ] && [ -s "$_sg" ] \
+     && ssh-keygen -Y verify -f "$ALEX_DIR/system/allowed_signers" \
+          -I alexandria-payload-signing -n alexandria -s "$_sg" < "$_mf" >/dev/null 2>&1; then
+    if cp "$_mf" "$ALEX_DIR/system/.canon_manifest" 2>/dev/null; then
+      VERIFIED_MANIFEST="$ALEX_DIR/system/.canon_manifest"
+    fi
+  fi
+  rm -f "$_mf" "$_sg"
+fi
+
 # ── 2. Factory files from GitHub ──────────────────────────────────
 
 # Templates → files/ (don't overwrite existing)
@@ -291,41 +324,19 @@ Full mechanism: https://alexandria-library.com/mechanics
 AUTOUPDATE_END
 fi
 
-# Allowed signers — the trust root for payload signature verification.
-# Embedded here rather than fetched separately so the public key arrives in the
-# same atomic install step as the shim that uses it. To rotate, replace the
-# line below and ship a new setup.sh release.
-# Fingerprint: SHA256:kAas5fUUnV/XcfKoH3Ysm7IZrqY2HcQSuhSaMoAMqnA
-cat > "$ALEX_DIR/system/allowed_signers" <<'EOF'
-alexandria-payload-signing ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHv5jBpDuEg2Nae7QrtNQ9ycclulY8+G4iZOjd2Kdw+9 alexandria-payload-signing
-EOF
-chmod 644 "$ALEX_DIR/system/allowed_signers"
-
-# Verify + pin the payload NOW, while network is guaranteed (we just fetched
-# everything). Same check the shim makes — manifest signature (offline key)
-# then sha match — recorded in .payload_verified_sha so the first session
-# needs zero network to run. If any step fails, write no marker: the shim
-# verifies at first session instead (fail-closed either way — an unverified
-# payload never executes).
-if command -v ssh-keygen >/dev/null 2>&1; then
-  _mf=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
-  _sg=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
-  if [ -n "$_mf" ] && [ -n "$_sg" ]      && curl -fsS --max-time 10 "$FACTORY_RAW/manifest.txt" -o "$_mf" 2>/dev/null      && curl -fsS --max-time 10 "$FACTORY_RAW/manifest.txt.sig" -o "$_sg" 2>/dev/null      && [ -s "$_mf" ] && [ -s "$_sg" ]      && ssh-keygen -Y verify -f "$ALEX_DIR/system/allowed_signers"           -I alexandria-payload-signing -n alexandria -s "$_sg" < "$_mf" >/dev/null 2>&1; then
-    # Signature verified — cache the manifest and arm the fetch_factory
-    # manifest gate for every remaining fetch in this run (canon seed, the
-    # onboarding block, the harness skills, the cursor hooks). Same semantics
-    # as the shim, which caches .canon_manifest on every sig-verify.
-    if cp "$_mf" "$ALEX_DIR/system/.canon_manifest" 2>/dev/null; then
-      VERIFIED_MANIFEST="$ALEX_DIR/system/.canon_manifest"
-    fi
-    _expected=$(awk '$2=="factory/hooks/payload.sh" {print $1}' "$_mf")
-    if command -v shasum >/dev/null 2>&1; then _actual=$(shasum -a 256 "$ALEX_DIR/system/.hooks_payload" | cut -d' ' -f1)
-    else _actual=$(sha256sum "$ALEX_DIR/system/.hooks_payload" 2>/dev/null | cut -d' ' -f1); fi
-    if [ -n "$_expected" ] && [ "$_expected" = "$_actual" ]; then
-      printf '%s' "$_actual" > "$ALEX_DIR/system/.payload_verified_sha"
-    fi
+# Pin the payload sha NOW so the first session needs zero network. The
+# manifest itself was fetched + signature-verified at the trust-root-first
+# step (§ 1b), and the payload fetch above already passed the manifest gate —
+# this just records the verified sha. No verified manifest = no pin, and the
+# shim verifies at first session instead (fail-closed either way — an
+# unverified payload never executes).
+if [ -n "${VERIFIED_MANIFEST:-}" ] && [ -f "$ALEX_DIR/system/.hooks_payload" ]; then
+  _expected=$(awk '$2=="factory/hooks/payload.sh" {print $1}' "$VERIFIED_MANIFEST")
+  if command -v shasum >/dev/null 2>&1; then _actual=$(shasum -a 256 "$ALEX_DIR/system/.hooks_payload" | cut -d' ' -f1)
+  else _actual=$(sha256sum "$ALEX_DIR/system/.hooks_payload" 2>/dev/null | cut -d' ' -f1); fi
+  if [ -n "$_expected" ] && [ "$_expected" = "$_actual" ]; then
+    printf '%s' "$_actual" > "$ALEX_DIR/system/.payload_verified_sha"
   fi
-  rm -f "$_mf" "$_sg"
 fi
 
 # Canon — the full default, seeded at install (the Author's active adoption via
