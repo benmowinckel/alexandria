@@ -25,6 +25,23 @@ Five stages, two owners. The Author touches only the ends: one save gesture at t
 4. **Land (Engine, same session).** Constitution/marginalia deltas flow live where warranted; the Author's absorption surfaces get restocked.
 5. **Absorb (Author, their pace).** The ledger (`vault/saved/ledger.md`) is the single absorption surface: one checkbox line per item, unchecked = extracted-not-absorbed, checked only on genuine engagement. Pile size is never homework.
 
+### The review card — the one engagement format (locked 2026-07-31, founder directive)
+
+When the Author engages captures live, every item is surfaced **one at a time** as a fixed card — **100% adherence, unless the Author specifies otherwise in the moment**. Never a batched list, never a prose summary, never an essay opener. The card:
+
+```
+**#N · @handle/source**
+🔗 <raw source link>
+
+*What it is:* <plain, the real content — what the post/article actually says, never an abstract compression>
+
+*Note:* <honest class — confirmatory / reference / genuine push-back / genuinely new — how it sits against the Author's canon, plus one dead-simple actionable note>
+
+→ **engage / skip / delay?**
+```
+
+Then a running counter (**"N left."**) so the drain feels like it's draining. Two load-bearing rules, both from Author correction: the Author cannot process an item from handle + title — the card must carry the link, the real content, and one actionable note; and no manufactured tension — only name a divergence that is genuinely the Author's view vs the post. Verdicts: **engage** → develop live, land any canon delta; **skip** → one-line ledger check; **delay** → later pass. Optional per-Author rider: a drafted reply in the Author's voice as a second card field (armed, never fired).
+
 ## Principles embodied
 
 Awareness-upstream (the pending nudge + marker make invisible backlog growth impossible); source/derivative + never-delete (raw stays beside its analysis; richer passes append to `passes`, never rewrite); ground-truth proximity (the gap rule — payload over placeholder); bitter lesson (schemaless prose analyses — a sharper model re-extracts more from the same raw with zero migration); humans-out-of-maximisation-loops (extraction is pure Engine; the Author only absorbs).
