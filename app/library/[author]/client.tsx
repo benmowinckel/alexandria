@@ -130,6 +130,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // auto-fires it (?q=). The door owns no chat state; the chat is the room.
   const [doorQ, setDoorQ] = useState('');
   const [doorGoing, setDoorGoing] = useState(false);
+  // Offline-attempt feedback — the shake + the transient note (2026-08-02).
+  const [doorShake, setDoorShake] = useState(false);
+  const [offlineNote, setOfflineNote] = useState(false);
   const [beliCopied, setBeliCopied] = useState(false);
   // Rotating door placeholder — smart example questions cycle through the ghost
   // text instead of rigid hardcoded chips (founder 2026-07-19). Unhurried cadence
@@ -162,13 +165,32 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   };
 
   // The door's question rides to the chat page, which auto-fires it (?q=).
+  // No standing online/offline label anymore (founder, 2026-08-02: "we dont
+  // need to say online and offline") — a dead mind answers the ATTEMPT: the
+  // door shakes (error physics: 300ms, 4px) and a quiet "offline right now"
+  // appears where the status word used to sit, only while it's true.
   const goAskWith = (q: string) => {
     const text = q.trim();
     if (!text || doorGoing) return;
+    if (data?.twin?.online !== true) {
+      setDoorShake(true);
+      setOfflineNote(true);
+      return;
+    }
     setDoorGoing(true);
     router.push(`/library/${encodeURIComponent(authorId)}/plm?q=${encodeURIComponent(text)}`);
   };
   const goAsk = () => goAskWith(doorQ);
+  useEffect(() => {
+    if (!doorShake) return;
+    const t = setTimeout(() => setDoorShake(false), 420);
+    return () => clearTimeout(t);
+  }, [doorShake]);
+  useEffect(() => {
+    if (!offlineNote) return;
+    const t = setTimeout(() => setOfflineNote(false), 2600);
+    return () => clearTimeout(t);
+  }, [offlineNote]);
 
   if (loading) return (
     <main style={{ maxWidth: '560px', margin: '0 auto', padding: '40vh 2rem', fontFamily: 'var(--font-eb-garamond)', textAlign: 'center' }}>
@@ -367,20 +389,23 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 500, letterSpacing: '-0.012em', margin: '2rem 0 0.35rem' }}>
             {author.display_name || author.id}
           </h1>
-          {/* Identity line — number · location · contact on one plain line, same
-              style as the member number; cleaner than pills (founder 2026-07-19). */}
+          {/* Identity line — the member number stands apart, then location ·
+              contact as a dotted pair (founder 2026-08-02: "a gap between the
+              a0 number and the location and email pairing so its not all three
+              cramped on each other"). Same plain style throughout. */}
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.35rem 0 0', textTransform: 'lowercase' }}>
-            {author.alexandria_id}
+            <span style={{ marginRight: '0.95rem' }}>{author.alexandria_id}</span>
             {author.location && author.location_key && (
-              <>{' '}<span style={{ color: 'var(--text-ghost)' }}>·</span>{' '}
-                <Link href={`/library?locations=${encodeURIComponent(author.location_key)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link></>
+              <Link href={`/library?locations=${encodeURIComponent(author.location_key)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link>
             )}
             {author.contact && (
-              <>{' '}<span style={{ color: 'var(--text-ghost)' }}>·</span>{' '}
+              <>
+                {author.location && author.location_key && <>{' '}<span style={{ color: 'var(--text-ghost)' }}>·</span>{' '}</>}
                 <a href={contactHref(author.contact)}
                   target={author.contact.startsWith('http') ? '_blank' : undefined}
                   rel={author.contact.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{contactForm(author.contact)}</a></>
+                  style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{contactForm(author.contact)}</a>
+              </>
             )}
           </p>
           {/* No bio — nobody gets a bio (founder 2026-07-19): a line isn't enough to
@@ -421,7 +446,6 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             // The PLM page still carries the quick/deep toggle + invite gate.
             const anyOn = (data.twin.variants || []).some((v) => v.enabled);
             if (!anyOn) return null;
-            const online = data.twin.online === true;
             const first = (author.display_name || author.id).split(' ')[0];
             const projs = grouped.find((g) => g.cat === 'projects')?.items || [];
             const p0 = projs[0] ? (projs[0].title || fileDisplayName(projs[0].name)).toLowerCase() : null;
@@ -452,19 +476,25 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                 boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 6px 18px rgba(0,0,0,0.04)',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
-                  {sectionHead('mind', 'a personal language model')}
-                  {/* Status as pure typography — accent when live, ghost when
-                      not. No dot geometry to misalign (founder, round 13). */}
-                  <span style={{ color: online ? 'var(--accent)' : 'var(--text-ghost)', fontSize: '0.85rem', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-                    {online ? 'online' : 'offline'}
-                  </span>
+                  {/* The whisper matches the other sections' hand — "what's
+                      being mirrored" beside "what's being built / thought"
+                      (founder, 2026-08-02, replacing the spec-register
+                      "a personal language model"). */}
+                  {sectionHead('mind', 'what’s being mirrored')}
+                  {/* The old standing online/offline word is gone — the note
+                      exists only in the moment an offline ask is attempted. */}
+                  {offlineNote && (
+                    <span className="twin-offline-note" style={{ color: 'var(--text-ghost)', fontStyle: 'italic', fontSize: '0.85rem', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+                      offline right now
+                    </span>
+                  )}
                 </div>
-                <div style={{ margin: '0.9rem -0.98rem 0' }}>
+                <div className={doorShake ? 'twin-door-shake' : undefined} style={{ margin: '0.9rem -0.98rem 0' }}>
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing}
                     placeholder={doorQ ? 'ask anything…' : askExamples[phIdx % askExamples.length]} />
                 </div>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0.8rem 0 0', textWrap: 'pretty' }}>
-                  a mirror of {first}&rsquo;s published mind — ask it anything; it answers from what they&rsquo;ve written, and says so plainly where it can&rsquo;t.
+                  a mirror of {first}&rsquo;s published mind — it answers from what&rsquo;s written here, and says so when it can&rsquo;t.
                 </p>
               </div>
             );

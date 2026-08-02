@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import type { CSSProperties, KeyboardEvent } from 'react';
+import type { KeyboardEvent } from 'react';
 
 /**
  * PromptBox — the single PLM composer used everywhere (profile page, reader).
@@ -141,9 +141,9 @@ const PromptBox = forwardRef<PromptBoxHandle, {
   };
 
   // Take the suggestion currently showing and put it in the box, ready to send
-  // (or to edit first). Tab is the accepted gesture for accepting a completion,
-  // and the hint beside the line says so; the hint is also a real button, so
-  // touch — which has no Tab — gets there too (founder 2026-07-28).
+  // (or to edit first). Tab is the accepted gesture for accepting a completion.
+  // The visible "tab"/"tap" key-cap hint was deleted 2026-08-02 (founder: "that
+  // tab icon needs to be deleted. its implied") — the gesture stays, unlabeled.
   const canFill = fillable && !value && !!ghost && !(loading && !typeWhileLoading);
   const fillGhost = () => {
     if (!canFill) return;
@@ -172,18 +172,9 @@ const PromptBox = forwardRef<PromptBoxHandle, {
     }
   };
 
-  const disabled = (loading && !typeWhileLoading) || !value.trim();
-  const btn: CSSProperties = {
-    // position:relative so the loading "…" can overlay the label instead of
-    // replacing it — the label stays in flow (invisible) to hold the button's
-    // width, so nothing shifts when ask↔… swap (founder: "lock it tighter").
-    position: 'relative',
-    border: 'none', borderRadius: '11px', background: 'var(--accent)', color: 'var(--bg-primary)',
-    fontFamily: 'inherit', fontSize: '0.95rem', padding: '0.72rem 1.25rem',
-    cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.5 : 1, transition: 'opacity 0.15s', whiteSpace: 'nowrap',
-  };
-
-  const ghostRight = voiceOn ? '2.6rem' : '0.95rem';
+  // Boxed always carries the in-field send glyph now, so the ghost line and the
+  // textarea's right padding budget for it (+ the mic when voice is on).
+  const ghostRight = voiceOn ? '4.1rem' : '2.5rem';
   return (
     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
       <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -211,7 +202,7 @@ const PromptBox = forwardRef<PromptBoxHandle, {
               }
               : {
                 minHeight: '2.85rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-secondary)',
-                fontSize: '1rem', padding: `0.62rem ${voiceOn ? '2.6rem' : '0.95rem'} 0.62rem 0.95rem`,
+                fontSize: '1rem', padding: `0.62rem ${voiceOn ? '4.1rem' : '2.5rem'} 0.62rem 0.95rem`,
               }),
           }}
         />
@@ -242,27 +233,6 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           opacity: (!value && ghostShown) ? 1 : 0,
           transition: 'opacity 0.4s ease',
         }}>{ghost}</div>
-        {/* The hint that the suggestion is takeable: a quiet key-cap at the end
-            of the line, up whenever a question is showing — hiding it until
-            focus would mean nobody discovers the gesture. It is a real button,
-            so a phone (which has no Tab) taps it for the same result; the label
-            itself swaps to "tap" there, in CSS. */}
-        {canFill && (
-          // pointerdown, not click: a tap would blur the field first, and the
-          // hint unmounts on blur — so the tap would land on nothing. Preventing
-          // default keeps focus where it is and fills in the same gesture.
-          <button type="button" tabIndex={-1} aria-label="use this question"
-            onPointerDown={(e) => { e.preventDefault(); fillGhost(); }}
-            className="pb-fill"
-            style={{ position: 'absolute', right: bare ? (voiceOn ? '1.9rem' : 0) : (voiceOn ? '2.6rem' : '0.95rem'), bottom: bare ? '0.5rem' : '0.72rem',
-              // Rides the suggestion's own crossfade instead of unmounting with
-              // it — the chip belongs to the line, but blinking out of the DOM
-              // every rotation makes it flicker and lose taps mid-fade.
-              opacity: ghostShown ? 1 : 0, pointerEvents: ghostShown ? 'auto' : 'none', transition: 'opacity 0.4s ease' }}>
-            <span className="pb-fill-key">tab</span>
-            <span className="pb-fill-tap">tap</span>
-          </button>
-        )}
         {/* Bare has no standing submit button — Enter sends it. But a soft
             keyboard has no reliable Enter, so once there are words the mic
             (useless mid-question anyway) gives its slot to a send arrow. One
@@ -291,7 +261,9 @@ const PromptBox = forwardRef<PromptBoxHandle, {
             aria-label={listening ? 'stop voice input' : 'voice input'}
             title={listening ? 'stop  (⌘D)' : 'speak  (⌘D)'}
             style={{
-              position: 'absolute', right: bare ? 0 : '0.55rem', bottom: bare ? '0.42rem' : '0.5rem',
+              // Boxed: the mic yields the right-most seat to the send glyph
+              // (2026-08-02) and sits just inboard of it.
+              position: 'absolute', right: bare ? 0 : '2.25rem', bottom: bare ? '0.42rem' : '0.5rem',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem',
               color: listening ? 'var(--accent)' : 'var(--text-ghost)', transition: 'color 0.15s',
@@ -302,22 +274,38 @@ const PromptBox = forwardRef<PromptBoxHandle, {
             </svg>
           </button>
         )}
+        {/* Boxed submit — the big "ask" button was noise (founder, 2026-08-02:
+            "the big ask button is noise… its obvious that pressing return is
+            submitting"). One quiet glyph inside the field, next to the mic:
+            ghost while the box is empty, the accent once there's something to
+            send — and the tap target phones need. Loading shows as the same
+            slot's ellipsis, so nothing resizes. */}
+        {!bare && (
+          <button
+            type="button"
+            onClick={submit}
+            aria-label={submitLabel}
+            title={submitLabel}
+            style={{
+              position: 'absolute', right: '0.55rem', bottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: 'none', background: 'none', padding: '0.2rem',
+              cursor: value.trim() && !(loading && !typeWhileLoading) ? 'pointer' : 'default',
+              color: value.trim() ? 'var(--accent)' : 'var(--text-ghost)', transition: 'color 0.15s, opacity 0.15s',
+            }}
+          >
+            {loading && !typeWhileLoading ? (
+              <span aria-hidden style={{ color: 'var(--text-ghost)', fontSize: '1rem', lineHeight: 1 }}>…</span>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 19V5" /><path d="M5 12l7-7 7 7" />
+              </svg>
+            )}
+          </button>
+        )}
       </div>
-      {/* Bare has no button — Enter is the gesture, and the row stays one line
-          of text on one rule. Loading shows as a lone ellipsis in its place. */}
-      {bare ? (loading && <span aria-hidden style={{ flex: 'none', color: 'var(--text-ghost)', paddingBottom: '0.5rem' }}>…</span>) : (
-        <button type="button" onClick={submit} disabled={disabled}
-          onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.opacity = '0.85'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.opacity = disabled ? '0.5' : '1'; }}
-          style={btn}>
-          {/* Label always reserves the width; the "…" overlays it centered while
-              loading, so the button never resizes between states. */}
-          <span style={{ visibility: loading ? 'hidden' : undefined }}>{submitLabel}</span>
-          {loading && (
-            <span aria-hidden style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>…</span>
-          )}
-        </button>
-      )}
+      {/* Bare has no standing control — Enter is the gesture, and the row stays
+          one line of text on one rule. Loading shows as a lone ellipsis. */}
+      {bare && loading && <span aria-hidden style={{ flex: 'none', color: 'var(--text-ghost)', paddingBottom: '0.5rem' }}>…</span>}
     </div>
   );
 });
