@@ -540,8 +540,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     if (frameHold) return;
     // 8000ms per frame, hero included (founder, 2026-07-24: 6000 was "a
     // touch too fast"; a 10s hero dwell was tried the same night and
-    // pulled back to a uniform 8s — the sequenced dissolve eats ~1.75s,
-    // so 8s leaves ~6s of still read).
+    // pulled back to a uniform 8s). The dissolve was slowed 2026-08-02
+    // ("too abrupt") and now eats ~2.6s, leaving ~5.4s of still read.
     const t = setTimeout(() => setFrameIdx((i) => (i + 1) % frameCount), 8000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps

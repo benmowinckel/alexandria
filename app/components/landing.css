@@ -1154,9 +1154,14 @@
           /* Lifts the closing group so the CTA row's bottom lands on the
              big wordmark's baseline across the slide (founder: "the bottom
              of the CTAs bottom aligned with the bottom of the alexandria
-             text"); quiet-links keep the lower tier with the dict lines. */
-          /* CTA bottom = wordmark bottom + exactly one pixel (founder). */
-          padding-bottom: 83px;
+             text"; re-trued 2026-08-02 — "the ctas need to be moved up a
+             bit"); quiet-links keep the lower tier with the dict lines.
+             83px aligned to the wordmark's BOX bottom, but the box carries
+             ~23px of line slack below the glyphs ("alexandria." has no
+             descenders, so its visual bottom IS the baseline). 106px puts
+             the CTA bottom on the glyph bottom itself — measured via
+             canvas font metrics × the 0.9 stage scale, verified by rect. */
+          padding-bottom: 106px;
           /* Squeeze the column — narrower text width pushes the left
              edge inward (right edge unchanged because right-lower is
              flex-end aligned). */
@@ -1839,16 +1844,19 @@
              frame fades out in place — no movement on the way out; its
              transform snaps back invisibly after the fade so it's staged
              for re-entry. The wall then breathes empty for a beat.
-             visibility flips hidden only AFTER the fade (750ms delay) so
+             Slowed + softened 2026-08-02 (founder: "the feature rotation
+             stuff… too abrupt rn") — longer fades on slow-onset curves so
+             nothing pops; the dissolve now breathes ~2.6s of the 8s dwell.
+             visibility flips hidden only AFTER the fade (1000ms delay) so
              the exit stays visible — and, because the frames are links
              now, a hidden frame is also an unclickable one: during the
              empty breath the invisible incoming frame sits on top of the
              fading text, and without this it would eat that click and
              silently navigate. */
           transition:
-            opacity 700ms cubic-bezier(0.65, 0, 0.35, 1),
-            transform 0ms linear 700ms,
-            visibility 0s linear 750ms;
+            opacity 950ms cubic-bezier(0.4, 0, 0.6, 1),
+            transform 0ms linear 950ms,
+            visibility 0s linear 1000ms;
           visibility: hidden;
           pointer-events: none;
         }
@@ -1856,17 +1864,19 @@
           opacity: 1;
           transform: translateY(0);
           visibility: visible;
-          /* ENTER: waits for the outgoing frame to clear (750ms), then
-             eases in with a whisper of rise. Never two texts on the wall
-             at once. The live frame regains pointer-events (the feature
-             frames are doors to /features, 2026-08-02) — but only once
-             its visibility flips at 750ms, i.e. as it starts to appear,
-             never while it is still the invisible layer over the exit. */
+          /* ENTER: waits for the outgoing frame to clear (1000ms), then
+             dissolves in slowly — the slow-onset curve is what kills the
+             pop (opacity barely moves for the first ~300ms, then blooms).
+             Never two texts on the wall at once. The live frame regains
+             pointer-events (the feature frames are doors to /features,
+             2026-08-02) — but only once its visibility flips at 1000ms,
+             i.e. as it starts to appear, never while it is still the
+             invisible layer over the exit. */
           pointer-events: auto;
           transition:
-            opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1) 750ms,
-            transform 1000ms cubic-bezier(0.22, 1, 0.36, 1) 750ms,
-            visibility 0s linear 750ms;
+            opacity 1600ms cubic-bezier(0.45, 0, 0.25, 1) 1000ms,
+            transform 1600ms cubic-bezier(0.45, 0, 0.25, 1) 1000ms,
+            visibility 0s linear 1000ms;
         }
         /* Feature frames as doors (founder, 2026-08-02: the features link
            left the back-slide shelf; clicking the rotation is the way in).
@@ -1890,13 +1900,16 @@
            "have it reveal our answer of becoming an alexandrian after a
            couple seconds so it reads as an answer to the question").
            Class re-application restarts the animation, so every lap of
-           the brand frame poses, breathes, then answers. */
+           the brand frame poses, breathes, then answers. Slowed same day
+           (founder: "becoming alexandrian needs to fade in better…
+           too abrupt") — a long slow-onset bloom, not a pop: 2.2s on a
+           curve that spends its first third barely visible. */
         @keyframes front-answer-in {
           from { opacity: 0; transform: translateY(5px); }
           to   { opacity: 1; transform: none; }
         }
         .front-frame.is-live .front-answer {
-          animation: front-answer-in 1300ms cubic-bezier(0.22, 1, 0.36, 1) 2000ms both;
+          animation: front-answer-in 2200ms cubic-bezier(0.33, 0, 0.2, 1) 2400ms both;
         }
         @media (prefers-reduced-motion: reduce) {
           .front-frame {
@@ -1930,12 +1943,13 @@
           gap: 18px;
           /* Hidden until the rotation first turns (founder, 2026-08-02:
              "hide the numerals on the front slide until the first
-             rotation") — the page opens as a pure question. The 750ms
+             rotation") — the page opens as a pure question. The 1000ms
              delay lands the fade-up inside the first frame's enter
-             dissolve, so the hand and the new frame arrive as one move. */
+             dissolve, so the hand and the new frame arrive as one move,
+             on the same slow-onset curve. */
           opacity: 0;
           pointer-events: none;
-          transition: opacity 1200ms cubic-bezier(0.22, 1, 0.36, 1) 750ms;
+          transition: opacity 1400ms cubic-bezier(0.45, 0, 0.25, 1) 1000ms;
         }
         .front-numerals.is-in {
           opacity: 1;
