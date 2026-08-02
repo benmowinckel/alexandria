@@ -386,28 +386,36 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               </a>
             )}
           </div>
-          <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 500, letterSpacing: '-0.012em', margin: '2rem 0 0.35rem' }}>
-            {author.display_name || author.id}
-          </h1>
-          {/* Identity line — the member number stands apart, then location ·
-              contact as a dotted pair (founder 2026-08-02: "a gap between the
-              a0 number and the location and email pairing so its not all three
-              cramped on each other"). Same plain style throughout. */}
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.35rem 0 0', textTransform: 'lowercase' }}>
-            <span style={{ marginRight: '0.95rem' }}>{author.alexandria_id}</span>
-            {author.location && author.location_key && (
-              <Link href={`/library?locations=${encodeURIComponent(author.location_key)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link>
-            )}
-            {author.contact && (
-              <>
-                {author.location && author.location_key && <>{' '}<span style={{ color: 'var(--text-ghost)' }}>·</span>{' '}</>}
-                <a href={contactHref(author.contact)}
-                  target={author.contact.startsWith('http') ? '_blank' : undefined}
-                  rel={author.contact.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{contactForm(author.contact)}</a>
-              </>
-            )}
-          </p>
+          {/* The member number rides the name line, baseline-aligned at its
+              right — a quiet stamp beside the signature (founder 2026-08-02:
+              "maybe the a0 stuff should be on the same line as the name? on
+              the right of it"). The identity line below is then purely the
+              location · contact pair, uncramped. flex-wrap lets the number
+              drop gracefully on narrow screens. */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '1.1rem', flexWrap: 'wrap', margin: '2rem 0 0.35rem' }}>
+            <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 500, letterSpacing: '-0.012em', margin: 0 }}>
+              {author.display_name || author.id}
+            </h1>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', textTransform: 'lowercase' }}>
+              {author.alexandria_id}
+            </span>
+          </div>
+          {(author.location && author.location_key) || author.contact ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.35rem 0 0', textTransform: 'lowercase' }}>
+              {author.location && author.location_key && (
+                <Link href={`/library?locations=${encodeURIComponent(author.location_key)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link>
+              )}
+              {author.contact && (
+                <>
+                  {author.location && author.location_key && <>{' '}<span style={{ color: 'var(--text-ghost)' }}>·</span>{' '}</>}
+                  <a href={contactHref(author.contact)}
+                    target={author.contact.startsWith('http') ? '_blank' : undefined}
+                    rel={author.contact.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{contactForm(author.contact)}</a>
+                </>
+              )}
+            </p>
+          ) : null}
           {/* No bio — nobody gets a bio (founder 2026-07-19): a line isn't enough to
               sense-check a person; the name, location, and the mind carry it. */}
           {/* Links, slightly underlined so they read as links (founder 2026-07-19).

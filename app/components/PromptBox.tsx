@@ -207,17 +207,26 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           }}
         />
         {showOwnCaret && (
+          // The caret sits just LEFT of the shared text origin (a ~2.5px gap),
+          // never on the first letter, and is vertically centred on the text's
+          // own line box (padding + border + half-leading) — so bar, ghost, and
+          // typed text hold one baseline (founder, 2026-08-02: "it all needs
+          // to be consistent").
           <span aria-hidden style={{
-            position: 'absolute', left: bare ? '1px' : '0.98rem', top: bare ? '0.52rem' : '0.78rem',
-            width: '1.5px', height: '1.05rem', background: 'var(--text-muted)', borderRadius: '1px',
+            position: 'absolute', left: bare ? '-4px' : 'calc(0.95rem - 2.5px)', top: bare ? '0.59rem' : '0.91rem',
+            width: '1.5px', height: bare ? '1.05rem' : '1rem', background: 'var(--text-muted)', borderRadius: '1px',
             pointerEvents: 'none', animation: 'pb-caret-blink 1.5s ease-in-out infinite',
           }} />
         )}
-        {/* the rotating suggestion — nudged right of the caret so the blinking
-            cursor never sits on the first letter (founder 2026-07-20) */}
+        {/* the rotating suggestion — an exact overlay of the textarea's own
+            text box: same left padding, top offset compensating the 1px border,
+            so ghost and typed text share one origin and the Tab-fill never
+            jumps (founder, 2026-08-02: "the ghost text is higher than the
+            actual text… it all needs to be consistent" — supersedes the
+            07-20 nudge-right, which put the ghost 0.4rem off the typed line). */}
         <div aria-hidden style={{
-          position: 'absolute', left: 0, top: 0, right: bare ? (voiceOn ? '1.9rem' : 0) : ghostRight,
-          padding: bare ? '0.35rem 0 0.5rem 0.4rem' : '0.62rem 0 0.62rem 1.35rem',
+          position: 'absolute', left: bare ? 0 : '1px', top: bare ? 0 : '1px', right: bare ? (voiceOn ? '1.9rem' : 0) : ghostRight,
+          padding: bare ? '0.35rem 0 0.5rem 0' : '0.62rem 0 0.62rem 0.95rem',
           pointerEvents: 'none', color: 'var(--text-ghost)',
           fontFamily: 'var(--font-eb-garamond)', fontSize: bare ? '1.05rem' : '1rem', lineHeight: 1.45,
           whiteSpace: 'nowrap', overflow: 'hidden',
