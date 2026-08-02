@@ -534,7 +534,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                     by the ask box itself; one name, short clauses, sayable
                     aloud. */}
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0.8rem 0 0', textWrap: 'pretty' }}>
-                  a mirror of {first}&rsquo;s mind, in writing &mdash; ask it anything; where it runs out, it says so.
+                  a mirror of {first}&rsquo;s mind, in writing &mdash; ask it anything; when it doesn&rsquo;t know, it says so.
                 </p>
               </div>
             );

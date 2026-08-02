@@ -571,7 +571,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                     a <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>mirror of {who.split(' ')[0]}’s mind</strong>, in writing — it speaks about {who.split(' ')[0]}, never as {who.split(' ')[0]}.
                   </p>
                   <p style={{ margin: '0 0 0.9rem' }}>
-                    ask anything; where it runs out, it says so.
+                    ask anything; when it doesn&rsquo;t know, it says so.
                   </p>
                   <p style={{ margin: 0 }}>
                     <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>make your own →</Link>
