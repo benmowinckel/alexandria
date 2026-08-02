@@ -456,18 +456,34 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             if (!anyOn) return null;
             const first = (author.display_name || author.id).split(' ')[0];
             const projs = grouped.find((g) => g.cat === 'projects')?.items || [];
-            const p0 = projs[0] ? (projs[0].title || fileDisplayName(projs[0].name)).toLowerCase() : null;
-            const p1 = projs[1] ? (projs[1].title || fileDisplayName(projs[1].name)).toLowerCase() : null;
+            const projName = (i: number) => (projs[i] ? (projs[i].title || fileDisplayName(projs[i].name)).toLowerCase() : null);
+            const p0 = projName(0);
+            const p1 = projName(1);
+            const p2 = projName(2);
+            // The rotation is the marginal-value showcase (founder, 2026-08-02:
+            // "most interesting and unique things that only a plm would
+            // actually be able to answer… really showcase our marginal value")
+            // — three registers interleaved: the concrete (projects by name),
+            // the linked surfaces (beli → taste, instagram → aesthetic, x —
+            // the declared graph the mind reads), and the questions no search
+            // or bio could answer: beliefs against the grain, what to push
+            // back on, the surprise in the corpus.
+            const linkLabels = new Set(routerLinks.map((l) => l.label));
             const askExamples = [
               p0 ? `what is ${p0}?` : `what is ${first} building?`,
-              `what does ${first} believe?`,
-              `what’s ${first} like?`,
-              `how does ${first} think about ai?`,
+              `what does ${first} believe that most people don’t?`,
               p1 ? `why ${p1}?` : `what matters most to ${first}?`,
-              `what should i read first?`,
-              routerLinks.some((l) => l.label === 'x') ? `what’s on ${first}’s x?` : 'where should i start?',
-              `what’s ${first}’s philosophy?`,
+              `what’s the most surprising thing in here?`,
               `what would ${first} push back on?`,
+              ...(linkLabels.has('beli') ? [`what’s ${first}’s taste in restaurants?`] : []),
+              `how does ${first} think about ai?`,
+              p2 ? `what is ${p2}?` : `what is ${first} working on?`,
+              ...(linkLabels.has('instagram') ? [`what’s ${first}’s aesthetic?`] : []),
+              `what should i read first?`,
+              ...(linkLabels.has('x') ? [`what’s on ${first}’s x?`] : []),
+              `how does ${first} decide what to work on?`,
+              `what’s ${first}’s philosophy?`,
+              `what’s ${first} like?`,
               'ask anything…',
             ];
             return (
@@ -501,8 +517,13 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing}
                     placeholder={doorQ ? 'ask anything…' : askExamples[phIdx % askExamples.length]} />
                 </div>
+                {/* Truck-driver plain (founder, 2026-08-02: "its still a
+                    little unclear what this is") — say the mechanism, not
+                    the metaphor: an ai, it has read the published corpus,
+                    ask it, honesty cap. Pronoun-free so the template holds
+                    for any Author. */}
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0.8rem 0 0', textWrap: 'pretty' }}>
-                  a mirror of {first}&rsquo;s published mind — it answers from what&rsquo;s written here, and says so when it can&rsquo;t.
+                  an ai that has read everything {first} has published here &mdash; ask it what {first} thinks; where the writing runs out, it says so.
                 </p>
               </div>
             );

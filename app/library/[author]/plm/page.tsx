@@ -736,43 +736,45 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 // still ask the mirror about the linked surfaces — it answers from
                 // what the Author has shared, even the ones it can't open itself.
                 <>
-                  {/* Links PINNED at the top — always visible, since they're the key
-                      value; artifacts scroll below (founder 2026-07-19). */}
-                  {linked.length > 0 && (
-                    <div style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-light)', padding: '1.2rem clamp(1.4rem, 4vw, 3rem) 1rem' }}>
-                      <p style={{ color: 'var(--text-ghost)', fontSize: '0.8rem', letterSpacing: '0.08em', margin: '0 0 0.3rem' }}>links</p>
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0 0 0.6rem' }}>
-                        ask the mirror about these, or tap to open them.
-                      </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.3rem 1.15rem', fontSize: '0.98rem' }}>
-                        {linked.map((l) => {
-                          if (/beliapp\.co/i.test(l.url)) {
-                            const handle = l.url.replace(/\/+$/, '').split('/').pop() || '';
-                            return (
-                              <button key={l.url} type="button" title="beli has no web page — click to copy the username"
-                                onClick={() => { try { navigator.clipboard?.writeText('@' + handle); } catch { /* */ } setBeliCopied(true); setTimeout(() => setBeliCopied(false), 1800); }}
-                                style={{ color: 'var(--text-muted)', textDecoration: 'underline', textDecorationColor: 'var(--border-light)', textUnderlineOffset: '3px', border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
-                                className="hover:opacity-60">
-                                {beliCopied ? `@${handle} · copied ✓` : 'beli'}
-                              </button>
-                            );
-                          }
-                          return (
-                            <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="hover:opacity-60"
-                              style={{ color: 'var(--text-muted)', textDecoration: 'underline', textDecorationColor: 'var(--border-light)', textUnderlineOffset: '3px' }}>
-                              {l.label}
-                            </a>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  {/* One consistent pane (founder, 2026-08-02: "it should have
+                      an elegant maybe italic explanation text, then the title
+                      things, then the items"): a single italic explainer covers
+                      the whole pane, then every section — links first, then the
+                      artifact categories — carries the same label hand and the
+                      same rhythm. The old pinned links block (its own border,
+                      background, and second explainer) was the inconsistency. */}
                   <div style={{ padding: '1.4rem clamp(1.4rem, 4vw, 3rem)' }}>
                     {files.length === 0 && linked.length === 0 && <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem' }}>nothing to show yet.</p>}
-                    {files.length > 0 && (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: 1.55, margin: '0 0 1.9rem' }}>
-                        open a piece to read it beside the chat.
+                    {(files.length > 0 || linked.length > 0) && (
+                      <p style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.95rem', lineHeight: 1.55, margin: '0 0 1.9rem' }}>
+                        ask the mirror about anything here &mdash; or open a piece to read it beside the chat.
                       </p>
+                    )}
+                    {linked.length > 0 && (
+                      <div style={{ margin: '0 0 1.5rem' }}>
+                        <p style={{ ...label, margin: '0 0 0.45rem' }}>links</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.3rem 1.15rem', fontSize: '0.98rem' }}>
+                          {linked.map((l) => {
+                            if (/beliapp\.co/i.test(l.url)) {
+                              const handle = l.url.replace(/\/+$/, '').split('/').pop() || '';
+                              return (
+                                <button key={l.url} type="button" title="beli has no web page — click to copy the username"
+                                  onClick={() => { try { navigator.clipboard?.writeText('@' + handle); } catch { /* */ } setBeliCopied(true); setTimeout(() => setBeliCopied(false), 1800); }}
+                                  style={{ color: 'var(--text-muted)', textDecoration: 'underline', textDecorationColor: 'var(--border-light)', textUnderlineOffset: '3px', border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
+                                  className="hover:opacity-60">
+                                  {beliCopied ? `@${handle} · copied ✓` : 'beli'}
+                                </button>
+                              );
+                            }
+                            return (
+                              <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer" className="hover:opacity-60"
+                                style={{ color: 'var(--text-muted)', textDecoration: 'underline', textDecorationColor: 'var(--border-light)', textUnderlineOffset: '3px' }}>
+                                {l.label}
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </div>
                     )}
                     {(['works', 'projects', 'shadows'] as const).map((cat) => {
                       const items = files.filter((f) => (f.category || 'shadows') === cat);
