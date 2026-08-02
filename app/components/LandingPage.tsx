@@ -182,11 +182,11 @@ function HomeInstall() {
   );
 }
 
-// The films — front-slide rotation. The demo leads until the launch film
-// ships; add entries here and the plate arrows appear automatically.
-// The frame at rest is a title card (the fresco crop was tried and cut —
-// Creation-of-Adam is borderline cliché across ai/tech now); pressing
-// play lifts the film out into a lightbox (x / Esc / backdrop closes).
+// The films — the demo leads until the launch film ships. Its ONE home
+// is the back-slide quiet-links foot (founder, 2026-08-02: "remove the
+// demo from the front slide and only have it as the footer on the back
+// slide" — the 07-27 archway door is gone). Pressing play lifts the film
+// into a lightbox (x / Esc / backdrop closes).
 const FILMS = [
   {
     src: '/demo-public.mp4',
@@ -503,6 +503,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   ];
   const [frameIdx, setFrameIdx] = useState(0);
   const [frameHold, setFrameHold] = useState(false);
+  // The hand stays hidden until the rotation first turns (founder,
+  // 2026-08-02: "hide the numerals on the front slide until the first
+  // rotation") — the page opens as a pure question; the numerals fade up
+  // with the first incoming frame. Reduced-motion users never rotate, so
+  // they get the hand immediately (it is their only way to the frames).
+  const [numeralsIn, setNumeralsIn] = useState(false);
   const frameCount = FRONT_FRAMES.length;
   const featureCount = frameCount - 1;
   // Five slots visible; each slot advances 34px (26px numeral + 8px gap
@@ -523,10 +529,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   useEffect(() => {
     // Reduced motion: no auto-rotation — the page rests on the brand
     // frame (index 0), which is exactly the pre-rotation hero. Manual
-    // controls still work. Read the media query directly: showBreeze is
-    // false for one mount tick even for motion users, so keying off it
-    // would kill the rotation for everyone.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // controls still work (and must be visible: reveal the hand now).
+    // Read the media query directly: showBreeze is false for one mount
+    // tick even for motion users, so keying off it would kill the
+    // rotation for everyone.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setNumeralsIn(true);
+      return;
+    }
     if (frameHold) return;
     // 8000ms per frame, hero included (founder, 2026-07-24: 6000 was "a
     // touch too fast"; a 10s hero dwell was tried the same night and
@@ -536,6 +546,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameIdx, frameHold]);
+  // First turn — auto, swipe, or keyboard — reveals the hand for good.
+  useEffect(() => {
+    if (frameIdx !== 0) setNumeralsIn(true);
+  }, [frameIdx]);
   // Keyboard ← → steps the rotation (vertical arrows keep scrolling the
   // page; horizontal are unclaimed on this layout).
   useEffect(() => {
@@ -948,20 +962,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         {/* Frontispiece composition — the wall + arch + fresco ARE the
             slide (restored 2026-07-01 after a framed-card detour: the
             painting is the image the launch film re-authors, so it
-            stays). The demo trigger moved OFF the hero to the back-slide
-            foot (2026-07-19) — the arch is now pure scenery, no caption
-            stuck on the art. */}
+            stays). The arch is pure scenery again (founder, 2026-08-02:
+            "remove the demo from the front slide and only have it as the
+            footer on the back slide" — reversing the 07-27 archway door);
+            the demo's one home is the back-slide quiet-links foot. */}
         <div className="stage-top">
-        {/* The demo returns to the archway (founder, 2026-07-27: "put the
-            demo back into the water archway... I'm keeping the water") —
-            the window becomes a literal window into the product: the whole
-            arch is the trigger, a quiet plaque line sits at its foot, and
-            the film lifts into the same lightbox as the back-slide link. */}
-        <DemoFilm className="arch-demo">
-          <span className="arch-demo-label">
-            <span className="arch-demo-glyph" aria-hidden>▷</span> watch the demo
-          </span>
-        </DemoFilm>
         {/* The colophon — the front slide signed like a manuscript, the two
             marks bracketing the hero in opposite corners (founder 2026-07-23):
             the maker's name bottom-left, the place + year bottom-right, both in
@@ -1003,33 +1008,47 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               carousel dots. Arrows returned 2026-07-24 night with the
               sliding window (no longer redundant: they steer past it). */}
           <div className="front-frames">
-            {FRONT_FRAMES.map((f, i) => (
-              <div
-                key={i}
-                className={`front-frame${i === frameIdx ? ' is-live' : ''}`}
-                aria-hidden={i !== frameIdx}
-              >
-                {f.kind === 'brand' ? (
-                  <>
-                    {/* The brand frame — the locked 07-17 hero, verbatim;
-                        the rotation opens here. */}
-                    <p className="front-lead">When ai can do everything humans can, what do we do?</p>
-                    <p className="front-answer">
-                      <span className="front-answer-lead">our answer is becoming an</span>
-                      <span className="front-answer-nameline"><span className="front-answer-name">alexandrian</span><span className="front-answer-dot">.</span></span>
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="front-frame-name">{f.name}</p>
-                    <p className="front-lead">{f.lead}</p>
-                    <p className="front-frame-sub">{f.sub}</p>
-                  </>
-                )}
-              </div>
-            ))}
+            {FRONT_FRAMES.map((f, i) =>
+              f.kind === 'brand' ? (
+                <div
+                  key={i}
+                  className={`front-frame${i === frameIdx ? ' is-live' : ''}`}
+                  aria-hidden={i !== frameIdx}
+                >
+                  {/* The brand frame — the locked 07-17 hero, verbatim;
+                      the rotation opens here. The answer arrives ~2s after
+                      the question (founder, 2026-08-02: "have it reveal our
+                      answer … after a couple seconds so it reads as an
+                      answer to the question") — see .front-answer's
+                      is-live animation. */}
+                  <p className="front-lead">When ai can do everything humans can, what do we do?</p>
+                  <p className="front-answer">
+                    <span className="front-answer-lead">our answer is becoming an</span>
+                    <span className="front-answer-nameline"><span className="front-answer-name">alexandrian</span><span className="front-answer-dot">.</span></span>
+                  </p>
+                </div>
+              ) : (
+                /* Feature frames are doors (founder, 2026-08-02: the
+                   features link came off the back slide; "when you click
+                   on the rotation of features on the front slide it takes
+                   you there") — the live frame links to /features. Only
+                   the live frame is clickable/tabbable; swipe still steps
+                   (a >44px swipe suppresses the click). */
+                <Link
+                  key={i}
+                  href="/features"
+                  className={`front-frame front-frame-link${i === frameIdx ? ' is-live' : ''}`}
+                  aria-hidden={i !== frameIdx}
+                  tabIndex={i === frameIdx ? 0 : -1}
+                >
+                  <p className="front-frame-name">{f.name}</p>
+                  <p className="front-lead">{f.lead}</p>
+                  <p className="front-frame-sub">{f.sub}</p>
+                </Link>
+              ),
+            )}
           </div>
-          <div className="front-numerals" aria-label="Slides">
+          <div className={`front-numerals${numeralsIn ? ' is-in' : ''}`} aria-label="Slides">
             <button
               type="button"
               className="front-arrow"
@@ -1246,14 +1265,17 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   space-between drops it to the bottom; matching right-lower's
                   752px flex-end box keeps it under the CTAs. */}
               {/* The shelf — two pairs with a hairline divider (founder,
-                  2026-07-27): the places, then the doors. The demo lives
-                  in the archway now; here it keeps a one-word echo. */}
+                  2026-07-27): the places, then the doors. This is the
+                  demo's ONE home (founder, 2026-08-02 — the archway door
+                  removed). The features door also left this shelf the
+                  same day: the front rotation itself is the features
+                  door now (click any feature frame → /features); the
+                  /features page stays live for direct links. */}
               <p className="quiet-links">
                 <Link href="/library" className="quiet-link">library<span className="shelf-dot">.</span></Link>
                 <Link href="/marketplace" className="quiet-link">marketplace<span className="shelf-dot">.</span></Link>
                 <span className="quiet-div" aria-hidden />
                 <DemoFilm className="quiet-link quiet-door"><em>watch the demo</em></DemoFilm>
-                <Link href="/features" className="quiet-link quiet-door"><em>the features</em></Link>
                 <Link href="/follow" className="quiet-link quiet-door"><em>show your support</em></Link>
               </p>
           </div>

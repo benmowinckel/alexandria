@@ -1800,56 +1800,10 @@
           letter-spacing: 0.012em;
           color: var(--theme-fg-muted);
         }
-        /* The arch as demo door — a hotspot over the window in stage
-           coordinates (scales with the scene), the label a quiet plaque
-           at the window's foot over the sea. Always visible (touch has
-           no hover), waking fully on hover. Mobile keeps the demo on
-           the back slide only — the mobile scene crops differently. */
-        .arch-demo {
-          position: absolute;
-          left: 505px;
-          top: 218px;
-          width: 410px;
-          height: 425px;
-          background: none;
-          border: none;
-          cursor: pointer;
-          z-index: 3;
-          display: flex;
-          align-items: flex-end;
-          justify-content: center;
-          padding: 0 0 18px;
-        }
-        .arch-demo-label {
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 14.5px;
-          letter-spacing: 0.015em;
-          color: rgba(38, 44, 72, 0.72);
-          transition: color 200ms ease;
-        }
-        .arch-demo-glyph {
-          font-size: 9px;
-          margin-right: 3px;
-          vertical-align: 1px;
-        }
-        .arch-demo:hover .arch-demo-label {
-          color: rgba(38, 44, 72, 0.85);
-        }
-        @media (max-width: 899px) {
-          /* Mobile: the stage flattens (display:contents), so the hotspot
-             positions against the flowing top-slide with viewport units.
-             The mobile scene centres the arch; svh keeps the seat stable
-             while the iOS bar collapses. Tap opens the same lightbox. */
-          .arch-demo {
-            left: 50%;
-            top: 46svh;
-            transform: translateX(-50%);
-            width: 66vw;
-            height: 30svh;
-            padding-bottom: 6px;
-          }
-        }
+        /* (The arch-demo door was removed 2026-08-02 — founder: "remove
+           the demo from the front slide and only have it as the footer on
+           the back slide." The arch is pure scenery; the demo's one
+           trigger is the back-slide quiet-links foot.) */
         /* ─── FRONT-SLIDE OPENING ─── */
         /* "to the reader" + the calculator hook, set on the LEFT of the
            hero (founder, 2026-07-12: "on the left and elegant") in the
@@ -1895,10 +1849,42 @@
           transform: translateY(0);
           /* ENTER: waits for the outgoing frame to clear (750ms), then
              eases in with a whisper of rise. Never two texts on the wall
-             at once. */
+             at once. Live frame regains pointer-events — the feature
+             frames are links (doors to /features, 2026-08-02). */
+          pointer-events: auto;
           transition:
             opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1) 750ms,
             transform 1000ms cubic-bezier(0.22, 1, 0.36, 1) 750ms;
+        }
+        /* Feature frames as doors (founder, 2026-08-02: the features link
+           left the back-slide shelf; clicking the rotation is the way in).
+           Ink stays ink, no underline — the kicker warming on hover is the
+           one quiet tell. */
+        .front-frame-link {
+          display: block;
+          text-decoration: none;
+          color: inherit;
+          cursor: pointer;
+        }
+        .front-frame-link:hover .front-frame-name,
+        .front-frame-link:focus-visible .front-frame-name {
+          color: rgba(46, 30, 38, 0.68);
+        }
+        .front-frame-link:focus-visible {
+          outline: 1px solid rgba(46, 30, 38, 0.35);
+          outline-offset: 8px;
+        }
+        /* The answer arrives after the question (founder, 2026-08-02:
+           "have it reveal our answer of becoming an alexandrian after a
+           couple seconds so it reads as an answer to the question").
+           Class re-application restarts the animation, so every lap of
+           the brand frame poses, breathes, then answers. */
+        @keyframes front-answer-in {
+          from { opacity: 0; transform: translateY(5px); }
+          to   { opacity: 1; transform: none; }
+        }
+        .front-frame.is-live .front-answer {
+          animation: front-answer-in 1300ms cubic-bezier(0.22, 1, 0.36, 1) 2000ms both;
         }
         @media (prefers-reduced-motion: reduce) {
           .front-frame,
@@ -1907,6 +1893,13 @@
             transition: opacity 600ms ease;
           }
           .front-numeral-strip {
+            transition: none;
+          }
+          /* No delayed bloom — the answer is simply present. */
+          .front-frame.is-live .front-answer {
+            animation: none;
+          }
+          .front-numerals {
             transition: none;
           }
         }
@@ -1920,6 +1913,18 @@
           display: flex;
           align-items: center;
           gap: 18px;
+          /* Hidden until the rotation first turns (founder, 2026-08-02:
+             "hide the numerals on the front slide until the first
+             rotation") — the page opens as a pure question. The 750ms
+             delay lands the fade-up inside the first frame's enter
+             dissolve, so the hand and the new frame arrive as one move. */
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 1200ms cubic-bezier(0.22, 1, 0.36, 1) 750ms;
+        }
+        .front-numerals.is-in {
+          opacity: 1;
+          pointer-events: auto;
         }
         /* The sliding window — five fixed-width slots over the full
            numeral strip; the strip translates by whole slots (34px
