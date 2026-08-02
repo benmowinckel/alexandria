@@ -568,10 +568,10 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 // a lecture).
                 <div style={{ padding: '0.6rem 0 0.2rem', color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.65 }}>
                   <p style={{ margin: '0 0 0.9rem' }}>
-                    the <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>written mirror of {who.split(' ')[0]}’s mind</strong> — an ai speaks from it, about {who.split(' ')[0]}, never as {who.split(' ')[0]}.
+                    a <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>mirror of {who.split(' ')[0]}’s mind</strong>, in writing — it speaks about {who.split(' ')[0]}, never as {who.split(' ')[0]}.
                   </p>
                   <p style={{ margin: '0 0 0.9rem' }}>
-                    ask anything; where the mirror runs out, it says so.
+                    ask anything; where it runs out, it says so.
                   </p>
                   <p style={{ margin: 0 }}>
                     <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>make your own →</Link>

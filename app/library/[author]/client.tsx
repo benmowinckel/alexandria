@@ -529,8 +529,12 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                     Access-tier filtering exists but stays unsaid ("idk if
                     we need to say the filter thing" — we don't). Pronoun-
                     free so the template holds for any Author. */}
+                {/* De-clunked (founder, 2026-08-02, third pass: "the blurb
+                    texts are too clunky") — "an ai with access to" is implied
+                    by the ask box itself; one name, short clauses, sayable
+                    aloud. */}
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0.8rem 0 0', textWrap: 'pretty' }}>
-                  an ai with access to the written mirror of {first}&rsquo;s mind &mdash; ask it what {first} thinks; where the mirror runs out, it says so.
+                  a mirror of {first}&rsquo;s mind, in writing &mdash; ask it anything; where it runs out, it says so.
                 </p>
               </div>
             );
