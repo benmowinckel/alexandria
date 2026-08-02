@@ -462,28 +462,33 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             const p2 = projName(2);
             // The rotation is the marginal-value showcase (founder, 2026-08-02:
             // "most interesting and unique things that only a plm would
-            // actually be able to answer… really showcase our marginal value")
-            // — three registers interleaved: the concrete (projects by name),
-            // the linked surfaces (beli → taste, instagram → aesthetic, x —
-            // the declared graph the mind reads), and the questions no search
-            // or bio could answer: beliefs against the grain, what to push
-            // back on, the surprise in the corpus.
+            // actually be able to answer"; second pass same day: "they need to
+            // be more interesting questions rather than just things you can
+            // literally just click the link for" — so no what's-on-his-x /
+            // aesthetic / taste-list questions, the links answer those with a
+            // click). Two registers: the concrete anchors (projects by name)
+            // and the questions only a mirror of a mind can answer — beliefs
+            // against the grain, contradictions, changed positions, what the
+            // corpus itself finds surprising. A link may inspire a question
+            // only where the mirror adds the THINKING behind the surface
+            // (beli → what makes a restaurant worth his time), never its
+            // clickable content.
             const linkLabels = new Set(routerLinks.map((l) => l.label));
             const askExamples = [
               p0 ? `what is ${p0}?` : `what is ${first} building?`,
               `what does ${first} believe that most people don’t?`,
               p1 ? `why ${p1}?` : `what matters most to ${first}?`,
-              `what’s the most surprising thing in here?`,
+              `what’s ${first}’s biggest contradiction?`,
               `what would ${first} push back on?`,
-              ...(linkLabels.has('beli') ? [`what’s ${first}’s taste in restaurants?`] : []),
+              `what popular idea does ${first} think is just wrong?`,
+              p2 ? `what is ${p2}?` : `how does ${first} decide what to work on?`,
+              `what’s the most surprising thing in here?`,
+              `what keeps ${first} up at night?`,
+              ...(linkLabels.has('beli') ? [`what makes a restaurant worth ${first}’s time?`] : []),
+              `what’s something ${first} changed positions on?`,
               `how does ${first} think about ai?`,
-              p2 ? `what is ${p2}?` : `what is ${first} working on?`,
-              ...(linkLabels.has('instagram') ? [`what’s ${first}’s aesthetic?`] : []),
               `what should i read first?`,
-              ...(linkLabels.has('x') ? [`what’s on ${first}’s x?`] : []),
-              `how does ${first} decide what to work on?`,
               `what’s ${first}’s philosophy?`,
-              `what’s ${first} like?`,
               'ask anything…',
             ];
             return (
@@ -517,13 +522,15 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing}
                     placeholder={doorQ ? 'ask anything…' : askExamples[phIdx % askExamples.length]} />
                 </div>
-                {/* Truck-driver plain (founder, 2026-08-02: "its still a
-                    little unclear what this is") — say the mechanism, not
-                    the metaphor: an ai, it has read the published corpus,
-                    ask it, honesty cap. Pronoun-free so the template holds
-                    for any Author. */}
+                {/* The architecture, plainly (founder, 2026-08-02: "the
+                    company builds teh mirror, and this is just an ai with
+                    access to the mirror so it can speak on it") — the
+                    MIRROR is the product; this door is an ai reading it.
+                    Access-tier filtering exists but stays unsaid ("idk if
+                    we need to say the filter thing" — we don't). Pronoun-
+                    free so the template holds for any Author. */}
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0.8rem 0 0', textWrap: 'pretty' }}>
-                  an ai that has read everything {first} has published here &mdash; ask it what {first} thinks; where the writing runs out, it says so.
+                  an ai with access to the written mirror of {first}&rsquo;s mind &mdash; ask it what {first} thinks; where the mirror runs out, it says so.
                 </p>
               </div>
             );

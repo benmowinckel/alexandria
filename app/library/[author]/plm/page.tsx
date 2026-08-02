@@ -126,8 +126,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const who = authorName || author;
   // One public mind; DEPTH is structural per querier (public shadow for anyone,
   // the deeper invite shadow for granted friends — server-side). The header
-  // shows the sidecar's online state; the public|invite toggle carries depth.
-  const [online, setOnline] = useState(false);
   const usable = useMemo(() => variants.filter((v) => v.enabled && (v.accessible || v.needsInvite)), [variants]);
   const activeCfg = useMemo(() => variants.find((v) => v.variant === activeVariant), [variants, activeVariant]);
   // Either mind can be invite-gated (which one is the Author's call). Show the
@@ -147,7 +145,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       if (!live) return;
       setAuthorName(dir?.author?.display_name || '');
       setSignedIn(sess?.signed_in === true);
-      setOnline(dir?.twin?.online === true);
       const d = dir?.twin?.depth; if (d === 'public' || d === 'paid' || d === 'invite') { setDepth(d); if (d === 'invite') setSel('invite'); }
       setContact(typeof dir?.author?.contact === 'string' ? dir.author.contact : '');
       const cleanUrl = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`);
@@ -455,12 +452,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         <header style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.9rem', padding: '0.85rem 3.6rem 0.85rem 1.2rem', borderBottom: '1px solid var(--border-light)' }}>
           <Link href={`/library/${encodeURIComponent(author)}`} aria-label="back to the library" title="library"
             style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
-          {/* Name + status share a BASELINE (the header centers for the icon,
-              which floated the smaller status word high — founder note). */}
-          <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.9rem' }}>
-            <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>{who}</span>
-            <span style={{ ...label }}>{online ? 'online' : 'offline'}</span>
-          </span>
+          {/* No standing online/offline word here either (founder, 2026-08-02:
+              "i also dont need to have that online offline thing again in the
+              top left") — a failed ask already answers with the offline note
+              in-thread; status only exists in the moment it matters. */}
+          <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>{who}</span>
         </header>
 
         <div className="plm-tabs" style={{ display: 'none', flex: 'none', borderBottom: '1px solid var(--border-light)' }}>
@@ -563,15 +559,19 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
               {who && (active?.messages.length ?? 0) === 0 && !asking && !cameWithQuestion && (
                 // The first-timer explainer — third-person MIRROR framing (it
-                // reflects the Author, it never IS them) + how to use it and the
-                // right mindset. Suppressed when arriving with a ?q= (else it
-                // flashes then vanishes — reads as a glitch; founder 2026-07-18).
+                // reflects the Author, it never IS them). Suppressed when
+                // arriving with a ?q= (else it flashes then vanishes — reads as
+                // a glitch; founder 2026-07-18). Two beats, pronoun-free, same
+                // grammar as the profile door (founder, 2026-08-02: "rephrase
+                // this. simplify. this is super ugly" — the they/them template
+                // read broken next to a named person, and three sentences was
+                // a lecture).
                 <div style={{ padding: '0.6rem 0 0.2rem', color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.65 }}>
                   <p style={{ margin: '0 0 0.9rem' }}>
-                    this is a <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>mirror of {who}’s mind</strong> — built from what they’ve published. it speaks about them, not as them.
+                    the <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>written mirror of {who.split(' ')[0]}’s mind</strong> — an ai speaks from it, about {who.split(' ')[0]}, never as {who.split(' ')[0]}.
                   </p>
                   <p style={{ margin: '0 0 0.9rem' }}>
-                    ask about their work or how they think. when it names a piece, pull it up to read alongside; where it doesn’t have their take, it says so plainly.
+                    ask anything; where the mirror runs out, it says so.
                   </p>
                   <p style={{ margin: 0 }}>
                     <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>make your own →</Link>
