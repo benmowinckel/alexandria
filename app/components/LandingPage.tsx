@@ -1147,7 +1147,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       <span className="pitch-lead">
                         The free download is a complete set of instructions our
                         founder shows his own AI&mdash;not an app or tool. Show them
-                        to yours; it decides with you what fits.
+                        to your AI. Together, you decide what fits.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1224,8 +1224,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         Over time, those files become a mirror of your thinking.
-                        Your AI uses it to help you keep what matters, develop
-                        it, and act on it instead of letting it fade.
+                        Your AI reads that mirror to help you keep the thoughts
+                        that matter, develop them, and act on them instead of
+                        letting them fade.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1263,7 +1264,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       <span className="pitch-lead">
                         Your AI repeats that cycle&mdash;writing to the
                         mirror, reading it back, and helping you build on it.
-                        That is an Alexandria loop. It works on its own; the
+                        That is an Alexandria loop, complete on its own. The
                         optional connector adds the community.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
