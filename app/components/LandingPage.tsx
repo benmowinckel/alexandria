@@ -1145,8 +1145,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        We give you instructions for your own AI. It decides
-                        what to use and changes how it works.
+                        Alexandria isn&rsquo;t another AI or app to install. You
+                        show our instructions to your own AI, which decides
+                        with you if and how to change its behaviour.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
