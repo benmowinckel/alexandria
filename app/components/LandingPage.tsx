@@ -1145,9 +1145,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        Alexandria is a concept, not an AI or app. You show our
-                        instructions to your own AI; it decides with you whether
-                        and how to change its own behaviour.
+                        The free download is our founder&rsquo;s complete loop:
+                        instructions for your own AI, not another AI or app.
+                        Your AI decides with you what to use and how to behave.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1161,11 +1161,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           idea, not a separate thing doing the work.
                         </p>
                         <p className="pitch-more">
-                          We give you our founder&rsquo;s complete loop for free.
-                          If you are starting from nothing, it is a full setup.
-                          Already have your own instructions, memory files,
-                          notes, or vault? Keep them. Your AI moulds the loop
-                          into what already works for you.
+                          Starting from nothing, the download gives you a full
+                          setup. Already have your own instructions, memory
+                          files, notes, or vault? Keep them. Your AI moulds our
+                          founder&rsquo;s loop into what already works for you.
                         </p>
                       </div>
                     </div>
@@ -1261,20 +1260,20 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        That is an Alexandria loop. You can download our
-                        founder&rsquo;s complete loop for free. Add the optional
-                        Alexandria connector to let it learn from other loops.
+                        That becomes your Alexandria loop, complete on its own.
+                        Add the optional Alexandria connector if you want it to
+                        learn from other loops.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          The downloaded loop is complete on its own. The
-                          Alexandria connector is the only paid part; adding it
-                          is what joins your loop to the community. You choose
-                          what to share. Your loop can learn what other people
-                          chose to keep thinking about, how they developed those
+                          Your loop is complete on its own. The Alexandria
+                          connector is the only paid part; adding it is what
+                          joins your loop to the community. You choose what to
+                          share. Your loop can learn what other people chose to
+                          keep thinking about, how they developed those
                           thoughts, and what they did because of them. It can
                           also copy useful parts of how their loops work. Your
                           private files stay private.
