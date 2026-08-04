@@ -1637,21 +1637,29 @@
         /* The back kicker — a faint letter-plate title telling the reader
            what why/what/how refer to: the answer in full (front gives it
            in short). Sits where the sections' top margin was. */
-        /* ─── THE PITCH — four self-sufficient mechanism lines followed
-           by one static coda. Tiny one-word labels orient without carrying
-           meaning; the sentences still carry the mechanism and its human
-           result alone. Expanded paragraphs are optional depth. */
+        /* ─── THE PITCH — a manuscript index rather than five equal
+           paragraphs. The marginal rail carries orientation; a large sentence
+           carries each causal beat; the quieter sentence beneath adds detail.
+           The prose remains complete if the labels are ignored. */
         .pitch {
+          --pitch-rail: 82px;
+          --pitch-gutter: 22px;
           flex: 1 1 auto;
           min-height: 0;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          gap: 22px;
+          gap: 20px;
           margin: 0;
         }
+        .pitch-item {
+          position: relative;
+        }
         .pitch-head {
-          display: block;
+          display: grid;
+          grid-template-columns: var(--pitch-rail) minmax(0, 1fr);
+          column-gap: var(--pitch-gutter);
+          align-items: start;
           width: 100%;
           background: none;
           border: none;
@@ -1665,37 +1673,62 @@
         .pitch-head:active { opacity: 0.82; }
         .pitch-kicker {
           display: block;
-          margin: 0 0 5px;
+          margin: 0;
+          padding: 7px 15px 0 0;
+          text-align: right;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: normal;
           font-size: 11px;
           line-height: 1;
           letter-spacing: 0.13em;
           color: var(--theme-fg-muted);
+          transition: color 220ms ease;
         }
         .pitch-lead {
           display: block;
+          min-width: 0;
           margin: 0;
           font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
-          font-size: 23px;
-          line-height: 1.46;
           letter-spacing: 0.002em;
           font-feature-settings: 'liga', 'dlig';
-          color: var(--theme-fg);
           max-width: 660px;
           text-wrap: pretty;
         }
+        .pitch-thesis {
+          display: block;
+          font-size: 22px;
+          line-height: 1.34;
+          color: var(--theme-fg);
+        }
+        .pitch-detail {
+          display: block;
+          margin-top: 5px;
+          font-size: 17px;
+          line-height: 1.43;
+          color: var(--theme-fg-muted);
+        }
         .pitch-coda {
-          margin: 0;
+          position: relative;
+          display: grid;
+          grid-template-columns: var(--pitch-rail) minmax(0, 1fr);
+          column-gap: var(--pitch-gutter);
+          align-items: start;
+          margin: 7px 0 0;
+          padding: 0;
+          max-width: none;
+        }
+        .pitch-coda-copy {
+          min-width: 0;
           font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 23px;
-          line-height: 1.46;
-          letter-spacing: 0.002em;
+          font-style: normal;
+          font-weight: 500;
+          font-size: 25px;
+          line-height: 1.28;
+          letter-spacing: -0.005em;
           font-feature-settings: 'liga', 'dlig';
           color: var(--theme-fg);
-          max-width: 660px;
+          max-width: 620px;
           text-wrap: pretty;
         }
         .pitch-para {
@@ -1722,6 +1755,8 @@
         }
         .pitch-head:hover .pitch-caret,
         .pitch-item:hover .pitch-caret { color: var(--theme-fg-muted); }
+        .pitch-item:hover .pitch-kicker,
+        .pitch-item.is-open .pitch-kicker { color: var(--theme-fg); }
         .pitch-item.is-open .pitch-caret {
           transform: rotate(90deg);
         }
@@ -1734,6 +1769,7 @@
         .pitch-body {
           display: grid;
           grid-template-rows: 0fr;
+          margin-left: calc(var(--pitch-rail) + var(--pitch-gutter));
           transition: grid-template-rows 330ms cubic-bezier(0.33, 0, 0.2, 1);
         }
         .pitch-item.is-open .pitch-body {
@@ -2987,13 +3023,45 @@
           /* The pitch on mobile: natural flow (no flex-fill), the
              paragraphs scale down with the viewport. */
           .pitch {
+            --pitch-rail: 0px;
+            --pitch-gutter: 0px;
             flex: 0 0 auto;
             justify-content: flex-start;
             margin-top: 22px;
-            gap: 20px;
+            gap: 19px;
           }
-          .pitch-lead {
-            font-size: clamp(19px, 2.6vw, 23px);
+          .pitch-item {
+            padding: 0;
+          }
+          .pitch-head {
+            display: block;
+          }
+          .pitch-kicker {
+            margin-bottom: 7px;
+            padding: 0;
+            text-align: left;
+          }
+          .pitch-thesis {
+            font-size: clamp(19.5px, 5.1vw, 21px);
+            line-height: 1.34;
+          }
+          .pitch-detail {
+            margin-top: 5px;
+            font-size: clamp(16.5px, 4.25vw, 17.5px);
+            line-height: 1.43;
+          }
+          .pitch-body {
+            margin-left: 0;
+          }
+          .pitch-coda {
+            display: block;
+            margin-top: 5px;
+            padding: 0;
+          }
+          .pitch-coda-copy {
+            display: block;
+            font-size: clamp(22px, 5.9vw, 25px);
+            line-height: 1.28;
           }
           .pitch-para {
             font-size: 15.5px;

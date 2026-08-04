@@ -1127,10 +1127,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     pinned below with the CTAs. Copy consolidated this
                     pass — same ideas and richness, fewer words. Section
                     plates (roman numerals) echo the dictionary block. */}
-                {/* The pitch — four self-sufficient mechanism lines, then
-                    one static coda that turns the mechanism into its human
-                    result. No titles, numbering, or explanatory UI copy. A
-                    quiet chevron is the only expansion affordance. */}
+                {/* The pitch — a manuscript index, not a wall of prose.
+                    Each large sentence carries the causal story on its own;
+                    the quieter line beneath adds precision. Marginal labels
+                    orient, whitespace separates, and the chevron alone
+                    implies that the first four beats open. */}
                 <div className="pitch">
                   <section
                     data-pitch="instructions"
@@ -1146,12 +1147,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-kicker">instructions.</span>
                       <span className="pitch-lead">
-                        Your AI should know how you think&mdash;not just
-                        remember your last chat. Show it our free
-                        instructions&mdash;not a new app or tool. They explain why
-                        the loop matters and how to set yours up; together, you
-                        decide exactly how it works.
-                        <span className="pitch-caret" aria-hidden>›</span>
+                        <span className="pitch-thesis">
+                          Show your AI our free instructions&mdash;not a new app
+                          or tool.
+                          <span className="pitch-caret" aria-hidden>›</span>
+                        </span>
+                        <span className="pitch-detail">
+                          They explain why the loop matters and how to set yours
+                          up. From there, you both decide exactly how it should
+                          work.
+                        </span>
                       </span>
                     </button>
                     <div className="pitch-body">
@@ -1188,11 +1193,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-kicker">files.</span>
                       <span className="pitch-lead">
-                        Once the loop is set up, your AI automatically
-                        writes what it learns about you&mdash;in full detail&mdash;to
-                        plain files on your computer, then reads them again when
-                        useful.
-                        <span className="pitch-caret" aria-hidden>›</span>
+                        <span className="pitch-thesis">
+                          Your AI writes what it learns about you to plain files
+                          on your computer.
+                          <span className="pitch-caret" aria-hidden>›</span>
+                        </span>
+                        <span className="pitch-detail">
+                          It fills them in automatically, in full detail, then
+                          reads them again whenever they would help.
+                        </span>
                       </span>
                     </button>
                     <div className="pitch-body">
@@ -1230,11 +1239,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-kicker">mirror.</span>
                       <span className="pitch-lead">
-                        As those files grow, they become a detailed mirror of
-                        your thinking. Your AI uses that mirror to help you keep
-                        the thoughts that matter, develop them, and act on them
-                        instead of letting them fade.
-                        <span className="pitch-caret" aria-hidden>›</span>
+                        <span className="pitch-thesis">
+                          Those files become a detailed mirror of your thinking.
+                          <span className="pitch-caret" aria-hidden>›</span>
+                        </span>
+                        <span className="pitch-detail">
+                          Your AI uses it to help you keep the thoughts that
+                          matter, develop them, and act on them instead of
+                          letting them fade.
+                        </span>
                       </span>
                     </button>
                     <div className="pitch-body">
@@ -1270,11 +1283,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-kicker">loop.</span>
                       <span className="pitch-lead">
-                        As you think and act, your AI repeats the cycle&mdash;writing
-                        to the mirror, reading it back, and helping you build on
-                        it. We call that your Alexandria loop. The optional
-                        connector joins your loop to the community.
-                        <span className="pitch-caret" aria-hidden>›</span>
+                        <span className="pitch-thesis">
+                          As you think and act, your AI repeats the cycle.
+                          <span className="pitch-caret" aria-hidden>›</span>
+                        </span>
+                        <span className="pitch-detail">
+                          It writes to the mirror, reads it back, and helps you
+                          build on it. We call that your Alexandria loop; the
+                          optional connector joins it to the community.
+                        </span>
                       </span>
                     </button>
                     <div className="pitch-body">
@@ -1298,9 +1315,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   </section>
                   <p className="pitch-coda">
                     <span className="pitch-kicker">result.</span>
-                    The result is more than better answers: more of your
-                    thinking kept, developed, and turned into things you
-                    actually do.
+                    <span className="pitch-coda-copy">
+                      Your thinking stops disappearing between conversations.
+                      It becomes something you can keep, develop, and turn
+                      into action.
+                    </span>
                   </p>
                 </div>
 
