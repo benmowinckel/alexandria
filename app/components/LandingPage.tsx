@@ -1129,7 +1129,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     plates (roman numerals) echo the dictionary block. */}
                 {/* The pitch — a manuscript index, not a wall of prose.
                     Each large sentence carries the causal story on its own;
-                    the quieter line beneath adds precision. Marginal labels
+                    the quieter line beneath adds precision. Inline labels
                     orient, whitespace separates, and the chevron alone
                     implies that the four beats open. The final line is an
                     unlabelled coda, not a fifth section. */}
@@ -1329,9 +1329,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     beat iii, so the close doesn't repeat it. */}
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  You&rsquo;d take a free sample at the supermarket.
+                  At the supermarket, you try the free sample before deciding
+                  whether you like it.
                   <br />
-                  Five minutes from now, your mirror can be writing itself.
+                  Show these instructions to your AI. Five minutes from now,
+                  your mirror can be writing itself.
                 </p>
 
                 <div className="cta-pair">
