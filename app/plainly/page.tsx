@@ -9,9 +9,9 @@ import { pageMetadata } from '../lib/config';
 // The text leads (docked ask beneath): its whole job is converting a
 // zero-context reader into pressing the button; the mirror catches
 // whoever still has a question standing between them and it.
-const TITLE = 'alexandria, plainly — the whole thing in one read.';
+const TITLE = 'alexandria, plainly.';
 const DESCRIPTION =
-  'the entire company in plain english: a complete written map of how you think, built by your own ai, in files you own — and why to start today. ask anything as you read.';
+  'How your own AI builds a detailed mirror in files you own, what it helps you do, and why to start today.';
 
 const PAGE_META = pageMetadata({
   path: '/plainly',

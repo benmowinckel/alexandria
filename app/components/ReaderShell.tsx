@@ -191,7 +191,7 @@ export default function ReaderShell({
   numbered = false, plain = false,
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
-  intro, mirrorNote, inviteField, askFirst = false, dockedAsk = false, footerCta = 'build your own',
+  intro, mirrorNote, inviteField, askFirst = false, dockedAsk = false, footerCta = 'start your loop',
   handoffAuthorId, initialBudget = null,
 }: ReaderShellProps) {
   const book = useMemo(
@@ -489,7 +489,7 @@ export default function ReaderShell({
                 </>
               )}
               <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
-                title="take it with you — copies the mind, the piece and this conversation for your own ai"
+                title="take it with you — copies the mind, the piece and this conversation for your own AI"
                 style={{ ...iconBtn, marginLeft: 'auto', color: spent ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
               {(active?.messages.length ?? 0) > 0 && (
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
@@ -545,10 +545,10 @@ export default function ReaderShell({
                   </p>
                   <p style={{ margin: '0 0 0.85rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
                     Answers cost money to run, so everyone gets a few a day. You don’t have to wait —
-                    take the conversation to your own ai and keep going there.
+                    take the conversation to your own AI and keep going there.
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
-                    <ActionButton icon={HandoffIcon} label="continue in your own ai" doneLabel="copied — paste it into your ai"
+                    <ActionButton icon={HandoffIcon} label="continue in your own AI" doneLabel="copied — paste it into your AI"
                       onAction={() => void takeItWithYou()}
                       title="copies this chat, the piece and the writing behind it — paste it into ChatGPT, Claude, or whatever you use"
                       style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
@@ -557,7 +557,7 @@ export default function ReaderShell({
                       className="hover:opacity-75" />
                   </div>
                   <p style={{ margin: '0.85rem 0 0', color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.55, textWrap: 'pretty' }}>
-                    Or stop asking about it and try it — <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">make your own mirror</Link>.
+                    Or stop asking about it and try it — <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">start your loop</Link>.
                     It’s free, and it’s the fastest way to see what this is.
                   </p>
                 </div>

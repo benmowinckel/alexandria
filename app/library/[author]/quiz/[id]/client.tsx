@@ -208,8 +208,8 @@ export default function QuizPageClient({ params }: { params: Promise<{ author: s
           <p id="shadow-info" style={{ display: 'none', fontSize: '0.7rem', color: 'var(--text-ghost)', fontStyle: 'italic', margin: 0, lineHeight: 1.6, maxWidth: '280px' }}>
             the shadow is a published mind — a file that maps how someone actually thinks. each chapter is a different dimension.
           </p>
-          <a href={`/signup?ref=${encodeURIComponent(authorId)}&ref_source=library`} style={{ color: 'var(--text-ghost)', textDecoration: 'none', fontSize: '0.78rem', transition: 'opacity 0.15s' }} className="hover:opacity-60">
-            make your own
+          <a href={`/start?ref=${encodeURIComponent(authorId)}`} style={{ color: 'var(--text-ghost)', textDecoration: 'none', fontSize: '0.78rem', transition: 'opacity 0.15s' }} className="hover:opacity-60">
+            start your loop
           </a>
         </div>
 

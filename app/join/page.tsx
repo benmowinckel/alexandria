@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: '/join',
   title: 'join alexandria.',
   description:
-    'keep thinking, together — the library, the marketplace, the tribe. first month free; free with three friends on; then a dollar a day, and I\u2019ll waive it if you ask.',
+    'Connect your Alexandria loop to other people’s. The first month is free; then a dollar a day, free with three active friends, or waived if the price would keep you out.',
 });
 
 // The founding-member JOIN — the paid half of the two things. The tool (the run)
@@ -294,6 +294,10 @@ export default async function JoinPage({
           color: var(--text-muted, rgba(26, 19, 24, 0.55));
         }
         .join-terms + .join-terms { margin-top: 4px; }
+        .join-terms a {
+          color: inherit; text-decoration-color: currentColor;
+          text-underline-offset: 2px;
+        }
         .join-exits {
           margin: 40px 0 0; padding-top: 30px; width: 100%; max-width: 486px;
           border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));

@@ -510,7 +510,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 </span>
               )}
               <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
-                title="take it with you — copies the mind, the open piece and this conversation for your own ai"
+                title="take it with you — copies the mind, the open piece and this conversation for your own AI"
                 style={{ ...iconBtn, color: spent ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
               {/* public | invite — the two DEPTHS of the one mind, named like
                   the pieces' own visibility tags (founder: most queriers are
@@ -574,7 +574,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                     ask anything; when it doesn&rsquo;t know, it says so.
                   </p>
                   <p style={{ margin: 0 }}>
-                    <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>make your own →</Link>
+                    <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>start your loop →</Link>
                   </p>
                 </div>
               )}
@@ -656,9 +656,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                   </p>
                   <p style={{ margin: '0 0 0.85rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
                     Answers cost money to run, so everyone gets a few a day. You don’t have to wait —
-                    take the conversation to your own ai and keep going there.
+                    take the conversation to your own AI and keep going there.
                   </p>
-                  <ActionButton icon={HandoffIcon} label="continue in your own ai" doneLabel="copied — paste it into your ai"
+                  <ActionButton icon={HandoffIcon} label="continue in your own AI" doneLabel="copied — paste it into your AI"
                     onAction={() => void takeItWithYou()}
                     title="copies this chat, the open piece and the writing behind it"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
@@ -666,7 +666,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                       color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
                     className="hover:opacity-75" />
                   <p style={{ margin: '0.85rem 0 0', color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.55, textWrap: 'pretty' }}>
-                    Or stop asking about it and try it — <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">make your own mirror</Link>.
+                    Or stop asking about it and try it — <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">start your loop</Link>.
                     It’s free, and it’s the fastest way to see what this is.
                   </p>
                 </div>
@@ -811,7 +811,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         </main>
         {/* Slim footer to frame the page even with the panes open (founder 2026-07-19). */}
         <footer style={{ flex: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.6rem', padding: '1rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
-          <Link href="/start" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">build your own</Link>
+          <Link href="/start" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">start your loop</Link>
           <Link href="/" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">alexandria<span style={{ fontStyle: 'normal' }}>.</span></Link>
         </footer>
       </div>

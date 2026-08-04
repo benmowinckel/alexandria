@@ -167,16 +167,17 @@ const THEMES: Theme[] = [
 // land on /start without ever touching this button again.
 // Label history: "join the tribe" → "try it free" (07-09) → "join the
 // tribe" (07-13) → "take it — it's free" (2026-07-15) → "free sample"
-// (2026-07-16) → "close your loop" (07-27) → "try it free" (07-28
-// proposal): "close your loop" only parses after reading the pitch —
-// opaque at the moment of action on the skim path, the same defect
-// class as "stay close" (field-tested fatal, twice). The label names
-// the action and the cost.
+// (2026-07-16) → "close your loop" (07-27) → "try it free" (07-28:
+// loop labels were opaque on the skim path) → "start your loop"
+// (2026-08-02, founder killed "try it free"): the objection is gone —
+// the first section lead now defines the loop one inch above the
+// button, and the close line directly over it says free + five
+// minutes, so the label can name the concept and the beginning.
 function HomeInstall() {
   return (
     <div className="cta-block">
       <Link href="/start" className="install-cta">
-        try it free
+        start your loop
       </Link>
     </div>
   );
@@ -285,49 +286,34 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // not-software-just-a-prompt + the Strava-shoes frame. Claims in the
   // display face; reasons quieter beneath; reading only the claims
   // delivers the whole argument.
-  // THE SIMPLE LEVEL (2026-07-29, three-level site: simple = this
-  // slide · extended = /plainly · infinite = the ask on /plainly).
-  // Copy derived from THE CANONICAL RUN-THROUGH (a4, locked) — edit
-  // canon first, re-derive here. The bar: a 30-second half-attention
-  // skimmer reads three labels + three leads + the close and either
-  // presses "try it free" or knows exactly where the full story is.
-  const SECS: Array<{ id: string; label: string; lead: string; body: string[] }> = [
-    {
-      id: 'what',
-      label: 'what it is.',
-      lead: 'A complete written map of how you think — built by your ai, in files on your own computer, owned by you.',
-      body: [
-        'Paste one package of instructions into whatever ai you already use. It starts a folder and writes down what it learns about your thinking as you talk, in as much detail as it can — a mirror of your mind. Read every line, edit anything, delete it all; every ai you choose reads it, and the built-in memories keep working alongside.',
-      ],
-    },
-    {
-      id: 'why',
-      label: 'why it’s valuable.',
-      lead: 'Every ai you use opens knowing you like a friend of twenty years — and develops your mind instead of quietly replacing it.',
-      body: [
-        'You never re-explain yourself, and it shows you things you’d genuinely love. When it can’t see your thinking, it asks — a biographer mode that gets you to say what you actually think, then writes it down. And it compounds: the models get smarter every month, and all that new intelligence aims itself at you.',
-      ],
-    },
-    {
-      id: 'how',
-      label: 'how to try it.',
-      lead: 'Free, five minutes: paste one line into your ai. Delete the folder and it’s like it never happened.',
-      body: [
-        'No loop yet? You get a complete one, free. Built pieces already — a CLAUDE.md, notes, memory files? It plugs the gaps and closes it. Nothing is installed and nothing is sent to us: it’s a prompt your ai reads, then decides for itself what to take.',
-      ],
-    },
-  ];
-  // One open at a time; null = all closed (the resting, skimmable state).
-  const [openSec, setOpenSec] = useState<string | null>(null);
-  // HOVER + CLICK expansion (founder, 2026-07-28: "it expands when you
-  // click or hover... like we had before"). The July controller rules
-  // apply: drive layout-moving hover states from MOUSEMOVE only (the
-  // sections shift when one opens, and enter/leave boundary events
-  // self-trigger under a moving layout — the 07-17 cascade), 160ms
-  // hover-intent so a pointer in transit opens nothing, a 560ms settle
-  // lock after each switch, and a longer dwell before move-away closes.
-  // Touch keeps tap-toggle via the click handler; coarse pointers skip
-  // the mousemove path entirely.
+  // THE PITCH — first-principles rebuild (founder, 2026-08-03:
+  // "figure out what we want to say, then the section is just the
+  // format"). The reader's questions arrive in a fixed order: what
+  // is this and what do I get (ONE question — this product's
+  // identity IS its effect: your ai, knowing you); what's the
+  // catch; why now. Three jobs, three short paragraphs, ~140 words,
+  // ALL VISIBLE — the accordion (preview + expanded) was built for
+  // a 400-word pitch, and at 140 words there is nothing left to
+  // hide, so the mechanism is deleted (labels too: each paragraph's
+  // opening words do the label's job). Hierarchy is size + air
+  // alone: the movie paragraph leads in the display italic; the
+  // catch-dissolver and the push sit quieter beneath. The old
+  // separate action-close merged into the third paragraph — one
+  // urgency beat, not two. Copy derives from THE CANONICAL
+  // RUN-THROUGH (a4, locked) — edit canon first, re-derive here.
+  // EXPANSION RESTORED same day (founder: "we should still have the
+  // expansion thing just bc it really provides frictionless marginal
+  // value") — but inverted from the old accordion: the visible
+  // paragraphs carry the COMPLETE pitch, and each opens one
+  // bonus-depth paragraph (map/biographer · control/portability ·
+  // library/Strava). Depth is never load-bearing.
+  // One open at a time; null = all closed (the resting state).
+  const [openPitch, setOpenPitch] = useState<string | null>(null);
+  // HOVER + CLICK expansion — the July controller rules apply:
+  // mousemove-driven (layout shifts under the pointer when a body
+  // opens — the 07-17 boundary cascade), 160ms hover-intent, 560ms
+  // settle lock, longer dwell before move-away closes. Touch taps
+  // toggle via the click handler; coarse pointers skip mousemove.
   const hoverIntent = useRef<{
     id: string | null;
     timer: ReturnType<typeof setTimeout> | null;
@@ -336,10 +322,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   useEffect(() => {
     if (window.matchMedia('(pointer: coarse)').matches) return;
     const onMove = (e: MouseEvent) => {
-      const sec = (e.target as Element | null)?.closest?.(
-        '.sec',
+      const item = (e.target as Element | null)?.closest?.(
+        '.pitch-item',
       ) as HTMLElement | null;
-      const id = sec?.dataset.sec ?? null;
+      const id = item?.dataset.pitch ?? null;
       if (Date.now() < settleLock.current) return;
       const intent = hoverIntent.current;
       if (id === intent.id) return;
@@ -348,7 +334,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       intent.timer = setTimeout(
         () => {
           settleLock.current = Date.now() + 560;
-          setOpenSec(id);
+          setOpenPitch(id);
         },
         id === null ? 420 : 160,
       );
@@ -424,8 +410,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     {
       kind: 'feature',
       name: 'personalisation.',
-      lead: 'Your ai still treats you like a stranger.',
-      sub: 'With an Alexandria loop, every ai opens knowing you like an old friend — your work, your taste, how you think.',
+      lead: 'Your AI still treats you like a stranger.',
+      sub: 'Every conversation starts mid-thought: your AI already knows your work, your taste, and how you think.',
     },
     // Added 2026-07-24 (founder picked it from the brainstorm): the
     // deepest claim, previously only gestured at by the hero. Canon's
@@ -434,20 +420,20 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     {
       kind: 'feature',
       name: 'development.',
-      lead: 'Your ai answers you. It should be developing you.',
-      sub: 'Your ai works from one aim you set — the best version of you. Months in, you notice you’ve changed.',
+      lead: 'Your AI answers you. It should be developing you.',
+      sub: 'It remembers where you’re trying to go, pushes your thinking further, and months later you can see how you changed.',
     },
     {
       kind: 'feature',
       name: 'saved posts.',
       lead: 'Saved 200 posts you’ll never read?',
-      sub: 'Point your ai at the pile — it reads every one and writes what spoke to you into your own files. The things you saved become things you know.',
+      sub: 'Point your AI at the pile — it reads every one and writes what spoke to you into your own files. The things you saved become things you know.',
     },
     {
       kind: 'feature',
       name: 'capture.',
       lead: 'Your best thoughts die in your notes app.',
-      sub: 'One tap from your phone and it’s kept — days later, mid-conversation, your ai brings it back exactly when it matters.',
+      sub: 'One tap from your phone and it’s kept — days later, mid-conversation, your AI brings it back exactly when it matters.',
     },
     // Added 2026-07-24 (founder: "development and mind"): the
     // fragmentation pain — distinct from i (stranger) and vi (trapped).
@@ -457,19 +443,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'one mind.',
       lead: 'Claude knows one you. Cursor another. ChatGPT a third.',
-      sub: 'One file on your machine, read by all of them — every ai you open picks up exactly where the last one left off.',
+      sub: 'One mirror on your machine, shared with the compatible AIs you choose — each can pick up where the last one left off.',
     },
     {
       kind: 'feature',
       name: 'ownership.',
-      lead: 'Switching ai shouldn’t mean starting over.',
-      sub: 'Your mind is a folder you own — move it to the next great ai in a minute, or delete it outright. No one holds you.',
+      lead: 'Switching AI shouldn’t mean starting over.',
+      sub: 'What they know about you lives in a folder you own — move it to the next great AI in a minute, or delete it outright. No one holds you.',
     },
     {
       kind: 'feature',
       name: 'plugs in.',
       lead: 'Already have a system?',
-      sub: 'Keep it all — the CLAUDE.md, the memory files, the vault. The loop clicks into what you have, and everything you’ve built finally pulls together — one closed loop.',
+      sub: 'Keep it all — the CLAUDE.md, the memory files, the vault. The instructions adapt to what you already use and pull it together.',
     },
     // Reframed biography → the mirror (founder, 2026-07-24: "rephrase the
     // biography thing to be the mirror" — same day as "its my mirror not
@@ -481,7 +467,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'the mirror.',
       lead: 'You’ve never seen your own mind.',
-      sub: 'Everything you put in, your ai draws into a living mirror of how you think — on your own machine. Look in and recognise yourself, clearer every day.',
+      sub: 'As you use AI, it writes a living mirror of how you think — on your own machine. Read it and recognise yourself, clearer every day.',
     },
   ];
   // The hand (corrected, founder 2026-07-24 night: "when i say rotate
@@ -819,46 +805,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     color: t.fg,
   });
 
-  const statementBlock = (
-    <div className="statement">
-      <p>
-        <span className="beat-title">The substrate</span>
-        alexandria is{' '}
-        <em className="em-strong">files on your own computer</em>{' '}
-        where you write what you actually think. You add to them &mdash;
-        thoughts, decisions, notes &mdash; and AI develops them with
-        you in short sessions. The files compound.{' '}
-        <em>Your machine. Your files. Your pace.</em>
-      </p>
-      <p>
-        <span className="beat-title">The practice</span>
-        Every AI you use pulls from{' '}
-        <em className="em-strong">the same files</em>. You stop
-        repeating yourself. You stop losing context when you switch
-        models.{' '}
-        <em>The more you write, the sharper your thinking stays.</em>
-      </p>
-      <p>
-        <span className="beat-title">The community</span>
-        <em className="em-strong">Three friends and your membership
-        is free.</em>{' '}Share files with friends you choose &mdash;
-        both ways, revocable any time. AI stops guessing about the
-        people in your life.{' '}
-        <em>More authors &rarr; richer AI for everyone.</em>
-      </p>
-      <p>
-        <span className="beat-title">The founding</span>
-        Greece had the agora. Rome the forum. America the constitution.
-        The original alexandria had the library &mdash; until it
-        burned, and centuries of thought were lost.{' '}
-        <em className="em-strong">We are building it again</em>, this
-        time as a library of human minds.{' '}
-        <em>Early members shape what it becomes &mdash; the practice,
-        the culture, the people.</em>
-      </p>
-    </div>
-  );
-
   // Push theme palette into CSS variables on :root so the static stylesheet
   // can pick them up via var(...). This avoids re-parsing the entire
   // ~1500-line <style> block on theme change — the previous template-string
@@ -1021,7 +967,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       answer … after a couple seconds so it reads as an
                       answer to the question") — see .front-answer's
                       is-live animation. */}
-                  <p className="front-lead">When ai can do everything humans can, what do we do?</p>
+                  <p className="front-lead">When AI can do everything humans can, what do we do?</p>
                   <p className="front-answer">
                     <span className="front-answer-lead">our answer is becoming an</span>
                     <span className="front-answer-nameline"><span className="front-answer-name">alexandrian</span><span className="front-answer-dot">.</span></span>
@@ -1181,76 +1127,188 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     pinned below with the CTAs. Copy consolidated this
                     pass — same ideas and richness, fewer words. Section
                     plates (roman numerals) echo the dictionary block. */}
-                {/* WHY / WHAT / HOW — a small section title (the old
-                    letter-plate register) over full-width copy (2026-07-13),
-                    flowing with no dividers between them. A lead paragraph
-                    shows; a rotating caret reveals the rest. Accordion (one
-                    open at a time) keeps the fixed stage bounded. */}
-                {/* The three sections — the leads carry the whole skim
-                    story; bodies open on hover (mousemove-intent) or
-                    click/tap, one at a time. */}
-                <div className="secs">
-                  {SECS.map((s) => (
-                    <section
-                      key={s.id}
-                      data-sec={s.id}
-                      className={`sec${openSec === s.id ? ' is-open' : ''}`}
+                {/* The pitch — four self-sufficient lines that carry the
+                    complete mechanism without titles, numbering, or
+                    explanatory UI copy. A quiet chevron is the only
+                    expansion affordance; each line opens for depth. */}
+                <div className="pitch">
+                  <section
+                    data-pitch="instructions"
+                    className={`pitch-item${openPitch === 'instructions' ? ' is-open' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      className="pitch-head"
+                      aria-expanded={openPitch === 'instructions'}
+                      onClick={() =>
+                        setOpenPitch(openPitch === 'instructions' ? null : 'instructions')
+                      }
                     >
-                      <button
-                        type="button"
-                        className="sec-head"
-                        aria-expanded={openSec === s.id}
-                        onClick={() =>
-                          setOpenSec(openSec === s.id ? null : s.id)
-                        }
-                      >
-                        <span className="sec-label">{s.label}</span>
-                        <span className="sec-lead">
-                          {s.lead}
-                          <span className="sec-caret" aria-hidden>›</span>
-                        </span>
-                      </button>
-                      <div className="sec-body">
-                        <div className="sec-body-inner">
-                          {s.body.map((para, i) => (
-                            <p key={i} className="sec-para">{para}</p>
-                          ))}
-                        </div>
+                      <span className="pitch-lead">
+                        We give you instructions for your own AI. It decides
+                        what to use and changes how it works.
+                        <span className="pitch-caret" aria-hidden>›</span>
+                      </span>
+                    </button>
+                    <div className="pitch-body">
+                      <div className="pitch-body-inner">
+                        <p className="pitch-more">
+                          Alexandria is not another AI, app, or thing acting
+                          on you. &ldquo;Alexandria loop&rdquo; is simply our name
+                          for what your own AI does after reading the
+                          instructions. They are guidance, not hard rules:
+                          your AI decides what fits you and changes its
+                          own behaviour.
+                        </p>
+                        <p className="pitch-more">
+                          We give you the complete loop our founder uses,
+                          free. Starting from nothing, it is a full setup.
+                          Already have your own instructions, memory files,
+                          notes, or vault? Keep them. Your AI moulds the loop
+                          into what already works for you.
+                        </p>
                       </div>
-                    </section>
-                  ))}
+                    </div>
+                  </section>
+                  <section
+                    data-pitch="mirror"
+                    className={`pitch-item${openPitch === 'mirror' ? ' is-open' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      className="pitch-head"
+                      aria-expanded={openPitch === 'mirror'}
+                      onClick={() =>
+                        setOpenPitch(openPitch === 'mirror' ? null : 'mirror')
+                      }
+                    >
+                      <span className="pitch-lead">
+                        Your AI then automatically writes what it learns about
+                        you&mdash;in full detail&mdash;to plain files on your computer.
+                        It reads them again whenever they help.
+                        <span className="pitch-caret" aria-hidden>›</span>
+                      </span>
+                    </button>
+                    <div className="pitch-body">
+                      <div className="pitch-body-inner">
+                        <p className="pitch-more">
+                          The mirror is not a profile in our database. It is
+                          ordinary text files holding your thoughts, goals,
+                          work, taste, decisions, and the way you reason&mdash;as
+                          much detail as your AI can capture. Open them, edit
+                          them, move them, or delete them. They are yours;
+                          Alexandria never sees them.
+                        </p>
+                        <p className="pitch-more">
+                          The same files can follow you from one AI to the next.
+                          You stop re-explaining yourself and stop losing your
+                          context whenever you switch. Most of this happens
+                          quietly as you work. When the missing context exists
+                          only in your head, your AI can ask you to think it
+                          through and write down the result.
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                  <section
+                    data-pitch="development"
+                    className={`pitch-item${openPitch === 'development' ? ' is-open' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      className="pitch-head"
+                      aria-expanded={openPitch === 'development'}
+                      onClick={() =>
+                        setOpenPitch(openPitch === 'development' ? null : 'development')
+                      }
+                    >
+                      <span className="pitch-lead">
+                        Those files become a mirror of your thinking. Your AI
+                        uses it to help you keep what matters, develop it, and
+                        act on it instead of letting it fade.
+                        <span className="pitch-caret" aria-hidden>›</span>
+                      </span>
+                    </button>
+                    <div className="pitch-body">
+                      <div className="pitch-body-inner">
+                        <p className="pitch-more">
+                          Without the mirror, a useful thought helps once and
+                          then gets buried. The next conversation has no way
+                          to build on it. With the mirror, each conversation
+                          can start from what you have already learned, what
+                          you care about, and where you want to go.
+                        </p>
+                        <p className="pitch-more">
+                          Your AI can bring the right thought back, challenge
+                          it, connect it to new work, and help turn it into
+                          something real. The difference grows with every
+                          conversation. The earlier you start, the more of
+                          your thinking the mirror has to work with.
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                  <section
+                    data-pitch="connector"
+                    className={`pitch-item${openPitch === 'connector' ? ' is-open' : ''}`}
+                  >
+                    <button
+                      type="button"
+                      className="pitch-head"
+                      aria-expanded={openPitch === 'connector'}
+                      onClick={() =>
+                        setOpenPitch(openPitch === 'connector' ? null : 'connector')
+                      }
+                    >
+                      <span className="pitch-lead">
+                        That process is called an Alexandria loop. The free
+                        loop is complete by itself. An optional connector lets
+                        loops learn from each other.
+                        <span className="pitch-caret" aria-hidden>›</span>
+                      </span>
+                    </button>
+                    <div className="pitch-body">
+                      <div className="pitch-body-inner">
+                        <p className="pitch-more">
+                          The free loop is complete on its own. Nothing
+                          connects to Alexandria unless you add the optional
+                          connector; it is the only paid part. If you add it,
+                          you choose what to share. Your loop can learn what
+                          other people kept thinking about, how they developed
+                          it, and what they did because of it. You can also copy
+                          the useful parts of how their loops are built. Your
+                          private files stay private.
+                        </p>
+                      </div>
+                    </div>
+                  </section>
                 </div>
 
-                {/* The line break — one rule between the sections and the
-                    single action beat below. */}
-                <div className="secs-rule" aria-hidden />
-
-                {/* The close — the skimmer's last beat before the
-                    buttons: urgency (the map compounds), identity (yours
-                    doesn't have to average out), and the cost ledger in
-                    one breath. Derived from the run-through's start-now
-                    paragraph. */}
-                <div className="action-close">
-                  <p className="statement-beat action-beat action-beat-final">
-                    <em>Every day you wait, the map isn&rsquo;t being
-                    written. Most minds will average out &mdash; yours
-                    doesn&rsquo;t have to. It&rsquo;s free, it takes five
-                    minutes, it never leaves your computer, and it
-                    compounds for the rest of your life.</em>
-                  </p>
-                </div>
+                {/* The turn — hairline, then the agency-breaker close
+                    (restored 2026-08-03; the rebuild had merged it into
+                    beat iii and the founder called it back). Identity +
+                    the button, nothing else — urgency already lives in
+                    beat iii, so the close doesn't repeat it. */}
+                <div className="pitch-rule" aria-hidden />
+                <p className="pitch-close">
+                  You&rsquo;d take a free sample at the supermarket.
+                  <br />
+                  Five minutes from now, your mirror can be writing itself.
+                </p>
 
                 <div className="cta-pair">
                   <HomeInstall />
                   <div className="cta-block">
                     {/* The ghost CTA — the EXTENDED level's door
                         (2026-07-29): /plainly carries the full
-                        run-through with the ask docked beneath, so one
-                        door serves both the read-more reader and the
-                        ask-first reader. Label pairs 3-and-3 with "try
-                        it free". */}
+                        run-through with the ask docked beneath. Label
+                        "the full story" → "ask us anything" (2026-08-03,
+                        founder: the old label hid the interactive ask —
+                        you can literally ask anything there; the
+                        pronoun seam was accepted 07-29, "leave it").
+                        Pairs 3-and-3 with "start your loop". */}
                     <Link href="/plainly" className="lr-cta lr-cta-ghost">
-                      the full story
+                      ask us anything
                     </Link>
                   </div>
                 </div>
@@ -1291,92 +1349,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     </div>
   );
 }
-
-/* ════════════════════════════════════════════════════════
-   SEAL — rotating Greek + English text rings around the a.
-   mark. The centerpiece of the front slide.
-   ════════════════════════════════════════════════════════ */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function Seal() {
-  return (
-    <div className="seal">
-      <svg viewBox="-150 -150 300 300" className="seal-svg">
-        <defs>
-          <path
-            id="seal-outer"
-            d="M 0,0 m -128, 0 a 128,128 0 1,1 256,0 a 128,128 0 1,1 -256,0"
-          />
-          <path
-            id="seal-inner"
-            d="M 0,0 m -98, 0 a 98,98 0 1,1 196,0 a 98,98 0 1,1 -196,0"
-          />
-          <radialGradient id="seal-halo" cx="50%" cy="50%">
-            <stop offset="0%" stopColor="#fff2c9" stopOpacity="0.95" />
-            <stop offset="42%" stopColor="#f4d18a" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#d4a04f" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        <circle r="144" fill="url(#seal-halo)" />
-
-        <g className="ring ring-outer">
-          <text className="seal-text">
-            <textPath href="#seal-outer" startOffset="0">
-              · ΜΕΝΤΕΣ ΑΕΤΕΡΝΑΕ · ΑΛΕΞΑΝΔΡΕΙΑ · ΒΙΒΛΙΟΘΗΚΗ ·
-            </textPath>
-          </text>
-        </g>
-
-        <circle
-          r="116"
-          fill="none"
-          stroke="#b68a3c"
-          strokeWidth="0.5"
-          strokeDasharray="0.6 3"
-        />
-        <circle r="110" fill="none" stroke="#b68a3c" strokeWidth="0.35" />
-
-        <g className="ring ring-inner">
-          <text className="seal-text seal-text-en">
-            <textPath href="#seal-inner" startOffset="0">
-              · THE THINKING REPUBLIC · THE INTENT LAYER · YOURS ·
-            </textPath>
-          </text>
-        </g>
-
-        {[0, 90, 180, 270].map((deg) => (
-          <g key={deg} transform={`rotate(${deg})`}>
-            <line
-              x1="0"
-              y1="-128"
-              x2="0"
-              y2="-118"
-              stroke="#3a0f3d"
-              strokeWidth="1"
-            />
-          </g>
-        ))}
-
-        <g className="seal-center">
-          <circle r="46" fill="#3a0f3d" />
-          <text
-            x="0"
-            y="12"
-            textAnchor="middle"
-            fill="#efe9e0"
-            fontSize="44"
-            fontFamily="var(--font-serif), serif"
-            fontStyle="italic"
-          >
-            a.
-          </text>
-        </g>
-      </svg>
-
-    </div>
-  );
-}
-
 
 /* ════════════════════════════════════════════════════════
    ORNAMENT — renders the generated "a." image for the

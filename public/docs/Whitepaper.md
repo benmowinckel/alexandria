@@ -276,4 +276,4 @@ So: a philosophy, a tribe, and the infrastructure that joins them. Offer the pat
 
 *You don’t need to accept all of it to begin. A few words, five minutes — free, and yours.*
 
-[try it free](/start) · [read the letter](/docs/letter.pdf) · [browse the library](/library)
+[start your loop](/start) · [read the letter](/docs/letter.pdf) · [browse the library](/library)

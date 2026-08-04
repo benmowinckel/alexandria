@@ -6,10 +6,10 @@ import type { MetadataRoute } from 'next';
 // and theme color rather than platform defaults.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'alexandria — the library of human minds',
+    name: 'alexandria — your mind, in files you own',
     short_name: 'alexandria',
     description:
-      "a tribe of humans who put their minds into writing, so ai thinks with them, not for them. the path through the singularity.",
+      'Give your AI Alexandria’s instructions. It builds and reads a detailed mirror of your thinking in files you own.',
     start_url: '/',
     display: 'browser',
     background_color: '#f7f2ec',

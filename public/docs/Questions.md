@@ -1,81 +1,79 @@
 # questions.
 
-*plain answers. the [letter](/docs/letter.pdf) and the [whitepaper](/whitepaper) are the longer reads. if yours isn't here, [email me](mailto:benmowinckel@gmail.com).*
+*Plain answers. The [letter](/docs/letter.pdf) and the [whitepaper](/whitepaper) are the longer reads. If yours is not here, [email me](mailto:benmowinckel@gmail.com).*
 
 ## what is alexandria.
 
-the shortest version: **the alexandria loop.** your ai writes what it learns about you into private files on your own computer, and reads them before it helps you — so every ai you use starts from how you actually think, and it gets deeper the longer it runs. here's why that matters.
+The shortest version: we give you instructions for your own AI. Your AI decides how to use them, then automatically writes what it learns about you into private files on your computer and reads those files whenever they help. The files become a detailed mirror of your thinking. Your AI uses that mirror to help you retain what matters, develop it, and act on it. We call that process an **Alexandria loop**.
 
-most designers keep a simple file that tells their ai how they work — their taste, their rules, the way they think about design. the ai reads it, so its work comes out in their style instead of something generic. it isn't only a design thing: coders keep one for code, and it works for anything. it's just a file of how you do something.
+Designers often keep a design.md: a simple file telling their AI their taste, rules, and way of working. Coders do the same for code. The AI reads the file, so the work sounds like them instead of everyone else.
 
-so if you value design, you keep a design.md. and if you value your mind — how you reason, what you believe, how you decide — you'd want the same for that: a **mind.md**. it's the most valuable file there could be, because everything you do comes from how you think.
+If design is worth a file, your mind is too. A mind.md can hold how you reason, what you believe, what you want, and how you decide. Nobody can hand you that file because nobody else is you. Your loop is how you build it.
 
-a mind.md is different in one way, though. a design file you can copy off someone else. your mind, you can't — it's you, your fingerprint, unlike anyone else's. so no one can hand you a mind.md. you make your own.
+The loop is a pattern, not an entity. Your own AI does the work. We give you the complete loop our founder uses, free, and the instructions adapt to you: start from nothing and they provide the setup; already keep notes or a CLAUDE.md and they fit around it; already run your own loop and they take only what improves it.
 
-which is what the loop is for. it's a **simple standard, not software**: your ai writes what it learns about you into your files, and reads them back — automatic in the background, deliberate when it matters. we hand you a complete working loop, free, and it moulds to you: nothing yet, it's everything you need; already keeping notes or a claude.md, we click into yours; built your own, ours makes it stronger. you talk, and out comes your mind.md.
+The optional connector is the company’s hosted part. Add it if you want your loop to learn from what other people chose to keep, how they developed it, what they made, and which parts of their setup helped. The [Library](/library) holds what people share. The [Marketplace](/marketplace) holds reusable parts of their loops.
 
-and it gets better with other people. you can't take someone's mind, but you can see how they think, and borrow the systems they built. so two more things open up: a [library of minds](/library) to get inspired by, and a [marketplace of systems](/marketplace) to build your own from. your mind, sharpened by everyone else's.
-
-that's all alexandria is: a tribe who decided their own mind is worth keeping — alexandrians — and the ground they stand on. we don't tell you how to think or what to believe. we lay the foundation, make closing your loop easy, and run the two. **keep thinking.**
+Your AI runs the free loop. Alexandria runs the optional connector for people who want to learn and share across loops. **Keep thinking.**
 
 ## am i just handing my thinking to ai.
 
-the opposite — that's the whole point. hand all your thinking to ai and your own fades: an unused mind goes the way of an unused muscle, and most people never notice, because the ai keeps getting the answers right while the muscle quietly wastes. refuse ai entirely and you stay capped. the win is the middle — ai that thinks *with* you, not *for* you: it sharpens how you reason instead of replacing it, so the effort stays yours. that's why it's a gym and not a chauffeur. you train for the same reason anyone does — it's good for you — and the part of you that's still worth something once ai can do everything else is your judgment, your taste, the way only you see a thing. that part you can't download. you can only build it. and ai can only sharpen what it can see, so your files are how it sees yours. you can't multiply a zero.
+The opposite. Hand every thought to AI and your own thinking fades; refuse AI and you give up useful intelligence. The win is AI that thinks *with* you, not *for* you. Your files let it see your thinking well enough to challenge and develop it while the judgment stays yours.
 
-## isn't this just my ai's memory.
+## isn’t this just my ai’s memory.
 
-your ai's memory is genuinely useful, and it will keep getting better — nothing here touches it; it keeps running alongside. the difference is structure: it lives on that product's account, and if you ever move, what you can take is raw material — transcripts, exported notes — that the next ai has to work you out from all over again. the loop builds the understanding itself: deliberate depth, in plain files you can read top to bottom, that every ai you choose reads — and the whole map comes with you if you ever switch. the better their memory gets, the more yours has to build on. no vendor caps how much your files hold, you choose what each ai sees, and you can change or revoke any of it whenever. your memory, your terms, every model.
+Built-in memory is useful and keeps working. The difference is depth and ownership. A company’s memory lives in its product and usually leaves you with raw exports if you move. Your loop builds the understanding itself in plain files you can read, shape, and carry whole to every AI you choose.
 
-## isn't this just a notes app.
+## isn’t this just a notes app.
 
-no, though it lives where your notes do. your files are plain markdown on your machine — point obsidian or any editor at them and they're your vault, unchanged. the difference is the loop: a notes app stores what you write, while the loop draws your thinking out, writes it down, and feeds it to every ai you use. the editor is where it sits; the loop is what it does.
+No, though the files can sit beside your notes. A notes app stores what you write. Your loop draws your thinking out, writes it down automatically, and feeds the useful parts back to every compatible AI you give access. The editor is where the files sit; the loop is what makes them useful.
 
-## can't i just do this myself.
+## can’t i just do this myself.
 
-you can, and you should — that's the whole idea. the loop is your own files, owned by no one but you, and plenty of people run one by hand. all we do is hand you a complete working version, make it easy, and run the place where everyone's minds and systems come together so yours keeps getting better. doing it alone works. doing it next to everyone else solving the same problem works better.
+Yes. Plenty of people already run some version by hand. The point is to give everyone a complete starting point, help existing pieces work together, and offer a connector for people who want to learn from other loops. Doing it alone still works.
 
-## can't ai just copy my mind.
+## can’t ai just copy my mind.
 
-no. your files live on your own computer and never reach us — there's nothing to lift. even what you choose to publish is only the output, never the private files your thinking runs on; those stay with you. and a copy is a snapshot, while you're a moving target: you keep thinking, so any copy is already a step behind. nobody can be you — which turns out to be the one thing that still matters once ai can do everything else.
+No. Your private files stay on your computer, so there is nothing for us to copy. Anything you publish is something you deliberately chose to share, not the private mirror underneath it. And a copy would be a snapshot; you keep changing.
 
 ## how does it work.
 
-you talk; your ai writes what it learns about you into your files, and reads them before it helps you. most of it is automatic — just use ai like you already do and the loop quietly writes down what it learns. the deepest parts of you need real thought: think out loud with it, on purpose, and the more you put in, the more you get out. no system to learn, no forms to fill. you just keep thinking, and it keeps getting written down.
+You give the instructions to your AI. It decides what fits, creates the files, writes what it learns, and reads the relevant parts before it helps. Most of that is automatic. When something needs your own thought, you think out loud with it on purpose. The more real thinking you put in, the more useful the mirror becomes.
 
 ## do i need to be a coder.
 
-no. your ai runs the loop, not you — you talk in plain words and it does the rest. if you can chat with an ai, you can use alexandria. (and if you do code, the whole thing is open for you to crack open and change.)
+No. Your AI runs the loop. You talk in plain words and it handles the files. If you can chat with an AI, you can use Alexandria.
 
 ## what do i need to run it.
 
-any ai that can reach files on your computer — claude code, cursor, codex, or claude desktop with the local helper. if your ai can read a folder, it works. that's the whole requirement.
+For the full local version, any compatible AI that can reach files on your computer — Claude Code, Cursor, Codex, or Claude Desktop’s code tab. If you only use regular Claude chat, the [chat version](/chat) keeps its documents in your own Google Drive instead.
 
 ## how do i start.
 
-you close your loop: one line adds a complete working loop to the ai you already use, and your first conversation is already your first page. add the [iphone shortcut](/shortcut) and anything you send (a voice memo, an article, a passing thought) lands in the pile for it to fold in. you don't need a lifetime of notes to begin: the loop compounds, so the sooner you start the further ahead you are. you're above zero from the first session.
+One line gives the instructions to the AI you already use. It inspects the setup, installs the files if everything checks out, and walks you through your first conversation. Add the [iPhone shortcut](/shortcut) if you want voice notes, articles, and passing thoughts to land in the same inbox. Your first session is already the first page of the mirror.
 
 ## is my data mine.
 
-entirely. the loop is just text files on your own computer; they never reach us. we store what you publish, never what you think — and the only thing we ever hold is what you choose to send to the library, your call, gated however you like. nothing to sell, nothing to train on. want out? delete the folder, and it's as if you were never here.
+Entirely. The private mirror is plain text on your computer and never reaches our server. We store account and service records for the optional connector, plus only the Library files you deliberately publish. We do not sell your data or train on your private files. Delete the local folder to remove the loop; delete your account to remove the hosted copy of what you published.
 
 ## is it safe to install.
 
-yes. the install is one command that drops a folder on your machine and pulls code from github each session. look before you run it: it's [open source](https://github.com/benmowinckel/alexandria), you (or your ai) can read every line, and nothing runs unless the maintainer has signed it. it touches nothing outside its own folder and uninstalls clean — delete the folder and it's gone. the [mechanics](/mechanics) page walks an auditor through the rest.
+The setup changes files on your machine, so inspect it before you run it. The [source is public](https://github.com/benmowinckel/alexandria), and your AI can read every line. Each session runs the signed version pinned on your disk. It may check whether a newer signed version exists, but nothing updates unless you choose to apply it. The [mechanics](/mechanics) page lists every file changed, every network call, the remaining risks, and the uninstall steps.
 
 ## what does it cost.
 
-the tool is free, always. you paste one line, the loop lives in a folder you own, and we can't take it back — you never pay to think. open source, runs on your own ai, on your own machine. it can afford to be free because it costs us nothing to give and everything we build is the connection: our company is the place loops connect.
+The complete loop is free. It lives in files you own and keeps working without an account.
 
-what you pay for is the tribe. joining the community makes you a founding member with your own number — alexandrian #14, yours for good. that's a dollar a day ($30/month), and the first month is free. or, if three friends *join the community* through you — actually in, not just running the free tool — yours is free for good. or, if that's a stretch, just email and we'll waive it. you're never paying for the tool; you're backing the thing and taking your place in it. said plainly: free to read the library, you pay to add your own mind to it.
+The optional connector is the paid part. Membership is $30 a month after the first month, free for good once three active friends join through you, and waived if the price would keep you out. You are paying to connect your loop to the Library, Marketplace, and other people’s loops — never to keep using your own files.
 
-## what's a founding member.
+## what’s a founding member.
 
-it's your place in the community, with your own number — alexandrian #14 — yours for good. not a feature you unlock; the tool already works for free. it's being a real part of the tribe as it forms, and backing the thing early. you join in-flow, right after you install and it's just shown you something real about your own mind — that's the moment it lands. and it's free for good if three friends join the community through you, because the people you'd want thinking alongside you are exactly who makes the place worth being in.
+An early place in the community, with your own permanent Alexandrian number. It does not unlock the loop; the loop is already free. It means joining while the connector, Library, and Marketplace are still being shaped.
 
 ## who is it for.
 
-anyone who thinks their own mind is worth keeping — worth backing up, sharpening, and carrying forward as ai gets better at everything else. you don't need to be technical. the deepest fit today: people who already use ai every day as a thinking partner, not a search box — founders, coders, writers, anyone who makes things and means to keep their own mind sharp while the machines get sharper too.
+Anyone who thinks their own mind is worth keeping, sharpening, and carrying forward as AI gets better. The deepest fit today is someone who already uses AI as a thinking partner — founders, coders, writers, researchers, and other people who make things — but you do not need to be technical.
 
 ## will it outlast my ai.
 
-yes, and that's the point. the loop is yours, in plain files; the ai is just the engine that runs it. models come and go. your files stay — and every new model reads the same ones and gives you more, with nothing to change.
+Yes. The loop is yours, in plain files; the AI is the engine that runs it. Models come and go. Your files stay, and each better model can read the same mirror and do more with it.

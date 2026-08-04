@@ -27,22 +27,23 @@ const spectral = Spectral({
 });
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://alexandria-library.com";
+const SITE_TITLE = "alexandria — your mind, in files you own";
 
 // Canonical product sentence — used for SEO meta description because it's
 // keyword-dense, classical, and reads well as a search snippet under the
 // browser tab title.
 const SEO_DESCRIPTION =
-  "alexandria helps humans keep thinking in the age of ai — one folder teaches your ai who you are, so it thinks with you, not for you. free to try; the community is the only paid part.";
+  "Give your AI Alexandria’s instructions. It builds and reads a detailed mirror of your thinking in files you own, so it can help you keep, develop, and act on what matters.";
 
 // Sharing-optimised description — punchier than the SEO sentence. Lands as
 // the body of social previews (Twitter / Slack / iMessage / LinkedIn).
 // Leads with the live homepage's own question (the 2026-07-16
 // founder-written rebuild), then his answer and the free sample.
 const SHARE_DESCRIPTION =
-  "when ai can do everything humans can, what do we do? we keep thinking — and use ai to help. the founder's whole setup is free. try it.";
+  "Your own AI writes what it learns about you into files you own, then reads them whenever they help. The complete loop is free.";
 
 export const metadata: Metadata = {
-  title: "alexandria — the library of human minds",
+  title: SITE_TITLE,
   description: SEO_DESCRIPTION,
   applicationName: "alexandria",
   authors: [{ name: "Benjamin a. Mowinckel", url: "https://x.com/benmowinckel" }],
@@ -78,7 +79,7 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "alexandria — the library of human minds",
+    title: SITE_TITLE,
     description: SHARE_DESCRIPTION,
     url: SITE,
     siteName: "alexandria",
@@ -88,7 +89,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "alexandria — the library of human minds",
+    title: SITE_TITLE,
     description: SHARE_DESCRIPTION,
     site: "@benmowinckel",
     creator: "@benmowinckel",

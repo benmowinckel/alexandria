@@ -1637,47 +1637,21 @@
         /* The back kicker — a faint letter-plate title telling the reader
            what why/what/how refer to: the answer in full (front gives it
            in short). Sits where the sections' top margin was. */
-        /* House register (founder, 2026-07-18): lowercase with terminal
-           period — 'on alexandria.' — the wordmark's owned move (Taste.md
-           settled boundary; abstract.pdf section titles). Bigger than the
-           why/what/how labels so it reads as the section's title, muted
-           ink, on a hairline underline spanning only the words. The line
-           uses --theme-border-soft (a per-theme soft hairline) — fainter
-           than the ink (founder, 2026-07-18); the old var(--theme-border)
-           was never defined, which invalidated the rule and drew nothing. */
-        .secs-kicker {
-          display: inline-block;
-          align-self: flex-start;
-          margin: 40px 0 0;
-          padding-bottom: 10px;
-          border-bottom: 1px solid var(--theme-border-soft);
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 16px;
-          letter-spacing: 0.02em;
-          color: var(--theme-fg-muted);
-        }
-        /* ─── THE THREE SECTIONS — what / why / how, expand-contract
-           (2026-07-28). Beats, not blocks (design.md § Conversion): the
-           claim in the display face, the reason quieter beneath, and
-           reading only the claims delivers the whole argument — the
-           closed state IS the site, skimmable in ~15s. The group fills
-           the column and centres in it, so the air is composition, not
-           leftover void; opening a body breathes symmetrically around
-           the centre and nothing below the rule moves (the group's
-           height is fixed by flex). Click-driven only (the 07-17
-           hover-boundary cascade); no CSS multicol anywhere near the
-           animated track (the 07-17 WebKit bug). */
-        .secs {
+        /* ─── THE PITCH — four self-sufficient lines. Read straight
+           through, they carry the whole mechanism; expanded paragraphs
+           are optional depth. Titles, numbering, and instructional UI
+           copy are absent, leaving size, air, and a quiet chevron to
+           express the structure. */
+        .pitch {
           flex: 1 1 auto;
           min-height: 0;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          gap: 54px;
+          gap: 22px;
           margin: 0;
         }
-        .sec-head {
+        .pitch-head {
           display: block;
           width: 100%;
           background: none;
@@ -1686,105 +1660,107 @@
           text-align: left;
           cursor: pointer;
           color: inherit;
+          font: inherit;
+          letter-spacing: inherit;
         }
-        .sec-head:active { opacity: 0.82; }
-        .sec-label {
+        .pitch-head:active { opacity: 0.82; }
+        .pitch-lead {
           display: block;
-          margin-bottom: 12px;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 12.5px;
-          letter-spacing: 0.05em;
-          color: var(--theme-fg-faint);
-          transition: color 220ms ease;
-        }
-        .sec-head:hover .sec-label,
-        .sec.is-open .sec-label {
-          color: var(--theme-fg-muted);
-        }
-        /* The claim — the display face (the /join two-serif lesson:
-           EB Garamond display against the Spectral body), full ink
-           always; it IS the section for most visitors. */
-        .sec-lead {
-          display: block;
+          margin: 0;
           font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
           font-size: 23px;
-          line-height: 1.42;
+          line-height: 1.46;
           letter-spacing: 0.002em;
           font-feature-settings: 'liga', 'dlig';
           color: var(--theme-fg);
           max-width: 660px;
           text-wrap: pretty;
         }
-        .sec-caret {
-          display: inline-block;
-          margin-left: 12px;
-          font-style: normal;
-          font-size: 17px;
-          color: var(--theme-fg-faint);
-          transition: transform 300ms ease, color 220ms ease;
-        }
-        .sec-head:hover .sec-caret { color: var(--theme-fg-muted); }
-        .sec.is-open .sec-caret {
-          transform: rotate(90deg);
-          color: var(--theme-fg-muted);
-        }
-        /* The reason — animated 0fr→1fr grid track; the inner wrapper
-           clips. One quieter paragraph, nothing else. Exit runs faster
-           than enter (design.md: always faster out). */
-        .sec-body {
-          display: grid;
-          grid-template-rows: 0fr;
-          transition: grid-template-rows 330ms cubic-bezier(0.33, 0, 0.2, 1);
-        }
-        .sec.is-open .sec-body {
-          grid-template-rows: 1fr;
-          transition: grid-template-rows 440ms cubic-bezier(0.33, 0, 0.2, 1);
-        }
-        .sec-body-inner {
-          overflow: hidden;
-          min-height: 0;
-        }
-        .sec-para {
-          margin: 14px 0 0;
-          font-size: 15.5px;
-          line-height: 1.6;
+        .pitch-para {
+          display: block;
+          margin: 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 16.5px;
+          line-height: 1.62;
           letter-spacing: 0.004em;
           color: var(--theme-fg-muted);
           max-width: 620px;
           text-wrap: pretty;
         }
-        .secs-rule {
+        /* A single quiet chevron is enough to imply that each line opens.
+           It rotates with the expansion; no instructional UI copy. */
+        .pitch-caret {
+          display: inline-block;
+          margin-left: 12px;
+          font-style: normal;
+          font-size: 16px;
+          line-height: 1;
+          color: var(--theme-fg-faint);
+          transition: transform 300ms ease, color 220ms ease;
+        }
+        .pitch-head:hover .pitch-caret,
+        .pitch-item:hover .pitch-caret { color: var(--theme-fg-muted); }
+        .pitch-item.is-open .pitch-caret {
+          transform: rotate(90deg);
+        }
+        @media (hover: hover) {
+          .pitch-item:hover .pitch-body { grid-template-rows: 1fr; }
+          .pitch-item:hover .pitch-caret { transform: rotate(90deg); }
+        }
+        /* The bonus depth — animated 0fr→1fr grid track; the inner
+           wrapper clips. Exit faster than enter (design.md). */
+        .pitch-body {
+          display: grid;
+          grid-template-rows: 0fr;
+          transition: grid-template-rows 330ms cubic-bezier(0.33, 0, 0.2, 1);
+        }
+        .pitch-item.is-open .pitch-body {
+          grid-template-rows: 1fr;
+          transition: grid-template-rows 440ms cubic-bezier(0.33, 0, 0.2, 1);
+        }
+        .pitch-body-inner {
+          overflow: hidden;
+          min-height: 0;
+        }
+        /* The depth speaks in the same hand as the beats — the
+           EB Garamond italic, a size down and a shade quieter — so an
+           opened expansion reads as the same voice continuing, not a
+           different document (founder, 2026-08-03: the roman body
+           font clashed against the all-italic visible layer). */
+        .pitch-more {
+          margin: 12px 0 0;
+          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 17.5px;
+          line-height: 1.52;
+          letter-spacing: 0.002em;
+          font-feature-settings: 'liga', 'dlig';
+          color: var(--theme-fg-muted);
+          max-width: 640px;
+          text-wrap: pretty;
+        }
+        /* The turn — hairline above the closing beat; everything below
+           it (close + buttons) reads as the action zone. */
+        .pitch-rule {
           height: 1px;
           background: var(--theme-border-soft);
-          /* margin-top auto = the turn: everything above it (sections)
-             anchors top, everything below (close + CTAs) sinks to the
-             bottom of the column — the rule rides with the closing group
-             so the break always sits naturally just above it. Bottom
-             margin lifted (22→34, 2026-07-17): the rule sits higher and
-             the closing sections breathe. */
-          margin: auto 0 26px;
+          margin: auto 0 24px;
         }
-        /* Extra air between the close beats and the buttons — the two
-           closing sections read as separate breaths (2026-07-17), taking
-           the space the lifted rule opens up. */
+        .pitch-close {
+          margin: 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 16px;
+          line-height: 1.6;
+          letter-spacing: 0.004em;
+          color: var(--theme-fg);
+          max-width: 620px;
+          text-wrap: pretty;
+        }
+        /* Air between the close and the buttons. */
         .right-lower > .cta-pair {
           margin-top: 12px;
-        }
-        .action-beat {
-          margin: 0;
-        }
-        /* The split close — three beats with air between them (frame /
-           punch / action); the final beat gains a touch of ink so the
-           action line lands strongest, right above the buttons. */
-        .action-close {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        .action-beat-final em {
-          color: var(--theme-fg);
         }
         /* THE CLOSING MOVEMENT — set apart from the argument box above
            and given its own rhythm so it doesn't read as two more blocks
@@ -2069,7 +2045,7 @@
           font-size: 17px;
           line-height: 1.5;
           letter-spacing: 0.01em;
-          color: rgba(46, 30, 38, 0.52);
+          color: rgba(46, 30, 38, 0.6);
           text-wrap: pretty;
         }
         /* Orientation robustness — the wall scales by cover while the stage
@@ -2142,11 +2118,8 @@
           color: rgba(46, 30, 38, 0.62);
           text-wrap: balance;
         }
-        /* The answer as an elegant reveal (founder 2026-07-20: "needs to
-           look more elegant and interesting and cooler" — the flat line read
-           like a caption). A small, quiet, tracked ITALIC lead-in blooms into
-           "alexandrian" as the large ROMAN payoff word (styled below), so the
-           eye lands on the identity, not the sentence. */
+        /* The answer as an elegant reveal: a quiet lead-in, then the named
+           identity on its own line. */
         .front-answer {
           margin: 30px 0 0;
           display: flex;
@@ -2166,19 +2139,12 @@
           font-size: 30px;
           line-height: 1.05;
           letter-spacing: -0.004em;
-          /* Tyrian / imperial purple — the brand accent (nav + watermark),
-             historically the imperial dye of antiquity, so it ties
-             "alexandrian" to the ancient world (founder 2026-07-20: "let's
-             try the imperial purple"). Muted, not bright (founder 2026-07-20:
-             "a little too bright … more subtle") — low opacity lets the cream
-             soften it toward the palette. The underline inherits it. */
+          /* Muted brand purple: enough contrast to make the answer land, still
+             quiet enough to remain part of the editorial composition. */
           color: rgba(58, 15, 61, 0.6);
         }
-        /* "alexandrian" — the question's OWN Garamond, but ROMAN not italic
-           (founder 2026-07-20: "same font as the question but non italic,
-           underlined"). Upright posture + underline + the imperial purple
-           (set on .front-answer-nameline) differentiate it from the faded
-           italic question; no third font needed. */
+        /* Upright posture + underline distinguish the answer from the faded
+           italic question without introducing another face. */
         .front-answer-name {
           font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
           font-style: normal;
@@ -2811,7 +2777,7 @@
             margin-bottom: 10px;
           }
           .front-frame-sub {
-            font-size: 14.5px;
+            font-size: 15px;
             margin-top: 14px;
           }
           /* Mobile — the block is centred text, so the numerals centre
@@ -2881,18 +2847,6 @@
                founder's phone screenshots read the 64px gaps as
                "spacing all off". Net ≈ 26px inside the letter. */
             margin-top: -38px;
-          }
-          /* The split close travels as ONE block: the wrapper takes the
-             order and the gap-pull; the beats inside keep only their own
-             12px rhythm (the per-beat -38px above would stack them into
-             each other — that overlap shipped for a minute on 07-16). */
-          .action-close {
-            order: 4;
-            margin-top: -38px;
-          }
-          .action-close .statement-beat {
-            order: 0;
-            margin-top: 0;
           }
           .letter-sec {
             margin-bottom: -44px;
@@ -3008,17 +2962,19 @@
             font-size: clamp(11.5px, 1.1vw, 13px);
             margin-top: -4px;
           }
-          /* The three sections on mobile: one block (order 0, like the
-             tabs before it — text leads the flattened column), natural
-             flow (no flex-fill), claims scale down with the viewport. */
-          .secs {
+          /* The pitch on mobile: natural flow (no flex-fill), the
+             paragraphs scale down with the viewport. */
+          .pitch {
             flex: 0 0 auto;
             justify-content: flex-start;
             margin-top: 22px;
-            gap: 36px;
+            gap: 20px;
           }
-          .sec-lead {
+          .pitch-lead {
             font-size: clamp(19px, 2.6vw, 23px);
+          }
+          .pitch-para {
+            font-size: 15.5px;
           }
 
         }

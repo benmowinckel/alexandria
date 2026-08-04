@@ -21,8 +21,8 @@ import type { CSSProperties } from 'react';
  * sub line for tight, app-like contexts.
  */
 export default function StartJoinCTA({
-  lead = 'make your own.',
-  sub = 'one line adds it to the ai you already use — free, and your mind lives in a folder you own. build it, and a page like this comes with it.',
+  lead = 'start your loop.',
+  sub = 'Give the instructions to your own AI. It builds and reads a detailed mirror in files you own — free.',
   align = 'center',
   compact = false,
 }: {
@@ -59,7 +59,7 @@ export default function StartJoinCTA({
         </p>
       )}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.9rem 1.4rem', alignItems: 'center', justifyContent: align === 'center' ? 'center' : 'flex-start', marginTop: compact ? '0.9rem' : 0 }}>
-        <Link href="/start" style={primary} className="hover:opacity-80">build your own</Link>
+        <Link href="/start" style={primary} className="hover:opacity-80">start your loop</Link>
       </div>
     </div>
   );

@@ -57,14 +57,14 @@ export default function InviteClient({ refCode }: { refCode?: string }) {
         </p>
 
         <Link className="door-btn act-box act-primary" href={startHref}>
-          take it<span className="act-why act-why-inverse"> &mdash; it&rsquo;s free</span>
+          start your loop<span className="act-why act-why-inverse"> &mdash; it&rsquo;s free</span>
         </Link>
 
         <p className="invite-terms">
-          about five minutes, all on your own computer &mdash; nothing ever leaves it.
+          About five minutes. Your private files stay on your own computer.
         </p>
         <p className="invite-terms">
-          then work out what it can do together.
+          Then work out what it can do together.
         </p>
 
         <div className="invite-exits">

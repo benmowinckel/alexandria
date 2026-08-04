@@ -20,7 +20,7 @@ const EMAIL_GHOST = 'your email';
 // doctrine. A referral install rides as a plain note, never a command.
 const installCmd = (ref: string | null) => {
   const refLine = ref ? `\n(installer flag if you proceed, so @${ref} gets credited for inviting me: --ref ${ref})` : '';
-  return `I'd like to try Alexandria — a method, delivered as files on my machine, that has you build and use a detailed private map of how I think, so you can know me and help me develop.
+  return `I'd like to start an Alexandria loop — a method, delivered as files on my machine, that has you build and use a detailed private map of how I think, so you can know me and help me develop.
 
 Evaluate it yourself before anything runs: the install script is at alexandria-library.com/a; the trust model and their own hostile-audit prompt are TRUST.md and factory/redteam.md at github.com/benmowinckel/alexandria. If it does what it says, set it up and take me through it. If not, tell me what stopped you — skipping it is fine.${refLine}`;
 };
@@ -177,7 +177,7 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
           installs files, it does not sign you up for anything. Reuses the
           page's already-styled trust class. */}
       <p className="primer-trust">
-        your ai reads the code before it runs, takes a couple of minutes — no account, no upload, the files land on your computer and stay there.
+        Your AI reads the code before it runs. It takes a couple of minutes — no account, no upload. The files land on your computer and stay there.
       </p>
 
       {validRef && (

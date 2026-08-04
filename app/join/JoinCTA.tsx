@@ -120,18 +120,18 @@ export default function JoinCTA({
           thin, the long paragraph version as too much text. */}
       <div className="join-pitch">
         <section>
-          <p className="join-beat">you get averaged by default.</p>
-          <p className="join-sub">same tools, same answers, same voice as everyone else. staying particular is something you now have to do on purpose.</p>
+          <p className="join-beat">AI averages people by default.</p>
+          <p className="join-sub">Same tools, same answers, same voice. The connector puts your loop beside people working to stay particular.</p>
         </section>
         <section>
-          <p className="join-beat">a dollar a day is what the choice costs.</p>
-          <p className="join-sub">most people won’t make it. the ones who do are in here.</p>
+          <p className="join-beat">Their progress can strengthen yours.</p>
+          <p className="join-sub">See what they kept thinking about, how they developed it, and what they made. Use the systems that helped.</p>
         </section>
         <section>
-          <p className="join-beat">and they compound.</p>
-          <p className="join-sub">their systems, runnable by you. your library, wired into theirs. you get further because they did.</p>
+          <p className="join-beat">A dollar a day connects you.</p>
+          <p className="join-sub">Your loop stays free either way. Your first month is free, and membership is free for good once three friends join through you.</p>
         </section>
-        <p className="join-pitch-last">early enough that you’d shape it.</p>
+        <p className="join-pitch-last">Early enough that you&rsquo;d shape what this becomes.</p>
       </div>
 
       <a className="door-btn act-box act-primary" href={joinUrl}>
@@ -142,10 +142,9 @@ export default function JoinCTA({
           argues a dollar a day, so the actual deal has to be legible at the
           point of decision. */}
       <p className="join-terms">
-        free for good once three friends join through you. otherwise a dollar a day.
-        the tool on your machine stays free and yours either way — this is the only part
-        we host: joining syncs your publish folder to the library and counts your module
-        use, nothing more.
+        Your loop stays free and yours if you leave. Joining only syncs the files you
+        choose to publish and records which modules your loop uses. Read the{' '}
+        <a href="/privacy">privacy policy</a> and <a href="/terms">terms</a>.
       </p>
 
       {/* Below the hairline: the two quiet doors. The waive path lives here

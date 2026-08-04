@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: '/start',
   title: 'start alexandria.',
   description:
-    'one command installs the founder’s whole setup — free, five minutes, no account. paste it into your coding agent and it walks you through the rest.',
+    'Start your Alexandria loop free. Give one setup message to your coding AI and it inspects the public source, installs the files, and walks you through the rest.',
 });
 
 // The front door for someone who already clicked "join the tribe" — bought in,
@@ -54,7 +54,7 @@ export default async function StartPage({
       <main className="primer-main">
         {/* No lede (2026-07-16, radical simplicity): the two steps are the
             page; the lede's privacy line lives in the fine print below. */}
-        <h1 className="primer-h1">Becoming an Alexandrian</h1>
+        <h1 className="primer-h1">Start your loop</h1>
 
         {/* Two doors, one question (founder 2026-07-24: radical simplicity for
             stressed/cowork/chat users) — only the chosen door's content shows.

@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 // pageMetadata supplies the per-page canonical + og:url.
 const LIBRARY_TITLE = 'the library of human minds — alexandria.';
 const LIBRARY_DESCRIPTION =
-  'the member directory of the community — find the Alexandrians near you and reach them. each mind has its own page, shared by link.';
+  'The member directory of the community — find the Alexandrians near you and reach them. Each mind has its own page, shared by link.';
 
 export const metadata: Metadata = {
   ...pageMetadata({
@@ -114,29 +114,29 @@ export default async function LibraryPage({
           // is the centrepiece; sign-in / join sit quiet beneath.
           <div className="lib-gate">
             <p className="lib-lede">
-              a living directory of the community — every Alexandrian&rsquo;s mind on its own page.
-              find who&rsquo;s near you, and reach them.
+              A living directory of the community — every Alexandrian&rsquo;s mind on its own page.
+              Find who&rsquo;s near you, and reach them.
             </p>
             <p className="lib-cta">
-              <span className="lib-cta-lead">see what one looks like — </span>
+              <span className="lib-cta-lead">See what one looks like — </span>
               <Link href={FOUNDER_PROFILE_PATH} className="lib-cta-link">Benjamin&rsquo;s mind &amp; library</Link>
             </p>
             <p className="lib-sub">
-              already a member? <a href={signInUrl} style={linkStyle}>sign in</a>.
-              new here? <Link href="/join" style={linkStyle}>join the community</Link>.
+              Already a member? <a href={signInUrl} style={linkStyle}>sign in</a>.
+              New here? <Link href="/join" style={linkStyle}>join the community</Link>.
             </p>
           </div>
         ) : (
           <>
             {!you_listed ? (
               <p className="lib-notlisted">
-                you&rsquo;re not listed yet — add a <em>location</em> (your city) and a{' '}
+                You&rsquo;re not listed yet — add a <em>location</em> (your city) and a{' '}
                 <em>contact</em> to your library file to appear here for the others.
               </p>
             ) : null}
             {authors.length === 0 ? (
               <p className="lib-empty">
-                no Alexandrians listed yet — be the first: add your city and a contact to your file.
+                No Alexandrians listed yet — be the first: add your city and a contact to your file.
               </p>
             ) : (
               <LibraryDirectory authors={authors} initialLocationKeys={initialLocationKeys} />
@@ -144,7 +144,7 @@ export default async function LibraryPage({
           </>
         )}
       </main>
-      <SiteFooter cta="start your own" />
+      <SiteFooter cta="start your loop" />
 
       <style>{`
         .lib-page {

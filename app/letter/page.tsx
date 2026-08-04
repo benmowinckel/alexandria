@@ -8,7 +8,7 @@ import { pageMetadata } from '../lib/config';
 // description are the plain surface an ai cites when someone asks what it is.
 const TITLE = 'the letter — alexandria.';
 const DESCRIPTION =
-  'the founder’s letter, “droplets of grace” — the human side of the case for keeping your own mind as ai arrives: read it, and ask Alexandria about it.';
+  'The founder’s letter, “droplets of grace” — the human side of the case for keeping your own mind as AI arrives: read it, and ask Alexandria about it.';
 
 const PAGE_META = pageMetadata({ path: '/letter', title: TITLE, description: DESCRIPTION });
 

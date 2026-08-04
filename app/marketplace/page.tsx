@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   ...pageMetadata({
     path: '/marketplace',
     title: 'marketplace — alexandria.',
-    description: "each Author's system decomposes into modules — pooled here so others can learn, share signal, and refine their own.",
+    description: 'The reusable parts people built for their Alexandria loops — shared so anyone can use them, improve them, and pass the improvements on.',
   }),
 };
 
@@ -88,7 +88,7 @@ export default async function MarketplacePage() {
           <p className="mkt-eyebrow">the collective</p>
           <h1 className="mkt-h1">the marketplace</h1>
           <p className="mkt-lede">
-            each Author&apos;s system decomposes into modules — pooled here so others can learn, share signal, and refine their own.
+            The reusable parts people built for their loops — shared here so anyone can use them, improve them, and pass the improvements on.
           </p>
         </header>
 
@@ -144,7 +144,7 @@ export default async function MarketplacePage() {
           </section>
         )}
       </main>
-      <SiteFooter cta="add your own" />
+      <SiteFooter cta="start your loop" />
 
       <style>{`
         .mkt-page {

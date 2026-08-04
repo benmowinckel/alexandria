@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: '/chat',
   title: 'alexandria in chat.',
   description:
-    'claude already knows you. now you own it — your thinking in ordinary Google Docs in your own Drive, developed in chat, on any device, free plan included. no install.',
+    'Claude already knows you. Now you own it — your thinking in ordinary Google Docs in your own Drive, developed in chat, on any device, free plan included. No install.',
 });
 
 // Door 2 of the two-door onboarding (can you run a terminal command? no → here).
@@ -38,7 +38,7 @@ export default function ChatPage() {
       </header>
 
       <main className="primer-main">
-        <h1 className="primer-h1">Becoming an Alexandrian</h1>
+        <h1 className="primer-h1">Start your loop</h1>
 
         <ChatCTA bootstrap={bootstrap} />
 

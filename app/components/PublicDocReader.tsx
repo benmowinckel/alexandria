@@ -141,7 +141,7 @@ export default function PublicDocReader({
   const intro = (
     <div style={{ color: 'var(--text-muted)', fontSize: '1.02rem', lineHeight: 1.78, textWrap: 'pretty' }}>
       <p style={{ margin: 0, display: 'flex', alignItems: 'baseline', gap: '0.95rem', fontSize: '0.95rem' }}>
-        <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">make your own</Link>
+        <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">start your loop</Link>
         <span aria-hidden style={{ color: 'var(--text-ghost)' }}>·</span>
         <Link href={FOUNDER_PROFILE_PATH} style={{ color: 'var(--text-muted)', textDecoration: 'none' }} className="hover:opacity-70">his library</Link>
       </p>
@@ -176,7 +176,7 @@ export default function PublicDocReader({
       // read, so the ask is docked under the document. The mirror-led pages
       // (askFirst) already open with the pane up and need nothing.
       dockedAsk={!askFirst}
-      footerCta="try it free"
+      footerCta="start your loop"
     />
   );
 }

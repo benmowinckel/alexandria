@@ -1,85 +1,81 @@
-import type { Metadata } from "next";
-import { pageMetadata } from "../lib/config";
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { FOUNDER_EMAIL, pageMetadata } from '../lib/config';
 
 export const metadata: Metadata = {
   ...pageMetadata({
-    path: "/privacy",
-    title: "Privacy Policy — alexandria.",
-    description: "alexandria privacy policy.",
+    path: '/privacy',
+    title: 'Privacy Policy — alexandria.',
+    description: 'What Alexandria keeps, what stays on your computer, and how to remove your data.',
   }),
 };
+
+const section = { marginBottom: '2rem' };
+const heading = { fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 } as const;
+const detail = { marginTop: '0.65rem' };
+const link = { color: 'var(--text-primary)' };
 
 export default function Privacy() {
   return (
     <main style={{
-      maxWidth: '640px',
+      maxWidth: '680px',
       margin: '0 auto',
       padding: '4rem 1.5rem',
       fontFamily: 'var(--font-eb-garamond)',
       color: 'var(--text-primary)',
       lineHeight: 1.7,
     }}>
-      <h1 style={{ fontSize: '1.5rem', marginBottom: '2rem', fontWeight: 400 }}>Privacy Policy</h1>
-      <p style={{ marginBottom: '1rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: April 3, 2026</p>
+      <Link href="/" style={{ ...link, display: 'inline-block', marginBottom: '2.5rem', fontStyle: 'italic', textDecoration: 'none' }}>
+        alexandria.
+      </Link>
+      <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 400 }}>Privacy Policy</h1>
+      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 4, 2026</p>
 
-      <section style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>What Alexandria is</h2>
-        <p>Alexandria is Greek philosophy infrastructure. It helps you build a structured picture of how you think — your Constitution — stored as markdown files on your own machine at <code>~/alexandria/</code>. Alexandria does not host, store, or retain your cognitive data.</p>
+      <section style={section}>
+        <h2 style={heading}>What Alexandria is</h2>
+        <p>Alexandria provides instructions that your own AI uses to build and read a detailed mirror of your thinking. The private mirror is stored as plain files on your computer. An optional hosted connector lets compatible loops use the Library, Marketplace, membership, and publishing features.</p>
       </section>
 
-      <section style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>Your private data never reaches us</h2>
-        <p>Your Constitution, Vault, feedback log, notepad, and ontology are local markdown files on your device. They are backed up only to accounts you control — a private GitHub repo (if you&apos;re logged into the GitHub CLI) and your iCloud (on a Mac) — and never to Alexandria. Our server cannot access, read, or retrieve them. This is not a policy — it is architecture: there is no mechanism in the system for your private cognitive data to reach our servers.</p>
+      <section style={section}>
+        <h2 style={heading}>Your private mirror stays private</h2>
+        <p>Your private files — including your constitution, vault, marginalia, transcripts, and notes — stay on your device. Alexandria has no endpoint that accepts them and cannot read or retrieve them. Backups are optional and go only to accounts you control if you choose to enable them.</p>
+        <p style={detail}>This promise covers the private mirror. Information you deliberately publish, feedback you submit, and the connector records described below do reach services we operate.</p>
       </section>
 
-      <section style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>What we store</h2>
-        <p>Alexandria&apos;s server stores three categories of data, all on Cloudflare infrastructure:</p>
-        <p style={{ marginTop: '0.5rem' }}><strong>Account records</strong> (KV) — your GitHub username, email address, API key, and billing status. Created when you sign up via GitHub OAuth.</p>
-        <p style={{ marginTop: '0.5rem' }}><strong>Anonymous session metadata</strong> (KV) — when sessions start and end, constitution file size, vault entry count, platform type. Never content. Never personal information. Used to verify the product is working and to improve the methodology.</p>
-        <p style={{ marginTop: '0.5rem' }}><strong>Published Library content</strong> (D1 + R2) — if you choose to publish shadow MDs, works, or quizzes to the Library, that published content is stored on our infrastructure. Publishing is an explicit, deliberate act — you review and approve everything before it leaves your machine. You can unpublish at any time.</p>
+      <section style={section}>
+        <h2 style={heading}>What the hosted connector stores</h2>
+        <p><strong>Account and billing records.</strong> Your GitHub ID and login, email address, billing status, and Stripe customer or subscription identifiers. Account records are encrypted at rest.</p>
+        <p style={detail}><strong>Authentication records.</strong> A SHA-256 hash of your Alexandria API key; the raw key stays on your machine. Short-lived browser session and onboarding tokens are also stored when those flows are used.</p>
+        <p style={detail}><strong>Service activity.</strong> A 60-day log of which Alexandria endpoints your account used and when; module IDs your loop calls, with any notes you explicitly attach; Library publishing, access, purchase, and account events; and install-status or feedback text you explicitly submit.</p>
+        <p style={detail}><strong>Content you publish.</strong> Files, works, quizzes, profile details, and other material you deliberately send to the Library, together with their titles, access settings, prices, and file metadata.</p>
       </section>
 
-      <section style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>Authentication</h2>
-        <p>Account creation uses GitHub OAuth. Ongoing authentication uses an API key issued at signup. Only a SHA-256 hash of your API key is stored on the server; the raw key lives only on your machine at <code>~/alexandria/system/.api_key</code>. The key authenticates your access to Alexandria and the Library APIs.</p>
+      <section style={section}>
+        <h2 style={heading}>Website analytics</h2>
+        <p>We use Vercel Web Analytics for aggregate page views, referrers, country or region, browser, operating system, and device type. Vercel says this service uses no cookies, stores anonymised data, and resets its visitor-identification hash every 24 hours. We do not use advertising trackers or cross-site fingerprinting. Read <a href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noopener noreferrer" style={link}>Vercel’s analytics privacy documentation</a>.</p>
       </section>
 
-      <section style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>The canon</h2>
-        <p>Every session, your ai fetches Alexandria&apos;s canon — the methodology that guides cognitive extraction and development. This is a text document served publicly from GitHub (<code>factory/canon/methodology.md</code>). It contains no personal data. It is the same for all Authors. The canon is readable — you can inspect exactly what instructions your ai receives.</p>
+      <section style={section}>
+        <h2 style={heading}>Payments</h2>
+        <p>Stripe processes payments. Alexandria does not receive or store complete card numbers. Stripe receives the information needed to process the payment and keeps it under <a href="https://stripe.com/privacy" target="_blank" rel="noopener noreferrer" style={link}>Stripe’s privacy policy</a>.</p>
       </section>
 
-      <section style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>Payments</h2>
-        <p>Payments are processed by Stripe. Alexandria does not store credit card numbers or financial credentials. Stripe&apos;s privacy policy governs payment data.</p>
+      <section style={section}>
+        <h2 style={heading}>Retention</h2>
+        <p>Account records stay while your account is active. Endpoint event logs expire after 60 days. Mobile-onboarding records expire after 90 days. Module-call, Library activity, transaction, and submitted-feedback records do not currently expire automatically. Published content stays until you unpublish it or delete your account; unpublishing cannot recall copies someone already downloaded or shared. We may retain records when required for security, fraud prevention, payments, disputes, or law.</p>
       </section>
 
-      <section style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>Data retention</h2>
-        <p>Account records are stored indefinitely while your account is active. Anonymous session metadata is stored in daily event logs with no expiration. User feedback submitted via the product is stored for 90 days. Published Library content is stored until you unpublish it or request deletion. There is no hidden retention beyond what is described here.</p>
+      <section style={section}>
+        <h2 style={heading}>Your choices and rights</h2>
+        <p>Your private mirror is already portable: ordinary files you can read, edit, move, or delete. Deleting <code>~/alexandria/</code> removes the local loop but does not delete an optional hosted account.</p>
+        <p style={detail}>Depending on where you live, you may have rights to know or access personal data, correct it, delete it, receive a portable copy, restrict or object to processing, and appeal a decision. We do not sell personal information or share it for cross-context behavioural advertising.</p>
+        <p style={detail}>To exercise a right, delete an account, or ask us to remove submitted feedback, email <a href={`mailto:${FOUNDER_EMAIL}`} style={link}>{FOUNDER_EMAIL}</a>. We may need to verify your identity. We will answer within the period required by applicable law.</p>
       </section>
 
-      <section style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>Your rights</h2>
-        <p>Your cognitive data is yours. It lives on your machine. You can read, edit, move, or delete it at any time — it is markdown files in a folder. Deleting <code>~/alexandria/</code> removes everything local.</p>
-        <p style={{ marginTop: '0.5rem' }}>Under GDPR, CCPA, and equivalent data protection laws, you have the right to:</p>
-        <p style={{ marginTop: '0.5rem' }}><strong>Access</strong> — request a copy of all data we hold about you (account record, session metadata, published Library content).</p>
-        <p style={{ marginTop: '0.5rem' }}><strong>Rectification</strong> — correct any inaccurate data in your account record.</p>
-        <p style={{ marginTop: '0.5rem' }}><strong>Erasure</strong> — request deletion of your account and all associated data. Email us and we will delete your account record, session metadata, and any published Library content within 30 days.</p>
-        <p style={{ marginTop: '0.5rem' }}><strong>Portability</strong> — your cognitive data is already on your machine in open markdown format. For server-side data, we will provide your account record and published content in JSON/markdown format on request.</p>
-        <p style={{ marginTop: '0.5rem' }}><strong>Objection</strong> — you may object to processing of your session metadata. Email us and we will stop collecting it for your account.</p>
-        <p style={{ marginTop: '0.5rem' }}>To exercise any of these rights, email <a href="mailto:benmowinckel@gmail.com" style={{ color: 'var(--text-primary)' }}>benmowinckel@gmail.com</a>.</p>
-      </section>
-
-      <section style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>No tracking</h2>
-        <p>Alexandria does not use cookies, third-party analytics, advertising trackers, or fingerprinting on any surface. The website, the server, and the product are tracking-free.</p>
-      </section>
-
-      <section style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: 400 }}>Contact</h2>
-        <p>Benjamin Mowinckel — <a href="mailto:benmowinckel@gmail.com" style={{ color: 'var(--text-primary)' }}>benmowinckel@gmail.com</a></p>
+      <section style={section}>
+        <h2 style={heading}>Contact</h2>
+        <p>Benjamin a. Mowinckel — <a href={`mailto:${FOUNDER_EMAIL}`} style={link}>{FOUNDER_EMAIL}</a></p>
+        <p style={detail}><Link href="/terms" style={link}>Terms of Service</Link></p>
       </section>
     </main>
   );

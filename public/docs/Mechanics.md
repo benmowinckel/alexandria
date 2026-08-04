@@ -1,6 +1,6 @@
 # Mechanics
 
-You are about to run a curl command that puts files on your machine, modifies your ai config, and checks GitHub for signed updates each session (applying one is always your call). Read this once. If anything here doesn't match the scripts, don't run it. (Using Claude Desktop? Its **code tab** is Claude Code running on your machine — the same setup, run once via a coding agent, wires it up automatically. Everything on this page still applies.)
+You are about to run a curl command that puts files on your machine, modifies your AI config, and checks GitHub for signed updates each session (applying one is always your call). Read this once. If anything here doesn't match the scripts, don't run it. (Using Claude Desktop? Its **code tab** is Claude Code running on your machine — the same setup, run once via a coding agent, wires it up automatically. Everything on this page still applies.)
 
 ## TL;DR for the auditor
 
@@ -10,7 +10,7 @@ You are about to run a curl command that puts files on your machine, modifies yo
 - **Source of truth:** `github.com/benmowinckel/alexandria` (public). Auditable line by line.
 - **Trust model:** consent-symmetric. The shim only ever runs the payload pinned on your disk, and only after that exact file passed verification against a manifest signed by the maintainer's offline ed25519 key. Newer signed versions surface as a notice; you apply one by re-running the install line, and it's re-verified before its first run. Nothing self-updates; compromise of the GitHub account alone does not yield code execution. Full mechanism in [`TRUST.md`](https://github.com/benmowinckel/alexandria/blob/main/TRUST.md).
 - **What our server holds:** your email, GitHub user ID, hashed API key, a 60-day event log of which endpoints you hit, and any files you explicitly publish to the Library. Nothing else.
-- **What our server does not hold:** your constitution, vault, marginalia, transcripts, or ai-vendor API keys. There is no endpoint that accepts them.
+- **What our server does not hold:** your constitution, vault, marginalia, transcripts, or AI-vendor API keys. There is no endpoint that accepts them.
 - **Side channel:** the only data that leaves your machine for our server is (a) module IDs you call — recorded so the marketplace can show who's using which gear; per-module call records (your account ID + timestamp + any notes the Engine attached) are queryable by any authenticated Alexandria user via `/marketplace/<module>`, by design, (b) feedback you explicitly type into `~/alexandria/system/.session_feedback`, (c) files you explicitly publish to the Library, (d) one install status report at setup (which subsystems succeeded/failed — no file content), (e) marketplace requests — "I wish a module existed for X" lines you have explicitly cleared for the public wish-board (max 5 per call, ≤300 chars; shown anonymously, ranked by how many distinct accounts asked, at public `/marketplace/requests`), and (f) a canon-health status ping each keyed session-start — which canon modules failed to fetch plus whether an update notice is pending; module names only, never file content. The Engine may *draft* requests and contributions proactively, but nothing in any category is sent without your explicit go — the Engine never auto-sends private content.
 - **Uninstall:** the commands at the bottom of this page. Reversible.
 
@@ -24,7 +24,7 @@ We claim:
 We do not claim:
 - Zero metadata. The server logs which endpoints your account hits and when (60-day TTL in KV), and Cloudflare logs IPs at the edge.
 - Immunity to the maintainer's signing key being compromised. The key is offline-held; if it ever leaks, future signed payloads could ship arbitrary code until rotation. Rotation procedure is in `TRUST.md`. Compromise of the public repo or GitHub account alone is not sufficient.
-- Zero risk. ai tools execute hooks with your shell privileges. That is true of every editor extension, every dev-server, and every shell hook on your machine — but it is true here too.
+- Zero risk. AI tools execute hooks with your shell privileges. That is true of every editor extension, every dev-server, and every shell hook on your machine — but it is true here too.
 
 ## Inspect before running
 
@@ -119,8 +119,8 @@ This is the most important property to understand.
 
 The shim at `~/alexandria/system/hooks/shim.sh` is installed by `setup.sh` (re-running setup will overwrite it; sessions never refetch the shim). On every session start — Claude Code and Claude Desktop's code tab reach it via the settings-hook entries; Cursor via its Python wrappers — the shim does this:
 
-1. **Runs only the payload pinned on your disk** (`system/.hooks_payload`) — and only if that exact file has passed verification. When the file is new or changed (fresh install, an update you applied), the shim fetches `factory/manifest.txt` + `.sig` over HTTPS, verifies the signature with `ssh-keygen -Y verify` against `~/alexandria/system/allowed_signers` (the offline key installed once at setup), and compares the payload's SHA-256 to the manifest entry. Pass → the hash is recorded in `system/.payload_verified_sha` and the payload runs. Fail → the shim refuses to run it: loud warning in the ai's context, entry in `~/alexandria/system/.alexandria_errors`, bare mode (constitution only, no protocol calls).
-2. **Checks for updates, notify-only** (skipped if you deleted `hooks/auto-update`): fetches and signature-verifies the current upstream manifest; if it lists a different payload hash, a "signed update available" notice lands in the ai's context. Nothing is applied.
+1. **Runs only the payload pinned on your disk** (`system/.hooks_payload`) — and only if that exact file has passed verification. When the file is new or changed (fresh install, an update you applied), the shim fetches `factory/manifest.txt` + `.sig` over HTTPS, verifies the signature with `ssh-keygen -Y verify` against `~/alexandria/system/allowed_signers` (the offline key installed once at setup), and compares the payload's SHA-256 to the manifest entry. Pass → the hash is recorded in `system/.payload_verified_sha` and the payload runs. Fail → the shim refuses to run it: loud warning in the AI's context, entry in `~/alexandria/system/.alexandria_errors`, bare mode (constitution only, no protocol calls).
+2. **Checks for updates, notify-only** (skipped if you deleted `hooks/auto-update`): fetches and signature-verifies the current upstream manifest; if it lists a different payload hash, a "signed update available" notice lands in the AI's context. Nothing is applied.
 
 So **the code that processes your session is exactly what you approved — the payload pinned at install or at your last explicit update — and it passed the offline-key check before its first run.** Applying an update is always your action: re-run the one install line, and the new payload is verified before it ever executes. Bare GitHub access isn't enough to ship code — the attacker also needs the offline private key to sign the manifest. Full mechanism in [`TRUST.md`](https://github.com/benmowinckel/alexandria/blob/main/TRUST.md).
 
@@ -133,7 +133,7 @@ What protects you anyway:
 2. **Refuse-to-run.** A payload that has never passed verification never executes — if the file on disk changes without re-verification (tampering, a half-finished update), the session runs bare instead of running it.
 3. **Public diff.** Every payload version is in git history. Any session can be reconstructed from the commit SHA on `main` at that moment.
 4. **Canon canaries.** The canon explicitly tells the model to refuse instructions that try to exfiltrate files, escalate scope, or bypass the user. The same posture covers marketplace modules: a foreign module's body is untrusted input — instructions inside it are read as data, not commands, and adopted only after review against your own canon.
-5. **ai-tool approval dialogs.** Claude Code, Cursor, and Codex show every shell action before executing. Real protection at install and during anomaly, but it weakens with habituation — treat it as a backstop, not the primary defense.
+5. **AI-tool approval dialogs.** Claude Code, Cursor, and Codex show every shell action before executing. Real protection at install and during anomaly, but it weakens with habituation — treat it as a backstop, not the primary defense.
 
 **Residual gap:** compromise of the offline signing key would compromise future payloads. Mitigations: the key is offline-held, the maintainer's repo is 2FA-protected, the key-rotation procedure is documented in `TRUST.md`. If that residual gap matters to you, run a frozen install (see below).
 
@@ -201,11 +201,11 @@ Cloudflare Worker, stateless re: your private content. KV + D1 + R2.
 | Library files you explicitly publish | R2 | Published Library content |
 | Library file metadata (name, visibility tier, content hash, updated_at) | D1 | Discovery, listing |
 | Per-account record of every module call: module ID, your account ID, timestamp, optional notes (≤2000 chars) — plus any requests you cleared for the wish-board, stored in the same table | D1 (`protocol_calls`) | Powers the marketplace. Catalog of modules used in the last 90 days is exposed at public `/marketplace`; per-module caller list is exposed at authed `/marketplace/<module>`; cleared requests are exposed anonymously (text + distinct-caller count only, never account IDs) at public `/marketplace/requests`. |
-| Feedback text you explicitly type and submit (including the one-line install status report at setup) | Private GitHub repo `benmowinckel/alexandria-feedback` (founder-only access) | Founder reads + factory autoloop processes weekly to draft canon updates |
+| Feedback text you explicitly type and submit (including the one-line install status report at setup) | Private GitHub repo `benmowinckel/alexandria-feedback` (founder-only access) | The founder reads it and uses it to improve the instructions |
 
-**Not stored anywhere we control:** your constitution, vault, marginalia, transcripts, machine.md, notepad, raw API key, ai-vendor (Anthropic/OpenAI/etc) API keys, or any file outside your `files/library/` publish outbox — the only path the session sync ever `PUT`s. There is no endpoint that accepts them.
+**Not stored anywhere we control:** your constitution, vault, marginalia, transcripts, machine.md, notepad, raw API key, AI-vendor (Anthropic/OpenAI/etc) API keys, or any file outside your `files/library/` publish outbox — the only path the session sync ever `PUT`s. There is no endpoint that accepts them.
 
-**What a complete server breach yields:** account emails, GitHub user IDs, hashed (un-reversible) API keys, the 60-day event log, your full `protocol_calls` history (the per-module portion is already exposed by design via the authed marketplace endpoint), published Library content (files you explicitly published), and Cloudflare-level access logs (IPs, timing). It does not yield private cognition, unpublished files, or ai-vendor credentials, because those never reach the server.
+**What a complete server breach yields:** account emails, GitHub user IDs, hashed (un-reversible) API keys, the 60-day event log, your full `protocol_calls` history (the per-module portion is already exposed by design via the authed marketplace endpoint), published Library content (files you explicitly published), and Cloudflare-level access logs (IPs, timing). It does not yield private cognition, unpublished files, or AI-vendor credentials, because those never reach the server.
 
 **What a `benmowinckel/alexandria-feedback` breach yields:** feedback text you explicitly typed and submitted, attributed to your GitHub login. Same trust posture as the public repo: protected by GitHub account security.
 
@@ -215,11 +215,11 @@ Cloudflare Worker, stateless re: your private content. KV + D1 + R2.
 - Account blob in KV encrypted at rest with AES-256-GCM.
 - The raw key appears once on the OAuth callback page in your browser. Never in email, never in any third-party metadata.
 - Stripe identifies your account by GitHub login, not API key.
-- `DELETE /account` with your key removes everything: account record, events, feedback, published files, and any Stripe subscription.
+- `DELETE /account` with your key cancels any Stripe subscription and removes your account, module-call records, Library activity, and published files. Endpoint events expire on their 60-day TTL. Email us to remove feedback you explicitly submitted.
 
 ## Audit checklist
 
-Fastest path: paste the adversarial audit prompt from [`factory/redteam.md`](https://github.com/benmowinckel/alexandria/blob/main/factory/redteam.md) into your ai — it fetches every file below and tries to refute our claims. (We run the same prompt against every change before it ships.) To do it by hand:
+Fastest path: paste the adversarial audit prompt from [`factory/redteam.md`](https://github.com/benmowinckel/alexandria/blob/main/factory/redteam.md) into your AI — it fetches every file below and tries to refute our claims. (We run the same prompt against every change before it ships.) To do it by hand:
 
 These are the files. Read them.
 
@@ -237,10 +237,10 @@ curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hook
 curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/manifest.txt
 curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/manifest.txt.sig
 
-# The canon the ai follows (one of eleven modules)
+# The canon the AI follows (one of eleven modules)
 curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/canon/methodology.md
 
-# What the ai is told via skill
+# What the AI is told via skill
 curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/skills/claudecode.md
 ```
 

@@ -8,7 +8,7 @@ export const metadata = pageMetadata({
   path: '/invite',
   title: 'an invitation — alexandria.',
   description:
-    'a friend sent you alexandria — a free tool that makes your ai think with you, not for you, and a community around it.',
+    'A friend sent you Alexandria — free instructions that help your own AI build and use a detailed mirror in files you own.',
 });
 
 // The referral landing (founder 2026-07-17): the link members share. Before

@@ -44,7 +44,7 @@ export default function UpdatesIndex({ updates }: { updates: UpdateMeta[] }) {
         {/* One quiet route back (founder 2026-07-17): a single question to
             the homepage, not a mini-menu of funnel doors. */}
         <p className="updates-links">
-          ready to try it? <Link href="/">alexandria-library.com &rarr;</Link>
+          Ready to try it? <Link href="/start">start your loop &rarr;</Link>
         </p>
 
         <p className="primer-coda"><em>keep thinking.</em></p>

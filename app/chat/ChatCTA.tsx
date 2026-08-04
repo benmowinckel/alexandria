@@ -24,7 +24,7 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
           reader's own Drive, not to anything of ours. Reuses the page's
           already-styled quiet class. */}
       <p className="chat-rest">
-        no install, no account, no server of ours — the docs are created in your own Drive.
+        No install, no account, no server of ours — the docs are created in your own Drive.
       </p>
     </div>
   );
