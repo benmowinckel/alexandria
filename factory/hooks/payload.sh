@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Alexandria Hooks Payload — live, auto-updating
+# Alexandria Hooks Payload — pinned; signed updates are notify-only
 # Source: https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hooks/payload.sh
-# The canon is public on GitHub (factory/canon/ folder). No signing needed.
+# The canon is public on GitHub and every fetched module is checked against
+# the offline-signed manifest before it can be offered or written.
 
 MODE="$1"
 ALEX_DIR="$2"
@@ -115,8 +116,8 @@ if [ "$MODE" = "session-start" ]; then
   canon_fetch_failures=""
   # Continuous-update module (default on). Delete ~/alexandria/system/hooks/auto-update
   # to freeze: stop fetching upstream methodology and run purely on the local copy (the
-  # shim makes the same check for the payload itself, so deleting it means zero contact
-  # with Alexandria). See Mechanics.md → "turning off continuous updates".
+  # shim makes the same check for payload update notices). A keyed member's explicit
+  # community calls remain until system/.api_key is removed. See Mechanics.md.
   AUTO_UPDATE=true
   [ -f "$ALEX_DIR/system/hooks/auto-update" ] || AUTO_UPDATE=false
   # Cold-start fast path (2026-07-15, warm-lead P0.3): on a brand-new install
@@ -431,30 +432,38 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
 "
       fi
     }
-    check_drift "$HOME/.claude/skills/alexandria/SKILL.md" "skills/claudecode.md" "  /a skill (~/.claude/skills/alexandria/SKILL.md)" "rename-alexandria"
+    if [ -f "$HOME/.claude/skills/a/SKILL.md" ] && grep -qi alexandria "$HOME/.claude/skills/a/SKILL.md" 2>/dev/null; then
+      check_drift "$HOME/.claude/skills/a/SKILL.md" "skills/claudecode.md" "  /a skill (~/.claude/skills/a/SKILL.md)"
+    else
+      check_drift "$HOME/.claude/skills/alexandria/SKILL.md" "skills/claudecode.md" "  /alexandria skill (~/.claude/skills/alexandria/SKILL.md)" "rename-alexandria"
+    fi
     check_drift "$HOME/.claude/scheduled-tasks/alexandria/SKILL.md" "skills/scheduled-bootstrap.md" "  scheduled agent (~/.claude/scheduled-tasks/alexandria/SKILL.md)"
     check_drift "$HOME/.cursor/rules/alexandria.mdc" "skills/cursor.mdc" "  cursor rules (~/.cursor/rules/alexandria.mdc)"
     check_drift "$HOME/.cursor/hooks/alexandria-session-start.py" "hooks/cursor/alexandria-session-start.py" "  cursor session-start hook (~/.cursor/hooks/alexandria-session-start.py)"
     check_drift "$HOME/.cursor/hooks/alexandria-session-end.py" "hooks/cursor/alexandria-session-end.py" "  cursor session-end hook (~/.cursor/hooks/alexandria-session-end.py)"
     check_drift "$HOME/.cursor/hooks/alexandria-stop.py" "hooks/cursor/alexandria-stop.py" "  cursor stop hook (~/.cursor/hooks/alexandria-stop.py)"
     check_drift "$HOME/.cursor/hooks/alexandria-transcript.py" "hooks/cursor/alexandria-transcript.py" "  cursor transcript hook (~/.cursor/hooks/alexandria-transcript.py)"
-    # Alias only, like the Claude Code entry above — ~/.cursor/skills/a/ may be
-    # an Author's own DIY skill (setup preserves it), which would false-flag.
-    check_drift "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md" "  cursor /alexandria skill (~/.cursor/skills/alexandria/SKILL.md)" "rename-alexandria"
+    if [ -f "$HOME/.cursor/skills/a/SKILL.md" ] && grep -qi alexandria "$HOME/.cursor/skills/a/SKILL.md" 2>/dev/null; then
+      check_drift "$HOME/.cursor/skills/a/SKILL.md" "skills/claudecode.md" "  cursor /a skill (~/.cursor/skills/a/SKILL.md)"
+    else
+      check_drift "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md" "  cursor /alexandria skill (~/.cursor/skills/alexandria/SKILL.md)" "rename-alexandria"
+    fi
     check_drift "$ALEX_DIR/system/hooks/shim.sh" "hooks/shim.sh" "  hook shim ($ALEX_DISPLAY/system/hooks/shim.sh)"
 
-    # Codex case — block embedded between markers in a shared instructions.md.
-    # Extract just the Alexandria section, compare to factory/skills/codex.md.
-    if [ -f "$HOME/.codex/instructions.md" ] && grep -q "<!-- alexandria:start -->" "$HOME/.codex/instructions.md"; then
+    # Codex case — only compare the compact block Alexandria owns in the
+    # current global instruction surface. A full Author-managed AGENTS.md is
+    # deliberately outside drift control, and legacy instructions.md is never
+    # read or rewritten by the installer.
+    if [ -f "$HOME/.codex/AGENTS.md" ] && grep -q "<!-- alexandria:start -->" "$HOME/.codex/AGENTS.md"; then
       codex_local_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
       codex_factory_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
       if [ -n "$codex_local_tmp" ] && [ -n "$codex_factory_tmp" ]; then
-        sed -n '/<!-- alexandria:start -->/,/<!-- alexandria:end -->/p' "$HOME/.codex/instructions.md" > "$codex_local_tmp"
-        if curl -sf --max-time 3 "https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/skills/codex.md" -o "$codex_factory_tmp" 2>/dev/null; then
+        sed -n '/<!-- alexandria:start -->/,/<!-- alexandria:end -->/p' "$HOME/.codex/AGENTS.md" > "$codex_local_tmp"
+        if curl -sf --max-time 3 "https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/skills/codex-ambient.md" -o "$codex_factory_tmp" 2>/dev/null; then
           codex_local_sha=$($sha_cmd "$codex_local_tmp" | cut -c1-7)
           codex_factory_sha=$($sha_cmd "$codex_factory_tmp" | cut -c1-7)
           if [ -n "$codex_factory_sha" ] && [ -n "$codex_local_sha" ] && [ "$codex_factory_sha" != "$codex_local_sha" ]; then
-            drift_found="${drift_found}  codex block (~/.codex/instructions.md) (local=$codex_local_sha, factory=$codex_factory_sha)
+            drift_found="${drift_found}  codex block (~/.codex/AGENTS.md) (local=$codex_local_sha, factory=$codex_factory_sha)
 "
           fi
         fi

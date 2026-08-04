@@ -58,4 +58,4 @@
 
 Documented here for symmetry: this is the one thing that ships ON. Updates are never applied automatically — the machine runs only the engine payload pinned and verified at install (or at the Author's last explicit update). While `~/alexandria/system/hooks/auto-update` exists, each session *checks* public GitHub and surfaces any newer offline-key-signed engine or canon as a notice; the Author applies with the one install line, and the new code is verified before its first run.
 
-- **Off:** `rm ~/alexandria/system/hooks/auto-update` — stops even the check: zero contact with Alexandria, pinned forever. Full mechanism: https://alexandria-library.com/mechanics
+- **Off:** `rm ~/alexandria/system/hooks/auto-update` — stops public engine/canon update checks and stays pinned forever. If the Author joined the collective, keyed Library/feedback calls remain until `~/alexandria/system/.api_key` is removed. Full mechanism: https://alexandria-library.com/mechanics
