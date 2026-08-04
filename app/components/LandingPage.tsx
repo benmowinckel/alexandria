@@ -1316,9 +1316,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   <p className="pitch-coda">
                     <span className="pitch-kicker">result.</span>
                     <span className="pitch-coda-copy">
-                      Your thinking stops disappearing between conversations.
-                      It becomes something you can keep, develop, and turn
-                      into action.
+                      Keep what matters. Develop it. Act on it.
                     </span>
                   </p>
                 </div>

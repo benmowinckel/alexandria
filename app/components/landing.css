@@ -1721,11 +1721,11 @@
         .pitch-coda-copy {
           min-width: 0;
           font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
-          font-style: normal;
-          font-weight: 500;
-          font-size: 25px;
-          line-height: 1.28;
-          letter-spacing: -0.005em;
+          font-style: italic;
+          font-weight: 400;
+          font-size: 22px;
+          line-height: 1.34;
+          letter-spacing: 0.002em;
           font-feature-settings: 'liga', 'dlig';
           color: var(--theme-fg);
           max-width: 620px;
@@ -3060,8 +3060,8 @@
           }
           .pitch-coda-copy {
             display: block;
-            font-size: clamp(22px, 5.9vw, 25px);
-            line-height: 1.28;
+            font-size: clamp(20px, 5.2vw, 22px);
+            line-height: 1.34;
           }
           .pitch-para {
             font-size: 15.5px;
