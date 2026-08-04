@@ -1154,16 +1154,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          Alexandria is not another AI, app, or thing acting
-                          on you. &ldquo;Alexandria loop&rdquo; is simply our name
-                          for what your own AI does after reading the
-                          instructions. They are guidance, not hard rules:
-                          your AI decides what fits you and changes its
-                          own behaviour.
+                          Think of the instructions as a recipe handed to a
+                          chef. Your AI is the chef: it reads them, works out
+                          with you what fits, and decides how to change
+                          its own behaviour. Alexandria is the name for the
+                          idea, not a separate thing doing the work.
                         </p>
                         <p className="pitch-more">
-                          We give you the complete loop our founder uses,
-                          free. Starting from nothing, it is a full setup.
+                          We give you our founder&rsquo;s complete loop for free.
+                          If you are starting from nothing, it is a full setup.
                           Already have your own instructions, memory files,
                           notes, or vault? Keep them. Your AI moulds the loop
                           into what already works for you.
@@ -1184,9 +1183,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        Your AI then automatically writes what it learns about
-                        you&mdash;in full detail&mdash;to plain files on your computer.
-                        It reads them again whenever they help.
+                        Your AI can then automatically write what it learns
+                        about you&mdash;in full detail&mdash;to plain files on your
+                        computer, and read them again whenever they help.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1194,11 +1193,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
                           The mirror is not a profile in our database. It is
-                          ordinary text files holding your thoughts, goals,
-                          work, taste, decisions, and the way you reason&mdash;as
-                          much detail as your AI can capture. Open them, edit
-                          them, move them, or delete them. They are yours;
-                          Alexandria never sees them.
+                          a set of ordinary text files holding your thoughts,
+                          goals, work, taste, decisions, and the way you
+                          reason&mdash;as much detail as your AI can capture. Open
+                          them, edit them, move them, or delete them. They are
+                          yours; we never see them.
                         </p>
                         <p className="pitch-more">
                           The same files can follow you from one AI to the next.
@@ -1224,9 +1223,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        Those files become a mirror of your thinking. Your AI
-                        uses it to help you keep what matters, develop it, and
-                        act on it instead of letting it fade.
+                        Over time, those files become a mirror of your thinking.
+                        Your AI uses it to help you keep what matters, develop
+                        it, and act on it instead of letting it fade.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1262,22 +1261,22 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        That process is called an Alexandria loop. The free
-                        loop is complete by itself. An optional connector lets
-                        loops learn from each other.
+                        That is an Alexandria loop. The complete loop is free.
+                        An optional connector lets loops learn from each other
+                        and form the Alexandria community.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          The free loop is complete on its own. Nothing
-                          connects to Alexandria unless you add the optional
-                          connector; it is the only paid part. If you add it,
-                          you choose what to share. Your loop can learn what
-                          other people kept thinking about, how they developed
-                          it, and what they did because of it. You can also copy
-                          the useful parts of how their loops are built. Your
+                          The free loop is complete on its own. Your loop only
+                          joins the Alexandria community if you add the optional
+                          connector; it is the only paid part. You choose what
+                          to share. Your loop can learn what other people chose
+                          to keep thinking about, how they developed those
+                          thoughts, and what they did because of them. It can
+                          also copy useful parts of how their loops work. Your
                           private files stay private.
                         </p>
                       </div>
