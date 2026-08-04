@@ -1149,14 +1149,14 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       <span className="pitch-kicker">instructions.</span>
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          Show your AI our free instructions&mdash;not a new app
-                          or tool.
+                          Alexandria is an idea for how your own AI should
+                          work&mdash;not another app or tool.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          They explain why the loop matters and how to set yours
-                          up. From there, you both decide exactly how it should
-                          work.
+                          Show it our free instructions. They explain why and
+                          how to build a loop around your thinking; you decide
+                          together exactly how it works.
                         </span>
                       </span>
                     </button>
@@ -1167,8 +1167,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           chef. Your AI is the chef: it sees the purpose and
                           possible steps, then decides with you what to notice,
                           what to write, when to read it back, and how to build
-                          on it. Alexandria is the name for the idea, not a
-                          separate thing doing the work.
+                          on it. Alexandria is the name for that way of working,
+                          not a separate thing doing the work.
                         </p>
                         <p className="pitch-more">
                           Starting from nothing, the download gives you the
@@ -1195,8 +1195,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       <span className="pitch-kicker">files.</span>
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          Your AI writes what it learns about you to plain files
-                          on your computer.
+                          The loop starts when your AI writes what it learns
+                          about you to plain files on your computer.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
