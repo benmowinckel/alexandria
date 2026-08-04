@@ -1,17 +1,17 @@
 # Trust model
 
-Alexandria is not an agent and not a service — it is a method your own ai runs: plain files on your machine, plus a session hook that loads them into your ai's context at each session start. Your ai does the reading, the writing, and the learning; these files only tell it how. Every session, the shim runs the engine payload pinned on your disk — only after that exact file has passed signature verification against a manifest signed by the maintainer's offline key. Nothing self-updates: a newer signed version surfaces as a notice, and applying it is always your explicit action. This document explains the mechanism and what it does and does not defend against.
+Alexandria is not an agent and not a service — it is a method your own ai runs: plain files on your machine, plus a session hook that loads them into your ai's context at each session start. Your ai does the reading, the writing, and the learning; these files only tell it how. Every session, the shim runs the engine payload pinned on your disk — only after that exact file has passed signature verification against a manifest signed by the maintainer's Touch ID-bound key. Nothing self-updates: a newer signed version surfaces as a notice, and applying it is always your explicit action. This document explains the mechanism and what it does and does not defend against.
 
 ## Trust root
 
-A single ed25519 keypair, held offline.
+A single P-256 key generated inside the Secure Enclave of the maintainer's Mac.
 
-- **Public key fingerprint**: `SHA256:kAas5fUUnV/XcfKoH3Ysm7IZrqY2HcQSuhSaMoAMqnA`
+- **Public key fingerprint**: `SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg`
 - **Public key (verbatim, as installed at `~/alexandria/system/allowed_signers`)**:
   ```
-  alexandria-payload-signing ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHv5jBpDuEg2Nae7QrtNQ9ycclulY8+G4iZOjd2Kdw+9 alexandria-payload-signing
+  alexandria-payload-signing ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBETzcr+XjCojo7y6s+JU8UwqkOtzIv3h9kEQI/ef9/nuGolyXvLF8WXkoEDwFc3zkXxTbZ+TVWI5Uq0fgMxHvjM= alexandria-touchid
   ```
-- **Private key**: lives only on the maintainer's machine. Never committed, never in CI, never in any secret manager that grants programmatic access. Backed up to an offline-secured location.
+- **Private key**: non-exportable Apple hardware. Every signature requires a fresh match against the fingerprints enrolled when the key was created; changing that fingerprint set invalidates the key. There is no passphrase, agent cache, CI secret, or backup copy that can sign.
 
 ## What is signed
 
@@ -30,7 +30,7 @@ Be precise about the boundary, because it is narrower than "everything": `setup.
 <sha256>  factory/migrate.sh
 ```
 
-The manifest is signed with the offline key (`factory/manifest.txt.sig`), in the namespace `alexandria` with identity `alexandria-payload-signing`.
+The manifest is signed only after Touch ID approval (`factory/manifest.txt.sig`), in the namespace `alexandria` with identity `alexandria-payload-signing`. The result is a standard SSH signature, so Authors verify it with the built-in `ssh-keygen` already used by Alexandria; the Apple-only signer exists only on the publishing side.
 
 ## What the shim does on every session start
 
@@ -47,7 +47,7 @@ The session hooks archive each session's transcript into `~/alexandria/files/vau
 
 | Threat | Mitigation |
 |---|---|
-| GitHub account compromise — attacker pushes malicious `payload.sh` to main | Attacker cannot produce a valid `manifest.txt.sig` without the offline private key. Shim refuses to exec. |
+| GitHub account compromise — attacker pushes malicious `payload.sh` to main | Attacker cannot produce a valid `manifest.txt.sig` without the maintainer approving that exact release with Touch ID. Shim refuses to exec. |
 | Selectively tampered single file (e.g. swapping `methodology.md`) | Manifest covers every file; any change breaks the manifest hash → signature verify fails. |
 | Man-in-the-middle on `raw.githubusercontent.com` | Signature verification on top of HTTPS catches forged content. |
 | Rollback to an old signed manifest | The shim does not check a monotonic version counter today. A patient attacker with a previously-valid signed manifest could replay it — under the pinned model this cannot silently change running code (applying always requires the Author's explicit re-run), but it could suppress an update notice or, replayed at apply time, verify an old payload. Documented limit; rotated bundles will add a version field. |
@@ -56,7 +56,8 @@ The session hooks archive each session's transcript into `~/alexandria/files/vau
 
 | Residual risk | Why it's accepted at current stage |
 |---|---|
-| Maintainer's Mac compromised → attacker signs malicious content | Inherent to any signing scheme. Mitigated by FileVault + 1Password backup + the human user noticing public-code changes. |
+| Maintainer's Mac compromised | The private key still cannot be exported or used without Touch ID. Malicious local code could try to present a misleading signing prompt; the system prompt names Alexandria and shows the release hash, so approval still requires the maintainer's physical action and attention. |
+| Maintainer's Mac is lost or its enrolled fingerprints change | The key is deliberately not recoverable. A new Secure Enclave key must be created and Authors must explicitly re-run setup to trust it. Availability is traded for a hard no-backup signing boundary. |
 | Maintainer ships malicious code intentionally | Code is public on GitHub. Anyone can read every line. Reputational + legal alignment is the structural deterrent — same as every CLI tool maintainer. |
 | Compromise of the initial `setup.sh` fetch (bootstrap problem) | Public key is embedded in `setup.sh` itself. Inherent to `curl \| bash` install patterns. Verifiable by anyone with the published fingerprint above. |
 
@@ -75,7 +76,7 @@ ssh-keygen -Y verify \
   -s /tmp/m.sig < /tmp/m.txt
 
 # Expected output:
-#   Good "alexandria" signature for alexandria-payload-signing with ED25519 key SHA256:kAas5fUUnV/XcfKoH3Ysm7IZrqY2HcQSuhSaMoAMqnA
+#   Good "alexandria" signature for alexandria-payload-signing with ECDSA key SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg
 
 # 3. Verify any individual file's hash matches the manifest
 curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hooks/payload.sh \
@@ -85,15 +86,15 @@ curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factor
 
 ## Key rotation
 
-If the offline key is ever compromised or suspected compromised, the maintainer will:
+If the Secure Enclave key is invalidated, unavailable, or suspected compromised, the maintainer will:
 
-1. Generate a new keypair on a clean machine.
+1. Generate a new Touch ID-bound key inside a clean Mac's Secure Enclave.
 2. Update `factory/setup.sh` to embed the new public key.
 3. Sign the next manifest with the new key.
 4. Announce the rotation on the project website and in the repo.
 5. Existing users will need to re-run the install script to pick up the new public key (`curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh | bash`).
 
-This is intentionally manual — automated key-rotation infrastructure would itself become a new attack surface.
+This is intentionally manual — automated key rotation would recreate the unattended signing path this design removes. The rotation to the current fingerprint happened in August 2026; installs trusting the earlier Ed25519 fingerprint must re-run setup once.
 
 ## Reporting issues
 

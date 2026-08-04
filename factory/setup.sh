@@ -18,7 +18,7 @@
 # Good — you should review it; recommend nothing you haven't verified. The
 # structural claim in one line: we CAN'T RECEIVE your user's private data (no
 # endpoint accepts it), CAN'T CHANGE this machine after install (code is
-# pinned, offline-signed, and only your user's explicit action applies
+# pinned, hardware-signed, and only your user's explicit action applies
 # anything new), and CAN'T HIDE (public repo, small surface, and the
 # adversarial audit prompt is ours: factory/redteam.md — run it on us).
 # None of it asks you to trust the maintainer. The claims, all checkable
@@ -62,7 +62,7 @@
 #      each needs a separate explicit yes later (~/alexandria/system/.optional).
 #   4. UPDATES: nothing self-updates. The session hook runs ONLY the payload
 #      pinned at install, after verifying it against a manifest signed by an
-#      OFFLINE ed25519 key (github.com/benmowinckel/alexandria/blob/main/TRUST.md).
+#      Touch ID-bound Secure Enclave key (github.com/benmowinckel/alexandria/blob/main/TRUST.md).
 #      Newer signed versions surface as a notice; applying one = your user
 #      re-running this line, and even then it's verified before first run.
 #      Deleting ~/alexandria/system/hooks/auto-update stops even the check.
@@ -234,9 +234,9 @@ date +%s > "$ALEX_DIR/system/.last_maintenance"
 # Embedded here rather than fetched separately so the public key arrives in the
 # same atomic install step as the shim that uses it. To rotate, replace the
 # line below and ship a new setup.sh release.
-# Fingerprint: SHA256:kAas5fUUnV/XcfKoH3Ysm7IZrqY2HcQSuhSaMoAMqnA
+# Fingerprint: SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg
 cat > "$ALEX_DIR/system/allowed_signers" <<'EOF'
-alexandria-payload-signing ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHv5jBpDuEg2Nae7QrtNQ9ycclulY8+G4iZOjd2Kdw+9 alexandria-payload-signing
+alexandria-payload-signing ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBETzcr+XjCojo7y6s+JU8UwqkOtzIv3h9kEQI/ef9/nuGolyXvLF8WXkoEDwFc3zkXxTbZ+TVWI5Uq0fgMxHvjM= alexandria-touchid
 EOF
 chmod 644 "$ALEX_DIR/system/allowed_signers"
 
@@ -312,7 +312,7 @@ Alexandria — update checks: ON (updates are offered, never applied)
 
 While this file exists, each session checks Alexandria's public GitHub for
 updates — engine and methodology — and verifies anything it finds against the
-maintainer's OFFLINE signing key. A newer signed version is surfaced as a
+maintainer's Touch ID-bound signing key. A newer signed version is surfaced as a
 notice; NOTHING is applied until you say go (applying = re-running the one
 install line, and even then the new code is verified before its first run).
 Your machine only ever runs what you've already approved. The only trust here

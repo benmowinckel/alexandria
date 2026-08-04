@@ -3,15 +3,13 @@
 # Run from repo root: bash factory/ship.sh
 #
 # Builds factory/manifest.txt (sha256 of payload + every canon file),
-# signs it with the offline signing key, commits + pushes.
+# signs it with the Mac's Touch ID-bound Secure Enclave key, commits + pushes.
 # Replaces `git push` for any change in factory/hooks/payload.sh or factory/canon/*.md.
 #
-# Trust root: ~/.alexandria-signing/key (ed25519, passphrase-protected, never in CI).
-#
-# Signing must always cost the founder's passphrase — enforced structurally
-# below (agent cut off + unencrypted-key refusal), not by discipline. Found
-# live 2026-07-30: the key sat cached in ssh-agent and ship.sh signed silently,
-# which hands valid signatures to any process running as the user.
+# Trust root: a non-exportable P-256 key in this Mac's Secure Enclave. Its
+# opaque reference lives at ~/.alexandria-signing/secure-enclave.keyref; the
+# private key never leaves Apple hardware. Every signature requires a fresh
+# Touch ID match. ssh-agent and passphrase caches are not involved.
 
 set -euo pipefail
 
@@ -20,28 +18,44 @@ echo "reminder: install-surface change? run the red-team pass first (factory/red
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
-SIGNING_KEY="${ALEX_SIGNING_KEY:-$HOME/.alexandria-signing/key}"
-if [ ! -f "$SIGNING_KEY" ]; then
-  echo "error: signing key not found at $SIGNING_KEY" >&2
-  echo "Generate with: ssh-keygen -t ed25519 -f $SIGNING_KEY -C alexandria-payload-signing" >&2
+# A commit includes everything already staged, even when this script later
+# stages explicit paths. Refuse an ambiguous release before asking for Touch ID.
+if ! git diff --cached --quiet; then
+  echo "error: the git index already contains staged changes — unstage them, then re-run" >&2
   exit 1
 fi
 
-# ── Structural passphrase gate (2026-07-30) ──────────────────────────────────
-# Two silent-signing paths exist and both are closed here, in code:
-# 1) ssh-agent: ssh-keygen -Y sign uses an agent-cached key without prompting,
-#    so a passphrase typed once anywhere makes every later ship free for ANY
-#    process running as this user. The sign invocation below runs with
-#    SSH_AUTH_SOCK emptied — agent unreachable for signing only, so the key
-#    file must be decrypted directly, which demands the passphrase. (Scoped to
-#    the sign line, not a global unset: a fork pushing over an ssh remote still
-#    gets its agent for git push.)
-# 2) an unencrypted key file: file-based signing wouldn't prompt either. If the
-#    key opens with an empty passphrase, it is not passphrase-protected —
-#    refuse to ship until it is re-keyed.
-if ssh-keygen -y -P "" -f "$SIGNING_KEY" >/dev/null 2>&1; then
-  echo "error: $SIGNING_KEY opens with an EMPTY passphrase — signing would never require the founder." >&2
-  echo "Re-key it now: ssh-keygen -p -f $SIGNING_KEY   (set a real passphrase), then re-run." >&2
+SIGNER_SOURCE="$REPO_ROOT/factory/signing/alexandria-sign.swift"
+SIGNER_BIN="${ALEX_SIGNER_BIN:-$HOME/.alexandria-signing/bin/alexandria-sign}"
+KEY_REFERENCE="${ALEX_SIGNING_KEY_REFERENCE:-$HOME/.alexandria-signing/secure-enclave.keyref}"
+PUBLIC_KEY="${ALEX_SIGNING_PUBLIC_KEY:-$HOME/.alexandria-signing/secure-enclave.pub}"
+
+if [ "$(uname -s)" != "Darwin" ]; then
+  echo "error: releases can only be signed on the founder's Mac" >&2
+  exit 1
+fi
+command -v swiftc >/dev/null 2>&1 || { echo "error: Apple Swift compiler not found" >&2; exit 1; }
+[ -f "$SIGNER_SOURCE" ] || { echo "error: signer source missing at $SIGNER_SOURCE" >&2; exit 1; }
+[ -f "$KEY_REFERENCE" ] || { echo "error: Secure Enclave key reference missing at $KEY_REFERENCE" >&2; exit 1; }
+[ -f "$PUBLIC_KEY" ] || { echo "error: signing public key missing at $PUBLIC_KEY" >&2; exit 1; }
+
+# Compile the tiny Apple-only signer locally. It emits standard SSHSIG files,
+# so Authors keep using the built-in ssh-keygen verifier on every platform.
+if [ ! -x "$SIGNER_BIN" ] || [ "$SIGNER_SOURCE" -nt "$SIGNER_BIN" ]; then
+  mkdir -p "$(dirname "$SIGNER_BIN")"
+  _signer_tmp="${SIGNER_BIN}.tmp.$$"
+  trap 'rm -f "${_signer_tmp:-}"' EXIT
+  swiftc -O "$SIGNER_SOURCE" -o "$_signer_tmp"
+  chmod 700 "$_signer_tmp"
+  mv "$_signer_tmp" "$SIGNER_BIN"
+  trap - EXIT
+fi
+
+# The public key used locally must be byte-identical to the trust root a fresh
+# install receives. Refuse a key rotation that would strand Authors by mistake.
+_embedded_signer="$(awk '/^cat > .*allowed_signers/{f=1;next} f&&/^EOF$/{exit} f' factory/setup.sh)"
+if [ "$_embedded_signer" != "$(cat "$PUBLIC_KEY")" ]; then
+  echo "error: local Touch ID public key does not match factory/setup.sh" >&2
   exit 1
 fi
 
@@ -173,17 +187,23 @@ done < <(cd "$REPO_ROOT" && find factory -type f \( -name '*.sh' -o -name '*.py'
   done
 } > factory/manifest.txt
 
-# Sign the manifest. Namespace "alexandria" prevents this signature from
-# being valid in any other ssh-signing context.
+# Sign the manifest. The Secure Enclave will ask for Touch ID for this exact
+# manifest; namespace "alexandria" prevents reuse in another SSH context.
 rm -f factory/manifest.txt.sig
-SSH_AUTH_SOCK= ssh-keygen -Y sign -f "$SIGNING_KEY" -n alexandria factory/manifest.txt >/dev/null
-# ssh-keygen writes to factory/manifest.txt.sig automatically.
+"$SIGNER_BIN" sign "$KEY_REFERENCE" factory/manifest.txt factory/manifest.txt.sig
+
+# Verify the exact bytes before anything is committed or pushed.
+ssh-keygen -Y verify \
+  -f "$PUBLIC_KEY" \
+  -I alexandria-payload-signing \
+  -n alexandria \
+  -s factory/manifest.txt.sig < factory/manifest.txt >/dev/null
 
 echo "Signed manifest:"
 sed 's/^/  /' factory/manifest.txt
 echo ""
 echo "Public key fingerprint:"
-ssh-keygen -lf "${SIGNING_KEY}.pub" | sed 's/^/  /'
+ssh-keygen -lf "$PUBLIC_KEY" | sed 's/^/  /'
 echo ""
 
 if [ "${1:-}" = "--sign-only" ]; then
