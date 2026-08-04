@@ -1148,13 +1148,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          Alexandria is a way of working with your AI&mdash;not
-                          another app or tool.
+                          You show the AI you already use our free
+                          instructions&mdash;not a new app or tool.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          Show your AI our free instructions, then decide
-                          together whether and how to use them.
+                          It reads them, then decides with you whether and how
+                          to change the way it works.
                         </span>
                       </span>
                     </button>
@@ -1162,18 +1162,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
                           Think of the instructions as a recipe handed to a
-                          chef. Your AI is the chef: it sees the purpose and
+                          chef. Your AI is the chef. It reads the purpose and
                           possible steps, then decides with you what to notice,
-                          what to write, when to read it back, and how to build
-                          on it. Alexandria is the name for that way of working,
-                          not a separate thing doing the work.
+                          what to write down, when to read it back, and how to
+                          build on it. Alexandria is simply the name for this
+                          way of working.
                         </p>
                         <p className="pitch-more">
-                          Starting from nothing, the free download gives you
-                          the complete loop our founder uses. Already have your
-                          own instructions, memory files, notes, or vault? Keep
-                          them. Your AI moulds the new instructions into what
-                          already works for you.
+                          Starting from nothing? The free download gives you
+                          the complete loop our founder uses. Already have
+                          instructions, memory files, notes, a vault, or your
+                          own loop? Keep them. Your AI fits these instructions
+                          around what already works for you.
                         </p>
                       </div>
                     </div>
@@ -1192,33 +1192,33 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          Your AI writes what it learns about you into files you
-                          own.
+                          If you use them, your AI builds a detailed mirror of
+                          you in files you own.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          It fills them automatically, in full detail, then
-                          reads them again whenever they would help.
+                          It writes what it learns automatically, then reads it
+                          back whenever it would help.
                         </span>
                       </span>
                     </button>
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          The files are not a profile in our database. They are
-                          ordinary text files holding your thoughts, goals,
-                          work, taste, decisions, and the way you
-                          reason&mdash;as much detail as your AI can capture.
-                          Open them, edit them, move them, or delete them. They
-                          are yours; we never see them.
+                          These are ordinary text files on your computer, not a
+                          profile in our database. They can hold your thoughts,
+                          goals, work, taste, decisions, and way of
+                          reasoning&mdash;in as much detail as your AI can
+                          capture. Open them, edit them, move them, or delete
+                          them. They are yours; we never see them.
                         </p>
                         <p className="pitch-more">
-                          The same files can follow you from one AI to
-                          the next. You stop re-explaining yourself and stop
-                          losing your context whenever you switch. Most of this
-                          happens quietly as you work. When the missing context
-                          exists only in your head, your AI can ask you
-                          to think it through and write down the result.
+                          The same files can follow you from one AI to another,
+                          so you do not have to explain yourself again or lose
+                          your context when you switch. Most of the writing
+                          happens quietly while you work. When something useful
+                          exists only in your head, your AI can ask you to think
+                          it through and save the result.
                         </p>
                       </div>
                     </div>
@@ -1237,31 +1237,30 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          Those files become a mirror that helps you keep what
-                          matters.
+                          The mirror stops your thinking from disappearing
+                          between conversations.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          Your AI uses it to bring back the right thoughts,
-                          develop them with you, and help you act on them.
+                          Your AI brings back the right thoughts, develops them
+                          with you, and helps you act on them.
                         </span>
                       </span>
                     </button>
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          Without the mirror, a useful thought helps once and
-                          then gets buried. The next conversation has no way
-                          to build on it. With the mirror, each conversation
-                          can start from what you have already learned, what
-                          you care about, and where you want to go.
+                          Without the mirror, a useful thought helps once, then
+                          gets buried. The next conversation cannot build on
+                          it. With the mirror, each conversation can begin with
+                          what you have already learned, what you care about,
+                          and where you want to go.
                         </p>
                         <p className="pitch-more">
-                          Your AI can bring the right thought back, challenge
-                          it, connect it to new work, and help turn it into
-                          something real. The difference grows with every
-                          conversation. The earlier you start, the more of
-                          your thinking the mirror has to work with.
+                          Your AI can bring a thought back, challenge it,
+                          connect it to new work, and help you turn it into
+                          something real. The earlier you start, the more of
+                          your thinking there is to build on.
                         </p>
                       </div>
                     </div>
@@ -1280,47 +1279,46 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          Your AI keeps reading that mirror and writing back to
-                          it.
+                          Reading from the mirror and writing back is your
+                          Alexandria loop.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          That repeating cycle is your Alexandria loop. The
-                          optional connector joins your loop to the community.
+                          The loop works on its own. The optional connector
+                          joins it to the Alexandria community.
                         </span>
                       </span>
                     </button>
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          The loop is complete on its own. The Alexandria
-                          connector is the only paid part; adding it joins you
-                          to a community of people who value their minds enough
-                          to keep thinking. The Library shows what people
-                          decided was worth keeping, how they developed it, and
-                          what they did because of it. The marketplace lets you
-                          use and share the useful parts of how their loops are
-                          built. You choose what to share; your private files
-                          stay private.
+                          The connector is the only paid part. It joins you to
+                          people who value their minds enough to keep thinking.
+                          The Library shows what they chose to keep, how they
+                          developed it, and what they did because of it. The
+                          marketplace lets you use and share useful parts of
+                          how their loops work. You choose what to share; your
+                          private files stay private.
                         </p>
                       </div>
                     </div>
                   </section>
                   <p className="pitch-coda">
                     <span className="pitch-coda-copy">
-                      Keep what matters. Develop it. Act on it&mdash;instead of
-                      letting it fade.
+                      Better answers are only half the point. Your AI should
+                      develop your thinking, not replace it.
                     </span>
                   </p>
                 </div>
 
-                {/* The turn — hairline, then the smallest honest ask: the
-                    instructions cost nothing, and five minutes is enough to
-                    decide whether they belong in the reader's own workflow. */}
+                {/* The turn — hairline, then the supermarket frame makes the
+                    size of the decision physical: take the free thing, try it
+                    for five minutes, and decide afterwards. */}
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  The instructions are free. Five minutes is enough to see if
-                  this way of working fits you.
+                  Treat it like a free sample at the supermarket.
+                  <br />
+                  Take it, try it for five minutes, then decide.
                 </p>
 
                 <div className="cta-pair">
