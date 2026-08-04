@@ -1145,9 +1145,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        The free download is our founder&rsquo;s complete loop:
-                        instructions for your own AI, not another AI or app.
-                        Your AI decides with you what to use and how to behave.
+                        The free download is a complete set of instructions our
+                        founder shows his own AI&mdash;not an app or tool. Show them
+                        to yours; it decides with you what fits.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1164,7 +1164,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           Starting from nothing, the download gives you a full
                           setup. Already have your own instructions, memory
                           files, notes, or vault? Keep them. Your AI moulds our
-                          founder&rsquo;s loop into what already works for you.
+                          founder&rsquo;s setup into what already works for you.
                         </p>
                       </div>
                     </div>
@@ -1182,9 +1182,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        Your AI can then automatically write what it learns
-                        about you&mdash;in full detail&mdash;to plain files on your
-                        computer, and read them again whenever they help.
+                        With those instructions, your AI can automatically
+                        write what it learns about you&mdash;in full detail&mdash;to
+                        plain files on your computer, then read them again when
+                        useful.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1260,22 +1261,27 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        That becomes your Alexandria loop, complete on its own.
-                        Add the optional Alexandria connector if you want it to
-                        learn from other loops.
+                        Your AI repeats that cycle&mdash;writing to the
+                        mirror, reading it back, and helping you build on it.
+                        That is an Alexandria loop. It works on its own; the
+                        optional connector adds the community.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          Your loop is complete on its own. The Alexandria
-                          connector is the only paid part; adding it is what
-                          joins your loop to the community. You choose what to
-                          share. Your loop can learn what other people chose to
-                          keep thinking about, how they developed those
-                          thoughts, and what they did because of them. It can
-                          also copy useful parts of how their loops work. Your
+                          An Alexandria loop is simply that repeating cycle:
+                          your AI notices what matters, writes it to your files,
+                          reads it back when useful, and helps you develop or
+                          act on it. The loop is complete on its own. The
+                          Alexandria connector is the only paid part; adding it
+                          joins you to a community of people who value their
+                          minds enough to keep thinking. The Library shows what
+                          people decided was worth keeping, how they developed
+                          it, and what they did because of it. The marketplace
+                          lets you use and share the useful parts of how their
+                          loops are built. You choose what to share; your
                           private files stay private.
                         </p>
                       </div>

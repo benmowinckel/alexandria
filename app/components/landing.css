@@ -2801,10 +2801,11 @@
             gap: 32px;
           }
 
-          /* BOTTOM SLIDE — single column, ornament first as a decorative
-             beat, then statement (the argument), then close + CTA, then
-             wordmark + dict-lines as the closing identity block. Order is
-             set via flex order so we don't have to touch JSX. */
+          /* BOTTOM SLIDE — single column: argument, close + CTA, then the
+             ornament and wordmark as the closing identity block. The CTA
+             must stay attached to the close; decoration never interrupts
+             the decision. Order is set via flex order so we don't have to
+             touch JSX. */
           .bottom-inner {
             flex-direction: column;
             gap: 64px;
@@ -2827,7 +2828,7 @@
             display: contents;
           }
           .ornament-wrap {
-            order: 1;
+            order: 6;
             justify-content: center;
             padding-top: 8px;
             padding-left: 0;
@@ -2871,7 +2872,7 @@
             margin-top: -42px;
           }
           .wordmark-block {
-            order: 6;
+            order: 7;
             margin-left: 0;
             max-width: 100%;
             /* Extra breath above so the brand block reads as its
@@ -2880,7 +2881,7 @@
             margin-top: 96px;
           }
           .quiet-links {
-            order: 7;
+            order: 8;
             width: auto;
             align-self: auto;
             padding-left: 0;
