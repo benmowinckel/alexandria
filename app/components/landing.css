@@ -1737,10 +1737,6 @@
         .pitch-item.is-open .pitch-caret {
           transform: rotate(90deg);
         }
-        @media (hover: hover) {
-          .pitch-item:hover .pitch-body { grid-template-rows: 1fr; }
-          .pitch-item:hover .pitch-caret { transform: rotate(90deg); }
-        }
         /* The bonus depth — animated 0fr→1fr grid track; the inner
            wrapper clips. Exit faster than enter (design.md). */
         .pitch-body {
@@ -1773,6 +1769,26 @@
           color: var(--theme-fg-muted);
           max-width: 640px;
           text-wrap: pretty;
+        }
+        /* An open explanation needs more vertical room than the resting
+           skim. On desktop, pack the beats from just below the fixed nav
+           instead of re-centring the taller stack under it. All four beats
+           remain visible, so opening one never breaks the causal sequence. */
+        @media (min-width: 900px) {
+          .pitch:has(.pitch-item.is-open) {
+            justify-content: flex-start;
+            box-sizing: border-box;
+            padding-top: 90px;
+            gap: 16px;
+          }
+          /* In depth mode, the active beat keeps its preview while the
+             other three collapse to their one-line headlines. The whole
+             sequence therefore stays legible without turning the page into
+             a wall of text or pushing the active explanation off-screen. */
+          .pitch:has(.pitch-item.is-open)
+            .pitch-item:not(.is-open) .pitch-detail {
+            display: none;
+          }
         }
         /* The turn — hairline above the closing beat; everything below
            it (close + buttons) reads as the action zone. */

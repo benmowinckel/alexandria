@@ -1148,14 +1148,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          Alexandria is an idea for how your own AI should
-                          work&mdash;not another app or tool.
+                          Alexandria is a way of working with your AI&mdash;not
+                          another app or tool.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          Show it our free instructions. They explain why and
-                          how to build a loop around your thinking; you decide
-                          together exactly how it works.
+                          Show it our free instructions. Together, you decide
+                          how to use them and build a loop around your thinking.
                         </span>
                       </span>
                     </button>
@@ -1170,9 +1169,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           not a separate thing doing the work.
                         </p>
                         <p className="pitch-more">
-                          Starting from nothing, the download gives you the
-                          complete loop our founder uses. Already have your own
-                          instructions, memory files, notes, or vault? Keep
+                          Starting from nothing, the free download gives you
+                          the complete loop our founder uses. Already have your
+                          own instructions, memory files, notes, or vault? Keep
                           them. Your AI moulds the new instructions into what
                           already works for you.
                         </p>
@@ -1193,12 +1192,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          The loop starts when your AI writes what it learns
-                          about you to plain files on your computer.
+                          Your AI writes what it learns about you into files you
+                          own.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          It fills them in automatically, in full detail, then
+                          It fills them automatically, in full detail, then
                           reads them again whenever they would help.
                         </span>
                       </span>
@@ -1206,9 +1205,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          The mirror is not a profile in our database. It is
-                          a set of ordinary text files holding your thoughts,
-                          goals, work, taste, decisions, and the way you
+                          The files are not a profile in our database. They are
+                          ordinary text files holding your thoughts, goals,
+                          work, taste, decisions, and the way you
                           reason&mdash;as much detail as your AI can capture.
                           Open them, edit them, move them, or delete them. They
                           are yours; we never see them.
@@ -1238,13 +1237,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          Those files become a detailed mirror of your thinking.
+                          Those files become a mirror that helps you keep what
+                          matters.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          Your AI uses it to help you keep the thoughts that
-                          matter, develop them, and act on them instead of
-                          letting them fade.
+                          Your AI uses it to bring back the right thoughts,
+                          develop them with you, and help you act on them.
                         </span>
                       </span>
                     </button>
@@ -1281,39 +1280,36 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          As you think and act, your AI repeats the cycle.
+                          Your AI keeps reading that mirror and writing back to
+                          it.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          It writes to the mirror, reads it back, and helps you
-                          build on it. We call that your Alexandria loop; the
-                          optional connector joins it to the community.
+                          That repeating cycle is your Alexandria loop. The
+                          optional connector joins your loop to the community.
                         </span>
                       </span>
                     </button>
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          An Alexandria loop is simply that repeating cycle:
-                          your AI notices what matters, writes it to
-                          your files, reads it back when useful, and helps you
-                          develop or act on it. The loop is complete on its
-                          own. The Alexandria connector is the only paid part;
-                          adding it joins you to a community of people who
-                          value their minds enough to keep thinking. The
-                          Library shows what people decided was worth keeping,
-                          how they developed it, and what they did because of
-                          it. The marketplace lets you use and share the useful
-                          parts of how their loops are built. You choose what
-                          to share; your private files stay private.
+                          The loop is complete on its own. The Alexandria
+                          connector is the only paid part; adding it joins you
+                          to a community of people who value their minds enough
+                          to keep thinking. The Library shows what people
+                          decided was worth keeping, how they developed it, and
+                          what they did because of it. The marketplace lets you
+                          use and share the useful parts of how their loops are
+                          built. You choose what to share; your private files
+                          stay private.
                         </p>
                       </div>
                     </div>
                   </section>
                   <p className="pitch-coda">
                     <span className="pitch-coda-copy">
-                      The earlier you start, the more of your thinking survives
-                      to compound.
+                      The sooner you start, the more of your thinking your AI
+                      can keep and build on.
                     </span>
                   </p>
                 </div>
@@ -1325,11 +1321,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     beat iii, so the close doesn't repeat it. */}
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  At the supermarket, you try a free sample before deciding
-                  whether you like it.
+                  At the supermarket, someone holds out a free sample. You just
+                  take it and try it.
                   <br />
-                  Do the same here: start your loop, and your own mirror can be
-                  writing itself in five minutes.
+                  We are doing the same here. Press &ldquo;start your
+                  loop.&rdquo; Give it five minutes.
                 </p>
 
                 <div className="cta-pair">
