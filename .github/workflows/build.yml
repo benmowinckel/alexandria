@@ -5,6 +5,8 @@ on:
     paths:
       - 'server/src/**'
       - 'app/**'
+      - 'factory/**'
+      - 'scripts/test-codex-integration.sh'
       - 'package.json'
       - 'server/package.json'
   pull_request:
@@ -43,6 +45,9 @@ jobs:
 
       - name: Server type check
         run: cd server && npm ci && npx tsc --noEmit
+
+      - name: Codex integration test
+        run: bash scripts/test-codex-integration.sh
 
       - name: App build
         run: npm ci && npm run build

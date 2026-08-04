@@ -35,7 +35,8 @@
 #
 #   1. INSTALLS: one folder (~/alexandria/ — plain markdown + small scripts, a
 #      local git repo) and session hooks/skills in detected agent configs
-#      (~/.claude, ~/.cursor, ~/.codex, ~/.factory). Two small extras, both
+#      (~/.claude, ~/.cursor, ~/.codex, ~/.factory, and Codex's shared
+#      ~/.agents/skills convention). Two small extras, both
 #      visible below: if an SSH key exists, one commit-signing entry appended
 #      to ~/.config/git/allowed_signers (local git verify only); on a Mac with
 #      iCloud Drive, an "alexandria" capture-inbox folder in the Author's OWN
@@ -204,9 +205,7 @@ command -v git &>/dev/null || DEFERRED="${DEFERRED}git — versioning + GitHub b
 if ! command -v node &>/dev/null && ! command -v python3 &>/dev/null; then
   DEFERRED="${DEFERRED}node or python3 — powers the automatic session hooks (https://nodejs.org)\n"
 fi
-if command -v gh &>/dev/null; then
-  gh auth status &>/dev/null 2>&1 || DEFERRED="${DEFERRED}gh sign-in — run 'gh auth login' to unlock the optional backup add-on (your own private GitHub repo)\n"
-else
+if ! command -v gh &>/dev/null; then
   DEFERRED="${DEFERRED}gh CLI — unlocks the optional backup add-on to your own GitHub (https://cli.github.com)\n"
 fi
 
@@ -279,6 +278,8 @@ fetch_factory "hooks/shim.sh" "$ALEX_DIR/system/hooks/shim.sh" "hooks/shim.sh" y
 chmod +x "$ALEX_DIR/system/hooks/shim.sh" 2>/dev/null
 fetch_factory "hooks/payload.sh" "$ALEX_DIR/system/.hooks_payload" "hooks/payload.sh" yes
 fetch_factory "scripts/capture_resolver.py" "$ALEX_DIR/system/scripts/capture_resolver.py" "scripts/capture_resolver.py" yes
+fetch_factory "scripts/configure_codex.py" "$ALEX_DIR/system/scripts/configure_codex.py" "scripts/configure_codex.py" yes
+fetch_factory "skills/codex-ambient.md" "$ALEX_DIR/system/.codex-ambient.md" "skills/codex-ambient.md" yes
 # verify-fetch.sh — the trust root for every later "fetch a factory script,
 # then run it" flow (install/publish/brief-setup skills, migrate.sh). Installed
 # HERE so it lands in the same install-time trust step as the shim; consumers
@@ -302,8 +303,8 @@ fetch_factory "optional.md" "$ALEX_DIR/system/.optional" "optional.md" yes
 # Update-check toggle — present = on (default). NOTIFY-ONLY: the shim runs the
 # pinned verified payload and only surfaces newer signed versions as a notice;
 # nothing is ever auto-applied. Its contents ARE the explanation; deleting the
-# file stops even the check (shim + payload both honor it — zero contact with
-# Alexandria, fully local). Seed-if-missing so a deliberate deletion survives
+# file stops public engine/canon checks (keyed collective calls remain until
+# .api_key is removed). Seed-if-missing so a deliberate deletion survives
 # unless the Author re-runs setup.
 if [ ! -f "$ALEX_DIR/system/hooks/auto-update" ]; then
   cat > "$ALEX_DIR/system/hooks/auto-update" <<'AUTOUPDATE_END'
@@ -317,8 +318,9 @@ install line, and even then the new code is verified before its first run).
 Your machine only ever runs what you've already approved. The only trust here
 is GitHub (hosting) + the maintainer (the one person who can sign).
 
-DELETE THIS FILE to stop even the check: no fetch, zero contact with
-Alexandria — you run forever on your pinned local copy. Fully sovereign.
+DELETE THIS FILE to stop public engine/canon update checks: you run forever on
+your pinned local copy. If you joined the collective, keyed Library/feedback
+calls remain until you remove system/.api_key; free installs have none.
 
 Full mechanism: https://alexandria-library.com/mechanics
 AUTOUPDATE_END
@@ -353,22 +355,24 @@ fetch_factory "canon/MODULES.md" "$ALEX_DIR/system/canon/MODULES.md" "canon/MODU
 # Block (cache locally for easy access — system, not user content)
 fetch_factory "block.md" "$ALEX_DIR/system/.block" "block.md" yes
 
-# Account-level "Instructions for Claude" — the one-time paste that turns
-# Cowork / the Claude app / plain chat into Alexandria-aware surfaces. Those
-# surfaces can't run hooks or the skill on their own; this instruction (pasted
-# into the Author's Claude Settings → Profile → Instructions for Claude) makes
-# every session there know who the Author is and proactively prompt to attach
-# the folder + run /a. Written locally so the close message can point at it.
+# Account-level instructions for Claude chat surfaces. Cowork can use an
+# attached folder, but it is a usage surface rather than an install surface:
+# no plugin, duplicate skill, or hidden hook path. The file-only floor is the
+# real path on every chat surface that can see the folder.
 cat > "$ALEX_DIR/system/.claude-instructions.md" << 'CLAUDEINSTR'
-I use "Alexandria": sovereign files at ~/alexandria on my computer — my constitution (who I am, how I think, my beliefs, taste, voice), my notes, and my work. These files are how you actually know me. You can only read or write them when the ~/alexandria FOLDER is attached — which needs the desktop app on the computer where the files live. Mobile, web/plain chat, and Dispatch cannot reach my local files.
+<!-- alexandria:start -->
+## Alexandria
 
-Be eager and explicit. The moment a task would be better with my real files — my views, my voice, my past thinking, a decision, or developing an idea personal to me — do NOT wing it. Stop and tell me how to load them, based on what this session can actually do:
-- If you can attach a whole folder here (desktop Cowork): "This needs your Alexandria files. Attach the ~/alexandria folder, then type /a." (/a runs my full load; it comes from the one-time Cowork step: Add plugins -> from repo -> benmowinckel/alexandria.) If /a isn't available here, do the same thing yourself the moment the folder is attached: read ~/alexandria/system/canon/methodology.md and my constitution in ~/alexandria/files/constitution/ (Core.md first), and follow that methodology as my Alexandria.
-- If you cannot attach a folder here — only individual files, or no local access (mobile, web chat, Dispatch): "This needs your Alexandria files, which live on your computer. Do it on your desktop: open Cowork or Claude Code there and attach the ~/alexandria folder."
+I use Alexandria: sovereign files containing my constitution, notes, captures, and work. Preserve all my existing instructions; this block adds routing only.
 
-Once the folder is attached and loaded, work entirely from my files: read the relevant parts to inform everything, and when I articulate a belief, preference, correction, or idea worth keeping, judge whether it's genuinely new, decide where it belongs (constitution, marginalia, or notes), keep the file coherent, and confirm with me before writing to my constitution.
+When personal context would improve the task, use the best home this session can actually reach:
 
-Carry all of this yourself — I never have to remember where to do it, to attach the folder, or to save. You prompt me.
+1. If `~/alexandria` is available, use it exclusively. It is ground truth. Read `~/alexandria/system/canon/methodology.md` and the relevant files under `~/alexandria/files/`.
+2. Otherwise, if my Google Drive `alexandria` folder is available, open `_start` and follow it. For a full local Author this is a pocket copy; for a chat-only Author it is ground truth.
+3. If neither home is reachable, capture a compact handoff for the next writable surface. Never pretend something was saved.
+
+Never load local and Drive in the same task. Bare `a` starts the Alexandria method. State what you can read and write, and only claim persistence after writing and reading it back.
+<!-- alexandria:end -->
 CLAUDEINSTR
 
 # ── 3. Platform configuration ─────────────────────────────────────
@@ -376,27 +380,33 @@ CLAUDEINSTR
 # Claude Code — skill + hooks
 
 if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
-  # Install the skill under BOTH names so /a and /alexandria both work (Claude Code
-  # keys on the skill, by dir + frontmatter name). Same content; the alias's
-  # frontmatter `name:` is rewritten to alexandria. Additive — if the rewrite ever
-  # fails, /a still works, so no regression.
-  mkdir -p "$HOME/.claude/skills/a" "$HOME/.claude/skills/alexandria" 2>/dev/null
+  # Exactly one start skill: /a by default, /alexandria only when the Author
+  # already owns a foreign /a. Duplicate aliases are noise and can drift.
+  mkdir -p "$HOME/.claude/skills/a" 2>/dev/null
   # /a may already be the user's OWN skill (DIY setups predating Alexandria).
   # Only overwrite when the existing file is ours — any alexandria marker in
   # it means we wrote it (every shipped version contains the word). A foreign
   # /a stays untouched; /alexandria below carries the full skill either way.
   A_SKILL_KEPT=""
+  CLAUDE_START_SKILL="a"
   if [ -f "$HOME/.claude/skills/a/SKILL.md" ] && \
      ! grep -qi 'alexandria' "$HOME/.claude/skills/a/SKILL.md" 2>/dev/null; then
     A_SKILL_KEPT=1
+    CLAUDE_START_SKILL="alexandria"
+    mkdir -p "$HOME/.claude/skills/alexandria" 2>/dev/null
+    if fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/alexandria/SKILL.md" "skills/claudecode.md (/alexandria skill)" yes; then
+      if [ "$(uname)" = "Darwin" ]; then
+        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
+      else
+        sed -i 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
+      fi
+    fi
   else
     fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/a/SKILL.md" "skills/claudecode.md" yes
-  fi
-  if fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/alexandria/SKILL.md" "skills/claudecode.md (/alexandria alias)" yes; then
-    if [ "$(uname)" = "Darwin" ]; then
-      sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
-    else
-      sed -i 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
+    if [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ] && \
+       grep -q 'running their \*\*Alexandria loop\*\*' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null; then
+      rm -f "$HOME/.claude/skills/alexandria/SKILL.md"
+      rmdir "$HOME/.claude/skills/alexandria" 2>/dev/null || true
     fi
   fi
 
@@ -416,10 +426,9 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   # shim -> payload chain Cursor/Codex/Factory hand off to. One mechanism,
   # one behavior source, works on every Claude Code surface (CLI + Claude
   # Desktop's code tab, which is Claude Code on the host). No marketplace,
-  # no second code path. (An earlier build also shipped a marketplace plugin;
-  # it's parked in factory/_parked-plugin/ and no longer used — it added
-  # nothing this curl doesn't, and couldn't reach Cowork anyway. Reintroduce
-  # only if Anthropic makes plugins load + fire hooks in Cowork.)
+  # no second code path. An earlier marketplace plugin was deleted because it
+  # duplicated the skill, added nothing to this curl, and could not create a
+  # trustworthy Cowork hook path.
   #
   # Migrate off any prior plugin install so nothing double-fires and the
   # Author lands cleanly on the one hook path.
@@ -541,25 +550,30 @@ if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
   fetch_factory "hooks/cursor/alexandria-transcript.py" "$HOME/.cursor/hooks/alexandria-transcript.py" "hooks/cursor/alexandria-transcript.py" yes
   chmod +x "$HOME/.cursor/hooks/alexandria-session-start.py" "$HOME/.cursor/hooks/alexandria-session-end.py" "$HOME/.cursor/hooks/alexandria-stop.py" "$HOME/.cursor/hooks/alexandria-transcript.py" 2>/dev/null
 
-  # /a as a native Cursor skill — same source file as the Claude Code skill
-  # (skills/claudecode.md), same DIY-preservation rule, same /alexandria alias
-  # rename. One content source, two harness surfaces.
-  mkdir -p "$HOME/.cursor/skills/a" "$HOME/.cursor/skills/alexandria" 2>/dev/null
+  # One native Cursor start skill, with the same foreign-/a preservation rule.
+  mkdir -p "$HOME/.cursor/skills/a" 2>/dev/null
+  CURSOR_START_SKILL="a"
   if [ -f "$HOME/.cursor/skills/a/SKILL.md" ] && \
      ! grep -qi 'alexandria' "$HOME/.cursor/skills/a/SKILL.md" 2>/dev/null; then
-    : # Author's own /a skill — keep it, /alexandria alias still installs below
+    CURSOR_START_SKILL="alexandria"
+    mkdir -p "$HOME/.cursor/skills/alexandria" 2>/dev/null
+    if fetch_factory "skills/claudecode.md" "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md (cursor /alexandria skill)" yes; then
+      if [ "$(uname)" = "Darwin" ]; then
+        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
+      else
+        sed -i 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
+      fi
+    fi
   else
     fetch_factory "skills/claudecode.md" "$HOME/.cursor/skills/a/SKILL.md" "skills/claudecode.md (cursor /a skill)" yes
+    if [ -f "$HOME/.cursor/skills/alexandria/SKILL.md" ] && \
+       grep -q 'running their \*\*Alexandria loop\*\*' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null; then
+      rm -f "$HOME/.cursor/skills/alexandria/SKILL.md"
+      rmdir "$HOME/.cursor/skills/alexandria" 2>/dev/null || true
+    fi
   fi
   mkdir -p "$HOME/.cursor/skills/a." 2>/dev/null
   fetch_factory "skills/aclose.md" "$HOME/.cursor/skills/a./SKILL.md" "skills/aclose.md (cursor /a. close)" yes
-  if fetch_factory "skills/claudecode.md" "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md (cursor /alexandria alias)" yes; then
-    if [ "$(uname)" = "Darwin" ]; then
-      sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
-    else
-      sed -i 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
-    fi
-  fi
 
   CURSOR_HOOKS_OK=""
   if command -v python3 &>/dev/null; then
@@ -646,55 +660,77 @@ fi
 # Factory (droid CLI)
 if [ -d "$HOME/.factory" ] || command -v droid &>/dev/null; then
   mkdir -p "$HOME/.factory/droids" 2>/dev/null
-  # Both names: invoke the `a` droid or the `alexandria` droid.
-  fetch_factory "skills/droid.md" "$HOME/.factory/droids/a.md" "skills/droid.md" yes
-  if fetch_factory "skills/droid.md" "$HOME/.factory/droids/alexandria.md" "skills/droid.md (alexandria alias)" yes; then
-    if [ "$(uname)" = "Darwin" ]; then
-      sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.factory/droids/alexandria.md" 2>/dev/null
-    else
-      sed -i 's/^name: a$/name: alexandria/' "$HOME/.factory/droids/alexandria.md" 2>/dev/null
+  FACTORY_START_DROID="a"
+  if [ -f "$HOME/.factory/droids/a.md" ] && \
+     ! grep -qi 'alexandria' "$HOME/.factory/droids/a.md" 2>/dev/null; then
+    FACTORY_START_DROID="alexandria"
+    if fetch_factory "skills/droid.md" "$HOME/.factory/droids/alexandria.md" "skills/droid.md (alexandria droid)" yes; then
+      if [ "$(uname)" = "Darwin" ]; then
+        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.factory/droids/alexandria.md" 2>/dev/null
+      else
+        sed -i 's/^name: a$/name: alexandria/' "$HOME/.factory/droids/alexandria.md" 2>/dev/null
+      fi
+    fi
+  else
+    fetch_factory "skills/droid.md" "$HOME/.factory/droids/a.md" "skills/droid.md" yes
+    if [ -f "$HOME/.factory/droids/alexandria.md" ] && \
+       grep -q 'running their \*\*Alexandria loop\*\*' "$HOME/.factory/droids/alexandria.md" 2>/dev/null; then
+      rm -f "$HOME/.factory/droids/alexandria.md"
     fi
   fi
-  echo "  Factory: configured"
+  echo "  Factory: configured (one start droid)"
 fi
 
 # Codex
 if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   mkdir -p "$HOME/.codex" 2>/dev/null
-  # Codex discovers user skills from ~/.agents/skills. Install both names from
-  # one source so /a and /alexandria are the same active-session workflow.
-  mkdir -p "$HOME/.agents/skills/a" "$HOME/.agents/skills/alexandria" 2>/dev/null
+  # Codex discovers user skills from ~/.agents/skills. Install exactly ONE
+  # start skill: /a by default; /alexandria only when the Author already owns a
+  # foreign /a. The separate /a. close skill is always installed.
+  mkdir -p "$HOME/.agents/skills/a" "$HOME/.agents/skills/a." 2>/dev/null
+  CODEX_START_SKILL="a"
   if [ -f "$HOME/.agents/skills/a/SKILL.md" ] && \
      ! grep -qi 'alexandria' "$HOME/.agents/skills/a/SKILL.md" 2>/dev/null; then
-    : # Preserve an Author's own /a; the Alexandria alias still installs below.
+    CODEX_START_SKILL="alexandria"
+    mkdir -p "$HOME/.agents/skills/alexandria" 2>/dev/null
+    if fetch_factory "skills/codex.md" "$HOME/.agents/skills/alexandria/SKILL.md" "skills/codex.md (Codex /alexandria skill)" yes; then
+      if [ "$(uname)" = "Darwin" ]; then
+        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null
+      else
+        sed -i 's/^name: a$/name: alexandria/' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null
+      fi
+    fi
   else
     fetch_factory "skills/codex.md" "$HOME/.agents/skills/a/SKILL.md" "skills/codex.md (Codex /a skill)" yes
-  fi
-  if fetch_factory "skills/codex.md" "$HOME/.agents/skills/alexandria/SKILL.md" "skills/codex.md (Codex /alexandria alias)" yes; then
-    if [ "$(uname)" = "Darwin" ]; then
-      sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null
-    else
-      sed -i 's/^name: a$/name: alexandria/' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null
+    # Remove only the duplicate alias previously installed by Alexandria.
+    if [ -f "$HOME/.agents/skills/alexandria/SKILL.md" ] && \
+       grep -q '^<!-- alexandria:start -->' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null; then
+      rm -f "$HOME/.agents/skills/alexandria/SKILL.md"
+      rmdir "$HOME/.agents/skills/alexandria" 2>/dev/null || true
     fi
   fi
-  codex_tmp="$ALEX_DIR/system/.codex_alexandria.tmp"
-  if fetch_factory "skills/codex.md" "$codex_tmp" "skills/codex.md" yes; then
-    # Current Codex reads global instructions from ~/.codex/AGENTS.md;
-    # instructions.md is the legacy location older CLIs still load.
-    # Write both, replacing any previous alexandria marker block.
-    for codex_target in "$HOME/.codex/AGENTS.md" "$HOME/.codex/instructions.md"; do
-      [ -f "$codex_target" ] && {
-        if [ "$(uname)" = "Darwin" ]; then
-          sed -i '' '/^<!-- alexandria:start -->/,/^<!-- alexandria:end -->/d' "$codex_target"
-        else
-          sed -i '/^<!-- alexandria:start -->/,/^<!-- alexandria:end -->/d' "$codex_target"
-        fi
-      }
-      cat "$codex_tmp" >> "$codex_target"
-    done
-    rm -f "$codex_tmp"
+
+  fetch_factory "skills/aclose.md" "$HOME/.agents/skills/a./SKILL.md" "skills/aclose.md (Codex /a. close)" yes
+
+  # Merge the current Codex surfaces. Preserve every unknown hook and every
+  # byte of the user's instructions outside our own marker. Never write the
+  # obsolete instructions.md. A changed hook is deliberately left pending:
+  # Codex's own /hooks trust screen is the security boundary.
+  CODEX_CONFIGURED=""
+  if command -v python3 &>/dev/null && \
+     [ -s "$ALEX_DIR/system/scripts/configure_codex.py" ] && \
+     [ -s "$ALEX_DIR/system/.codex-ambient.md" ]; then
+    if python3 "$ALEX_DIR/system/scripts/configure_codex.py" \
+      --codex-home "$HOME/.codex" --alex-dir "$ALEX_DIR" \
+      --ambient "$ALEX_DIR/system/.codex-ambient.md" >/dev/null 2>&1; then
+      CODEX_CONFIGURED=1
+    fi
   fi
-  echo "  Codex: configured"
+  if [ -n "$CODEX_CONFIGURED" ]; then
+    echo "  Codex: wired (trust is verified in the health check below)"
+  else
+    echo "  Codex: found, but python3 is needed to merge hooks safely — install python3 and re-run"
+  fi
 fi
 
 # ── 4. Git substrate — your worldline as cryptographic ledger ─────
@@ -941,12 +977,13 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   # present.
   if [ -f "$HOME/.claude/settings.json" ] && \
      grep -q "alexandria/system/hooks/shim.sh" "$HOME/.claude/settings.json" 2>/dev/null && \
-     [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ]; then
+     [ -f "$HOME/.claude/skills/${CLAUDE_START_SKILL:-a}/SKILL.md" ] && \
+     [ -f "$HOME/.claude/skills/a./SKILL.md" ]; then
     if [ -n "$A_SKILL_KEPT" ]; then
       # Honest row: their own /a was left alone; ours lives at /alexandria.
       STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/alexandria skill + session hooks wired (your own /a skill left untouched)"
     else
-      STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a + /alexandria skill + session hooks wired"
+      STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a + /a. skills and session hooks wired"
     fi
   else
     STATUS_CLAUDE="fail"; DETAIL_CLAUDE="Claude Code detected but not configured — re-run setup"
@@ -959,9 +996,9 @@ if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
   if [ -f "$HOME/.cursor/hooks.json" ] && \
      grep -q "alexandria-session-start" "$HOME/.cursor/hooks.json" 2>/dev/null && \
      [ -f "$HOME/.cursor/rules/alexandria.mdc" ] && \
-     [ -f "$HOME/.cursor/skills/a/SKILL.md" ] && \
+     [ -f "$HOME/.cursor/skills/${CURSOR_START_SKILL:-a}/SKILL.md" ] && \
      [ -f "$HOME/.cursor/skills/a./SKILL.md" ]; then
-    STATUS_CURSOR="ok"; DETAIL_CURSOR="hooks + rules + /a + /a. skills wired"
+    STATUS_CURSOR="ok"; DETAIL_CURSOR="hooks + rules + one start + /a. close skill wired"
   else
     STATUS_CURSOR="fail"; DETAIL_CURSOR="Cursor detected but not configured — re-run setup"
   fi
@@ -970,23 +1007,40 @@ fi
 CODEX_DETECTED="no"
 if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   CODEX_DETECTED="yes"
-  if [ -f "$HOME/.agents/skills/alexandria/SKILL.md" ] && { \
-       { [ -f "$HOME/.codex/AGENTS.md" ] && \
-         grep -q "alexandria:start" "$HOME/.codex/AGENTS.md" 2>/dev/null; } || \
-       { [ -f "$HOME/.codex/instructions.md" ] && \
-         grep -q "alexandria:start" "$HOME/.codex/instructions.md" 2>/dev/null; }; \
+  CODEX_SKILL_OK=""
+  [ -f "$HOME/.agents/skills/${CODEX_START_SKILL:-a}/SKILL.md" ] && \
+    [ -f "$HOME/.agents/skills/a./SKILL.md" ] && CODEX_SKILL_OK=1
+  CODEX_AGENTS_OK=""
+  if [ -f "$HOME/.codex/AGENTS.md" ] && { \
+       grep -q "alexandria:start" "$HOME/.codex/AGENTS.md" 2>/dev/null || \
+       grep -q "Alexandria the product — always running" "$HOME/.codex/AGENTS.md" 2>/dev/null; \
      }; then
-    STATUS_CODEX="ok"; DETAIL_CODEX="/a + /alexandria skills and instructions wired"
+    CODEX_AGENTS_OK=1
+  fi
+  CODEX_HOOKS_OK=""
+  if [ -f "$HOME/.codex/hooks.json" ] && \
+     grep -q "shim.sh session-start" "$HOME/.codex/hooks.json" 2>/dev/null && \
+     grep -q "capture_resolver.py" "$HOME/.codex/hooks.json" 2>/dev/null && \
+     grep -q "shim.sh codex-session-end" "$HOME/.codex/hooks.json" 2>/dev/null; then
+    CODEX_HOOKS_OK=1
+  fi
+  if [ -n "$CODEX_SKILL_OK" ] && [ -n "$CODEX_AGENTS_OK" ] && \
+     [ -n "$CODEX_HOOKS_OK" ] && \
+     [ -f "$ALEX_DIR/system/.codex_session_start_ok" ] && \
+     [ -f "$ALEX_DIR/system/.codex_session_end_ok" ]; then
+    STATUS_CODEX="ok"; DETAIL_CODEX="one start skill + /a. close; trusted hooks ran start and end"
+  elif [ -n "$CODEX_SKILL_OK" ] && [ -n "$CODEX_AGENTS_OK" ] && [ -n "$CODEX_HOOKS_OK" ]; then
+    STATUS_CODEX="skip"; DETAIL_CODEX="pending one-time trust — run codex in Terminal, type /hooks, trust Alexandria, then open and close one task"
   else
-    STATUS_CODEX="fail"; DETAIL_CODEX="Codex detected but not configured — re-run setup"
+    STATUS_CODEX="fail"; DETAIL_CODEX="Codex integration incomplete — re-run setup"
   fi
 fi
 
 FACTORY_DETECTED="no"
 if [ -d "$HOME/.factory" ] || command -v droid &>/dev/null; then
   FACTORY_DETECTED="yes"
-  if [ -f "$HOME/.factory/droids/a.md" ]; then
-    STATUS_FACTORY="ok"; DETAIL_FACTORY="droid skill installed"
+  if [ -f "$HOME/.factory/droids/${FACTORY_START_DROID:-a}.md" ]; then
+    STATUS_FACTORY="ok"; DETAIL_FACTORY="one start droid installed"
   else
     STATUS_FACTORY="fail"; DETAIL_FACTORY="Factory detected but skill not installed — re-run setup"
   fi
@@ -1149,6 +1203,12 @@ emit_row "$STATUS_REPO" "git ledger" "$DETAIL_REPO"
 [ "$ICLOUD_APPLICABLE" = "yes" ] && emit_row "$STATUS_ICLOUD" "iCloud" "$DETAIL_ICLOUD"
 
 echo ""
+[ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "skip" ] && {
+  echo "AGENT: tell the Author the Codex row is a required one-time trust step, not"
+  echo "a broken install. Codex deliberately skips new hooks until they approve the"
+  echo "exact commands in Terminal via /hooks; never bypass or silently manufacture it."
+  echo ""
+}
 # Core health gate. files/canon/hooks/core are the must-haves; the rest (repo,
 # iCloud, account) degrade gracefully and are fine to skip. If a CORE piece
 # didn't land the install didn't really land — say so plainly and stop the agent,

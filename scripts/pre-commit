@@ -19,18 +19,18 @@ if git diff --cached --name-only | grep -qx 'AGENTS.md'; then
   echo "AGENTS.md changed — regenerated CLAUDE.md (+ local .cursorrules) and staged."
 fi
 
-# Harness-skill invariant gate. The five /a skills are hand-synced copies, one
+# Harness-skill invariant gate. The active /a skills are hand-synced copies, one
 # per harness, and they drift silently because nothing reads them together.
 # Drifted once on 2026-07-22 (conversion language landed in claudecode only);
-# found drifted again 2026-07-27, when claudecode.md AND the Cowork plugin had
+# found drifted again 2026-07-27, when claudecode.md had
 # lost the brand-new-install check entirely — so on the primary harness, a user
 # whose onboarding didn't auto-start would get a normal /a against an empty
 # constitution, which every sibling file calls "firing blanks". A silent broken
 # first session on the biggest surface. Copy-syncing is wrong here (the files
 # legitimately differ per harness), so gate the invariant instead: every skill
 # must carry the new-install check.
-SKILL_FILES="factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/cursor.mdc factory/plugin/skills/a/SKILL.md"
-if git diff --cached --name-only | grep -qE '^factory/(skills/|plugin/skills/)'; then
+SKILL_FILES="factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/cursor.mdc"
+if git diff --cached --name-only | grep -qE '^factory/skills/'; then
   missing=""
   for f in $SKILL_FILES; do
     [ -f "$f" ] || continue

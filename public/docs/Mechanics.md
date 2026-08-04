@@ -86,10 +86,12 @@ The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your o
 | `~/.cursor/hooks.json` | Only if Cursor detected. Adds 5 hook entries pointing to the Python wrappers below — session start/end/stop plus per-prompt and per-response transcript capture (written locally to your vault, like the Claude Code transcript archive). | `cat ~/.cursor/hooks.json` |
 | `~/.cursor/hooks/alexandria-{session-start,session-end,stop,transcript}.py` | Only if Cursor detected. Four small Python files that shell out to the shim or write the local transcript. | `cat ~/.cursor/hooks/alexandria-*.py` |
 | `~/.cursor/rules/alexandria.mdc` | Only if Cursor detected. Plain markdown rule. | `cat ~/.cursor/rules/alexandria.mdc` |
-| `~/.codex/instructions.md` | Only if Codex detected. Appends a marked block (`<!-- alexandria:start -->` … `<!-- alexandria:end -->`). | `cat ~/.codex/instructions.md` |
+| `~/.codex/hooks.json` | Only if Codex detected. Preserves unknown hooks; adds SessionStart, bounded 3-second SessionEnd, SubagentStart, and capture resolver entries. Codex requires the user to trust each new or changed definition in `/hooks` before it runs. | `cat ~/.codex/hooks.json` |
+| `~/.codex/AGENTS.md` | Only if Codex detected. Preserves existing instructions and merges one small marked Alexandria block. If the full Alexandria agent instructions are already present, writes nothing. Legacy `instructions.md` is never touched. | `cat ~/.codex/AGENTS.md` |
+| `~/.agents/skills/a/` + `a./` | Only if Codex detected. Installs one start skill and the separate close skill. If the user already owns a foreign `/a`, Alexandria installs only `/alexandria` instead. | `find ~/.agents/skills -maxdepth 2 -name SKILL.md` |
 | `~/.factory/droids/a.md` | Only if Factory droid CLI detected. Plain markdown skill. | `cat ~/.factory/droids/a.md` |
 
-**Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system `PATH`, sudoers, system services, launchd, cron, anything outside `~/alexandria/`, `~/.claude/`, `~/.cursor/`, `~/.codex/`, `~/.factory/`, and the Cursor sidecar `~/.alexandria/` (transcript staging + hook logs — session capture only, never canon). The repo-local git config inside `~/alexandria/` is set; your global git config is not. The install schedules nothing and creates no background processes — scheduled jobs exist only inside opt-in add-ons (`io.alexandria.publish` for marketplace publishing, `io.alexandria.icloud-backup` for the iCloud mirror, the texting bridge's digest job), each installed only on your explicit yes and each with a one-line off switch listed in `~/alexandria/system/.optional`.
+**Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system `PATH`, sudoers, system services, launchd, cron, anything outside `~/alexandria/`, the detected harness folders (`~/.claude/`, `~/.cursor/`, `~/.codex/`, `~/.factory/`, `~/.agents/skills/`), and the Cursor sidecar `~/.alexandria/` (transcript staging + hook logs — session capture only, never canon). The repo-local git config inside `~/alexandria/` is set; your global git config is not. The install schedules nothing and creates no background processes — scheduled jobs exist only inside opt-in add-ons (`io.alexandria.publish` for marketplace publishing, `io.alexandria.icloud-backup` for the iCloud mirror, the texting bridge's digest job), each installed only on your explicit yes and each with a one-line off switch listed in `~/alexandria/system/.optional`.
 
 ### How each surface is wired
 
@@ -98,18 +100,18 @@ One curl wires every surface — nothing to install per-agent, no plugin, no mar
 - **Claude Code:** the 3 hook entries in `~/.claude/settings.json` fire the shim at session start/end.
 - **Claude Desktop's code tab:** that tab **is** Claude Code running on your machine — it reads the same `~/.claude/settings.json`, so the same entries cover it automatically. (The chat tab has no local file access, so it does nothing.)
 - **Cursor:** 5 hook entries in `~/.cursor/hooks.json` call small Python wrappers — session start/end/stop plus per-prompt and per-response transcript capture — that shell out to the same shim (or write the local staging transcript Cursor never provides natively).
-- **Codex, Factory:** an always-loaded instruction block appended to `~/.codex/instructions.md` / `~/.factory/droids/a.md` — no hooks, the instructions load every session.
+- **Codex:** native `hooks.json`, current `AGENTS.md`, and one start + one close skill. SessionEnd saves the transcript and a receipt inside Codex's three-second cap; the next SessionStart drains the ordinary feedback/git work. Setup stays visibly pending until trusted hooks have actually run at start and end.
+- **Factory:** a plain droid skill in `~/.factory/droids/a.md`; the file-only floor applies where lifecycle hooks are unavailable.
 
-Result: session-start context load and session-end capture run in every Claude Code, Claude Desktop code-tab, and Cursor session; Codex and Factory load the same behavior via their instruction files. One behavior source (the signed payload), N dumb shells; the sovereign folder is the interop bus between all of them.
+Result: every supported harness uses its native mechanism over one signed payload and one sovereign folder. Hooks are an efficiency ceiling; bare `a` plus the installed methodology is the portable floor.
 
-### Cowork and the Claude app (a different, opt-in path)
+### Cowork and the Claude app (a file surface, not an install path)
 
-Cowork runs your agent in a sealed Apple-Virtualization VM: it can't run the hooks or load the `/a` skill on its own, and it can only see a folder when you explicitly attach it that session (no external script can auto-mount it — the share is created inside the Claude app's own process). So Cowork isn't wired by the curl. It's still usable, opt-in, in four parts (two one-time, then per-session):
+Cowork runs your agent in a sealed environment and can only see a local folder when you attach it. Alexandria installs no Cowork plugin: a plugin duplicated the skill, could not provide a trustworthy hook path, and created a misleading extra install surface. Cowork works through the files themselves:
 
 1. **Capture (automatic).** An optional launchd agent (`com.alexandria.session-capture`, enabled separately) reads the transcripts Cowork writes to your disk and mirrors the dialogue into `~/alexandria/files/vault/sessions/` — no attach needed, riding the one direction the VM shares out.
-2. **The `/a` command (one-time plugin add).** Cowork keeps its own skill registry, so `/a` isn't there by default. Add it once: in Cowork, **Add plugins → from repo → `benmowinckel/alexandria`**. This installs only the `/a` skill (its hooks are inert in Cowork — they can't fire in the VM — so it's a skill delivery, nothing more). This is the *only* thing the plugin is still used for; the curl path never touches it.
-3. **Awareness (one-time paste).** `setup.sh` writes `~/alexandria/system/.claude-instructions.md`; paste it into **Claude Settings → Profile → "Instructions for Claude"**. Every Cowork/chat session then knows who you are and proactively prompts you to attach the folder + run `/a` when it would help.
-4. **Full read/write (prompted).** Attach `~/alexandria` in a desktop Cowork session and type `/a` — it loads your constitution and works from your real files. (If you skipped the plugin, the pasted instructions make the agent do the same by reading your canon directly once the folder is attached.) Mobile and plain chat can't attach a folder, so there they point you to your desktop.
+2. **Awareness (one-time, additive).** `setup.sh` writes `~/alexandria/system/.claude-instructions.md`; integrate its short Alexandria block into **Claude Settings → Profile → "Instructions for Claude"** without replacing anything already there. It prompts for the right home when context would help.
+3. **Full read/write (prompted).** Attach `~/alexandria` in Cowork and type bare `a`. The agent reads `system/canon/methodology.md` and the constitution directly. If local is unavailable, use the Drive pocket copy; never load both homes in one task.
 
 Nothing here routes your files through a server; it's the same sovereign folder, reached the only way a sealed VM allows.
 
@@ -139,7 +141,7 @@ What protects you anyway:
 
 ### Turning off update checks
 
-**The simple freeze — delete one file.** `rm ~/alexandria/system/hooks/auto-update`. Updates are already never applied without you; deleting this file stops even the *check* — neither the shim nor the payload fetches anything from us, every session runs on your pinned local copy with zero network contact with Alexandria. The check is on by default (the file's own contents explain this); deleting it is the one-line opt-out. Re-running setup restores it.
+**The simple freeze — delete one file.** `rm ~/alexandria/system/hooks/auto-update`. Updates are already never applied without you; deleting this file stops the public engine/canon checks and every session runs on your pinned local copy. For a free install, that removes Alexandria's standing session-start network reads. If you joined the collective, keyed Library, marketplace, canon-health, and feedback calls remain until you remove `~/alexandria/system/.api_key`. Re-running setup restores the update-check file.
 
 **The paranoid freeze — fork it.** If you don't even want to *fetch-and-verify* from our repo, fork `benmowinckel/alexandria` on GitHub. Rewrite `benmowinckel/alexandria` to `YOUR-HANDLE/alexandria` in every script + skill file under `factory/`, then install from your fork:
 
@@ -298,7 +300,9 @@ rm -f  ~/.cursor/rules/alexandria.mdc ~/.cursor/hooks/alexandria-*.py
 rm -rf ~/.alexandria
 rm -f  ~/.factory/droids/a.md
 # ~/.cursor/hooks.json: edit by hand to remove the five alexandria entries
-sed -i '' '/alexandria:start/,/alexandria:end/d' ~/.codex/instructions.md 2>/dev/null
+# ~/.codex/hooks.json: remove only hook entries whose command points at ~/alexandria
+# ~/.codex/AGENTS.md: remove only the alexandria:start … alexandria:end marker block
+rm -rf ~/.agents/skills/a ~/.agents/skills/a. ~/.agents/skills/alexandria
 
 # Add-on jobs — only present if you enabled the matching add-on
 launchctl unload ~/Library/LaunchAgents/io.alexandria.publish.plist 2>/dev/null

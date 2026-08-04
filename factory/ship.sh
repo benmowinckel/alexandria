@@ -67,6 +67,7 @@ SIGNED_FILES=(
   factory/skills/factory.md
   factory/skills/claudecode.md
   factory/skills/codex.md
+  factory/skills/codex-ambient.md
   factory/skills/droid.md
   factory/skills/cursor.mdc
   factory/skills/aclose.md
@@ -79,6 +80,7 @@ SIGNED_FILES=(
   factory/scripts/install.sh
   factory/scripts/publish.sh
   factory/scripts/capture_resolver.py
+  factory/scripts/configure_codex.py
   factory/systems/capture-pipeline.md
   factory/systems/texting-presence.md
   factory/optional.md
@@ -116,8 +118,9 @@ done
 MUST_SIGN=(
   factory/hooks/payload.sh factory/skills/scheduled.md
   factory/skills/machine.md factory/skills/factory.md
-  factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md
+  factory/skills/claudecode.md factory/skills/codex.md factory/skills/codex-ambient.md factory/skills/droid.md
   factory/skills/cursor.mdc factory/skills/aclose.md factory/block.md
+  factory/scripts/configure_codex.py
   factory/hooks/cursor/alexandria-session-start.py factory/hooks/cursor/alexandria-session-end.py
   factory/hooks/cursor/alexandria-stop.py factory/hooks/cursor/alexandria-transcript.py
   factory/scripts/brief.py factory/scripts/install.sh factory/scripts/publish.sh
@@ -152,11 +155,6 @@ UNSIGNED_OK=(
   factory/hooks/shim.sh factory/setup.sh factory/ship.sh
   factory/scripts/verify-fetch.sh
   factory/scripts/publish-fork.sh
-  # Cowork plugin — a skill delivery only (its hooks are inert in Cowork, and
-  # the curl path never installs it). Added via Claude's git-clone plugin
-  # system (TOFU), not our signed payload chain, so it's not signature-gated.
-  factory/plugin/scripts/plugin-shim.sh
-  factory/plugin/scripts/shim.sh
 )
 while IFS= read -r f; do
   printf '%s\n' "${SIGNED_FILES[@]}" "${UNSIGNED_OK[@]}" | grep -qxF "$f" || \

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Alexandria shim — one file, three modes, signature-verified payload.
+# Alexandria shim — one file, four modes, signature-verified payload.
 # Immutable. Installed once. All evolving logic lives in signed payload.sh.
 #
 # Trust model: this shim is the root, and it is CONSENT-SYMMETRIC — it only
@@ -7,8 +7,8 @@
 # passed verification against a manifest signed by the maintainer's OFFLINE
 # key. It never auto-applies anything: when a newer signed payload exists
 # upstream it surfaces a notice, and the Author applies it by re-running the
-# install line. Deleting ~/alexandria/system/hooks/auto-update stops even the
-# update check — zero contact with Alexandria, fully local, forever.
+# install line. Deleting ~/alexandria/system/hooks/auto-update stops public
+# engine/canon checks; keyed collective calls remain until .api_key is removed.
 #   Audit: https://github.com/benmowinckel/alexandria/blob/main/TRUST.md
 #   Inspect payload: https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hooks/payload.sh
 
@@ -120,6 +120,26 @@ payload_runnable() {
 # ─── SESSION START ───────────────────────────────────────────────
 
 if [ "$MODE" = "session-start" ]; then
+  # Codex caps SessionEnd at three seconds. Its end hook therefore writes a
+  # local receipt only; the next SessionStart finishes the ordinary end work
+  # (feedback delivery + git sync) before loading the new session. No daemon,
+  # no unsupported async hook, and the transcript is already safe in the vault.
+  CODEX_END_QUEUE="$ALEX_DIR/system/.codex_session_end_queue"
+  if [ -d "$CODEX_END_QUEUE" ]; then
+    for queued_end in "$CODEX_END_QUEUE"/*.json; do
+      [ -f "$queued_end" ] || continue
+      if bash "$0" session-end < "$queued_end"; then
+        rm -f "$queued_end"
+      fi
+    done
+    rmdir "$CODEX_END_QUEUE" 2>/dev/null || true
+  fi
+
+  # Ground-truth health signal: this line is reached only when Codex actually
+  # ran the configured hook. The installer never fabricates trust from config.
+  touch "$ALEX_DIR/system/.codex_session_start_ok" 2>/dev/null || true
+  rm -f "$ALEX_DIR/system/.codex_session_start_needs_trust"
+
   run_file=""
   run_state=""
   local_sha=""
@@ -157,7 +177,8 @@ if [ "$MODE" = "session-start" ]; then
   # Update check — NOTIFY ONLY, never applies. The auto-update file is the
   # update-channel toggle: present (default) = each session checks upstream and
   # surfaces a newer SIGNED payload as a notice the Author acts on; deleted =
-  # no fetch, zero contact with Alexandria, run the pinned copy forever.
+  # no public update fetch; run the pinned copy forever. Keyed collective calls
+  # remain until system/.api_key is removed.
   if [ "$run_state" = "pinned" ] && [ -f "$ALEX_DIR/system/hooks/auto-update" ]; then
     res=$(fetch_verified_manifest)
     case "$res" in
@@ -194,6 +215,27 @@ if [ "$MODE" = "session-start" ]; then
     [ -d "$ALEX_DIR/files/constitution" ] && for f in "$ALEX_DIR/files/constitution/"*.md; do [ -f "$f" ] && cat "$f"; done
   fi
 
+elif [ "$MODE" = "codex-session-end" ]; then
+  # Codex SessionEnd has a hard three-second maximum. Do only bounded local
+  # work here: save the transcript now, leave a receipt for SessionStart, exit.
+  # The normal session-end path below remains the single behavior source.
+  input=$(cat 2>/dev/null)
+  tp=$(printf '%s' "$input" | grep -oE '"transcript_path"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
+  sid=$(printf '%s' "$input" | grep -oE '"session_id"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4 | tr -cd 'A-Za-z0-9._-')
+  [ -n "$sid" ] || sid="session"
+  timestamp=$(date +%Y-%m-%d_%H-%M-%S)
+
+  if [ -n "$tp" ] && [ -f "$tp" ]; then
+    mkdir -p "$ALEX_DIR/files/vault" 2>/dev/null
+    cp "$tp" "$ALEX_DIR/files/vault/${timestamp}_codex_${sid}.jsonl" 2>/dev/null || true
+  fi
+
+  CODEX_END_QUEUE="$ALEX_DIR/system/.codex_session_end_queue"
+  mkdir -p "$CODEX_END_QUEUE" 2>/dev/null
+  printf '{"transcript_path":""}\n' > "$CODEX_END_QUEUE/${timestamp}_${sid}_$$.json"
+  touch "$ALEX_DIR/system/.codex_session_end_ok" 2>/dev/null || true
+  rm -f "$ALEX_DIR/system/.codex_session_end_needs_trust"
+
 elif [ "$MODE" = "session-end" ]; then
   # Clean up active session marker
   was_active=false
@@ -224,3 +266,7 @@ elif [ "$MODE" = "subagent" ]; then
     [ -d "$ALEX_DIR/files/constitution" ] && for f in "$ALEX_DIR/files/constitution/"*.md; do [ -f "$f" ] && cat "$f"; done
   fi
 fi
+
+# A handled hook is successful even when its final optional test was false.
+# Without this, a bare fallback could do its work and still be reported failed.
+exit 0
