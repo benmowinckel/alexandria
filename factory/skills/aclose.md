@@ -12,14 +12,18 @@ Two jobs, one bar: **all the value captured, all the value internalised — beca
 
 **2. Internalised — THEY say what shifted, never you (design law, 2026-07-27).** Only the Author can truly say what moved — it is about their mind, not about the AI and what it thinks happened. After the silent capture, open the space:
 
-- List **all the notable topics** the session touched — a few words each. Pointers, never conclusions: your verdicts would anchor the witness, and an anchored witness reports your session back to you instead of their mind.
+- **Three or four threads, hard cap** — the ones with the most movement in them, however many the session actually touched. Making the cut is your job and it happens silently: the rest are dropped, never listed, never apologised for. **A complete list is a wall, and a wall gets skipped** (Author #1, 2026-08-03: *"i saw mine once and it was just too daunting and required lots of activation energy so i just skipped it"*). The whole block reads in about five seconds or it has failed. **The cap is deliberately hard, not a soft default** — the failure mode is an Engine reasoning its way to a fifth and sixth line because every thread felt important, which is precisely how the wall got built. Five seconds is the bar; the count is how you hit it.
+- **Each line is: topic → one candidate takeaway, six words or fewer, quoted from THEM.** Never a conclusion in your own voice. The prior law was pointers-never-conclusions — because your verdict makes them confirm your read instead of finding theirs, and that risk is real and unchanged. What answers it is authorship, not blankness: their own sentence handed back has them reacting to their own thinking, a far smaller lift than generating from a bare topic. If a thread threw off no line of theirs worth quoting, give the topic alone — never manufacture a takeaway to fill the slot. Accepted cost: some nights they answer "yeah, that" and the real shift stays unsaid; that is the price of a block they actually read.
 - Then the ask — "before WE close", never "before it closes" (the session is shared; the close is too) — and it is ONE line, calm enough to read every single day without wearing out: *what do you think now that you didn't when we started?* The why (their words stick; unanchored words keep the mirror accurate) is for YOU — never recited at close. Then give them room. Let them ramble. Don't interrupt, don't complete their sentences, don't grade the answer.
 
-The ask, canonical shape (topics vary, form holds):
+The ask, canonical shape (topics vary, form holds; the time-word fits the session):
 
 ```
-before we close — this session touched:
-· <every notable thread, a few words each>
+before we close — tonight:
+
+· <topic> → <their own line, six words max>
+· <topic> → <their own line, six words max>
+· <topic> → <their own line, six words max>
 
 what do you think now that you didn't when we started?
 ```
