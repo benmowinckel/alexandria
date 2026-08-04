@@ -1127,10 +1127,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     pinned below with the CTAs. Copy consolidated this
                     pass — same ideas and richness, fewer words. Section
                     plates (roman numerals) echo the dictionary block. */}
-                {/* The pitch — four self-sufficient lines that carry the
-                    complete mechanism without titles, numbering, or
-                    explanatory UI copy. A quiet chevron is the only
-                    expansion affordance; each line opens for depth. */}
+                {/* The pitch — four self-sufficient mechanism lines, then
+                    one static coda that turns the mechanism into its human
+                    result. No titles, numbering, or explanatory UI copy. A
+                    quiet chevron is the only expansion affordance. */}
                 <div className="pitch">
                   <section
                     data-pitch="instructions"
@@ -1144,6 +1144,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         setOpenPitch(openPitch === 'instructions' ? null : 'instructions')
                       }
                     >
+                      <span className="pitch-kicker">instructions.</span>
                       <span className="pitch-lead">
                         Your AI should know how you think&mdash;not just
                         remember your last chat. Show it our free
@@ -1185,6 +1186,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         setOpenPitch(openPitch === 'mirror' ? null : 'mirror')
                       }
                     >
+                      <span className="pitch-kicker">files.</span>
                       <span className="pitch-lead">
                         Once the loop is set up, your AI automatically
                         writes what it learns about you&mdash;in full detail&mdash;to
@@ -1226,6 +1228,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         setOpenPitch(openPitch === 'development' ? null : 'development')
                       }
                     >
+                      <span className="pitch-kicker">mirror.</span>
                       <span className="pitch-lead">
                         As those files grow, they become a detailed mirror of
                         your thinking. Your AI uses that mirror to help you keep
@@ -1265,6 +1268,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         setOpenPitch(openPitch === 'connector' ? null : 'connector')
                       }
                     >
+                      <span className="pitch-kicker">loop.</span>
                       <span className="pitch-lead">
                         As you think and act, your AI repeats the cycle&mdash;writing
                         to the mirror, reading it back, and helping you build on
@@ -1292,6 +1296,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       </div>
                     </div>
                   </section>
+                  <p className="pitch-coda">
+                    <span className="pitch-kicker">result.</span>
+                    The result is more than better answers: more of your
+                    thinking kept, developed, and turned into things you
+                    actually do.
+                  </p>
                 </div>
 
                 {/* The turn — hairline, then the agency-breaker close

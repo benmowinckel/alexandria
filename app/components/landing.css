@@ -1637,11 +1637,10 @@
         /* The back kicker — a faint letter-plate title telling the reader
            what why/what/how refer to: the answer in full (front gives it
            in short). Sits where the sections' top margin was. */
-        /* ─── THE PITCH — four self-sufficient lines. Read straight
-           through, they carry the whole mechanism; expanded paragraphs
-           are optional depth. Titles, numbering, and instructional UI
-           copy are absent, leaving size, air, and a quiet chevron to
-           express the structure. */
+        /* ─── THE PITCH — four self-sufficient mechanism lines followed
+           by one static coda. Tiny one-word labels orient without carrying
+           meaning; the sentences still carry the mechanism and its human
+           result alone. Expanded paragraphs are optional depth. */
         .pitch {
           flex: 1 1 auto;
           min-height: 0;
@@ -1664,8 +1663,30 @@
           letter-spacing: inherit;
         }
         .pitch-head:active { opacity: 0.82; }
+        .pitch-kicker {
+          display: block;
+          margin: 0 0 5px;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-style: normal;
+          font-size: 11px;
+          line-height: 1;
+          letter-spacing: 0.13em;
+          color: var(--theme-fg-muted);
+        }
         .pitch-lead {
           display: block;
+          margin: 0;
+          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 23px;
+          line-height: 1.46;
+          letter-spacing: 0.002em;
+          font-feature-settings: 'liga', 'dlig';
+          color: var(--theme-fg);
+          max-width: 660px;
+          text-wrap: pretty;
+        }
+        .pitch-coda {
           margin: 0;
           font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
