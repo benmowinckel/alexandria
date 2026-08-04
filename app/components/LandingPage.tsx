@@ -1314,9 +1314,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     </div>
                   </section>
                   <p className="pitch-coda">
-                    <span className="pitch-kicker">result.</span>
+                    <span className="pitch-kicker">the point.</span>
                     <span className="pitch-coda-copy">
-                      Keep what matters. Develop it. Act on it.
+                      The thoughts that matter no longer fade. You keep them,
+                      develop them, and act on them.
                     </span>
                   </p>
                 </div>
