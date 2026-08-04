@@ -1261,20 +1261,20 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        That is an Alexandria loop. The complete loop is free.
-                        An optional connector lets loops learn from each other
-                        and form the Alexandria community.
+                        That is an Alexandria loop. You can download our
+                        founder&rsquo;s complete loop for free. Add the optional
+                        Alexandria connector to let it learn from other loops.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          The free loop is complete on its own. Your loop only
-                          joins the Alexandria community if you add the optional
-                          connector; it is the only paid part. You choose what
-                          to share. Your loop can learn what other people chose
-                          to keep thinking about, how they developed those
+                          The downloaded loop is complete on its own. The
+                          Alexandria connector is the only paid part; adding it
+                          is what joins your loop to the community. You choose
+                          what to share. Your loop can learn what other people
+                          chose to keep thinking about, how they developed those
                           thoughts, and what they did because of them. It can
                           also copy useful parts of how their loops work. Your
                           private files stay private.
