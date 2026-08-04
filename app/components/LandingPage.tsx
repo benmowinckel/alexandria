@@ -1146,9 +1146,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         Your AI should know how you think&mdash;not just
-                        remember your last chat. Download our free instructions,
-                        show them to it, and decide together what fits. There
-                        is no new app or tool.
+                        remember your last chat. Show it our free
+                        instructions&mdash;not a new app or tool. They explain why
+                        the loop matters and how to set yours up; together, you
+                        decide exactly how it works.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1156,17 +1157,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
                           Think of the instructions as a recipe handed to a
-                          chef. Your AI is the chef: it reads them,
-                          works out with you what fits, and decides how to
-                          change its own behaviour. Alexandria is the name
-                          for the idea, not a separate thing doing the work.
+                          chef. Your AI is the chef: it sees the purpose and
+                          possible steps, then decides with you what to notice,
+                          what to write, when to read it back, and how to build
+                          on it. Alexandria is the name for the idea, not a
+                          separate thing doing the work.
                         </p>
                         <p className="pitch-more">
-                          Starting from nothing, the download gives you a full
-                          setup. Already have your own instructions, memory
-                          files, notes, or vault? Keep them. Your AI
-                          moulds our founder&rsquo;s setup into what already works
-                          for you.
+                          Starting from nothing, the download gives you the
+                          complete loop our founder uses. Already have your own
+                          instructions, memory files, notes, or vault? Keep
+                          them. Your AI moulds the new instructions into what
+                          already works for you.
                         </p>
                       </div>
                     </div>
@@ -1184,9 +1186,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        With those instructions, your AI can automatically
-                        write what it learns about you&mdash;in full detail&mdash;to
-                        plain files on your computer, then read them again when
+                        Once the loop is set up, your AI automatically
+                        writes what it learns about you&mdash;in full detail&mdash;to
+                        plain files on your computer, then reads them again when
                         useful.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
@@ -1225,9 +1227,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        Over time, those files become a mirror of your thinking.
-                        Your AI reads that mirror to help you keep the
-                        thoughts that matter, develop them, and act on them
+                        As those files grow, they become a detailed mirror of
+                        your thinking. Your AI uses that mirror to help you keep
+                        the thoughts that matter, develop them, and act on them
                         instead of letting them fade.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
@@ -1264,10 +1266,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        The cycle keeps repeating: writing to the mirror,
-                        reading it back, and helping you build on it. We call
-                        this your Alexandria loop, complete on its own. The
-                        optional connector joins your loop to the community.
+                        As you think and act, your AI repeats the cycle&mdash;writing
+                        to the mirror, reading it back, and helping you build on
+                        it. We call that your Alexandria loop. The optional
+                        connector joins your loop to the community.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
