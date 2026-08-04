@@ -13,7 +13,7 @@
     "test:secret-fingerprint": "tsx test/secret-fingerprint.ts"
   },
   "dependencies": {
-    "hono": "^4.12.32",
+    "hono": "^4.12.34",
     "stripe": "21.0.1"
   },
   "devDependencies": {
