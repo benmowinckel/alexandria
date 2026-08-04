@@ -1145,10 +1145,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        Your assistant should know how you think&mdash;not just
+                        Your AI should know how you think&mdash;not just
                         remember your last chat. Download our free instructions,
-                        show them to it, and decide together how to use them.
-                        There is no new app or tool.
+                        show them to it, and decide together what fits. There
+                        is no new app or tool.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1156,7 +1156,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
                           Think of the instructions as a recipe handed to a
-                          chef. Your assistant is the chef: it reads them,
+                          chef. Your AI is the chef: it reads them,
                           works out with you what fits, and decides how to
                           change its own behaviour. Alexandria is the name
                           for the idea, not a separate thing doing the work.
@@ -1164,7 +1164,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         <p className="pitch-more">
                           Starting from nothing, the download gives you a full
                           setup. Already have your own instructions, memory
-                          files, notes, or vault? Keep them. Your assistant
+                          files, notes, or vault? Keep them. Your AI
                           moulds our founder&rsquo;s setup into what already works
                           for you.
                         </p>
@@ -1184,7 +1184,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        With those instructions, your assistant can automatically
+                        With those instructions, your AI can automatically
                         write what it learns about you&mdash;in full detail&mdash;to
                         plain files on your computer, then read them again when
                         useful.
@@ -1197,16 +1197,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           The mirror is not a profile in our database. It is
                           a set of ordinary text files holding your thoughts,
                           goals, work, taste, decisions, and the way you
-                          reason&mdash;as much detail as your assistant can capture.
+                          reason&mdash;as much detail as your AI can capture.
                           Open them, edit them, move them, or delete them. They
                           are yours; we never see them.
                         </p>
                         <p className="pitch-more">
-                          The same files can follow you from one assistant to
+                          The same files can follow you from one AI to
                           the next. You stop re-explaining yourself and stop
                           losing your context whenever you switch. Most of this
                           happens quietly as you work. When the missing context
-                          exists only in your head, your assistant can ask you
+                          exists only in your head, your AI can ask you
                           to think it through and write down the result.
                         </p>
                       </div>
@@ -1226,7 +1226,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         Over time, those files become a mirror of your thinking.
-                        Your assistant reads that mirror to help you keep the
+                        Your AI reads that mirror to help you keep the
                         thoughts that matter, develop them, and act on them
                         instead of letting them fade.
                         <span className="pitch-caret" aria-hidden>›</span>
@@ -1242,7 +1242,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           you care about, and where you want to go.
                         </p>
                         <p className="pitch-more">
-                          Your assistant can bring the right thought back, challenge
+                          Your AI can bring the right thought back, challenge
                           it, connect it to new work, and help turn it into
                           something real. The difference grows with every
                           conversation. The earlier you start, the more of
@@ -1264,10 +1264,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       }
                     >
                       <span className="pitch-lead">
-                        Your assistant repeats the cycle&mdash;writing to the
-                        mirror, reading it back, and helping you build on it.
-                        We call this your Alexandria loop, complete on its own.
-                        The optional connector adds the community.
+                        The cycle keeps repeating: writing to the mirror,
+                        reading it back, and helping you build on it. We call
+                        this your Alexandria loop, complete on its own. The
+                        optional connector adds the community.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1275,7 +1275,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
                           An Alexandria loop is simply that repeating cycle:
-                          your assistant notices what matters, writes it to
+                          your AI notices what matters, writes it to
                           your files, reads it back when useful, and helps you
                           develop or act on it. The loop is complete on its own. The
                           Alexandria connector is the only paid part; adding it
