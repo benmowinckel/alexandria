@@ -1129,10 +1129,10 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     plates (roman numerals) echo the dictionary block. */}
                 {/* The pitch — a manuscript index, not a wall of prose.
                     Each large sentence carries the causal story on its own;
-                    the quieter line beneath adds precision. Inline labels
-                    orient, whitespace separates, and the chevron alone
-                    implies that the four beats open. The final line is an
-                    unlabelled coda, not a fifth section. */}
+                    the quieter line beneath adds precision. Whitespace
+                    separates the four beats, and the chevron alone implies
+                    that each one opens. The final line is an unlabelled coda,
+                    not a fifth section. */}
                 <div className="pitch">
                   <section
                     data-pitch="instructions"
@@ -1146,7 +1146,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         setOpenPitch(openPitch === 'instructions' ? null : 'instructions')
                       }
                     >
-                      <span className="pitch-kicker">instructions.</span>
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
                           Alexandria is an idea for how your own AI should
@@ -1192,7 +1191,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         setOpenPitch(openPitch === 'mirror' ? null : 'mirror')
                       }
                     >
-                      <span className="pitch-kicker">files.</span>
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
                           The loop starts when your AI writes what it learns
@@ -1238,7 +1236,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         setOpenPitch(openPitch === 'development' ? null : 'development')
                       }
                     >
-                      <span className="pitch-kicker">mirror.</span>
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
                           Those files become a detailed mirror of your thinking.
@@ -1282,7 +1279,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         setOpenPitch(openPitch === 'connector' ? null : 'connector')
                       }
                     >
-                      <span className="pitch-kicker">loop.</span>
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
                           As you think and act, your AI repeats the cycle.
@@ -1329,11 +1325,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     beat iii, so the close doesn't repeat it. */}
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  At the supermarket, you try the free sample before deciding
+                  At the supermarket, you try a free sample before deciding
                   whether you like it.
                   <br />
-                  Show these instructions to your AI. Five minutes from now,
-                  your mirror can be writing itself.
+                  Do the same here: start your loop, and your own mirror can be
+                  writing itself in five minutes.
                 </p>
 
                 <div className="cta-pair">
