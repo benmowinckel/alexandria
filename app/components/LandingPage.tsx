@@ -1153,8 +1153,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          Show it our free instructions. Together, you decide
-                          how to use them and build a loop around your thinking.
+                          Show your AI our free instructions, then decide
+                          together whether and how to use them.
                         </span>
                       </span>
                     </button>
@@ -1308,8 +1308,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   </section>
                   <p className="pitch-coda">
                     <span className="pitch-coda-copy">
-                      The sooner you start, the more of your thinking your AI
-                      can keep and build on.
+                      Once the loop starts, your AI stops starting over and
+                      builds on what matters to you.
                     </span>
                   </p>
                 </div>
