@@ -1267,7 +1267,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         The cycle keeps repeating: writing to the mirror,
                         reading it back, and helping you build on it. We call
                         this your Alexandria loop, complete on its own. The
-                        optional connector adds the community.
+                        optional connector joins your loop to the community.
                         <span className="pitch-caret" aria-hidden>›</span>
                       </span>
                     </button>
@@ -1277,15 +1277,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           An Alexandria loop is simply that repeating cycle:
                           your AI notices what matters, writes it to
                           your files, reads it back when useful, and helps you
-                          develop or act on it. The loop is complete on its own. The
-                          Alexandria connector is the only paid part; adding it
-                          joins you to a community of people who value their
-                          minds enough to keep thinking. The Library shows what
-                          people decided was worth keeping, how they developed
-                          it, and what they did because of it. The marketplace
-                          lets you use and share the useful parts of how their
-                          loops are built. You choose what to share; your
-                          private files stay private.
+                          develop or act on it. The loop is complete on its
+                          own. The Alexandria connector is the only paid part;
+                          adding it joins you to a community of people who
+                          value their minds enough to keep thinking. The
+                          Library shows what people decided was worth keeping,
+                          how they developed it, and what they did because of
+                          it. The marketplace lets you use and share the useful
+                          parts of how their loops are built. You choose what
+                          to share; your private files stay private.
                         </p>
                       </div>
                     </div>
