@@ -4,7 +4,7 @@ import LocalAuthentication
 import Security
 
 private let identity = "alexandria-payload-signing"
-private let namespace = "alexandria"
+private let factoryNamespace = "alexandria"
 private let keyAlgorithm = "ecdsa-sha2-nistp256"
 private let curve = "nistp256"
 private let hashAlgorithm = "sha512"
@@ -14,18 +14,21 @@ private enum SignerError: LocalizedError {
     case secureEnclaveUnavailable
     case accessControl(String)
     case badKeyReference
+    case publicKeyMismatch
     case writeFailed(String)
 
     var errorDescription: String? {
         switch self {
         case .usage:
-            return "usage: alexandria-sign init <key-reference> <public-key> | sign <key-reference> <manifest> <signature> | self-test <manifest> <public-key> <signature>"
+            return "usage: alexandria-sign init <key-reference> <public-key> | sign <key-reference> <manifest> <signature> | self-test <manifest> <public-key> <signature> | -Y sign -n git -f <public-key> <content>"
         case .secureEnclaveUnavailable:
             return "this Mac has no available Secure Enclave"
         case .accessControl(let message):
             return "could not create Touch ID access control: \(message)"
         case .badKeyReference:
             return "the Secure Enclave key reference is invalid or no longer usable"
+        case .publicKeyMismatch:
+            return "the requested public key is not this Mac's Alexandria Secure Enclave key"
         case .writeFailed(let path):
             return "could not write \(path)"
         }
@@ -68,8 +71,8 @@ private func allowedSignerLine(_ x963: Data) -> String {
     return "\(identity) \(keyAlgorithm) \(encoded) alexandria-touchid\n"
 }
 
-private func bytesToSign(_ manifest: Data) -> Data {
-    let digest = Data(SHA512.hash(data: manifest))
+private func bytesToSign(_ content: Data, namespace: String) -> Data {
+    let digest = Data(SHA512.hash(data: content))
     var payload = Data("SSHSIG".utf8)
     payload.appendSSHString(namespace)
     payload.appendSSHString(Data())
@@ -93,7 +96,7 @@ private func signatureBlob(rawSignature: Data) -> Data {
     return signature
 }
 
-private func sshSignature(publicKey: Data, rawSignature: Data) -> Data {
+private func sshSignature(publicKey: Data, rawSignature: Data, namespace: String) -> Data {
     var envelope = Data("SSHSIG".utf8)
     envelope.appendUInt32(1)
     envelope.appendSSHString(publicKeyBlob(publicKey))
@@ -156,15 +159,21 @@ private func initialize(keyReferencePath: String, publicKeyPath: String) throws 
     print("Touch ID signing key created inside this Mac")
 }
 
-private func sign(keyReferencePath: String, manifestPath: String, signaturePath: String) throws {
+private func sign(
+    keyReferencePath: String,
+    contentPath: String,
+    signaturePath: String,
+    namespace: String,
+    purpose: String
+) throws {
     guard SecureEnclave.isAvailable else { throw SignerError.secureEnclaveUnavailable }
     let keyReference = try Data(contentsOf: URL(fileURLWithPath: keyReferencePath))
-    let manifest = try Data(contentsOf: URL(fileURLWithPath: manifestPath))
-    let releaseHash = SHA256.hash(data: manifest).prefix(6).map { String(format: "%02x", $0) }.joined()
+    let content = try Data(contentsOf: URL(fileURLWithPath: contentPath))
+    let contentHash = SHA256.hash(data: content).prefix(6).map { String(format: "%02x", $0) }.joined()
 
     let context = LAContext()
     context.touchIDAuthenticationAllowableReuseDuration = 0
-    context.localizedReason = "Ship Alexandria release \(releaseHash)"
+    context.localizedReason = "\(purpose) \(contentHash)"
 
     let key: SecureEnclave.P256.Signing.PrivateKey
     do {
@@ -176,36 +185,97 @@ private func sign(keyReferencePath: String, manifestPath: String, signaturePath:
         throw SignerError.badKeyReference
     }
 
-    print("Touch ID will ship release \(releaseHash)")
-    let signature = try key.signature(for: bytesToSign(manifest))
+    fputs("Touch ID: \(purpose) \(contentHash)\n", stderr)
+    let signature = try key.signature(for: bytesToSign(content, namespace: namespace))
     let output = armored(sshSignature(
         publicKey: key.publicKey.x963Representation,
-        rawSignature: signature.rawRepresentation
+        rawSignature: signature.rawRepresentation,
+        namespace: namespace
     ))
     try writePublic(output, to: signaturePath)
+}
+
+private func signGit(arguments: [String]) throws {
+    guard arguments.count == 8,
+          arguments[1] == "-Y",
+          arguments[2] == "sign",
+          arguments[3] == "-n",
+          arguments[4] == "git",
+          arguments[5] == "-f" else {
+        throw SignerError.usage
+    }
+
+    let home = FileManager.default.homeDirectoryForCurrentUser.path
+    let environment = ProcessInfo.processInfo.environment
+    let keyReferencePath = environment["ALEX_SIGNING_KEY_REFERENCE"]
+        ?? "\(home)/.alexandria-signing/secure-enclave.keyref"
+    let canonicalPublicKeyPath = environment["ALEX_SIGNING_PUBLIC_KEY"]
+        ?? "\(home)/.alexandria-signing/secure-enclave.pub"
+    let requestedPublicKey = try Data(contentsOf: URL(fileURLWithPath: arguments[6]))
+    let canonicalPublicKey = try Data(contentsOf: URL(fileURLWithPath: canonicalPublicKeyPath))
+    guard requestedPublicKey == canonicalPublicKey else { throw SignerError.publicKeyMismatch }
+
+    try sign(
+        keyReferencePath: keyReferencePath,
+        contentPath: arguments[7],
+        signaturePath: "\(arguments[7]).sig",
+        namespace: "git",
+        purpose: "Sign Alexandria commit"
+    )
+}
+
+private func runSSHKeygen(arguments: [String]) -> Never {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/ssh-keygen")
+    process.arguments = Array(arguments.dropFirst())
+    process.standardInput = FileHandle.standardInput
+    process.standardOutput = FileHandle.standardOutput
+    process.standardError = FileHandle.standardError
+    do {
+        try process.run()
+        process.waitUntilExit()
+        exit(process.terminationStatus)
+    } catch {
+        fputs("alexandria-sign: could not run /usr/bin/ssh-keygen\n", stderr)
+        exit(1)
+    }
 }
 
 private func selfTest(manifestPath: String, publicKeyPath: String, signaturePath: String) throws {
     let manifest = try Data(contentsOf: URL(fileURLWithPath: manifestPath))
     let key = P256.Signing.PrivateKey()
-    let signature = try key.signature(for: bytesToSign(manifest))
+    let signature = try key.signature(for: bytesToSign(manifest, namespace: factoryNamespace))
     try writePublic(Data(allowedSignerLine(key.publicKey.x963Representation).utf8), to: publicKeyPath)
     try writePublic(armored(sshSignature(
         publicKey: key.publicKey.x963Representation,
-        rawSignature: signature.rawRepresentation
+        rawSignature: signature.rawRepresentation,
+        namespace: factoryNamespace
     )), to: signaturePath)
 }
 
 do {
     let arguments = CommandLine.arguments
     guard arguments.count >= 2 else { throw SignerError.usage }
+    if arguments.count >= 3, arguments[1] == "-Y" {
+        if arguments[2] == "sign" {
+            try signGit(arguments: arguments)
+            exit(0)
+        }
+        runSSHKeygen(arguments: arguments)
+    }
     switch arguments[1] {
     case "init":
         guard arguments.count == 4 else { throw SignerError.usage }
         try initialize(keyReferencePath: arguments[2], publicKeyPath: arguments[3])
     case "sign":
         guard arguments.count == 5 else { throw SignerError.usage }
-        try sign(keyReferencePath: arguments[2], manifestPath: arguments[3], signaturePath: arguments[4])
+        try sign(
+            keyReferencePath: arguments[2],
+            contentPath: arguments[3],
+            signaturePath: arguments[4],
+            namespace: factoryNamespace,
+            purpose: "Ship Alexandria release"
+        )
     case "self-test":
         guard arguments.count == 5 else { throw SignerError.usage }
         try selfTest(manifestPath: arguments[2], publicKeyPath: arguments[3], signaturePath: arguments[4])

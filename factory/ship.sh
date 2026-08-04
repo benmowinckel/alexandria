@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Sign + commit + push factory changes.
+# Sign + commit + submit factory changes to the Touch ID release gate.
 # Run from repo root: bash factory/ship.sh
 #
 # Builds factory/manifest.txt (sha256 of payload + every canon file),
-# signs it with the Mac's Touch ID-bound Secure Enclave key, commits + pushes.
+# signs it with the Mac's Touch ID-bound Secure Enclave key, commits, then uses
+# the same Touch ID-gated release path as every other public change.
 # Replaces `git push` for any change in factory/hooks/payload.sh or factory/canon/*.md.
 #
 # Trust root: a non-exportable P-256 key in this Mac's Secure Enclave. Its
@@ -221,12 +222,7 @@ fi
 
 msg="${1:-ship: $(date -u +%Y-%m-%dT%H:%MZ)}"
 git commit -m "$msg"
-# Canon publishes to main (that's what every Author's machine pulls), regardless
-# of the local working branch. A plain `git push` silently no-ops/​fails when the
-# current branch has no upstream (e.g. a local feature branch) — leaving the
-# signed manifest committed but never live. Push HEAD→main explicitly so the
-# ship always reaches users. (Non-fast-forward still fails safely, no --force.)
-git push origin HEAD:main
+bash scripts/push.sh "$msg"
 
 # Awareness: ship.sh signs + pushes ONLY the gated files above. If other factory
 # changes (skills, templates) are sitting in the working tree, say so loudly —
@@ -238,5 +234,5 @@ if [ -n "$unshipped" ]; then
   echo ""
   echo "⚠️  factory changes NOT shipped by ship.sh (not signature-gated):"
   echo "$unshipped" | sed 's/^/    /'
-  echo "    → these need a separate push:  git push   (or: bash scripts/push.sh)"
+  echo "    → commit these separately, then run: bash scripts/push.sh"
 fi

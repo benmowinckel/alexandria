@@ -1,0 +1,143 @@
+name: Structural release
+
+# This file is read from main. A candidate cannot replace the gate that judges
+# it: GitHub only dispatches `create` workflows that exist on the default branch.
+on:
+  create:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: structural-release
+  cancel-in-progress: false
+
+env:
+  RELEASE_KEY: ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBETzcr+XjCojo7y6s+JU8UwqkOtzIv3h9kEQI/ef9/nuGolyXvLF8WXkoEDwFc3zkXxTbZ+TVWI5Uq0fgMxHvjM=
+  RELEASE_FINGERPRINT: SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg
+
+jobs:
+  verify:
+    if: github.event.ref_type == 'branch' && startsWith(github.event.ref, 'release/')
+    runs-on: ubuntu-latest
+    outputs:
+      candidate: ${{ steps.gate.outputs.candidate }}
+    steps:
+      - name: Require the exact Touch ID key and current main as parent
+        id: gate
+        env:
+          RELEASE_BRANCH: ${{ github.event.ref }}
+        run: |
+          set -euo pipefail
+          git init --quiet candidate
+          cd candidate
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --quiet --no-tags --depth=2 origin \
+            "+refs/heads/main:refs/remotes/origin/main" \
+            "+refs/heads/${RELEASE_BRANCH}:refs/remotes/origin/release"
+
+          candidate="$(git rev-parse refs/remotes/origin/release)"
+          main="$(git rev-parse refs/remotes/origin/main)"
+          test "$(git rev-list --parents -n 1 "$candidate" | wc -w | tr -d ' ')" = 2
+          test "$(git rev-parse "${candidate}^")" = "$main"
+
+          printf 'benjamin@mowinckel.com %s alexandria-touchid\n' "$RELEASE_KEY" > allowed_signers
+          git -c gpg.format=ssh \
+              -c gpg.ssh.allowedSignersFile="$PWD/allowed_signers" \
+              verify-commit "$candidate" 2>&1 | tee verify.txt
+          grep -qF "$RELEASE_FINGERPRINT" verify.txt
+          printf 'candidate=%s\n' "$candidate" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the authorized candidate without credentials
+        env:
+          CANDIDATE: ${{ needs.verify.outputs.candidate }}
+        run: |
+          set -euo pipefail
+          git init --quiet candidate
+          cd candidate
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --quiet --no-tags --depth=1 origin "$CANDIDATE"
+          git checkout --quiet --detach FETCH_HEAD
+
+      - name: Verify the Author-facing factory payload
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          printf 'alexandria-payload-signing %s alexandria-touchid\n' "$RELEASE_KEY" > "$RUNNER_TEMP/factory_signers"
+          embedded="$(awk '/^cat > .*allowed_signers/{f=1;next} f&&/^EOF$/{exit} f' factory/setup.sh)"
+          test "$embedded" = "alexandria-payload-signing $RELEASE_KEY alexandria-touchid"
+          ssh-keygen -Y verify \
+            -f "$RUNNER_TEMP/factory_signers" \
+            -I alexandria-payload-signing \
+            -n alexandria \
+            -s factory/manifest.txt.sig < factory/manifest.txt
+          sha256sum --strict -c factory/manifest.txt
+          sed -n '/^SIGNED_FILES=(/,/^)/p' factory/ship.sh \
+            | sed '1d;$d;s/#.*//;s/^[[:space:]]*//;s/[[:space:]]*$//' \
+            | grep -v '^$' > "$RUNNER_TEMP/signed_files"
+          awk '{print $2}' factory/manifest.txt > "$RUNNER_TEMP/manifest_paths"
+          while IFS= read -r path; do
+            grep -qxF "$path" "$RUNNER_TEMP/manifest_paths" || {
+              echo "unsigned factory path: $path" >&2
+              exit 1
+            }
+          done < "$RUNNER_TEMP/signed_files"
+
+      - name: Enforce server access boundaries
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          offenders="$(grep -lE 'protocol/\$\{' server/src/*.ts 2>/dev/null \
+            | grep -vE 'server/src/(file-access|protocol)\.ts$' || true)"
+          test -z "$offenders" || { printf '%s\n' "$offenders"; exit 1; }
+          offenders="$(grep -lE '(getR2\(\)|[^a-zA-Z_]r2)\.get\(' server/src/*.ts 2>/dev/null \
+            | grep -vE 'server/src/file-access\.ts$' || true)"
+          test -z "$offenders" || { printf '%s\n' "$offenders"; exit 1; }
+
+      - name: Server type check
+        working-directory: candidate/server
+        run: npm ci && npx tsc --noEmit
+
+      - name: Codex integration test
+        working-directory: candidate
+        run: bash scripts/test-codex-integration.sh
+
+      - name: App build
+        working-directory: candidate
+        run: npm ci && npm run build
+
+  promote:
+    needs: [verify, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # This job never checks out or executes candidate code. It repeats the
+      # signature + parent checks, then moves main to those exact bytes.
+      - name: Re-verify and promote the exact candidate
+        env:
+          CANDIDATE: ${{ needs.verify.outputs.candidate }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git init --quiet gate
+          cd gate
+          git remote add public "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --quiet --no-tags --depth=2 public \
+            "+refs/heads/main:refs/remotes/public/main" \
+            "$CANDIDATE"
+          test "$(git rev-parse FETCH_HEAD)" = "$CANDIDATE"
+          test "$(git rev-parse "${CANDIDATE}^")" = "$(git rev-parse refs/remotes/public/main)"
+          printf 'benjamin@mowinckel.com %s alexandria-touchid\n' "$RELEASE_KEY" > allowed_signers
+          git -c gpg.format=ssh \
+              -c gpg.ssh.allowedSignersFile="$PWD/allowed_signers" \
+              verify-commit "$CANDIDATE" 2>&1 | tee verify.txt
+          grep -qF "$RELEASE_FINGERPRINT" verify.txt
+          git remote add protected "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push protected "$CANDIDATE:refs/heads/main"

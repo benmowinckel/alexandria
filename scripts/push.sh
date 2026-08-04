@@ -1,75 +1,88 @@
 #!/usr/bin/env bash
-# Push and verify CI. Use this instead of raw `git push`.
+# Turn prepared local commits into one Touch ID-authorized release candidate.
+# GitHub's default-branch gate verifies, tests, and advances main.
 set -euo pipefail
 
-echo "pushing..."
-git push "$@"
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
 
-PUSH_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date +%Y-%m-%dT%H:%M:%SZ)
+SIGNER="$HOME/.alexandria-signing/bin/alexandria-sign"
+PUBLIC_KEY="$HOME/.alexandria-signing/secure-enclave.pub"
+ALLOWED_SIGNERS="$HOME/.alexandria-signing/git_allowed_signers"
 
-echo "waiting for CI to start..."
-sleep 20
+test "$(uname -s)" = Darwin || { echo "error: releases require the founder's Mac" >&2; exit 1; }
+test -x "$SIGNER" || { echo "error: Touch ID signer is missing" >&2; exit 1; }
+test -f "$PUBLIC_KEY" || { echo "error: Touch ID public key is missing" >&2; exit 1; }
+test -f "$ALLOWED_SIGNERS" || { echo "error: Git allowed-signers file is missing" >&2; exit 1; }
 
-# Check if any runs were triggered by this push
-RUNS=$(gh run list --limit 5 --json databaseId,status,conclusion,name,event,createdAt 2>/dev/null)
-NEW_RUNS=$(echo "$RUNS" | node -e "
-  let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
-    const runs=JSON.parse(d);
-    const triggered=runs.filter(r=>r.event==='push'&&new Date(r.createdAt)>new Date(Date.now()-120000));
-    console.log(JSON.stringify(triggered));
-  })
-" 2>/dev/null)
-
-COUNT=$(echo "$NEW_RUNS" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d).length))" 2>/dev/null)
-
-if [ "$COUNT" = "0" ]; then
-  echo "no CI runs triggered by this push (paths didn't match any workflow trigger)"
-  echo "last 3 runs:"
-  gh run list --limit 3
-  exit 0
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "error: commit the prepared changes before shipping" >&2
+  exit 1
 fi
 
-# Wait for triggered runs to complete
-MAX_WAIT=300
-WAITED=0
-while true; do
-  PENDING=$(echo "$NEW_RUNS" | node -e "
-    let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
-      const runs=JSON.parse(d);
-      console.log(runs.filter(r=>r.status!=='completed').length);
-    })
-  " 2>/dev/null)
+branch="$(git symbolic-ref --quiet --short HEAD)" || {
+  echo "error: detached HEAD cannot ship" >&2
+  exit 1
+}
 
-  if [ "$PENDING" = "0" ]; then break; fi
-  if [ "$WAITED" -ge "$MAX_WAIT" ]; then
-    echo "timeout (${MAX_WAIT}s). check: gh run list"
-    exit 1
+git fetch --quiet origin main
+base="$(git rev-parse origin/main)"
+head="$(git rev-parse HEAD)"
+test "$head" != "$base" || { echo "nothing to ship"; exit 0; }
+git merge-base --is-ancestor "$base" "$head" || {
+  echo "error: local work is not based on current main — rebase it first" >&2
+  exit 1
+}
+
+echo "Touch ID will authorize this exact release:"
+git log --format='  %h %s' "$base..$head"
+git diff --stat "$base..$head" | sed 's/^/  /'
+
+count="$(git rev-list --count "$base..$head")"
+if [ "$#" -gt 0 ]; then
+  subject="$*"
+elif [ "$count" = 1 ]; then
+  subject="$(git log -1 --format=%s "$head")"
+else
+  subject="ship: $count prepared commits"
+fi
+body="$(git log --reverse --format='- %s' "$base..$head")"
+tree="$(git rev-parse "$head^{tree}")"
+
+message_file="$(mktemp)"
+trap 'rm -f "$message_file"' EXIT
+{
+  printf '%s\n\n' "$subject"
+  printf '%s\n' "$body"
+} > "$message_file"
+
+signed="$(git \
+  -c gpg.format=ssh \
+  -c gpg.ssh.program="$SIGNER" \
+  -c user.signingkey="$PUBLIC_KEY" \
+  commit-tree "$tree" -p "$base" -S < "$message_file")"
+
+git -c gpg.format=ssh \
+    -c gpg.ssh.allowedSignersFile="$ALLOWED_SIGNERS" \
+    verify-commit "$signed" >/dev/null
+
+git update-ref "refs/heads/$branch" "$signed" "$head"
+candidate="release/$(date -u +%Y%m%dT%H%M%SZ)-${signed:0:12}"
+git push origin "$signed:refs/heads/$candidate"
+
+echo "GitHub is verifying and testing the signed release..."
+deadline=$((SECONDS + 900))
+while [ "$SECONDS" -lt "$deadline" ]; do
+  live="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+  if [ "$live" = "$signed" ]; then
+    git fetch --quiet origin main
+    git push --quiet origin ":refs/heads/$candidate" || true
+    echo "shipped: $signed"
+    exit 0
   fi
   sleep 15
-  WAITED=$((WAITED + 15))
-  # Re-fetch runs
-  RUNS=$(gh run list --limit 5 --json databaseId,status,conclusion,name,event,createdAt 2>/dev/null)
-  NEW_RUNS=$(echo "$RUNS" | node -e "
-    let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
-      const runs=JSON.parse(d);
-      const triggered=runs.filter(r=>r.event==='push'&&new Date(r.createdAt)>new Date(Date.now()-300000));
-      console.log(JSON.stringify(triggered));
-    })
-  " 2>/dev/null)
 done
 
-# Report
-echo ""
-echo "=== CI Results ==="
-echo "$NEW_RUNS" | node -e "
-  let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{
-    const runs=JSON.parse(d);
-    for(const r of runs) console.log(r.conclusion==='success'?'  PASS':'  FAIL', r.name);
-    const fails=runs.filter(r=>r.conclusion==='failure');
-    if(fails.length>0){
-      console.log('\nCI FAILED:',fails.map(r=>r.name).join(', '));
-      process.exit(1);
-    }
-    console.log('\nall CI passing.');
-  })
-" 2>/dev/null
+echo "error: GitHub did not promote the release within 15 minutes" >&2
+echo "check: https://github.com/benmowinckel/alexandria/actions/workflows/structural-release.yml" >&2
+exit 1
