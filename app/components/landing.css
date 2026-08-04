@@ -1693,14 +1693,14 @@
         .pitch-coda {
           position: relative;
           display: block;
-          margin: 7px 0 0;
+          margin: 18px 0 0;
           padding: 0;
           max-width: 660px;
         }
         .pitch-coda-copy {
           min-width: 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
+          font-style: normal;
           font-weight: 400;
           font-size: 19px;
           line-height: 1.45;
@@ -3041,7 +3041,7 @@
           }
           .pitch-coda {
             display: block;
-            margin-top: 5px;
+            margin-top: 16px;
             margin-left: 0;
             padding: 0;
           }

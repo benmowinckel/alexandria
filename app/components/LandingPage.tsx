@@ -1309,7 +1309,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   <p className="pitch-coda">
                     <span className="pitch-coda-copy">
                       Once the loop starts, your AI stops starting over and
-                      builds on what matters to you.
+                      builds on what matters.
                     </span>
                   </p>
                 </div>
