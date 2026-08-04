@@ -39,6 +39,13 @@ The code maps to four layers:
 - **Stack:** Vercel (website), Cloudflare (DNS + server + KV + D1 + R2), Resend (email), GitHub (code + OAuth), Stripe (billing), Mercury (banking, API), Claude (intelligence). All hybrid (CLI or API-controllable). Zero external dependencies.
 - **Storage architecture:** Stateless server, sovereign local files (`~/alexandria/` — local + private GitHub; `iCloud/alexandria/` is Apple-native input only), thin persistence for collective Library (D1 for metadata/discovery, R2 for published content, KV for accounts/events).
 
+## Agent-owned operating queues
+
+Founder email is not an operating queue. User-0 did not read the health or feedback alerts, so the emails created notification noise without producing action. The rented agent owns both loops whenever this repo is active:
+
+- **Health:** before discretionary server work, `curl https://api.alexandria-library.com/health`. A degraded response carries the remaining `awareness.issues`; diagnose, fix, deploy, and verify production before starting lower-priority work. The daily cron still detects and self-heals, but never emails the founder.
+- **Human feedback:** before discretionary product work, inspect every file in the private `benmowinckel/alexandria-feedback` repo. File presence means unprocessed. Implement or route what the agent can; batch only genuine founder taste or outward-facing calls; delete a file only after its signal has a durable home or shipped resolution. Cancel-screen and session feedback share this one substrate; machine setup reports stay in the event log and never enter it. `factory/skills/factory.md` is a dormant loop spec, not a running routine — never assume it drains the queue.
+
 ### Protocol Endpoints
 
 Seven endpoints. The collective's plumbing — internally named "protocol" in code (`protocol.ts`); never the public framing:
@@ -66,7 +73,7 @@ Operational overhead — OAuth, billing, email, admin:
 | GET | `/account` | Billing portal redirect |
 | DELETE | `/account` | Account deletion (GDPR-ready) |
 | GET | `/account/rotate-key` | Lost-key self-serve rotation (single-use code minted on returning-member OAuth; old key dies atomically) |
-| POST | `/feedback` | Author-explicit feedback (typed into `~/alexandria/system/.session_feedback`, posted at session end, stored in private `benmowinckel/alexandria-feedback` GitHub repo). Mints a `<date>-<hash>` **id**, returns it so the client can address a reply to it, and emails `FOUNDER_EMAIL` on arrival — except `context: setup`, which is install telemetry and must never notify |
+| POST | `/feedback` | Author-explicit feedback (typed into `~/alexandria/system/.session_feedback`, posted at session end, stored in private `benmowinckel/alexandria-feedback` GitHub repo). Mints a `<date>-<hash>` **id** and returns it so the client can address a reply. No per-item founder email; agents drain the repo as the operating queue. |
 | GET/POST | `/email/stop` | Email unsubscribe |
 | POST | `/admin/nudge` | Nudge uninstalled users (admin) |
 | POST | `/admin/email` | Send email (admin) |

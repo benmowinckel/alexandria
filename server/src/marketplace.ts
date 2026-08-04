@@ -1,12 +1,13 @@
 /**
  * Marketplace feedback substrate.
  *
- * Author-typed feedback (from ~/alexandria/system/.session_feedback) writes
- * to the benmowinckel/alexandria-feedback private GitHub repo. CCR routines
- * (the factory autoloop) can only reach github.com, so the substrate has
- * to be there. Single source of truth — no KV duplicate to keep in sync.
+ * Author-typed feedback (from ~/alexandria/system/.session_feedback and the
+ * cancel screen) writes to the benmowinckel/alexandria-feedback private GitHub
+ * repo so any rented agent can drain it through GitHub. Single source of truth
+ * — no KV or email duplicate to keep in sync. Machine setup telemetry never
+ * enters this queue; it has a purpose-built event-log path.
  *
- * Drain pattern: routine processes files, `git rm`s them, pushes. File
+ * Drain pattern: an active product agent processes files, `git rm`s them, pushes. File
  * presence = unprocessed, absence = processed. No separate marker.
  *
  * The daily library-signal snapshot (server-computed funnel data, no

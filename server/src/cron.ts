@@ -2,15 +2,17 @@
 
 import { getKV, getRecentDaysEvents, loadAccounts, saveAccount } from './kv.js';
 import { getDB } from './db.js';
-import { sendEmail, sendEmailsBatched, sendWeekOneCheckIn, sendOnboardFollowup, FOUNDER_EMAIL } from './email.js';
-import { formatPT } from './time.js';
+import { sendEmailsBatched, sendWeekOneCheckIn, sendOnboardFollowup } from './email.js';
 import { publishLibrarySignalSnapshot } from './marketplace.js';
 import { computeLibrarySignalText } from './library-signal.js';
 import { reconcilePatronSubscriptions, syncStripeWebhookEvents } from './billing.js';
 import type { AccountStore, Account } from './auth.js';
 
 // ---------------------------------------------------------------------------
-// Health digest — self-heal, only email the founder if he needs to log on
+// Health digest — self-heal, then publish the remaining state through /health.
+// Founder email is not an operating queue: unread alerts create the appearance
+// of awareness without producing action. The next working agent owns degraded
+// state directly from the public health endpoint.
 // ---------------------------------------------------------------------------
 
 type Urgency = 'sprint' | 'stroll';
@@ -202,7 +204,7 @@ export function scanEventsForAlarms(rawLog: string, cutoff: number): EventScanRe
   return r;
 }
 
-export async function runHealthDigest(opts: { sendEmailOnAlarm?: boolean } = { sendEmailOnAlarm: true }): Promise<void> {
+export async function runHealthDigest(): Promise<void> {
   try {
     const kv = getKV();
     const issues: string[] = [];
@@ -323,17 +325,6 @@ export async function runHealthDigest(opts: { sendEmailOnAlarm?: boolean } = { s
       }), { expirationTtl: 30 * 24 * 60 * 60 });
     } catch { /* non-fatal */ }
 
-    if (!urgency) return;
-    if (opts.sendEmailOnAlarm === false) return;
-
-    // Subject carries urgency; body carries the issue list. Awareness axiom:
-    // a notification without actionable content is just a notification.
-    const body = `<div style="font-family:'EB Garamond',Georgia,serif;max-width:520px;margin:0 auto;padding:40px 20px;color:#3d3630;">` +
-      `<p style="margin:0 0 1rem;font-size:0.85rem;opacity:0.5">` + formatPT(new Date()) + `</p>` +
-      issues.map(i => `<p style="margin:0 0 0.5rem;line-height:1.5;">${i.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</p>`).join('') +
-      `<p style="margin:2rem 0 0;font-size:0.75rem;opacity:0.4"><a href="https://api.alexandria-library.com/analytics/dashboard" style="color:#8a8078">dashboard</a></p>` +
-      `</div>`;
-    await sendEmail(FOUNDER_EMAIL, `alexandria. — ${urgency}`, body);
   } catch (err) {
     console.error('Health digest failed:', err);
   }

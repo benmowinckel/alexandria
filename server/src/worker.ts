@@ -941,8 +941,9 @@ export default {
     // No automatic server→user push. Week-one check-in + install-nudge emails were
     // removed from the cron: any output from the server to a user must be the user's
     // own active decision, so a corrupted server can never push content at them.
-    // Founder-internal ops (health digest, billing settlement) stay — those don't
-    // touch users. Manual founder admin email tools remain (founder-triggered).
+    // Founder-internal health state stays machine-readable in /health; it does
+    // not email the founder. Manual founder admin email tools remain
+    // founder-triggered.
     // Onboard follow-ups are the one carve-out: the user typed their email into
     // "send it to my computer" — an active request for exactly this delivery.
     // The sequence is finishing that delivery, hard-capped at 2, stops on

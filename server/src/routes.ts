@@ -1001,12 +1001,9 @@ export function registerRoutes(app: Hono) {
   // --- Cancel-screen feedback (the mirror loop) ---
   //
   // The /cancel save-screen has a free-text field for "what's missing /
-  // what would make you stay." Submissions land here, get persisted in
-  // access_log so the founder can query the structured feedback stream
-  // (`SELECT meta FROM access_log WHERE event = 'cancel_feedback' ...`),
-  // and trigger a notification email to FOUNDER_EMAIL. Mailto on the
-  // page was retired in favour of this so the loop closes — Gmail keeps
-  // a copy, D1 keeps a structured copy.
+  // what would make you stay." All human feedback shares one durable,
+  // agent-owned queue: the private alexandria-feedback repo. File presence
+  // means unprocessed; no per-item founder email sits beside that source.
   app.post('/account/feedback', async (c) => {
     const account = await authorFromRequest(c);
     if (!account) return c.json({ error: 'Unauthorized' }, 401);
@@ -1019,36 +1016,20 @@ export function registerRoutes(app: Hono) {
     if (message.length > 10000) return c.json({ ok: false, error: 'message too long' }, 400);
 
     try {
-      const db = getDB();
-      await db.prepare(
-        `INSERT INTO access_log (event, author_id, accessor_id, artifact_id, tier, meta, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
-      ).bind(
-        'cancel_feedback',
-        account.github_login,
-        account.github_login,
-        null,
-        null,
-        JSON.stringify({ message }),
-        new Date().toISOString(),
-      ).run();
-    } catch (e) {
-      console.error('[account/feedback] D1 insert failed:', e);
+      const t = new Date().toISOString();
+      const id = await publishFeedback({
+        author: account.github_login,
+        t,
+        text: message,
+        context: 'cancel',
+      });
+      logEvent('cancel_feedback', { github_login: account.github_login, id });
+      return c.json({ ok: true, id });
+    } catch (err) {
+      console.error('[account/feedback] relay failed:', err);
+      logEvent('cancel_feedback', { github_login: account.github_login, error: 'relay_failed' });
+      return c.json({ error: 'relay_failed' }, 502);
     }
-
-    try {
-      const fromName = account.github_name?.trim() || account.github_login;
-      await sendEmail(
-        FOUNDER_EMAIL,
-        `cancel feedback from ${fromName}`,
-        `${message}\n\n---\nfrom: ${fromName} (${account.email})\nsubscription: ${account.subscription_id || 'unknown'}`,
-      );
-    } catch (e) {
-      console.error('[account/feedback] notification email failed:', e);
-    }
-
-    logEvent('cancel_feedback', { github_login: account.github_login });
-
-    return c.json({ ok: true });
   });
 
   // --- Admin: remove another account (KV + D1 + R2; same footprint as DELETE /account) ---
@@ -1156,6 +1137,24 @@ export function registerRoutes(app: Hono) {
     }
 
     const t = new Date().toISOString();
+
+    // Setup reports are machine telemetry, not human feedback. They already
+    // have a purpose-built event-log path consumed by the health check; putting
+    // them in the human queue created hundreds of files no agent should read.
+    if (context === 'setup') {
+      const statusMatch = text.match(/^status:\s*([a-z0-9_-]+)/m);
+      logEvent('user_feedback', {
+        author: account.github_login,
+        context: 'setup',
+        length: String(text.length),
+      });
+      logEvent('setup_report', {
+        author: account.github_login,
+        status: statusMatch?.[1] || 'unknown',
+      });
+      return c.json({ ok: true });
+    }
+
     try {
       // The id is returned to the client so it can stamp its own ledger line —
       // that is what makes a reply addressable later, and a reply to nothing is
@@ -1167,43 +1166,11 @@ export function registerRoutes(app: Hono) {
         context: context?.slice?.(0, 200) || 'direct',
       });
 
-      // Notification, not a dashboard. Without this the repo silently accumulates
-      // files nobody is told about — which is how four days of feedback went
-      // unread (2026-07-27). Non-fatal: a failed notification never fails the POST,
-      // because the item is already durably committed above.
-      //
-      // Machine-generated contexts are NEVER notified. setup.sh POSTs an install
-      // report through this same endpoint, so notifying unconditionally would mail
-      // a human on every install — turning the one channel where an arriving email
-      // means "a person asked for something" into install telemetry, which is
-      // exactly the failure that killed the daily brief (an email that always
-      // arrives stops carrying information). Install reports already have
-      // logEvent('setup_report') and the health digest.
-      if (context !== 'setup') {
-        try {
-          await sendEmail(
-            FOUNDER_EMAIL,
-            `feedback from ${account.github_login} [${id}]`,
-            `${text.slice(0, 5000)}\n\n---\nfrom: ${account.github_login}\ncontext: ${context || 'direct'}\nid: ${id}\nreply: commit factory/replies/${id}.md and re-sign the manifest`,
-          );
-        } catch (e) {
-          console.error('[feedback] notification email failed:', e);
-        }
-      }
-
       logEvent('user_feedback', {
         author: account.github_login,
         context: context || 'direct',
         length: String(text.length),
       });
-      if (context === 'setup') {
-        const statusMatch = text.match(/^status:\s*([a-z0-9_-]+)/m);
-        logEvent('setup_report', {
-          author: account.github_login,
-          status: statusMatch?.[1] || 'unknown',
-        });
-      }
-
       return c.json({ ok: true, id });
     } catch (err) {
       console.error('Feedback relay failed:', err);
@@ -1271,20 +1238,16 @@ export function registerRoutes(app: Hono) {
   // the DATA KV namespace under `signal:` and `feedback:` prefixes. Inspect
   // via `wrangler kv:key list --binding=DATA --prefix=signal:`.)
 
-  // Manual digest trigger. Scheduled daily at 09:00 UTC, but that's a 24h feedback
-  // loop for any digest-logic change. This shortens it: make changes, curl this,
-  // read the email / cron:health_digest KV marker. Admin-only.
-  //
-  // ?email=true sends the alarm email (default: suppressed, so CI smoke can hammer
-  // this every 6h without flooding the inbox). Scheduled-cron path always sends.
+  // Manual digest trigger. The scheduled job writes the same result to KV for
+  // /health; this endpoint shortens the verification loop after a logic change.
+  // It never emails the founder — the result itself is the operating queue.
   app.post('/admin/cron/health-digest', async (c) => {
     if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
     if (await checkAdminRateLimit('health-digest', 20, 60)) return c.json({ error: 'Rate limited (20/min)' }, 429);
-    const sendEmailOnAlarm = c.req.query('email') === 'true';
-    await runHealthDigest({ sendEmailOnAlarm });
+    await runHealthDigest();
     const kv = getKV();
     const raw = await kv.get('cron:health_digest');
-    return c.json({ ok: true, email_sent: sendEmailOnAlarm, result: raw ? JSON.parse(raw) : null });
+    return c.json({ ok: true, result: raw ? JSON.parse(raw) : null });
   });
 
   // Manual trigger for week-1 check-in. Same shorter-feedback-loop motivation
