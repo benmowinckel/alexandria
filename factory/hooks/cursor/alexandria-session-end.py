@@ -84,8 +84,11 @@ def _flush_via_shim(root: Path, transcript: Path | None) -> str:
     env["ALEXANDRIA_DIR"] = str(root)
     # shim.sh session-end greps stdin for transcript_path — feed it the same
     # JSON shape Claude Code does.
+    # Compact JSON (no spaces) — defense in depth for shim parsers that
+    # historically required '"transcript_path":"' with no whitespace.
     stdin_payload = json.dumps(
-        {"transcript_path": str(transcript)} if transcript else {}
+        {"transcript_path": str(transcript)} if transcript else {},
+        separators=(",", ":"),
     )
     try:
         proc = subprocess.run(

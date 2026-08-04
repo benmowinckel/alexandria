@@ -302,36 +302,10 @@ def _run() -> None:
 
     sections: list[tuple[str, str, bool]] = []
 
-    if agent_path.is_file():
-        agent_text = _read_or_note(agent_path, "Alexandria agent.md")
-        if _is_untouched_template(agent_text):
-            # Still the shipped stub — a one-line note beats injecting an
-            # empty scaffold as if it were the Author's preferences.
-            sections.append(
-                (
-                    "Author preferences (`agent.md`)",
-                    (
-                        f"(agent.md at `{agent_path}` is still the untouched starter "
-                        "template — nothing to inject yet. It fills in as the Author "
-                        "states operating preferences.)\n"
-                    ),
-                    True,
-                )
-            )
-        else:
-            sections.append(("Author preferences (`agent.md`)", agent_text, True))
-    else:
-        sections.append(
-            (
-                "Author preferences (`agent.md`)",
-                (
-                    f"(Alexandria agent.md not found at `{agent_path}`. "
-                    "Set `ALEXANDRIA_ROOT` or clone `~/alexandria`.)\n"
-                ),
-                True,
-            )
-        )
-
+    # Payload FIRST. agent.md can be 90KB+ (Author-0) and used to claim the
+    # whole context budget, truncating itself to the cap and skipping the
+    # product chain entirely — canon notices, drift, maintenance, onboarding
+    # pointer all gone despite shim_status=ok. Live failure class 2026-08-04.
     if shim_status == "ok":
         # The full payload chain ran — canon notices, drift, maintenance,
         # onboarding, the Author-context pointer. This IS the product's
@@ -387,6 +361,55 @@ def _run() -> None:
                         False,
                     )
                 )
+
+    # agent.md second. Cursor has no global CLAUDE.md, so new Authors need it
+    # injected. If ~/.cursor/rules/agent.mdc already carries it (shell sync),
+    # inject a pointer only — re-inlining the same file wastes the budget and
+    # was the starvation mode above. Untouched templates stay one-line notes.
+    cursor_agent_rule = home / ".cursor" / "rules" / "agent.mdc"
+    agent_already_in_rules = (
+        cursor_agent_rule.is_file() and cursor_agent_rule.stat().st_size > 500
+    )
+    if agent_already_in_rules:
+        sections.append(
+            (
+                "Author preferences (`agent.md`)",
+                (
+                    f"Already loaded via Cursor rule `{cursor_agent_rule}` "
+                    f"(synced from `{agent_path}`). Do not re-read unless it "
+                    "diverges; repo-local CLAUDE.md / AGENTS.md still wins on "
+                    "project facts.\n"
+                ),
+                True,
+            )
+        )
+    elif agent_path.is_file():
+        agent_text = _read_or_note(agent_path, "Alexandria agent.md")
+        if _is_untouched_template(agent_text):
+            sections.append(
+                (
+                    "Author preferences (`agent.md`)",
+                    (
+                        f"(agent.md at `{agent_path}` is still the untouched starter "
+                        "template — nothing to inject yet. It fills in as the Author "
+                        "states operating preferences.)\n"
+                    ),
+                    True,
+                )
+            )
+        else:
+            sections.append(("Author preferences (`agent.md`)", agent_text, True))
+    else:
+        sections.append(
+            (
+                "Author preferences (`agent.md`)",
+                (
+                    f"(Alexandria agent.md not found at `{agent_path}`. "
+                    "Set `ALEXANDRIA_ROOT` or clone `~/alexandria`.)\n"
+                ),
+                True,
+            )
+        )
 
     if include_overlay and overlay.is_file():
         sections.append(

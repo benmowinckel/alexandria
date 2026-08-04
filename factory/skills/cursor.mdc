@@ -23,12 +23,9 @@ Alexandria is a pure marginal value add — it never overrides your existing wor
 
 If the Author mentions anything they want changed about Alexandria — features, behavior, methodology — write it to ~/alexandria/system/.session_feedback. It flows directly to the team at session end.
 
-## a. — end the session
+## a. — end the /a session
 
-When the Author types "a." (or "bye", "that's it", or any sign-off), this ends the Alexandria session. Before closing:
-- Write crystallised signal to the appropriate file — marginalia/, constitution/, or notepad.md
-- Update machine.md with how this session went
-- If the Author gave feedback, write to ~/alexandria/system/.session_feedback
+When the Author types "a." or "/a." (the bare sigil or the slash form), this closes the active Alexandria session. The full playbook is the installed skill — read ~/.cursor/skills/a./SKILL.md now and follow it end-to-end. (If that file is missing, fall back to ~/.claude/skills/a./SKILL.md, then to `~/alexandria/system/canon/methodology.md` § Session Close — "a.".) Never run the close from memory — long sessions compact context, and a close from a compressed recollection is where value evaporates silently.
 
 ## Vault
 
