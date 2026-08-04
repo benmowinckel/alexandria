@@ -1131,7 +1131,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     Each large sentence carries the causal story on its own;
                     the quieter line beneath adds precision. Marginal labels
                     orient, whitespace separates, and the chevron alone
-                    implies that the first four beats open. */}
+                    implies that the four beats open. The final line is an
+                    unlabelled coda, not a fifth section. */}
                 <div className="pitch">
                   <section
                     data-pitch="instructions"
@@ -1314,10 +1315,9 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     </div>
                   </section>
                   <p className="pitch-coda">
-                    <span className="pitch-kicker">the point.</span>
                     <span className="pitch-coda-copy">
-                      The thoughts that matter no longer fade. You keep them,
-                      develop them, and act on them.
+                      The earlier you start, the more of your thinking survives
+                      to compound.
                     </span>
                   </p>
                 </div>
