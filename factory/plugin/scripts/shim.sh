@@ -165,7 +165,8 @@ elif [ "$MODE" = "session-end" ]; then
   else
     input=$(cat 2>/dev/null)
   fi
-  tp=$(echo "$input" | grep -o '"transcript_path":"[^"]*"' | cut -d'"' -f4)
+  # Optional whitespace after ':' — Cursor's python json.dumps emits spaces.
+  tp=$(echo "$input" | grep -oE '"transcript_path"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
   if [ -f "$ALEX_DIR/system/.hooks_payload" ]; then
     ALEX_WAS_ACTIVE=$was_active bash "$ALEX_DIR/system/.hooks_payload" session-end "$ALEX_DIR" "$API_KEY" "$tp"
   else

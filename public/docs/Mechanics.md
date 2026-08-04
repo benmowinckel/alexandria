@@ -89,7 +89,7 @@ The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your o
 | `~/.codex/instructions.md` | Only if Codex detected. Appends a marked block (`<!-- alexandria:start -->` … `<!-- alexandria:end -->`). | `cat ~/.codex/instructions.md` |
 | `~/.factory/droids/a.md` | Only if Factory droid CLI detected. Plain markdown skill. | `cat ~/.factory/droids/a.md` |
 
-**Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system `PATH`, sudoers, system services, launchd, cron, anything outside `~/alexandria/`, `~/.claude/`, `~/.cursor/`, `~/.codex/`, `~/.factory/`. The repo-local git config inside `~/alexandria/` is set; your global git config is not. The install schedules nothing and creates no background processes — scheduled jobs exist only inside opt-in add-ons (`io.alexandria.publish` for marketplace publishing, `io.alexandria.icloud-backup` for the iCloud mirror, the texting bridge's digest job), each installed only on your explicit yes and each with a one-line off switch listed in `~/alexandria/system/.optional`.
+**Not modified:** shell rc files (`.zshrc`, `.bashrc`, `.profile`), system `PATH`, sudoers, system services, launchd, cron, anything outside `~/alexandria/`, `~/.claude/`, `~/.cursor/`, `~/.codex/`, `~/.factory/`, and the Cursor sidecar `~/.alexandria/` (transcript staging + hook logs — session capture only, never canon). The repo-local git config inside `~/alexandria/` is set; your global git config is not. The install schedules nothing and creates no background processes — scheduled jobs exist only inside opt-in add-ons (`io.alexandria.publish` for marketplace publishing, `io.alexandria.icloud-backup` for the iCloud mirror, the texting bridge's digest job), each installed only on your explicit yes and each with a one-line off switch listed in `~/alexandria/system/.optional`.
 
 ### How each surface is wired
 
@@ -97,7 +97,7 @@ One curl wires every surface — nothing to install per-agent, no plugin, no mar
 
 - **Claude Code:** the 3 hook entries in `~/.claude/settings.json` fire the shim at session start/end.
 - **Claude Desktop's code tab:** that tab **is** Claude Code running on your machine — it reads the same `~/.claude/settings.json`, so the same entries cover it automatically. (The chat tab has no local file access, so it does nothing.)
-- **Cursor:** three hook entries in `~/.cursor/hooks.json` call small Python wrappers that shell out to the same shim.
+- **Cursor:** 5 hook entries in `~/.cursor/hooks.json` call small Python wrappers — session start/end/stop plus per-prompt and per-response transcript capture — that shell out to the same shim (or write the local staging transcript Cursor never provides natively).
 - **Codex, Factory:** an always-loaded instruction block appended to `~/.codex/instructions.md` / `~/.factory/droids/a.md` — no hooks, the instructions load every session.
 
 Result: session-start context load and session-end capture run in every Claude Code, Claude Desktop code-tab, and Cursor session; Codex and Factory load the same behavior via their instruction files. One behavior source (the signed payload), N dumb shells; the sovereign folder is the interop bus between all of them.
@@ -295,8 +295,9 @@ jq '.hooks |= (if . == null then . else with_entries(.value |= map(select(tostri
 rm -rf ~/.claude/skills/a ~/.claude/skills/a. ~/.claude/skills/alexandria ~/.claude/scheduled-tasks/alexandria
 rm -rf ~/.cursor/skills/a ~/.cursor/skills/a. ~/.cursor/skills/alexandria
 rm -f  ~/.cursor/rules/alexandria.mdc ~/.cursor/hooks/alexandria-*.py
+rm -rf ~/.alexandria
 rm -f  ~/.factory/droids/a.md
-# ~/.cursor/hooks.json: edit by hand to remove the three alexandria entries
+# ~/.cursor/hooks.json: edit by hand to remove the five alexandria entries
 sed -i '' '/alexandria:start/,/alexandria:end/d' ~/.codex/instructions.md 2>/dev/null
 
 # Add-on jobs — only present if you enabled the matching add-on

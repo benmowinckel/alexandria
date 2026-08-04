@@ -345,7 +345,7 @@ fi
 # After install the payload NEVER auto-writes canon; it only notifies of updates and
 # the Author pulls (verified). So this install seed is the one automatic write, and
 # it is the Author's own decision to run setup.
-for module in foundation axioms methodology editor mercury publisher library filter bookshelf plm twin; do
+for module in foundation axioms methodology editor mercury publisher library filter bookshelf plm twin marketplace; do
   fetch_factory "canon/$module.md" "$ALEX_DIR/system/canon/$module.md" "canon/$module.md"
 done
 fetch_factory "canon/MODULES.md" "$ALEX_DIR/system/canon/MODULES.md" "canon/MODULES.md"
@@ -635,6 +635,7 @@ PY
   # need python3. Only claim "configured" when the hooks actually registered —
   # otherwise the rule is present but session capture won't fire, so say so.
   fetch_factory "skills/cursor.mdc" "$HOME/.cursor/rules/alexandria.mdc" "skills/cursor.mdc" yes
+
   if [ -n "$CURSOR_HOOKS_OK" ]; then
     echo "  Cursor: configured (hooks + rules + /a skill)"
   else
@@ -957,8 +958,10 @@ if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
   CURSOR_DETECTED="yes"
   if [ -f "$HOME/.cursor/hooks.json" ] && \
      grep -q "alexandria-session-start" "$HOME/.cursor/hooks.json" 2>/dev/null && \
-     [ -f "$HOME/.cursor/rules/alexandria.mdc" ]; then
-    STATUS_CURSOR="ok"; DETAIL_CURSOR="hooks + rules registered"
+     [ -f "$HOME/.cursor/rules/alexandria.mdc" ] && \
+     [ -f "$HOME/.cursor/skills/a/SKILL.md" ] && \
+     [ -f "$HOME/.cursor/skills/a./SKILL.md" ]; then
+    STATUS_CURSOR="ok"; DETAIL_CURSOR="hooks + rules + /a + /a. skills wired"
   else
     STATUS_CURSOR="fail"; DETAIL_CURSOR="Cursor detected but not configured — re-run setup"
   fi

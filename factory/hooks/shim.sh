@@ -205,7 +205,10 @@ elif [ "$MODE" = "session-end" ]; then
   else
     input=$(cat 2>/dev/null)
   fi
-  tp=$(echo "$input" | grep -o '"transcript_path":"[^"]*"' | cut -d'"' -f4)
+  # Optional whitespace after ':' — Cursor's python json.dumps emits
+  # {"transcript_path": "/path"} (space), Claude Code may emit compact form.
+  # A no-space-only grep silently dropped Cursor flushes (ok-but-vault-copy-unverified).
+  tp=$(echo "$input" | grep -oE '"transcript_path"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
   if payload_runnable; then
     ALEX_WAS_ACTIVE=$was_active bash "$PAYLOAD_FILE" session-end "$ALEX_DIR" "$API_KEY" "$tp"
   else
