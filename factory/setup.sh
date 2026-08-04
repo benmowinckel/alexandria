@@ -660,6 +660,22 @@ fi
 # Codex
 if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   mkdir -p "$HOME/.codex" 2>/dev/null
+  # Codex discovers user skills from ~/.agents/skills. Install both names from
+  # one source so /a and /alexandria are the same active-session workflow.
+  mkdir -p "$HOME/.agents/skills/a" "$HOME/.agents/skills/alexandria" 2>/dev/null
+  if [ -f "$HOME/.agents/skills/a/SKILL.md" ] && \
+     ! grep -qi 'alexandria' "$HOME/.agents/skills/a/SKILL.md" 2>/dev/null; then
+    : # Preserve an Author's own /a; the Alexandria alias still installs below.
+  else
+    fetch_factory "skills/codex.md" "$HOME/.agents/skills/a/SKILL.md" "skills/codex.md (Codex /a skill)" yes
+  fi
+  if fetch_factory "skills/codex.md" "$HOME/.agents/skills/alexandria/SKILL.md" "skills/codex.md (Codex /alexandria alias)" yes; then
+    if [ "$(uname)" = "Darwin" ]; then
+      sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null
+    else
+      sed -i 's/^name: a$/name: alexandria/' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null
+    fi
+  fi
   codex_tmp="$ALEX_DIR/system/.codex_alexandria.tmp"
   if fetch_factory "skills/codex.md" "$codex_tmp" "skills/codex.md" yes; then
     # Current Codex reads global instructions from ~/.codex/AGENTS.md;
@@ -951,11 +967,13 @@ fi
 CODEX_DETECTED="no"
 if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   CODEX_DETECTED="yes"
-  if { [ -f "$HOME/.codex/AGENTS.md" ] && \
-       grep -q "alexandria:start" "$HOME/.codex/AGENTS.md" 2>/dev/null; } || \
-     { [ -f "$HOME/.codex/instructions.md" ] && \
-       grep -q "alexandria:start" "$HOME/.codex/instructions.md" 2>/dev/null; }; then
-    STATUS_CODEX="ok"; DETAIL_CODEX="instructions appended (AGENTS.md + legacy instructions.md)"
+  if [ -f "$HOME/.agents/skills/alexandria/SKILL.md" ] && { \
+       { [ -f "$HOME/.codex/AGENTS.md" ] && \
+         grep -q "alexandria:start" "$HOME/.codex/AGENTS.md" 2>/dev/null; } || \
+       { [ -f "$HOME/.codex/instructions.md" ] && \
+         grep -q "alexandria:start" "$HOME/.codex/instructions.md" 2>/dev/null; }; \
+     }; then
+    STATUS_CODEX="ok"; DETAIL_CODEX="/a + /alexandria skills and instructions wired"
   else
     STATUS_CODEX="fail"; DETAIL_CODEX="Codex detected but not configured — re-run setup"
   fi
