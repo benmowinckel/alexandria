@@ -29,14 +29,19 @@ jobs:
           RELEASE_BRANCH: ${{ github.event.ref }}
         run: |
           set -euo pipefail
+          rm -rf candidate
           git init --quiet candidate
           cd candidate
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          # Default remote.fetch maps every branch under refs/remotes/origin/*.
+          # Mapping release/<id> → origin/release then fights origin/release/<id>
+          # ("unable to update local ref"). Clear it; fetch only what we name.
+          git config remote.origin.fetch ''
           git fetch --quiet --no-tags --depth=2 origin \
             "+refs/heads/main:refs/remotes/origin/main" \
-            "+refs/heads/${RELEASE_BRANCH}:refs/remotes/origin/release"
+            "+refs/heads/${RELEASE_BRANCH}:refs/remotes/origin/candidate"
 
-          candidate="$(git rev-parse refs/remotes/origin/release)"
+          candidate="$(git rev-parse refs/remotes/origin/candidate)"
           main="$(git rev-parse refs/remotes/origin/main)"
           test "$(git rev-list --parents -n 1 "$candidate" | wc -w | tr -d ' ')" = 2
           test "$(git rev-parse "${candidate}^")" = "$main"
@@ -126,13 +131,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          rm -rf gate
           git init --quiet gate
           cd gate
           git remote add public "https://github.com/${GITHUB_REPOSITORY}.git"
+          git config remote.public.fetch ''
           git fetch --quiet --no-tags --depth=2 public \
             "+refs/heads/main:refs/remotes/public/main" \
-            "$CANDIDATE"
-          test "$(git rev-parse FETCH_HEAD)" = "$CANDIDATE"
+            "+${CANDIDATE}:refs/remotes/public/candidate"
+          test "$(git rev-parse refs/remotes/public/candidate)" = "$CANDIDATE"
           test "$(git rev-parse "${CANDIDATE}^")" = "$(git rev-parse refs/remotes/public/main)"
           printf 'benjamin@mowinckel.com %s alexandria-touchid\n' "$RELEASE_KEY" > allowed_signers
           git -c gpg.format=ssh \
