@@ -1308,24 +1308,19 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   </section>
                   <p className="pitch-coda">
                     <span className="pitch-coda-copy">
-                      Once the loop starts, your AI stops starting over and
-                      builds on what matters.
+                      Keep what matters. Develop it. Act on it&mdash;instead of
+                      letting it fade.
                     </span>
                   </p>
                 </div>
 
-                {/* The turn — hairline, then the agency-breaker close
-                    (restored 2026-08-03; the rebuild had merged it into
-                    beat iii and the founder called it back). Identity +
-                    the button, nothing else — urgency already lives in
-                    beat iii, so the close doesn't repeat it. */}
+                {/* The turn — hairline, then the smallest honest ask: the
+                    instructions cost nothing, and five minutes is enough to
+                    decide whether they belong in the reader's own workflow. */}
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  At the supermarket, someone holds out a free sample. You just
-                  take it and try it.
-                  <br />
-                  We are doing the same here. Press &ldquo;start your
-                  loop.&rdquo; Give it five minutes.
+                  The instructions are free. Five minutes is enough to see if
+                  this way of working fits you.
                 </p>
 
                 <div className="cta-pair">
