@@ -1316,15 +1316,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   </p>
                 </div>
 
-                {/* The turn — hairline, then the free-sample moment makes the
-                    offer physical: the instructions are already being held
-                    out, so the reader only has to take them and try them. */}
+                {/* The turn — the supermarket sequence puts trying before
+                    deciding, then names the exact zero-commitment trial. */}
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  We are holding these free instructions out to you like a
-                  sample at the supermarket.
+                  At the supermarket, you try the sample before deciding if you
+                  want it.
                   <br />
-                  Take them. Show them to your AI. See what happens.
+                  Press the button. Show your AI the instructions. Then decide
+                  together.
                 </p>
 
                 <div className="cta-pair">
