@@ -10,7 +10,8 @@
 # Trust root: a non-exportable P-256 key in this Mac's Secure Enclave. Its
 # opaque reference lives at ~/.alexandria-signing/secure-enclave.keyref; the
 # private key never leaves Apple hardware. Every signature requires a fresh
-# Touch ID match. ssh-agent and passphrase caches are not involved.
+# Touch ID match. No persistent ssh-agent or passphrase cache is involved; the
+# final push gets a one-key agent that exists only for that release.
 
 set -euo pipefail
 

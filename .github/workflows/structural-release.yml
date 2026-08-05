@@ -117,34 +117,5 @@ jobs:
         working-directory: candidate
         run: npm ci && npm run build
 
-  promote:
-    needs: [verify, test]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      # This job never checks out or executes candidate code. It repeats the
-      # signature + parent checks, then moves main to those exact bytes.
-      - name: Re-verify and promote the exact candidate
-        env:
-          CANDIDATE: ${{ needs.verify.outputs.candidate }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          rm -rf gate
-          git init --quiet gate
-          cd gate
-          git remote add public "https://github.com/${GITHUB_REPOSITORY}.git"
-          git config remote.public.fetch ''
-          git fetch --quiet --no-tags --depth=2 public \
-            "+refs/heads/main:refs/remotes/public/main" \
-            "+${CANDIDATE}:refs/remotes/public/candidate"
-          test "$(git rev-parse refs/remotes/public/candidate)" = "$CANDIDATE"
-          test "$(git rev-parse "${CANDIDATE}^")" = "$(git rev-parse refs/remotes/public/main)"
-          printf 'benjamin@mowinckel.com %s alexandria-touchid\n' "$RELEASE_KEY" > allowed_signers
-          git -c gpg.format=ssh \
-              -c gpg.ssh.allowedSignersFile="$PWD/allowed_signers" \
-              verify-commit "$CANDIDATE" 2>&1 | tee verify.txt
-          grep -qF "$RELEASE_FINGERPRINT" verify.txt
-          git remote add protected "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push protected "$CANDIDATE:refs/heads/main"
+  # Promotion is deliberately absent: GitHub has no Touch ID. scripts/push.sh
+  # waits for both jobs above, then the Mac releases those exact bytes.
