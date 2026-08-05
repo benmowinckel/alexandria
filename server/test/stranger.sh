@@ -125,14 +125,47 @@ echo "[stranger] pre-populated settings.json with existing hooks"
 echo ""
 echo "═══ Phase 2: Setup script ═══"
 
-SETUP_SCRIPT=$(curl -s --max-time 15 "https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh" 2>/dev/null)
+SOURCE_DIR="$TEMP_HOME/alexandria-source"
+SIGNING_KEYS_JSON="$TEMP_HOME/github-signing-keys.json"
+SIGNING_KEY_FILE="$TEMP_HOME/release-signing-key.pub"
+ALLOWED_SIGNERS="$TEMP_HOME/release-allowed-signers"
+EXPECTED_FINGERPRINT="SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg"
 
-check "setup script fetched"       [ -n "$SETUP_SCRIPT" ]
-SETUP_FIRST_LINE=$(echo "$SETUP_SCRIPT" | head -1)
-check "setup is bash script"       [ "$SETUP_FIRST_LINE" = "#!/usr/bin/env bash" ]
+# Reproduce the official first-touch boundary. The website supplies no code:
+# clone only the canonical repo, obtain the account signing keys independently
+# from GitHub, require the pinned Touch ID fingerprint, verify the exact commit,
+# then run setup from that immutable commit.
+git clone --quiet --depth 1 https://github.com/benmowinckel/alexandria.git "$SOURCE_DIR" 2>/dev/null
+check "canonical repo cloned"       [ -d "$SOURCE_DIR/.git" ]
 
-# Execute setup with the test API key
-echo "$SETUP_SCRIPT" | bash -s -- "$API_KEY" 2>/dev/null
+curl -fsS --retry 3 --max-time 20 \
+  https://api.github.com/users/benmowinckel/ssh_signing_keys \
+  -o "$SIGNING_KEYS_JSON" 2>/dev/null
+check "account signing keys fetched" [ -s "$SIGNING_KEYS_JSON" ]
+
+MATCHING_KEY=""
+while IFS= read -r candidate_key; do
+  [ -n "$candidate_key" ] || continue
+  printf '%s\n' "$candidate_key" > "$SIGNING_KEY_FILE"
+  if ssh-keygen -lf "$SIGNING_KEY_FILE" 2>/dev/null | grep -qF "$EXPECTED_FINGERPRINT"; then
+    MATCHING_KEY="$candidate_key"
+    break
+  fi
+done < <(node -e "const fs=require('fs'); for (const k of JSON.parse(fs.readFileSync(process.argv[1],'utf8'))) if (k && typeof k.key==='string') console.log(k.key)" "$SIGNING_KEYS_JSON")
+
+check "Touch ID fingerprint matched" [ -n "$MATCHING_KEY" ]
+printf 'benjamin@mowinckel.com %s alexandria-touchid\n' "$MATCHING_KEY" > "$ALLOWED_SIGNERS"
+SOURCE_COMMIT=$(git -C "$SOURCE_DIR" rev-parse HEAD 2>/dev/null)
+check "source commit is exact"       bash -c '[[ "$1" =~ ^[0-9a-f]{40}$ ]]' _ "$SOURCE_COMMIT"
+check "source commit is Touch ID signed" git -C "$SOURCE_DIR" \
+  -c gpg.format=ssh \
+  -c gpg.ssh.allowedSignersFile="$ALLOWED_SIGNERS" \
+  verify-commit "$SOURCE_COMMIT"
+check "setup is bash script"         bash -c '[ "$(head -1 "$1")" = "#!/usr/bin/env bash" ]' _ "$SOURCE_DIR/factory/setup.sh"
+
+# Execute only that authenticated commit with the test API key.
+ALEXANDRIA_SOURCE_COMMIT="$SOURCE_COMMIT" \
+  bash "$SOURCE_DIR/factory/setup.sh" "$API_KEY" 2>/dev/null
 
 # Verify directory structure
 check "alexandria dir exists"      [ -d "$HOME/alexandria" ]
@@ -166,8 +199,10 @@ echo "═══ Phase 3: Hooks installation ═══"
 check "shim.sh exists"             [ -f "$HOME/alexandria/system/hooks/shim.sh" ]
 check "shim.sh executable"         [ -x "$HOME/alexandria/system/hooks/shim.sh" ]
 check "shim.sh non-empty"          [ -s "$HOME/alexandria/system/hooks/shim.sh" ]
-check "SKILL.md exists"            [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ]
-check "SKILL.md has Alexandria"    grep -q "Alexandria" "$HOME/.claude/skills/alexandria/SKILL.md"
+START_SKILL="$HOME/.claude/skills/a/SKILL.md"
+[ -f "$START_SKILL" ] || START_SKILL="$HOME/.claude/skills/alexandria/SKILL.md"
+check "start SKILL.md exists"      [ -f "$START_SKILL" ]
+check "start skill has Alexandria" grep -q "Alexandria" "$START_SKILL"
 # Inverted 2026-07-22: the scheduled-task bootstrap (retired cloud autoloop)
 # must NOT install — the core installs nothing scheduled.
 check "no scheduled task installed" bash -c '[ ! -f "$HOME/.claude/scheduled-tasks/alexandria/SKILL.md" ]'
