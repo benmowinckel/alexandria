@@ -2,7 +2,7 @@
 # Alexandria Hooks Payload — pinned; signed updates are notify-only
 # Source: https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hooks/payload.sh
 # The canon is public on GitHub and every fetched module is checked against
-# the offline-signed manifest before it can be offered or written.
+# the Touch ID-signed manifest before it can be offered or written.
 
 MODE="$1"
 ALEX_DIR="$2"
@@ -41,7 +41,7 @@ fi
 
 # ─── PULL — apply a canon update / adopt a module ────────────────
 # The ONLY path that writes live canon after install. Verified against the
-# offline-signed manifest before writing; refuses on mismatch. Invoked by the
+# Touch ID-signed manifest before writing; refuses on mismatch. Invoked by the
 # Author's Engine on the Author's explicit instruction — never automatic.
 if [ "$MODE" = "pull" ]; then
   pull_module="$2"
@@ -58,7 +58,7 @@ if [ "$MODE" = "pull" ]; then
     if [ -n "$pexp" ] && [ "$pexp" = "$pact" ]; then
       mkdir -p "$pull_dir/system/canon" 2>/dev/null
       cp "$ptmp" "$pull_dir/system/canon/$pull_module.md"
-      echo "pulled: $pull_module.md (verified against the offline-signed manifest)"
+      echo "pulled: $pull_module.md (verified against the Touch ID-signed manifest)"
     else
       echo "REFUSED: $pull_module.md failed the integrity check (sha != signed manifest, or no manifest entry). Nothing written."
     fi
@@ -134,9 +134,9 @@ if [ "$MODE" = "session-start" ]; then
     fresh_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
     if [ "$AUTO_UPDATE" = true ] && [ -n "$fresh_tmp" ] && curl -s --max-time 5 "$CANON_GITHUB/$module.md" -o "$fresh_tmp" 2>/dev/null \
          && [ -s "$fresh_tmp" ] && [ "$(wc -c < "$fresh_tmp")" -gt 100 ]; then
-      # Integrity gate — the fetched module must match the sha256 in the offline-signed
+      # Integrity gate — the fetched module must match the sha256 in the Touch ID-signed
       # manifest (the shim signature-verified it and cached it to .canon_manifest). A
-      # poisoned GitHub file cannot match: forging it needs the offline signing key, which
+      # poisoned GitHub file cannot match: forging it needs the Touch ID signing key, which
       # the server never holds. Fail closed — an unverifiable fetch is discarded, never
       # written — so a GitHub-repo compromise cannot push canon (markdown) onto an Author.
       expected_sha=$(awk -v p="factory/canon/$module.md" '$2==p {print $1}' "$ALEX_DIR/system/.canon_manifest" 2>/dev/null)
@@ -168,7 +168,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
       else
         # Hash mismatch or missing manifest entry — refuse the fetched bytes (fail closed).
         canon_fetch_failures="$canon_fetch_failures $module"
-        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) canon integrity check failed: $module (fetched sha != offline-signed manifest, or no manifest entry) — discarded, keeping local" >> "$ALEX_DIR/system/.alexandria_errors"
+        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) canon integrity check failed: $module (fetched sha != Touch ID-signed manifest, or no manifest entry) — discarded, keeping local" >> "$ALEX_DIR/system/.alexandria_errors"
       fi
     else
       # Fetch failed (network, GitHub down, 404). Log — silent skip would violate
@@ -200,7 +200,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
     {
       echo "# Canon divergence — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
       echo ""
-      echo "Your system canon (\`~/alexandria/system/canon/\`) is yours and is never auto-updated — the modules below are AVAILABLE upstream, not applied, each verified against the offline-signed manifest. To apply an update or adopt a new module, tell me to pull it (I run the verified pull; nothing is written unless the sha matches the signed manifest). To keep your version, do nothing. Your machine changes only by your action."
+      echo "Your system canon (\`~/alexandria/system/canon/\`) is yours and is never auto-updated — the modules below are AVAILABLE upstream, not applied, each verified against the Touch ID-signed manifest. To apply an update or adopt a new module, tell me to pull it (I run the verified pull; nothing is written unless the sha matches the signed manifest). To keep your version, do nothing. Your machine changes only by your action."
       echo "$notice_body"
     } > "$ALEX_DIR/system/.canon_update_notice"
   else
@@ -213,7 +213,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
   # (1) ADDRESSED — a reply is a file named for the id of the item it answers,
   #     so an unsolicited push has no landing site; we can only answer something
   #     the Author already said. (2) SIGNED — fetched through verify-fetch.sh,
-  #     the same offline-key chain canon updates use, which emits nothing on any
+  #     the same Touch ID-key chain canon updates use, which emits nothing on any
   #     sha or signature mismatch. (3) NOT AN INSTRUCTION — the body is written
   #     to a file for the Author to read; only the bare id is ever surfaced to
   #     the Engine. Feeding a company-authored text blob into the one agent that
@@ -228,12 +228,13 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
     while IFS= read -r rid; do
       case "$rid" in ''|*[!a-zA-Z0-9-]*) continue ;; esac
       rdest="$ALEX_DIR/system/replies/$rid.md"
-      if bash "$reply_verify" "replies/$rid.md" > "$rdest" 2>/dev/null && [ -s "$rdest" ]; then
+      rtmp="$rdest.tmp.$$"
+      if bash "$reply_verify" "replies/$rid.md" > "$rtmp" 2>/dev/null && [ -s "$rtmp" ] && mv "$rtmp" "$rdest"; then
         echo "$rid" >> "$ALEX_DIR/system/.reply_new"
       else
         # Not published yet, or failed verification. Either way keep waiting —
         # fail-closed means an unverifiable reply is simply never delivered.
-        rm -f "$rdest"
+        rm -f "$rtmp"
         reply_still="$reply_still$rid
 "
       fi
@@ -473,7 +474,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
     if [ -n "$drift_found" ]; then
       echo ""
       echo "--- INSTALLED ARTEFACT DRIFT ---"
-      echo "Your local files differ from current factory. Not updating automatically — sync when you're ready: curl -fsSL alexandria-library.com/a | bash (reuses your stored key)."
+      echo "Your local files differ from current factory. Not updating automatically — sync when you're ready: bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh (reuses your stored key)."
       echo ""
       printf '%s' "$drift_found"
       echo "--- END DRIFT ---"
@@ -564,7 +565,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
     echo "  core/feedback.md (or _feedback.md) — corrections + confirmed approaches"
     echo "  core/agent.md  — Author preferences for AI behaviour"
     echo ""
-    echo "Your system canon is at $ALEX_DISPLAY/system/canon/ — yours, never auto-updated. If $ALEX_DISPLAY/system/.canon_update_notice exists, upstream has updates AVAILABLE (not applied); each is integrity-verified against the offline-signed manifest. Surface them with your own evaluation and a recommendation, and apply ONLY on the Author's explicit go by running:  bash $ALEX_DISPLAY/system/.hooks_payload pull <module> $ALEX_DISPLAY  (verified before writing; refuses on mismatch). Local-only edits are the Author's own work — never raise those. Your machine changes only by the Author's action."
+    echo "Your system canon is at $ALEX_DISPLAY/system/canon/ — yours, never auto-updated. If $ALEX_DISPLAY/system/.canon_update_notice exists, upstream has updates AVAILABLE (not applied); each is integrity-verified against the Touch ID-signed manifest. Surface them with your own evaluation and a recommendation, and apply ONLY on the Author's explicit go by running:  bash $ALEX_DISPLAY/system/.hooks_payload pull <module> $ALEX_DISPLAY  (verified before writing; refuses on mismatch). Local-only edits are the Author's own work — never raise those. Your machine changes only by the Author's action."
     echo ""
     echo "Alexandria passive mode active. Follow the canon's passive mode instructions. If the Author mentions Alexandria feedback, write to .session_feedback — it reaches the team at session end."
   fi

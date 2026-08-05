@@ -11,26 +11,6 @@ const nextConfig: NextConfig = {
       // NON-permanent so the landing surface stays movable (e.g. straight to
       // the chat later) without breaking the link everyone already pasted.
       { source: '/ask/:author', destination: '/library/:author', permanent: false },
-      // The install one-liner: `curl -fsSL alexandria-library.com/a | bash`.
-      // `/a` is the protocol's name (lowercase, like git). Redirects to the raw
-      // setup.sh on GitHub; curl -fsSL follows it (-L). NON-permanent (307) so the
-      // target stays changeable without breaking the command everyone copied.
-      // Humans land on /start (the primer); `/a` is the machine target only.
-      {
-        source: '/a',
-        destination: 'https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh',
-        permanent: false,
-      },
-      // Tokenized install — the command emailed by the mobile "send it to my
-      // computer" flow: `curl -fsSL alexandria-library.com/a/TOKEN | bash`.
-      // Routes through the API so the fetch marks that email as installed
-      // (follow-ups stop), then the API 302s to the same raw setup.sh above.
-      // The public copy-paste command stays the clean, tokenless /a.
-      {
-        source: '/a/:token',
-        destination: 'https://api.alexandria-library.com/a/:token',
-        permanent: false,
-      },
       // Two doors, by intent. /start is the keyless primer (the FREE tool — one
       // copy-paste, no account). /join is the founding-member JOIN (the paid
       // collective: GitHub sign-in → Stripe trial → alexandrian #N). Homepage +

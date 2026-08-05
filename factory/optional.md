@@ -40,7 +40,7 @@
 - **Enable:**
   ```bash
   VF="$HOME/alexandria/system/scripts/verify-fetch.sh"
-  bash "$VF" scripts/imsg_ctl.sh > "$HOME/alexandria/system/scripts/imsg_ctl.sh" && chmod +x "$HOME/alexandria/system/scripts/imsg_ctl.sh"
+  tmp=$(mktemp); bash "$VF" scripts/imsg_ctl.sh > "$tmp" && mv "$tmp" "$HOME/alexandria/system/scripts/imsg_ctl.sh" && chmod +x "$HOME/alexandria/system/scripts/imsg_ctl.sh"
   bash "$HOME/alexandria/system/scripts/imsg_ctl.sh" enable   # fetches its own verified pieces, walks the two grants
   ```
 - **Off:** `bash ~/alexandria/system/scripts/imsg_ctl.sh off` (soft) or `launchctl bootout gui/$(id -u)/com.alexandria.imsg-daemon` (hard); full details in `imsg_ctl.sh status`.
@@ -56,6 +56,6 @@
 
 ## update checks — on by default, offered never imposed
 
-Documented here for symmetry: this is the one thing that ships ON. Updates are never applied automatically — the machine runs only the engine payload pinned and verified at install (or at the Author's last explicit update). While `~/alexandria/system/hooks/auto-update` exists, each session *checks* public GitHub and surfaces any newer offline-key-signed engine or canon as a notice; the Author applies with the one install line, and the new code is verified before its first run.
+Documented here for symmetry: this is the one thing that ships ON. Updates are never applied automatically — the machine runs only the engine payload pinned and verified at install (or at the Author's last explicit update). While `~/alexandria/system/hooks/auto-update` exists, each session *checks* public GitHub and surfaces any newer Touch ID-signed engine or canon as a notice; the Author applies through the installed verifier, and the new code is verified before its first run.
 
 - **Off:** `rm ~/alexandria/system/hooks/auto-update` — stops public engine/canon update checks and stays pinned forever. If the Author joined the collective, keyed Library/feedback calls remain until `~/alexandria/system/.api_key` is removed. Full mechanism: https://alexandria-library.com/mechanics

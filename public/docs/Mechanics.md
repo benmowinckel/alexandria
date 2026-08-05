@@ -1,6 +1,6 @@
 # Mechanics
 
-You are about to run a curl command that puts files on your machine, modifies your AI config, and checks GitHub for signed updates each session (applying one is always your call). Read this once. If anything here doesn't match the scripts, don't run it. (Using Claude Desktop? Its **code tab** is Claude Code running on your machine — the same setup, run once via a coding agent, wires it up automatically. Everything on this page still applies.)
+You are about to give a non-executable setup message to your existing coding agent. That agent independently verifies one exact GitHub commit before it runs the setup file that modifies your AI config. Read this once. If anything here doesn't match the scripts, don't run it. (Using Claude Desktop? Its **code tab** is Claude Code running on your machine — the same verified setup, run once via a coding agent, wires it up automatically. Everything on this page still applies.)
 
 ## TL;DR for the auditor
 
@@ -8,7 +8,7 @@ You are about to run a curl command that puts files on your machine, modifies yo
 - **What runs:** plain bash and markdown. No binaries, no daemons, no launchd/cron jobs, no shell-rc edits, no root.
 - **What the install does NOT do:** no push to any remote, no repo creation, no key upload, nothing scheduled. Backups (to your **own** GitHub/iCloud), the iMessage bridge, and marketplace publishing are opt-in add-ons — each needs a separate explicit yes after install (`~/alexandria/system/.optional` documents every one: what it touches, what leaves the machine, its off switch).
 - **Source of truth:** `github.com/benmowinckel/alexandria` (public). Auditable line by line.
-- **Trust model:** consent-symmetric. The shim only ever runs the payload pinned on your disk, and only after that exact file passed verification against a manifest signed with the maintainer's Touch ID-bound Secure Enclave key. Newer signed versions surface as a notice; you apply one by re-running the install line, and it's re-verified before its first run. Nothing self-updates; compromise of the GitHub account alone does not yield code execution. Full mechanism in [`TRUST.md`](https://github.com/benmowinckel/alexandria/blob/main/TRUST.md).
+- **Trust model:** consent-symmetric. The first install runs one independently verified Git commit. After that, the shim only runs the payload pinned on your disk, and every factory file is covered by a manifest signed with the maintainer's Touch ID-bound Secure Enclave key. Newer signed versions surface as a notice; your installed verifier authenticates any update before it runs. Nothing self-updates; compromise of the GitHub account alone does not yield code execution. Full mechanism in [`TRUST.md`](https://github.com/benmowinckel/alexandria/blob/main/TRUST.md).
 - **What our server holds:** your email, GitHub user ID, hashed API key, a 60-day event log of which endpoints you hit, and any files you explicitly publish to the Library. Nothing else.
 - **What our server does not hold:** your constitution, vault, marginalia, transcripts, or AI-vendor API keys. There is no endpoint that accepts them.
 - **Side channel:** the only data that leaves your machine for our server is (a) module IDs you call — recorded so the marketplace can show who's using which gear; per-module call records (your account ID + timestamp + any notes the Engine attached) are queryable by any authenticated Alexandria user via `/marketplace/<module>`, by design, (b) feedback you explicitly type into `~/alexandria/system/.session_feedback`, (c) files you explicitly publish to the Library, (d) one install status report at setup (which subsystems succeeded/failed — no file content), (e) marketplace requests — "I wish a module existed for X" lines you have explicitly cleared for the public wish-board (max 5 per call, ≤300 chars; shown anonymously, ranked by how many distinct accounts asked, at public `/marketplace/requests`), and (f) a canon-health status ping each keyed session-start — which canon modules failed to fetch plus whether an update notice is pending; module names only, never file content. The Engine may *draft* requests and contributions proactively, but nothing in any category is sent without your explicit go — the Engine never auto-sends private content.
@@ -23,16 +23,14 @@ We claim:
 
 We do not claim:
 - Zero metadata. The server logs which endpoints your account hits and when (60-day TTL in KV), and Cloudflare logs IPs at the edge.
-- Immunity to the maintainer's signing key being compromised. The key is offline-held; if it ever leaks, future signed payloads could ship arbitrary code until rotation. Rotation procedure is in `TRUST.md`. Compromise of the public repo or GitHub account alone is not sufficient.
+- Immunity to the maintainer's Mac being compromised. The signing key cannot be exported from Apple hardware, but malicious local code could try to misuse it when the maintainer approves a Touch ID prompt. Compromise of the public repo or GitHub account alone is not sufficient. Rotation procedure is in `TRUST.md`.
 - Zero risk. AI tools execute hooks with your shell privileges. That is true of every editor extension, every dev-server, and every shell hook on your machine — but it is true here too.
 
 ## Inspect before running
 
-```
-curl -s https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh | less
-```
+Start at [`/start`](https://alexandria-library.com/start). Its message tells your agent to clone only `github.com/benmowinckel/alexandria`, fetch the maintainer's public signing keys independently from GitHub's account API, require fingerprint `SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg`, and verify the current `main` commit before reading or running project code. It then audits and runs `factory/setup.sh` from that exact commit, with every setup fetch pinned to the same hash.
 
-The setup is one bash script. The hooks payload is one bash script. The shim is one bash script. The trust root is one P-256 public key, embedded inline in `setup.sh` (fingerprint `SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg`). The matching private key cannot leave the maintainer's Mac hardware, and every release signature requires Touch ID. Everything below describes what they do, in order.
+The setup is one bash script. The hooks payload is one bash script. The shim is one bash script. The matching private key cannot leave the maintainer's Mac hardware, and every release signature requires Touch ID. Everything below describes what they do, in order.
 
 ## What gets installed on your machine
 
@@ -53,7 +51,9 @@ The setup is one bash script. The hooks payload is one bash script. The shim is 
 | `system/.hooks_payload` | The pinned engine payload. Runs only after passing hardware-signature verification. |
 | `system/.payload_verified_sha` | The recorded hash of the verified payload — the pin. If the payload file changes without re-verification, the shim refuses to run it. |
 | `system/.canon_manifest` | The signed manifest that backed this cached payload — every canon module is hash-checked against it before being written, so a compromised GitHub repo cannot push poisoned canon either. |
+| `system/.factory_version` | Highest signed factory release this machine has accepted. Older valid manifests are rejected instead of being replayed as a downgrade. |
 | `system/allowed_signers` | The maintainer's P-256 public key. Trust root for payload + manifest signature verification. |
+| `system/scripts/verify-fetch.sh` | The only later update door. It verifies the signed manifest, rejects rollback, verifies the requested file hash, then emits or runs those exact bytes. |
 | `system/canon/` | The canon modules, cached locally. **Foundation:** `foundation.md` (the incompressible core — the minimal closed-loop system). **Founder module** (Author #1's default, forkable): `axioms.md`, `methodology.md`, `editor.md`, `mercury.md`, `publisher.md`, `library.md`, `filter.md`, `bookshelf.md`, `plm.md`, `twin.md`. Plus `MODULES.md` (the tier map). **Sovereign and never auto-written** — seeded once at install; after that nothing is auto-applied. Each session checks upstream, **verifies it against the signed manifest**, and surfaces any update as a notice; you pull it (verified) or ignore it. |
 | `system/.api_key` | Your API key, mode 0600. |
 | `system/.block` | One-time onboarding instructions cached locally. |
@@ -95,7 +95,7 @@ The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your o
 
 ### How each surface is wired
 
-One curl wires every surface — nothing to install per-agent, no plugin, no marketplace:
+One verified setup wires every surface — nothing to install per-agent, no plugin, no marketplace:
 
 - **Claude Code:** the 3 hook entries in `~/.claude/settings.json` fire the shim at session start/end.
 - **Claude Desktop's code tab:** that tab **is** Claude Code running on your machine — it reads the same `~/.claude/settings.json`, so the same entries cover it automatically. (The chat tab has no local file access, so it does nothing.)
@@ -119,47 +119,31 @@ Nothing here routes your files through a server; it's the same sovereign folder,
 
 This is the most important property to understand.
 
-The shim at `~/alexandria/system/hooks/shim.sh` is installed by `setup.sh` (re-running setup will overwrite it; sessions never refetch the shim). On every session start — Claude Code and Claude Desktop's code tab reach it via the settings-hook entries; Cursor via its Python wrappers — the shim does this:
+The shim at `~/alexandria/system/hooks/shim.sh` is installed by `setup.sh` and refreshed only by a verified, explicit update. Sessions never refetch the shim. On every session start — Claude Code and Claude Desktop's code tab reach it via the settings-hook entries; Cursor via its Python wrappers — the shim does this:
 
 1. **Runs only the payload pinned on your disk** (`system/.hooks_payload`) — and only if that exact file has passed verification. When the file is new or changed (fresh install, an update you applied), the shim fetches `factory/manifest.txt` + `.sig` over HTTPS, verifies the signature with `ssh-keygen -Y verify` against `~/alexandria/system/allowed_signers` (the public key installed once at setup), and compares the payload's SHA-256 to the manifest entry. Pass → the hash is recorded in `system/.payload_verified_sha` and the payload runs. Fail → the shim refuses to run it: loud warning in the AI's context, entry in `~/alexandria/system/.alexandria_errors`, bare mode (constitution only, no protocol calls).
 2. **Checks for updates, notify-only** (skipped if you deleted `hooks/auto-update`): fetches and signature-verifies the current upstream manifest; if it lists a different payload hash, a "signed update available" notice lands in the AI's context. Nothing is applied.
 
-So **the code that processes your session is exactly what you approved — the payload pinned at install or at your last explicit update — and it passed the hardware-signature check before its first run.** Applying an update is always your action: re-run the one install line, and the new payload is verified before it ever executes. Bare GitHub access isn't enough to ship code — the maintainer must also approve that exact manifest with Touch ID. Full mechanism in [`TRUST.md`](https://github.com/benmowinckel/alexandria/blob/main/TRUST.md).
+So **the code that processes your session is exactly what you approved — the payload pinned at install or at your last explicit update — and it passed the hardware-signature check before its first run.** Applying an update is always your action: `bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh`. The installed verifier authenticates setup before it executes; setup then verifies every fetched factory file. Bare GitHub access isn't enough to ship code — the maintainer must also approve that exact manifest with Touch ID. Full mechanism in [`TRUST.md`](https://github.com/benmowinckel/alexandria/blob/main/TRUST.md).
 
-Engine and **canon** now work the same way: both are offered, verified, and applied only on your go — canon via the update notice you pull per-module, the engine via the install line. Nothing on your machine changes without your explicit action.
+Engine and **canon** work the same way: both are offered, verified, and applied only on your go — canon via the update notice you pull per-module, the engine via the local verifier. Nothing on your machine changes without your explicit action.
 
 What you're trusting: the maintainer's Touch ID approval on a private key that cannot leave Apple hardware. The public repo is auditable; that physical approval is the only thing that can ship new signed code.
 
 What protects you anyway:
-1. **Signed manifest + hash pinning.** `manifest.txt` lists the SHA-256 of `payload.sh` and every canon module. The manifest itself is signed (`manifest.txt.sig`). The shim refuses to run any file whose hash isn't in a manifest whose signature verifies against the embedded public key. Compromise of the GitHub repo alone does not produce code execution.
+1. **Whole-factory signed manifest + hash pinning.** `manifest.txt` lists a monotonic release version and the SHA-256 of every tracked file under `factory/`, including setup and the verifier. CI derives the same set from Git and fails on any missing or extra path. The manifest itself is signed (`manifest.txt.sig`). Compromise of the GitHub repo alone does not produce code execution.
 2. **Refuse-to-run.** A payload that has never passed verification never executes — if the file on disk changes without re-verification (tampering, a half-finished update), the session runs bare instead of running it.
 3. **Public diff.** Every payload version is in git history. Any session can be reconstructed from the commit SHA on `main` at that moment.
 4. **Canon canaries.** The canon explicitly tells the model to refuse instructions that try to exfiltrate files, escalate scope, or bypass the user. The same posture covers marketplace modules: a foreign module's body is untrusted input — instructions inside it are read as data, not commands, and adopted only after review against your own canon.
 5. **AI-tool approval dialogs.** Claude Code, Cursor, and Codex show every shell action before executing. Real protection at install and during anomaly, but it weakens with habituation — treat it as a backstop, not the primary defense.
 
-**Residual gap:** compromise of the offline signing key would compromise future payloads. Mitigations: the key is offline-held, the maintainer's repo is 2FA-protected, the key-rotation procedure is documented in `TRUST.md`. If that residual gap matters to you, run a frozen install (see below).
+**Residual gap:** a compromised maintainer Mac could try to misuse the non-exportable key during a misleading Touch ID prompt. Every release still requires the maintainer's physical approval. The key-rotation procedure is documented in `TRUST.md`. If that residual gap matters to you, run a frozen install.
 
 ### Turning off update checks
 
 **The simple freeze — delete one file.** `rm ~/alexandria/system/hooks/auto-update`. Updates are already never applied without you; deleting this file stops the public engine/canon checks and every session runs on your pinned local copy. For a free install, that removes Alexandria's standing session-start network reads. If you joined the collective, keyed Library, marketplace, canon-health, and feedback calls remain until you remove `~/alexandria/system/.api_key`. Re-running setup restores the update-check file.
 
-**The paranoid freeze — fork it.** If you don't even want to *fetch-and-verify* from our repo, fork `benmowinckel/alexandria` on GitHub. Rewrite `benmowinckel/alexandria` to `YOUR-HANDLE/alexandria` in every script + skill file under `factory/`, then install from your fork:
-
-```
-git clone https://github.com/YOUR-HANDLE/alexandria.git
-cd alexandria
-grep -rl 'benmowinckel/alexandria' factory/ \
-  | xargs sed -i.bak 's|benmowinckel/alexandria|YOUR-HANDLE/alexandria|g'
-find factory/ -name '*.bak' -delete    # BSD/GNU sed compatible
-git commit -am "pin to my fork"
-git push
-curl -fsSL "https://raw.githubusercontent.com/YOUR-HANDLE/alexandria/main/factory/setup.sh" \
-  | bash -s -- $YOUR_API_KEY
-```
-
-To pin to a specific commit (full immutability), also replace `main` with a commit SHA in those files. Re-pin manually whenever you want to upgrade.
-
-The bundled `factory/manifest.txt` + `manifest.txt.sig` keep verifying against the maintainer's public key as long as you don't modify any file listed in the manifest — the signature is over the manifest, and the manifest pins file hashes, so an unmodified fork continues to verify cleanly. If you intend to *edit* any signed file (e.g., write your own canon), replace `factory/setup.sh`'s embedded public key with your own and re-sign with `ssh-keygen -Y sign -f <your_key> -n alexandria -I alexandria-payload-signing factory/manifest.txt`.
+**A truly independent fork needs its own trust root.** Copying the repo is easy; safely shipping changed factory files means replacing the embedded public key, the first-touch fingerprint, and the release signer, then signing your own whole-factory manifests. A raw fork URL is not an authentication mechanism. If you only want immutability, the simple freeze above is the safer, smaller move: your already-verified local files keep running with no update path at all.
 
 ## Network call inventory
 
@@ -167,9 +151,10 @@ Every outbound call the install or hooks make. Complete list.
 
 | Call | Trigger | Sends | Receives |
 |---|---|---|---|
-| `GET raw.githubusercontent.com/.../factory/setup.sh` | You, once, at install | nothing | the install script |
-| `GET alexandria-library.com/a/<token>` (302s via `api.alexandria-library.com/a/<token>`) | You, once, at install — only if you used the command from the onboarding email (the public copy-paste command is the tokenless `/a`) | the one-time token in the URL path, which marks that email capture as installed so the follow-up nudges stop — no other data | redirect to the same `setup.sh` above |
-| `GET raw.githubusercontent.com/.../factory/hooks/{shim.sh,payload.sh}` | Install (both); applying an engine update = you re-running the install line (payload). Sessions never fetch code. | nothing | hooks |
+| `GET github.com/benmowinckel/alexandria` + GitHub account signing-key API | Your coding agent, once before first install | nothing | one exact commit + the public keys needed to authenticate it |
+| `GET raw.githubusercontent.com/.../<verified-commit>/factory/...` | Setup, pinned to the exact verified commit | nothing | signed manifest + factory files |
+| `POST api.alexandria-library.com/onboard/<token>/installed` | Only after setup succeeds, if you asked for the setup message by email | the one-time opaque email token; no files or machine data | empty 204 response; stops follow-up nudges |
+| `GET raw.githubusercontent.com/.../factory/{setup.sh,hooks/...}` | Only when you explicitly apply an update through the installed verifier | nothing | files accepted only if the whole-factory manifest signature, version, and file hash pass |
 | `GET raw.githubusercontent.com/.../factory/manifest.txt(.sig)` | Session start — verifying a newly pinned payload + the notify-only update check (skipped if `hooks/auto-update` is deleted) | nothing | signed manifest + signature |
 | `GET raw.githubusercontent.com/.../factory/canon/*.md` | Session start, eleven modules | nothing | canon |
 | `GET raw.githubusercontent.com/.../factory/{skills,hooks/cursor,templates,scripts}/...` | Install + session-start drift checks | nothing | factory files for skill/hook/template install + comparison |
@@ -222,47 +207,38 @@ Cloudflare Worker, stateless re: your private content. KV + D1 + R2.
 
 ## Audit checklist
 
-Fastest path: paste the adversarial audit prompt from [`factory/redteam.md`](https://github.com/benmowinckel/alexandria/blob/main/factory/redteam.md) into your AI — it fetches every file below and tries to refute our claims. (We run the same prompt against every change before it ships.) To do it by hand:
+Fastest path: paste the adversarial audit prompt from [`factory/redteam.md`](https://github.com/benmowinckel/alexandria/blob/main/factory/redteam.md) into your AI — it authenticates the commit first, then tries to refute our claims. (We run the same prompt against every change before it ships.) To do it by hand, clone the canonical repo, obtain the account's public signing keys from GitHub's API, require the fingerprint above, and verify the exact `main` commit before reading these paths:
 
 These are the files. Read them.
 
 ```
-# The install
-curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh
-
-# The shim that runs every session
-curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hooks/shim.sh
-
-# The mutable payload — the one to read most carefully
-curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hooks/payload.sh
-
-# The signed manifest that gates the payload
-curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/manifest.txt
-curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/manifest.txt.sig
-
-# The canon the AI follows (one of eleven modules)
-curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/canon/methodology.md
-
-# What the AI is told via skill
-curl https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/skills/claudecode.md
+factory/setup.sh
+factory/hooks/shim.sh
+factory/hooks/payload.sh
+factory/scripts/verify-fetch.sh
+factory/manifest.txt
+factory/manifest.txt.sig
+factory/canon/methodology.md
+factory/skills/claudecode.md
 ```
 
-Verify the manifest signature yourself:
+From that authenticated checkout, verify the manifest signature yourself:
 
 ```
 ssh-keygen -Y verify \
   -f ~/alexandria/system/allowed_signers \
   -I alexandria-payload-signing \
   -n alexandria \
-  -s <(curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/manifest.txt.sig) \
-  < <(curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/manifest.txt)
+  -s factory/manifest.txt.sig \
+  < factory/manifest.txt
 # Expected: Good "alexandria" signature for alexandria-payload-signing with ECDSA key SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg
 ```
 
 After install, your live install is at:
-- `~/alexandria/system/hooks/shim.sh` (refreshed only by re-running setup)
-- `~/alexandria/system/.hooks_payload` (refreshed each session after signature + hash check — `diff` against the GitHub raw URL)
+- `~/alexandria/system/hooks/shim.sh` (refreshed only by a verified explicit update)
+- `~/alexandria/system/.hooks_payload` (refreshed only by a verified explicit update)
 - `~/alexandria/system/.canon_manifest` (the verified manifest backing the cached payload)
+- `~/alexandria/system/.factory_version` (the accepted rollback floor)
 - `~/alexandria/system/canon/*.md` (sovereign; divergence from upstream shows up in `~/alexandria/system/.canon_update_notice`)
 
 Then audit the cached payload for anything that touches the network, evaluates remote code, or reads sensitive paths:
@@ -326,8 +302,8 @@ curl -X DELETE -H "Authorization: Bearer $YOUR_KEY" https://api.alexandria-libra
 The trust here is legible, not zero. It is bounded-trust:
 
 - The repo is public; every payload change is in git history.
-- The signing key is offline-held. Anyone with the public repo cannot ship code; only the keyholder can. That is a real concentration of trust; we are not pretending otherwise. Rotation procedure is in `TRUST.md`.
-- You can fork, pin to a commit SHA, and run from your own copy. Instructions are above.
+- The signing key is non-exportable Apple hardware. Anyone with the public repo or GitHub account cannot ship factory code; a release also needs a fresh Touch ID approval. That is a real concentration of trust; we are not pretending otherwise. Rotation procedure is in `TRUST.md`.
+- You can freeze forever on your verified local copy. A modified fork must establish and publish its own signing root rather than inheriting ours.
 - You can re-audit at any time. `diff` your cached payload against the GitHub raw URL, and verify the manifest signature with `ssh-keygen -Y verify` — both shown above.
 
 What we are claiming is *not* "no trust required." We are claiming you can read every line of the trust you are extending, change the relationship anytime, and walk away cleanly with all your files intact.

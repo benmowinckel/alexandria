@@ -82,17 +82,31 @@ jobs:
             -I alexandria-payload-signing \
             -n alexandria \
             -s factory/manifest.txt.sig < factory/manifest.txt
-          sha256sum --strict -c factory/manifest.txt
-          sed -n '/^SIGNED_FILES=(/,/^)/p' factory/ship.sh \
-            | sed '1d;$d;s/#.*//;s/^[[:space:]]*//;s/[[:space:]]*$//' \
-            | grep -v '^$' > "$RUNNER_TEMP/signed_files"
-          awk '{print $2}' factory/manifest.txt > "$RUNNER_TEMP/manifest_paths"
-          while IFS= read -r path; do
-            grep -qxF "$path" "$RUNNER_TEMP/manifest_paths" || {
-              echo "unsigned factory path: $path" >&2
-              exit 1
-            }
-          done < "$RUNNER_TEMP/signed_files"
+          awk '$1 !~ /^#/ {print}' factory/manifest.txt | sha256sum --strict -c -
+          git ls-files factory \
+            | grep -vE '^factory/manifest\.txt(\.sig)?$' \
+            | LC_ALL=C sort > "$RUNNER_TEMP/expected_factory_paths"
+          awk '$1 !~ /^#/ {print $2}' factory/manifest.txt \
+            | LC_ALL=C sort > "$RUNNER_TEMP/manifest_paths"
+          diff -u "$RUNNER_TEMP/expected_factory_paths" "$RUNNER_TEMP/manifest_paths"
+          version="$(awk '$1=="#" && $2=="alexandria-factory-version" {print $3; exit}' factory/manifest.txt)"
+          [[ "$version" =~ ^[0-9]{14}$ ]]
+
+      - name: Refuse mutable executable bootstrap paths
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          if git grep -nE 'curl[^|]*(alexandria-library\.com/a|raw\.githubusercontent\.com/benmowinckel/alexandria/[^ ]*/factory/setup\.sh)[^|]*\|[[:space:]]*(ba)?sh' -- .; then
+            echo "mutable response is still piped into a shell" >&2
+            exit 1
+          fi
+          ! grep -q "destination: 'https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh'" next.config.ts
+          grep -q 'status: 410' app/a/route.ts
+          grep -q 'status: 410' 'app/a/[token]/route.ts'
+          ! grep -q "app.get('/a/:token'" server/src/worker.ts
+          grep -q 'Refusing an unverified moving-main install' factory/setup.sh
+          grep -q 'verify-fetch.sh --run setup.sh' factory/setup.sh
+          grep -q 'signed-rollback' factory/scripts/verify-fetch.sh
 
       - name: Enforce server access boundaries
         working-directory: candidate

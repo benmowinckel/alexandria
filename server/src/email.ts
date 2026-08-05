@@ -1,5 +1,7 @@
 /** Email primitives — Resend API (hybrid dependency, API-controllable, free 100/day). */
 
+import { installPrompt } from './install-prompt.js';
+
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'benmowinckel@gmail.com';
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
 const SERVER_URL = process.env.SERVER_URL || 'https://api.alexandria-library.com';
@@ -76,9 +78,18 @@ function emailShell(inner: string, unsubscribeUrl?: string): string {
 // element, not buried in prose — the email version of the pages' clear CTAs). ---
 
 // A filled pill link — the primary action for URL-based asks.
-// The command to paste — the action, as a monospace card.
-function emailCmd(cmd: string): string {
-  return `<p style="margin: 0 0 1.4rem; background: rgba(61,54,48,0.06); border-radius: 8px; padding: 14px 16px; word-break: break-all;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; color: #3d3630;">${cmd}</code></p>`;
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// The non-executable setup message to paste — the action, as a monospace card.
+function emailCmd(message: string): string {
+  return `<pre style="white-space: pre-wrap; margin: 0 0 1.4rem; background: rgba(61,54,48,0.06); border-radius: 8px; padding: 14px 16px; overflow-wrap: anywhere;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; color: #3d3630;">${escapeHtml(message)}</code></pre>`;
 }
 // Inline key/command chip — e.g. /a in running prose.
 function emailKbd(text: string): string {
@@ -165,15 +176,15 @@ export async function sendWelcomeEmail(email: string, githubLogin: string, email
   // attribution through install → eventual join is intact.
   const kinLink = `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}`;
   const kinLinkDisplay = `${websiteHost}/invite?ref=${githubLogin}`;
-  // Connect command — carry it in the email body so a user who finishes GitHub
+  // Connect message — carry it in the email body so a user who finishes GitHub
   // OAuth but abandons Stripe is never stranded without their key. Same command
   // the founding-member page shows; re-running setup.sh with the key is
   // idempotent (installs + links, or just links if already installed). Only
   // included when we actually minted a key for this sign-in (new / uninstalled).
-  // Branded form: /a is a 307 to the raw setup.sh on GitHub — the L in -fsSL
-  // (--location) follows it, so the redirect MUST stay paired with -fsSL.
+  // It is deliberately non-executable: an existing install uses its local
+  // verifier; a first install independently authenticates one exact commit.
   const connectCmd = apiKey
-    ? `curl -fsSL alexandria-library.com/a | bash -s -- ${apiKey}`
+    ? installPrompt({ apiKey })
     : '';
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
   const body = connectCmd
@@ -248,18 +259,13 @@ export async function sendWeekOneCheckIn(
   return await sendEmail(email, 'checking in.', html, { unsubscribeUrl });
 }
 
-// --- Mobile onboarding — command delivery + follow-ups ---
-// The mobile /start flow captures an email and delivers the install command
-// for later (phones have no terminal). The command carries the install token
-// in its path (alexandria-library.com/a/TOKEN) so the setup-script fetch
-// marks the capture as installed — the public web command stays tokenless.
+// --- Mobile onboarding — safe setup-message delivery + follow-ups ---
+// Phones have no terminal, so the email carries the same non-executable agent
+// handoff as /start. The completion token is reported only after setup succeeds;
+// no mutable website or API response is ever piped into a shell.
 
 function onboardCmd(installToken: string, ref?: string): string {
-  // `-s -- --ref <login>` forwards the referrer into setup.sh (it parses --ref
-  // and bakes system/.referrer), so a command emailed off a /start?ref visit
-  // keeps kin attribution. ref is sanitised to [A-Za-z0-9-] at capture
-  // (POST /onboard), so it's shell- and HTML-safe to interpolate here.
-  return `curl -fsSL alexandria-library.com/a/${installToken} | bash${ref ? ` -s -- --ref ${ref}` : ''}`;
+  return installPrompt({ completionToken: installToken, ref });
 }
 
 export async function sendOnboardCommand(
@@ -273,7 +279,7 @@ export async function sendOnboardCommand(
   ${emailCmd(onboardCmd(installToken, ref))}
   <p style="margin: 0 0 1.6rem;">then open a new tab and type ${emailKbd('/a')}.</p>
   <p style="margin: 0 0 1.8rem;">on your phone? <a href="${SHORTCUT_URL}" style="color: #3d3630;">add the shortcut</a> &mdash; capture anything.</p>`, unsubscribeUrl);
-  return await sendEmail(email, 'alexandria. — your install command', html, { unsubscribeUrl });
+  return await sendEmail(email, 'alexandria. — your setup message', html, { unsubscribeUrl });
 }
 
 export async function sendOnboardFollowup(

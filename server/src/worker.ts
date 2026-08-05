@@ -588,14 +588,12 @@ app.options('/follow', (c) => {
 
 // ---------------------------------------------------------------------------
 // Mobile onboarding — "send it to my computer". Phones have no terminal, so
-// the mobile /start flow captures an email and delivers the install command
-// for later. Keyless (no account, no OAuth — this is the free tool). The
-// emailed command carries an install token in its path so the setup-script
-// fetch (GET /a/:token) marks the capture as installed; the public web
-// command stays clean and tokenless.
+// the mobile /start flow emails the same non-executable agent message for
+// later. Keyless (no account, no OAuth — this is the free tool). The agent
+// reports the opaque token only after verified setup succeeds; the API never
+// supplies code or instructions to execute.
 // ---------------------------------------------------------------------------
 
-const SETUP_SH_URL = 'https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh';
 const ONBOARD_TTL_SECONDS = 90 * 24 * 60 * 60;
 
 export interface OnboardRecord {
@@ -605,8 +603,8 @@ export interface OnboardRecord {
   installed_at?: string;
   followups?: number;
   followup_last_sent_at?: string;
-  /** Referrer login (sanitised [A-Za-z0-9-]) — the emailed install command
-   *  appends `--ref <login>` so the eventual join keeps kin attribution. */
+  /** Referrer login (sanitised [A-Za-z0-9-]) — the emailed setup message
+   *  passes `--ref <login>` so the eventual join keeps kin attribution. */
   ref?: string;
 }
 
@@ -658,7 +656,7 @@ app.post('/onboard', async (c) => {
     const db = (globalThis as any).__d1 as D1Database;
     if (!db) return c.json({ error: 'Database not available.' }, 503);
 
-    // One record per email — resubmits resend the same tokenized command
+    // One record per email — resubmits resend the same tokenized setup message
     // instead of forking a second follow-up thread.
     const emailIndexKey = `onboard_email:${normalizedEmail}`;
     let installToken = await kv.get(emailIndexKey);
@@ -750,12 +748,14 @@ app.options('/onboard', (c) => {
   return c.body(null, 204);
 });
 
-// Tokenized setup fetch — the emailed command curls this (via the website's
-// /a/:token redirect). Marks the capture installed, then hands off to the
-// same raw setup.sh the public command uses. Any failure still redirects:
-// never break an install for tracking.
-app.get('/a/:token', async (c) => {
+// Completion receipt for the emailed setup message. The coding agent calls it
+// only after the verified installer succeeds. It never returns instructions or
+// executable bytes, so the API is tracking only — not part of the trust chain.
+app.post('/onboard/:token/installed', async (c) => {
   const token = c.req.param('token');
+  if (!/^[a-f0-9]{24}$/.test(token)) return c.body(null, 204);
+  const ip = c.req.header('cf-connecting-ip') || 'unknown';
+  if (!await enforcePublicRateLimit('onboard', ip)) return c.body(null, 204);
   try {
     const kv = getKV();
     const raw = token ? await kv.get(`onboard:${token}`) : null;
@@ -772,7 +772,7 @@ app.get('/a/:token', async (c) => {
   } catch (err) {
     console.error('Onboard install mark failed:', err);
   }
-  return c.redirect(SETUP_SH_URL, 302);
+  return c.body(null, 204);
 });
 
 // ---------------------------------------------------------------------------

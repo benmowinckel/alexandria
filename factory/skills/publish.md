@@ -23,10 +23,10 @@ Run the setup phase. The script ensures `<user>/alexandria-modules` exists on Gi
 
 ```bash
 # Route the fetch through verify-fetch.sh: it checks the script against the
-# offline-signed manifest and refuses to emit tampered/unsigned code (installed
-# by setup.sh; self-bootstrap if absent). Never curl|bash a factory script raw.
-VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { mkdir -p "$(dirname "$VF")"; curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/scripts/verify-fetch.sh -o "$VF" && chmod +x "$VF"; }
-file=$(bash "$VF" scripts/publish.sh | bash -s -- setup "<slug>")
+# Touch ID-signed manifest and refuses to run tampered/unsigned code (installed
+# by setup.sh; it never self-bootstraps from the web).
+VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
+file=$(bash "$VF" --run scripts/publish.sh setup "<slug>")
 echo "$file"
 ```
 
@@ -55,8 +55,8 @@ Show the Author the final body. They can still edit. They can also abort entirel
 Run the finalize phase. The script `git add`s the file, commits with message `module: <slug>`, pushes to `main`, and prints the canonical module ID on stdout.
 
 ```bash
-VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { mkdir -p "$(dirname "$VF")"; curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/scripts/verify-fetch.sh -o "$VF" && chmod +x "$VF"; }
-id=$(bash "$VF" scripts/publish.sh | bash -s -- finalize "<slug>")
+VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
+id=$(bash "$VF" --run scripts/publish.sh finalize "<slug>")
 echo "$id"
 ```
 
@@ -65,8 +65,8 @@ echo "$id"
 The Author probably wants to start using their own module immediately. Offer to run `install.sh` against the new ID — that registers it in `~/alexandria/.call_manifest`, and the next `/call` POST surfaces it on the marketplace.
 
 ```bash
-VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { mkdir -p "$(dirname "$VF")"; curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/scripts/verify-fetch.sh -o "$VF" && chmod +x "$VF"; }
-bash "$VF" scripts/install.sh | bash -s -- "$id"
+VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
+bash "$VF" --run scripts/install.sh "$id"
 ```
 
 ## What this does NOT do

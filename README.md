@@ -6,13 +6,9 @@ Alexandria is a free, local tool: your thinking in plain files on your machine, 
 
 ## Try it
 
-Paste this into your coding agent (Claude Code, Cursor, Codex, Factory) and hit enter:
+Open [alexandria-library.com/start](https://alexandria-library.com/start), copy the setup message into your coding agent (Claude Code, Cursor, Codex, Factory), and hit enter.
 
-```
-curl -fsSL alexandria-library.com/a | bash
-```
-
-It walks you through the rest. Hesitant? Paste it in and ask your ai to check it first — it reads the whole script before anything runs.
+The message makes your agent independently prove the GitHub release is ours, read the code, and run one exact signed commit. The website never gives you executable bytes.
 
 The habit afterwards: open a new tab, type `/a`, and leave it. That's a session.
 

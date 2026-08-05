@@ -79,6 +79,9 @@ cleanup() {
   [ -z "$agent_socket" ] || rm -f "$agent_socket"
   [ -z "$agent_dir" ] || rmdir "$agent_dir" 2>/dev/null || true
   rm -f "$message_file"
+  if [ -n "$candidate" ]; then
+    git push --quiet origin ":refs/heads/$candidate" >/dev/null 2>&1 || true
+  fi
 }
 trap cleanup EXIT INT TERM
 {
@@ -107,10 +110,10 @@ verify=""
 test_job=""
 while [ "$SECONDS" -lt "$deadline" ]; do
   if [ -z "$run_id" ]; then
-    runs="$(curl -fsSL "https://api.github.com/repos/benmowinckel/alexandria/actions/workflows/structural-release.yml/runs?head_sha=$signed&event=create&per_page=5")"
+    runs="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://api.github.com/repos/benmowinckel/alexandria/actions/workflows/structural-release.yml/runs?head_sha=$signed&event=create&per_page=5")"
     run_id="$(printf '%s' "$runs" | jq -r '.workflow_runs[0].id // empty')"
   else
-    jobs="$(curl -fsSL "https://api.github.com/repos/benmowinckel/alexandria/actions/runs/$run_id/jobs?per_page=20")"
+    jobs="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://api.github.com/repos/benmowinckel/alexandria/actions/runs/$run_id/jobs?per_page=20")"
     verify="$(printf '%s' "$jobs" | jq -r '.jobs[] | select(.name == "verify") | .conclusion // .status')"
     test_job="$(printf '%s' "$jobs" | jq -r '.jobs[] | select(.name == "test") | .conclusion // .status')"
     if [ "$verify" = success ] && [ "$test_job" = success ]; then

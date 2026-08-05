@@ -323,7 +323,7 @@ def _run() -> None:
                     f"(The signed shim -> payload chain did not run: {shim_status}. "
                     "Canon update notices, drift checks, git sync, and protocol calls "
                     "were skipped this session. Falling back to local context. "
-                    "If this persists, re-run: curl -fsSL alexandria-library.com/a | bash)\n"
+                    "If this persists, re-run: bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh)\n"
                 ),
                 True,
             )

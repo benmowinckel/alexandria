@@ -176,8 +176,7 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
         </div>
       )}
 
-      {/* The one line that answers the curl|bash hesitation: the command
-          installs files, it does not sign you up for anything. Reuses the
+      {/* The one line that explains the executable boundary. Reuses the
           page's already-styled trust class. */}
       <p className="primer-trust">
         Your AI proves the download is really ours and reads the code before it runs. It takes a couple of minutes — no account, no upload. The files land on your computer and stay there.

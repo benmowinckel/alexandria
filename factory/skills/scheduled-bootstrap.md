@@ -4,7 +4,7 @@ description: Autonomous cognitive maintenance — vault reprocessing, marginalia
 schedule: daily 03:00
 ---
 
-Your actual instructions (`scheduled.md`) live on GitHub and are **signature-verified before execution** — the same trust model as the session hook (`shim.sh`): this bootstrap is the immutable local root, `scheduled.md` is the signed payload it verifies against the offline key. `scheduled.md` runs autonomous code with the Author's API key in reach, so an unverified fetch would let a repo compromise or MITM execute attacker code on this machine. **Do not skip the gate. Do not fall back to cached or unverified content.**
+Your actual instructions (`scheduled.md`) live on GitHub and are **signature-verified before execution** — the same trust model as the session hook (`shim.sh`): this locally installed bootstrap verifies `scheduled.md` against the Touch ID key. `scheduled.md` runs autonomous code with the Author's API key in reach, so an unverified fetch would let a repo compromise or MITM execute attacker code on this machine. **Do not skip the gate. Do not fall back to cached or unverified content.**
 
 Run this block. It fetches `scheduled.md`, verifies the signed manifest, confirms the file's hash matches, and **prints the authentic playbook only if verification passes** (otherwise it exits non-zero and prints nothing to follow):
 
@@ -28,7 +28,7 @@ curl -sf --max-time 10 "$RAW/factory/manifest.txt"        -o "$mf" || fail manif
 curl -sf --max-time 10 "$RAW/factory/manifest.txt.sig"    -o "$sg" || fail sig-fetch
 [ -s "$sk" ] && [ -s "$mf" ] && [ -s "$sg" ] || fail empty-fetch
 
-# 1. Manifest is authentically signed by the offline key.
+# 1. Manifest is authentically signed by the Touch ID key.
 ssh-keygen -Y verify -f "$SIGNERS" -I "$ID" -n "$NS" -s "$sg" < "$mf" >/dev/null 2>&1 || fail bad-signature
 
 # 2. The fetched scheduled.md matches its hash in the verified manifest.

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Alexandria migration — safely upgrade from pre-2026-04-24 structure to current.
 # Usage (verified — routes through the signed manifest, refuses tampered code):
-#   VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/scripts/verify-fetch.sh -o "$VF"
-#   bash <(bash "$VF" migrate.sh)            # add --apply to perform the move
+#   VF="$HOME/alexandria/system/scripts/verify-fetch.sh"
+#   bash "$VF" --run migrate.sh              # add --apply to perform the move
 #
 # Safe by design:
 # - Never overwrites existing files at new locations
@@ -98,8 +98,7 @@ fi
 
 if [ "$APPLY" != "true" ]; then
   echo "Dry-run only. Re-run with --apply to execute moves (verified fetch):"
-  echo "  VF=\"\$HOME/alexandria/system/scripts/verify-fetch.sh\"; [ -f \"\$VF\" ] || curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/scripts/verify-fetch.sh -o \"\$VF\""
-  echo "  bash <(bash \"\$VF\" migrate.sh) --apply"
+  echo "  bash ~/alexandria/system/scripts/verify-fetch.sh --run migrate.sh --apply"
   exit 0
 fi
 

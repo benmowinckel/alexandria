@@ -17,11 +17,12 @@ The install script appends the module ID to `~/alexandria/.call_manifest`. The n
 
 1. Resolve the request to a single canonical module ID. If ambiguous, ask the Author which one they meant; never guess silently.
 
-2. Run the installer. The script lives in the public alexandria repo — fetch it fresh each install (current logic, no SDK update step), but route the fetch through `verify-fetch.sh` so it's checked against the offline-signed manifest and tampered/unsigned code is refused (never raw `curl|bash` a factory script):
+2. Run the installer through the local verifier so the script is checked against the Touch ID-signed manifest and tampered/unsigned code is refused (never raw `curl|bash` a factory script):
 
    ```bash
-   VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { mkdir -p "$(dirname "$VF")"; curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/scripts/verify-fetch.sh -o "$VF" && chmod +x "$VF"; }
-   bash "$VF" scripts/install.sh | bash -s -- "<module-id>"
+   VF="$HOME/alexandria/system/scripts/verify-fetch.sh"
+   [ -f "$VF" ] || { echo "Alexandria's verifier is missing; restore it through https://alexandria-library.com/start before installing anything."; exit 1; }
+   bash "$VF" --run scripts/install.sh "<module-id>"
    ```
 
 3. Read back the result. Three outcomes:

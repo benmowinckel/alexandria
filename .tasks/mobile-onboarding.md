@@ -1,5 +1,7 @@
 # Mobile onboarding — SHIPPED 2026-07-01
 
+> **Historical plan — install transport superseded 2026-08-05.** Email now sends the same non-executable `/start` message. The old tokenized `/a` download returns 410; completion tracking is a bodyless POST sent only after verified setup succeeds.
+
 Worker deployed (health ok) + site pushed (CI green, Vercel live). Verified in
 prod: /onboard validates (400 on reserved domain), /a/:token 302s to setup.sh
 via the website hop, /start carries open-in-claude-code (desktop) + shortcut/
@@ -49,13 +51,11 @@ the iCloud Shortcut (`SHORTCUT_URL` single-sourced in `app/lib/config.ts`);
 (2) quiet underneath, **"send it to my computer"** — email field → `POST
 api…/onboard` → emails the install command. Delivery framing, nothing else.
 
-**Tracking.** The emailed command is tokenized:
-`curl -fsSL alexandria-library.com/a/TOKEN | bash`. Website redirects
-`/a/:token` → API (next.config.ts); API marks the capture installed in KV
-(`onboard:{token}`, 90d TTL) and 302s to the same raw setup.sh. The public
-web command stays clean `/a`. Unsubscribe rides the waitlist substrate (row
-type='onboard', existing `/email/stop`). GDPR: account purge also clears the
-onboard KV records.
+**Tracking (historical; replaced).** The emailed command used a tokenized `/a`
+download and redirect. It now sends a non-executable agent message; after the
+authenticated setup exits successfully, the agent sends a bodyless completion
+POST. Unsubscribe still rides the waitlist substrate. GDPR: account purge also
+clears the onboard KV records.
 
 **Follow-ups.** `runOnboardFollowups` (`server/src/cron.ts`): first at 2d,
 second/last at 5d, nothing past 14d, stops on install or unsubscribe. Admin:

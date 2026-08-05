@@ -396,9 +396,9 @@ export async function runWeekOneCheckIns(
 // ---------------------------------------------------------------------------
 // Onboard follow-ups — for mobile "send it to my computer" captures (keyless,
 // no account; KV `onboard:` records written by POST /onboard). The user
-// explicitly asked us to email them the install command; this finishes that
+// explicitly asked us to email them the setup message; this finishes that
 // delivery: first nudge at 2d, second and last at 5d, then silence. Stops the
-// moment the tokenized command is run (GET /a/:token sets installed_at) or
+// moment the verified setup succeeds (POST /onboard/:token/installed) or
 // the waitlist unsubscribe fires.
 // ---------------------------------------------------------------------------
 

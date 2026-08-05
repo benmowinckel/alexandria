@@ -14,8 +14,8 @@ export const metadata = pageMetadata({
 
 // The front door for someone who already clicked "join the tribe" — bought in,
 // here to act. One job: get the command into their agent. So: brand header, the
-// command, and one quiet line that dissolves the curl|bash hesitation (their own
-// ai reads the open script). No product pitch — the homepage/video did that.
+// message, and one quiet line explaining the independent signature check.
+// No product pitch — the homepage/video did that.
 //
 // Composition: a single flush-left editorial column (not a centred stack). The
 // eyebrow ("the free tool") is the one accent on the skeleton and names which

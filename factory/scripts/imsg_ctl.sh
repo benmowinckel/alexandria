@@ -19,11 +19,11 @@ case "${1:-status}" in
     #
     # 0. Self-fetch — setup.sh deliberately seeds NONE of the texting machinery
     # (opt-in add-on, 2026-07-22): fetch any missing piece here, at enable time,
-    # through verify-fetch.sh so every file is checked against the offline-signed
+    # through verify-fetch.sh so every file is checked against the Touch ID-signed
     # manifest before it lands. Seed-if-missing — the Author's own edits survive.
     VF="$BASE/scripts/verify-fetch.sh"
     if [ ! -f "$VF" ]; then
-      echo "✗ verify-fetch.sh missing ($VF) — re-run the install line first: curl -fsSL alexandria-library.com/a | bash"
+      echo "✗ verify-fetch.sh missing ($VF) — open https://alexandria-library.com/start and use the verified install path"
       exit 1
     fi
     for _p in scripts/imsg_run.sh scripts/imsg_send.sh scripts/imsg_handle.sh scripts/agent_reply.sh \

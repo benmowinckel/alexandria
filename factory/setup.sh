@@ -3,8 +3,9 @@
 # Official first install: an existing coding agent verifies the canonical
 # GitHub commit and runs this file from that exact commit with
 # ALEXANDRIA_SOURCE_COMMIT=<40-character commit hash>.
-# Existing-install sync:  curl -fsSL alexandria-library.com/a | bash
-#        (with account):  curl -fsSL …/factory/setup.sh | bash -s -- <API_KEY>
+# Existing-install sync:
+#   bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh
+#        (with account): append the API key as the final argument.
 # Keyless installs the full local product, no account; the key only adds the hub.
 # NO set -e — every section must succeed or fail independently.
 #
@@ -72,8 +73,8 @@
 #   4. UPDATES: nothing self-updates. The session hook runs ONLY the payload
 #      pinned at install, after verifying it against a manifest signed by an
 #      Touch ID-bound Secure Enclave key (github.com/benmowinckel/alexandria/blob/main/TRUST.md).
-#      Newer signed versions surface as a notice; applying one = your user
-#      re-running this line, and even then it's verified before first run.
+#      Newer signed versions surface as a notice; applying one = the installed
+#      verifier authenticating and running the signed setup file.
 #      Deleting ~/alexandria/system/hooks/auto-update stops even the check.
 #   5. UNINSTALL: complete, listed at alexandria-library.com/mechanics.
 #
@@ -89,6 +90,16 @@ SOURCE_REF="${ALEXANDRIA_SOURCE_COMMIT:-main}"
 if [ "$SOURCE_REF" != main ] && ! [[ "$SOURCE_REF" =~ ^[0-9a-f]{40}$ ]]; then
   echo "Invalid Alexandria source commit; refusing to install." >&2
   exit 1
+fi
+if [ "$SOURCE_REF" = main ]; then
+  if [ "${ALEXANDRIA_VERIFIED_UPDATE:-}" != "1" ] || \
+     [ ! -f "$ALEX_DIR/system/scripts/verify-fetch.sh" ] || \
+     [ ! -f "$ALEX_DIR/system/allowed_signers" ]; then
+    echo "Refusing an unverified moving-main install." >&2
+    echo "Start at https://alexandria-library.com/start, or update an existing install with:" >&2
+    echo "  bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh" >&2
+    exit 1
+  fi
 fi
 FACTORY_RAW="https://raw.githubusercontent.com/benmowinckel/alexandria/$SOURCE_REF/factory"
 SERVER="https://api.alexandria-library.com"
@@ -128,26 +139,28 @@ fetch_factory() {
   local tmp="${dest}.tmp.$$"
   if curl -fsS --retry 2 --retry-delay 1 --connect-timeout 5 --max-time 20 \
     "$FACTORY_RAW/$rel" -o "$tmp" 2>/dev/null && [ -s "$tmp" ]; then
-    # Manifest gate: when this run holds a signature-verified manifest (set
-    # after the allowed_signers pin below) and the fetched file is listed in
-    # it, the bytes must match the signed sha — fail-closed: the file is not
-    # installed and the existing local copy, if any, stays. Files not listed
-    # in the manifest install as before. No verified manifest available =
-    # the documented install-time TOFU floor (same residual as setup.sh
-    # itself, audit H5). A mismatch can also be a transient CDN lag between
-    # a file push and its manifest re-sign — re-running the install resolves.
+    # Manifest gate: every factory file must appear in the signature-verified
+    # manifest and match its pinned hash. Missing coverage and mismatched bytes
+    # both fail closed; an existing local copy, if any, stays untouched.
     if [ -n "${VERIFIED_MANIFEST:-}" ] && [ -f "$VERIFIED_MANIFEST" ]; then
       local want_sha got_sha
       want_sha=$(awk -v p="factory/$rel" '$2==p{print $1}' "$VERIFIED_MANIFEST")
-      if [ -n "$want_sha" ]; then
-        if command -v shasum >/dev/null 2>&1; then got_sha=$(shasum -a 256 "$tmp" | cut -d' ' -f1)
-        else got_sha=$(sha256sum "$tmp" 2>/dev/null | cut -d' ' -f1); fi
-        if [ "$want_sha" != "$got_sha" ]; then
-          rm -f "$tmp"
-          FETCH_ERRORS="${FETCH_ERRORS}${label}(signature-mismatch) "
-          return 1
-        fi
+      if [ -z "$want_sha" ]; then
+        rm -f "$tmp"
+        FETCH_ERRORS="${FETCH_ERRORS}${label}(not-in-signed-manifest) "
+        return 1
       fi
+      if command -v shasum >/dev/null 2>&1; then got_sha=$(shasum -a 256 "$tmp" | cut -d' ' -f1)
+      else got_sha=$(sha256sum "$tmp" 2>/dev/null | cut -d' ' -f1); fi
+      if [ "$want_sha" != "$got_sha" ]; then
+        rm -f "$tmp"
+        FETCH_ERRORS="${FETCH_ERRORS}${label}(signature-mismatch) "
+        return 1
+      fi
+    else
+      rm -f "$tmp"
+      FETCH_ERRORS="${FETCH_ERRORS}${label}(no-verified-manifest) "
+      return 1
     fi
     mv "$tmp" "$dest"
     return 0
@@ -158,8 +171,8 @@ fetch_factory() {
 }
 
 # Existing-install fallback: if no key was passed but one is already stored
-# locally from a prior install, use it. Makes reinstall a one-liner for
-# existing Authors — `curl … | bash` instead of having to find their key again.
+# locally from a prior install, use it. The verified updater therefore needs
+# no key argument unless the Author is rotating or linking an account.
 # Passing a key explicitly still overrides (for rotations).
 if [ -z "$API_KEY" ] && [ -f "$ALEX_DIR/system/.api_key" ]; then
   API_KEY=$(tr -d '[:space:]' < "$ALEX_DIR/system/.api_key" 2>/dev/null)
@@ -179,7 +192,7 @@ EXISTING_AUTHOR=""
 # Keyless = the free product (the gym), no account. A key — passed, or reused
 # from a prior install above — adds the hub layer (Library, marketplace, kin).
 # Either path installs the full LOCAL product; the key only gates server calls.
-# This is the one-copy-paste front door: `curl … | bash` with no key just works.
+# The front door is the non-executable agent message at /start.
 KEYLESS=false
 if [ -z "$API_KEY" ]; then
   KEYLESS=true
@@ -209,6 +222,10 @@ fi
 # clear line, clean exit.
 if ! command -v curl &>/dev/null; then
   echo "alexandria needs curl to install — install curl (wget alone isn't enough) and try again."
+  exit 1
+fi
+if ! command -v ssh-keygen &>/dev/null; then
+  echo "alexandria needs ssh-keygen to verify its release signature; refusing to install without it."
   exit 1
 fi
 
@@ -249,32 +266,60 @@ date +%s > "$ALEX_DIR/system/.last_maintenance"
 # same atomic install step as the shim that uses it. To rotate, replace the
 # line below and ship a new setup.sh release.
 # Fingerprint: SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg
-cat > "$ALEX_DIR/system/allowed_signers" <<'EOF'
+cat > "$ALEX_DIR/system/allowed_signers.tmp.$$" <<'EOF'
 alexandria-payload-signing ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBETzcr+XjCojo7y6s+JU8UwqkOtzIv3h9kEQI/ef9/nuGolyXvLF8WXkoEDwFc3zkXxTbZ+TVWI5Uq0fgMxHvjM= alexandria-touchid
 EOF
-chmod 644 "$ALEX_DIR/system/allowed_signers"
+if ! chmod 644 "$ALEX_DIR/system/allowed_signers.tmp.$$" \
+   || ! mv "$ALEX_DIR/system/allowed_signers.tmp.$$" "$ALEX_DIR/system/allowed_signers"; then
+  rm -f "$ALEX_DIR/system/allowed_signers.tmp.$$"
+  echo "Could not pin the Alexandria signing key locally; refusing to continue." >&2
+  exit 1
+fi
 
 # Fetch + signature-verify the manifest NOW, so fetch_factory's manifest gate
 # is armed for EVERY factory fetch below — payload, resolver, optional.md,
 # canon, block, skills, cursor hooks, anything the manifest lists. Ordering is
 # the point (2026-07-30): fetches that ran before the gate armed were TOFU.
-# No verifiable manifest (offline, no ssh-keygen) = gate stays unarmed and
-# fetches keep the documented install-time TOFU floor (audit H5).
-if command -v ssh-keygen >/dev/null 2>&1; then
-  _mf=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
-  _sg=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
-  if [ -n "$_mf" ] && [ -n "$_sg" ] \
-     && curl -fsS --max-time 10 "$FACTORY_RAW/manifest.txt" -o "$_mf" 2>/dev/null \
-     && curl -fsS --max-time 10 "$FACTORY_RAW/manifest.txt.sig" -o "$_sg" 2>/dev/null \
-     && [ -s "$_mf" ] && [ -s "$_sg" ] \
-     && ssh-keygen -Y verify -f "$ALEX_DIR/system/allowed_signers" \
-          -I alexandria-payload-signing -n alexandria -s "$_sg" < "$_mf" >/dev/null 2>&1; then
-    if cp "$_mf" "$ALEX_DIR/system/.canon_manifest" 2>/dev/null; then
-      VERIFIED_MANIFEST="$ALEX_DIR/system/.canon_manifest"
-    fi
-  fi
-  rm -f "$_mf" "$_sg"
+# If the manifest cannot be authenticated, nothing from the factory installs.
+_mf=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
+_sg=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
+if [ -z "$_mf" ] || [ -z "$_sg" ] \
+   || ! curl -fsS --max-time 10 "$FACTORY_RAW/manifest.txt" -o "$_mf" 2>/dev/null \
+   || ! curl -fsS --max-time 10 "$FACTORY_RAW/manifest.txt.sig" -o "$_sg" 2>/dev/null \
+   || [ ! -s "$_mf" ] || [ ! -s "$_sg" ] \
+   || ! ssh-keygen -Y verify -f "$ALEX_DIR/system/allowed_signers" \
+        -I alexandria-payload-signing -n alexandria -s "$_sg" < "$_mf" >/dev/null 2>&1; then
+  rm -f "${_mf:-}" "${_sg:-}"
+  echo "Could not verify the signed Alexandria factory; nothing was installed." >&2
+  exit 1
 fi
+
+# Refuse signed rollback as well as unsigned mutation. A release version is
+# inside the signed manifest, and every accepted version becomes the local
+# floor. Rollback is shipped as a new forward-signed release, never by replaying
+# old valid bytes.
+_factory_version=$(awk '$1=="#" && $2=="alexandria-factory-version" {print $3; exit}' "$_mf")
+_installed_version=$(cat "$ALEX_DIR/system/.factory_version" 2>/dev/null)
+if ! [[ "$_factory_version" =~ ^[0-9]+$ ]] \
+   || { [ -n "$_installed_version" ] && ! [[ "$_installed_version" =~ ^[0-9]+$ ]]; } \
+   || { [ -n "$_installed_version" ] && [ "$_factory_version" -lt "$_installed_version" ]; }; then
+  rm -f "$_mf" "$_sg"
+  echo "Refusing a missing or rolled-back Alexandria factory version." >&2
+  exit 1
+fi
+_manifest_cache="$ALEX_DIR/system/.canon_manifest.tmp.$$"
+_version_cache="$ALEX_DIR/system/.factory_version.tmp.$$"
+if ! cp "$_mf" "$_manifest_cache" 2>/dev/null \
+   || ! printf '%s\n' "$_factory_version" > "$_version_cache" \
+   || ! mv "$_manifest_cache" "$ALEX_DIR/system/.canon_manifest" \
+   || ! mv "$_version_cache" "$ALEX_DIR/system/.factory_version"; then
+  rm -f "$_mf" "$_sg"
+  rm -f "$_manifest_cache" "$_version_cache"
+  echo "Could not pin the verified Alexandria factory locally; refusing to continue." >&2
+  exit 1
+fi
+VERIFIED_MANIFEST="$ALEX_DIR/system/.canon_manifest"
+rm -f "$_mf" "$_sg"
 
 # ── 2. Factory files from GitHub ──────────────────────────────────
 
@@ -294,11 +339,10 @@ fetch_factory "hooks/payload.sh" "$ALEX_DIR/system/.hooks_payload" "hooks/payloa
 fetch_factory "scripts/capture_resolver.py" "$ALEX_DIR/system/scripts/capture_resolver.py" "scripts/capture_resolver.py" yes
 fetch_factory "scripts/configure_codex.py" "$ALEX_DIR/system/scripts/configure_codex.py" "scripts/configure_codex.py" yes
 fetch_factory "skills/codex-ambient.md" "$ALEX_DIR/system/.codex-ambient.md" "skills/codex-ambient.md" yes
-# verify-fetch.sh — the trust root for every later "fetch a factory script,
-# then run it" flow (install/publish/brief-setup skills, migrate.sh). Installed
-# HERE so it lands in the same install-time trust step as the shim; consumers
-# keep a lazy-fetch fallback but that fallback is unverified TOFU — this line
-# is what makes the trust-root claim real.
+# verify-fetch.sh — the only later "fetch a factory script, then run it" door
+# (install/publish/brief-setup skills, migrate.sh). It lands through this
+# authenticated whole-factory install. Consumers fail closed if it is missing;
+# they never bootstrap a replacement from the network.
 fetch_factory "scripts/verify-fetch.sh" "$ALEX_DIR/system/scripts/verify-fetch.sh" "scripts/verify-fetch.sh" yes
 chmod +x "$ALEX_DIR/system/scripts/verify-fetch.sh" 2>/dev/null
 
@@ -327,8 +371,8 @@ Alexandria — update checks: ON (updates are offered, never applied)
 While this file exists, each session checks Alexandria's public GitHub for
 updates — engine and methodology — and verifies anything it finds against the
 maintainer's Touch ID-bound signing key. A newer signed version is surfaced as a
-notice; NOTHING is applied until you say go (applying = re-running the one
-install line, and even then the new code is verified before its first run).
+notice; NOTHING is applied until you say go (applying = asking the installed
+verifier to authenticate and run setup.sh).
 Your machine only ever runs what you've already approved. The only trust here
 is GitHub (hosting) + the maintainer (the one person who can sign).
 
@@ -355,8 +399,8 @@ if [ -n "${VERIFIED_MANIFEST:-}" ] && [ -f "$ALEX_DIR/system/.hooks_payload" ]; 
   fi
 fi
 
-# Canon — the full default, seeded at install (the Author's active adoption via
-# `curl | bash`): Foundation (the universal core) + the Founder module (Author #1's
+# Canon — the full default, seeded during the Author's verified first install:
+# Foundation (the universal core) + the Founder module (Author #1's
 # system). Seed-if-missing only (no overwrite) — never clobber the Author's edits.
 # After install the payload NEVER auto-writes canon; it only notifies of updates and
 # the Author pulls (verified). So this install seed is the one automatic write, and
@@ -1245,11 +1289,11 @@ if [ "$CORE_OK" != "true" ]; then
   echo "Install incomplete — a core piece didn't land (see the ✗ rows above)."
   # The block has no matrix row — name it explicitly when it's the gap.
   [ -n "$BLOCK_MISSING" ] && echo "(Also missing: the onboarding file at ~/alexandria/system/.block — the first session needs it.)"
-  echo "Re-run the one line; it's safe and never overwrites your files:"
+  echo "Re-run through the installed signature verifier; it never overwrites your files:"
   if [ "$KEYLESS" = "true" ]; then
-    echo "  curl -fsSL alexandria-library.com/a | bash"
+    echo "  bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh"
   else
-    echo "  curl -fsSL alexandria-library.com/a | bash -s -- \$API_KEY"
+    echo "  bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh \$API_KEY"
   fi
   echo ""
   echo "AGENT: core install failed — do NOT read the block, start setup, or draft anything."
@@ -1337,8 +1381,16 @@ elif [ "$KEY_STATUS" = "401" ]; then
   echo "Your API key was rejected by the server — the local install itself is fine,"
   echo "but the account layer (Library, marketplace, kin) isn't connected."
   echo "Get a fresh key at https://alexandria-library.com/signup, then re-run:"
-  echo "  curl -fsSL alexandria-library.com/a | bash -s -- \$NEW_KEY"
+  echo "  bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh \$NEW_KEY"
   echo "(The rejected key was not saved — a bare re-run stays keyless instead of re-failing.)"
 else
-  echo "Re-run anytime: curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/setup.sh | bash -s -- \$API_KEY"
+  echo "Re-run anytime: bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh \$API_KEY"
+fi
+
+# A partial fetch preserves every good local file, but it is not a successful
+# install or update. Return non-zero so an agent cannot send the onboarding
+# completion receipt or tell the Author a mixed version is finished.
+if [ -n "$FETCH_ERRORS" ] || [ -n "$MISSING" ]; then
+  echo "Alexandria setup is incomplete; existing verified files were kept. Re-run when the network is stable." >&2
+  exit 1
 fi

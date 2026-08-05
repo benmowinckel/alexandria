@@ -3,34 +3,12 @@ on:
   push:
     branches: [main]
     paths:
-      # Signing surface — this job must run on any commit that touches a signed
-      # file, the manifest, or the signer roots, or a "committed but never
-      # re-signed" drift ships without CI ever looking.
-      - 'factory/manifest.txt'
-      - 'factory/manifest.txt.sig'
-      - 'factory/setup.sh'
-      - 'factory/ship.sh'
-      - 'factory/signing/**'
-      - 'factory/canon/**'
-      - 'factory/hooks/payload.sh'
-      - 'factory/skills/**'
-      - 'factory/scripts/**'
-      - 'factory/systems/**'
-      - 'factory/migrate.sh'
+      # Every tracked factory file is signed; every factory change must run it.
+      - 'factory/**'
   pull_request:
     branches: [main]
     paths:
-      - 'factory/manifest.txt'
-      - 'factory/manifest.txt.sig'
-      - 'factory/setup.sh'
-      - 'factory/ship.sh'
-      - 'factory/signing/**'
-      - 'factory/canon/**'
-      - 'factory/hooks/payload.sh'
-      - 'factory/skills/**'
-      - 'factory/scripts/**'
-      - 'factory/systems/**'
-      - 'factory/migrate.sh'
+      - 'factory/**'
 
 jobs:
   # Signing integrity — makes "committed but never re-signed" impossible to
@@ -39,7 +17,8 @@ jobs:
   #       installs as the trust root (extracted from setup.sh itself, so CI
   #       checks the same key users get — no second copy to drift),
   #   (b) every path listed in manifest.txt re-hashes to its pinned sha256,
-  #   (c) every path in ship.sh's SIGNED_FILES appears in manifest.txt.
+  #   (c) manifest coverage exactly equals every tracked factory file except
+  #       the generated manifest and signature themselves.
   signing:
     runs-on: ubuntu-latest
     steps:
@@ -58,20 +37,16 @@ jobs:
             -s factory/manifest.txt.sig < factory/manifest.txt
 
       - name: Every manifest entry re-hashes to its pinned sha256
-        run: sha256sum --strict -c factory/manifest.txt
-
-      - name: Every SIGNED_FILES entry is present in the manifest
         run: |
-          sed -n '/^SIGNED_FILES=(/,/^)/p' factory/ship.sh \
-            | sed '1d;$d;s/#.*//;s/^[[:space:]]*//;s/[[:space:]]*$//' \
-            | grep -v '^$' > "$RUNNER_TEMP/signed_files.txt"
-          test -s "$RUNNER_TEMP/signed_files.txt" || { echo "could not extract SIGNED_FILES from factory/ship.sh"; exit 1; }
-          awk '{print $2}' factory/manifest.txt > "$RUNNER_TEMP/manifest_paths.txt"
-          missing=0
-          while IFS= read -r f; do
-            grep -qxF "$f" "$RUNNER_TEMP/manifest_paths.txt" || {
-              echo "NOT IN MANIFEST: $f — listed in ship.sh SIGNED_FILES but never signed. Run 'bash factory/ship.sh' to re-sign."
-              missing=1
-            }
-          done < "$RUNNER_TEMP/signed_files.txt"
-          exit $missing
+          awk '$1 !~ /^#/ {print}' factory/manifest.txt | sha256sum --strict -c -
+          version="$(awk '$1=="#" && $2=="alexandria-factory-version" {print $3; exit}' factory/manifest.txt)"
+          [[ "$version" =~ ^[0-9]{14}$ ]]
+
+      - name: Manifest covers the entire tracked factory exactly
+        run: |
+          git ls-files factory \
+            | grep -vE '^factory/manifest\.txt(\.sig)?$' \
+            | LC_ALL=C sort > "$RUNNER_TEMP/expected_factory_paths.txt"
+          awk '$1 !~ /^#/ {print $2}' factory/manifest.txt \
+            | LC_ALL=C sort > "$RUNNER_TEMP/manifest_paths.txt"
+          diff -u "$RUNNER_TEMP/expected_factory_paths.txt" "$RUNNER_TEMP/manifest_paths.txt"

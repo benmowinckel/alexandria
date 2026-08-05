@@ -4,6 +4,7 @@
  */
 
 import { randomBytes } from 'crypto';
+import { installPrompt } from './install-prompt.js';
 
 function getWebsiteUrl() { return process.env.WEBSITE_URL || 'https://alexandria-library.com'; }
 
@@ -115,13 +116,13 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   // `rotateUrl` (set only for returning INSTALLED members, minted per-OAuth by
   // the callback) renders the low-key lost-key escape hatch below.
   const isReturning = !apiKey && authorNumber <= 0;
-  // The connect command is copy-paste, matching /start. (A claude-cli:// deep link was tried
+  // The connect message is copy-paste, matching /start. (A claude-cli:// deep link was tried
   // and removed 2026-06-24: it auto-ran the script and felt like a terminal hijack — copy-paste
-  // is calmer and universal across Claude Code / Cursor / Codex / Factory.) Same command whether
+  // is calmer and universal across Claude Code / Cursor / Codex / Factory.) Same message whether
   // they installed keyless first (it links the account) or join from the web first (it installs +
-  // links) — re-running setup.sh with the key is idempotent. Branded form: /a is
-  // a 307 to the raw setup.sh; the L in -fsSL (--location) follows it — keep it.
-  const curlCmd = apiKey ? `curl -fsSL alexandria-library.com/a | bash -s -- ${apiKey}` : '';
+  // links). It is non-executable: existing installs use their local signature
+  // verifier; first installs authenticate one exact GitHub commit themselves.
+  const connectPrompt = apiKey ? installPrompt({ apiKey }) : '';
   // The invite link now opens /invite — the self-contained referral landing
   // (founder 2026-07-17: a cold recipient dropped on /start had "no idea what
   // that is"). /invite pitches in one line and forwards the ref to /start,
@@ -393,7 +394,7 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   ${inviteUrl
     ? `<button type="button" class="cta-box primary" onclick="shareInvite(this)" aria-label="share your invite link">share your link<span class="cta-why cta-why-inverse">&nbsp;&mdash; bring people, stay free</span><span class="icon"><span class="icon-copy">${ICON_SHARE}</span><span class="icon-check">${ICON_CHECK}</span></span></button>`
     : ''}
-  ${isReturning || !curlCmd
+  ${isReturning || !connectPrompt
     ? `<div class="cta-box static">start /a in a new tab<span class="cta-why">&nbsp;&mdash; refine yourself between tasks</span></div>`
     : `<button type="button" class="cta-box" onclick="copyCmd(this)" aria-label="copy connect command">copy this line<span class="cta-why">&nbsp;&mdash; paste it in your agent</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>`}
   <div class="footer">
@@ -425,7 +426,7 @@ function manualCopy(text, el) {
     window.prompt('copy this:', text);
   }
 }
-function copyCmd(el) { copyText(${jsLiteral(curlCmd)}, el); }
+function copyCmd(el) { copyText(${jsLiteral(connectPrompt)}, el); }
 // Share, not copy (founder 2026-07-27): the native sheet puts the link one tap
 // from a real conversation — Messages, WhatsApp, wherever they'd actually send
 // it — instead of parking it on a clipboard they never paste. Desktop browsers

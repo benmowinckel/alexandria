@@ -1,5 +1,7 @@
 # Product engineering plan — building the closed loop
 
+> **Historical roadmap note — install transport superseded 2026-08-05.** The website no longer redirects any route to executable setup code. `/start` gives the user's coding agent a non-executable instruction to authenticate one exact GitHub commit and Touch ID fingerprint; later updates use the installed verifier.
+
 **What we're building (a2 THE PURE PRODUCT):** the closed-loop product — the **gym** (individual: `mind.md` developed by the user's AI via the `alexandria.md` harness) + the **collective** (library of minds + marketplace of systems + kin/circle + identity), with the **mesh** wiring the two.
 
 **Engineering principles (from the vehicle — these are architecture constraints):**
@@ -18,7 +20,7 @@
 ## 1. The floor — the gym (the substrate everything sits on)
 Full detail in `keyless-onboarding.md`. Work-list:
 - `setup.sh` **key-optional** (the 10 enumerated touchpoints) → keyless = the free gym, no account, no server calls. (`payload.sh` already keyless-clean.)
-- **`/a` redirect** (Vercel 302 → raw `setup.sh`): `curl -fsSL alexandria-library.com/a | bash`.
+- **First-install door:** `/start` is non-executable; `/a` is a retired 410 route.
 - **Auto-draft on install** (setup.sh tail → agent reads `.block`, begins) + tune `block.md`/editor canon so the first session is a *light, sharp* conversation, not a 20-question intake.
 - **Keyless public primer page** (slick copy-block + deep-link + copy-fallback; no kin code, no OAuth to view).
 - **Delete billing** (see §4) — it's free.

@@ -1,11 +1,13 @@
 # Keyless one-copy-paste onboarding — full plan
 
+> **Historical plan — install transport superseded 2026-08-05.** `/a` no longer serves executable bytes. The official first install is the non-executable message at `/start`, which makes the user's existing coding agent authenticate one exact GitHub commit and the Touch ID key before running setup. Later updates use the installed verifier.
+
 **Goal (founder, this session):** getting Alexandria = **copy one line → paste into your AI → it installs the free product and starts.** No sign-in, no key, nothing else. Sign-in is deferred to a later opt-in "join the Library" step.
 
 **Why this is correct now (new ground truth, 2026-06-23):** the **product** (the gym) and the **protocol** (`mind.md`) are *free and need no account*; only the **Library hub** needs sign-in, and it's opt-in/later. So the front door needs no account. This is mostly *deleting* a requirement (the forced key), not adding anything.
 
 ## DECISIONS LOCKED (founder, 2026-06-24)
-1. **Install one-liner = `/a`** (not `/go`): `curl -fsSL alexandria-library.com/a | bash`. On-brand (the protocol's own name).
+1. **Historical decision, now retired:** `/a` used to be the install one-liner. It now returns 410 so old executable commands fail closed; `/start` is the only official first-install door.
 2. **Marketplace — CORE to the product, but defer the *machinery* (corrected 2026-06-24).** Earlier "deleted" was part of the over-strip — wrong. The marketplace *function* (everyone's harness-learnings aggregate → the floor under every individual continuously rises) is one half of the closed loop (the systems flywheel; a2 THE PURE PRODUCT). It is **not** cut from the product. What we defer is the heavy *ranking machinery* (`marketplace*.ts`, the `/call` usage-signal half) — because at movement scale there's no usage signal yet to rank. Keep it dormant/dead-code-removed now; rebuild it when there's a network generating signal. Concept = core; machinery = not-yet.
 3. **The product is FREE.** Delete the billing machinery entirely (`billing.ts`, Stripe, checkout, patron/kin pricing). No payment anywhere in onboarding or the product. Monetise *depth* later (B2B opt-in shadows / pay-to-query) only if/when a network exists.
 4. **Kin — drop the *pricing* mechanic, keep the *social* ring (corrected 2026-06-24).** Free makes "free with 5 kin" (the pricing lever) moot — remove the kin *code/referral-for-pricing* from the primer. But "kin" also means the **social inner ring** (your circle on Alexandria — the friend's-mind primitive, ring 1 of the collective; a2/a4). That stays — it's part of the collective loop, not pricing. Drop kin-as-price; keep kin-as-circle.

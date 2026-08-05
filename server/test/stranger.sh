@@ -119,7 +119,7 @@ DIRTY
 echo "[stranger] pre-populated settings.json with existing hooks"
 
 # ═══════════════════════════════════════════════════════════
-# Phase 2 — Setup script (curl factory/setup.sh | bash)
+# Phase 2 — Setup script (the first-touch agent runs an exact verified commit)
 # ═══════════════════════════════════════════════════════════
 
 echo ""

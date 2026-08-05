@@ -56,11 +56,11 @@ Copy `factory/scripts/brief.py` from the public alexandria repo to `~/alexandria
 
 ```bash
 mkdir -p "$HOME/alexandria/system/scripts"
-# brief.py handles SMTP creds, so verify it against the offline-signed manifest
-# before installing — verify-fetch refuses tampered/unsigned code. (installed by
-# setup.sh; self-bootstrap if absent.)
-VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { curl -fsSL https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/scripts/verify-fetch.sh -o "$VF" && chmod +x "$VF"; }
-bash "$VF" scripts/brief.py > "$HOME/alexandria/system/scripts/brief.py" || { echo "brief.py verification failed — not installed"; return 1 2>/dev/null || exit 1; }
+# brief.py handles SMTP creds, so verify it against the Touch ID-signed manifest
+# before installing — verify-fetch refuses tampered/unsigned code. It must come
+# from the verified Alexandria install; it never bootstraps itself from the web.
+VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; return 1 2>/dev/null || exit 1; }
+tmp=$(mktemp); bash "$VF" scripts/brief.py > "$tmp" && mv "$tmp" "$HOME/alexandria/system/scripts/brief.py" || { rm -f "$tmp"; echo "brief.py verification failed — not installed"; return 1 2>/dev/null || exit 1; }
 chmod +x "$HOME/alexandria/system/scripts/brief.py"
 ```
 

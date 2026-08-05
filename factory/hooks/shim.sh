@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # Alexandria shim — one file, four modes, signature-verified payload.
-# Immutable. Installed once. All evolving logic lives in signed payload.sh.
+# Small and stable. Every install/update refreshes it only after the full
+# factory manifest authenticates its exact bytes.
 #
 # Trust model: this shim is the root, and it is CONSENT-SYMMETRIC — it only
 # ever executes the payload pinned on disk, and only after that exact file has
-# passed verification against a manifest signed by the maintainer's OFFLINE
+# passed verification against a manifest signed by the maintainer's Touch ID
 # key. It never auto-applies anything: when a newer signed payload exists
-# upstream it surfaces a notice, and the Author applies it by re-running the
-# install line. Deleting ~/alexandria/system/hooks/auto-update stops public
+# upstream it surfaces a notice, and the Author applies it through the local
+# signature verifier. Deleting ~/alexandria/system/hooks/auto-update stops public
 # engine/canon checks; keyed collective calls remain until .api_key is removed.
 #   Audit: https://github.com/benmowinckel/alexandria/blob/main/TRUST.md
 #   Inspect payload: https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hooks/payload.sh
@@ -25,6 +26,7 @@ SIGN_IDENTITY="alexandria-payload-signing"
 
 PAYLOAD_FILE="$ALEX_DIR/system/.hooks_payload"
 MARKER_FILE="$ALEX_DIR/system/.payload_verified_sha"
+VERSION_FILE="$ALEX_DIR/system/.factory_version"
 
 # ── Helpers ──────────────────────────────────────────────────────
 # All file operations work on byte-exact tempfiles (NOT bash string vars —
@@ -39,11 +41,11 @@ sha_of() {
 }
 
 # fetch_verified_manifest: fetch manifest + sig, verify the signature against
-# the offline key, cache the manifest to .canon_manifest (payload.sh uses it
+# the Touch ID key, cache the manifest to .canon_manifest (payload.sh uses it
 # for canon verification). Echoes "ok:<tempfile path>" (caller removes it) or
 # "fail:<reason>".
 fetch_verified_manifest() {
-  local manifest_file sig_file
+  local manifest_file sig_file version installed manifest_cache version_tmp
 
   if ! command -v ssh-keygen >/dev/null 2>&1; then
     echo "fail:no-ssh-keygen"; return
@@ -77,7 +79,25 @@ fetch_verified_manifest() {
     rm -f "$manifest_file" "$sig_file"; echo "fail:bad-signature"; return
   fi
 
-  cp "$manifest_file" "$ALEX_DIR/system/.canon_manifest"
+  version=$(awk '$1=="#" && $2=="alexandria-factory-version" {print $3; exit}' "$manifest_file")
+  case "$version" in ''|*[!0-9]*) rm -f "$manifest_file" "$sig_file"; echo "fail:missing-version"; return ;; esac
+  installed=$(cat "$VERSION_FILE" 2>/dev/null)
+  if [ -n "$installed" ]; then
+    case "$installed" in ''|*[!0-9]*) rm -f "$manifest_file" "$sig_file"; echo "fail:bad-local-version"; return ;; esac
+    if [ "$version" -lt "$installed" ]; then
+      rm -f "$manifest_file" "$sig_file"; echo "fail:signed-rollback"; return
+    fi
+  fi
+
+  manifest_cache="$ALEX_DIR/system/.canon_manifest.tmp.$$"
+  version_tmp="$VERSION_FILE.tmp.$$"
+  if ! cp "$manifest_file" "$manifest_cache" \
+     || ! mv "$manifest_cache" "$ALEX_DIR/system/.canon_manifest" \
+     || ! printf '%s\n' "$version" > "$version_tmp" \
+     || ! mv "$version_tmp" "$VERSION_FILE"; then
+    rm -f "$manifest_file" "$sig_file" "$manifest_cache" "$version_tmp"
+    echo "fail:pin-version"; return
+  fi
   rm -f "$sig_file"
   echo "ok:$manifest_file"
 }
@@ -151,7 +171,7 @@ if [ "$MODE" = "session-start" ]; then
       run_file="$PAYLOAD_FILE"; run_state="pinned"
     else
       # New or changed payload on disk (fresh install, an update the Author
-      # just applied via the install line, or tampering). Verify against the
+      # just applied via the local verifier, or tampering). Verify against the
       # signed manifest BEFORE its first run — this is the pin moment.
       verify_result=$(verify_payload_file "$PAYLOAD_FILE")
       if [ "$verify_result" = "ok" ] && [ -n "$local_sha" ]; then
@@ -162,12 +182,12 @@ if [ "$MODE" = "session-start" ]; then
         echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) shim: payload on disk not verified ($reason) — refusing to run it, bare mode" >> "$ALEX_DIR/system/.alexandria_errors"
         echo ""
         echo "--- ALEXANDRIA PAYLOAD NOT VERIFIED ---"
-        echo "The engine payload on disk hasn't passed the offline-key signature check (reason: $reason)."
+        echo "The engine payload on disk hasn't passed the Touch ID signature check (reason: $reason)."
         echo "Refusing to run it. This session runs bare (your files only, no engine)."
         echo "Just installed or updated? Verification needs one fetch of the signed manifest —"
         echo "check your network and open a new session. If this persists, audit"
-        echo "https://github.com/benmowinckel/alexandria and reinstall:"
-        echo "  curl -fsSL alexandria-library.com/a | bash"
+        echo "https://github.com/benmowinckel/alexandria and reinstall through the local verifier:"
+        echo "  bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh"
         echo "--- END NOT VERIFIED ---"
         echo ""
       fi
@@ -195,11 +215,11 @@ if [ "$MODE" = "session-start" ]; then
           printf '%s' "$upstream_sha" > "$NOTICE_FILE"
           echo ""
           echo "--- ALEXANDRIA ENGINE UPDATE AVAILABLE (signed, not applied) ---"
-          echo "A newer engine payload is published and its manifest passes the offline-key"
+          echo "A newer engine payload is published and its manifest passes the Touch ID"
           echo "signature check. Nothing has changed on this machine — it runs only what"
           echo "you've already approved. AGENT: mention this to the Author once; on their go,"
-          echo "apply it by running the install line (the new payload is verified before its"
-          echo "first run):  curl -fsSL alexandria-library.com/a | bash"
+          echo "apply it through the local verifier (the new payload is verified before its"
+          echo "first run):  bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh"
           echo "--- END UPDATE NOTICE ---"
           echo ""
         fi
