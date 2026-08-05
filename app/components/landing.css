@@ -1698,6 +1698,8 @@
           max-width: 660px;
         }
         .pitch-coda-copy {
+          display: grid;
+          gap: 2px;
           min-width: 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: normal;
@@ -1710,6 +1712,22 @@
           max-width: 620px;
           text-wrap: pretty;
         }
+        /* The fifth beat is a before/after, carried by typography rather than
+           UI furniture: the loss recedes; the result steps forward. */
+        .pitch-coda-line {
+          display: block;
+        }
+        .pitch-coda-loss {
+          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 0.95em;
+          color: var(--theme-fg-muted);
+        }
+        .pitch-coda-gain {
+          padding-left: 14px;
+          font-size: 1.04em;
+          color: var(--theme-fg);
+        }
         .pitch-para {
           display: block;
           margin: 0;
@@ -1721,8 +1739,8 @@
           max-width: 620px;
           text-wrap: pretty;
         }
-        /* A single quiet chevron is enough to imply that each line opens.
-           It rotates with the expansion; no instructional UI copy. */
+        /* A quiet chevron at the end of each preview implies that the thought
+           continues. It rotates with the expansion; no instructional UI copy. */
         .pitch-caret {
           display: inline-block;
           margin-left: 12px;
