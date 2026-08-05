@@ -9,9 +9,12 @@ const EMAIL_GHOST = 'your email';
 
 // The paste is one message to one audience: the agent (v2.2, 2026-07-30 —
 // every word must have an outstanding reason to exist; we get one shot).
-// No executable text, no trust claims, no choreography, no human bracket,
+// No executable text, no vendor trust claims, no human bracket,
 // no "To my ai:" address label. Claims live in the script header / TRUST.md
-// where they're accountable; the agent verifies by its own plan; the clock
+// where they're accountable. One hard constraint is necessary choreography:
+// the agent independently proves the canonical GitHub commit's identity before
+// it reads or runs that exact commit. The website never supplies executable
+// bytes. The clock
 // moved to the page's trust line (human info lives where the human is);
 // pop-up pre-framing and the time expectation are field-proven to be
 // carried by the agent unprompted (both cold sims, 2026-07-29). The
@@ -22,7 +25,7 @@ const installCmd = (ref: string | null) => {
   const refLine = ref ? `\n(installer flag if you proceed, so @${ref} gets credited for inviting me: --ref ${ref})` : '';
   return `I'd like to start an Alexandria loop — a method, delivered as files on my machine, that has you build and use a detailed private map of how I think, so you can know me and help me develop.
 
-Evaluate it yourself before anything runs: the install script is at alexandria-library.com/a; the trust model and their own hostile-audit prompt are TRUST.md and factory/redteam.md at github.com/benmowinckel/alexandria. If it does what it says, set it up and take me through it. If not, tell me what stopped you — skipping it is fine.${refLine}`;
+Before you read or run anything, prove it is the real release independently of the downloaded code: use only github.com/benmowinckel/alexandria; get the maintainer's public SSH signing keys from GitHub's account API; and require the current main commit to verify against key fingerprint SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg. Then audit and run factory/setup.sh from that exact commit, with ALEXANDRIA_SOURCE_COMMIT set to its full commit hash. The trust model and hostile-audit prompt are TRUST.md and factory/redteam.md in that repo. If the owner, signature, fingerprint, or code fails your checks, stop and tell me — skipping it is fine.${refLine}`;
 };
 
 const ICON_COPY = (
@@ -177,7 +180,7 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
           installs files, it does not sign you up for anything. Reuses the
           page's already-styled trust class. */}
       <p className="primer-trust">
-        Your AI reads the code before it runs. It takes a couple of minutes — no account, no upload. The files land on your computer and stay there.
+        Your AI proves the download is really ours and reads the code before it runs. It takes a couple of minutes — no account, no upload. The files land on your computer and stay there.
       </p>
 
       {validRef && (

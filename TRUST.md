@@ -13,11 +13,17 @@ A single P-256 key generated inside the Secure Enclave of the maintainer's Mac.
   ```
 - **Private key**: non-exportable Apple hardware. Every signature requires a fresh match against the fingerprints enrolled when the key was created; changing that fingerprint set invalidates the key. There is no passphrase, agent cache, CI secret, or backup copy that can sign.
 
+## First-install identity
+
+The official first touch gives no executable command. The user's existing coding agent independently clones only `https://github.com/benmowinckel/alexandria`, obtains the maintainer account's public signing keys from GitHub's account API, requires the exact fingerprint above, resolves `main` to one full commit hash, and verifies that commit before it reads or runs anything from the project. It then audits and runs `factory/setup.sh` from that same verified commit with `ALEXANDRIA_SOURCE_COMMIT` set to the hash. The setup script uses that immutable hash for every file it fetches, so the code cannot change between inspection and installation.
+
+The check must use the key written into the user's original request or another trust root independent of the downloaded code; a script cannot prove its own identity with a key it supplies itself. A different GitHub owner, fork, unsigned commit, wrong fingerprint, floating download, or mismatch fails closed as possible impersonation. The exact commands are deliberately left to the user's agent so they are produced by the trusted side of the boundary, not copied from the thing being examined.
+
 ## What is signed
 
 A single manifest, `factory/manifest.txt`, lists the SHA-256 of the **recurring execution path**: the hook payload, every canon module, and the scheduled skills and scripts. The authoritative set is the `SIGNED_FILES` array in `factory/ship.sh`; the manifest itself is one `<sha256>  <path>` line per file.
 
-Be precise about the boundary, because it is narrower than "everything": `setup.sh` itself is the trust-on-first-use bootstrap. It embeds the public key, fetches and verifies the signed manifest first, and then checks every fetched file that appears in that manifest before installing it. The recurring payload, canon modules, harness skills, Codex merge helper, and other named execution files therefore get a per-file hash check during setup. Files intentionally outside the signed set — including the shim, onboarding block, templates, and setup script itself — still rely on HTTPS plus public review. If GitHub's `main` were compromised, an existing pinned install refuses a changed payload; a fresh or repeated install still inherits the bootstrap risk because a malicious `setup.sh` could replace the embedded key or bypass the checks. That is the same residual as every `curl | bash` tool, disclosed here rather than papered over: read the setup script before each run. Excerpt (trimmed — read `factory/ship.sh` for the authoritative set):
+Be precise about the boundary, because it is narrower than "everything": the manifest signs the recurring execution path, not `setup.sh` itself. On the official first-install path, that bootstrap is protected one layer earlier by verifying the Git commit before any project code runs, then pinning every setup fetch to the same immutable commit. `setup.sh` embeds the payload public key, fetches and verifies the signed manifest first, and then checks every fetched file that appears in that manifest before installing it. The recurring payload, canon modules, harness skills, Codex merge helper, and other named execution files therefore get a per-file hash check during setup. Files intentionally outside the manifest — including the shim, onboarding block, templates, and setup script itself — are still bound to the verified Git commit on that path. A direct `curl | bash` bypasses the independent commit check and is not the official first-install path. Excerpt (trimmed — read `factory/ship.sh` for the authoritative set):
 
 ```
 <sha256>  factory/hooks/payload.sh
@@ -47,6 +53,7 @@ The session hooks archive each session's transcript into `~/alexandria/files/vau
 
 | Threat | Mitigation |
 |---|---|
+| Impersonating site, repo, or fork supplies different code | The official paste tells the user's already-running agent to require the exact canonical owner and Touch ID key fingerprint before any project code runs. The installer then stays pinned to that verified commit. Any mismatch stops. |
 | GitHub account compromise — attacker pushes malicious `payload.sh` to main | Attacker cannot produce a valid `manifest.txt.sig` without the maintainer approving that exact release with Touch ID. Shim refuses to exec. |
 | Selectively tampered single file (e.g. swapping `methodology.md`) | Manifest covers every file; any change breaks the manifest hash → signature verify fails. |
 | Man-in-the-middle on `raw.githubusercontent.com` | Signature verification on top of HTTPS catches forged content. |
@@ -59,7 +66,7 @@ The session hooks archive each session's transcript into `~/alexandria/files/vau
 | Maintainer's Mac compromised | The private key still cannot be exported or used without Touch ID. Malicious local code could try to present a misleading signing prompt; the system prompt names Alexandria and shows the release hash, so approval still requires the maintainer's physical action and attention. |
 | Maintainer's Mac is lost or its enrolled fingerprints change | The key is deliberately not recoverable. A new Secure Enclave key must be created and Authors must explicitly re-run setup to trust it. Availability is traded for a hard no-backup signing boundary. |
 | Maintainer ships malicious code intentionally | Code is public on GitHub. Anyone can read every line. Reputational + legal alignment is the structural deterrent — same as every CLI tool maintainer. |
-| Compromise of the initial `setup.sh` fetch (bootstrap problem) | Public key is embedded in `setup.sh` itself. Inherent to `curl \| bash` install patterns. Verifiable by anyone with the published fingerprint above. |
+| User bypasses the official flow and runs code from an impersonator | No shell script can authenticate itself after it has already started. The independent agent check prevents this on the official path; a person can still deliberately ignore the canonical owner and fingerprint, as with any phishing attempt. |
 
 ## Verifying it yourself
 
