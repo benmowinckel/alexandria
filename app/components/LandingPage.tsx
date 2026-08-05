@@ -1316,16 +1316,15 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   </p>
                 </div>
 
-                {/* The turn — hairline, then the supermarket frame makes the
-                    size of the decision physical before the literal button
-                    instruction removes the final activation barrier. */}
+                {/* The turn — hairline, then the free-sample moment makes the
+                    offer physical: the instructions are already being held
+                    out, so the reader only has to take them and try them. */}
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  Starting your loop is as small a decision as taking a free
+                  We are holding these free instructions out to you like a
                   sample at the supermarket.
                   <br />
-                  The free instructions are right there. Press the button and
-                  see what happens.
+                  Take them. Show them to your AI. See what happens.
                 </p>
 
                 <div className="cta-pair">
