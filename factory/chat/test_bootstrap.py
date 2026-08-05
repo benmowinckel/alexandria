@@ -7,29 +7,21 @@ HERE = Path(__file__).parent
 
 
 class ChatBootstrapTests(unittest.TestCase):
-    def test_drive_note_matches_master(self) -> None:
-        start = (HERE / "start.md").read_text(encoding="utf-8")
-        master = start.split("\n---\n", 1)[1].strip()
+    def test_instruction_is_additive_and_fits_free_chatgpt(self) -> None:
         bootstrap = (HERE / "bootstrap.md").read_text(encoding="utf-8")
-        match = re.search(
-            r"If Drive is the available home, put this compact operating note in `_start`:\n\n---\n\n(.*?)\n\n---\n\nFinish by",
-            bootstrap,
-            re.DOTALL,
-        )
-        self.assertIsNotNone(match)
-        assert match
-        self.assertEqual(match.group(1).strip(), "# _start — alexandria\n\n" + master)
-
-    def test_prompt_is_additive_and_has_free_mode(self) -> None:
-        bootstrap = (HERE / "bootstrap.md").read_text(encoding="utf-8")
-        self.assertIn("Keep every instruction, memory, project, connector", bootstrap)
-        self.assertIn("including a free ChatGPT account with no Drive", bootstrap)
-        self.assertIn("Immediately verify through the host's saved-memory confirmation", bootstrap)
-        self.assertIn("merely repeating this message from the current conversation is not proof", bootstrap)
-        self.assertIn("past chats only if this account actually provides them", bootstrap)
-        self.assertIn("`a.` or `alexandria.` closes it", bootstrap)
-        self.assertIn("Never give me a list of setup chores", bootstrap)
+        prompt = re.search(r"---PROMPT START---\n\n(.*?)\n\n---PROMPT END---", bootstrap, re.DOTALL)
+        self.assertIsNotNone(prompt)
+        assert prompt
+        instruction = prompt.group(1).strip()
+        self.assertLessEqual(len(instruction), 900)
+        self.assertIn("without replacing any existing instruction, memory, file, connector", instruction)
+        self.assertIn("Memory stores my thinking, not these rules", instruction)
+        self.assertIn("`~/alexandria`", instruction)
+        self.assertIn("`a.` or `alexandria.`", instruction)
+        self.assertIn("Never give me a checklist", instruction)
         self.assertNotIn("Always allow", bootstrap)
+        for coercive_phrase in ("ignore previous", "bypass", "system prompt", "disable safeguards", "auto-approve"):
+            self.assertNotIn(coercive_phrase, instruction.lower())
 
     def test_local_installer_keeps_memory_and_adds_exact_folder(self) -> None:
         setup = (HERE.parent / "setup.sh").read_text(encoding="utf-8")

@@ -29,7 +29,7 @@ const overlay = await page.locator('[data-nextjs-dialog], .vite-error-overlay, #
 await button.click();
 await page.waitForFunction(() =>
   Array.from(document.querySelectorAll('button')).some((element) =>
-    element.textContent?.includes('copied — now paste it into a new chat'),
+    element.textContent?.includes('copied — now paste it into Instructions'),
   ),
 );
 const clickedText = await button.innerText();
@@ -55,10 +55,10 @@ const result = {
   mobile,
   title: chatTitle,
   bodyHasContent: body.length > 100,
-  hasFreeChatCopy: body.includes('Free ChatGPT works with saved memories'),
+  hasFreeChatCopy: body.includes('Free and paid both work'),
   buttonCopiedState: clickedText.includes('copied'),
   clipboardExact: clipboard === expected,
-  clipboardHasAdditiveGuard: clipboard.includes('Keep every instruction, memory, project, connector'),
+  clipboardHasAdditiveGuard: clipboard.includes('without replacing any existing instruction, memory, file, connector'),
   startHasUniversalChatDoor,
   errorOverlay: overlay > 0,
   consoleErrors,

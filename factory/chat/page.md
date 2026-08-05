@@ -1,13 +1,13 @@
 # onboarding page — /chat
 
-**alexandria — in the chat you already use**
+**alexandria — one instruction**
 
-## keep chatting normally. your ai starts remembering what matters.
+## paste once. then keep chatting normally.
 
-copy the setup. paste it into a new chat. your ai does everything it can and gives you one short action only if the app requires it.
+copy Alexandria. paste it into ChatGPT's Custom Instructions or Claude's Instructions for Claude, then save. your ai handles storage and asks for one short action only if the app requires it.
 
 [copy the setup]
 
-works in free ChatGPT with saved memories; gets deeper automatically when writable Drive or local files are available.
+free and paid ChatGPT and Claude all have an instruction layer. memory keeps your thinking; instructions keep Alexandria running.
 
-nothing is sent to Alexandria. every instruction and memory you already have stays.
+nothing is sent to Alexandria. every instruction and memory you already have stays. ChatGPT Projects need the same block in Project instructions; custom GPTs do not support account instructions or memory.

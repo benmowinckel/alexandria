@@ -17,12 +17,19 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
     <div className="cta-section">
       <button className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
         {copied
-          ? 'copied — now paste it into a new chat'
-          : (<>copy the setup<span className="act-why"> — paste it into any chat</span></>)}
+          ? 'copied — now paste it into Instructions'
+          : (<>copy Alexandria<span className="act-why"> — one instruction</span></>)}
       </button>
       <p className="chat-rest">
-        Free ChatGPT works with saved memories. Drive or local files deepen it automatically. Nothing is sent to Alexandria.
+        ChatGPT: Settings → Personalization → Custom Instructions.<br />Claude: Settings → Instructions for Claude.
       </p>
+      <p className="chat-where">
+        Free and paid both work. Nothing is sent to Alexandria.
+      </p>
+      <details className="chat-details">
+        <summary>Using a ChatGPT Project or custom GPT?</summary>
+        <p>A Project needs the same paste in Project instructions. Custom GPTs cannot use account instructions or memory.</p>
+      </details>
     </div>
   );
 }

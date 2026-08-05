@@ -7,14 +7,14 @@ import ChatCTA from './ChatCTA';
 
 export const metadata = pageMetadata({
   path: '/chat',
-  title: 'alexandria in chat.',
+  title: 'alexandria in every chat.',
   description:
-    'Add Alexandria to the chat you already use. Free ChatGPT works with saved memories; writable Drive or local files deepen it automatically.',
+    'Paste Alexandria once into ChatGPT or Claude instructions. Memory keeps your thinking; instructions keep Alexandria running.',
 });
 
 // Door 2 of the two-door onboarding (can you run a terminal command? no → here).
-// One capability-aware request works in ordinary ChatGPT and Claude. The
-// user's own AI selects saved memory, Drive, or local files.
+// One compact block fits the free ChatGPT instruction limit and works in
+// Claude profile instructions. The user's AI selects memory, Drive, or files.
 function readBootstrap(): string {
   const raw = fs.readFileSync(
     path.join(process.cwd(), 'factory', 'chat', 'bootstrap.md'),
@@ -38,10 +38,10 @@ export default function ChatPage() {
       </header>
 
       <main className="primer-main">
-        <h1 className="primer-h1">Keep chatting normally.<br />Your AI starts remembering what matters.</h1>
+        <h1 className="primer-h1">Paste once.<br />Then keep chatting normally.</h1>
 
         <p className="start-grab">
-          Paste one request into the chat you already use. Your AI does what it can and asks for one short action only when the app requires it.
+          Put Alexandria in your AI&apos;s Instructions once. Memory keeps your thinking; the instruction keeps Alexandria running.
         </p>
 
         <ChatCTA bootstrap={bootstrap} />
@@ -120,8 +120,14 @@ export default function ChatPage() {
           color: var(--text-muted, rgba(26, 19, 24, 0.55));
         }
         .chat-where {
-          font-size: 14px; color: var(--text-muted, rgba(26, 19, 24, 0.55));
+          margin: 3px 0 0; font-size: 14px; color: var(--text-muted, rgba(26, 19, 24, 0.55));
         }
+        .chat-details {
+          margin: 13px 0 0; font-size: 13px; line-height: 1.55;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
+        .chat-details summary { cursor: pointer; }
+        .chat-details p { margin: 8px 0 0; max-width: 450px; }
 
 
         .door-btn {
