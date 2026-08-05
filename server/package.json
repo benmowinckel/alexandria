@@ -13,20 +13,21 @@
     "test:secret-fingerprint": "tsx test/secret-fingerprint.ts"
   },
   "dependencies": {
-    "hono": "^4.12.32",
+    "hono": "^4.13.0",
     "stripe": "21.0.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241230.0",
+    "@cloudflare/workers-types": "^5.20260804.1",
     "@types/node": "^22",
     "tsx": "^4.22.4",
     "typescript": "^5.8.0",
-    "wrangler": "^4.104.0"
+    "wrangler": "^4.118.0"
   },
   "engines": {
     "node": ">=20"
   },
   "overrides": {
-    "sharp": "^0.35.0"
+    "sharp": "^0.35.0",
+    "undici": "7.29.0"
   }
 }
