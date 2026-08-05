@@ -1320,8 +1320,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     deciding, then names the exact zero-commitment trial. */}
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  At the supermarket, you try the sample before deciding if you
-                  want it.
+                  You try a supermarket sample before deciding whether you want
+                  the product.
                   <br />
                   Press the button. Show your AI the instructions. Then decide
                   together.
