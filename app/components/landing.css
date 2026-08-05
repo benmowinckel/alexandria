@@ -1647,7 +1647,7 @@
           display: flex;
           flex-direction: column;
           justify-content: center;
-          gap: 20px;
+          gap: 26px;
           margin: 0;
         }
         .pitch-item {
@@ -1693,7 +1693,9 @@
         .pitch-coda {
           position: relative;
           display: block;
-          margin: 18px 0 0;
+          /* The larger pitch gap opens the four mechanism beats; trim this
+             margin by the same amount so the coda keeps its existing pause. */
+          margin: 12px 0 0;
           padding: 0;
           max-width: 660px;
         }
@@ -3041,7 +3043,7 @@
             flex: 0 0 auto;
             justify-content: flex-start;
             margin-top: 22px;
-            gap: 19px;
+            gap: 26px;
           }
           .pitch-item {
             padding: 0;
@@ -3063,7 +3065,7 @@
           }
           .pitch-coda {
             display: block;
-            margin-top: 16px;
+            margin-top: 9px;
             margin-left: 0;
             padding: 0;
           }
