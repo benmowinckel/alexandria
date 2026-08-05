@@ -87,6 +87,39 @@ if [ -n "$untracked_factory" ]; then
   exit 1
 fi
 
+# A skill without valid discovery metadata exists on disk but silently
+# disappears from the host's skill picker. Check the aliases before signing.
+validate_skill_frontmatter() {
+  local file="$1" expected_name="$2"
+  [ "$(sed -n '1p' "$file")" = "---" ] || {
+    echo "error: $file has no opening skill frontmatter" >&2
+    exit 1
+  }
+  grep -q "^name: $expected_name$" "$file" || {
+    echo "error: $file must declare name: $expected_name" >&2
+    exit 1
+  }
+  grep -q '^description: .' "$file" || {
+    echo "error: $file has no skill description" >&2
+    exit 1
+  }
+  sed -n '2,12p' "$file" | grep -qx -- '---' || {
+    echo "error: $file has no closing skill frontmatter" >&2
+    exit 1
+  }
+}
+validate_skill_frontmatter factory/skills/claudecode.md a
+validate_skill_frontmatter factory/skills/codex.md a
+validate_skill_frontmatter factory/skills/aclose.md a.
+grep -q 'display_name: "a — Alexandria"' factory/skills/codex-openai.yaml || {
+  echo "error: factory/skills/codex-openai.yaml has no Alexandria display name" >&2
+  exit 1
+}
+grep -q 'allow_implicit_invocation: false' factory/skills/codex-openai.yaml || {
+  echo "error: factory/skills/codex-openai.yaml must remain explicit-only" >&2
+  exit 1
+}
+
 previous_version="$(awk '$1=="#" && $2=="alexandria-factory-version" {print $3; exit}' factory/manifest.txt 2>/dev/null)"
 release_version="$(date -u +%Y%m%d%H%M%S)"
 case "$previous_version" in ''|[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "error: existing factory version is malformed" >&2; exit 1 ;; esac

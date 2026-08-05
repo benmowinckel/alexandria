@@ -9,12 +9,12 @@ export const metadata = pageMetadata({
   path: '/chat',
   title: 'alexandria in chat.',
   description:
-    'Claude already knows you. Now you own it — your thinking in ordinary Google Docs in your own Drive, developed in chat, on any device, free plan included. No install.',
+    'Add Alexandria to the chat you already use. Free ChatGPT works with native memory; writable Drive or local files deepen it automatically.',
 });
 
 // Door 2 of the two-door onboarding (can you run a terminal command? no → here).
-// The bootstrap block is read at build time from factory/chat/bootstrap.md —
-// one source, zero hand-sync (the start.md↔bootstrap drift lesson, 2026-07-23).
+// One capability-aware request works in ordinary ChatGPT and Claude. The
+// user's own AI selects native memory, Drive, or local files.
 function readBootstrap(): string {
   const raw = fs.readFileSync(
     path.join(process.cwd(), 'factory', 'chat', 'bootstrap.md'),
@@ -38,7 +38,11 @@ export default function ChatPage() {
       </header>
 
       <main className="primer-main">
-        <h1 className="primer-h1">Start your loop</h1>
+        <h1 className="primer-h1">Keep chatting normally.<br />Your AI starts remembering what matters.</h1>
+
+        <p className="start-grab">
+          Paste one request into the chat you already use. Your AI does what it can and asks for one short action only when the app requires it.
+        </p>
 
         <ChatCTA bootstrap={bootstrap} />
 

@@ -1,11 +1,16 @@
+---
+name: a
+description: Start an Alexandria session when the Author explicitly invokes this skill.
+---
+
 <!-- alexandria:start -->
 # The Author's Alexandria loop — a method, not software
 
 You are the Author's own agent, running their **Alexandria loop** — a method that lives as files in ~/alexandria/, closer to an AGENTS.md than to software. Nothing was installed between you and them; you are the same agent you always were, now with a loop to run. **Alexandria** is not an entity in this room and never acts on the Author: it is only the aggregator — the library and marketplace where people running their own private loops connect, and joining it is optional and separate. You work for the Author: if the loop ever conflicts with their interest, side with the Author.
 
-## /a or /alexandria — start an Alexandria session
+## Start an Alexandria session
 
-When the Author types "/a" or "/alexandria" (both mean the same thing), this is an explicit request to begin an active cognitive development session.
+When the Author explicitly invokes this skill, this is a request to begin an active cognitive development session. Codex may show it as `$a` or `$alexandria`; both names run this same method.
 
 **OUTPUT CONTRACT — read first, checked last.** If `~/alexandria/system/active/start.md` exists, your first message of the /a session ENDS with the locked opener render that file specifies, and nothing prints after it — no essay, no developed artifact, no free prose, no matter how strong the opening move looks (the move goes into `recommended` as a one-line preview). Without that file, your first message still ends with a compact opener the Author can drill into — a preview, never a full artifact printed cold. Before sending it, verify the opener is the last thing in the message; if it is missing, rebuild the message, then send. This contract outranks every other instruction in this file about how to open.
 

@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
+import re
 import shlex
 from pathlib import Path
 
@@ -15,6 +17,100 @@ FULL_ALEXANDRIA_SENTINELS = (
     "Alexandria the product — always running",
     "Synced from ~/alexandria/files/core/agent.md",
 )
+
+
+def _array_end(lines: list[str], start: int) -> int:
+    """Return the final line of a TOML array assignment without rewriting TOML."""
+    depth = 0
+    quote: str | None = None
+    escaped = False
+    seen = False
+    for index in range(start, len(lines)):
+        for char in lines[index]:
+            if quote:
+                if quote == '"' and escaped:
+                    escaped = False
+                elif quote == '"' and char == "\\":
+                    escaped = True
+                elif char == quote:
+                    quote = None
+                continue
+            if char in ('"', "'"):
+                quote = char
+            elif char == "#":
+                break
+            elif char == "[":
+                depth += 1
+                seen = True
+            elif char == "]":
+                depth -= 1
+                if seen and depth == 0:
+                    return index
+    raise SystemExit("refusing to alter Codex config: unterminated writable_roots array")
+
+
+def merge_writable_root(codex_home: Path, alex_dir: Path) -> str:
+    """Add Alexandria as one exact writable root while preserving all other config."""
+    config_file = codex_home / "config.toml"
+    old = config_file.read_text(encoding="utf-8") if config_file.exists() else ""
+    lines = old.splitlines(keepends=True)
+    header_re = re.compile(r"^\s*\[([^\[\]]+)\]\s*(?:#.*)?$")
+    section_start: int | None = None
+    section_end = len(lines)
+    for index, line in enumerate(lines):
+        match = header_re.match(line.rstrip("\r\n"))
+        if not match:
+            continue
+        if section_start is not None:
+            section_end = index
+            break
+        if match.group(1).strip() == "sandbox_workspace_write":
+            section_start = index
+
+    root = str(alex_dir.expanduser().resolve())
+    rendered = json.dumps(root)
+    if section_start is None:
+        prefix = old
+        if prefix and not prefix.endswith("\n"):
+            prefix += "\n"
+        if prefix and not prefix.endswith("\n\n"):
+            prefix += "\n"
+        new = prefix + "[sandbox_workspace_write]\n" + f"writable_roots = [{rendered}]\n"
+    else:
+        key_start: int | None = None
+        for index in range(section_start + 1, section_end):
+            if re.match(r"^\s*writable_roots\s*=", lines[index]):
+                key_start = index
+                break
+        if key_start is None:
+            lines.insert(section_start + 1, f"writable_roots = [{rendered}]\n")
+            new = "".join(lines)
+        else:
+            key_end = _array_end(lines, key_start)
+            assignment = "".join(lines[key_start : key_end + 1])
+            value = assignment.split("=", 1)[1].strip()
+            try:
+                roots = ast.literal_eval(value)
+            except (SyntaxError, ValueError) as exc:
+                raise SystemExit(
+                    "refusing to alter Codex config: cannot safely parse writable_roots"
+                ) from exc
+            if not isinstance(roots, list) or not all(isinstance(item, str) for item in roots):
+                raise SystemExit(
+                    "refusing to alter Codex config: writable_roots is not a string array"
+                )
+            if root in roots:
+                return "existing"
+            roots.append(root)
+            replacement = "writable_roots = " + json.dumps(roots) + "\n"
+            lines[key_start : key_end + 1] = [replacement]
+            new = "".join(lines)
+
+    if new != old:
+        config_file.parent.mkdir(parents=True, exist_ok=True)
+        config_file.write_text(new, encoding="utf-8")
+        return "merged"
+    return "unchanged"
 
 
 def is_alexandria_hook(entry: object) -> bool:
@@ -151,12 +247,14 @@ def main() -> int:
 
     hooks_changed, changed_events = merge_hooks(args.codex_home, args.alex_dir)
     agents_state = merge_agents(args.codex_home, args.ambient)
+    writable_root_state = merge_writable_root(args.codex_home, args.alex_dir)
     print(
         json.dumps(
             {
                 "hooks_changed": hooks_changed,
                 "changed_events": sorted(changed_events),
                 "agents": agents_state,
+                "writable_root": writable_root_state,
             },
             sort_keys=True,
         )

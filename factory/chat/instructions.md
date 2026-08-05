@@ -1,30 +1,19 @@
-# after the bootstrap — two settings, then one letter
+# after the bootstrap — nothing to remember
 
-*User-facing card. This is everything a chat user does after pasting the bootstrap. Two actions, once each. Anything beyond these is noise — no vehicles, options, or alternatives here (Projects rejected outright, founder 2026-07-23; memory is seeded silently by the bootstrap; the Skill variant is parked, internal-only).*
+*The user's AI performs capability negotiation. The Author pastes once, then follows at most one short prompt for a setting or approval the host reserves for humans.*
 
----
+## normal use
 
-## 1. make reads silent (once)
+Keep chatting exactly as before. The AI notices durable signal and asks **“save that to Alexandria?”** only when confirmation matters.
 
-Settings → Connectors → Google Drive → Tool permissions:
+Type **a** or **alexandria** for a deliberate session. Type **a.** to close it.
 
-- every read tool — search, read, download, metadata — set to **Always allow**
-- file creation: leave on **Needs approval**
+## storage ladder
 
-Reads happen every session and should be silent. Writes are rare and should ask.
+1. Local writable `~/alexandria` — full sovereign mode.
+2. Writable Google Drive — connected chat mode.
+3. Native memory + existing Custom Instructions — free ChatGPT mode.
 
-## 2. make it save your thinking as you go (once)
+The user never chooses a mode and never moves material between them. The agent uses the strongest live capability, preserves all existing personalisation, and says honestly when the current surface cannot persist something.
 
-Settings → General → Instructions — paste this at the bottom:
-
-> I keep my alexandria — my thinking practice — in the "alexandria" folder of my Google Drive. In every conversation, quietly notice when I state a belief, a position, a preference, or a way I think — and offer to save it there, without me ever having to remember; that offer is always your job. When I say "a", find the doc "_start" in that folder via the Drive connector, read it, and run the session it describes.
-
-This is the passive layer — the most important piece: your files grow from normal conversations, and the one approval tap on each save IS your confirmation. "a" is just the deep session on top.
-
-## 3. that's it
-
-New chat, any device: type **a**.
-
-## 4. one folder, any ai
-
-The same block works in any ai that can read your Drive — claude is where it's fully supported today. Your files aren't locked to any vendor either way: they're ordinary Google Docs.
+Native mode is deliberately the floor, not fake file parity: it works across ordinary free-account chats with no connector, but its depth is bounded by the host's memory. When the user later gains writable files, the agent exports what it knows into the sovereign folder without changing their behavior.

@@ -1,0 +1,6 @@
+interface:
+  display_name: "a — Alexandria"
+  short_description: "Start an Alexandria session"
+
+policy:
+  allow_implicit_invocation: false

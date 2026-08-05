@@ -67,7 +67,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
           claude code<span className="act-why"> — or cursor or codex</span>
         </button>
         <Link href="/chat" className="door-btn door-btn-link">
-          just claude<span className="act-why"> — the regular chat app</span>
+          just chat<span className="act-why"> — ChatGPT or Claude</span>
         </Link>
       </div>
     </div>

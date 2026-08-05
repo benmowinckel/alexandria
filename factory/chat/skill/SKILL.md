@@ -1,8 +1,12 @@
 ---
 name: a
-description: The Author's alexandria session. Fires when they say "a" or mention alexandria, their constitution, or a session over their thinking files in Google Drive.
+description: The Author's Alexandria session across local files, writable Drive, or native memory.
 ---
 
-Find the Google Doc titled "_start" inside the "alexandria" folder of the Author's Google Drive (title search via the Google Drive connector), read it, and follow it exactly — it defines the session protocol, the write rules, and the guards.
+Use the strongest home this task can actually read and write:
 
-If the Drive connector is unavailable or the doc cannot be found, say so plainly and stop — never improvise the protocol from memory.
+1. `~/alexandria` when local file access exists.
+2. The `_start` document in the Author's Google Drive `alexandria` folder when Drive is writable.
+3. Existing saved memory and available past chats when neither file home exists.
+
+Never mix local and Drive in one task. Never replace or disable the host's existing memory or instructions. In native mode, be honest that persistence is bounded by the host's memory; save only after the Author confirms. Say plainly when a read or write fails and never claim an unverified save.

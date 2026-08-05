@@ -17,14 +17,11 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
     <div className="cta-section">
       <button className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
         {copied
-          ? 'copied — now paste it into claude'
-          : (<>copy the setup<span className="act-why"> — paste it into claude</span></>)}
+          ? 'copied — now paste it into a new chat'
+          : (<>copy the setup<span className="act-why"> — paste it into any chat</span></>)}
       </button>
-      {/* The trust line for the chat door — the docs are written into the
-          reader's own Drive, not to anything of ours. Reuses the page's
-          already-styled quiet class. */}
       <p className="chat-rest">
-        No install, no account, no server of ours — the docs are created in your own Drive.
+        Free ChatGPT works with native memory. Drive or local files deepen it automatically. Nothing is sent to Alexandria.
       </p>
     </div>
   );
