@@ -1721,8 +1721,8 @@
           max-width: 620px;
           text-wrap: pretty;
         }
-        /* A single quiet chevron is enough to imply that each line opens.
-           It rotates with the expansion; no instructional UI copy. */
+        /* A quiet chevron at the end of each preview implies that the thought
+           continues. It rotates with the expansion; no instructional UI copy. */
         .pitch-caret {
           display: inline-block;
           margin-left: 12px;
