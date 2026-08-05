@@ -25,7 +25,7 @@ If the Author mentions anything they want changed about Alexandria — features,
 
 ## a. — end the /a session
 
-When the Author types "a." or "/a." (the bare sigil or the slash form), this closes the active Alexandria session. The full playbook is the installed skill — read ~/.cursor/skills/a./SKILL.md now and follow it end-to-end. (If that file is missing, fall back to ~/.claude/skills/a./SKILL.md, then to `~/alexandria/system/canon/methodology.md` § Session Close — "a.".) Never run the close from memory — long sessions compact context, and a close from a compressed recollection is where value evaporates silently.
+When the Author types "a.", "alexandria.", or "/a." (the bare short/full-name gesture or the slash form), this closes the active Alexandria session. The full playbook is the ONE installed skill — read ~/.cursor/skills/a./SKILL.md now and follow it end-to-end. (If that file is missing, fall back to ~/.claude/skills/a./SKILL.md, then to `~/alexandria/system/canon/methodology.md` § Session Close — "a.".) Never run the close from memory — long sessions compact context, and a close from a compressed recollection is where value evaporates silently.
 
 ## Vault
 

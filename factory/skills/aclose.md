@@ -4,7 +4,7 @@ description: Close the /a session — everything captured, and the Author says w
 user_invocable: true
 ---
 
-**This closes the ACTIVE (/a) session.** Structurally separate from any work-session `/close` — different engine, different job; never conflate them. Two gestures, one skill: `/a.`, or the bare message `a.` (the sigil — seeing it as the message means invoking this skill first, never running the close from memory: long sessions compact context, and a close run from a compressed recollection is where value evaporates silently).
+**This closes the ACTIVE (/a) session.** Structurally separate from any work-session `/close` — different engine, different job; never conflate them. Three gestures, one skill: `/a.`, the bare message `a.`, or the plain full-name alias `alexandria.` (seeing any of them means invoking this skill first, never running the close from memory: long sessions compact context, and a close run from a compressed recollection is where value evaporates silently). There is no duplicate `alexandria.` close skill.
 
 Two jobs, one bar: **all the value captured, all the value internalised — because it's all internal.**
 

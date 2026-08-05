@@ -21,7 +21,7 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
           : (<>copy the setup<span className="act-why"> — paste it into any chat</span></>)}
       </button>
       <p className="chat-rest">
-        Free ChatGPT works with native memory. Drive or local files deepen it automatically. Nothing is sent to Alexandria.
+        Free ChatGPT works with saved memories. Drive or local files deepen it automatically. Nothing is sent to Alexandria.
       </p>
     </div>
   );

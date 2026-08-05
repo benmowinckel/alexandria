@@ -55,7 +55,7 @@ const result = {
   mobile,
   title: chatTitle,
   bodyHasContent: body.length > 100,
-  hasFreeChatCopy: body.includes('Free ChatGPT works with native memory'),
+  hasFreeChatCopy: body.includes('Free ChatGPT works with saved memories'),
   buttonCopiedState: clickedText.includes('copied'),
   clipboardExact: clipboard === expected,
   clipboardHasAdditiveGuard: clipboard.includes('Keep every instruction, memory, project, connector'),

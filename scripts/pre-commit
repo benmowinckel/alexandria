@@ -122,10 +122,12 @@ if git diff --cached --name-only | grep -q '^server/src/'; then
   fi
 fi
 
-# App build check (matches CI: "npm ci && npm run build")
+# App build check. Use Next's supported Webpack path locally because Turbopack
+# opens a helper port while compiling CSS, which Codex's sandbox correctly
+# blocks. The signed GitHub release still runs the default Turbopack build.
 if git diff --cached --name-only | grep -qE '^(app/|next\.config|package\.json)'; then
   echo "app/ changed — build checking..."
-  npm run build 2>&1 | tail -20
+  npm run build -- --webpack 2>&1 | tail -20
   if [ ${PIPESTATUS[0]} -ne 0 ]; then
     echo ""
     echo "BLOCKED: app build failed. Fix before committing."

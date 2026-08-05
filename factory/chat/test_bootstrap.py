@@ -24,6 +24,10 @@ class ChatBootstrapTests(unittest.TestCase):
         bootstrap = (HERE / "bootstrap.md").read_text(encoding="utf-8")
         self.assertIn("Keep every instruction, memory, project, connector", bootstrap)
         self.assertIn("including a free ChatGPT account with no Drive", bootstrap)
+        self.assertIn("Immediately verify through the host's saved-memory confirmation", bootstrap)
+        self.assertIn("merely repeating this message from the current conversation is not proof", bootstrap)
+        self.assertIn("past chats only if this account actually provides them", bootstrap)
+        self.assertIn("`a.` or `alexandria.` closes it", bootstrap)
         self.assertIn("Never give me a list of setup chores", bootstrap)
         self.assertNotIn("Always allow", bootstrap)
 

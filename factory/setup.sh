@@ -430,9 +430,9 @@ When personal context would improve the task, use the best home this session can
 
 1. If `~/alexandria` is available, use it exclusively. It is ground truth. Read `~/alexandria/system/canon/methodology.md` and the relevant files under `~/alexandria/files/`.
 2. Otherwise, if my Google Drive `alexandria` folder is available, open `_start` and follow it. For a full local Author this is a pocket copy; for a chat-only Author it is ground truth.
-3. Otherwise use the host's existing saved memory and available past chats as a lightweight native floor. Quietly notice durable beliefs, preferences, and ideas; ask “save that to Alexandria?” when one is worth keeping, and save only after I confirm. Never pretend native memory has file-level fidelity.
+3. Otherwise use the host's saved memories as a lightweight native floor, plus past chats only when this account actually exposes them. Quietly notice durable beliefs, preferences, and ideas; ask “save that to Alexandria?” when one is worth keeping, and save only after I confirm. Never pretend native memory has file-level fidelity.
 
-Never load local and Drive in the same task. Bare `a`, `alexandria`, `/a`, or `/alexandria` starts the same Alexandria method; `a.` closes it. State what you can read and write, and only claim persistence after verifying it. Existing instructions and native memories remain active beside Alexandria.
+Never load local and Drive in the same task. Bare `a`, `alexandria`, `/a`, or `/alexandria` starts the same Alexandria method; bare `a.` or `alexandria.` closes it through the same close skill. State what you can read and write, and only claim persistence after verifying it. Existing instructions and native memories remain active beside Alexandria.
 <!-- alexandria:end -->
 CLAUDEINSTR
 

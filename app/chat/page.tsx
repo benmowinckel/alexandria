@@ -9,12 +9,12 @@ export const metadata = pageMetadata({
   path: '/chat',
   title: 'alexandria in chat.',
   description:
-    'Add Alexandria to the chat you already use. Free ChatGPT works with native memory; writable Drive or local files deepen it automatically.',
+    'Add Alexandria to the chat you already use. Free ChatGPT works with saved memories; writable Drive or local files deepen it automatically.',
 });
 
 // Door 2 of the two-door onboarding (can you run a terminal command? no → here).
 // One capability-aware request works in ordinary ChatGPT and Claude. The
-// user's own AI selects native memory, Drive, or local files.
+// user's own AI selects saved memory, Drive, or local files.
 function readBootstrap(): string {
   const raw = fs.readFileSync(
     path.join(process.cwd(), 'factory', 'chat', 'bootstrap.md'),

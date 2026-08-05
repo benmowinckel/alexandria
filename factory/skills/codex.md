@@ -61,7 +61,7 @@ If the Author mentions anything they want changed about Alexandria — features,
 
 ## a. — end the session (the close reflection)
 
-When the Author types "a." (or "bye", "that's it", or any sign-off), this ends the Alexandria session. Two jobs, one bar: all the value captured, all the value internalised.
+When the Author types "a." or "alexandria." (or "bye", "that's it", or any sign-off), this ends the Alexandria session through the same close method. Two jobs, one bar: all the value captured, all the value internalised.
 
 First, silently — capture:
 - Write crystallised signal to the appropriate file — marginalia/, constitution/, or notepad.md

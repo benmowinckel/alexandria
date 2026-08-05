@@ -8,6 +8,6 @@ copy the setup. paste it into a new chat. your ai does everything it can and giv
 
 [copy the setup]
 
-works in free ChatGPT with native memory; gets deeper automatically when writable Drive or local files are available.
+works in free ChatGPT with saved memories; gets deeper automatically when writable Drive or local files are available.
 
 nothing is sent to Alexandria. every instruction and memory you already have stays.
