@@ -98,7 +98,7 @@ The `~/.config/git/allowed_signers` file (used by `git verify-commit` for your o
 One verified setup wires every surface — nothing to install per-agent, no plugin, no marketplace:
 
 - **Claude Code:** the 3 hook entries in `~/.claude/settings.json` fire the shim at session start/end.
-- **Claude Desktop's code tab:** that tab **is** Claude Code running on your machine — it reads the same `~/.claude/settings.json`, so the same entries cover it automatically. (The chat tab has no local file access, so it does nothing.)
+- **Claude Desktop's code tab:** that tab **is** Claude Code running on your machine — it reads the same `~/.claude/settings.json`, so the same entries cover it automatically. The normal chat tab cannot run these local hooks; Alexandria still works there through the one account-instructions paste on the [chat onboarding page](/chat), using writable Drive or native memory for personal content.
 - **Cursor:** 5 hook entries in `~/.cursor/hooks.json` call small Python wrappers — session start/end/stop plus per-prompt and per-response transcript capture — that shell out to the same shim (or write the local staging transcript Cursor never provides natively).
 - **Codex:** native `hooks.json`, current `AGENTS.md`, and one start + one close skill. SessionEnd saves the transcript and a receipt inside Codex's three-second cap; the next SessionStart drains the ordinary feedback/git work. Setup stays visibly pending until trusted hooks have actually run at start and end.
 - **Factory:** a plain droid skill in `~/.factory/droids/a.md`; the file-only floor applies where lifecycle hooks are unavailable.
