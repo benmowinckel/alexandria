@@ -64,10 +64,10 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
       <p className="door-q">what do you use?</p>
       <div className="door-answers">
         <button className="door-btn" onClick={() => go('device')}>
-          claude code<span className="act-why"> — or cursor or codex</span>
+          agents<span className="act-why"> — eg claude code, codex, cursor</span>
         </button>
         <Link href="/chat" className="door-btn door-btn-link">
-          just chat<span className="act-why"> — ChatGPT or Claude</span>
+          chat<span className="act-why"> — eg claude, gpt, gemini</span>
         </Link>
       </div>
     </div>

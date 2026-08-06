@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { SERVER_URL, SHORTCUT_URL } from '../lib/config';
 import { ArrowIcon } from '../join/DoorIcons';
 
-const EMAIL_GHOST = 'your email';
-
 // The paste is one message to one audience: the agent (v2.2, 2026-07-30 —
 // every word must have an outstanding reason to exist; we get one shot).
 // No executable text, no vendor trust claims, no human bracket,
@@ -42,13 +40,14 @@ const ICON_CHECK = (
 );
 
 // ONE screen after the door (founder 2026-07-24: "no need for another gate…
-// you just autopilot through"): copy → paste → shortcut → email, stacked,
+// you just autopilot through"): shortcut → email → setup, stacked,
 // each one line. The command TEXT is hidden behind the copy button (noise to
 // an autopilot user; it lives in the footnote for the curious). `refCode`,
 // not `ref` — `ref` is a reserved React prop name.
 export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'computer' | 'phone' }) {
   const [copied, setCopied] = useState(false);
   const [email, setEmail] = useState('');
+  const [emailFocused, setEmailFocused] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [shakeKey, setShakeKey] = useState(0);
@@ -119,23 +118,18 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
         <p className="install-invite">@{validRef} invited you to alexandria.</p>
       )}
 
-      {/* The numerals count only what is required — on the computer path
-          that is two things (shortcut, paste); on the phone path the
-          shortcut is the whole flow, so it carries no numeral at all. The
-          empty gutter keeps every box on the same left spine. */}
+      {/* The computer path has three numbered actions. On the phone path the
+          shortcut is the first action, so it carries no numeral. */}
       <div className="act-row">
         <span className="act-num">{mode === 'computer' ? '1' : ''}</span>
         <a className="door-btn act-box" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">
-          add the shortcut<span className="act-why"> — drop in anything</span>
+          add the shortcut<span className="act-why"> — share anything you want to think about</span>
         </a>
       </div>
 
-      {/* The email sits OUTSIDE the sequence — numbered, it read as
-          required registration; it is neither. Same box grammar (inputs
-          live in boxes), no numeral, and the why-line says optional. */}
       <div className="act-row">
-        <span className="act-num" aria-hidden />
-        <form className="door-btn act-box act-email" onSubmit={sendEmail} onClick={() => emailRef.current?.focus()}>
+        <span className="act-num">{mode === 'computer' ? '2' : ''}</span>
+        <form className={`door-btn act-box act-email${emailFocused ? ' is-focused' : ''}`} onSubmit={sendEmail} onClick={() => emailRef.current?.focus()}>
           {mailState === 'sent' ? (
             <span className="act-sent">sent<span className="act-why"> ✓</span></span>
           ) : (
@@ -147,16 +141,19 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
                 type="email"
                 inputMode="email"
                 autoComplete="email"
-                placeholder="leave your email"
-                aria-label="leave your email"
+                placeholder="your email"
+                aria-label="your email"
                 data-shake={shakeKey > 0 ? 'on' : 'off'}
-                className={email.trim() ? 'has-val' : ''}
+                className={email.trim() || emailFocused ? 'has-val' : ''}
                 value={email}
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
                 onChange={(e) => { setEmail(e.target.value); if (mailState === 'error') setMailState('idle'); }}
               />
-              {!email.trim() && <span className="act-why act-email-why"> — optional, for the follow-up</span>}
-              {email.trim() && (
-                <button type="submit" className="join-door-go" aria-label="send" disabled={mailState === 'sending'}>
+              {!email.trim() && <span className="act-why act-email-why"> — get help as you go, from setup through first use</span>}
+              {emailFocused && (
+                <button type="submit" className="join-door-go" aria-label="submit email" disabled={mailState === 'sending'} onMouseDown={(e) => e.preventDefault()}>
+                  <span className="join-go-word">enter</span>
                   <ArrowIcon />
                 </button>
               )}
@@ -167,11 +164,11 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
 
       {mode === 'computer' && (
         <div className="act-row">
-          <span className="act-num">2</span>
+          <span className="act-num">3</span>
           <button type="button" className={`door-btn act-box cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
             {copied
-              ? 'copied — now paste it in'
-              : (<>copy the setup<span className="act-why"> — then paste it in</span></>)}
+              ? 'copied — paste it into your agent’s chat or terminal'
+              : (<>copy the setup<span className="act-why"> — paste it into your agent’s chat or terminal</span></>)}
           </button>
         </div>
       )}
@@ -181,7 +178,6 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
       <p className="primer-trust">
         Your AI proves the download is really ours and reads the code before it runs. It takes a couple of minutes — no account, no upload. The files land on your computer and stay there.
       </p>
-
       {validRef && (
         <p className="install-new">
           <Link href="/">new here? see what this is &rarr;</Link>
