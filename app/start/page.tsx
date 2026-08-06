@@ -129,23 +129,7 @@ export default async function StartPage({
           text-wrap: pretty;
         }
 
-        .primer-trust {
-          margin: 36px 0 0; max-width: 460px;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 14px; line-height: 1.65; letter-spacing: 0.01em;
-          color: var(--text-muted); text-align: left;
-          font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
-        }
-        .primer-trust a {
-          color: var(--text-secondary);
-          text-decoration: underline; text-decoration-color: var(--text-muted);
-          text-underline-offset: 3px; text-decoration-thickness: 1px;
-          transition: color 200ms, text-decoration-color 200ms;
-        }
-        .primer-trust a:hover { text-decoration-color: var(--text-primary); color: var(--text-primary); }
-
-        /* CTA — the copy-block command is the single primary action; the whole
-           cluster hangs from the left spine. */
+        /* CTA — every box shares the text spine; numerals sit just outside it. */
         .cta-section { display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin: 12px 0 0; width: 100%; }
 
         /* The two steps — readable instructions, faint numerals; the page IS
@@ -343,16 +327,19 @@ export default async function StartPage({
         .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .door-btn:active { transform: scale(0.992); }
         .act-row {
-          display: flex; align-items: center; gap: 14px;
-          width: 100%; max-width: 486px; margin: 0 0 10px;
+          position: relative; width: 100%; max-width: 460px; margin: 0 0 10px;
         }
         .act-num {
-          flex: none; width: 12px; text-align: right;
+          position: absolute; left: -24px; top: 50%; transform: translateY(-50%);
+          width: 12px; text-align: right;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 13px; color: var(--text-muted, rgba(26, 19, 24, 0.4));
           font-variant-numeric: lining-nums;
         }
-        .act-box { flex: 1; max-width: none; text-decoration: none; display: block; }
+        .act-box {
+          width: 100%; max-width: none; text-decoration: none; display: block;
+          font-size: 14px; white-space: nowrap;
+        }
         .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
         .act-sub {
           margin: -2px 0 14px 46px; max-width: 420px;
@@ -362,17 +349,23 @@ export default async function StartPage({
         }
         .act-email { display: flex; align-items: center; gap: 0; cursor: text; }
         .act-email input {
-          flex: none; width: 7.6em; min-width: 0; background: transparent; border: none; outline: none;
+          flex: none; width: 5.5em; min-width: 0; background: transparent; border: none; outline: none;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary);
+          font-size: inherit; letter-spacing: 0.01em; color: var(--text-primary);
           padding: 0;
         }
         .act-email input.has-val { flex: 1; }
         .act-email .join-door-go { margin-left: auto; }
         .act-email input::placeholder { color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .act-email input[data-shake="on"] { animation: startShake 320ms ease-in-out; }
-        .act-email-why { flex: none; font-size: 17px; }
-        .act-sent { font-size: 17px; }
+        .act-email-why {
+          flex: none; max-width: 28em; overflow: hidden; opacity: 1;
+          transition: opacity 180ms ease, max-width 220ms ease;
+        }
+        .act-email.is-focused .act-email-why {
+          opacity: 0; max-width: 0; pointer-events: none;
+        }
+        .act-sent { font-size: inherit; }
         .cta-btn.is-copied {
           border-color: var(--accent); background: var(--bg-primary);
         }
@@ -468,6 +461,7 @@ export default async function StartPage({
           .primer-lede { font-size: 16px; margin-bottom: 36px; }
           .install-cmd { font-size: 12.5px; }
           .primer-coda { font-size: 18px; margin-top: 52px; }
+          .act-box { font-size: 11.5px; letter-spacing: -0.02em; padding-left: 8px; padding-right: 8px; }
         }
       `}</style>
     </div>

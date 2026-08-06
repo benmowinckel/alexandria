@@ -1131,8 +1131,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     Each large sentence carries the causal story on its own;
                     the quieter line beneath adds precision. Whitespace
                     separates the four beats, and the chevron alone implies
-                    that each one opens. The final before/after is the fifth
-                    beat: still literal, but typographically distinct. */}
+                    that each one opens. The final line is an unlabelled coda,
+                    not a fifth section. */}
                 <div className="pitch">
                   <section
                     data-pitch="instructions"
@@ -1148,13 +1148,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          You start by showing the AI you already use our free
-                          instructions.
+                          You show the AI you already use our free
+                          instructions&mdash;not a new app or tool.
+                          <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          Your AI reads them, then decides with you whether and
-                          how to change the way it works.
-                          <span className="pitch-caret" aria-hidden>›</span>
+                          It reads them, then decides with you whether and how
+                          to change the way it works.
                         </span>
                       </span>
                     </button>
@@ -1163,16 +1163,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         <p className="pitch-more">
                           Think of the instructions as a recipe handed to a
                           chef. Your AI is the chef. It reads the purpose and
-                          possible steps, then decides with you which parts make
-                          sense and how to use them. Alexandria is just the name
-                          for this way of working; nothing else is doing the
-                          work.
+                          possible steps, then decides with you what to notice,
+                          what to write down, when to read it back, and how to
+                          build on it. Alexandria is simply the name for this
+                          way of working.
                         </p>
                         <p className="pitch-more">
                           Starting from nothing? The free download gives you
-                          the full set of instructions our founder uses.
-                          Already have instructions, memory files, notes, or a
-                          vault? Keep them. Your AI fits the new instructions
+                          the complete loop our founder uses. Already have
+                          instructions, memory files, notes, a vault, or your
+                          own loop? Keep them. Your AI fits these instructions
                           around what already works for you.
                         </p>
                       </div>
@@ -1192,13 +1192,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          Then your AI starts building a detailed mirror of you
-                          in files you own.
+                          If you use them, your AI builds a detailed mirror of
+                          you in files you own.
+                          <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          It writes what it learns about you automatically, then
-                          reads those files whenever they would help.
-                          <span className="pitch-caret" aria-hidden>›</span>
+                          It writes what it learns automatically, then reads it
+                          back whenever it would help.
                         </span>
                       </span>
                     </button>
@@ -1239,11 +1239,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         <span className="pitch-thesis">
                           The mirror stops your thinking from disappearing
                           between conversations.
+                          <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          When a thought matters, your AI can bring it back,
-                          develop it with you, and help you act on it.
-                          <span className="pitch-caret" aria-hidden>›</span>
+                          Your AI brings back the right thoughts, develops them
+                          with you, and helps you act on them.
                         </span>
                       </span>
                     </button>
@@ -1259,8 +1259,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                         <p className="pitch-more">
                           Your AI can bring a thought back, challenge it,
                           connect it to new work, and help you turn it into
-                          something real. The thought keeps moving with you
-                          instead of ending with the conversation.
+                          something real. The earlier you start, the more of
+                          your thinking there is to build on.
                         </p>
                       </div>
                     </div>
@@ -1279,13 +1279,13 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          That repeating read-and-write cycle is your Alexandria
-                          loop.
+                          Reading from the mirror and writing back is your
+                          Alexandria loop.
+                          <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
-                          The loop is complete on its own. The optional connector
+                          The loop works on its own. The optional connector
                           joins it to the Alexandria community.
-                          <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                       </span>
                     </button>
@@ -1305,26 +1305,20 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                   </section>
                   <p className="pitch-coda">
                     <span className="pitch-coda-copy">
-                      <span className="pitch-coda-line pitch-coda-loss">
-                        Without the loop, important thoughts keep disappearing.
-                      </span>
-                      <span className="pitch-coda-line pitch-coda-gain">
-                        With the loop, your AI saves and develops those thoughts
-                        with you.
-                      </span>
+                      Better answers are only half the point. Your AI should
+                      develop your thinking, not replace it.
                     </span>
                   </p>
                 </div>
 
-                {/* The turn — the supermarket sequence puts trying before
-                    deciding, then names the exact zero-commitment trial. */}
+                {/* The turn — hairline, then the supermarket frame makes the
+                    size of the decision physical: take the free thing, try it
+                    for five minutes, and decide afterwards. */}
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  You try a supermarket sample before deciding whether you want
-                  the product.
+                  Treat it like a free sample at the supermarket.
                   <br />
-                  Press the button. Show your AI the instructions. Then decide
-                  together.
+                  Take it, try it for five minutes, then decide.
                 </p>
 
                 <div className="cta-pair">
