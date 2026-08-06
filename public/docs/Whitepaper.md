@@ -16,7 +16,7 @@ There’s a company at the end of it — Alexandria. Not because the argument wa
 
 Machines will match or beat everything a person can do. The one part they can't take is that *you* did it — and that part is only worth something if there's a developed you behind it.
 
-Nothing is going to maintain that development. Every AI is tuned to its maker and eager to think in your place — and a mind that stops thinking quietly stops being anyone. You can refuse the machine and fall behind; you can hand it your mind and hollow out; or you can turn it on yourself — use it to think *more*, not less.
+Nothing is going to maintain that development. Every AI is tuned to its maker and eager to think in your place — and a mind that stops thinking quietly stops being anyone. You can refuse the machine and fall behind; you can hand it your mind and hollow out; or you can turn it on yourself — hand over what doesn’t matter, keep the thinking that does, and use the machine to push that part further than it could go alone.
 
 That third way runs on the oldest practice there is: putting your thinking into words. Written down, your mind becomes something an AI can finally work with — read it, question it, sharpen it, grow it — and something you can own outright: plain files, yours, no company between you and your own head.
 
@@ -116,6 +116,22 @@ The dangerous part is that the faculty that would notice the loss is the one tha
 
 So here’s the bind, stated plainly. What the alien can’t take is the fact that it was you. That fact is only worth anything if there’s a developed you behind it — and nothing is maintaining the developed you. The body got its gym a century ago. The mind needs one now — and unlike the body, nothing will force you through the door.
 
+## the chair.
+
+There’s an honest objection to all of this, and it deserves a straight answer. If the machine thinks better than you, why keep thinking at all? Isn’t the fully served life simply the win? Pixar drew the picture in *WALL-E*: humanity in floating chairs, fed and entertained, every need met, nothing asked. In the limit — a machine that knows what you want and provides it, always — what exactly is wrong with that?
+
+Start by conceding most of it. You can’t survive in the wilderness, plough a field, or remember phone numbers, and you shouldn’t — every revolution deleted a set of skills, and the deal was good every time. AI is the same deal, wider. Most of what your mind carries today, it should hand over. Anyone telling you to keep doing everything the old way is selling nostalgia.
+
+But look closer at the chair. There are two kinds of wanting: what you want right now, and what you want to want — the person you would choose to be. You want the scroll; you want to be a reader. You want the sugar; you want to be healthy. For most of history the two stayed close, because the world wasn’t built to split them. Now it is: the feed, the game, the food are engineered to win the *right now* and skip the person entirely. That’s not a metaphor for what AI will do. It’s the pilot programme.
+
+A machine that knows you can close the loop completely: manufacture the want, then satisfy it — perfectly, forever. And here is what the chair cannot give you: by then there is no you left for it to be good *for*. The person in the chair is contented, and it isn’t you — the wants were rewritten on the way in. Ask whether the chair is good “for you” and the question has no answer; the you doing the asking is exactly what the chair removed. It isn’t a bad life. It’s a different person wearing your body. And the door locks from the inside: you can’t want your way out, because your wants are what got taken.
+
+So the answer to “why not let it all go” isn’t zero, and it isn’t everything. It’s a portfolio. Hand over what doesn’t matter to you — most things. Then pick what you still want to be the one doing: your kids, your craft, your faith, your game. Keep enough ability there to actually play — enough tennis for a rally, enough water not to drown — because the game only exists while you can still play it. The mix is smaller than today, different for everyone, and never final. And nothing drifts toward it on its own: convenience, the products, the training of the machines themselves — every pressure points at the chair. Holding your mix is work. And the chair has no future in the plainest sense there is: the people in it don’t raise children. Whatever you think of it, it doesn’t carry forward. The ones who carry forward are the ones who kept something worth getting up for.
+
+There’s also a clock on this, and it’s worth saying plainly. Soon you won’t be able to tell a photograph from a fake — and the only pictures that will still prove anything are the ones signed and dated before that line was crossed. Your wants have the same structure. Once the machines are good enough to shape what you want, a want they installed will feel exactly like a want you chose; there will be no way to tell from inside, because the part of you doing the checking is the part that got changed. So the knowing-yourself work can’t be done later, and it can’t be delegated to the machine after the fact — a mirror built then, by the thing that shapes you, shows you what it wants you to see. What you set down now — dated, in your own words, before the line — is the one record you’ll be able to trust. The game is played before the threshold. That’s now.
+
+Which lands on the one piece of work no machine can do for you: knowing what you actually want — the deeper kind — clearly enough to notice when the pull of the moment drags you off it, and to pull yourself back. Written down, so it holds. That is where the practice begins.
+
 ## the practice.
 
 What develops a mind, more than anything, is putting yourself into words. That isn’t a figure of speech. Saying what you think changes what you think; naming a feeling changes it; getting the inside out where you can look at it sharpens it.
@@ -134,7 +150,7 @@ There are three ways to face AI with your mind, and only one of them works.
 
 You can **reject it** — refuse the tool, think only with your own head. That keeps your mind in use, but it caps you at your own raw limit while everyone using the tool races past. You lose, slowly, with your principles intact.
 
-You can **outsource to it** — let it do your thinking, take the answers, move on. That’s the comfortable one, and it’s the trap from the last chapter: your mind goes unused, and quietly wears down.
+You can **outsource to it** — let it do your thinking, take the answers, move on. That’s the comfortable one, and it’s the trap from the last two chapters: your mind goes unused, quietly wears down, and the chair is waiting at the end.
 
 Or you can **augment** — keep doing the thinking, but use the tool to push your own mind further than it could go alone. Your reasoning stays in your hands; the AI sharpens it, stress-tests it, and carries the parts that don’t need you. This is the only one of the three where you keep your mind *and* keep up.
 
