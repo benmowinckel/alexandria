@@ -1,6 +1,7 @@
 ---
 name: a
 description: Start an Alexandria session when the Author explicitly invokes this skill.
+user_invocable: true
 ---
 
 <!-- alexandria:start -->

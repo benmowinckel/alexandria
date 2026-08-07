@@ -15,7 +15,7 @@ Your mirror compiles from something no one else has and no one can scrape: **you
 - **Your constitution** — what you actually believe. Not opinions you performed once; positions that got elicited, contradicted, resolved, and status-assigned by the practice. This carries the *what*.
 - **Your sessions and your writing** — how you actually talk. Every session with the engine, every dictated memo, every draft is your verbatim voice, captured as exhaust. This carries the *how*. The sessions *are* the training set — using the product builds the corpus.
 
-That is the moat made literal. A competitor who only *observes* you produces a measurably worse mirror, because they never authored the training data the way extraction does, and they never accumulate the volume of real first-person voice that daily use generates. Nobody can compile your mirror but you, because nobody else is sitting on your substrate — and the substrate cannot be back-filled. It only accrues by living the practice.
+That is the moat made literal. A competitor who only *observes* you produces a measurably worse mirror, because observation never elicits the choices, corrections, contested transitions, and first-person voice that the practice accumulates. Nobody can compile the same causal record from outside, because nobody else is sitting on the sovereign substrate as it changes — and that history cannot be back-filled. It only accrues by living the practice.
 
 ## two versions — a floor anyone can publish, a ceiling for the trusted
 

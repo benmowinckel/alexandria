@@ -24,13 +24,13 @@ The things the Author wouldn't tell a stranger even given infinite time. These f
 
 - **What belongs to other people.** Names, stories, positions of friends, family, colleagues, clients. The Author wouldn't share these without consent in a real conversation, and doesn't here either. Default redact to role or pseudonym. Exception: public figures already discussed in the Author's public work.
 - **Live, undisclosed business state.** Active negotiations, unclosed deals, unannounced moves. The Author wouldn't brief a stranger on these while they're live; the Library waits too.
-- **Processing state.** The Author wouldn't read a stranger their private journals or voice memos mid-thought. Vault, marginalia, constitution stay closed. If a processed position crystallises into something the Author would say aloud, the Author moves it into `library/` as a deliberate act of authorship.
+- **Processing state.** The Author wouldn't read a stranger their private journals or voice memos mid-thought. Vault, marginalia, constitution stay closed. If a processed position crystallises into something the Author would say aloud, the Author moves it into `library/` as a deliberate act of publication.
 - **Health, location, schedule, relationships** at a granularity the Author wouldn't offer. Public framing the Author already uses is fine. Operational specifics aren't — exact address, daily routine, health details, specific relationship dynamics.
 - **Hypotheses posing as conclusions.** The Author wouldn't tell a stranger "I believe X" about a position they voiced for the first time that morning. First-thought is exploration, not disclosure. Wait for the position to settle into something the Author carries in conversation.
 
 ## What the frame naturally includes
 
-- Everything the Author has already said publicly — in their writing, talks, conversations, published work. Prior public authorship is continuing consent.
+- Everything the Author has already said publicly — in their writing, talks, conversations, published work. Prior publication is continuing consent.
 - Their methodology, their frames, their positions that have crystallised into how they actually think and talk.
 - Their work — essays, projects, opinions, observations — framed at the level the Author is comfortable speaking them.
 - Their aesthetic, taste, craft. The things they'd happily spend hours on with anyone who asked.

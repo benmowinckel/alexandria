@@ -1122,10 +1122,12 @@ if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
      [ "$(sed -n '1p' "$CODEX_START_FILE")" = "---" ] && \
      grep -q "^name: $CODEX_START_NAME$" "$CODEX_START_FILE" 2>/dev/null && \
      grep -q '^description: .' "$CODEX_START_FILE" 2>/dev/null && \
+     grep -q '^user_invocable: true$' "$CODEX_START_FILE" 2>/dev/null && \
      [ -f "$HOME/.agents/skills/$CODEX_START_NAME/agents/openai.yaml" ] && \
      grep -q 'allow_implicit_invocation: false' "$HOME/.agents/skills/$CODEX_START_NAME/agents/openai.yaml" 2>/dev/null && \
      [ -f "$HOME/.agents/skills/alexandria/SKILL.md" ] && \
      grep -q '^name: alexandria$' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null && \
+     grep -q '^user_invocable: true$' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null && \
      [ -f "$HOME/.agents/skills/alexandria/agents/openai.yaml" ] && \
      [ -f "$HOME/.agents/skills/a./SKILL.md" ]; then
     CODEX_SKILL_OK=1

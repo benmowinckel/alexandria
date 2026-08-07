@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-echo "reminder: install-surface change? run the red-team pass first (factory/redteam.md)"
+echo "reminder: install or sovereignty-surface change? run the relevant red-team pass first (factory/redteam.md)"
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
@@ -90,7 +90,7 @@ fi
 # A skill without valid discovery metadata exists on disk but silently
 # disappears from the host's skill picker. Check the aliases before signing.
 validate_skill_frontmatter() {
-  local file="$1" expected_name="$2"
+  local file="$1" expected_name="$2" explicit="${3:-no}"
   [ "$(sed -n '1p' "$file")" = "---" ] || {
     echo "error: $file has no opening skill frontmatter" >&2
     exit 1
@@ -103,14 +103,20 @@ validate_skill_frontmatter() {
     echo "error: $file has no skill description" >&2
     exit 1
   }
+  if [ "$explicit" = "yes" ]; then
+    grep -q '^user_invocable: true$' "$file" || {
+      echo "error: $file is not explicitly invocable" >&2
+      exit 1
+    }
+  fi
   sed -n '2,12p' "$file" | grep -qx -- '---' || {
     echo "error: $file has no closing skill frontmatter" >&2
     exit 1
   }
 }
 validate_skill_frontmatter factory/skills/claudecode.md a
-validate_skill_frontmatter factory/skills/codex.md a
-validate_skill_frontmatter factory/skills/aclose.md a.
+validate_skill_frontmatter factory/skills/codex.md a yes
+validate_skill_frontmatter factory/skills/aclose.md a. yes
 grep -q 'display_name: "a — Alexandria"' factory/skills/codex-openai.yaml || {
   echo "error: factory/skills/codex-openai.yaml has no Alexandria display name" >&2
   exit 1
