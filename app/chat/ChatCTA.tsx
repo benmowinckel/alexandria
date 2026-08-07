@@ -15,21 +15,23 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
 
   return (
     <div className="cta-section">
-      <button className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
-        {copied
-          ? 'copied — now paste it into Instructions'
-          : (<>copy Alexandria<span className="act-why"> — one instruction</span></>)}
-      </button>
-      <p className="chat-rest">
-        ChatGPT: Settings → Personalization → Custom Instructions.<br />Claude: Settings → Instructions for Claude.
-      </p>
+      <div className="chat-step">
+        <span className="chat-step-num">1</span>
+        <button className={`door-btn cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
+          {copied
+            ? 'copied — paste it into any chat'
+            : (<>copy the setup<span className="act-why"> — your ai checks it first</span></>)}
+        </button>
+      </div>
+      <div className="chat-step">
+        <span className="chat-step-num">2</span>
+        <div className="chat-step-card">paste it into any chat</div>
+      </div>
+      <p className="chat-rest">Follow the two short actions your ai gives you. Then you&apos;re done.</p>
+      <p className="chat-after">After that, chat normally. Type <strong>a</strong> whenever you want a deliberate session.</p>
       <p className="chat-where">
         Free and paid both work. Nothing is sent to Alexandria.
       </p>
-      <details className="chat-details">
-        <summary>Using a ChatGPT Project or custom GPT?</summary>
-        <p>A Project needs the same paste in Project instructions. Custom GPTs cannot use account instructions or memory.</p>
-      </details>
     </div>
   );
 }

@@ -9,12 +9,13 @@ export const metadata = pageMetadata({
   path: '/chat',
   title: 'alexandria in every chat.',
   description:
-    'Paste Alexandria once into ChatGPT or Claude instructions. Memory keeps your thinking; instructions keep Alexandria running.',
+    'Paste one setup into any chat. Your AI checks it, recognizes the app, and tells you exactly what to press.',
 });
 
 // Door 2 of the two-door onboarding (can you run a terminal command? no → here).
-// One compact block fits the free ChatGPT instruction limit and works in
-// Claude profile instructions. The user's AI selects memory, Drive, or files.
+// The copied request is safe to paste into any ordinary chat: the current AI
+// reviews the embedded compact instruction before directing the human to its
+// own durable setting. The durable block still fits free instruction limits.
 function readBootstrap(): string {
   const raw = fs.readFileSync(
     path.join(process.cwd(), 'factory', 'chat', 'bootstrap.md'),
@@ -38,10 +39,10 @@ export default function ChatPage() {
       </header>
 
       <main className="primer-main">
-        <h1 className="primer-h1">Paste once.<br />Then keep chatting normally.</h1>
+        <h1 className="primer-h1">Two steps.<br />Then keep chatting normally.</h1>
 
         <p className="start-grab">
-          Put Alexandria in your AI&apos;s Instructions once. Memory keeps your thinking; the instruction keeps Alexandria running.
+          Your ai checks the setup first, recognizes the app, and tells you exactly what to press.
         </p>
 
         <ChatCTA bootstrap={bootstrap} />
@@ -129,6 +130,27 @@ export default function ChatPage() {
         .chat-details summary { cursor: pointer; }
         .chat-details p { margin: 8px 0 0; max-width: 450px; }
 
+        .chat-step {
+          display: grid; grid-template-columns: 24px minmax(0, 1fr);
+          align-items: center; gap: 10px; width: 100%;
+        }
+        .chat-step + .chat-step { margin-top: 14px; }
+        .chat-step-num {
+          font-size: 15px; color: var(--text-muted, rgba(26, 19, 24, 0.48));
+          font-variant-numeric: lining-nums tabular-nums;
+        }
+        .chat-step-card {
+          width: 100%; max-width: 460px; padding: 17px 20px;
+          border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
+          border-radius: 10px; color: var(--text-primary);
+          background: transparent; font-size: 17px; line-height: 1.35;
+        }
+        .chat-after {
+          margin: 28px 0 0; max-width: 460px;
+          font-size: 16px; line-height: 1.55; color: var(--text-secondary);
+        }
+        .chat-after strong { color: var(--text-primary); font-weight: 600; }
+
 
         .door-btn {
           display: block; width: 100%; max-width: 460px; text-align: left;
@@ -182,6 +204,7 @@ export default function ChatPage() {
           .primer-main { padding: 2rem 24px 4rem; }
           .primer-h1 { font-size: 28px; line-height: 1.3; margin-bottom: 18px; }
           .primer-coda { font-size: 18px; margin-top: 52px; }
+          .chat-step { grid-template-columns: 20px minmax(0, 1fr); gap: 8px; }
         }
       `}</style>
     </div>

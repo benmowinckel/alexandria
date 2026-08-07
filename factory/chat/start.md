@@ -1,12 +1,8 @@
 # _start — alexandria
 
-*Master content for the `_start` document in an Author's Drive. The same body is embedded in `bootstrap.md`; verification checks keep them aligned.*
-
----
-
 This folder is the Author's private thinking record. Existing AI memory and instructions remain active beside it.
 
-- `constitution/`: confirmed positions, one document per natural domain. Rewrite the complete document when a position changes; keep prior versions.
+- `constitution/`: confirmed positions, one document per natural domain. Never overwrite the current document from chat. Write the complete changed document beside it as `<domain> — v2`, then increment the version; the local loop will fold it into ground truth.
 - `vault/`: raw captures and dated session notes. Append only.
 - `marginalia/`: unresolved threads. Promote only after the Author confirms a position.
 

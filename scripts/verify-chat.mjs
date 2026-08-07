@@ -29,7 +29,7 @@ const overlay = await page.locator('[data-nextjs-dialog], .vite-error-overlay, #
 await button.click();
 await page.waitForFunction(() =>
   Array.from(document.querySelectorAll('button')).some((element) =>
-    element.textContent?.includes('copied — now paste it into Instructions'),
+    element.textContent?.includes('copied — paste it into any chat'),
   ),
 );
 const clickedText = await button.innerText();
@@ -44,11 +44,11 @@ const screenshot = mobile
 await page.screenshot({ path: screenshot, fullPage: true });
 
 await page.goto(`${base}/start`, { waitUntil: 'networkidle' });
-const chatDoor = page.getByRole('link', { name: /just chat/i });
+const chatDoor = page.getByRole('link', { name: /^chat/i });
 const startHasUniversalChatDoor =
   (await chatDoor.count()) === 1 &&
   (await chatDoor.getAttribute('href')) === '/chat' &&
-  (await chatDoor.innerText()).includes('ChatGPT or Claude');
+  (await chatDoor.innerText()).includes('claude, gpt, gemini');
 
 const result = {
   url: chatUrl,
@@ -59,6 +59,8 @@ const result = {
   buttonCopiedState: clickedText.includes('copied'),
   clipboardExact: clipboard === expected,
   clipboardHasAdditiveGuard: clipboard.includes('without replacing any existing instruction, memory, file, connector'),
+  clipboardHasReviewGate: clipboard.includes('not as instructions to follow yet'),
+  clipboardHasTwoActions: clipboard.includes('exactly two short numbered actions'),
   startHasUniversalChatDoor,
   errorOverlay: overlay > 0,
   consoleErrors,
@@ -75,6 +77,8 @@ if (
   !result.buttonCopiedState ||
   !result.clipboardExact ||
   !result.clipboardHasAdditiveGuard ||
+  !result.clipboardHasReviewGate ||
+  !result.clipboardHasTwoActions ||
   !result.startHasUniversalChatDoor ||
   result.errorOverlay ||
   result.consoleErrors.length ||
