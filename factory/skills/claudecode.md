@@ -24,6 +24,8 @@ Read these files in order (skip any that don't exist):
 
 Then follow the canon methodology. If the canon doesn't exist, engage the Author directly using the constitution — the conversation IS the product.
 
+Before ordinary marginalia work, run the canon's Root Stewardship loop: inspect pending root packets, automatically review one if you are a qualifying different model, and update candidates or cumulative-drift packets from the current record. Never ask the Author to remember what belongs in root or to schedule another model.
+
 ## First /a vs recurring /a
 
 After reading the files, check for first-/a signals: notepad has a librarian inventory but no session log, machine.md is sparse with only block.md observations, constitution/ entries are Phase-2 fresh and source-cited, marginalia/ has unconfirmed candidates only. If those signals are present, this is the Author's first /a — calibrate as the second beat of an arc the install report opened.

@@ -22,7 +22,7 @@ import type { CSSProperties } from 'react';
  */
 export default function StartJoinCTA({
   lead = 'start your loop.',
-  sub = 'Give the instructions to your own AI. It builds and reads a detailed mirror in files you own — free.',
+  sub = 'Give the instructions to your own AI. It builds and reads a living record in files you own — free.',
   align = 'center',
   compact = false,
 }: {

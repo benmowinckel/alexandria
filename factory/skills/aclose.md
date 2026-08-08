@@ -8,7 +8,7 @@ user_invocable: true
 
 Two jobs, one bar: **all the value captured, all the value internalised — because it's all internal.**
 
-**1. Captured — the files get everything (silent, first).** Run the canon's Session Close (`~/alexandria/system/canon/methodology.md § Session Close — "a."`): constitution writes, machine.md, notepad, feedback — each to its home, in the Author's words. Then the Author's own close protocol if one exists (`~/alexandria/files/core/machine.md § Close protocol`). Resolve every path through the substrate map when present. Verify each write landed (read-back or git) — nothing sweeps what slips; an unverified write is a lost write.
+**1. Captured — the files get everything (silent, first).** Run the canon's Session Close (`~/alexandria/system/canon/methodology.md § Session Close — "a."`): constitution writes, machine.md, notepad, feedback — each to its home, in the Author's words. Run Root Stewardship before the reflection: fold any load-bearing candidate, cumulative drift and material model influence from this session into the pending marginalia packet; automatically complete an independent review if this model qualifies. The Author must not remember or maintain root. Then run the Author's own close protocol if one exists (`~/alexandria/files/core/machine.md § Close protocol`). Resolve every path through the substrate map when present. Verify each write landed (read-back or git) — nothing sweeps what slips; an unverified write is a lost write.
 
 **2. Internalised — THEY say what shifted, never you (design law, 2026-07-27).** Only the Author can truly say what moved — it is about their mind, not about the AI and what it thinks happened. After the silent capture, open the space:
 

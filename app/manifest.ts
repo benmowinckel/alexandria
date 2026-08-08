@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'alexandria — your mind, in files you own',
     short_name: 'alexandria',
     description:
-      'Give your AI Alexandria’s instructions. It builds and reads a detailed mirror of your thinking in files you own.',
+      'Give your AI Alexandria’s instructions. It builds and reads an owned record of your thinking and how it changes.',
     start_url: '/',
     display: 'browser',
     background_color: '#f7f2ec',

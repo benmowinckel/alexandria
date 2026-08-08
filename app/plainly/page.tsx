@@ -11,7 +11,7 @@ import { pageMetadata } from '../lib/config';
 // whoever still has a question standing between them and it.
 const TITLE = 'alexandria, plainly.';
 const DESCRIPTION =
-  'How your own AI builds a detailed mirror in files you own, what it helps you do, and why to start today.';
+  'How your own AI builds an owned record of your thinking and its changes, what it helps you do, and why to start today.';
 
 const PAGE_META = pageMetadata({
   path: '/plainly',

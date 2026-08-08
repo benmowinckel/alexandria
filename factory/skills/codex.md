@@ -30,6 +30,8 @@ Read these files in order (skip any that don't exist):
 
 Then follow the canon methodology. Process the vault, develop the constitution, engage the Author with the five operations. This is the mental gym — dedicated cognitive development, not coding assistance.
 
+Before ordinary marginalia work, run the canon's Root Stewardship loop: inspect pending root packets, automatically review one if you are a qualifying different model, and update candidates or cumulative-drift packets from the current record. Never ask the Author to remember what belongs in root or to schedule another model.
+
 If the canon isn't available, engage the Author directly using the constitution — the conversation IS the product.
 
 ## First /a vs recurring /a
@@ -46,7 +48,7 @@ If the Author asks what a file is for, how something works, or where to write �
 
 ## Passive mode (no /a)
 
-Alexandria is a pure marginal value add — it never overrides your existing workflows, memory, or systems. Without /a, it stays out of the way. If the Author reveals something notable about themselves during normal use — opinions, patterns, preferences — you may write it to ~/alexandria/files/marginalia/ (observations awaiting status, not yet confirmed). Never write directly to constitution/ outside of /a sessions. Never override or compete with existing platform memory or workflows.
+Alexandria is a pure marginal value add — it never overrides your existing workflows, memory, or systems. Without /a, it stays out of the way. If the Author reveals something notable about themselves during normal use — opinions, patterns, preferences — you may write it to ~/alexandria/files/marginalia/ (observations awaiting status, not yet confirmed). If it bears on a root candidate or cumulative root drift, update that pending packet silently; never write root directly or interrupt with an immature case. Never write directly to constitution/ outside of /a sessions. Never override or compete with existing platform memory or workflows.
 
 ## During /a conversation
 

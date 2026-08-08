@@ -421,7 +421,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'development.',
       lead: 'Your AI answers you. It should be developing you.',
-      sub: 'It remembers where you’re trying to go, pushes your thinking further, and months later you can see how you changed.',
+      sub: 'It pushes your thinking, records its influence, and notices when small changes add up to a different direction.',
     },
     {
       kind: 'feature',
@@ -443,7 +443,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
       kind: 'feature',
       name: 'one mind.',
       lead: 'Claude knows one you. Cursor another. ChatGPT a third.',
-      sub: 'One mirror on your machine, shared with the compatible AIs you choose — each can pick up where the last one left off.',
+      sub: 'One history on your machine, shared with the compatible AIs you choose — each can inspect where the others left you.',
     },
     {
       kind: 'feature',
@@ -466,8 +466,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
     {
       kind: 'feature',
       name: 'the mirror.',
-      lead: 'You’ve never seen your own mind.',
-      sub: 'As you use AI, it writes a living mirror of how you think — on your own machine. Read it and recognise yourself, clearer every day.',
+      lead: 'You’ve never seen your thinking change.',
+      sub: 'As you use AI, it writes a living record of how you think and change. Read it, contest it, and keep the history yours.',
     },
   ];
   // The hand (corrected, founder 2026-07-24 night: "when i say rotate
@@ -1192,8 +1192,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          If you use them, your AI builds a detailed mirror of
-                          you in files you own.
+                          If you use them, your AI builds a living record of
+                          your thinking in files you own.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
                         <span className="pitch-detail">
@@ -1237,7 +1237,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          The mirror stops your thinking from disappearing
+                          The record stops your thinking from disappearing
                           between conversations.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>
@@ -1250,17 +1250,18 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     <div className="pitch-body">
                       <div className="pitch-body-inner">
                         <p className="pitch-more">
-                          Without the mirror, a useful thought helps once, then
+                          Without the record, a useful thought helps once, then
                           gets buried. The next conversation cannot build on
-                          it. With the mirror, each conversation can begin with
+                          it. With the record, each conversation can begin with
                           what you have already learned, what you care about,
                           and where you want to go.
                         </p>
                         <p className="pitch-more">
                           Your AI can bring a thought back, challenge it,
                           connect it to new work, and help you turn it into
-                          something real. The earlier you start, the more of
-                          your thinking there is to build on.
+                          something real. It also watches for small changes
+                          adding up to a different direction, then brings in a
+                          different AI before asking you to choose.
                         </p>
                       </div>
                     </div>
@@ -1279,7 +1280,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     >
                       <span className="pitch-lead">
                         <span className="pitch-thesis">
-                          Reading from the mirror and writing back is your
+                          Reading from the record and writing back is your
                           Alexandria loop.
                           <span className="pitch-caret" aria-hidden>›</span>
                         </span>

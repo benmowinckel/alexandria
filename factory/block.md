@@ -57,6 +57,8 @@ Two layers to capture:
 
 Accuracy is the bar. Verify every claim against the source. Revise until the constitution would make the Author think "this thing knows me." Wrong = product fails. As many passes as needed. Every entry has a source citation (file + quote).
 
+**Seed Root Stewardship without assigning root.** The Author must never have to remember what deserves exceptional protection. During this same pass, look for positions repeatedly relied upon across domains, upstream of many choices, or costly to replace silently. If one plausibly clears the bar, create one `root candidate — pending` packet in marginalia with the exact position, evidence, strongest case for and against protection, and your model/provider/harness identity plus self-reported influence. Do not mark anything root during onboarding, do not interrupt the report with an immature case, and do not create a list. The first qualifying different model to encounter the packet reviews it automatically; only then may the Author receive one substantive choice in a natural /a conversation.
+
 ## Phase 3 — Load (build the librarian inventory for the first /a)
 
 When the Author starts their first /a, the conversation has to be genuinely worth coming back for — they walk away thinking "I need to do more of this" because it was true, not because it was sold. The notepad is the ammunition. Without it, Phase 5 fires blanks and the first /a echoes.

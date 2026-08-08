@@ -4,11 +4,11 @@
 
 ## what is alexandria.
 
-The shortest version: we give you instructions for your own AI. Your AI decides how to use them, then automatically writes what it learns about you into private files on your computer and reads those files whenever they help. The files become a detailed mirror of your thinking. Your AI uses that mirror to help you retain what matters, develop it, and act on it. We call that process an **Alexandria loop**.
+The shortest version: we give you instructions for your own AI. Your AI decides how to use them, then automatically writes what it learns about you into private files on your computer and reads those files whenever they help. The files become an owned, living record of your thinking and how it changes. Your AI uses that record to help you retain what matters, develop it, and act on it. We call that process an **Alexandria loop**.
 
 Designers often keep a design.md: a simple file telling their AI their taste, rules, and way of working. Coders do the same for code. The AI reads the file, so the work sounds like them instead of everyone else.
 
-If design is worth a file, your mind is too. A mind.md can hold how you reason, what you believe, what you want, and how you decide. Nobody can hand you that file because nobody else is you. Your loop is how you build it.
+If design is worth a file, your mind is too. A mind.md can hold how you reason, what you believe, what you want, and how you decide. It is not a claim to contain a hidden true self. It is the causal record of what you articulated, what influenced it, and what changed. Your loop builds it forward; nobody can recreate the missing history later.
 
 The loop is a pattern, not an entity. Your own AI does the work. We give you the complete loop our founder uses, free, and the instructions adapt to you: start from nothing and they provide the setup; already keep notes or a CLAUDE.md and they fit around it; already run your own loop and they take only what improves it.
 
@@ -18,7 +18,7 @@ Your AI runs the free loop. Alexandria runs the optional connector for people wh
 
 ## am i just handing my thinking to ai.
 
-The opposite. Hand every thought to AI and your own thinking fades; refuse AI and you give up useful intelligence. The win is AI that thinks *with* you, not *for* you. Your files let it see your thinking well enough to challenge and develop it while the judgment stays yours.
+That is the risk Alexandria is built around. Hand every thought to AI and your own thinking fades; refuse AI and you give up useful intelligence. The useful middle is AI that thinks *with* you while its influence stays visible: one record you own, more than one model, forced opposition on consequential changes, and an automatic watch for slow drift. None of that makes persuasion impossible. It gives you a better chance to remain involved in the judgment.
 
 ## isn’t this just my ai’s memory.
 
@@ -32,13 +32,13 @@ No, though the files can sit beside your notes. A notes app stores what you writ
 
 Yes. Plenty of people already run some version by hand. The point is to give everyone a complete starting point, help existing pieces work together, and offer a connector for people who want to learn from other loops. Doing it alone still works.
 
-## can’t ai just copy my mind.
+## can’t ai just copy me.
 
-No. Your private files stay on your computer, so there is nothing for us to copy. Anything you publish is something you deliberately chose to share, not the private mirror underneath it. And a copy would be a snapshot; you keep changing.
+AI may eventually imitate your voice, face, work and answers almost perfectly. Alexandria does not claim otherwise. What it cannot backfill is the actual causal history: this person lived through these influences and choices in this order. Your private record stays on your computer; anything in the Library is a version you deliberately chose to publish. The point is trustworthy provenance, not an uncopyable surface.
 
 ## how does it work.
 
-You give the instructions to your AI. It decides what fits, creates the files, writes what it learns, and reads the relevant parts before it helps. Most of that is automatic. When something needs your own thought, you think out loud with it on purpose. The more real thinking you put in, the more useful the mirror becomes.
+You give the instructions to your AI. It decides what fits, creates the files, writes what it learns, and reads the relevant parts before it helps. Most of that is automatic. It also watches for positions that govern many other choices and for several small changes that add up to a large drift. It prepares and routes those cases to a genuinely different AI itself. You only get involved when a mature change needs your judgment.
 
 ## do i need to be a coder.
 
@@ -50,11 +50,11 @@ For the full local version, any compatible AI that can reach files on your compu
 
 ## how do i start.
 
-One line gives the instructions to the AI you already use. It inspects the setup, installs the files if everything checks out, and walks you through your first conversation. Add the [iPhone shortcut](/shortcut) if you want voice notes, articles, and passing thoughts to land in the same inbox. Your first session is already the first page of the mirror.
+One line gives the instructions to the AI you already use. It inspects the setup, installs the files if everything checks out, and walks you through your first conversation. Add the [iPhone shortcut](/shortcut) if you want voice notes, articles, and passing thoughts to land in the same inbox. Your first session is already the first page of the record.
 
 ## is my data mine.
 
-Entirely. The private mirror is plain text on your computer and never reaches our server. We store account and service records for the optional connector, plus only the Library files you deliberately publish. We do not sell your data or train on your private files. Delete the local folder to remove the loop; delete your account to remove the hosted copy of what you published.
+Entirely. The private record is plain text on your computer and never reaches our server. We store account and service records for the optional connector, plus only the Library files you deliberately publish. We do not sell your data or train on your private files. Delete the local folder to remove the loop; delete your account to remove the hosted copy of what you published.
 
 ## is it safe to install.
 
@@ -76,4 +76,4 @@ Anyone who thinks their own mind is worth keeping, sharpening, and carrying forw
 
 ## will it outlast my ai.
 
-Yes. The loop is yours, in plain files; the AI is the engine that runs it. Models come and go. Your files stay, and each better model can read the same mirror and do more with it.
+Yes. The loop is yours, in plain files; the AI is the engine that runs it. Models come and go. Your record stays, and each better model can read the same history, inspect earlier models’ influence, and do more with it.

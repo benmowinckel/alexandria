@@ -33,7 +33,7 @@ const SITE_TITLE = "alexandria — your mind, in files you own";
 // keyword-dense, classical, and reads well as a search snippet under the
 // browser tab title.
 const SEO_DESCRIPTION =
-  "Give your AI Alexandria’s instructions. It builds and reads a detailed mirror of your thinking in files you own, so it can help you keep, develop, and act on what matters.";
+  "Give your AI Alexandria’s instructions. It builds and reads an owned record of your thinking and how it changes, so it can help you keep, develop, and contest what matters.";
 
 // Sharing-optimised description — punchier than the SEO sentence. Lands as
 // the body of social previews (Twitter / Slack / iMessage / LinkedIn).
