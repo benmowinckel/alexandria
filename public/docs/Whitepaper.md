@@ -172,7 +172,7 @@ Take the transition to its limit. Carbon and silicon think together; then the ca
 
 The three problems have different owners. Others are working on keeping the body alive. Keeping every copy physically safe is a collective problem. The part directly in your hands now is the record of identity: what you think, how you think, and how any silicon extension entered your sense of self while you were still there to experience it.
 
-Alexandria does not claim to solve continuity of consciousness. It does something narrower: preserves a living causal record before any copy exists, across time, in the hands of the person it describes. That gives a future transition more than a reconstruction made after the fact. Immortality without identity is only the chair with better hardware.
+None of this solves continuity of consciousness. With an Alexandria loop, your own AI does something narrower: it preserves a living causal record before any copy exists, across time, in your hands. That gives a future transition more than a reconstruction made after the fact. Immortality without identity is only the chair with better hardware.
 
 ## direction, not timing.
 
