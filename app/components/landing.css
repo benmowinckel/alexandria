@@ -1647,8 +1647,9 @@
           display: flex;
           flex-direction: column;
           justify-content: center;
-          gap: 26px;
+          gap: 34px;
           margin: 0;
+          transition: gap 560ms cubic-bezier(0.33, 0, 0.2, 1);
         }
         .pitch-item {
           position: relative;
@@ -1684,11 +1685,23 @@
           color: var(--theme-fg);
         }
         .pitch-detail {
-          display: block;
-          margin-top: 5px;
+          display: grid;
+          grid-template-rows: 1fr;
+          margin-top: 6px;
           font-size: 17px;
           line-height: 1.43;
           color: var(--theme-fg-muted);
+          opacity: 1;
+          transform: translateY(0);
+          transition:
+            grid-template-rows 520ms cubic-bezier(0.33, 0, 0.2, 1) 140ms,
+            opacity 300ms ease 390ms,
+            transform 520ms cubic-bezier(0.33, 0, 0.2, 1) 140ms;
+        }
+        .pitch-detail-inner {
+          display: block;
+          min-height: 0;
+          overflow: hidden;
         }
         .pitch-coda {
           position: relative;
@@ -1761,21 +1774,39 @@
         .pitch-item.is-open .pitch-caret {
           transform: rotate(90deg);
         }
-        /* The bonus depth — animated 0fr→1fr grid track; the inner
-           wrapper clips. Exit faster than enter (design.md). */
+        /* The bonus depth opens as one movement: the old reading fades,
+           then geometry makes room while invisible, then the continuation
+           arrives. Closing reverses that sequence, leaving a brief breath
+           before the resting details return. */
         .pitch-body {
           display: grid;
           grid-template-rows: 0fr;
           margin-left: 0;
-          transition: grid-template-rows 330ms cubic-bezier(0.33, 0, 0.2, 1);
+          transition: grid-template-rows 500ms cubic-bezier(0.33, 0, 0.2, 1) 80ms;
         }
         .pitch-item.is-open .pitch-body {
           grid-template-rows: 1fr;
-          transition: grid-template-rows 440ms cubic-bezier(0.33, 0, 0.2, 1);
+          transition: grid-template-rows 620ms cubic-bezier(0.33, 0, 0.2, 1) 90ms;
         }
         .pitch-body-inner {
           overflow: hidden;
           min-height: 0;
+          opacity: 0;
+          transform: translateY(-5px);
+          visibility: hidden;
+          transition:
+            opacity 150ms ease,
+            transform 300ms ease,
+            visibility 0s linear 580ms;
+        }
+        .pitch-item.is-open .pitch-body-inner {
+          opacity: 1;
+          transform: translateY(0);
+          visibility: visible;
+          transition:
+            opacity 380ms ease 250ms,
+            transform 520ms cubic-bezier(0.33, 0, 0.2, 1) 170ms,
+            visibility 0s linear;
         }
         /* The depth speaks in the same hand as the beats — the
            EB Garamond italic, a size down and a shade quieter — so an
@@ -1800,18 +1831,30 @@
            remain visible, so opening one never breaks the causal sequence. */
         @media (min-width: 900px) {
           .pitch:has(.pitch-item.is-open) {
-            justify-content: flex-start;
-            box-sizing: border-box;
-            padding-top: 90px;
-            gap: 16px;
+            gap: 22px;
           }
-          /* In depth mode, the active beat keeps its preview while the
-             other three collapse to their one-line headlines. The whole
-             sequence therefore stays legible without turning the page into
-             a wall of text or pushing the active explanation off-screen. */
+          /* Keep the whole causal sequence, but let its secondary lines
+             withdraw before the continuation opens. They collapse rather
+             than disappearing from layout in one frame, which lets both
+             the opening and the return read as one calm movement. */
           .pitch:has(.pitch-item.is-open)
             .pitch-item:not(.is-open) .pitch-detail {
-            display: none;
+            grid-template-rows: 0fr;
+            opacity: 0;
+            transform: translateY(-4px);
+            transition:
+              opacity 160ms ease,
+              transform 320ms cubic-bezier(0.33, 0, 0.2, 1),
+              grid-template-rows 480ms cubic-bezier(0.33, 0, 0.2, 1) 70ms;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .pitch,
+          .pitch-detail,
+          .pitch-body,
+          .pitch-body-inner,
+          .pitch-caret {
+            transition: none !important;
           }
         }
         /* The turn — hairline above the closing beat; everything below
@@ -3043,7 +3086,7 @@
             flex: 0 0 auto;
             justify-content: flex-start;
             margin-top: 22px;
-            gap: 26px;
+            gap: 34px;
           }
           .pitch-item {
             padding: 0;

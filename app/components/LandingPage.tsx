@@ -309,11 +309,12 @@ export default function LandingPage({ brandClassName = '' }: Props) {
   // library/Strava). Depth is never load-bearing.
   // One open at a time; null = all closed (the resting state).
   const [openPitch, setOpenPitch] = useState<string | null>(null);
-  // HOVER + CLICK expansion — the July controller rules apply:
-  // mousemove-driven (layout shifts under the pointer when a body
-  // opens — the 07-17 boundary cascade), 160ms hover-intent, 560ms
-  // settle lock, longer dwell before move-away closes. Touch taps
-  // toggle via the click handler; coarse pointers skip mousemove.
+  // HOVER + CLICK expansion — mousemove-driven so a reveal changing
+  // the item's box never creates a false mouseleave. Every target seen
+  // during the short settle window is queued instead of discarded;
+  // otherwise moving away during the reveal could leave a section stuck
+  // open until the mouse moved again. Touch taps toggle via the click
+  // handler; coarse pointers skip mousemove.
   const hoverIntent = useRef<{
     id: string | null;
     timer: ReturnType<typeof setTimeout> | null;
@@ -326,18 +327,17 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         '.pitch-item',
       ) as HTMLElement | null;
       const id = item?.dataset.pitch ?? null;
-      if (Date.now() < settleLock.current) return;
       const intent = hoverIntent.current;
       if (id === intent.id) return;
       if (intent.timer) clearTimeout(intent.timer);
       intent.id = id;
-      intent.timer = setTimeout(
-        () => {
-          settleLock.current = Date.now() + 560;
-          setOpenPitch(id);
-        },
-        id === null ? 420 : 160,
-      );
+      const settleRemaining = Math.max(0, settleLock.current - Date.now());
+      const intentDelay = id === null ? 180 : 190;
+      intent.timer = setTimeout(() => {
+        settleLock.current = Date.now() + 360;
+        setOpenPitch(id);
+        intent.timer = null;
+      }, settleRemaining + intentDelay);
     };
     window.addEventListener('mousemove', onMove, { passive: true });
     return () => {
@@ -1152,9 +1152,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           instructions.
                         </span>
                         <span className="pitch-detail">
-                          Your AI reads them, then decides with you whether and
-                          how to change the way it works.
-                          <span className="pitch-caret" aria-hidden>›</span>
+                          <span className="pitch-detail-inner">
+                            Your AI reads them, then decides with you whether and
+                            how to change the way it works.
+                            <span className="pitch-caret" aria-hidden>›</span>
+                          </span>
                         </span>
                       </span>
                     </button>
@@ -1196,9 +1198,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           in files you own.
                         </span>
                         <span className="pitch-detail">
-                          It writes what it learns about you automatically, then
-                          reads those files whenever they would help.
-                          <span className="pitch-caret" aria-hidden>›</span>
+                          <span className="pitch-detail-inner">
+                            It writes what it learns about you automatically, then
+                            reads those files whenever they would help.
+                            <span className="pitch-caret" aria-hidden>›</span>
+                          </span>
                         </span>
                       </span>
                     </button>
@@ -1241,9 +1245,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           between conversations.
                         </span>
                         <span className="pitch-detail">
-                          When a thought matters, your AI can bring it back,
-                          develop it with you, and help you act on it.
-                          <span className="pitch-caret" aria-hidden>›</span>
+                          <span className="pitch-detail-inner">
+                            When a thought matters, your AI can bring it back,
+                            develop it with you, and help you act on it.
+                            <span className="pitch-caret" aria-hidden>›</span>
+                          </span>
                         </span>
                       </span>
                     </button>
@@ -1283,9 +1289,11 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                           loop.
                         </span>
                         <span className="pitch-detail">
-                          The loop is complete on its own. The optional connector
-                          joins it to the Alexandria community.
-                          <span className="pitch-caret" aria-hidden>›</span>
+                          <span className="pitch-detail-inner">
+                            The loop is complete on its own. The optional connector
+                            joins it to the Alexandria community.
+                            <span className="pitch-caret" aria-hidden>›</span>
+                          </span>
                         </span>
                       </span>
                     </button>
