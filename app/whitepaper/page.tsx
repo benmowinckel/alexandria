@@ -6,11 +6,11 @@ import { pageMetadata } from '../lib/config';
 // <title> and <meta name="description"> from app/layout.tsx — generic
 // site-wide copy that hurts SEO and click-through for one of the highest-
 // value pages in the sitemap. Title names the artifact; description honours
-// the whitepaper's actual argument (what ai leaves for humans → where humans
-// still get paid → the practice that develops the part that wins).
+// the whitepaper's actual argument (what ai leaves for humans → why human
+// provenance retains value → the practice that keeps the person involved).
 const TITLE = 'whitepaper — alexandria. when a machine can do everything, what is a person for?';
 const DESCRIPTION =
-  'The full argument, from first principles: what AI leaves for humans, where humans still get paid, and the practice that develops the part that wins — your mind in a file you own, so every AI thinks with you, not for you.';
+  'The full argument, from first principles: what AI leaves for humans, why human provenance can retain value, and the practice that keeps you involved in your own change.';
 
 const PAGE_META = pageMetadata({
   path: '/whitepaper',
