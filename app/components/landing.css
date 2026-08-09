@@ -1647,7 +1647,7 @@
           display: flex;
           flex-direction: column;
           justify-content: center;
-          gap: 20px;
+          gap: 26px;
           margin: 0;
         }
         .pitch-item {
@@ -1693,11 +1693,15 @@
         .pitch-coda {
           position: relative;
           display: block;
-          margin: 18px 0 0;
+          /* The larger pitch gap opens the four mechanism beats; trim this
+             margin by the same amount so the coda keeps its existing pause. */
+          margin: 12px 0 0;
           padding: 0;
           max-width: 660px;
         }
         .pitch-coda-copy {
+          display: grid;
+          gap: 2px;
           min-width: 0;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: normal;
@@ -1710,6 +1714,26 @@
           max-width: 620px;
           text-wrap: pretty;
         }
+        /* The fifth beat is a before/after, carried by typography rather than
+           UI furniture: the loss recedes; the result steps forward. */
+        .pitch-coda-line {
+          display: block;
+        }
+        .pitch-coda-loss {
+          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 0.95em;
+          color: var(--theme-fg-muted);
+        }
+        .pitch-coda-gain {
+          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-weight: 500;
+          font-size: 1.08em;
+          line-height: 1.34;
+          letter-spacing: -0.003em;
+          color: var(--theme-fg);
+        }
         .pitch-para {
           display: block;
           margin: 0;
@@ -1721,8 +1745,8 @@
           max-width: 620px;
           text-wrap: pretty;
         }
-        /* A single quiet chevron is enough to imply that each line opens.
-           It rotates with the expansion; no instructional UI copy. */
+        /* A quiet chevron at the end of each preview implies that the thought
+           continues. It rotates with the expansion; no instructional UI copy. */
         .pitch-caret {
           display: inline-block;
           margin-left: 12px;
@@ -3019,7 +3043,7 @@
             flex: 0 0 auto;
             justify-content: flex-start;
             margin-top: 22px;
-            gap: 19px;
+            gap: 26px;
           }
           .pitch-item {
             padding: 0;
@@ -3041,7 +3065,7 @@
           }
           .pitch-coda {
             display: block;
-            margin-top: 16px;
+            margin-top: 9px;
             margin-left: 0;
             padding: 0;
           }
