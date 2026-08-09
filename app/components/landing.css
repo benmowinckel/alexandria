@@ -56,14 +56,23 @@
           right: 0;
           z-index: 100;
           padding: 22px clamp(56px, 8vw, 160px);
+          opacity: 1;
+          visibility: visible;
           pointer-events: none;
+          transition: opacity 260ms ease, visibility 0s linear;
+        }
+        /* The back slide has no header. */
+        .nav.on-bottom {
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 260ms ease, visibility 0s linear 260ms;
         }
         .nav-inner {
           max-width: 1700px;
           margin: 0 auto;
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content: flex-end;
           pointer-events: auto;
         }
         /* Default = "top" phase (cream slide, dark ink). Mark runs at
@@ -136,15 +145,6 @@
         }
         .nav-brand:hover {
           opacity: 0.72;
-        }
-        /* Brand block — wordmark + tagline stacked. The block is
-           collapsed to the wordmark's height (tagline is absolute
-           below) so the nav's center alignment doesn't shift. */
-        .nav-brand-block {
-          position: relative;
-          display: inline-flex;
-          flex-direction: column;
-          align-items: flex-start;
         }
         /* Frontispiece subtitle — the Latin motto in the italic hand the
            back slide used to carry (nav-subtitle-back, pre-2026-07-08):
@@ -917,26 +917,6 @@
           pointer-events: none;
           z-index: 25;
         }
-        /* Alpha mark — bottom-left colophon (place + year in
-           lowercase Roman). Mirrors 'vol. i' on the right so the
-           page is bracketed by manuscript marginalia. */
-        /* Two corner marks in the same faded italic hand, bracketing the hero —
-           name bottom-left, place·year bottom-right (founder 2026-07-23:
-           symmetric, both italic; the stacked / upright-roman versions read
-           wrong). Mirrors the old manuscript-folio idea. */
-        .alpha-mark, .omega-mark {
-          position: absolute;
-          bottom: 56px;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 13px;
-          color: rgba(26, 19, 24, 0.42);
-          letter-spacing: 0.02em;
-          user-select: none;
-          z-index: 2;
-        }
-        .alpha-mark { left: 58px; }
-        .omega-mark { right: 58px; }
         /* Scroll cue — soft pulsing chevron beneath the close.
            Tells the reader where to go without saying it. */
         .scroll-cue {
@@ -1508,7 +1488,7 @@
         }
 
         /* LOWER BAND — two mirrored halves around page centre.
-             LEFT  : wordmark + dict stack (anchors bottom-left)
+             LEFT  : wordmark + pronunciation (anchors bottom-left)
              RIGHT : right-stack (dagger+CTAs+motto) anchored bottom-right
            Each half is exactly 1fr, so the wordmark's right edge and
            the right-stack's left edge sit at equal distances from the
@@ -2025,8 +2005,7 @@
           }
         }
         /* The it-rotates indicator — lowercase roman numerals in the
-           site's own hand (the dict-lines and letter sections already
-           speak roman numerals), never carousel dots. Active numeral
+           site's own manuscript hand, never carousel dots. Active numeral
            carries the ink; the rest sit at ghost. Each is a quiet jump
            target. */
         .front-numerals {
@@ -2260,15 +2239,12 @@
              quiet enough to remain part of the editorial composition. */
           color: rgba(58, 15, 61, 0.6);
         }
-        /* Upright posture + underline distinguish the answer from the faded
-           italic question without introducing another face. */
+        /* Upright posture distinguishes the answer from the faded italic
+           question without introducing another face. */
         .front-answer-name {
           font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
           font-style: normal;
           font-weight: 600;
-          text-decoration: underline;
-          text-decoration-thickness: 1px;
-          text-underline-offset: 6px;
         }
         .front-answer-dot {
           font-style: normal;
@@ -2304,15 +2280,15 @@
           align-items: center;
           transition: opacity 320ms ease;
           gap: clamp(18px, 1.8vw, 26px);
-          /* Bottom-pinned in right-col — its space-between drops this to the
-             bottom. Matches right-lower's box (752px, flex-end, -32px) and
-             the letter column's 64px left inset so it left-aligns with the
-             CTAs; margin-bottom equals the wordmark-block's so both baselines
-             align across the slide. */
+          /* Keep the original in-flow footprint so the closing copy + CTAs
+             remain at their exact established coordinates. Translate only
+             the painted footer group to the page centre; transforms do not
+             participate in the column's space-between layout. */
           align-self: flex-end;
           width: 752px;
           padding-left: 72px;
           margin: 0 -32px var(--lower-block-bottom) 0;
+          transform: translateX(-283px);
         }
         .quiet-link {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -2467,9 +2443,7 @@
         }
         .demo-link em { font-style: italic; }
         .demo-link:hover { color: var(--theme-fg); }
-        /* WORDMARK + DICT STACK — Fleet's signature anchor block.
-           Wordmark dominates, then phon, then numbered defs, then
-           footnote. The stack creates visual gravity at bottom-left. */
+        /* Wordmark + pronunciation — the back slide's bottom-left anchor. */
         .wordmark-block {
           display: flex;
           flex-direction: column;
@@ -2477,6 +2451,10 @@
           max-width: 540px;
           margin-left: -32px;
           margin-bottom: var(--lower-block-bottom);
+          /* The definitions are gone, but the mark stays at its exact former
+             coordinates. This is the measured height they occupied on the
+             fixed desktop canvas; mobile flows naturally and resets it. */
+          padding-bottom: 86.625px;
         }
         .big-word {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -2515,35 +2493,6 @@
           color: var(--theme-fg-muted);
           margin: -8px 0 10px 0;
           padding-left: 0;
-        }
-        .dict-line {
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 13.5px;
-          line-height: 1.42;
-          color: var(--theme-fg);
-          margin: 0;
-          max-width: 520px;
-        }
-        .dict-line + .dict-line {
-          margin-top: 10px;
-        }
-        .dict-line em {
-          font-style: italic;
-          /* fg-muted (was fg-faint) — same WCAG AA reasoning as .phon:
-             the "I. n." / "II. n." labels are 13.5px body text and
-             need ≥ 4.5:1 contrast. */
-          color: var(--theme-fg-muted);
-          margin-right: 4px;
-        }
-        .dict-line a {
-          color: var(--theme-fg);
-          text-decoration: underline;
-          text-decoration-color: var(--theme-border-soft);
-          text-underline-offset: 2px;
-          transition: text-decoration-color 180ms ease;
-        }
-        .dict-line a:hover {
-          text-decoration-color: var(--theme-fg);
         }
         .footnote {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -2836,15 +2785,6 @@
           .hero-h1 {
             font-size: clamp(30px, 7vw, 56px);
           }
-          .alpha-mark, .omega-mark {
-            /* Sit BELOW the watermark glyph (founder, 2026-07-18) — the
-               watermark rests at bottom 7%, so the colophon drops beneath
-               it near the slide foot. Both corners share the baseline. */
-            bottom: 150px;
-            font-size: 10.5px;
-          }
-          .alpha-mark { left: 20px; }
-          .omega-mark { right: 20px; }
           /* Front-slide opening on mobile — over the square scene, lower
              third, sized to the viewport (the desktop 648px block would
              overflow). stage-top is display:contents here, so this
@@ -2992,6 +2932,7 @@
             order: 7;
             margin-left: 0;
             max-width: 100%;
+            padding-bottom: 0;
             /* Extra breath above so the brand block reads as its
                own closing section, not as the next paragraph after
                the CTAs. Adds to the bottom-inner 64px flex gap. */
@@ -2999,6 +2940,7 @@
           }
           .quiet-links {
             order: 8;
+            transform: none;
             width: auto;
             align-self: auto;
             padding-left: 0;
@@ -3071,10 +3013,6 @@
             font-size: clamp(44px, 12.5vw, 120px);
             white-space: nowrap;
             letter-spacing: -0.022em;
-          }
-          .dict-line {
-            max-width: 100%;
-            font-size: clamp(13.5px, 1.4vw, 15px);
           }
           .phon {
             font-size: clamp(11.5px, 1.1vw, 13px);

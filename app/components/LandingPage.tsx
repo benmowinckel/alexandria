@@ -9,10 +9,6 @@ import { createPortal } from 'react-dom';
 // paint on chunked HTML). See landing.css header for the story.
 import './landing.css';
 
-interface Props {
-  brandClassName?: string;
-}
-
 /*
  * Structurally a carbon copy of fleetai.com. Only the words change.
  *
@@ -29,7 +25,7 @@ interface Props {
  * Theme variants for the bottom slide. Each theme pairs a generated
  * ornamental "a." image with the exact page background it was produced on,
  * so the image blends seamlessly into the slide. Foreground colors are
- * tuned so nav / wordmark / dict stay readable.
+ * tuned so the ornament, wordmark, and pronunciation stay readable.
  */
 type Theme = {
   id: string;
@@ -45,7 +41,7 @@ type Theme = {
  * Palette coordination: for each variant, fg pulls from the ornament's
  * dominant pigment (deep wax blue, mosaic navy, terracotta umber, jade
  * forest, muscle rose, etc.) rather than generic ink. Muted + faint are
- * softer descendants of the same family. This makes the wordmark and dict
+ * softer descendants of the same family. This makes the wordmark
  * read as part of the same artifact rather than text pasted on top.
  */
 // Order matches `~/alexandria-inc/public/brand/ornament 1-9.png` — the curated
@@ -265,7 +261,7 @@ function DemoFilm({
   );
 }
 
-export default function LandingPage({ brandClassName = '' }: Props) {
+export default function LandingPage() {
   const [themeIdx, setThemeIdx] = useState(0);
   // ── THE BACK SLIDE — three sections, expand/contract (founder,
   // 2026-07-28: "radically simplify… a super super simple short version
@@ -667,11 +663,16 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         const progress = y1 / peelDistance;
         document.documentElement.style.setProperty('--peel-progress', String(progress));
         document.documentElement.style.setProperty('--peel-progress-2', String(progress));
-        // on-bottom flips once the top slide is past the midpoint. Toggled
-        // on mobile too so the nav can switch from transparent (over the
-        // painting) to solid (over the back slide) without the desktop
-        // peel transform.
-        navRef.current?.classList.toggle('on-bottom', progress > 0.5);
+        // Desktop changes at the peel midpoint. Mobile has no peel, so wait
+        // until the flowing front slide has actually cleared the fixed nav;
+        // the Alexandria mark belongs only to the second slide.
+        const mobileBottomStart = Math.max(
+          0,
+          (topRef.current?.offsetHeight ?? peelDistance) -
+            (navRef.current?.offsetHeight ?? 0),
+        );
+        const onBottom = mq.matches ? sy >= mobileBottomStart : progress > 0.5;
+        navRef.current?.classList.toggle('on-bottom', onBottom);
         if (mq.matches) return;
         if (topRef.current) {
           topRef.current.style.transform = `translate3d(0, ${-y1}px, 0)`;
@@ -825,16 +826,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
              any bottom-slide theme. ═════ */}
       <nav className="nav" ref={navRef} aria-label="Primary">
         <div className="nav-inner">
-          <div className="nav-brand-block">
-            <Link href="/" className={`nav-brand ${brandClassName}`}>
-              alexandria<span className="nav-dot">.</span>
-            </Link>
-            {/* Frontispiece subtitle — small-caps Roman beneath the italic
-                wordmark. Classical title-block contrast: italic display,
-                roman small-caps Latin motto. The seal, not the explainer —
-                the founding paragraph carries "library of human minds". */}
-            <span className="nav-subtitle" aria-hidden>mentes aeternae</span>
-          </div>
           <div className="nav-links">
             {/* Just the reading now — whitepaper + letter. library ·
                 marketplace moved OUT of the nav down to the bottom of the
@@ -913,14 +904,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
             footer on the back slide" — reversing the 07-27 archway door);
             the demo's one home is the back-slide quiet-links foot. */}
         <div className="stage-top">
-        {/* The colophon — the front slide signed like a manuscript, the two
-            marks bracketing the hero in opposite corners (founder 2026-07-23):
-            the maker's name bottom-left, the place + year bottom-right, both in
-            the same faded italic hand. "Benjamin a. Mowinckel" keeps caps B + M
-            around the lowercase a. — the same a. that closes a session and dots
-            the wordmark. A printed book credits its maker in the margins. */}
-        <span className="alpha-mark">Benjamin a. Mowinckel</span>
-        <span className="omega-mark">san francisco · mmxxvi</span>
         {/* Front-slide opening (2026-07-12, founder-directed): the letter
             begins on the hero — "to the reader" + the calculator hook —
             set low and centred over the scene, quiet serif. It peels up
@@ -1087,7 +1070,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
         <div className="bottom-inner">
           {/* TWO COLUMNS spanning full vertical height.
                 LEFT  : ornament (top, original padding-top preserved)
-                        + wordmark/dict (bottom)
+                        + wordmark/pronunciation (bottom)
                 RIGHT : statement (top) + CTAs (bottom)
               The right column has the same width and right-alignment as
               the old right-stack, so the body's left edge is where the
@@ -1102,18 +1085,6 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                 <sup className="big-word-sup">1</sup>
               </h2>
               <p className="phon">/ˌæl.ɪɡˈzæn.dri.ə/</p>
-              <p className="dict-line">
-                <em>I. n.</em> founded by alexander the great in
-                egypt; antiquity&rsquo;s library of all human
-                knowledge; destroyed by fire, centuries of thought
-                lost forever.
-              </p>
-              <p className="dict-line">
-                <em>II. n.</em> refounded two thousand years
-                later; a library not of human knowledge but of
-                human minds, written by their authors; this
-                time, it cannot burn.
-              </p>
             </div>
           </div>
 
@@ -1126,7 +1097,7 @@ export default function LandingPage({ brandClassName = '' }: Props) {
                     two closing sections (how to start + the door) stay
                     pinned below with the CTAs. Copy consolidated this
                     pass — same ideas and richness, fewer words. Section
-                    plates (roman numerals) echo the dictionary block. */}
+                    plates (roman numerals) carry the manuscript register. */}
                 {/* The pitch — a manuscript index, not a wall of prose.
                     Each large sentence carries the causal story on its own;
                     the quieter line beneath adds precision. Whitespace
@@ -1355,8 +1326,8 @@ export default function LandingPage({ brandClassName = '' }: Props) {
               </div>
 
               {/* The places line — library. marketplace., bottom-pinned in
-                  the right column so its baseline lines up with the wordmark/
-                  dictionary block at bottom-left (2026-07-13, founder). Out
+                  the right column so its baseline lines up with the wordmark
+                  at bottom-left (2026-07-13, founder). Out
                   of the nav, carrying the exact prod nav-shelf styling
                   (period marks, 15px medium, spaced). right-col's
                   space-between drops it to the bottom; matching right-lower's
