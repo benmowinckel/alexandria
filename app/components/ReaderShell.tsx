@@ -83,8 +83,8 @@ export function PdfView({ url }: { url: string }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let doc: any = null;
     const renderAll = async (w: number) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       // @ts-expect-error pdfjs-dist's bundler entry does not ship a declaration file.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const pdfjs: any = await import('pdfjs-dist/webpack.mjs');
       if (!doc) {
         const bytes = new Uint8Array(await (await fetch(url)).arrayBuffer());
