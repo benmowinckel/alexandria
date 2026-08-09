@@ -1,4 +1,4 @@
-# alexandria-factory-version 20260809163647
+# alexandria-factory-version 20260809164042
 7e5f87df4e4484b1dac73686d8844abcc41835823fd6193f93bb639b1c362867  factory/block.md
 7f211812c204ac107cb577cbbae2cf8dc91c2a2dd6334e09b9a34704ff393cc8  factory/canon/MODULES.md
 9c64b149044d11081bf9b1cb6f3b6db722a4f57edda28685dbd73beb39ff5794  factory/canon/axioms.md
@@ -9,7 +9,7 @@
 edfa36c54ca2a725e67932404183625e62328e09d5afdffa0442ed381ab824fc  factory/canon/library.md
 1153cef4ae6b1cc09efb1ac67dc0154e1c78d48115c70232375681f9bcc41c83  factory/canon/marketplace.md
 24b5046339b8f5a31788c5b1089159170a3d2d3323420d79c183520409745bb1  factory/canon/mercury.md
-1de0b54936233fafc89a0512877df51df24ac6315ea74c0822c2fa1d12e684be  factory/canon/methodology.md
+b94ebb2815c758adce8e18a9535cb11a76dad9ba0289f927d984ec0107130c87  factory/canon/methodology.md
 95766bfe96f22250fc7062d8d64def04cf371e8e2ff5b34bc8564cecd5e6ba1c  factory/canon/plm.md
 12646f62304506ab68ee81d6018d2a5fd967282c09c8040672cf926e1a7ddda9  factory/canon/publisher.md
 b51fdfd085da3d0455a1cb9115ec29ddaf8f9973e4108a0f4fdbb426aaf7070d  factory/canon/twin.md
