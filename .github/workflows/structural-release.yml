@@ -127,9 +127,12 @@ jobs:
         working-directory: candidate
         run: bash scripts/test-codex-integration.sh
 
-      - name: App build
+      - name: App dependency audit and build
         working-directory: candidate
-        run: npm ci && npm run build
+        run: |
+          npm ci
+          npm audit --audit-level=high
+          npm run build
 
   # Promotion is deliberately absent: GitHub has no Touch ID. scripts/push.sh
   # waits for both jobs above, then the Mac releases those exact bytes.

@@ -84,8 +84,8 @@ export function PdfView({ url }: { url: string }) {
     let doc: any = null;
     const renderAll = async (w: number) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const pdfjs: any = await import('pdfjs-dist');
-      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';  // served statically (reliable in Next)
+      // @ts-expect-error pdfjs-dist's bundler entry does not ship a declaration file.
+      const pdfjs: any = await import('pdfjs-dist/webpack.mjs');
       if (!doc) {
         const bytes = new Uint8Array(await (await fetch(url)).arrayBuffer());
         doc = await pdfjs.getDocument({ data: bytes }).promise;
