@@ -24,6 +24,9 @@ check() {
     PASSED=$((PASSED + 1))
   else
     echo "[stranger] $name ... FAIL"
+    if [ -n "${GITHUB_ACTIONS:-}" ]; then
+      printf '::error title=Stranger test failed::%s\n' "$name"
+    fi
     FAILED=$((FAILED + 1))
   fi
 }
@@ -35,6 +38,9 @@ check_output() {
     PASSED=$((PASSED + 1))
   else
     echo "[stranger] $name ... FAIL"
+    if [ -n "${GITHUB_ACTIONS:-}" ]; then
+      printf '::error title=Stranger test failed::%s\n' "$name"
+    fi
     FAILED=$((FAILED + 1))
   fi
 }
