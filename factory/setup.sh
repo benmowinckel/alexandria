@@ -857,6 +857,8 @@ PY
   fi
 
   if [ -n "$CLAUDE_HOOKS_OK" ]; then
+    printf '%s\n' 'alexandria-config-v1' > "$RUNTIME_DIR/.owned_claude_config"
+    chmod 600 "$RUNTIME_DIR/.owned_claude_config" 2>/dev/null
     echo "  Claude Code: configured (session hooks)"
   else
     echo "  Claude Code: existing settings could not be merged safely; left unchanged"
@@ -993,6 +995,8 @@ PY
   done
 
   if [ -n "$CURSOR_HOOKS_OK" ]; then
+    printf '%s\n' 'alexandria-config-v1' > "$RUNTIME_DIR/.owned_cursor_config"
+    chmod 600 "$RUNTIME_DIR/.owned_cursor_config" 2>/dev/null
     echo "  Cursor: configured (hooks + rules + /a skill)"
   else
     echo "  Cursor: existing hooks could not be merged safely; left unchanged"
@@ -1066,6 +1070,8 @@ if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
     fi
   fi
   if [ -n "$CODEX_CONFIGURED" ]; then
+    printf '%s\n' 'alexandria-config-v1' > "$RUNTIME_DIR/.owned_codex_config"
+    chmod 600 "$RUNTIME_DIR/.owned_codex_config" 2>/dev/null
     echo "  Codex: wired (trust is verified in the health check below)"
   else
     echo "  Codex: existing configuration could not be merged safely; left unchanged"

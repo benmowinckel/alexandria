@@ -353,6 +353,9 @@ def remove_signed_runtime_files() -> None:
     if RUNTIME_DIR.is_symlink():
         print(f"kept foreign runtime symlink: {RUNTIME_DIR}")
         return
+    if has_symlink_component(manifest):
+        print(f"kept runtime with a symlinked manifest: {RUNTIME_DIR}")
+        return
     try:
         expected = {}
         for line in manifest.read_text(encoding="utf-8").splitlines():
@@ -391,6 +394,16 @@ def remove_signed_runtime_files() -> None:
             pass
 
 
+def protected_config_marker(name: str) -> bool:
+    marker = RUNTIME_DIR / name
+    if has_symlink_component(marker):
+        return False
+    try:
+        return marker.read_text(encoding="utf-8") == "alexandria-config-v1\n"
+    except OSError:
+        return False
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Remove Alexandria integrations safely")
     parser.add_argument(
@@ -401,19 +414,24 @@ def main() -> int:
     args = parser.parse_args()
     ok = True
 
-    for path, label, editor in (
-        (HOME / ".claude/settings.json", "Claude settings", edit_claude),
-        (HOME / ".cursor/hooks.json", "Cursor hooks", edit_cursor),
-        (HOME / ".codex/hooks.json", "Codex hooks", edit_codex_hooks),
+    for path, label, editor, marker in (
+        (HOME / ".claude/settings.json", "Claude settings", edit_claude, ".owned_claude_config"),
+        (HOME / ".cursor/hooks.json", "Cursor hooks", edit_cursor, ".owned_cursor_config"),
+        (HOME / ".codex/hooks.json", "Codex hooks", edit_codex_hooks, ".owned_codex_config"),
     ):
+        if not protected_config_marker(marker):
+            if path.exists():
+                print(f"left {label} unchanged: no protected Alexandria config receipt")
+            continue
         try:
             ok = edit_json(path, label, editor) and ok
         except ValueError as exc:
             print(f"left {label} unchanged: {exc}")
             ok = False
 
-    ok = remove_codex_agents_block(HOME / ".codex/AGENTS.md") and ok
-    ok = remove_codex_writable_root(HOME / ".codex/config.toml") and ok
+    if protected_config_marker(".owned_codex_config"):
+        ok = remove_codex_agents_block(HOME / ".codex/AGENTS.md") and ok
+        ok = remove_codex_writable_root(HOME / ".codex/config.toml") and ok
     ok = remove_owned_allowed_signer() and ok
 
     for base in (HOME / ".claude/skills", HOME / ".cursor/skills", HOME / ".agents/skills"):

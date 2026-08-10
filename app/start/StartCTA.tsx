@@ -147,13 +147,9 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
         </div>
       )}
 
-      {/* The one line that explains the executable boundary. Reuses the
-          page's already-styled trust class. */}
-      <p className="primer-trust">
-        {mode === 'computer'
-          ? 'Your AI reads the public code and explains it before anything changes. Then you decide. The local setup needs no account and sends no personal files to Alexandria.'
-          : 'We send this setup message once. No reminders, account, or iCloud connection.'}
-      </p>
+      {mode !== 'computer' && (
+        <p className="primer-trust">We send this setup message once. No reminders, account, or iCloud connection.</p>
+      )}
       {validRef && (
         <p className="install-new">
           <Link href="/">new here? see what this is &rarr;</Link>

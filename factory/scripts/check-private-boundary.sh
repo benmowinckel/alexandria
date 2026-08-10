@@ -689,6 +689,9 @@ printf '%s\n' \
 printf '%s\n' 'Alexandria runtime shim' > "$uninstall_home/.local/share/alexandria/hooks/shim.sh"
 printf '%s\n' 'Alexandria statusline' > "$uninstall_home/.local/share/alexandria/scripts/statusline.sh"
 printf '%s\n' 'foreign runtime addition' > "$uninstall_home/.local/share/alexandria/keep.txt"
+for marker in .owned_claude_config .owned_cursor_config .owned_codex_config; do
+  printf '%s\n' 'alexandria-config-v1' > "$uninstall_home/.local/share/alexandria/$marker"
+done
 {
   printf '%s  factory/hooks/shim.sh\n' "$(shasum -a 256 "$uninstall_home/.local/share/alexandria/hooks/shim.sh" | awk '{print $1}')"
   printf '%s  factory/scripts/statusline.sh\n' "$(shasum -a 256 "$uninstall_home/.local/share/alexandria/scripts/statusline.sh" | awk '{print $1}')"
