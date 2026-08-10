@@ -257,7 +257,8 @@ mkdir -p "$ALEX_DIR/files/vault" "$ALEX_DIR/system/hooks" "$ALEX_DIR/files/const
 # sentence inside a foreign file is never ownership proof.
 PREVIOUS_VERIFIED_MANIFEST=""
 _previous_manifest_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
-if [ -n "$_previous_manifest_tmp" ] && [ -s "$RUNTIME_DIR/.canon_manifest" ] && \
+if [ -n "$_previous_manifest_tmp" ] && [ ! -L "$RUNTIME_DIR/.canon_manifest" ] && \
+   [ -f "$RUNTIME_DIR/.canon_manifest" ] && [ -s "$RUNTIME_DIR/.canon_manifest" ] && \
    cp "$RUNTIME_DIR/.canon_manifest" "$_previous_manifest_tmp" 2>/dev/null; then
   PREVIOUS_VERIFIED_MANIFEST="$_previous_manifest_tmp"
 else
