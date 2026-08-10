@@ -82,8 +82,16 @@ if [ "$MODE" = "pull" ]; then
     fi
     if [ -n "$pexp" ] && [ "$pexp" = "$pact" ]; then
       mkdir -p "$pull_dir/system/canon" 2>/dev/null
-      cp "$ptmp" "$pull_dir/system/canon/$pull_module.md"
-      echo "pulled: $pull_module.md (verified against the Touch ID-signed manifest)"
+      if [ -f "$pull_dir/system/canon/disabled/$pull_module.md" ]; then
+        # Updating a disabled default must not silently reactivate it. Keep the
+        # verified new bytes in the disabled slot; moving it back remains the
+        # one explicit enable action.
+        cp "$ptmp" "$pull_dir/system/canon/disabled/$pull_module.md"
+        echo "pulled: $pull_module.md updated in disabled/ and remains off (verified)"
+      else
+        cp "$ptmp" "$pull_dir/system/canon/$pull_module.md"
+        echo "pulled: $pull_module.md (verified against the Touch ID-signed manifest)"
+      fi
     else
       echo "REFUSED: $pull_module.md failed the integrity check (sha != signed manifest, or no manifest entry). Nothing written."
     fi
@@ -155,6 +163,12 @@ if [ "$MODE" = "session-start" ]; then
   fi
   for module in foundation axioms methodology editor mercury publisher library filter bookshelf plm twin; do
     local_path="$ALEX_DIR/system/canon/$module.md"
+    # A reversible default opt-out is durable across both setup and optional
+    # update notices. Disabled modules are neither injected nor advertised as
+    # missing; the Author can move one back whenever they want it again.
+    if [ -f "$ALEX_DIR/system/canon/disabled/$module.md" ]; then
+      continue
+    fi
     fresh_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
     if [ "$AUTO_UPDATE" = true ] && [ -n "$fresh_tmp" ] && curl -s --max-time 5 "$CANON_GITHUB/$module.md" -o "$fresh_tmp" 2>/dev/null \
          && [ -s "$fresh_tmp" ] && [ "$(wc -c < "$fresh_tmp")" -gt 100 ]; then
@@ -334,12 +348,6 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
       ) 2>/dev/null &
     fi
   fi
-
-  # ── Nudges ──
-  # Markers only — Engine composes any user-facing text per canon.
-  # .nudge_pending: written at prior session-end if the session wasn't active.
-  # signal.md: observations accumulated from passive sessions — Engine reads directly.
-  # Canon instructs the Engine to check these at session start and respond appropriately.
 
   # Maintenance status — one line each, detail stays in files. Repair happens
   # in an active session — the Engine drains these when the Author engages.
@@ -733,11 +741,6 @@ if [ "$MODE" = "session-end" ]; then
     rm -f "$ALEX_DIR/system/.active_session"
   elif [ "$ALEX_WAS_ACTIVE" = "true" ]; then
     was_active=true
-  fi
-
-  # Marker only if session was NOT active — Engine composes nudge text per canon at next session start
-  if [ "$was_active" = "false" ]; then
-    touch "$ALEX_DIR/system/.nudge_pending"
   fi
 
   # Transcript → vault

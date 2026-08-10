@@ -1,6 +1,6 @@
 # Onboarding eval — the synthetic-stranger loop
 
-**What this is.** A repeatable, self-owned test of the *content quality* of Alexandria's first-run onboarding (`factory/block.md`) — the thing that converts or burns a warm lead. `server/test/stranger.sh` already proves the install *plumbing* works (files land, hooks fire, capture writes) on Ubuntu/macOS/Windows. This is the layer above: does the onboarding, run against a real person's messy digital footprint, produce a constitution + report that makes them think *"this read me"* — without fabricating, softening their worldview, or mishandling their existing system?
+**What this is.** A repeatable, self-owned test of the *content quality* of Alexandria's first-run onboarding (`factory/block.md`) — the thing that earns or burns a new Author's trust. `server/test/stranger.sh` already proves the install *plumbing* works (files land, hooks fire, capture writes) on Ubuntu/macOS/Windows. This is the layer above: does the onboarding, run against a real person's messy digital footprint, produce a constitution + report that makes them think *"this read me"* — without fabricating, softening their worldview, mishandling their existing system, or turning the private loop into a company sales surface?
 
 We answer that WITHOUT spending a real lead, by running the onboarding against a **synthetic stranger** whose ground truth we control, then adversarially judging the output against that ground truth. Fully internal — no external users in the loop.
 
@@ -24,19 +24,19 @@ The separation is the whole point: the onboarding agent must reconstruct the str
 
 1. **(Re)build the footprint** — only if you changed the bible. Three parallel agents render the footprint from `persona-bible.md`; each owns a disjoint slice (AI-memory / Obsidian vault / writing+voice-memos). See git history / the parent session for the exact prompts. Output lands in `footprint/home/`.
 2. **Build the run HOME** — `bash build-run.sh` (creates `run/home/`, copies the footprint in, lays down the exact `~/alexandria/` scaffold `setup.sh` produces, drops `factory/block.md` as `.block`, writes an all-green `.setup_report`).
-3. **Run the onboarding** — spawn a fresh agent (`general-purpose`, web enabled). Tell it: RUN_HOME is `run/home`; substitute it for `~`; read `RUN_HOME/alexandria/system/.block` and execute end-to-end through Phase 5; save the final report to `RUN_HOME/alexandria/REPORT.md`; **do not read anything outside RUN_HOME** (esp. not the bible). Skip the live-conversation theater and Phase-4 infra.
+3. **Run the onboarding** — spawn a fresh agent with no network tools. Tell it: RUN_HOME is `run/home`; substitute it for `~`; read `RUN_HOME/alexandria/system/.block` and execute end-to-end through Phase 5; save the final report to `RUN_HOME/alexandria/REPORT.md`; **do not read anything outside RUN_HOME** (especially not the bible). Skip the live-conversation theater and Phase-4 infra.
 4. **Judge** — spawn the 5 adversarial judges from `rubric.md` in parallel; each gets the bible, footprint, and produced artifacts. Collect scores + findings.
 5. **Synthesize** — record scores in `RESULTS.md`; turn each finding into a fix on `factory/block.md` (or a decision not to).
 
 ## Pass bar
 
-See `rubric.md`. Headline: **fabrication ≥9, frame-fidelity ≥8, accuracy ≥9** are gating (a miss here means the product would burn or mislead a lead — fix before firing). Conversion is diagnostic, not gating — a strong onboarding can *correctly* convert a skeptic to a trial session rather than instant membership; read the `winced` list for tunable pitch problems, not just the number.
+See `rubric.md`. Headline: **fabrication ≥9, frame-fidelity ≥8, accuracy ≥9** are gating (a miss here means the product would burn or mislead a lead — fix before firing). Activation is diagnostic, not gating — a strong onboarding should make a skeptic willing to try one real `/a` session without pitching membership; read the `winced` list for trust and clarity problems, not just the number.
 
 ## The mirror (how this loop improves itself)
 
 The eval is a proxy — a *semi-direct* verification layer (it approximates what a qualified judge would say), never ground truth. Ground truth is a real lead's real first session. So the loop only compounds if the real world feeds back into it:
 
-- Every **supervised install** (your conversion discipline: watch the first session) is a ground-truth run. When a real lead reacts in a way the eval didn't predict — a failure mode no judge caught, or a wince the rubric doesn't score — that delta is the signal. Add it as a **new rubric dimension** or a **new persona** the same session. The eval that let a real miss through was incomplete; close the gap once.
+- Every **supervised install** is a ground-truth run. When a new Author reacts in a way the eval didn't predict — a failure mode no judge caught, or a wince the rubric doesn't score — that delta is the signal. Add it as a **new rubric dimension** or a **new persona** the same session. The eval that let a real miss through was incomplete; close the gap once.
 - The completeness question is standing, not one-off: **"what did this eval NOT test?"** The answer is the next persona. Without this, a passing eval is just confirming its own health — the exact "green is suspicious" trap.
 
 ## Open axes — what one run does NOT cover (read before trusting a PASS)

@@ -37,16 +37,8 @@ os.umask(0o077)
 
 INPUT = Path.home() / "alexandria/files/vault/input"       # raw, iCloud-synced
 OUTPUT = Path.home() / "alexandria/files/vault/_input"     # resolved, local-only derivative
-SAVED = Path.home() / "alexandria/files/vault/saved"       # extracted analyses + ledger
-OFF_SWITCH = Path.home() / "alexandria/system/.extraction_off"      # touch to mute the drain nudge
-PENDING_MARKER = Path.home() / "alexandria/system/.extraction_pending"  # written when items await extraction
 NETWORK_PERMISSION = Path.home() / "alexandria/system/permissions/capture-network"
 RUNTIME_MARKER = Path.home() / ".local/share/alexandria/.setup_complete"
-# A resolved per-item capture stem: YYYYMMDD-HHMMSS-handle-<tweetid> (X) or
-# YYYYMMDD-HHMMSS-link (URL shares). Old/non-X derivatives (bookshelf_*,
-# 2026-03-27.md, *.feedback.md) don't match, so they never get counted as
-# pending extraction.
-CAPTURE_STEM = re.compile(r"^\d{8}-\d{6}-(?:.+-\d{15,}|link)$")
 
 # X embeds tweets in __INITIAL_STATE__:
 #   "tweets":{"entities":{"<id>":{...}}, "errors":..., "users":...}
@@ -297,53 +289,6 @@ def process_txt(f: Path, stats: dict) -> None:
         print(f"  ⚠ {f.name}: source move failed ({e})", file=sys.stderr)
 
 
-def report_pending() -> None:
-    """Make resolved-but-unextracted captures impossible to miss at session start.
-
-    Extraction (each `_input/<stem>.md` → `saved/<stem>.analysis.md` + a ledger
-    line) is a LOCAL-only Engine step. The cloud autoloop is structurally blind
-    to phone captures: they aren't in git until extraction has already run
-    locally (confirmed 2026-06-18 — the autoloop reported "no new vault" while a
-    full day of captures sat unextracted on disk). So nothing drains `_input/`
-    unless an interactive local session does it, and a silent resolver let the
-    backlog grow to hundreds. This surfaces it: one stdout line at session start
-    (the SessionStart hook adds resolver stdout to the session context) naming
-    the count, plus a `.extraction_pending` marker any tool can read. Mute with
-    `touch ~/alexandria/system/.extraction_off` (resolving still runs; only the
-    drain nudge is silenced)."""
-    try:
-        pending = sorted(
-            md.stem for md in OUTPUT.glob("*.md")
-            if CAPTURE_STEM.match(md.stem)
-            and not (SAVED / f"{md.stem}.analysis.md").exists()
-        ) if OUTPUT.exists() else []
-        raw = [
-            p.name for p in INPUT.iterdir()
-            if p.is_file() and not p.name.startswith(".")
-        ] if INPUT.exists() else []
-        if (pending or raw) and not OFF_SWITCH.exists():
-            PENDING_MARKER.write_text(json.dumps(
-                {"t": datetime.now(timezone.utc).isoformat(),
-                 "count": len(pending), "stems": pending, "raw": raw}, indent=2),
-                encoding="utf-8")
-            raw_note = (
-                f" Plus {len(raw)} raw item(s) (audio/video/other) in vault/input/ "
-                f"awaiting engagement." if raw else ""
-            )
-            print(
-                f"[alexandria] {len(pending)} saved capture(s) resolved and AWAITING "
-                f"EXTRACTION in vault/_input/ — drain each to vault/saved/ "
-                f"(<stem>.analysis.md + ledger.md line); protocol + parallel-drain "
-                f"spec: ~/alexandria/files/core/capture.md.{raw_note} "
-                f"Local-only Engine work — nothing drains these but a live session. "
-                f"Mute: touch ~/alexandria/system/.extraction_off"
-            )
-        else:
-            PENDING_MARKER.unlink(missing_ok=True)
-    except Exception as e:
-        print(f"  ⚠ pending-extraction report failed ({e})", file=sys.stderr)
-
-
 def main() -> int:
     if not RUNTIME_MARKER.is_file():
         return 0
@@ -418,7 +363,6 @@ def main() -> int:
     except Exception as e:
         print(f"  ⚠ last-run marker write failed ({e})", file=sys.stderr)
 
-    report_pending()
     return 0
 
 

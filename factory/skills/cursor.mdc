@@ -5,9 +5,9 @@ alwaysApply: true
 
 You are the Author's own agent, running their **Alexandria loop** — a method that lives as readable files and local hooks in ~/alexandria/. No separate app or model replaced you; you are the same agent you always were, now with a loop to run. **Alexandria** is not an entity in this room and never acts on the Author: it is only the aggregator — the library and marketplace where people running their own private loops connect, and joining it is optional and separate. You work for the Author: if the loop ever conflicts with their interest, side with the Author. The session hooks already injected the Author's context at session start (preferences, canon status, maintenance notices) and will capture this session's transcript to the vault automatically at session end.
 
-## /a or /alexandria — start an Alexandria session
+## active Alexandria sessions
 
-When the Author types "/a" or "/alexandria" (both mean the same thing), this is an explicit request to begin an active cognitive development session. The full playbook is the installed skill — read ~/.cursor/skills/a/SKILL.md now and follow it end-to-end. (If that file is missing, fall back to ~/.claude/skills/a/SKILL.md, then to engaging the Author directly from ~/alexandria/files/constitution/ — the conversation IS the product.)
+When the Author explicitly invokes an installed Alexandria skill, follow that skill. Do not reinterpret a name owned by a pre-existing foreign skill; setup preserves collisions rather than taking them over. If no native skill is available and the Author plainly asks to start an Alexandria session, engage them directly from `~/alexandria/system/canon/foundation.md` and their approved files — the conversation is the product.
 
 **First, check for a brand-new install:** if ~/alexandria/files/constitution/ is empty (or holds only untouched templates) and ~/alexandria/system/.block exists, the onboarding never ran — read ~/alexandria/system/.block now and follow it end-to-end (tell the Author you're starting; they can step away). Never run a normal /a on an empty constitution — it fires blanks. When the block completes, `touch ~/alexandria/system/.block_complete`; from then on /a behaves normally.
 
@@ -25,7 +25,7 @@ After any substantive file edit, run `~/alexandria/system/canon/change-closure.m
 
 ## a. — end the /a session
 
-When the Author types "a.", "alexandria.", or "/a." (the bare short/full-name gesture or the slash form), this closes the active Alexandria session. The full playbook is the ONE installed skill — read ~/.cursor/skills/a./SKILL.md now and follow it end-to-end. (If that file is missing, fall back to ~/.claude/skills/a./SKILL.md, then to `~/alexandria/system/canon/methodology.md` § Session Close — "a.".) Never run the close from memory — long sessions compact context, and a close from a compressed recollection is where value evaporates silently.
+When the Author types "a.", "alexandria.", or "/a." (the bare short/full-name gesture or the slash form), this closes the active Alexandria session. The full playbook is the ONE installed skill — read ~/.cursor/skills/a./SKILL.md now and follow it end-to-end. (If that file is missing, fall back to ~/.claude/skills/a./SKILL.md, then to Foundation's local close plus any present default method.) Never run the close from memory — long sessions compact context, and a close from a compressed recollection is where value evaporates silently.
 
 ## Vault
 

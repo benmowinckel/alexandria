@@ -14,7 +14,7 @@ The habit afterwards: open a new tab, type `/a`, and leave it. That's a session.
 
 ## What's in this repo
 
-- **`factory/`** — the gear that installs into `~/alexandria/`: canon (the methodology your agent follows), skills (`/a` and friends), hooks, templates, `setup.sh`. Public and forkable — the ideal Alexandrian replaces our defaults with their own.
+- **`factory/`** — the gear that installs into `~/alexandria/`: canon (the methodology your agent follows), the `/a` session route, hooks, templates, and `setup.sh`. Public and forkable — the ideal Alexandrian replaces our defaults with their own.
 - **`app/`** — the website ([alexandria-library.com](https://alexandria-library.com)), Next.js on Vercel.
 - **`server/`** — the api ([api.alexandria-library.com](https://api.alexandria-library.com)), a Cloudflare Worker. Stateless by design: it holds accounts and what Authors *publish*, never their thinking.
 

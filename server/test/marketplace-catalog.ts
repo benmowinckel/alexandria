@@ -13,12 +13,12 @@ assert.equal(
   currentDefault,
 );
 assert.equal(
-  canonicalizeModuleId('github:mowinckelb/alexandria-systems#optimise'),
-  'github:benmowinckel/alexandria-modules#optimise',
+  canonicalizeModuleId('github:mowinckelb/alexandria-systems#verify-edit'),
+  'github:benmowinckel/alexandria-modules#verify-edit',
 );
 assert.equal(
-  canonicalizeModuleId('github:someone/alexandria-systems#optimise'),
-  'github:someone/alexandria-systems#optimise',
+  canonicalizeModuleId('github:someone/alexandria-systems#verify-edit'),
+  'github:someone/alexandria-systems#verify-edit',
 );
 
 for (const name of ['axioms', 'methodology', 'editor', 'mercury', 'publisher']) {
@@ -32,7 +32,7 @@ assert.equal(
   'official',
 );
 assert.equal(
-  deriveMarketplaceTier('github:benmowinckel/alexandria-modules#optimise'),
+  deriveMarketplaceTier('github:benmowinckel/alexandria-modules#verify-edit'),
   'community',
 );
 assert.equal(
@@ -44,7 +44,7 @@ assert.deepEqual(moduleIdAliases(currentDefault), [
   currentDefault,
   'github:mowinckelb/alexandria#factory/canon/methodology',
 ]);
-assert.equal(new Set(moduleIdAliases('github:benmowinckel/alexandria-modules#optimise')).size, 4);
+assert.equal(new Set(moduleIdAliases('github:benmowinckel/alexandria-modules#verify-edit')).size, 4);
 assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/foundation'), false);
 assert.equal(isMarketplaceModule('github:mowinckelb/alexandria#factory/canon/foundation'), false);
 assert.equal(isMarketplaceModule(currentDefault), true);

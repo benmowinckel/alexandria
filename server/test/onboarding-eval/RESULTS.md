@@ -1,5 +1,7 @@
 # Onboarding eval — results log
 
+*Historical note: Runs 1–2 tested an older onboarding that still contained a commercial close. Their conversion rows and pitch findings are preserved as run history, not as the current product contract. The current rubric requires a complete private local loop, one natural `/a` activation, and no company ask.*
+
 ## Run 1 — Rosa Imani Bello — 2026-07-03
 
 **System under test:** `factory/block.md` @ commit `42b32a2` (as of this run).

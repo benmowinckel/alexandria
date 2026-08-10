@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import os
 import re
@@ -19,9 +20,26 @@ ALEX_DIR = HOME / "alexandria"
 RUNTIME_DIR = HOME / ".local/share/alexandria"
 MARKER_START = "<!-- alexandria:start -->"
 MARKER_END = "<!-- alexandria:end -->"
+OWNERSHIP_LEDGER = RUNTIME_DIR / ".owned_integrations"
+
+
+def has_symlink_component(path: Path) -> bool:
+    """Reject symlinks anywhere below HOME before any destructive write."""
+    try:
+        relative = path.relative_to(HOME)
+    except ValueError:
+        return True
+    current = HOME
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False
 
 
 def write_text_atomic(path: Path, text: str) -> None:
+    if has_symlink_component(path):
+        raise OSError(f"refusing symlinked path: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     mode = path.stat().st_mode & 0o777 if path.exists() else 0o600
     fd, name = tempfile.mkstemp(prefix=path.name + ".", dir=path.parent)
@@ -71,8 +89,26 @@ def remove_hook_entries(hooks: object, predicate) -> bool:
 
 
 def mentions_alexandria_hook(entry: object) -> bool:
-    text = json.dumps(entry, sort_keys=True).lower()
-    return "alexandria" in text and ("shim.sh" in text or "capture_resolver" in text)
+    if not isinstance(entry, dict):
+        return False
+    nested = entry.get("hooks", [])
+    if not isinstance(nested, list):
+        return False
+    owned = {
+        "bash $HOME/.local/share/alexandria/hooks/shim.sh session-start",
+        "bash $HOME/.local/share/alexandria/hooks/shim.sh session-end",
+        "bash $HOME/.local/share/alexandria/hooks/shim.sh codex-session-end",
+        "bash $HOME/.local/share/alexandria/hooks/shim.sh subagent",
+        f"bash {RUNTIME_DIR / 'hooks/shim.sh'} session-start",
+        f"bash {RUNTIME_DIR / 'hooks/shim.sh'} session-end",
+        f"bash {RUNTIME_DIR / 'hooks/shim.sh'} codex-session-end",
+        f"bash {RUNTIME_DIR / 'hooks/shim.sh'} subagent",
+        "python3 $HOME/.local/share/alexandria/scripts/capture_resolver.py 2>/dev/null || true",
+        f"python3 {RUNTIME_DIR / 'scripts/capture_resolver.py'} 2>/dev/null || true",
+    }
+    return any(
+        isinstance(hook, dict) and hook.get("command") in owned for hook in nested
+    )
 
 
 def edit_claude(document: dict) -> bool:
@@ -121,8 +157,13 @@ CURSOR_HOOKS = (
 
 def edit_cursor(document: dict) -> bool:
     def owned(entry: object) -> bool:
-        text = json.dumps(entry, sort_keys=True).lower()
-        return any(name in text for name in CURSOR_HOOKS)
+        return isinstance(entry, dict) and entry.get("command") in {
+            "./hooks/alexandria-session-start.py",
+            "./hooks/alexandria-session-end.py",
+            "./hooks/alexandria-stop.py",
+            "./hooks/alexandria-transcript.py beforeSubmitPrompt",
+            "./hooks/alexandria-transcript.py afterAgentResponse",
+        }
 
     return remove_hook_entries(document.get("hooks"), owned)
 
@@ -141,7 +182,17 @@ def remove_codex_agents_block(path: Path) -> bool:
     if MARKER_START not in text:
         return True
     before, _, rest = text.partition(MARKER_START)
-    _, _, after = rest.partition(MARKER_END)
+    body, _, after = rest.partition(MARKER_END)
+    block = (MARKER_START + body + MARKER_END).strip()
+    receipt_file = RUNTIME_DIR / ".codex_agents_block_sha"
+    try:
+        receipt = receipt_file.read_text(encoding="utf-8").strip()
+    except OSError:
+        print("left Codex AGENTS.md unchanged: no protected Alexandria block receipt")
+        return False
+    if hashlib.sha256(block.encode("utf-8")).hexdigest() != receipt:
+        print("left Codex AGENTS.md unchanged: marker block does not match its receipt")
+        return False
     merged = (before.rstrip() + ("\n\n" if before.strip() and after.strip() else "") + after.lstrip()).rstrip()
     write_text_atomic(path, merged + ("\n" if merged else ""))
     return True
@@ -220,20 +271,29 @@ def remove_codex_writable_root(path: Path) -> bool:
     return True
 
 
+def owned_file_matches(path: Path) -> bool:
+    """Require the protected install receipt and the exact installed bytes."""
+    if has_symlink_component(path) or not path.is_file() or not OWNERSHIP_LEDGER.is_file():
+        return False
+    try:
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        for line in OWNERSHIP_LEDGER.read_text(encoding="utf-8").splitlines():
+            recorded_path, separator, recorded_digest = line.partition("\t")
+            if separator and recorded_path == str(path):
+                return recorded_digest == digest
+    except OSError:
+        return False
+    return False
+
+
 def remove_owned_tree(path: Path, marker: str = "SKILL.md") -> None:
     proof = path / marker
     if not proof.is_file():
         return
-    try:
-        owned = "alexandria" in proof.read_text(encoding="utf-8", errors="ignore").lower()
-    except OSError:
-        owned = False
-    if owned:
+    if owned_file_matches(proof):
         proof.unlink()
         metadata = path / "agents/openai.yaml"
-        if metadata.is_file() and "alexandria" in metadata.read_text(
-            encoding="utf-8", errors="ignore"
-        ).lower():
+        if owned_file_matches(metadata):
             metadata.unlink()
         for directory in (path / "agents", path):
             try:
@@ -247,7 +307,7 @@ def remove_owned_tree(path: Path, marker: str = "SKILL.md") -> None:
 def remove_owned_file(path: Path) -> None:
     if not path.is_file():
         return
-    if "alexandria" in path.read_text(encoding="utf-8", errors="ignore").lower():
+    if owned_file_matches(path):
         path.unlink()
     else:
         print(f"kept foreign file: {path}")
@@ -256,24 +316,25 @@ def remove_owned_file(path: Path) -> None:
 def remove_jobs() -> None:
     for name in ("io.alexandria.icloud-backup.plist", "io.alexandria.drive-sync.plist"):
         path = HOME / "Library/LaunchAgents" / name
-        if path.exists():
+        if path.exists() and owned_file_matches(path):
             subprocess.run(["launchctl", "unload", str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             path.unlink(missing_ok=True)
+        elif path.exists():
+            print(f"kept foreign file: {path}")
 
 
 def remove_owned_allowed_signer() -> bool:
-    marker = ALEX_DIR / "system/.allowed_signers_entry"
+    marker = RUNTIME_DIR / ".allowed_signers_entry"
     if not marker.is_file():
         return True
     try:
         owned_line = marker.read_text(encoding="utf-8").rstrip("\r\n")
-        configured = subprocess.run(
-            ["git", "-C", str(ALEX_DIR), "config", "gpg.ssh.allowedSignersFile"],
-            check=False,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        path = Path(configured).expanduser() if configured else HOME / ".config/git/allowed_signers"
+        # Setup writes only this fixed user-level file. Never let repository
+        # config redirect deletion to an attacker-chosen path.
+        path = HOME / ".config/git/allowed_signers"
+        if has_symlink_component(path):
+            print(f"left the Git allowed-signers entry unchanged: symlinked path {path}")
+            return False
         if path.is_file() and owned_line:
             lines = path.read_text(encoding="utf-8").splitlines()
             kept = [line for line in lines if line != owned_line]
@@ -318,6 +379,7 @@ def main() -> int:
 
     for path in (
         HOME / ".cursor/rules/alexandria.mdc",
+        HOME / ".cursor/rules/alexandria-loop.mdc",
         *(HOME / ".cursor/hooks" / name for name in CURSOR_HOOKS),
         HOME / ".factory/droids/a.md",
         HOME / ".factory/droids/alexandria.md",
@@ -326,11 +388,15 @@ def main() -> int:
 
     sidecar = HOME / ".alexandria"
     if sidecar.is_dir():
-        shutil.rmtree(sidecar)
+        # Cursor uses this shared, user-writable namespace for local transcript
+        # staging and overlays. A directory name is not proof of ownership, so
+        # disconnect the hooks but preserve every byte here. The user can inspect
+        # and remove it separately if they know it contains only Alexandria data.
+        print(f"kept local Cursor sidecar: {sidecar}")
     remove_jobs()
 
-    # Remove both the protected runtime and exact legacy runtime files. Author
-    # cognition remains under ~/alexandria unless --delete-files was requested.
+    # Remove legacy runtime files only when the protected receipt proves their
+    # exact bytes were installed by Alexandria. A familiar path is not proof.
     for legacy in (
         ALEX_DIR / "system/hooks/shim.sh",
         ALEX_DIR / "system/.hooks_payload",
@@ -345,7 +411,7 @@ def main() -> int:
         ALEX_DIR / "system/scripts/statusline.sh",
         ALEX_DIR / "system/scripts/verify-fetch.sh",
     ):
-        legacy.unlink(missing_ok=True)
+        remove_owned_file(legacy)
     if RUNTIME_DIR.is_symlink():
         RUNTIME_DIR.unlink()
     elif RUNTIME_DIR.is_dir():

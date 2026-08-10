@@ -7,7 +7,7 @@ Use this entry point only when the Author directly asks to register a named mark
 
 - a full module ID: `github:<user>/<repo>#<path>` or `local:<github-login>/<slug>`
 - a marketplace URL: `alexandria-library.com/marketplace/<user>/<repo>/<path>` (translate to the github ID)
-- a freeform reference: "install optimise" — search `https://api.alexandria-library.com/marketplace`, find the matching module by `name`, confirm the ID with the Author before installing.
+- a freeform reference: "install verify-edit" — search `https://api.alexandria-library.com/marketplace`, find the matching module by `name`, confirm the ID with the Author before installing.
 
 ## What this does
 

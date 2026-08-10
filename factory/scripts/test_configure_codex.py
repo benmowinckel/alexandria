@@ -12,6 +12,84 @@ SPEC.loader.exec_module(MODULE)
 
 
 class WritableRootTests(unittest.TestCase):
+    def test_agents_marker_requires_exact_protected_receipt(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            codex = root / ".codex"
+            runtime = root / ".local" / "share" / "alexandria"
+            ambient = root / "ambient.md"
+            codex.mkdir()
+            runtime.mkdir(parents=True)
+            ambient.write_text(
+                "<!-- alexandria:start -->\nowned\n<!-- alexandria:end -->\n",
+                encoding="utf-8",
+            )
+            foreign = (
+                "keep\n<!-- alexandria:start -->\nforeign\n"
+                "<!-- alexandria:end -->\n"
+            )
+            agents = codex / "AGENTS.md"
+            agents.write_text(foreign, encoding="utf-8")
+
+            with self.assertRaises(SystemExit):
+                MODULE.merge_agents(codex, ambient, runtime)
+            self.assertEqual(agents.read_text(encoding="utf-8"), foreign)
+            self.assertFalse((runtime / ".codex_agents_block_sha").exists())
+
+            legacy_manifest = root / "previous-manifest"
+            legacy_digest = MODULE.hashlib.sha256(
+                foreign[foreign.index(MODULE.MARKER_START):].strip().encode("utf-8")
+            ).hexdigest()
+            legacy_manifest.write_text(
+                f"{legacy_digest}  factory/skills/codex-ambient.md\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                MODULE.merge_agents(codex, ambient, runtime, legacy_manifest),
+                "merged",
+            )
+
+            first = agents.read_text(encoding="utf-8")
+            ambient.write_text(
+                "<!-- alexandria:start -->\nupdated\n<!-- alexandria:end -->\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(MODULE.merge_agents(codex, ambient, runtime), "merged")
+            self.assertNotEqual(agents.read_text(encoding="utf-8"), first)
+
+            agents.write_text(
+                agents.read_text(encoding="utf-8").replace("updated", "tampered"),
+                encoding="utf-8",
+            )
+            tampered = agents.read_text(encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                MODULE.merge_agents(codex, ambient, runtime)
+            self.assertEqual(agents.read_text(encoding="utf-8"), tampered)
+
+    def test_finished_config_is_parsed_and_validated(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            codex = root / ".codex"
+            alex = root / "alexandria"
+            runtime = root / ".local" / "share" / "alexandria"
+            ambient = root / "ambient.md"
+            codex.mkdir()
+            alex.mkdir()
+            runtime.mkdir(parents=True)
+            ambient.write_text(
+                "<!-- alexandria:start -->\nAlexandria\n<!-- alexandria:end -->\n",
+                encoding="utf-8",
+            )
+
+            MODULE.merge_hooks(codex, alex, runtime)
+            MODULE.merge_agents(codex, ambient, runtime)
+            MODULE.merge_writable_root(codex, alex)
+            MODULE.validate_install(codex, alex, runtime)
+
+            (codex / "hooks.json").write_text("{malformed", encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                MODULE.validate_install(codex, alex, runtime)
+
     def test_hooks_execute_only_from_separate_runtime(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)

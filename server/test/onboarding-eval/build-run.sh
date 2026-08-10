@@ -44,7 +44,26 @@ touch "$RUNTIME/.setup_complete"
 
 # All-green setup report so block's install-integrity gate passes and it proceeds to content
 cat > "$ALEX/system/.setup_report" <<'EOF'
-{"files":"ok","canon":"ok","hooks":"ok","skill":"ok","account":"ok","private_repo":"local-only","public_fork":"skipped","icloud":"skipped"}
+Alexandria setup report — synthetic onboarding eval
+status: ok
+key_status: not_checked
+platforms:
+  claude: present
+  cursor: absent
+  factory: absent
+  codex: absent
+subsystems:
+  files: ok
+  canon: ok
+  methods: ok
+  hooks: ok
+  core: ok
+  passive_session: ok
+  visible_cue: ok
+  loop: ok
+  api_key: skip
+  claude_skill: ok
+  private_repo: ok
 EOF
 
 echo "RUN HOME built at $RUN"

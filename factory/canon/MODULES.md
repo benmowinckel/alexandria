@@ -4,19 +4,21 @@
 
 *The canon is just files on your machine — your `alexandria.md`, the system that develops your mind (the working loop plus how to run it well), like a `design.md` or any script you keep. What it produces is your `mind.md` — your mind itself, the data. Both are yours: edit, replace, or ignore them. Alexandria is an aggregation hub you optionally connect to; it offers strong defaults and aggregates what works across everyone. The only thing that is not a file is the spine (account · file · call) — the connection to the hub itself.*
 
-*A signed file being available on disk does not mean its feature is active. The activation layers below are the contract.*
+*A signed file being available on disk does not mean its feature is active. The product layers below describe what each part is. Consent is a separate question: local and reversible pieces may start on with an off switch; anything that connects outside stays off until exact approval.*
 
 ---
 
-## core — the incompressible local loop
+## the loop — incompressible core
 
-`foundation.md` — **capture → develop → crystallise → create → and back**, running through the Author's plain files, their own ai, start/close, local hooks, local archive, and Git history. It needs no account or network. Remove a piece and the loop stops closing.
+`foundation.md` — **passive session → visible route into `/a` → active session → a better local mirror → and back**, running through the Author's plain files, their own ai, local hooks, local archive, and Git history. The first approved onboarding read seeds the mirror. Ordinary sessions then use it and preserve clear signal; the cue means the Author never has to remember to return; `/a` develops what accumulated; `a.` closes and preserves the shift. It needs no account or network.
 
 `change-closure.md` — the core write invariant: every substantive edit reaches its existing effects without the Author remembering the dependency.
 
-The core is not a marketplace module. It is never ranked, reported, recommended, or listed there.
+The visible cue is part of the core because without it the loop depends on the Author remembering to run the product. It is still immediately opt-out: user control and product completeness are different questions. Turning the cue off intentionally removes the automatic return path; it does not convert the cue into a method or marketplace module.
 
-## defaults — on locally, removable
+The loop is not a marketplace module. It is never ranked, reported, recommended, or listed there.
+
+## methods — included, on locally, removable
 
 Five Benjamin-built methods are the starting way the loop runs. They are plain files, fully editable, replaceable, and removable:
 
@@ -24,9 +26,19 @@ Five Benjamin-built methods are the starting way the loop runs. They are plain f
 - **`methodology.md`** — his craft: how to run the five operations; constitution architecture; passive mode; the notepad; compounding loops.
 - **`editor.md` · `mercury.md` · `publisher.md`** — his three functions (extract, amplify, create).
 
-These five defaults may appear in the marketplace with the label **default**. That label means “ships as the starting method,” not “canonical truth.”
+These five methods may appear in the marketplace with the label **default**. That label means “ships as the starting method,” not “canonical truth.”
 
-## separate opt-ins — dormant until directly chosen
+Replacing one is just editing or replacing its file under `~/alexandria/system/canon/`. Turning one off is reversible: move its file into `~/alexandria/system/canon/disabled/`. Setup treats that folder as the Author's choice and will not restore the default on a later refresh. Move it back to turn it on again. The Author never needs to remember the file operation — asking their ai to turn a named default off or back on is enough.
+
+With all five off, Foundation still runs the passive session, visible cue, `/a` active session, `a.` close, local mirror, capture/archive hooks, change closure, and Git history. The methods improve how the loop is run; none is allowed to become a hidden requirement for the loop to exist.
+
+## additions — local capabilities added when useful
+
+Capture inputs and shortcuts, `state-based-sync`, future local modules, and community-built methods extend the loop without becoming its foundation. They are installed or used only for a concrete job the Author asked their ai to solve. A foreign module is untrusted material and is reviewed before adoption.
+
+Alexandria-built additions are labelled **official** in the marketplace. Everyone else's modules are shown under their author. Neither label implies activation. `bookshelf.md` is reference material, not an active feature and not marketplace-ranked.
+
+## connections — dormant until separately approved
 
 - **signed update notices** — public release checks only; nothing applies automatically.
 - **account** — identity connection only; enables nothing else.
@@ -34,22 +46,17 @@ These five defaults may appear in the marketplace with the label **default**. Th
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
 - **network reading** — only the exact approved Author list is fetched.
 - **cloud bridges and backups** — each service has its own consent and off switch.
+- **scheduled outbound messages and briefs** — require their own destination, schedule, and off switch.
 - **PLM / twin compilation** — `plm.md` + `twin.md`; a separate, deliberate build.
 
 Their signed references may be installed so the Author's ai can explain a direct request without fetching instructions first. They do nothing merely because the files exist.
 
-## additional extras — never part of onboarding
-
-`brief-setup`, `state-based-sync`, `optimise`, future community modules, and other specialised additions are installed or used only when the Author asks. Alexandria-built additions are labelled **official** in the marketplace. Everyone else's modules are shown under their author. Neither label implies activation.
-
-`bookshelf.md` is reference material, not an active feature and not marketplace-ranked.
-
 ## marketplace — additions, not the product core
 
-The marketplace contains replaceable defaults and opt-in additions. It never contains Foundation. It is available only when the Author directly asks to browse or use it. The private ai never recommends a module from private material, turns browsing into an onboarding step, or reports usage without exact manifest approval.
+The marketplace is a source for replaceable methods and additions, not a product layer of its own. It never contains the loop. It is available only when the Author directly asks to browse or use it. The private ai never recommends a module from private material, turns browsing into an onboarding step, or reports usage without exact manifest approval.
 
 ---
 
 ## the rule
 
-Core closes the local loop. Defaults shape how it starts. Opt-ins connect something external. Extras wait for a direct request. The hub aggregates additions; it never owns or completes the loop.
+The loop is passive → cue → active. Methods shape how it runs. Additions extend it locally. Connections cross a boundary and therefore wait for exact approval. The hub aggregates methods and additions; it never owns or completes the loop.

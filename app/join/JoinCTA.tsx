@@ -9,11 +9,10 @@ import { ArrowIcon } from './DoorIcons';
 // words — quieter words; inputs live INSIDE their boxes.
 //
 // 2026-07-27 rebuild. Three changes, all founder-dictated:
-//  1. THE COLLECTIVE IS EXPLAINED. Nothing upstream of this page says what it
-//     is — the onboarding block's close (factory/block.md) states the join in
-//     one line and deliberately doesn't pitch it, so /join was asking people to
-//     buy a thing they'd never had described. The three-line "what it is" block
-//     carries that weight now: library, marketplace, people.
+//  1. THE COLLECTIVE IS EXPLAINED HERE. The private onboarding block is
+//     structurally silent about joining; Alexandria-owned surfaces carry the
+//     whole sell. The three-line "what it is" block therefore carries the
+//     weight itself: library, marketplace, people.
 //  2. TWO PATHS, BOTH ARE JOINING. Not join-or-decline. Either you take the
 //     free month, or you email and it's waived — you're in on both. The email
 //     field posts intent:'waive' so the founder can tell a waive ASK apart from

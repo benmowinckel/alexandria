@@ -24,9 +24,11 @@
 #
 #   1. INSTALLS: one Author-writable folder (~/alexandria/ — plain markdown, a
 #      local git repo), one small read-only-to-the-agent runtime at
-#      ~/.local/share/alexandria/, and session hooks/skills in detected configs
-#      (~/.claude, ~/.cursor, ~/.codex, ~/.factory, and Codex's shared
-#      ~/.agents/skills convention). To make the one folder reachable from any
+#      ~/.local/share/alexandria/, session hooks where the host supports them,
+#      and active-session skills in detected configs (~/.claude, ~/.cursor,
+#      ~/.codex, ~/.factory, and Codex's shared ~/.agents/skills convention).
+#      Factory currently receives the active droid only and cannot complete the
+#      passive loop by itself. To make the one folder reachable from any
 #      local project, the merge adds ONLY ~/alexandria to each detected
 #      harness's native additional-directory/writable-root list; every existing
 #      root and permission mode stays. One small extra is visible below: if an
@@ -60,6 +62,32 @@ umask 077
 
 ALEX_DIR="$HOME/alexandria"
 RUNTIME_DIR="$HOME/.local/share/alexandria"
+
+# Setup never follows a symlinked parent into some other namespace. This is a
+# destructive-boundary check, not an ownership hint: if a supported host root
+# is intentionally symlinked, the Author must configure it manually.
+path_has_symlink_component() {
+  local target="$1" current="$HOME" relative part old_ifs
+  case "$target" in "$HOME"|"$HOME"/*) ;; *) return 0 ;; esac
+  relative="${target#"$HOME"/}"
+  old_ifs="$IFS"; IFS='/'
+  for part in $relative; do
+    [ -n "$part" ] || continue
+    current="$current/$part"
+    if [ -L "$current" ]; then IFS="$old_ifs"; return 0; fi
+  done
+  IFS="$old_ifs"
+  return 1
+}
+for protected_root in \
+  "$ALEX_DIR" "$RUNTIME_DIR" "$HOME/.claude" "$HOME/.cursor" \
+  "$HOME/.codex" "$HOME/.agents" "$HOME/.factory" \
+  "$HOME/.config/git" "$HOME/Library/LaunchAgents"; do
+  if path_has_symlink_component "$protected_root"; then
+    echo "Refusing setup through symlinked path: $protected_root" >&2
+    exit 1
+  fi
+done
 SOURCE_REF="${ALEXANDRIA_SOURCE_COMMIT:-main}"
 if [ "$SOURCE_REF" != main ] && ! [[ "$SOURCE_REF" =~ ^[0-9a-f]{40}$ ]]; then
   echo "Invalid Alexandria source commit; refusing to install." >&2
@@ -188,8 +216,8 @@ fi
 #   OPTIONAL — git, node/python3, gh sign-in, ssh signing, iCloud. Each adds a
 #     layer (backup, session hooks, signing, capture) but NONE gates the first
 #     reflection. Present now → wired silently below. Missing now → collected in
-#     $DEFERRED and offered AFTER the first session as a short "want the full
-#     setup?" list. Never blocks, never nags mid-install.
+#     $DEFERRED as local diagnostic context. It is surfaced only when the
+#     Author asks why a capability is unavailable; never as an upsell or nudge.
 
 # REQUIRED #1 — curl. Used unconditionally throughout (fetch_factory, the key
 # probe, the session hooks); wget alone can't run this installer, so passing
@@ -204,8 +232,8 @@ if ! command -v ssh-keygen &>/dev/null; then
   exit 1
 fi
 
-# OPTIONAL — collect what's missing now; offered after the first session, never
-# blocking. Each entry is a short actionable line.
+# OPTIONAL — collect what's missing now as diagnostic context, never as a
+# proactive offer. Each entry is a short actionable line for a direct question.
 DEFERRED=""
 command -v git &>/dev/null || DEFERRED="${DEFERRED}git — versioning + GitHub backup of your worldline (https://git-scm.com)\n"
 if ! command -v node &>/dev/null && ! command -v python3 &>/dev/null; then
@@ -219,14 +247,59 @@ echo "Setting up Alexandria..."
 
 # ── 1. Directory structure ────────────────────────────────────────
 
+RUNTIME_HAD_CONTENT=""
+if [ -d "$RUNTIME_DIR" ] && [ -n "$(find "$RUNTIME_DIR" -mindepth 1 -print -quit 2>/dev/null)" ]; then
+  RUNTIME_HAD_CONTENT=1
+fi
 mkdir -p "$ALEX_DIR/files/vault" "$ALEX_DIR/system/hooks" "$ALEX_DIR/files/constitution" "$ALEX_DIR/files/marginalia" "$ALEX_DIR/files/library/public" "$ALEX_DIR/files/library/paid" "$ALEX_DIR/files/library/invite" "$ALEX_DIR/files/library/authors" "$ALEX_DIR/files/works" "$ALEX_DIR/files/core" "$ALEX_DIR/files/vault/input" "$ALEX_DIR/files/vault/_input" "$ALEX_DIR/system/.autoloop" "$ALEX_DIR/system/permissions" "$RUNTIME_DIR/hooks" "$RUNTIME_DIR/scripts"
+# Keep the previously accepted signed manifest long enough to recognise exact
+# legacy Alexandria bytes during the ownership-ledger migration below. A loose
+# sentence inside a foreign file is never ownership proof.
+PREVIOUS_VERIFIED_MANIFEST=""
+_previous_manifest_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
+if [ -n "$_previous_manifest_tmp" ] && [ -s "$RUNTIME_DIR/.canon_manifest" ] && \
+   cp "$RUNTIME_DIR/.canon_manifest" "$_previous_manifest_tmp" 2>/dev/null; then
+  PREVIOUS_VERIFIED_MANIFEST="$_previous_manifest_tmp"
+else
+  rm -f "${_previous_manifest_tmp:-}"
+fi
+
+# The runtime path is reserved only after exact prior-install proof. A copied
+# filename or marker is not enough: an existing non-empty directory must carry
+# a completed install plus two core files matching its prior signed manifest.
+# Otherwise setup stops before replacing a byte in that namespace.
+runtime_sha256() {
+  local file="$1"
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$file" 2>/dev/null | cut -d' ' -f1
+  else
+    sha256sum "$file" 2>/dev/null | cut -d' ' -f1
+  fi
+}
+prior_runtime_matches() {
+  local rel installed expected actual
+  [ -n "$PREVIOUS_VERIFIED_MANIFEST" ] && [ -s "$PREVIOUS_VERIFIED_MANIFEST" ] \
+    && [ -f "$RUNTIME_DIR/.setup_complete" ] || return 1
+  for rel in hooks/shim.sh scripts/verify-fetch.sh; do
+    installed="$RUNTIME_DIR/$rel"
+    [ -f "$installed" ] || return 1
+    expected=$(awk -v p="factory/$rel" '$2==p{print $1}' "$PREVIOUS_VERIFIED_MANIFEST")
+    actual=$(runtime_sha256 "$installed")
+    [ -n "$expected" ] && [ "$actual" = "$expected" ] || return 1
+  done
+}
+if [ -n "$RUNTIME_HAD_CONTENT" ] && ! prior_runtime_matches; then
+  rm -f "${PREVIOUS_VERIFIED_MANIFEST:-}"
+  echo "Refusing to use a non-empty ~/.local/share/alexandria without exact prior-install proof." >&2
+  echo "Move that directory aside, inspect it, and run the verified setup again." >&2
+  exit 1
+fi
 # Keyless leaves no .api_key — its absence IS the "no account" signal the hooks
 # read (every server call in payload.sh is guarded by [ -n "$API_KEY" ]).
 # NOTE: the key is persisted AFTER the server verify near the end of this
 # script, never here — storing an unverified key poisoned every future bare
 # re-run (the reuse fallback above would resurrect a rejected key forever).
-touch "$ALEX_DIR/system/.last_processed"
-date +%s > "$ALEX_DIR/system/.last_maintenance"
+[ -e "$ALEX_DIR/system/.last_processed" ] || touch "$ALEX_DIR/system/.last_processed"
 
 # ── 1b. Trust root FIRST — armed before any factory fetch ─────────
 # Allowed signers — the trust root for payload signature verification.
@@ -293,7 +366,7 @@ rm -f "$_mf" "$_sg"
 # replacement begins, every Alexandria hook stays inert until the functional
 # probes below prove that the complete core landed. A failed refresh therefore
 # leaves inspectable files, but never a mixed installation that keeps running.
-rm -f "$RUNTIME_DIR/.setup_complete" "$ALEX_DIR/system/.setup_complete"
+rm -f "$RUNTIME_DIR/.setup_complete"
 
 # ── 2. Factory files from GitHub ──────────────────────────────────
 
@@ -315,7 +388,7 @@ fetch_factory "scripts/configure_codex.py" "$RUNTIME_DIR/scripts/configure_codex
 fetch_factory "scripts/uninstall.py" "$RUNTIME_DIR/scripts/uninstall.py" "scripts/uninstall.py" yes
 fetch_factory "scripts/statusline.sh" "$RUNTIME_DIR/scripts/statusline.sh" "scripts/statusline.sh" yes
 chmod +x "$RUNTIME_DIR/scripts/statusline.sh" 2>/dev/null
-fetch_factory "skills/codex-ambient.md" "$ALEX_DIR/system/.codex-ambient.md" "skills/codex-ambient.md" yes
+fetch_factory "skills/codex-ambient.md" "$RUNTIME_DIR/codex-ambient.md" "skills/codex-ambient.md" yes
 # verify-fetch.sh — the only later "fetch a factory script, then run it" door
 # (install/publish/brief-setup skills, migrate.sh). It lands through this
 # authenticated whole-factory install. Consumers fail closed if it is missing;
@@ -327,7 +400,7 @@ chmod +x "$RUNTIME_DIR/scripts/verify-fetch.sh" 2>/dev/null
 # capture, Drive, and separately consented connections), each with
 # what-it-touches + off switch. Overwrite:
 # it's system documentation, not Author content.
-fetch_factory "optional.md" "$ALEX_DIR/system/.optional" "optional.md" yes
+fetch_factory "optional.md" "$ALEX_DIR/system/.optional" "optional.md"
 
 # Update checks are deliberately OFF on first install. The optional add-ons
 # document explains the exact marker that enables signed, notify-only checks.
@@ -349,25 +422,54 @@ if [ -n "${VERIFIED_MANIFEST:-}" ] && [ -f "$RUNTIME_DIR/.hooks_payload" ]; then
 fi
 
 # Canon — signed local references seeded during the Author's verified first
-# install. Foundation + the five default methods run locally; Library,
-# marketplace, network, cloud, PLM/twin and extras remain dormant until the
-# Author directly chooses them. Availability on disk is not activation.
+# install. Foundation is the core. Five default methods start on, but each can
+# be replaced in place or reversibly turned off by moving it into
+# canon/disabled/. A later setup respects that local choice instead of silently
+# restoring the file. Library, marketplace, network, cloud, PLM/twin and extras
+# remain dormant until the Author directly chooses them; availability on disk
+# is not activation.
 # Seed-if-missing only (no overwrite) — never clobber the Author's edits.
 # After install the payload NEVER auto-writes canon; it only notifies of updates and
 # the Author pulls (verified). So this install seed is the one automatic write, and
 # it is the Author's own decision to run setup.
-for module in foundation change-closure axioms methodology editor mercury publisher library filter bookshelf plm twin marketplace; do
+mkdir -p "$ALEX_DIR/system/canon/disabled"
+for module in foundation change-closure; do
+  fetch_factory "canon/$module.md" "$ALEX_DIR/system/canon/$module.md" "canon/$module.md"
+done
+for module in axioms methodology editor mercury publisher; do
+  [ -f "$ALEX_DIR/system/canon/disabled/$module.md" ] && continue
+  fetch_factory "canon/$module.md" "$ALEX_DIR/system/canon/$module.md" "canon/$module.md"
+done
+for module in library filter bookshelf plm twin marketplace; do
   fetch_factory "canon/$module.md" "$ALEX_DIR/system/canon/$module.md" "canon/$module.md"
 done
 fetch_factory "canon/MODULES.md" "$ALEX_DIR/system/canon/MODULES.md" "canon/MODULES.md"
 
-# Block (cache locally for easy access — system, not user content)
-fetch_factory "block.md" "$ALEX_DIR/system/.block" "block.md" yes
+# Block (cache locally for easy access — system, not user content). Never infer
+# ownership from this public filename. A pending block may be replaced only
+# when its exact bytes match the previously verified release; a completed block
+# is left alone because it will never execute again.
+BLOCK_PATH="$ALEX_DIR/system/.block"
+if [ -e "$BLOCK_PATH" ]; then
+  block_expected=$(awk '$2=="factory/block.md"{print $1}' "$PREVIOUS_VERIFIED_MANIFEST" 2>/dev/null)
+  block_actual=$(runtime_sha256 "$BLOCK_PATH")
+  if [ -n "$block_expected" ] && [ "$block_actual" = "$block_expected" ]; then
+    fetch_factory "block.md" "$BLOCK_PATH" "block.md" yes
+  elif [ -f "$ALEX_DIR/system/.block_complete" ]; then
+    : # completed local history: preserve it byte-for-byte
+  else
+    echo "Refusing to replace an existing ~/alexandria/system/.block without exact prior-release proof." >&2
+    FETCH_ERRORS="${FETCH_ERRORS}block.md(foreign-collision) "
+  fi
+else
+  fetch_factory "block.md" "$BLOCK_PATH" "block.md"
+fi
 
 # Account-level instructions for Claude chat surfaces. Cowork can use an
 # attached folder, but it is a usage surface rather than an install surface:
 # no plugin, duplicate skill, or hidden hook path. The file-only floor is the
 # real path on every chat surface that can see the folder.
+if [ ! -e "$ALEX_DIR/system/.claude-instructions.md" ]; then
 cat > "$ALEX_DIR/system/.claude-instructions.md" << 'CLAUDEINSTR'
 <!-- alexandria:start -->
 ## Alexandria
@@ -376,82 +478,178 @@ I use Alexandria: sovereign files containing my constitution, notes, captures, a
 
 When personal context would improve the task, use the best home this session can actually reach:
 
-1. If `~/alexandria` is available, use it exclusively. It is ground truth. Read `~/alexandria/system/canon/methodology.md` and the relevant files under `~/alexandria/files/`.
+1. If `~/alexandria` is available, use it exclusively. It is ground truth. Read `~/alexandria/system/canon/foundation.md`, any present default-method files relevant to the task, and the relevant files under `~/alexandria/files/`.
 2. Otherwise, if my Google Drive `alexandria` folder is available, open `_start` and follow it. For a full local Author this is a pocket copy; for a chat-only Author it is ground truth.
 3. Otherwise use the host's native memory as a lightweight content store, plus past chats only when this account actually exposes them. Quietly notice durable beliefs, preferences, and ideas; ask “save that to Alexandria?” when one is worth keeping, and save only after I confirm. These operating rules stay in instructions; memory holds personal content. Never pretend native memory has file-level fidelity.
 
-Never load local and Drive in the same task. Bare `a`, `alexandria`, `/a`, or `/alexandria` starts the same Alexandria method; bare `a.` or `alexandria.` closes it through the same close skill. State what you can read and write, and only claim persistence after verifying it. Existing instructions and native memories remain active beside Alexandria.
+Never load local and Drive in the same task. `/a` starts an active Alexandria session; `a.` closes it. State what you can read and write, and only claim persistence after verifying it. Existing instructions and native memories remain active beside Alexandria.
 
 Finish every completed ordinary task with the exact one-line output of `bash ~/.local/share/alexandria/scripts/statusline.sh footer`; during a deliberate session use `→ close with a. when done`. If a native statusline is visibly carrying the cue, omit the response duplicate. Never open a chat or start a session for me.
 
 After any substantive file edit, run `~/alexandria/system/canon/change-closure.md` before calling the task complete: find every explicit and semantic downstream effect, update it or confirm it remains current, verify the assembled behavior, and refresh the local receipt. I never carry that follow-up in memory. New outward writes or wider audiences keep their existing approval gate.
 <!-- alexandria:end -->
 CLAUDEINSTR
+fi
 
 # ── 3. Platform configuration ─────────────────────────────────────
+
+# Integration names are shared user space. Ownership is recorded outside the
+# AI-writable Author folder as exact path + exact installed hash. A matching
+# filename or copied sentence is never proof. The signed-manifest comparison is
+# only a one-time migration for exact bytes installed by an older release.
+OWNERSHIP_LEDGER="$RUNTIME_DIR/.owned_integrations"
+
+sha256_file() {
+  local file="$1"
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$file" 2>/dev/null | cut -d' ' -f1
+  else
+    sha256sum "$file" 2>/dev/null | cut -d' ' -f1
+  fi
+}
+
+owned_file_matches() {
+  local file="$1" path recorded_path recorded_sha current_sha tab
+  [ -f "$file" ] && [ -f "$OWNERSHIP_LEDGER" ] || return 1
+  current_sha=$(sha256_file "$file")
+  [ -n "$current_sha" ] || return 1
+  tab=$(printf '\t')
+  while IFS="$tab" read -r recorded_path recorded_sha; do
+    if [ "$recorded_path" = "$file" ]; then
+      [ "$recorded_sha" = "$current_sha" ]
+      return
+    fi
+  done < "$OWNERSHIP_LEDGER"
+  return 1
+}
+
+record_owned_file() {
+  local file="$1" current_sha tmp recorded_path recorded_sha tab
+  [ -f "$file" ] || return 1
+  current_sha=$(sha256_file "$file")
+  [ -n "$current_sha" ] || return 1
+  mkdir -p "$RUNTIME_DIR" 2>/dev/null || return 1
+  tmp="${OWNERSHIP_LEDGER}.tmp.$$"
+  : > "$tmp" || return 1
+  tab=$(printf '\t')
+  if [ -f "$OWNERSHIP_LEDGER" ]; then
+    while IFS="$tab" read -r recorded_path recorded_sha; do
+      [ -n "$recorded_path" ] || continue
+      [ "$recorded_path" = "$file" ] && continue
+      printf '%s\t%s\n' "$recorded_path" "$recorded_sha" >> "$tmp" || {
+        rm -f "$tmp"
+        return 1
+      }
+    done < "$OWNERSHIP_LEDGER"
+  fi
+  printf '%s\t%s\n' "$file" "$current_sha" >> "$tmp" || {
+    rm -f "$tmp"
+    return 1
+  }
+  chmod 600 "$tmp" 2>/dev/null || {
+    rm -f "$tmp"
+    return 1
+  }
+  mv "$tmp" "$OWNERSHIP_LEDGER"
+}
+
+legacy_file_matches_signed_source() {
+  local file="$1" source="$2" actual_name="${3:-}" canonical_name="${4:-}"
+  local tmp manifest want_sha got_sha
+  [ -f "$file" ] || return 1
+  tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null) || return 1
+  cp "$file" "$tmp" 2>/dev/null || {
+    rm -f "$tmp"
+    return 1
+  }
+  if [ -n "$actual_name" ] && [ -n "$canonical_name" ] && [ "$actual_name" != "$canonical_name" ]; then
+    if [ "$(uname)" = "Darwin" ]; then
+      sed -i '' "s/^name: $actual_name\$/name: $canonical_name/" "$tmp" 2>/dev/null
+    else
+      sed -i "s/^name: $actual_name\$/name: $canonical_name/" "$tmp" 2>/dev/null
+    fi
+  fi
+  got_sha=$(sha256_file "$tmp")
+  rm -f "$tmp"
+  [ -n "$got_sha" ] || return 1
+  manifest="$PREVIOUS_VERIFIED_MANIFEST"
+  [ -n "$manifest" ] && [ -s "$manifest" ] || return 1
+  want_sha=$(awk -v p="factory/$source" '$2==p{print $1}' "$manifest")
+  [ -n "$want_sha" ] && [ "$want_sha" = "$got_sha" ] && return 0
+  return 1
+}
+
+claim_existing_file() {
+  local file="$1" source="$2" actual_name="${3:-}" canonical_name="${4:-}"
+  owned_file_matches "$file" && return 0
+  if legacy_file_matches_signed_source "$file" "$source" "$actual_name" "$canonical_name"; then
+    record_owned_file "$file"
+    return
+  fi
+  return 1
+}
+
+alex_skill_slot_available() {
+  local dir="$1" source="$2" actual_name="$3" canonical_name="$4"
+  [ ! -e "$dir" ] || { [ -f "$dir/SKILL.md" ] && claim_existing_file "$dir/SKILL.md" "$source" "$actual_name" "$canonical_name"; }
+}
+
+alex_file_slot_available() {
+  local file="$1" source="$2" actual_name="${3:-}" canonical_name="${4:-}"
+  [ ! -e "$file" ] || { [ -f "$file" ] && claim_existing_file "$file" "$source" "$actual_name" "$canonical_name"; }
+}
+
+install_start_skill() {
+  local source="$1" dir="$2" name="$3" label="$4"
+  mkdir -p "$dir" 2>/dev/null
+  fetch_factory "$source" "$dir/SKILL.md" "$label" yes || return 1
+  if [ "$name" != "a" ]; then
+    if [ "$(uname)" = "Darwin" ]; then
+      sed -i '' "s/^name: a$/name: $name/" "$dir/SKILL.md" 2>/dev/null
+    else
+      sed -i "s/^name: a$/name: $name/" "$dir/SKILL.md" 2>/dev/null
+    fi
+  fi
+  grep -q "^name: $name\$" "$dir/SKILL.md" 2>/dev/null || return 1
+  record_owned_file "$dir/SKILL.md"
+}
+
+install_close_skill() {
+  local dir="$1" name="$2" label="$3"
+  mkdir -p "$dir" 2>/dev/null
+  fetch_factory "skills/aclose.md" "$dir/SKILL.md" "$label" yes || return 1
+  if [ "$name" != "a." ]; then
+    if [ "$(uname)" = "Darwin" ]; then
+      sed -i '' "s/^name: a\.$/name: $name/" "$dir/SKILL.md" 2>/dev/null
+    else
+      sed -i "s/^name: a\.$/name: $name/" "$dir/SKILL.md" 2>/dev/null
+    fi
+  fi
+  grep -q "^name: $name\$" "$dir/SKILL.md" 2>/dev/null || return 1
+  record_owned_file "$dir/SKILL.md"
+}
 
 # Claude Code — skill + hooks
 
 if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
-  # Two intentional names for the same start: /a and /alexandria. They are
-  # aliases, not two methods. A foreign /a is never overwritten; in that one
-  # collision /alexandria remains the safe Alexandria name and bare `a` stays
-  # available through the global instruction floor.
-  # /a may already be the user's OWN skill (DIY setups predating Alexandria).
-  # Only overwrite when the existing file is ours — any alexandria marker in
-  # it means we wrote it (every shipped version contains the word). A foreign
-  # /a stays untouched; /alexandria below carries the full skill either way.
-  A_SKILL_KEPT=""
-  CLAUDE_START_SKILL="a"
-  if [ -e "$HOME/.claude/skills/a" ] && { \
-       [ ! -f "$HOME/.claude/skills/a/SKILL.md" ] || \
-       ! grep -qi 'alexandria' "$HOME/.claude/skills/a/SKILL.md" 2>/dev/null; \
-     }; then
-    A_SKILL_KEPT=1
-    CLAUDE_START_SKILL="alexandria"
-    mkdir -p "$HOME/.claude/skills/alexandria" 2>/dev/null
-    if fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/alexandria/SKILL.md" "skills/claudecode.md (/alexandria skill)" yes; then
-      if [ "$(uname)" = "Darwin" ]; then
-        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
-      else
-        sed -i 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
-      fi
-    fi
+  # Install the single visible start route, /a, without claiming a foreign one.
+  CLAUDE_A_SKILL=""
+  if alex_skill_slot_available "$HOME/.claude/skills/a" "skills/claudecode.md" "a" "a"; then
+    install_start_skill "skills/claudecode.md" "$HOME/.claude/skills/a" "a" "skills/claudecode.md (/a skill)" && CLAUDE_A_SKILL="a"
   else
-    mkdir -p "$HOME/.claude/skills/a" 2>/dev/null
-    fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/a/SKILL.md" "skills/claudecode.md" yes
-    mkdir -p "$HOME/.claude/skills/alexandria" 2>/dev/null
-    if fetch_factory "skills/claudecode.md" "$HOME/.claude/skills/alexandria/SKILL.md" "skills/claudecode.md (/alexandria alias)" yes; then
-      if [ "$(uname)" = "Darwin" ]; then
-        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
-      else
-        sed -i 's/^name: a$/name: alexandria/' "$HOME/.claude/skills/alexandria/SKILL.md" 2>/dev/null
-      fi
-    fi
+    echo "  Claude Code: kept foreign /a skill"
   fi
+  CLAUDE_START_SKILL="$CLAUDE_A_SKILL"
 
-  # /a. — the session close (the full stop). Same registered-name pattern as
-  # /a: the skill dir and frontmatter name are literally "a." (harness accepts
-  # it — tested 2026-07-27). Trailing-dot dirs are fine on macOS/Linux; the
-  # install already assumes a Unix machine throughout. Two gestures, one skill:
-  # /a. or the bare message a. — the close that captures everything and hands
-  # the Author what shifted, last thing on screen.
-  CLAUDE_CLOSE_SKILL="a."
-  if [ -e "$HOME/.claude/skills/a." ] && { \
-       [ ! -f "$HOME/.claude/skills/a./SKILL.md" ] || \
-       ! grep -qi 'alexandria' "$HOME/.claude/skills/a./SKILL.md" 2>/dev/null; \
-     }; then
-    CLAUDE_CLOSE_SKILL="alexandria-close"
-  fi
-  mkdir -p "$HOME/.claude/skills/$CLAUDE_CLOSE_SKILL" 2>/dev/null
-  if fetch_factory "skills/aclose.md" "$HOME/.claude/skills/$CLAUDE_CLOSE_SKILL/SKILL.md" "skills/aclose.md (session close)" yes && \
-     [ "$CLAUDE_CLOSE_SKILL" = "alexandria-close" ]; then
-    if [ "$(uname)" = "Darwin" ]; then
-      sed -i '' 's/^name: a\.$/name: alexandria-close/' "$HOME/.claude/skills/$CLAUDE_CLOSE_SKILL/SKILL.md" 2>/dev/null
+  CLAUDE_CLOSE_SKILL=""
+  for candidate in "a." "alexandria-close"; do
+    if alex_skill_slot_available "$HOME/.claude/skills/$candidate" "skills/aclose.md" "$candidate" "a."; then
+      install_close_skill "$HOME/.claude/skills/$candidate" "$candidate" "skills/aclose.md (session close)" && CLAUDE_CLOSE_SKILL="$candidate"
+      [ -n "$CLAUDE_CLOSE_SKILL" ] && break
     else
-      sed -i 's/^name: a\.$/name: alexandria-close/' "$HOME/.claude/skills/$CLAUDE_CLOSE_SKILL/SKILL.md" 2>/dev/null
+      echo "  Claude Code: kept foreign /$candidate skill"
     fi
-  fi
+  done
 
   # (The scheduled-task bootstrap for the cloud autoloop is RETIRED — /a does
   # that processing interactively. Nothing scheduled installs here.)
@@ -520,9 +718,15 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
           console.error('Refusing to alter Claude settings: ' + event + ' is not an array'); process.exit(2);
         }
       }
-      const filter = arr => (arr || []).filter(h => {
-        const s = JSON.stringify(h).toLowerCase();
-        return !(s.includes('alexandria') && (s.includes('shim.sh') || s.includes('capture_resolver')));
+      const ownedCommands = new Set([
+        'bash $HOME/.local/share/alexandria/hooks/shim.sh session-start',
+        'bash $HOME/.local/share/alexandria/hooks/shim.sh session-end',
+        'bash $HOME/.local/share/alexandria/hooks/shim.sh subagent',
+        'python3 $HOME/.local/share/alexandria/scripts/capture_resolver.py 2>/dev/null || true',
+      ]);
+      const filter = arr => (arr || []).filter(group => {
+        const nested = group && Array.isArray(group.hooks) ? group.hooks : [];
+        return !nested.some(hook => hook && ownedCommands.has(hook.command));
       });
       settings.hooks.SessionStart = filter(settings.hooks.SessionStart);
       settings.hooks.SessionEnd = filter(settings.hooks.SessionEnd);
@@ -604,9 +808,23 @@ if settings.get("statusLine") == alex_status_line and cue_off:
 elif "statusLine" not in settings and not cue_off:
     settings["statusLine"] = alex_status_line
 
+owned_commands = {
+    "bash $HOME/.local/share/alexandria/hooks/shim.sh session-start",
+    "bash $HOME/.local/share/alexandria/hooks/shim.sh session-end",
+    "bash $HOME/.local/share/alexandria/hooks/shim.sh subagent",
+    "python3 $HOME/.local/share/alexandria/scripts/capture_resolver.py 2>/dev/null || true",
+}
+
 def keep(entry):
-    s = json.dumps(entry).lower()
-    return not ("alexandria" in s and ("shim.sh" in s or "capture_resolver" in s))
+    if not isinstance(entry, dict):
+        return True
+    nested = entry.get("hooks", [])
+    if not isinstance(nested, list):
+        return True
+    return not any(
+        isinstance(hook, dict) and hook.get("command") in owned_commands
+        for hook in nested
+    )
 
 def clean(event):
     if event not in hooks:
@@ -649,55 +867,38 @@ fi
 if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
   mkdir -p "$HOME/.cursor/hooks" 2>/dev/null
   mkdir -p "$HOME/.cursor/rules" 2>/dev/null
-  fetch_factory "hooks/cursor/alexandria-session-start.py" "$HOME/.cursor/hooks/alexandria-session-start.py" "hooks/cursor/alexandria-session-start.py" yes
-  fetch_factory "hooks/cursor/alexandria-session-end.py" "$HOME/.cursor/hooks/alexandria-session-end.py" "hooks/cursor/alexandria-session-end.py" yes
-  fetch_factory "hooks/cursor/alexandria-stop.py" "$HOME/.cursor/hooks/alexandria-stop.py" "hooks/cursor/alexandria-stop.py" yes
-  fetch_factory "hooks/cursor/alexandria-transcript.py" "$HOME/.cursor/hooks/alexandria-transcript.py" "hooks/cursor/alexandria-transcript.py" yes
+  CURSOR_HOOK_FILES_OK=1
+  for hook_name in alexandria-session-start.py alexandria-session-end.py alexandria-stop.py alexandria-transcript.py; do
+    hook_path="$HOME/.cursor/hooks/$hook_name"
+    hook_source="hooks/cursor/$hook_name"
+    if alex_file_slot_available "$hook_path" "$hook_source" && \
+       fetch_factory "$hook_source" "$hook_path" "$hook_source" yes && \
+       record_owned_file "$hook_path"; then
+      :
+    else
+      CURSOR_HOOK_FILES_OK=""
+      echo "  Cursor: kept foreign hook $hook_name"
+    fi
+  done
   chmod +x "$HOME/.cursor/hooks/alexandria-session-start.py" "$HOME/.cursor/hooks/alexandria-session-end.py" "$HOME/.cursor/hooks/alexandria-stop.py" "$HOME/.cursor/hooks/alexandria-transcript.py" 2>/dev/null
 
-  # Two native Cursor aliases, with the same foreign-/a preservation rule.
-  CURSOR_START_SKILL="a"
-  if [ -e "$HOME/.cursor/skills/a" ] && { \
-       [ ! -f "$HOME/.cursor/skills/a/SKILL.md" ] || \
-       ! grep -qi 'alexandria' "$HOME/.cursor/skills/a/SKILL.md" 2>/dev/null; \
-     }; then
-    CURSOR_START_SKILL="alexandria"
-    mkdir -p "$HOME/.cursor/skills/alexandria" 2>/dev/null
-    if fetch_factory "skills/claudecode.md" "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md (cursor /alexandria skill)" yes; then
-      if [ "$(uname)" = "Darwin" ]; then
-        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
-      else
-        sed -i 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
-      fi
-    fi
+  CURSOR_A_SKILL=""
+  if alex_skill_slot_available "$HOME/.cursor/skills/a" "skills/claudecode.md" "a" "a"; then
+    install_start_skill "skills/claudecode.md" "$HOME/.cursor/skills/a" "a" "skills/claudecode.md (cursor /a skill)" && CURSOR_A_SKILL="a"
   else
-    mkdir -p "$HOME/.cursor/skills/a" 2>/dev/null
-    fetch_factory "skills/claudecode.md" "$HOME/.cursor/skills/a/SKILL.md" "skills/claudecode.md (cursor /a skill)" yes
-    mkdir -p "$HOME/.cursor/skills/alexandria" 2>/dev/null
-    if fetch_factory "skills/claudecode.md" "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md (cursor /alexandria alias)" yes; then
-      if [ "$(uname)" = "Darwin" ]; then
-        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
-      else
-        sed -i 's/^name: a$/name: alexandria/' "$HOME/.cursor/skills/alexandria/SKILL.md" 2>/dev/null
-      fi
-    fi
+    echo "  Cursor: kept foreign /a skill"
   fi
-  CURSOR_CLOSE_SKILL="a."
-  if [ -e "$HOME/.cursor/skills/a." ] && { \
-       [ ! -f "$HOME/.cursor/skills/a./SKILL.md" ] || \
-       ! grep -qi 'alexandria' "$HOME/.cursor/skills/a./SKILL.md" 2>/dev/null; \
-     }; then
-    CURSOR_CLOSE_SKILL="alexandria-close"
-  fi
-  mkdir -p "$HOME/.cursor/skills/$CURSOR_CLOSE_SKILL" 2>/dev/null
-  if fetch_factory "skills/aclose.md" "$HOME/.cursor/skills/$CURSOR_CLOSE_SKILL/SKILL.md" "skills/aclose.md (cursor session close)" yes && \
-     [ "$CURSOR_CLOSE_SKILL" = "alexandria-close" ]; then
-    if [ "$(uname)" = "Darwin" ]; then
-      sed -i '' 's/^name: a\.$/name: alexandria-close/' "$HOME/.cursor/skills/$CURSOR_CLOSE_SKILL/SKILL.md" 2>/dev/null
+  CURSOR_START_SKILL="$CURSOR_A_SKILL"
+
+  CURSOR_CLOSE_SKILL=""
+  for candidate in "a." "alexandria-close"; do
+    if alex_skill_slot_available "$HOME/.cursor/skills/$candidate" "skills/aclose.md" "$candidate" "a."; then
+      install_close_skill "$HOME/.cursor/skills/$candidate" "$candidate" "skills/aclose.md (cursor session close)" && CURSOR_CLOSE_SKILL="$candidate"
+      [ -n "$CURSOR_CLOSE_SKILL" ] && break
     else
-      sed -i 's/^name: a\.$/name: alexandria-close/' "$HOME/.cursor/skills/$CURSOR_CLOSE_SKILL/SKILL.md" 2>/dev/null
+      echo "  Cursor: kept foreign /$candidate skill"
     fi
-  fi
+  done
 
   CURSOR_HOOKS_OK=""
   if command -v python3 &>/dev/null; then
@@ -729,13 +930,13 @@ cfg["hooks"] = hooks
 def is_alex_hook(entry):
     if not isinstance(entry, dict):
         return False
-    cmd = str(entry.get("command", "")).lower()
-    return (
-        "alexandria-session-start.py" in cmd
-        or "alexandria-session-end.py" in cmd
-        or "alexandria-stop.py" in cmd
-        or "alexandria-transcript.py" in cmd
-    )
+    return entry.get("command") in {
+        "./hooks/alexandria-session-start.py",
+        "./hooks/alexandria-session-end.py",
+        "./hooks/alexandria-stop.py",
+        "./hooks/alexandria-transcript.py beforeSubmitPrompt",
+        "./hooks/alexandria-transcript.py afterAgentResponse",
+    }
 
 def clean(event):
     if event not in hooks:
@@ -775,10 +976,21 @@ PY
     fi
   fi
 
-  # The rules file installs regardless (no python3 needed); the hooks are what
-  # need python3. Only claim "configured" when the hooks actually registered —
-  # otherwise the rule is present but session capture won't fire, so say so.
-  fetch_factory "skills/cursor.mdc" "$HOME/.cursor/rules/alexandria.mdc" "skills/cursor.mdc" yes
+  # The rules filename is shared user space too. Prefer the canonical name,
+  # fall back to a product-specific name, and preserve both if foreign.
+  CURSOR_RULE_FILE=""
+  for candidate in "alexandria.mdc" "alexandria-loop.mdc"; do
+    if alex_file_slot_available "$HOME/.cursor/rules/$candidate" "skills/cursor.mdc"; then
+      if fetch_factory "skills/cursor.mdc" "$HOME/.cursor/rules/$candidate" "skills/cursor.mdc" yes; then
+        if record_owned_file "$HOME/.cursor/rules/$candidate"; then
+          CURSOR_RULE_FILE="$candidate"
+        fi
+      fi
+      [ -n "$CURSOR_RULE_FILE" ] && break
+    else
+      echo "  Cursor: kept foreign rule $candidate"
+    fi
+  done
 
   if [ -n "$CURSOR_HOOKS_OK" ]; then
     echo "  Cursor: configured (hooks + rules + /a skill)"
@@ -790,93 +1002,53 @@ fi
 # Factory (droid CLI)
 if [ -d "$HOME/.factory" ] || command -v droid &>/dev/null; then
   mkdir -p "$HOME/.factory/droids" 2>/dev/null
-  FACTORY_START_DROID="a"
-  if [ -f "$HOME/.factory/droids/a.md" ] && \
-     ! grep -qi 'alexandria' "$HOME/.factory/droids/a.md" 2>/dev/null; then
-    FACTORY_START_DROID="alexandria"
-    if fetch_factory "skills/droid.md" "$HOME/.factory/droids/alexandria.md" "skills/droid.md (alexandria droid)" yes; then
-      if [ "$(uname)" = "Darwin" ]; then
-        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.factory/droids/alexandria.md" 2>/dev/null
-      else
-        sed -i 's/^name: a$/name: alexandria/' "$HOME/.factory/droids/alexandria.md" 2>/dev/null
-      fi
+  FACTORY_A_DROID=""
+  if alex_file_slot_available "$HOME/.factory/droids/a.md" "skills/droid.md" "a" "a"; then
+    if fetch_factory "skills/droid.md" "$HOME/.factory/droids/a.md" "skills/droid.md (a droid)" yes; then
+      if record_owned_file "$HOME/.factory/droids/a.md"; then FACTORY_A_DROID="a"; fi
     fi
   else
-    fetch_factory "skills/droid.md" "$HOME/.factory/droids/a.md" "skills/droid.md" yes
-    if fetch_factory "skills/droid.md" "$HOME/.factory/droids/alexandria.md" "skills/droid.md (alexandria alias)" yes; then
-      if [ "$(uname)" = "Darwin" ]; then
-        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.factory/droids/alexandria.md" 2>/dev/null
-      else
-        sed -i 's/^name: a$/name: alexandria/' "$HOME/.factory/droids/alexandria.md" 2>/dev/null
-      fi
-    fi
+    echo "  Factory: kept foreign a droid"
   fi
-  echo "  Factory: configured (a + alexandria aliases)"
+  FACTORY_START_DROID="$FACTORY_A_DROID"
+  if [ -n "$FACTORY_START_DROID" ]; then
+    echo "  Factory: configured ($FACTORY_START_DROID droid)"
+  else
+    echo "  Factory: no safe Alexandria droid name was available"
+  fi
 fi
 
 # Codex
 if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   mkdir -p "$HOME/.codex" 2>/dev/null
-  # Codex discovers user skills from ~/.agents/skills. Install $a and
-  # $alexandria as intentional aliases. A foreign $a remains untouched; the
-  # Alexandria alias and the bare-a instruction floor still work.
-  CODEX_START_SKILL="a"
-  if [ -e "$HOME/.agents/skills/a" ] && { \
-       [ ! -f "$HOME/.agents/skills/a/SKILL.md" ] || \
-       ! grep -qi 'alexandria' "$HOME/.agents/skills/a/SKILL.md" 2>/dev/null; \
-     }; then
-    CODEX_START_SKILL="alexandria"
-    mkdir -p "$HOME/.agents/skills/alexandria" 2>/dev/null
-    if fetch_factory "skills/codex.md" "$HOME/.agents/skills/alexandria/SKILL.md" "skills/codex.md (Codex \$alexandria skill)" yes; then
-      if [ "$(uname)" = "Darwin" ]; then
-        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null
-      else
-        sed -i 's/^name: a$/name: alexandria/' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null
-      fi
-    fi
+  # Codex discovers user skills from ~/.agents/skills. Install only $a.
+  CODEX_A_SKILL=""
+  if alex_skill_slot_available "$HOME/.agents/skills/a" "skills/codex.md" "a" "a"; then
+    install_start_skill "skills/codex.md" "$HOME/.agents/skills/a" "a" "skills/codex.md (Codex \$a skill)" && CODEX_A_SKILL="a"
   else
-    mkdir -p "$HOME/.agents/skills/a" 2>/dev/null
-    fetch_factory "skills/codex.md" "$HOME/.agents/skills/a/SKILL.md" "skills/codex.md (Codex \$a skill)" yes
-    mkdir -p "$HOME/.agents/skills/alexandria" 2>/dev/null
-    if fetch_factory "skills/codex.md" "$HOME/.agents/skills/alexandria/SKILL.md" "skills/codex.md (Codex \$alexandria alias)" yes; then
-      if [ "$(uname)" = "Darwin" ]; then
-        sed -i '' 's/^name: a$/name: alexandria/' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null
-      else
-        sed -i 's/^name: a$/name: alexandria/' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null
-      fi
-    fi
+    echo "  Codex: kept foreign \$a skill"
   fi
+  CODEX_START_SKILL="$CODEX_A_SKILL"
 
-  CODEX_ALIASES="alexandria"
-  [ "$CODEX_START_SKILL" != "alexandria" ] && CODEX_ALIASES="$CODEX_START_SKILL alexandria"
+  CODEX_ALIASES=""
+  [ -n "$CODEX_A_SKILL" ] && CODEX_ALIASES="a"
   for CODEX_ALIAS in $CODEX_ALIASES; do
     mkdir -p "$HOME/.agents/skills/$CODEX_ALIAS/agents" 2>/dev/null
-    if fetch_factory "skills/codex-openai.yaml" "$HOME/.agents/skills/$CODEX_ALIAS/agents/openai.yaml" "skills/codex-openai.yaml (Codex \$$CODEX_ALIAS metadata)" yes && \
-       [ "$CODEX_ALIAS" = "alexandria" ]; then
-      if [ "$(uname)" = "Darwin" ]; then
-        sed -i '' 's/a — Alexandria/alexandria — Alexandria/' "$HOME/.agents/skills/$CODEX_ALIAS/agents/openai.yaml" 2>/dev/null
-      else
-        sed -i 's/a — Alexandria/alexandria — Alexandria/' "$HOME/.agents/skills/$CODEX_ALIAS/agents/openai.yaml" 2>/dev/null
-      fi
+    CODEX_METADATA="$HOME/.agents/skills/$CODEX_ALIAS/agents/openai.yaml"
+    if fetch_factory "skills/codex-openai.yaml" "$CODEX_METADATA" "skills/codex-openai.yaml (Codex \$$CODEX_ALIAS metadata)" yes; then
+      record_owned_file "$CODEX_METADATA" || true
     fi
   done
 
-  CODEX_CLOSE_SKILL="a."
-  if [ -e "$HOME/.agents/skills/a." ] && { \
-       [ ! -f "$HOME/.agents/skills/a./SKILL.md" ] || \
-       ! grep -qi 'alexandria' "$HOME/.agents/skills/a./SKILL.md" 2>/dev/null; \
-     }; then
-    CODEX_CLOSE_SKILL="alexandria-close"
-  fi
-  mkdir -p "$HOME/.agents/skills/$CODEX_CLOSE_SKILL" 2>/dev/null
-  if fetch_factory "skills/aclose.md" "$HOME/.agents/skills/$CODEX_CLOSE_SKILL/SKILL.md" "skills/aclose.md (Codex session close)" yes && \
-     [ "$CODEX_CLOSE_SKILL" = "alexandria-close" ]; then
-    if [ "$(uname)" = "Darwin" ]; then
-      sed -i '' 's/^name: a\.$/name: alexandria-close/' "$HOME/.agents/skills/$CODEX_CLOSE_SKILL/SKILL.md" 2>/dev/null
+  CODEX_CLOSE_SKILL=""
+  for candidate in "a." "alexandria-close"; do
+    if alex_skill_slot_available "$HOME/.agents/skills/$candidate" "skills/aclose.md" "$candidate" "a."; then
+      install_close_skill "$HOME/.agents/skills/$candidate" "$candidate" "skills/aclose.md (Codex session close)" && CODEX_CLOSE_SKILL="$candidate"
+      [ -n "$CODEX_CLOSE_SKILL" ] && break
     else
-      sed -i 's/^name: a\.$/name: alexandria-close/' "$HOME/.agents/skills/$CODEX_CLOSE_SKILL/SKILL.md" 2>/dev/null
+      echo "  Codex: kept foreign \$$candidate skill"
     fi
-  fi
+  done
 
   # Merge the current Codex surfaces. Preserve every unknown hook and every
   # byte of the user's instructions outside our own marker. Never write the
@@ -885,10 +1057,11 @@ if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   CODEX_CONFIGURED=""
   if command -v python3 &>/dev/null && \
      [ -s "$RUNTIME_DIR/scripts/configure_codex.py" ] && \
-     [ -s "$ALEX_DIR/system/.codex-ambient.md" ]; then
+     [ -s "$RUNTIME_DIR/codex-ambient.md" ]; then
     if python3 "$RUNTIME_DIR/scripts/configure_codex.py" \
       --codex-home "$HOME/.codex" --alex-dir "$ALEX_DIR" --runtime-dir "$RUNTIME_DIR" \
-      --ambient "$ALEX_DIR/system/.codex-ambient.md" >/dev/null 2>&1; then
+      --ambient "$RUNTIME_DIR/codex-ambient.md" \
+      --previous-manifest "$PREVIOUS_VERIFIED_MANIFEST" >/dev/null 2>&1; then
       CODEX_CONFIGURED=1
     fi
   fi
@@ -898,6 +1071,9 @@ if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
     echo "  Codex: existing configuration could not be merged safely; left unchanged"
   fi
 fi
+
+rm -f "${PREVIOUS_VERIFIED_MANIFEST:-}"
+PREVIOUS_VERIFIED_MANIFEST=""
 
 # ── 4. Git substrate — your worldline as cryptographic ledger ─────
 #
@@ -970,8 +1146,8 @@ GITIGNORE
     ENTRY="$SIGN_EMAIL $PUBKEY_CONTENTS"
     if ! grep -qxF "$ENTRY" "$ALLOWED" 2>/dev/null; then
       echo "$ENTRY" >> "$ALLOWED"
-      printf '%s\n' "$ENTRY" > "$ALEX_DIR/system/.allowed_signers_entry"
-      chmod 600 "$ALEX_DIR/system/.allowed_signers_entry" 2>/dev/null
+      printf '%s\n' "$ENTRY" > "$RUNTIME_DIR/.allowed_signers_entry"
+      chmod 600 "$RUNTIME_DIR/.allowed_signers_entry" 2>/dev/null
     fi
     git -C "$ALEX_DIR" config gpg.ssh.allowedSignersFile "$ALLOWED" 2>/dev/null
 
@@ -1070,13 +1246,37 @@ else
   STATUS_FILES="fail"; DETAIL_FILES="$ALEX_DIR/ not writable — check permissions and re-run"
 fi
 
-# canon: Foundation core + founder module #1 present and non-empty
-if [ -s "$ALEX_DIR/system/canon/foundation.md" ] && [ -s "$ALEX_DIR/system/canon/methodology.md" ]; then
+# canon: the irreducible core only. Default methods are reported separately and
+# may be off by Author choice without making the local loop unhealthy.
+if [ -s "$ALEX_DIR/system/canon/foundation.md" ] && [ -s "$ALEX_DIR/system/canon/change-closure.md" ]; then
   F_BYTES=$(wc -c < "$ALEX_DIR/system/canon/foundation.md" | tr -d ' ')
-  M_BYTES=$(wc -c < "$ALEX_DIR/system/canon/methodology.md" | tr -d ' ')
-  STATUS_CANON="ok"; DETAIL_CANON="foundation.md (${F_BYTES}b) + methodology.md (${M_BYTES}b)"
+  C_BYTES=$(wc -c < "$ALEX_DIR/system/canon/change-closure.md" | tr -d ' ')
+  STATUS_CANON="ok"; DETAIL_CANON="foundation.md (${F_BYTES}b) + change-closure.md (${C_BYTES}b)"
 else
-  STATUS_CANON="fail"; DETAIL_CANON="foundation.md/methodology.md missing — re-run setup (network?)"
+  STATUS_CANON="fail"; DETAIL_CANON="foundation.md/change-closure.md missing — re-run setup (network?)"
+fi
+
+# starting methods: visible and honest, but never a core gate. A file under
+# canon/disabled/ is an intentional, reversible opt-out; a missing file with no
+# disabled copy is a degraded default that setup should report.
+DEFAULTS_ON=""
+DEFAULTS_OFF=""
+DEFAULTS_MISSING=""
+for module in axioms methodology editor mercury publisher; do
+  if [ -s "$ALEX_DIR/system/canon/$module.md" ]; then
+    DEFAULTS_ON="${DEFAULTS_ON}${DEFAULTS_ON:+, }$module"
+  elif [ -s "$ALEX_DIR/system/canon/disabled/$module.md" ]; then
+    DEFAULTS_OFF="${DEFAULTS_OFF}${DEFAULTS_OFF:+, }$module"
+  else
+    DEFAULTS_MISSING="${DEFAULTS_MISSING}${DEFAULTS_MISSING:+, }$module"
+  fi
+done
+if [ -n "$DEFAULTS_MISSING" ]; then
+  STATUS_DEFAULTS="fail"; DETAIL_DEFAULTS="missing: $DEFAULTS_MISSING (loop still works)"
+elif [ -n "$DEFAULTS_OFF" ]; then
+  STATUS_DEFAULTS="skip"; DETAIL_DEFAULTS="on: ${DEFAULTS_ON:-none}; off by choice: $DEFAULTS_OFF"
+else
+  STATUS_DEFAULTS="ok"; DETAIL_DEFAULTS="five starting methods on; each removable or replaceable"
 fi
 
 # hooks: executable shim that parses + non-empty payload
@@ -1099,20 +1299,33 @@ else
   STATUS_CORE="fail"; DETAIL_CORE="missing:${CORE_MISSING} — re-run setup"
 fi
 
-# The visible cue is on by default. Native chrome wins where available; the
-# response footer is the portable floor everywhere else.
+# The visible route from passive work into /a is on by default. Native chrome
+# wins where available; the response footer is the portable floor everywhere
+# else. Only the explicit OFF sentinel is a valid skip. A missing or broken
+# renderer is a failed core path, not an inferred user choice.
 CUE_RENDERED=""
-if [ ! -f "$ALEX_DIR/system/hooks/visible-cue.off" ] && [ -f "$RUNTIME_DIR/scripts/statusline.sh" ]; then
+CUE_ACTIVE_RENDERED=""
+if [ -f "$ALEX_DIR/system/hooks/visible-cue.off" ]; then
+  STATUS_CUE="skip"; DETAIL_CUE="off by Author choice"
+elif [ ! -f "$RUNTIME_DIR/scripts/statusline.sh" ]; then
+  STATUS_CUE="fail"; DETAIL_CUE="renderer missing — re-run setup"
+else
   CUE_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer 2>/dev/null)
-fi
-case "$CUE_RENDERED" in
-  "→ "*" · start /a in a new chat")
+  CUE_PROBE_HOME="$RUNTIME_DIR/.cue-probe.$$"
+  mkdir -p "$CUE_PROBE_HOME/system"
+  printf 'alexandria-setup-probe %s\n' "$(date +%s)" > "$CUE_PROBE_HOME/system/.active_a_sessions"
+  CUE_ACTIVE_RENDERED=$(printf '%s\n' '{"session_id":"alexandria-setup-probe"}' | \
+    ALEXANDRIA_HOME="$CUE_PROBE_HOME" ALEXANDRIA_SETUP_PROBE=1 \
+    bash "$RUNTIME_DIR/scripts/statusline.sh" 2>/dev/null)
+  rm -f "$CUE_PROBE_HOME/system/.active_a_sessions"
+  rmdir "$CUE_PROBE_HOME/system" "$CUE_PROBE_HOME" 2>/dev/null || true
+  if [[ "$CUE_RENDERED" == "→ "*" · start /a in a new chat" ]] && \
+     [ "$CUE_ACTIVE_RENDERED" = "→ /a. when done · reflect on what moved" ]; then
     STATUS_CUE="ok"; DETAIL_CUE="$CUE_RENDERED"
-    ;;
-  *)
-    STATUS_CUE="skip"; DETAIL_CUE="off by Author choice"
-    ;;
-esac
+  else
+    STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce both the /a start and per-session /a. close routes"
+  fi
+fi
 
 # api key: HTTP probe (already done above)
 case "$KEY_STATUS" in
@@ -1124,8 +1337,101 @@ case "$KEY_STATUS" in
 esac
 
 # Coding agents: only show rows for ones the user has installed.
-# Functional probe = the config file the agent reads at startup actually
-# contains the Alexandria entry, not just that the agent's dir exists.
+# Functional probe = parse the finished config and require the exact entries
+# the host reads. Text search alone can mistake stale or malformed bytes for a
+# working passive loop.
+
+validate_claude_config() {
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - <<'PY' 2>/dev/null
+import json
+from pathlib import Path
+
+path = Path.home() / ".claude/settings.json"
+document = json.loads(path.read_text(encoding="utf-8"))
+if not isinstance(document, dict):
+    raise SystemExit(1)
+if document.get("disableAllHooks") is True:
+    raise SystemExit(1)
+hooks = document.get("hooks")
+permissions = document.get("permissions")
+if not isinstance(hooks, dict) or not isinstance(permissions, dict):
+    raise SystemExit(1)
+roots = permissions.get("additionalDirectories")
+if not isinstance(roots, list) or str(Path.home() / "alexandria") not in roots:
+    raise SystemExit(1)
+
+required = {
+    "SessionStart": [
+        {"hooks": [{"type": "command", "command": "bash $HOME/.local/share/alexandria/hooks/shim.sh session-start", "timeout": 60}]},
+        {"hooks": [{"type": "command", "command": "python3 $HOME/.local/share/alexandria/scripts/capture_resolver.py 2>/dev/null || true", "timeout": 10}]},
+    ],
+    "SessionEnd": [
+        {"hooks": [{"type": "command", "command": "bash $HOME/.local/share/alexandria/hooks/shim.sh session-end", "timeout": 15}]},
+    ],
+    "SubagentStart": [
+        {"hooks": [{"type": "command", "command": "bash $HOME/.local/share/alexandria/hooks/shim.sh subagent"}]},
+    ],
+}
+for event, expected_groups in required.items():
+    groups = hooks.get(event)
+    if not isinstance(groups, list) or any(group not in groups for group in expected_groups):
+        raise SystemExit(1)
+PY
+    return
+  fi
+  command -v node >/dev/null 2>&1 || return 1
+  node <<'NODE' 2>/dev/null
+const fs = require('fs'), path = require('path');
+const file = path.join(process.env.HOME, '.claude', 'settings.json');
+const document = JSON.parse(fs.readFileSync(file, 'utf8'));
+if (!document || Array.isArray(document) || typeof document !== 'object') process.exit(1);
+if (document.disableAllHooks === true) process.exit(1);
+const hooks = document.hooks, permissions = document.permissions;
+if (!hooks || Array.isArray(hooks) || typeof hooks !== 'object') process.exit(1);
+if (!permissions || Array.isArray(permissions) || typeof permissions !== 'object') process.exit(1);
+const root = path.join(process.env.HOME, 'alexandria');
+if (!Array.isArray(permissions.additionalDirectories) || !permissions.additionalDirectories.includes(root)) process.exit(1);
+const required = {
+  SessionStart: [
+    {hooks: [{type: 'command', command: 'bash $HOME/.local/share/alexandria/hooks/shim.sh session-start', timeout: 60}]},
+    {hooks: [{type: 'command', command: 'python3 $HOME/.local/share/alexandria/scripts/capture_resolver.py 2>/dev/null || true', timeout: 10}]},
+  ],
+  SessionEnd: [{hooks: [{type: 'command', command: 'bash $HOME/.local/share/alexandria/hooks/shim.sh session-end', timeout: 15}]}],
+  SubagentStart: [{hooks: [{type: 'command', command: 'bash $HOME/.local/share/alexandria/hooks/shim.sh subagent'}]}],
+};
+for (const [event, expectedGroups] of Object.entries(required)) {
+  const groups = hooks[event];
+  if (!Array.isArray(groups)) process.exit(1);
+  if (!expectedGroups.every(expected => groups.some(group => JSON.stringify(group) === JSON.stringify(expected)))) process.exit(1);
+}
+NODE
+}
+
+validate_cursor_config() {
+  command -v python3 >/dev/null 2>&1 || return 1
+  python3 - <<'PY' 2>/dev/null
+import json
+from pathlib import Path
+
+path = Path.home() / ".cursor/hooks.json"
+document = json.loads(path.read_text(encoding="utf-8"))
+hooks = document.get("hooks") if isinstance(document, dict) else None
+if not isinstance(hooks, dict):
+    raise SystemExit(1)
+required = {
+    "sessionStart": {"command": "./hooks/alexandria-session-start.py", "timeout": 60},
+    "sessionEnd": {"command": "./hooks/alexandria-session-end.py", "timeout": 30},
+    "beforeSubmitPrompt": {"command": "./hooks/alexandria-transcript.py beforeSubmitPrompt", "timeout": 5},
+    "afterAgentResponse": {"command": "./hooks/alexandria-transcript.py afterAgentResponse", "timeout": 5},
+    "stop": {"command": "./hooks/alexandria-stop.py", "timeout": 8, "loop_limit": None},
+}
+for event, expected in required.items():
+    entries = hooks.get(event)
+    if not isinstance(entries, list) or expected not in entries:
+        raise SystemExit(1)
+PY
+}
 
 CLAUDE_DETECTED="no"
 if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
@@ -1133,36 +1439,32 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   # Ground truth: the shim hook is registered in settings.json (the config
   # Claude Code — CLI and Desktop code tab — actually reads) and the skill is
   # present.
-  if [ -f "$HOME/.claude/settings.json" ] && \
-     grep -q "\.local/share/alexandria/hooks/shim.sh" "$HOME/.claude/settings.json" 2>/dev/null && \
-     grep -q 'additionalDirectories' "$HOME/.claude/settings.json" 2>/dev/null && \
-     grep -q 'alexandria' "$HOME/.claude/settings.json" 2>/dev/null && \
-     [ -f "$HOME/.claude/skills/${CLAUDE_START_SKILL:-a}/SKILL.md" ] && \
-     [ -f "$HOME/.claude/skills/alexandria/SKILL.md" ] && \
-     [ -f "$HOME/.claude/skills/${CLAUDE_CLOSE_SKILL:-a.}/SKILL.md" ]; then
-    if [ -n "$A_SKILL_KEPT" ]; then
-      # Honest row: their own /a was left alone; ours lives at /alexandria.
-      STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/alexandria + bare a + session close; your own /a left untouched"
-    else
-      STATUS_CLAUDE="ok"; DETAIL_CLAUDE="/a + /alexandria aliases + session close; session hooks wired"
-    fi
+  if [ -n "${CLAUDE_HOOKS_OK:-}" ] && validate_claude_config && \
+     [ "${CLAUDE_A_SKILL:-}" = "a" ] && \
+     [ -f "$HOME/.claude/skills/a/SKILL.md" ] && \
+     [ "${CLAUDE_CLOSE_SKILL:-}" = "a." ] && \
+     [ -f "$HOME/.claude/skills/a./SKILL.md" ]; then
+    CLAUDE_NAMES="/a + /a."
+    STATUS_CLAUDE="ok"; DETAIL_CLAUDE="$CLAUDE_NAMES ready; hooks wired; foreign names preserved"
   else
-    STATUS_CLAUDE="fail"; DETAIL_CLAUDE="Claude Code detected but not configured — re-run setup"
+    STATUS_CLAUDE="fail"; DETAIL_CLAUDE="Claude Code cannot safely own the visible /a and /a. route or merge its hooks — resolve the reported collision/error, then re-run setup"
   fi
 fi
 
 CURSOR_DETECTED="no"
 if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
   CURSOR_DETECTED="yes"
-  if [ -f "$HOME/.cursor/hooks.json" ] && \
-     grep -q "alexandria-session-start" "$HOME/.cursor/hooks.json" 2>/dev/null && \
-     [ -f "$HOME/.cursor/rules/alexandria.mdc" ] && \
-     [ -f "$HOME/.cursor/skills/${CURSOR_START_SKILL:-a}/SKILL.md" ] && \
-     [ -f "$HOME/.cursor/skills/alexandria/SKILL.md" ] && \
-     [ -f "$HOME/.cursor/skills/${CURSOR_CLOSE_SKILL:-a.}/SKILL.md" ]; then
-    STATUS_CURSOR="ok"; DETAIL_CURSOR="hooks + rules + start aliases + session close"
+  if [ -n "${CURSOR_HOOKS_OK:-}" ] && [ -n "${CURSOR_HOOK_FILES_OK:-}" ] && \
+     validate_cursor_config && \
+     [ -n "${CURSOR_RULE_FILE:-}" ] && \
+     [ -f "$HOME/.cursor/rules/$CURSOR_RULE_FILE" ] && \
+     [ "${CURSOR_A_SKILL:-}" = "a" ] && \
+     [ -f "$HOME/.cursor/skills/a/SKILL.md" ] && \
+     [ "${CURSOR_CLOSE_SKILL:-}" = "a." ] && \
+     [ -f "$HOME/.cursor/skills/a./SKILL.md" ]; then
+    STATUS_CURSOR="ok"; DETAIL_CURSOR="hooks + $CURSOR_RULE_FILE + /a + /a.; foreign names preserved"
   else
-    STATUS_CURSOR="fail"; DETAIL_CURSOR="Cursor detected but not configured — re-run setup"
+    STATUS_CURSOR="fail"; DETAIL_CURSOR="Cursor cannot safely own the visible /a and /a. route or merge its rules/hooks — resolve the reported collision/error, then re-run setup"
   fi
 fi
 
@@ -1170,63 +1472,100 @@ CODEX_DETECTED="no"
 if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   CODEX_DETECTED="yes"
   CODEX_SKILL_OK=""
-  CODEX_START_NAME="${CODEX_START_SKILL:-a}"
+  CODEX_START_NAME="${CODEX_A_SKILL:-}"
   CODEX_START_FILE="$HOME/.agents/skills/$CODEX_START_NAME/SKILL.md"
-  if [ -f "$CODEX_START_FILE" ] && \
+  if [ -n "$CODEX_START_NAME" ] && [ -f "$CODEX_START_FILE" ] && \
      [ "$(sed -n '1p' "$CODEX_START_FILE")" = "---" ] && \
      grep -q "^name: $CODEX_START_NAME$" "$CODEX_START_FILE" 2>/dev/null && \
      grep -q '^description: .' "$CODEX_START_FILE" 2>/dev/null && \
      grep -q '^user_invocable: true$' "$CODEX_START_FILE" 2>/dev/null && \
      [ -f "$HOME/.agents/skills/$CODEX_START_NAME/agents/openai.yaml" ] && \
      grep -q 'allow_implicit_invocation: false' "$HOME/.agents/skills/$CODEX_START_NAME/agents/openai.yaml" 2>/dev/null && \
-     [ -f "$HOME/.agents/skills/alexandria/SKILL.md" ] && \
-     grep -q '^name: alexandria$' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null && \
-     grep -q '^user_invocable: true$' "$HOME/.agents/skills/alexandria/SKILL.md" 2>/dev/null && \
-     [ -f "$HOME/.agents/skills/alexandria/agents/openai.yaml" ] && \
-     [ -f "$HOME/.agents/skills/${CODEX_CLOSE_SKILL:-a.}/SKILL.md" ]; then
+     [ "${CODEX_CLOSE_SKILL:-}" = "a." ] && \
+     [ -f "$HOME/.agents/skills/$CODEX_CLOSE_SKILL/SKILL.md" ]; then
     CODEX_SKILL_OK=1
   fi
-  CODEX_AGENTS_OK=""
-  if [ -f "$HOME/.codex/AGENTS.md" ] && { \
-       grep -q "alexandria:start" "$HOME/.codex/AGENTS.md" 2>/dev/null || \
-       grep -q "Alexandria the product — always running" "$HOME/.codex/AGENTS.md" 2>/dev/null; \
-     }; then
-    CODEX_AGENTS_OK=1
+  CODEX_CONFIG_OK=""
+  if [ -n "${CODEX_CONFIGURED:-}" ] && python3 "$RUNTIME_DIR/scripts/configure_codex.py" \
+    --codex-home "$HOME/.codex" --alex-dir "$ALEX_DIR" --runtime-dir "$RUNTIME_DIR" \
+    --ambient "$RUNTIME_DIR/codex-ambient.md" --check >/dev/null 2>&1; then
+    CODEX_CONFIG_OK=1
   fi
-  CODEX_HOOKS_OK=""
-  if [ -f "$HOME/.codex/hooks.json" ] && \
-     grep -q "shim.sh session-start" "$HOME/.codex/hooks.json" 2>/dev/null && \
-     grep -q "capture_resolver.py" "$HOME/.codex/hooks.json" 2>/dev/null && \
-     grep -q "shim.sh codex-session-end" "$HOME/.codex/hooks.json" 2>/dev/null; then
-    CODEX_HOOKS_OK=1
-  fi
-  CODEX_ROOT_OK=""
-  if [ -f "$HOME/.codex/config.toml" ] && \
-     grep -q 'writable_roots' "$HOME/.codex/config.toml" 2>/dev/null && \
-     grep -q '/alexandria' "$HOME/.codex/config.toml" 2>/dev/null; then
-    CODEX_ROOT_OK=1
-  fi
-  if [ -n "$CODEX_SKILL_OK" ] && [ -n "$CODEX_AGENTS_OK" ] && \
-     [ -n "$CODEX_HOOKS_OK" ] && [ -n "$CODEX_ROOT_OK" ] && \
+  if [ -n "$CODEX_SKILL_OK" ] && [ -n "$CODEX_CONFIG_OK" ] && \
      [ -f "$ALEX_DIR/system/.codex_session_start_ok" ] && \
      [ -f "$ALEX_DIR/system/.codex_session_end_ok" ]; then
-    STATUS_CODEX="ok"; DETAIL_CODEX="\$a + \$alexandria aliases + session close; trusted hooks ran start and end"
-  elif [ -n "$CODEX_SKILL_OK" ] && [ -n "$CODEX_AGENTS_OK" ] && [ -n "$CODEX_HOOKS_OK" ] && [ -n "$CODEX_ROOT_OK" ]; then
-    STATUS_CODEX="skip"; DETAIL_CODEX="aliases ready; pending one-time hook trust — type /hooks, trust Alexandria, then open and close one task"
+    STATUS_CODEX="ok"; DETAIL_CODEX="\$$CODEX_START_NAME + \$$CODEX_CLOSE_SKILL ready; trusted hooks ran start and end; foreign names preserved"
+  elif [ -n "$CODEX_SKILL_OK" ] && [ -n "$CODEX_CONFIG_OK" ]; then
+    STATUS_CODEX="skip"; DETAIL_CODEX="\$$CODEX_START_NAME + \$$CODEX_CLOSE_SKILL ready; pending one-time hook trust — type /hooks, trust Alexandria, then open and close one task"
   else
-    STATUS_CODEX="fail"; DETAIL_CODEX="Codex integration incomplete — re-run setup"
+    STATUS_CODEX="fail"; DETAIL_CODEX="Codex cannot safely own the visible /a and /a. route or merge its config — resolve the reported collision/error, then re-run setup"
   fi
 fi
 
 FACTORY_DETECTED="no"
 if [ -d "$HOME/.factory" ] || command -v droid &>/dev/null; then
   FACTORY_DETECTED="yes"
-  if [ -f "$HOME/.factory/droids/${FACTORY_START_DROID:-a}.md" ] && \
-     [ -f "$HOME/.factory/droids/alexandria.md" ]; then
-    STATUS_FACTORY="ok"; DETAIL_FACTORY="a + alexandria aliases installed"
+  if [ -n "${FACTORY_START_DROID:-}" ] && \
+     [ -f "$HOME/.factory/droids/$FACTORY_START_DROID.md" ]; then
+    STATUS_FACTORY="ok"; DETAIL_FACTORY="$FACTORY_START_DROID droid ready; foreign names preserved"
   else
-    STATUS_FACTORY="fail"; DETAIL_FACTORY="Factory detected but skill not installed — re-run setup"
+    STATUS_FACTORY="fail"; DETAIL_FACTORY="Factory has no safe Alexandria droid name — resolve the named collision/error, then re-run setup"
   fi
+fi
+
+# A complete product needs one verified path into an active session. Codex's
+# pending trust state is the deliberate first-run exception: the skills are
+# present and onboarding continues, while the Author still has to approve the
+# hooks. A separate host-failure gate below prevents another healthy host from
+# hiding an unsafe collision or incomplete merge.
+STATUS_ACTIVE="fail"
+DETAIL_ACTIVE="no supported ai integration is ready"
+if { [ "$CLAUDE_DETECTED" = "yes" ] && [ "$STATUS_CLAUDE" = "ok" ]; } || \
+   { [ "$CURSOR_DETECTED" = "yes" ] && [ "$STATUS_CURSOR" = "ok" ]; } || \
+   { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "ok" ]; } || \
+   { [ "$FACTORY_DETECTED" = "yes" ] && [ "$STATUS_FACTORY" = "ok" ]; }; then
+  STATUS_ACTIVE="ok"; DETAIL_ACTIVE="active session skill ready"
+elif [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "skip" ]; then
+  STATUS_ACTIVE="skip"; DETAIL_ACTIVE="active skill ready; Codex hooks await one-time trust"
+fi
+
+# Passive mode needs a host that can actually run session hooks and carry the
+# visible route during ordinary work. Factory currently supplies only the
+# active droid, so a Factory-only machine is intentionally incomplete rather
+# than falsely reported as the full loop.
+STATUS_PASSIVE="fail"
+DETAIL_PASSIVE="no supported passive session path is ready"
+if { [ "$CLAUDE_DETECTED" = "yes" ] && [ "$STATUS_CLAUDE" = "ok" ]; } || \
+   { [ "$CURSOR_DETECTED" = "yes" ] && [ "$STATUS_CURSOR" = "ok" ]; } || \
+   { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "ok" ]; }; then
+  STATUS_PASSIVE="ok"; DETAIL_PASSIVE="ordinary-session hooks and cue route ready"
+elif [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "skip" ]; then
+  STATUS_PASSIVE="skip"; DETAIL_PASSIVE="configured; Codex hooks await one-time trust"
+fi
+
+# A detected host that could not be merged safely keeps the whole runtime
+# inactive. Otherwise another working host could activate a wrong cue or a
+# half-configured hook in the failed host.
+STATUS_HOSTS="ok"
+{ [ "$CLAUDE_DETECTED" = "yes" ] && [ "$STATUS_CLAUDE" = "fail" ]; } && STATUS_HOSTS="fail"
+{ [ "$CURSOR_DETECTED" = "yes" ] && [ "$STATUS_CURSOR" = "fail" ]; } && STATUS_HOSTS="fail"
+{ [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "fail" ]; } && STATUS_HOSTS="fail"
+{ [ "$FACTORY_DETECTED" = "yes" ] && [ "$STATUS_FACTORY" = "fail" ]; } && STATUS_HOSTS="fail"
+
+# One user-facing loop status: passive hooks → visible cue → active session.
+# A cue the Author explicitly turned off is a valid intentional degradation;
+# an absent renderer is not. Codex's trust skip is likewise surfaced, never
+# manufactured away.
+STATUS_LOOP="ok"
+DETAIL_LOOP="passive → cue → active"
+if [ "$STATUS_HOOKS" != "ok" ] || [ "$STATUS_CUE" = "fail" ] || \
+   [ "$STATUS_PASSIVE" = "fail" ] || [ "$STATUS_ACTIVE" = "fail" ] || \
+   [ "$STATUS_HOSTS" = "fail" ]; then
+  STATUS_LOOP="fail"; DETAIL_LOOP="passive, cue, or active path is incomplete"
+elif [ "$STATUS_CUE" = "skip" ]; then
+  STATUS_LOOP="skip"; DETAIL_LOOP="passive + active ready; cue off by Author choice"
+elif [ "$STATUS_PASSIVE" = "skip" ] || [ "$STATUS_ACTIVE" = "skip" ]; then
+  STATUS_LOOP="skip"; DETAIL_LOOP="cue + active skill ready; Codex passive hooks await trust"
 fi
 
 # git ledger: local repo + genesis commit. A remote alone is never permission
@@ -1257,8 +1596,8 @@ MISSING=""
 [ "$STATUS_CANON" != "ok" ] && MISSING="$MISSING canon"
 [ "$STATUS_HOOKS" != "ok" ] && MISSING="$MISSING hooks"
 [ "$STATUS_CORE" != "ok" ] && MISSING="$MISSING${CORE_MISSING}"
+[ "$STATUS_LOOP" = "fail" ] && MISSING="$MISSING loop"
 [ ! -f "$ALEX_DIR/system/.block" ] && MISSING="$MISSING block"
-[ ! -f "$ALEX_DIR/files/library/filter.md" ] && MISSING="$MISSING library/filter.md"
 
 SETUP_STATUS="ok"
 [ -n "$MISSING" ] && SETUP_STATUS="missing_files"
@@ -1280,9 +1619,12 @@ SETUP_STATUS="ok"
   echo "subsystems:"
   echo "  files: $STATUS_FILES"
   echo "  canon: $STATUS_CANON"
+  echo "  methods: $STATUS_DEFAULTS"
   echo "  hooks: $STATUS_HOOKS"
   echo "  core: $STATUS_CORE"
+  echo "  passive_session: $STATUS_PASSIVE"
   echo "  visible_cue: $STATUS_CUE"
+  echo "  loop: $STATUS_LOOP"
   echo "  api_key: $STATUS_KEY"
   [ "$CLAUDE_DETECTED" = "yes" ] && echo "  claude_skill: $STATUS_CLAUDE"
   [ "$CURSOR_DETECTED" = "yes" ] && echo "  cursor_skill: $STATUS_CURSOR"
@@ -1323,9 +1665,12 @@ count_status() {
 
 count_status "$STATUS_FILES"
 count_status "$STATUS_CANON"
+count_status "$STATUS_DEFAULTS"
 count_status "$STATUS_HOOKS"
 count_status "$STATUS_CORE"
+count_status "$STATUS_PASSIVE"
 count_status "$STATUS_CUE"
+count_status "$STATUS_LOOP"
 count_status "$STATUS_KEY"
 [ "$CLAUDE_DETECTED" = "yes" ] && count_status "$STATUS_CLAUDE"
 [ "$CURSOR_DETECTED" = "yes" ] && count_status "$STATUS_CURSOR"
@@ -1343,9 +1688,12 @@ echo ""
 
 emit_row "$STATUS_FILES" "files" "$DETAIL_FILES"
 emit_row "$STATUS_CANON" "canon" "$DETAIL_CANON"
+emit_row "$STATUS_DEFAULTS" "starting methods" "$DETAIL_DEFAULTS"
 emit_row "$STATUS_HOOKS" "hooks" "$DETAIL_HOOKS"
 emit_row "$STATUS_CORE" "core templates" "$DETAIL_CORE"
+emit_row "$STATUS_PASSIVE" "passive session" "$DETAIL_PASSIVE"
 emit_row "$STATUS_CUE" "visible cue" "$DETAIL_CUE"
+emit_row "$STATUS_LOOP" "local loop" "$DETAIL_LOOP"
 emit_row "$STATUS_KEY" "account" "$DETAIL_KEY"
 [ "$CLAUDE_DETECTED" = "yes" ] && emit_row "$STATUS_CLAUDE" "Claude Code" "$DETAIL_CLAUDE"
 [ "$CURSOR_DETECTED" = "yes" ] && emit_row "$STATUS_CURSOR" "Cursor" "$DETAIL_CURSOR"
@@ -1360,14 +1708,17 @@ echo ""
   echo "exact commands in Terminal via /hooks; never bypass or silently manufacture it."
   echo ""
 }
-# Core health gate. files/canon/hooks/core are the must-haves; the rest (repo,
-# account) degrade gracefully and are fine to skip. If a CORE piece
+# Core health gate. Files, canon, templates, and the assembled passive → cue →
+# active loop are the must-haves; the rest (repo, account) degrade gracefully.
+# An explicit cue opt-out and Codex's disclosed one-time trust step are valid
+# skips. If a CORE piece
 # didn't land the install didn't really land — say so plainly and stop the agent,
 # rather than handing a half-built base to the block (the one real disaster).
 CORE_OK=true
 for s in "$STATUS_FILES" "$STATUS_CANON" "$STATUS_HOOKS" "$STATUS_CORE"; do
   [ "$s" = "ok" ] || CORE_OK=false
 done
+[ "$STATUS_LOOP" = "fail" ] && CORE_OK=false
 # The block is core for a FRESH install: the close below points the agent at
 # ~/alexandria/system/.block, so a missing block would send it to a file that
 # doesn't exist (and the payload's no-block branch then freestyles onboarding).
@@ -1379,7 +1730,7 @@ if [ -z "$EXISTING_AUTHOR" ] && [ ! -f "$ALEX_DIR/system/.block" ]; then
 fi
 
 if [ "$CORE_OK" != "true" ]; then
-  rm -f "$RUNTIME_DIR/.setup_complete" "$ALEX_DIR/system/.setup_complete"
+  rm -f "$RUNTIME_DIR/.setup_complete"
   echo "Install incomplete — a core piece didn't land (see the ✗ rows above)."
   # The block has no matrix row — name it explicitly when it's the gap.
   [ -n "$BLOCK_MISSING" ] && echo "(Also missing: the onboarding file at ~/alexandria/system/.block — the first session needs it.)"
@@ -1395,47 +1746,27 @@ if [ "$CORE_OK" != "true" ]; then
 else
   # This is the only activation point. Every installed hook checks this marker
   # outside the AI-writable Author folder before reading, retaining, or injecting.
-  # Remove the legacy in-folder runtime only after the protected replacement
-  # and all core probes pass. Stale hook definitions then fail closed rather
-  # than executing an AI-writable copy.
-  rm -f \
-    "$ALEX_DIR/system/hooks/shim.sh" \
-    "$ALEX_DIR/system/.hooks_payload" \
-    "$ALEX_DIR/system/.payload_verified_sha" \
-    "$ALEX_DIR/system/allowed_signers" \
-    "$ALEX_DIR/system/.canon_manifest" \
-    "$ALEX_DIR/system/.factory_version" \
-    "$ALEX_DIR/system/scripts/capture_resolver.py" \
-    "$ALEX_DIR/system/scripts/configure_codex.py" \
-    "$ALEX_DIR/system/scripts/uninstall.py" \
-    "$ALEX_DIR/system/scripts/statusline.sh" \
-    "$ALEX_DIR/system/scripts/verify-fetch.sh"
+  # Remove only legacy files whose exact bytes prove they came from the prior
+  # signed release. Names and marker text alone never authorize deletion.
+  while IFS='|' read -r legacy_path legacy_source; do
+    [ -n "$legacy_path" ] || continue
+    if legacy_file_matches_signed_source "$legacy_path" "$legacy_source"; then
+      rm -f "$legacy_path"
+    fi
+  done <<EOF
+$ALEX_DIR/system/hooks/shim.sh|hooks/shim.sh
+$ALEX_DIR/system/.hooks_payload|hooks/payload.sh
+$ALEX_DIR/system/scripts/capture_resolver.py|scripts/capture_resolver.py
+$ALEX_DIR/system/scripts/configure_codex.py|scripts/configure_codex.py
+$ALEX_DIR/system/scripts/uninstall.py|scripts/uninstall.py
+$ALEX_DIR/system/scripts/statusline.sh|scripts/statusline.sh
+$ALEX_DIR/system/scripts/verify-fetch.sh|scripts/verify-fetch.sh
+EOF
   touch "$RUNTIME_DIR/.setup_complete"
 fi
 
 if [ "$CORE_OK" != "true" ]; then
   : # The failure and recovery instructions were printed above.
-elif [ "$CLAUDE_DETECTED" != "yes" ] && [ "$CURSOR_DETECTED" != "yes" ] && [ "$CODEX_DETECTED" != "yes" ] && [ "$FACTORY_DETECTED" != "yes" ]; then
-  # Core landed but none of the harnesses we auto-wire was detected. Two very
-  # different cases share this branch: (a) pasted into the wrong place (a chat,
-  # Cowork's sandbox) — the old dead end; (b) a REAL coding agent we just don't
-  # have hooks for (OpenClaw, aider, anything with a terminal). Case (b) is
-  # fully supported — the folder IS the product; hooks are convenience — so
-  # instruct the running agent to wire itself instead of turning it away.
-  echo "Files installed. No agent we auto-wire was detected (Claude Code · Cursor · Codex · Factory)."
-  echo ""
-  echo "AGENT: if you're a coding agent running this from a real terminal, Alexandria"
-  echo "works with you too — wire yourself, right now:"
-  echo "  1. Add to your own persistent instructions (your rules/memory/AGENTS.md file):"
-  echo "     Alexandria lives at ~/alexandria/. Read system/canon/foundation.md; read"
-  echo "     only relevant Author files whose scope they already approved, and never"
-  echo "     search the machine or expand that scope at session start."
-  echo "  2. When the Author types /a (or asks for a session), follow"
-  echo "     ~/alexandria/system/canon/methodology.md end-to-end."
-  echo "  3. Then read ~/alexandria/system/.block now and run onboarding as normal."
-  echo ""
-  echo "Human, if this was pasted into a plain chat or Cowork's sandbox instead: it needs"
-  echo "a coding agent with a real terminal — open one and paste the same line there."
 elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
   if [ -n "$EXISTING_AUTHOR" ]; then
     # Re-run over a developed constitution = a sync, not a fresh install.
@@ -1446,7 +1777,7 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
     echo "AGENT: existing install refreshed — do NOT read the block or start onboarding."
     echo "Tell the Author they're synced. If you're already mid-session, carry on. If this"
     echo "paste is the first thing in a fresh tab, offer to start a session right now"
-    echo "(follow ~/alexandria/system/canon/methodology.md) so they never have to type /a."
+    echo "(follow Foundation plus any present default method) so they never have to type /a."
     if [ "$KEYLESS" != "true" ] && [ "$STATUS_KEY" = "ok" ]; then
       echo ""
       echo "Your account is connected. No publishing, marketplace reporting, network"
@@ -1469,14 +1800,12 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
     fi
   fi
   # Radical UX rule (founder, 2026-07-30): the installer prints nothing the
-  # agent can carry at a better moment. The habit, the add-ons drip, the
-  # Cowork steps and the deferred extras all
-  # used to print here — ~30 lines of wall at a person who hasn't onboarded
-  # yet, duplicating what block.md delivers when it's actually relevant.
-  # They now live in files the agent reads: .optional (add-ons + Cowork),
-  # .deferred (optional extras to offer AFTER the first session), and the
-  # block's own report beats. A page line is only legal if the
-  # model can't carry it.
+  # agent can carry at a better moment. The habit, Cowork steps and dependency
+  # notes used to print here — ~30 lines of wall at a person who hasn't
+  # onboarded yet. `.optional` is read only after the Author asks for a named
+  # capability (or asks what else is available); `.deferred` is diagnostic
+  # context for a missing dependency, never a prompt to add one. A page line is
+  # only legal if the model cannot carry it.
   if [ -n "$DEFERRED" ]; then
     printf "%b" "$DEFERRED" > "$ALEX_DIR/system/.deferred" 2>/dev/null || true
   fi

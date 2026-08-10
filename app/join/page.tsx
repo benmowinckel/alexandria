@@ -33,9 +33,9 @@ export const metadata = pageMetadata({
 // email capture below the fine print — every decline leaves a contactable
 // address (the reach the community gets recruited from).
 //
-// Composition mirrors /start: one flush-left editorial column, an accent
-// eyebrow ("the community") as the spine's anchor — the paid half, twinned
-// with /start's "the free tool".
+// Composition mirrors /start: one flush-left editorial column. This
+// Alexandria-owned page carries the connector pitch; the private local
+// onboarding and its ai remain commercially silent.
 //
 // This is also the invite target: a member's invite link is /join?ref=THEIR_CODE.
 // The ref rides through GitHub OAuth (server round-trips it) so the inviter is

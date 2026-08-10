@@ -14,7 +14,7 @@ The code maps to four layers:
 
 1. **The collective plumbing** (`server/src/protocol.ts` + `auth.ts` + `kv.ts` + `crypto.ts` + `db.ts` + `file-access.ts` + `marketplace-catalog.ts` + `marketplace.ts` + `audit.ts`) — optional server infrastructure for the Library, marketplace, and tribe. The incompressible product core is the local loop; it works without this layer. Internally still named `protocol.ts` — a code label for the plumbing, never the public framing.
 
-2. **Factory** (`factory/`) — the public, signed distribution. Activation has four layers: **core** (Foundation + local files/hooks/start/close/archive/Git); **default and removable** (`axioms·methodology·editor·mercury·publisher`); **separate opt-ins** (signed update checks, account, Library, marketplace signal, network, cloud, PLM/twin); **extras** (`brief-setup`, `state-based-sync`, `optimise`, community modules). Signed availability is not activation. The marketplace never lists Foundation: it labels the five replaceable methods `default`, Alexandria additions `official`, and everything else by author. **Everything listed in `manifest.txt` is signature-gated**; use `factory/ship.sh` for any manifest-covered change.
+2. **Factory** (`factory/`) — the public, signed distribution. The product taxonomy describes what each part *is*: **the loop** (Foundation + the local mirror + passive session + visible route into `/a` + active session/close + archive/Git); **methods** (`axioms·methodology·editor·mercury·publisher`, included and removable); **additions** (new local capabilities added when useful); **connections** (signed update checks, account, Library, marketplace signal, network, cloud, scheduled outbound messages, PLM/twin). Consent is a separate axis: the loop and methods start locally; the cue and methods have off switches; additions wait for a direct local need; connections stay off until exact approval. Signed availability is not activation. The marketplace never lists Foundation: it labels the five replaceable methods `default`, Alexandria additions `official`, and everything else by author. **Everything listed in `manifest.txt` is signature-gated**; use `factory/ship.sh` for any manifest-covered change.
 
 3. **Machine** (`~/alexandria/`) — Each Author's personal system. Constitution, vault, marginalia, machine.md, notepad, feedback. Lives locally, never on the server — the sovereign tool running on the Author's own files. The product IS this folder. Alexandria stores what Authors publish, never what they think.
 
@@ -87,7 +87,7 @@ factory/
   ship.sh                   # Sign + commit + push factory changes (re-signs manifest.txt)
   manifest.txt              # Signed sha256 manifest the shim verifies (canon + payload + skills)
   canon/                    # The canon — two tiers (see MODULES.md)
-    MODULES.md              # Activation map: core / defaults / opt-ins / extras
+    MODULES.md              # Product map: loop / methods / additions / connections
     foundation.md           # Incompressible local closed loop + invariants
     axioms.md  methodology.md  editor.md  mercury.md  publisher.md  # replaceable defaults
     library.md  filter.md  marketplace.md  plm.md  twin.md           # dormant opt-in references

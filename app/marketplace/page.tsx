@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   ...pageMetadata({
     path: '/marketplace',
     title: 'marketplace — alexandria.',
-    description: 'Replaceable defaults and opt-in additions for Alexandria loops.',
+    description: 'Replaceable methods and optional additions for Alexandria loops.',
   }),
 };
 
@@ -102,7 +102,7 @@ export default async function MarketplacePage() {
           <p className="mkt-eyebrow">the collective</p>
           <h1 className="mkt-h1">the marketplace</h1>
           <p className="mkt-lede">
-            The local loop’s core is not listed here. Defaults are replaceable. Official and community extras do nothing until you choose them.
+            The local loop is not listed here. Default methods are replaceable. Official and community additions do nothing until you choose them.
           </p>
         </header>
 

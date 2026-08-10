@@ -24,6 +24,24 @@ if [ "$MODE" = "active" ]; then
   exit 0
 fi
 
+# Claude's native statusline receives this tab's session_id on stdin. The /a
+# skill records the same id in `.active_a_sessions`; only that tab flips to the
+# close gesture. Response-footer calls use MODE=footer and never read stdin.
+if [ "$MODE" = "statusline" ]; then
+  sid=$(tr -d '\n' | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+  active_sessions="$A/system/.active_a_sessions"
+  if [ -n "$sid" ] && [ -f "$active_sessions" ]; then
+    now=$(date +%s)
+    while read -r marked_id marked_at; do
+      case "$marked_at" in ''|*[!0-9]*) continue ;; esac
+      if [ "$marked_id" = "$sid" ] && [ $((now - marked_at)) -lt 43200 ]; then
+        printf '%s\n' '→ /a. when done · reflect on what moved'
+        exit 0
+      fi
+    done < "$active_sessions"
+  fi
+fi
+
 if [ "$MODE" = "footer" ]; then
   CTA='start /a in a new chat'
 else

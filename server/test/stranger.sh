@@ -124,6 +124,13 @@ DIRTY
 
 echo "[stranger] pre-populated settings.json with existing hooks"
 
+# Shared skill names are user space. Seed foreign files in two Alexandria-named
+# fallback slots; setup must use the free /a and /a. slots without touching
+# these, and the scoped uninstaller must never mistake a filename for ownership.
+mkdir -p "$HOME/.claude/skills/alexandria" "$HOME/.claude/skills/alexandria-close"
+printf '%s\n' 'foreign start skill — keep this exact line' > "$HOME/.claude/skills/alexandria/SKILL.md"
+printf '%s\n' 'foreign close skill — keep this exact line' > "$HOME/.claude/skills/alexandria-close/SKILL.md"
+
 # ═══════════════════════════════════════════════════════════
 # Phase 2 — Setup script (the first-touch agent runs an exact verified commit)
 # ═══════════════════════════════════════════════════════════
@@ -197,6 +204,9 @@ check "machine.md exists"          [ -f "$HOME/alexandria/files/core/machine.md"
 check "api_key written"            [ -f "$HOME/alexandria/system/.api_key" ]
 check "api_key correct"            [ "$(cat "$HOME/alexandria/system/.api_key")" = "$API_KEY" ]
 check "setup_complete marker"      [ -f "$HOME/.local/share/alexandria/.setup_complete" ]
+check "passive-active loop healthy" grep -q '^  loop: ok$' "$HOME/alexandria/system/.setup_report"
+check "visible cue healthy"       grep -q '^  visible_cue: ok$' "$HOME/alexandria/system/.setup_report"
+check "visible cue reaches /a"    bash -c 'HOME="$1" bash "$1/.local/share/alexandria/scripts/statusline.sh" footer | grep -q "start /a in a new chat"' _ "$HOME"
 
 # Permission check (skip on Windows — NTFS doesn't enforce Unix perms)
 case "$(uname -s)" in
@@ -218,6 +228,8 @@ START_SKILL="$HOME/.claude/skills/a/SKILL.md"
 [ -f "$START_SKILL" ] || START_SKILL="$HOME/.claude/skills/alexandria/SKILL.md"
 check "start SKILL.md exists"      [ -f "$START_SKILL" ]
 check "start skill has Alexandria" grep -q "Alexandria" "$START_SKILL"
+check "foreign alexandria skill kept" grep -qxF 'foreign start skill — keep this exact line' "$HOME/.claude/skills/alexandria/SKILL.md"
+check "foreign close skill kept" grep -qxF 'foreign close skill — keep this exact line' "$HOME/.claude/skills/alexandria-close/SKILL.md"
 # Inverted 2026-07-22: the scheduled-task bootstrap (retired cloud autoloop)
 # must NOT install — the core installs nothing scheduled.
 check "no scheduled task installed" bash -c '[ ! -f "$HOME/.claude/scheduled-tasks/alexandria/SKILL.md" ]'
@@ -237,6 +249,23 @@ check "hook: SessionEnd"           grep -q "session-end" "$HOME/.claude/settings
 check "hook: SubagentStart"        grep -q "subagent" "$HOME/.claude/settings.json"
 check "existing hook preserved"    grep -q "existing-hook-preserved" "$HOME/.claude/settings.json"
 check "existing permissions kept"  grep -q '"defaultMode"' "$HOME/.claude/settings.json"
+
+# A shipped default is not the core. Turn methodology off using the documented
+# reversible move, re-run setup, and prove neither setup nor session start
+# resurrects it. This is the ground-truth regression for the activation layers.
+mkdir -p "$HOME/alexandria/system/canon/disabled"
+mv "$HOME/alexandria/system/canon/methodology.md" \
+  "$HOME/alexandria/system/canon/disabled/methodology.md"
+ALEXANDRIA_SOURCE_COMMIT="$SOURCE_COMMIT" \
+  bash "$SOURCE_DIR/factory/setup.sh" >/dev/null 2>&1
+check "disabled default preserved" [ -s "$HOME/alexandria/system/canon/disabled/methodology.md" ]
+check "disabled default not restored" [ ! -e "$HOME/alexandria/system/canon/methodology.md" ]
+check "core healthy without default" grep -q '^  canon: ok$' "$HOME/alexandria/system/.setup_report"
+check "method reported off" grep -q '^  methods: skip$' "$HOME/alexandria/system/.setup_report"
+PULL_DISABLED_OUTPUT=$(bash "$HOME/.local/share/alexandria/.hooks_payload" \
+  pull methodology "$HOME/alexandria" 2>&1)
+check_output "disabled update remains off" "updated in disabled/ and remains off" "$PULL_DISABLED_OUTPUT"
+check "disabled update not reactivated" [ ! -e "$HOME/alexandria/system/canon/methodology.md" ]
 
 # ═══════════════════════════════════════════════════════════
 # Phase 4 — Session-start hook execution
@@ -279,9 +308,10 @@ check_output "notepad pointer"           "core/notepad.md"       "$SESSION_START
 check_output "feedback pointer"          "core/feedback.md"      "$SESSION_START_OUTPUT"
 check "hooks_payload cached"             [ -f "$HOME/.local/share/alexandria/.hooks_payload" ]
 check "hooks_payload non-empty"          [ -s "$HOME/.local/share/alexandria/.hooks_payload" ]
-check "canon cached"                     [ -f "$HOME/alexandria/system/canon/methodology.md" ]
-CANON_SIZE=$(wc -c < "$HOME/alexandria/system/canon/methodology.md" 2>/dev/null | tr -d ' ' || echo 0)
-check "canon non-trivial"               [ "${CANON_SIZE:-0}" -gt 100 ]
+check "Foundation cached"                [ -f "$HOME/alexandria/system/canon/foundation.md" ]
+FOUNDATION_SIZE=$(wc -c < "$HOME/alexandria/system/canon/foundation.md" 2>/dev/null | tr -d ' ' || echo 0)
+check "Foundation non-trivial"           [ "${FOUNDATION_SIZE:-0}" -gt 100 ]
+check "session kept default disabled"    [ ! -e "$HOME/alexandria/system/canon/methodology.md" ]
 
 # ═══════════════════════════════════════════════════════════
 # Phase 5 — Session-end hook execution

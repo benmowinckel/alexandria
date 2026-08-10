@@ -24,19 +24,20 @@ The mirror of "model defaults are not neutral." The author's worldview must rend
 - Any hallucinated position they don't hold?
 - Constitution in the position format (## domains, ### stance-first positions, status marks, sourced)?
 
-## 4. Conversion (role-played skeptic) — **DIAGNOSTIC, not gating**
+## 4. Activation (role-played skeptic) — **DIAGNOSTIC, not gating**
 Embody the persona and react as they genuinely would; they are hard to please.
 - Where does it land ("it read me") vs. wince (overreach, flourish, flattery, a forced pattern)?
 - Do the librarian lineages land as a real thinking-partner, or as name-dropping / handing back material they already own?
 - Does it honor the live moment without trying to resolve it?
-- Decision: join / first-session / both / neither — and why.
-- **The `winced` list is the highest-value output** — it's the tunable pitch/tone problems. Read it even when the score is fine.
+- Decision: finish the reflection / try the first `/a` session / neither — and why.
+- Any account, Library, marketplace, referral, price, or company ask is a failure here. The private onboarding must return local value and stop.
+- **The `winced` list is the highest-value output** — it exposes trust, clarity, and tone problems. Read it even when the score is fine.
 
 ## 5. DIY + live-moment + honesty — **GATING on DIY & honesty, bar ≥8**
 - **DIY:** did it duplicate the author's existing system into ours, or recognize it as the floor and point at it? Any imposed structure/naming?
 - **Live moment:** present tense accurate? Did it try to resolve/nudge a decision-in-motion (a failure)?
-- **Honesty:** any false/over-strong claim about data, backups, or what the product does? Is the paid join correctly deferred to the close and framed as belonging (tool stays free), not access?
+- **Honesty:** any false or over-strong claim about data, backups, or what the product does? Is the local loop presented as complete, with no account, Library, marketplace, referral, price, or company ask volunteered?
 
 ## Reading the results
 - Any GATING miss → **do not fire at leads**; fix `block.md` and re-run.
-- All gates pass, conversion diagnostic surfaces pitch friction → **safe to fire**, but the `winced` findings are the backlog for tightening `block.md`. A skeptic converting to a trial session (not instant membership) is a *correct* outcome, not a failure — the report is the appetizer; `/a` is the meal.
+- All gates pass, activation diagnostic surfaces trust friction → **safe to fire**, but the `winced` findings are the backlog for tightening `block.md`. A skeptic choosing one real `/a` session is the correct outcome; membership is outside this test and outside the private onboarding.

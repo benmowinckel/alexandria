@@ -15,7 +15,7 @@ There is no `/publish` endpoint and no upload UI. The public GitHub file is the 
 
 ### 1. Pick the slug
 
-Ask the Author what to name the module if they haven't said. Constraints: lowercase alphanumerics + hyphens, must start with letter or digit (regex: `[a-z0-9][a-z0-9-]*`). One-word slugs are best: `optimise`, `verify-edit`, `brief-setup`. Confirm before continuing.
+Ask the Author what to name the module if they haven't said. Constraints: lowercase alphanumerics + hyphens, must start with letter or digit (regex: `[a-z0-9][a-z0-9-]*`). One-word slugs are best: `verify-edit`, `capture-links`, `brief-setup`. Confirm before continuing.
 
 ### 2. Setup — get the file ready to edit
 
