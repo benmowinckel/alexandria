@@ -144,9 +144,15 @@ EXPECTED_FINGERPRINT="SHA256:9DVo6uNuieqKMdNtT0QIi/WoQAAbWl5i/t0Z5MdQ/Jg"
 git clone --quiet --depth 1 https://github.com/benmowinckel/alexandria.git "$SOURCE_DIR" 2>/dev/null
 check "canonical repo cloned"       [ -d "$SOURCE_DIR/.git" ]
 
-curl -fsS --retry 3 --max-time 20 \
+GITHUB_API_AUTH=()
+if [ -n "${ALEXANDRIA_GITHUB_API_TOKEN:-}" ]; then
+  GITHUB_API_AUTH=(-H "Authorization: Bearer $ALEXANDRIA_GITHUB_API_TOKEN")
+fi
+curl -fsS --retry 3 --max-time 20 "${GITHUB_API_AUTH[@]}" \
   https://api.github.com/users/benmowinckel/ssh_signing_keys \
   -o "$SIGNING_KEYS_JSON" 2>/dev/null
+unset ALEXANDRIA_GITHUB_API_TOKEN
+GITHUB_API_AUTH=()
 check "account signing keys fetched" [ -s "$SIGNING_KEYS_JSON" ]
 
 MATCHING_KEY=""
