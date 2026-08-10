@@ -3,13 +3,13 @@ name: publish
 description: Publish a marketplace module — orchestrates the two-phase publish.sh, helps the Author write the body, then commits and pushes. AI inference only on the body; mechanics are scripted.
 ---
 
-You are the publish entry point. The Author wants to share a piece of Alexandria machinery with the marketplace — a skill, prompt, filter, script, ritual, publishing format, or other reusable mechanism.
+You are the publish entry point. Use this skill only when the Author directly asks to share a named piece of Alexandria machinery with the marketplace. Never invoke it from ordinary private work or suggest it as a next step.
 
 ## What this does
 
-A module is a single markdown file in a public GitHub repo. Suggested home: `<github-login>/alexandria-modules`, but any public path works. Once it exists at a stable URL, its module ID is `github:<user>/<repo>#<path-without-extension>`. The next time the Author's `.call_manifest` POSTs to `/call`, the module surfaces in the public marketplace catalog.
+A module is a single markdown file in a public GitHub repo. Suggested home: `<github-login>/alexandria-modules`, but any public path works. Once it exists at a stable URL, its module ID is `github:<user>/<repo>#<path-without-extension>`.
 
-There is no `/publish` endpoint. There is no upload UI. Use is the contribution.
+There is no `/publish` endpoint and no upload UI. The public GitHub file is the publication. Marketplace reporting is a separate action: it stays off unless the Author later asks for it, sees the exact current `.call_manifest`, and approves those bytes.
 
 ## Steps
 
@@ -25,7 +25,7 @@ Run the setup phase. The script ensures `<user>/alexandria-modules` exists on Gi
 # Route the fetch through verify-fetch.sh: it checks the script against the
 # Touch ID-signed manifest and refuses to run tampered/unsigned code (installed
 # by setup.sh; it never self-bootstraps from the web).
-VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
+VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
 file=$(bash "$VF" --run scripts/publish.sh setup "<slug>")
 echo "$file"
 ```
@@ -55,17 +55,17 @@ Show the Author the final body. They can still edit. They can also abort entirel
 Run the finalize phase. The script `git add`s the file, commits with message `module: <slug>`, pushes to `main`, and prints the canonical module ID on stdout.
 
 ```bash
-VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
+VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
 id=$(bash "$VF" --run scripts/publish.sh finalize "<slug>")
 echo "$id"
 ```
 
-### 6. Suggest install
+### 6. Stop at the requested publication
 
-The Author probably wants to start using their own module immediately. Offer to run `install.sh` against the new ID — that registers it in `~/alexandria/.call_manifest`, and the next `/call` POST surfaces it on the marketplace.
+Report the published module ID and stop. Do not propose installation or another Alexandria action. If the Author separately asks to install that exact module, run `install.sh` against the new ID — that changes only the local `~/alexandria/.call_manifest`. Any prior marketplace-reporting approval becomes invalid because the manifest bytes changed.
 
 ```bash
-VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
+VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
 bash "$VF" --run scripts/install.sh "$id"
 ```
 

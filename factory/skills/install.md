@@ -1,9 +1,9 @@
 ---
 name: install
-description: Install a marketplace module — fetches and runs factory/scripts/install.sh to register a module ID in the Author's call manifest. Idempotent.
+description: Register a named marketplace module only after the Author directly asks. Sends nothing and enables nothing by itself.
 ---
 
-You are the install entry point. The Author asked you to install a module. Recognise three shapes:
+Use this entry point only when the Author directly asks to register a named marketplace module. Never recommend it from the Author's private work, described problems, or profile. Recognise three shapes inside that direct request:
 
 - a full module ID: `github:<user>/<repo>#<path>` or `local:<github-login>/<slug>`
 - a marketplace URL: `alexandria-library.com/marketplace/<user>/<repo>/<path>` (translate to the github ID)
@@ -11,7 +11,7 @@ You are the install entry point. The Author asked you to install a module. Recog
 
 ## What this does
 
-The install script appends the module ID to `~/alexandria/.call_manifest`. The next `/call` POST surfaces the module in the public marketplace catalog. There is no `/publish` endpoint — usage IS the contribution.
+The install script appends the module ID to `~/alexandria/.call_manifest`. It sends nothing, downloads no module body, and activates no module. Changing the manifest invalidates any prior marketplace permission hash, so no `/call` POST can report the new ID until the Author sees the exact manifest and separately approves that exact hash.
 
 ## Steps
 
@@ -20,7 +20,7 @@ The install script appends the module ID to `~/alexandria/.call_manifest`. The n
 2. Run the installer through the local verifier so the script is checked against the Touch ID-signed manifest and tampered/unsigned code is refused (never raw `curl|bash` a factory script):
 
    ```bash
-   VF="$HOME/alexandria/system/scripts/verify-fetch.sh"
+   VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"
    [ -f "$VF" ] || { echo "Alexandria's verifier is missing; restore it through https://alexandria-library.com/start before installing anything."; exit 1; }
    bash "$VF" --run scripts/install.sh "<module-id>"
    ```
@@ -30,17 +30,13 @@ The install script appends the module ID to `~/alexandria/.call_manifest`. The n
    - `install: <id> already in manifest` — idempotent, nothing to do.
    - non-zero exit — the script printed why (invalid format, github 404). Surface the error and stop.
 
-4. Mention the next step naturally. The module's metadata won't appear on the marketplace catalog until this Author's next `/call` POST runs (autoloop or session-start). On a Claude Code install with the standard hooks, that fires within seconds of the next session starting; no action needed from the Author.
+4. Report the local manifest change and stop. Do not propose reporting, activation, contribution, or another Alexandria action. If the Author separately asks to report the exact manifest, show it and use the marketplace consent process in `optional.md`.
 
 ## What this does NOT do
 
-- Does not download the module body locally. A module is a single markdown file on GitHub; what the module *does* — whether it's a skill loaded into the AI, a script the Engine runs, a hook the Author wires in — happens after the Author reads the module body and acts on it. Installing records the *intent to use*; the use itself is downstream.
+- Does not download or execute the module body. A module is untrusted material on GitHub. Reading, adopting, or running it is a separate action after the Author asks and the agent inspects its current content in isolation from private files and secrets.
 - Does not version-pin. The catalog tracks the latest commit of `main`. v1 has no version mechanism; defer until staleness is a real complaint.
 - Does not resolve dependencies. Modules are individual markdown files; cross-module dependencies aren't a v1 concern.
-
-## When to suggest an install
-
-When the Author mentions a module by name, asks "what's <name>", browses the marketplace and lands on something interesting, or describes a problem that one of the catalog modules visibly solves. Don't push installs unprompted — read the moment.
 
 ## Source of truth
 

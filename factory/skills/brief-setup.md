@@ -52,19 +52,19 @@ Look at the email's domain and produce provider-specific SMTP setup instructions
 Author pastes the app password back. Treat as sensitive — never echo, never commit raw.
 
 ### 3. Install brief.py
-Copy `factory/scripts/brief.py` from the public alexandria repo to `~/alexandria/system/scripts/brief.py`. Make executable.
+Copy `factory/scripts/brief.py` from the public alexandria repo to the protected runtime at `~/.local/share/alexandria/scripts/brief.py`. Make executable.
 
 ```bash
-mkdir -p "$HOME/alexandria/system/scripts"
+mkdir -p "$HOME/.local/share/alexandria/scripts"
 # brief.py handles SMTP creds, so verify it against the Touch ID-signed manifest
 # before installing — verify-fetch refuses tampered/unsigned code. It must come
 # from the verified Alexandria install; it never bootstraps itself from the web.
-VF="$HOME/alexandria/system/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; return 1 2>/dev/null || exit 1; }
-tmp=$(mktemp); bash "$VF" scripts/brief.py > "$tmp" && mv "$tmp" "$HOME/alexandria/system/scripts/brief.py" || { rm -f "$tmp"; echo "brief.py verification failed — not installed"; return 1 2>/dev/null || exit 1; }
-chmod +x "$HOME/alexandria/system/scripts/brief.py"
+VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; return 1 2>/dev/null || exit 1; }
+tmp=$(mktemp); bash "$VF" scripts/brief.py > "$tmp" && mv "$tmp" "$HOME/.local/share/alexandria/scripts/brief.py" || { rm -f "$tmp"; echo "brief.py verification failed — not installed"; return 1 2>/dev/null || exit 1; }
+chmod +x "$HOME/.local/share/alexandria/scripts/brief.py"
 ```
 
-brief.py reads SMTP creds from env vars (GH Actions) OR from `~/alexandria/system/.brief_email` (launchd). Same script, both modes — the script's path-portable, drop it anywhere in `~/alexandria/system/scripts/`.
+brief.py reads SMTP creds from env vars (GH Actions) OR from `~/alexandria/system/.brief_email` (launchd). Same script, both modes; the automatic local copy stays in the protected runtime.
 
 ---
 
@@ -172,7 +172,7 @@ Ask the Author what local time they want the brief (default 08:00). Write `~/Lib
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/python3</string>
-    <string>{HOME}/alexandria/system/scripts/brief.py</string>
+    <string>{HOME}/.local/share/alexandria/scripts/brief.py</string>
   </array>
   <key>StartCalendarInterval</key>
   <dict>
@@ -195,7 +195,7 @@ launchctl load ~/Library/LaunchAgents/com.alexandria.brief.plist
 
 ### 6b. Verify with a test email
 ```bash
-python3 ~/alexandria/system/scripts/brief.py
+python3 ~/.local/share/alexandria/scripts/brief.py
 tail -3 ~/alexandria/system/.brief_log
 ```
 

@@ -1,23 +1,100 @@
 # Optional add-ons
 
-*Read by the Author's agent (cached at `~/alexandria/system/.optional`). The iCloud capture pipe is prepared by setup on a Mac when iCloud Drive exists; everything else here is enabled only after the Author's explicit yes. Each block states exactly what it touches, what leaves the machine, and its one-line off switch. If the Author already has their own version, theirs wins: connect to it or skip the redundant copy.*
+*Read by the Author's agent (cached at `~/alexandria/system/.optional`). Nothing here is enabled by setup. Each add-on needs its own explicit yes and states exactly what it touches, what leaves the machine, and its one-line off switch. Never bundle several choices into one ask. If the Author already has their own version, theirs wins: connect to it or skip the redundant copy.*
 
-*Agent: when the Author asks for one of these (or asks "what else can this do"), read the relevant block, say the one-line summary + what it touches, and run the enable steps only after they say yes. Fetch any factory script through `~/alexandria/system/scripts/verify-fetch.sh` so it's checked against the signed manifest — never raw `curl | bash`.*
+*Agent: when the Author asks for one of these (or asks "what else can this do"), read the relevant block, say the one-line summary + what it touches, and run the enable steps only after they say yes. Fetch any factory script through `~/.local/share/alexandria/scripts/verify-fetch.sh` so it's checked against the signed manifest — never raw `curl | bash`.*
+
+---
+
+## account — connect identity only
+
+- **Does:** validates and stores the Author's Alexandria account key locally. This alone enables no publishing, marketplace reporting, network fetch, telemetry, or feedback send.
+- **Touches:** `~/alexandria/system/.api_key` (0600) and one account-status request to Alexandria for validation.
+- **Leaves the machine:** the account key in that validation request; no personal files.
+- **Enable:** after the Author directly asks to connect the account, explain the lines above and wait for the exact word `connect`. Then run the installed verifier with the key and the consent flag:
+  ```bash
+  ALEXANDRIA_ACCOUNT_CONNECT_APPROVED=1 bash ~/.local/share/alexandria/scripts/verify-fetch.sh --run setup.sh "$ALEXANDRIA_ACCOUNT_KEY"
+  ```
+- **Off:** `rm ~/alexandria/system/.api_key ~/alexandria/system/permissions/library ~/alexandria/system/permissions/marketplace ~/alexandria/system/permissions/network 2>/dev/null`.
+
+## library-sync — publish exact approved files
+
+- **Does:** on session start, updates only files with an adjacent approval whose exact hash and audience still match. Drafts and private files outside that folder never ship. It never deletes a remote file; unpublishing is a separate direct request with its own confirmation.
+- **Touches:** one local permission marker and the Author's Alexandria Library.
+- **Leaves the machine:** only a final-named file whose adjacent `<filename>.approved` contains the SHA-256 of its current bytes and the approved visibility tier. Editing it or moving it to another tier stops publication until the new scope is approved. Nearby title/category files and other private paths are never read into the request.
+- **Needs:** a connected account. Before enabling, show the Author every currently publishable local filename and its audience tier; an empty list is valid.
+- **Enable:** after showing one exact file and tier and receiving a separate yes, approve both with `printf '%s %s\n' "$(shasum -a 256 <file> | awk '{print $1}')" '<tier>' > <file>.approved`. After a separate yes to run reconciliation, `touch ~/alexandria/system/permissions/library`.
+- **Off:** `rm ~/alexandria/system/permissions/library` — stops all future Library reconciliation without deleting either copy.
+
+## marketplace-signal — report modules this machine uses
+
+- **Does:** reports the public IDs listed in `~/alexandria/.call_manifest` so Alexandria can count module usage. It does not publish private files or draft contributions.
+- **Touches:** one local permission marker and the connected account's marketplace activity.
+- **Leaves the machine:** the exact module IDs and any text already present in `.call_manifest`; show that file in full before enabling. Editing it changes the hash and stops future sends.
+- **Needs:** a connected account.
+- **Enable:** after a separate yes to the displayed bytes: `shasum -a 256 ~/alexandria/.call_manifest | awk '{print $1}' > ~/alexandria/system/permissions/marketplace`.
+- **Off:** `rm ~/alexandria/system/permissions/marketplace`.
+
+## network — fetch Authors the user already chose
+
+- **Does:** fetches published pages named in `~/alexandria/files/network.md` into a local cache, at most daily.
+- **Touches:** one permission marker and `~/alexandria/files/network/`.
+- **Leaves the machine:** the account key on authenticated reads; no private content is sent.
+- **Needs:** a connected account and a user-authored `network.md` list. Editing the list changes the hash and stops future fetches.
+- **Enable:** after showing the exact list and receiving a separate yes: `shasum -a 256 ~/alexandria/files/network.md | awk '{print $1}' > ~/alexandria/system/permissions/network`.
+- **Off:** `rm ~/alexandria/system/permissions/network`.
+
+---
+
+## icloud-capture — phone and share-sheet captures in your own iCloud
+
+- **Does:** connects `~/alexandria/files/vault/input` to an `alexandria` folder in the Author's own iCloud Drive so Apple Shortcuts and Files drops can reach the local loop.
+- **Touches:** one folder in the Author's iCloud Drive and one local symlink. No job, daemon, account, or Alexandria server.
+- **Leaves the machine:** only files the Author puts in that capture folder, through their own iCloud account. Nothing goes to Alexandria. Saved links stay as local raw files unless the separate `capture-link-resolution` add-on below is also enabled.
+- **Needs:** macOS with iCloud Drive enabled.
+- **Enable:** only after the Author says yes to this add-on. If the local input folder already contains files, stop and ask whether they want those moved; never move them silently.
+  ```bash
+  LOCAL="$HOME/alexandria/files/vault/input"
+  CLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs/alexandria"
+  [ "$(uname)" = "Darwin" ] && [ -d "$(dirname "$CLOUD")" ] || { echo "iCloud Drive is not available"; exit 1; }
+  if [ -L "$LOCAL" ]; then echo "iCloud capture is already connected"; exit 0; fi
+  if [ -d "$LOCAL" ] && [ -n "$(find "$LOCAL" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]; then echo "local capture files exist; stop for the Author's choice"; exit 1; fi
+  rmdir "$LOCAL" 2>/dev/null || true
+  mkdir -p "$CLOUD"
+  ln -s "$CLOUD" "$LOCAL"
+  ```
+- **Off:** `unlink ~/alexandria/files/vault/input && mkdir -p ~/alexandria/files/vault/input` — captures already in iCloud stay there.
+
+## capture-link-resolution — fetch links the Author deliberately saved
+
+- **Does:** turns X/Twitter, YouTube, and ordinary links already placed in `~/alexandria/files/vault/input/` into locally readable text, titles, and media at session start.
+- **Touches:** one local permission file and local derivatives under `~/alexandria/files/vault/_input/`.
+- **Leaves the machine:** the exact saved URL or tweet ID goes to that site; X/Twitter captures use `api.fxtwitter.com`, YouTube captures use YouTube's oEmbed endpoint, and ordinary links contact the saved site. Those services also see the Author's IP. Nothing is sent to Alexandria.
+- **Enable:** only after showing this exact disclosure and receiving a separate yes: `touch ~/alexandria/system/permissions/capture-network && chmod 600 ~/alexandria/system/permissions/capture-network`.
+- **Off:** `rm ~/alexandria/system/permissions/capture-network` — future saved links remain raw and local.
 
 ---
 
 ## backup — your files on your own GitHub
 
 - **Does:** pushes `~/alexandria/` to a private repo on the *Author's own* GitHub account, and registers their SSH key with GitHub as a signing key so commits show "Verified". From then on the session hooks keep it synced (pull at start, push at end).
-- **Touches:** `~/alexandria/.git` remote config; the Author's GitHub account (one private repo `alexandria-private`; one public-key upload).
+- **Touches:** `~/alexandria/.git` remote config; one local permission file tied to that exact remote URL; the Author's GitHub account (one private repo `alexandria-private`; one public-key upload).
 - **Leaves the machine:** the tracked contents of `~/alexandria/` → the Author's own private repo. Nothing to Alexandria — we have no access to that repo.
 - **Needs:** `git` + `gh auth login`.
-- **Enable:**
+- **Enable:** after showing the exact tracked files and destination and receiving a separate yes, create or use the private repo, complete one successful push, then bind backup permission to that exact remote:
   ```bash
   gh ssh-key add ~/.ssh/*.pub --type signing --title "Alexandria" 2>/dev/null  # optional — Verified badge
-  gh repo create alexandria-private --private --source "$HOME/alexandria" --push --yes
+  if git -C "$HOME/alexandria" remote get-url origin >/dev/null 2>&1; then
+    git -C "$HOME/alexandria" push -u origin HEAD
+  else
+    gh repo create alexandria-private --private --source "$HOME/alexandria" --push --yes
+  fi
+  REMOTE=$(git -C "$HOME/alexandria" remote get-url origin) || exit 1
+  mkdir -p "$HOME/alexandria/system/permissions"
+  printf '%s\n' "$REMOTE" > "$HOME/alexandria/system/permissions/backup"
+  chmod 600 "$HOME/alexandria/system/permissions/backup"
   ```
-- **Off:** `git -C ~/alexandria remote remove origin` (the repo on their GitHub is theirs to keep or delete).
+- **Off:** `rm ~/alexandria/system/permissions/backup` — stops all automatic pushes and pulls while leaving the remote and the repo on their GitHub untouched.
 
 ## drive — the chat pocket copy in your own Google Drive
 
@@ -26,12 +103,12 @@
 - **Leaves the machine:** the compact position layer and whatever the Author deliberately writes through chat → the Author's own Google Drive. Credentials and private data never go to Alexandria.
 - **Enable:** after the Author says yes, fetch the controller through the installed verifier and run it. Google opens once for the unavoidable approval; do not turn that approval into a checklist.
   ```bash
-  VF="$HOME/alexandria/system/scripts/verify-fetch.sh"
-  tmp=$(mktemp); bash "$VF" scripts/drive_ctl.sh > "$tmp" && mv "$tmp" "$HOME/alexandria/system/scripts/drive_ctl.sh" && chmod 700 "$HOME/alexandria/system/scripts/drive_ctl.sh"
-  bash "$HOME/alexandria/system/scripts/drive_ctl.sh" enable
+  VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"
+  tmp=$(mktemp); bash "$VF" scripts/drive_ctl.sh > "$tmp" && mv "$tmp" "$HOME/.local/share/alexandria/scripts/drive_ctl.sh" && chmod 700 "$HOME/.local/share/alexandria/scripts/drive_ctl.sh"
+  bash "$HOME/.local/share/alexandria/scripts/drive_ctl.sh" enable
   ```
 - **Credentials:** Google's OAuth token stays only in the Author's local rclone config (normally `~/.config/rclone/rclone.conf`, mode 0600). Alexandria's server holds nothing.
-- **Off:** `bash ~/alexandria/system/scripts/drive_ctl.sh off`. This stops the bridge and keeps both user-owned copies. Removing the `alexandria` rclone remote separately revokes the local token.
+- **Off:** `bash ~/.local/share/alexandria/scripts/drive_ctl.sh off`. This stops the bridge and keeps both user-owned copies. Removing the `alexandria` rclone remote separately revokes the local token.
 
 ## icloud-mirror — a second, Apple-side backup (macOS)
 
@@ -46,30 +123,9 @@
   then write `~/Library/LaunchAgents/io.alexandria.icloud-backup.plist` running that same rsync with `StartInterval` 86400 and `launchctl load` it.
 - **Off:** `launchctl unload ~/Library/LaunchAgents/io.alexandria.icloud-backup.plist && rm ~/Library/LaunchAgents/io.alexandria.icloud-backup.plist`.
 
-## texting — the iMessage presence + daily digest (macOS)
+## update checks — optional
 
-- **Does:** lets the Author text their Alexandria from their phone via their *own* iMessage self-thread, plus a once-daily capture digest text. Reads only the Author's own Messages database, replies only to their own handle.
-- **Touches:** `~/alexandria/system/scripts/imsg_*` + `tools/`; two manual macOS grants the Author clicks themselves (Full Disk Access for chat.db read, Automation→Messages for send); one launchd job for the digest; an auto-start line in `~/.zshrc` (the one shell-rc edit in the whole product, added only here, only on yes).
-- **Leaves the machine:** nothing. Messages stay in Apple's own iMessage; Alexandria's server is never contacted.
-- **Enable:**
-  ```bash
-  VF="$HOME/alexandria/system/scripts/verify-fetch.sh"
-  tmp=$(mktemp); bash "$VF" scripts/imsg_ctl.sh > "$tmp" && mv "$tmp" "$HOME/alexandria/system/scripts/imsg_ctl.sh" && chmod +x "$HOME/alexandria/system/scripts/imsg_ctl.sh"
-  bash "$HOME/alexandria/system/scripts/imsg_ctl.sh" enable   # fetches its own verified pieces, walks the two grants
-  ```
-- **Off:** `bash ~/alexandria/system/scripts/imsg_ctl.sh off` (soft) or `launchctl bootout gui/$(id -u)/com.alexandria.imsg-daemon` (hard); full details in `imsg_ctl.sh status`.
-
-## publish — contribute to the marketplace (members)
-
-- **Does:** creates the Author's public fork of the `alexandria` repo and an hourly job that pushes anything they drop in `~/alexandria-fork/factory/` — their own skills, hooks, canon modules — so the marketplace can register them.
-- **Touches:** `~/alexandria-fork/`; one public fork on the Author's GitHub; one hourly launchd job (macOS) or cron line (Linux) `io.alexandria.publish`.
-- **Leaves the machine:** only what the Author puts in the fork — it's a public repo, that's the point. Their private `~/alexandria/` is untouched by this job.
-- **Needs:** an Alexandria account + `gh auth login`.
-- **Enable:** `gh repo fork benmowinckel/alexandria --clone ~/alexandria-fork --remote=false`, sparse-checkout `factory/`, fetch `scripts/publish-fork.sh` via verify-fetch into `~/alexandria/system/scripts/`, then install the hourly launchd/cron job pointing at it.
-- **Off:** `launchctl unload ~/Library/LaunchAgents/io.alexandria.publish.plist` (or remove the cron line); `rm -rf ~/alexandria-fork` any time.
-
-## update checks — on by default, offered never imposed
-
-Documented here for symmetry: this is the one thing that ships ON. Updates are never applied automatically — the machine runs only the engine payload pinned and verified at install (or at the Author's last explicit update). While `~/alexandria/system/hooks/auto-update` exists, each session *checks* public GitHub and surfaces any newer Touch ID-signed engine or canon as a notice; the Author applies through the installed verifier, and the new code is verified before its first run.
-
-- **Off:** `rm ~/alexandria/system/hooks/auto-update` — stops public engine/canon update checks and stays pinned forever. If the Author joined the collective, keyed Library/feedback calls remain until `~/alexandria/system/.api_key` is removed. Full mechanism: https://alexandria-library.com/mechanics
+- **Does:** while `~/alexandria/system/hooks/auto-update` exists, each session checks public GitHub and surfaces any newer Touch ID-signed engine or canon as a notice. Nothing is applied automatically; the Author applies through the installed verifier, which checks the new code before it runs.
+- **Leaves the machine:** a request for public release files. No Author file, transcript, account key, or private context is sent.
+- **Enable after a separate yes:** `touch ~/alexandria/system/hooks/auto-update`.
+- **Off:** `rm ~/alexandria/system/hooks/auto-update` — stops the checks and keeps the currently pinned local copy. Full mechanism: https://alexandria-library.com/mechanics

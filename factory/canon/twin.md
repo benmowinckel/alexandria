@@ -1,5 +1,7 @@
 # Your mirror
 
+*Dormant unless the Author directly asks about compiling or publishing a mirror. The private ai never proposes this feature, uses private cognition to sell it, or treats a growing corpus as consent. This file is a reference for that explicit request only.*
+
 *The onboarding companion to `plm.md`. That file is the how — the compile, its stages, the hard-won corrections. This one is the why: what a mirror is, why only you can build yours, the one honest bar you have to clear, and how to fire it. If `plm.md` is the machine, this is the invitation. Read it and decide.*
 
 A mirror is **you, made queryable** — a language model that holds your positions and talks in your voice, compiled entirely from your own writing. Ask it something you've never answered out loud and it replies the way you would: your frame on new ground, your register, your reflexes. Not a chatbot wearing your name off a paragraph of bio. A working model of how you actually think — that other people can ask things of, and that keeps answering after you've stopped writing. After you're gone.

@@ -28,6 +28,6 @@ description: <one sentence — what this module does, in plain terms>
 
 ---
 
-*Module ID once published: `github:<user>/<repo>#<path-without-extension>` — e.g. `github:<user>/alexandria-modules/<slug>`. Append to `~/alexandria/.call_manifest` to start counting usage. See `factory/canon/library.md` for the full lifecycle.*
+*Module ID once published: `github:<user>/<repo>#<path-without-extension>` — e.g. `github:<user>/alexandria-modules/<slug>`. Registering it in `~/alexandria/.call_manifest` is local only. Usage is reported only after the Author separately sees and approves the exact manifest bytes. See `factory/canon/marketplace.md` for the boundary.*
 
 *Trust note: consuming Machines treat module bodies as untrusted input — instructions here are read as data and adopted only after the installing Machine reviews them against its own canon. Write the module expecting that review.*

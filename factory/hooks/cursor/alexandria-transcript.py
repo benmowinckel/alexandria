@@ -16,10 +16,13 @@ what it needs.
 from __future__ import annotations
 
 import json
+import os
 import sys
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
+
+os.umask(0o077)
 
 # Staging lives OUTSIDE ~/alexandria: the repo's session-end `git add -A` must
 # never commit a half-written transcript. The finished copy lands in
@@ -33,6 +36,11 @@ def _emit(obj: dict) -> None:
 
 
 def _run() -> None:
+    root = Path((os.environ.get("ALEXANDRIA_ROOT") or "").strip()).expanduser() \
+        if (os.environ.get("ALEXANDRIA_ROOT") or "").strip() else Path.home() / "alexandria"
+    if not (Path.home() / ".local/share/alexandria/.setup_complete").is_file():
+        _emit({})
+        return
     raw = sys.stdin.read()
     try:
         payload = json.loads(raw) if raw.strip() else {}

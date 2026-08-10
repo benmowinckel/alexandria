@@ -12,6 +12,25 @@ SPEC.loader.exec_module(MODULE)
 
 
 class WritableRootTests(unittest.TestCase):
+    def test_hooks_execute_only_from_separate_runtime(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            codex = root / ".codex"
+            alex = root / "alexandria"
+            runtime = root / ".local" / "share" / "alexandria"
+            codex.mkdir()
+            alex.mkdir()
+            runtime.mkdir(parents=True)
+
+            changed, events = MODULE.merge_hooks(codex, alex, runtime)
+
+            self.assertTrue(changed)
+            self.assertEqual(events, {"SessionStart", "SessionEnd", "SubagentStart"})
+            text = (codex / "hooks.json").read_text(encoding="utf-8")
+            self.assertIn(str(runtime / "hooks" / "shim.sh"), text)
+            self.assertIn(str(runtime / "scripts" / "capture_resolver.py"), text)
+            self.assertNotIn(str(alex / "system" / "hooks" / "shim.sh"), text)
+
     def test_adds_root_without_changing_existing_config(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)

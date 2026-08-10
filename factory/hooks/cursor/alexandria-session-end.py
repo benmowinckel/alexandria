@@ -4,8 +4,8 @@
 Thin adapter over the same signed shim -> payload chain Claude Code runs at
 SessionEnd. The staging transcript alexandria-transcript.py accumulated is
 handed to the shim exactly the way Claude Code hands its transcript_path —
-payload.sh then does the rest: transcript -> vault, Author feedback POST,
-git commit + push of ~/alexandria. One behavior source across harnesses.
+payload.sh then does the rest: transcript -> vault and local git sync. It never
+drafts or sends feedback. One behavior source across harnesses.
 
 If the shim is missing, the transcript still reaches the vault directly
 (mirrors shim.sh's own bare fallback). The capture loop closes either way.
@@ -22,9 +22,10 @@ import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
+os.umask(0o077)
+
 STAGING_DIR = Path.home() / ".alexandria" / "transcripts"
-# Vault copy is local-fast; the network parts (feedback POST, git push) are
-# short-timeout or backgrounded inside payload.sh.
+# Vault copy and local git sync run inside payload.sh.
 SHIM_TIMEOUT_SECONDS = 25
 
 
@@ -73,11 +74,11 @@ def _staging_file(payload: dict) -> Path | None:
 
 
 def _flush_via_shim(root: Path, transcript: Path | None) -> str:
-    """Run shim session-end (vault copy + feedback POST + git sync).
+    """Run shim session-end (vault copy + local git sync).
 
     Returns status: "ok" | "missing" | "timeout" | "error:<detail>"
     """
-    shim = root / "system" / "hooks" / "shim.sh"
+    shim = Path.home() / ".local/share/alexandria/hooks/shim.sh"
     if not shim.is_file():
         return "missing"
     env = dict(os.environ)
@@ -143,6 +144,9 @@ def _run() -> None:
     payload = _parse_payload(sys.stdin.read())
     home = Path.home()
     root = _resolve_root(home)
+    if not (home / ".local/share/alexandria/.setup_complete").is_file():
+        _emit({})
+        return
 
     transcript = _staging_file(payload)
     transcript_lines = 0

@@ -145,7 +145,9 @@ def hook_entry(command: str, timeout: int | None = None, **extra: object) -> dic
     return {"hooks": [command_hook]}
 
 
-def merge_hooks(codex_home: Path, alex_dir: Path) -> tuple[bool, set[str]]:
+def merge_hooks(
+    codex_home: Path, alex_dir: Path, runtime_dir: Path
+) -> tuple[bool, set[str]]:
     hook_file = codex_home / "hooks.json"
     if hook_file.exists():
         try:
@@ -163,8 +165,8 @@ def merge_hooks(codex_home: Path, alex_dir: Path) -> tuple[bool, set[str]]:
     elif not isinstance(hooks, dict):
         raise SystemExit("refusing to replace Codex hooks: hooks is not an object")
 
-    shim = alex_dir / "system" / "hooks" / "shim.sh"
-    resolver = alex_dir / "system" / "scripts" / "capture_resolver.py"
+    shim = runtime_dir / "hooks" / "shim.sh"
+    resolver = runtime_dir / "scripts" / "capture_resolver.py"
     shim_arg = shlex.quote(str(shim))
     resolver_arg = shlex.quote(str(resolver))
     desired = {
@@ -242,10 +244,13 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--codex-home", type=Path, required=True)
     parser.add_argument("--alex-dir", type=Path, required=True)
+    parser.add_argument("--runtime-dir", type=Path, required=True)
     parser.add_argument("--ambient", type=Path, required=True)
     args = parser.parse_args()
 
-    hooks_changed, changed_events = merge_hooks(args.codex_home, args.alex_dir)
+    hooks_changed, changed_events = merge_hooks(
+        args.codex_home, args.alex_dir, args.runtime_dir
+    )
     agents_state = merge_agents(args.codex_home, args.ambient)
     writable_root_state = merge_writable_root(args.codex_home, args.alex_dir)
     print(

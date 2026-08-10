@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Alexandria migration — safely upgrade from pre-2026-04-24 structure to current.
 # Usage (verified — routes through the signed manifest, refuses tampered code):
-#   VF="$HOME/alexandria/system/scripts/verify-fetch.sh"
+#   VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"
 #   bash "$VF" --run migrate.sh              # add --apply to perform the move
 #
 # Safe by design:
@@ -55,7 +55,9 @@ fi
 
 # Old top-level paths (pre-2026-04 .alexandria → alexandria with files/system split)
 plan_move "$ALEX_DIR/.api_key"           "$ALEX_DIR/system/.api_key"
-plan_move "$ALEX_DIR/.hooks_payload"     "$ALEX_DIR/system/.hooks_payload"
+if [ -f "$ALEX_DIR/.hooks_payload" ]; then
+  CONFLICTS+=("$ALEX_DIR/.hooks_payload found — never migrate executable hook bytes; re-run verified setup to rebuild the protected runtime")
+fi
 plan_move "$ALEX_DIR/.canon_local"       "$ALEX_DIR/system/canon/methodology.md"
 
 # 2026-05-23 — ontology → marginalia (folder rename + single working file)
@@ -98,7 +100,7 @@ fi
 
 if [ "$APPLY" != "true" ]; then
   echo "Dry-run only. Re-run with --apply to execute moves (verified fetch):"
-  echo "  bash ~/alexandria/system/scripts/verify-fetch.sh --run migrate.sh --apply"
+  echo "  bash ~/.local/share/alexandria/scripts/verify-fetch.sh --run migrate.sh --apply"
   exit 0
 fi
 

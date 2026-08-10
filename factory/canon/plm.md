@@ -1,5 +1,7 @@
 # The PLM
 
+*Dormant unless the Author directly asks to compile a personal model. The private ai never proposes compilation, account connection, or publication from private corpus growth. Nothing here grants consent to send training data or model weights anywhere.*
+
 *Compiling the Author's twin — a queryable language model that thinks like them, built from their own Alexandria data. This file is craft observation: what the compile IS, what it optimises for, and the hard-won corrections that make it land instead of producing a broken twin. How to run each stage is an intelligence decision — the Author's own harness agent is the intelligence; the infra named here (a hosted LoRA API such as Tinker, a mid-size open base such as Qwen) is today's rideable option, not a fixture. User Zero proved the pipeline on himself — and paid for the mistakes now baked in as corrections below; this is the module that lets any Author fire it on their own substrate.*
 
 **Primary:** Creation (a Library artifact). **Secondary:** Development.

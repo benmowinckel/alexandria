@@ -14,6 +14,8 @@ The delta can be complete and still misleading. The state can reveal a problem e
 
 For any loop that can silently drift, define the current-state invariant and verify against that directly.
 
+Use content fingerprints to detect which bytes need re-evaluation, then verify the meaning or behaviour those bytes are supposed to preserve. Modification dates are never freshness proof: an old file can still be current, and a new one can already be stale.
+
 Use this especially for:
 
 - canon sync
@@ -28,9 +30,11 @@ Use this especially for:
 
 1. Name the invariant in present tense.
 2. Read the current ground-truth artifact, not just the latest diff.
-3. Compare current state to the invariant.
+3. Compare current state to the invariant. Where sources have outputs, compare their recorded fingerprints and re-check the semantic relationship.
 4. If false, repair the state or surface the smallest concrete action.
 5. Record the state check result where the next loop can see it.
+
+For substantive edits with downstream outputs, use the core `../canon/change-closure.md`: it adds the explicit-relationship pass, semantic corpus scan, sovereign receipts, and a workspace fingerprint that also detects when the receipt itself was missed. State-based sync names the general test; change closure applies it to a source and everything materially downstream.
 
 ## Example
 
@@ -40,7 +44,7 @@ Strong: "Does this machine currently have the canon files it should have, and ar
 
 Weak: "Did the user edit a file this month?"
 
-Strong: "Is the Author currently compliant with the file obligation, and if not, what exact approved/proposed public shadow state would close it?"
+Strong: "Do the current source fingerprint, approved output fingerprint, and stated relationship still agree; if not, what exact local repair or consent gate closes them?"
 
 ## When Not To Use
 

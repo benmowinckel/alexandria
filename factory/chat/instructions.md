@@ -8,6 +8,8 @@ Keep chatting exactly as before. The AI notices durable signal and asks **“sav
 
 Type **a** or **alexandria** for a deliberate session. Type **a.** or **alexandria.** to close it.
 
+Every completed ordinary task ends with **→ start /a in a new chat**. A terminal with the native footer shows that instead, never both. During an Alexandria session, the line becomes **→ close with a. when done**.
+
 ## storage ladder
 
 1. Local writable `~/alexandria` — full sovereign mode.

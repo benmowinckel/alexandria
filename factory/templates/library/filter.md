@@ -1,28 +1,16 @@
 # Filter
 
-*Your publishing policy. What classes of content are ok to publish to the Library, what stays local. The Engine reads this before any publish action.*
+*Your publishing safety policy. It never causes the Engine to suggest publishing; it applies only after you directly ask to publish a named artifact.*
 
-*The filter is your consent layer. Default: nothing publishes without you saying so. As you build trust with the Engine, you can grant it discretion on specific categories ("auto-publish typo fixes to my shadow", "always require explicit ok for new positions").*
-
-## Default policy (until customised)
+## Default policy
 
 - Nothing publishes automatically.
-- The Engine drafts to `library/{tier}/*_draft.*` and surfaces it for you to review.
-- You promote a draft by renaming it to the final name (e.g., `library/public/shadow_draft.md` → `library/public/shadow.md`).
+- A folder, filename, past publication, account connection, or standing category is not consent.
+- Before any publish action, you see the exact current artifact and exact audience and give a separate yes.
+- That approval is recorded beside the file as `<filename>.approved` containing `<sha256> <tier>`.
+- Any edit, rename, or audience change invalidates approval and keeps the changed version local.
+- Approval for one artifact never covers another artifact, adjacent metadata, pricing, invitations, or future updates.
 
-## Customising
+Never publish secrets, credentials, other people's private information, live undisclosed business state, precise health or location details, raw journals, transcripts, vault material, marginalia, or anything whose ownership is unclear.
 
-Add entries below as you develop trust with the Engine on specific publishing decisions.
-
-```
-## Auto-OK: <category>
-
-What: <specific class of edit/publication>
-Examples: <when this applies>
-Conditions: <any guardrails>
-Added: <date>
-```
-
----
-
-*(no auto-OK rules yet — explicit confirmation required for all publishes)*
+When anything is unclear, keep it local and wait until I ask.

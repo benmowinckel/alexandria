@@ -30,6 +30,8 @@ import sys
 import time
 import traceback
 from datetime import datetime, timezone
+
+os.umask(0o077)
 from pathlib import Path
 
 DEFAULT_MAX_CONTEXT_CHARS = 90000
@@ -199,7 +201,7 @@ def _run_shim(root: Path) -> tuple[str, str]:
 
     status: "ok" | "missing" | "timeout" | "error:<detail>"
     """
-    shim = root / "system" / "hooks" / "shim.sh"
+    shim = Path.home() / ".local/share/alexandria/hooks/shim.sh"
     if not shim.is_file():
         return "", "missing"
     env = dict(os.environ)
@@ -264,6 +266,9 @@ def _run() -> None:
     root_hint = _resolve_root(home)
     agent_path = _resolve_agent_path(home, root_hint)
     root = _derive_root(agent_path, root_hint)
+    if not (home / ".local/share/alexandria/.setup_complete").is_file():
+        _emit({})
+        return
     overlay = home / ".alexandria" / "inject" / "session-start.md"
     constitution_derivative = root / "files" / "constitution" / "_constitution.md"
     marginalia_file = root / "files" / "marginalia" / "marginalia.md"
@@ -323,7 +328,7 @@ def _run() -> None:
                     f"(The signed shim -> payload chain did not run: {shim_status}. "
                     "Canon update notices, drift checks, git sync, and protocol calls "
                     "were skipped this session. Falling back to local context. "
-                    "If this persists, re-run: bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh)\n"
+                    "If this persists, re-run: bash ~/.local/share/alexandria/scripts/verify-fetch.sh --run setup.sh)\n"
                 ),
                 True,
             )

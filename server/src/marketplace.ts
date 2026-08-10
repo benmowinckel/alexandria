@@ -1,11 +1,12 @@
 /**
  * Marketplace feedback substrate.
  *
- * Author-typed feedback (from ~/alexandria/system/.session_feedback and the
- * cancel screen) writes to the benmowinckel/alexandria-feedback private GitHub
- * repo so any rented agent can drain it through GitHub. Single source of truth
- * — no KV or email duplicate to keep in sync. Machine setup telemetry never
- * enters this queue; it has a purpose-built event-log path.
+ * Feedback an Author directly chooses to send in the foreground, plus the
+ * Alexandria-owned cancel screen, writes to the private
+ * benmowinckel/alexandria-feedback GitHub repo. Session hooks never draft or
+ * send it. Single source of truth — no KV or email duplicate to keep in sync.
+ * Machine setup telemetry never enters this queue; it has a purpose-built
+ * event-log path.
  *
  * Drain pattern: an active product agent processes files, `git rm`s them, pushes. File
  * presence = unprocessed, absence = processed. No separate marker.

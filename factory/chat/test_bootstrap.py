@@ -27,6 +27,10 @@ class ChatBootstrapTests(unittest.TestCase):
         self.assertIn("Memory stores my thinking, not these rules", instruction)
         self.assertIn("`~/alexandria`", instruction)
         self.assertIn("`a.` or `alexandria.`", instruction)
+        self.assertIn("start /a in a new chat", instruction)
+        self.assertIn("native chrome already shows the cue", instruction)
+        self.assertIn("`a.` or `alexandria.`", instruction)
+        self.assertNotIn("start a in a new chat", instruction)
         self.assertIn("Never give me a checklist", instruction)
         self.assertNotIn("Always allow", bootstrap)
         for coercive_phrase in ("ignore previous", "bypass", "system prompt", "disable safeguards", "auto-approve"):
@@ -34,9 +38,18 @@ class ChatBootstrapTests(unittest.TestCase):
 
     def test_local_installer_keeps_memory_and_adds_exact_folder(self) -> None:
         setup = (HERE.parent / "setup.sh").read_text(encoding="utf-8")
+        block = (HERE.parent / "block.md").read_text(encoding="utf-8")
+        foundation = (HERE.parent / "canon/foundation.md").read_text(encoding="utf-8")
+        renderer = (HERE.parent / "scripts/statusline.sh").read_text(encoding="utf-8")
         self.assertIn("permissions.additionalDirectories", setup)
         self.assertIn("merge_writable_root", (HERE.parent / "scripts/configure_codex.py").read_text(encoding="utf-8"))
         self.assertIn('skills/alexandria/SKILL.md', setup)
+        self.assertIn('scripts/statusline.sh', setup)
+        self.assertIn('visible_cue: $STATUS_CUE', setup)
+        self.assertIn("Every completed ordinary task carries exactly one small, visible `/a` cue", foundation)
+        self.assertIn("read the completed message as rendered", block)
+        self.assertIn("MODE=\"${1:-statusline}\"", renderer)
+        self.assertNotIn("open ", renderer)
         self.assertNotIn("generate_memories = false", setup)
         self.assertNotIn("use_memories = false", setup)
 

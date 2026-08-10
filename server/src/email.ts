@@ -5,7 +5,6 @@ import { installPrompt } from './install-prompt.js';
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'benmowinckel@gmail.com';
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
 const SERVER_URL = process.env.SERVER_URL || 'https://api.alexandria-library.com';
-const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337';
 
 /**
  * Run up to `concurrency` email sends in parallel, draining the task list in
@@ -170,12 +169,7 @@ export async function sendFollowerWelcome(email: string, unsubscribeToken?: stri
 }
 
 export async function sendWelcomeEmail(email: string, githubLogin: string, emailToken?: string, apiKey?: string): Promise<void> {
-  const websiteHost = WEBSITE_URL.replace(/^https?:\/\//, '');
-  // Invite link opens /invite — the self-contained referral landing (who sent
-  // you, what it is, one action). It forwards the ref to /start, so kin
-  // attribution through install → eventual join is intact.
-  const kinLink = `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}`;
-  const kinLinkDisplay = `${websiteHost}/invite?ref=${githubLogin}`;
+  void githubLogin;
   // Connect message — carry it in the email body so a user who finishes GitHub
   // OAuth but abandons Stripe is never stranded without their key. Same command
   // the founding-member page shows; re-running setup.sh with the key is
@@ -259,49 +253,21 @@ export async function sendWeekOneCheckIn(
   return await sendEmail(email, 'checking in.', html, { unsubscribeUrl });
 }
 
-// --- Mobile onboarding — safe setup-message delivery + follow-ups ---
+// --- Mobile onboarding — one requested setup-message delivery ---
 // Phones have no terminal, so the email carries the same non-executable agent
-// handoff as /start. The completion token is reported only after setup succeeds;
-// no mutable website or API response is ever piped into a shell.
+// handoff as /start. No reminder, waitlist, shortcut, or completion tracker.
 
-function onboardCmd(installToken: string, ref?: string): string {
-  return installPrompt({ completionToken: installToken, ref });
+function onboardCmd(): string {
+  return installPrompt();
 }
 
 export async function sendOnboardCommand(
   email: string,
-  installToken: string,
-  unsubscribeToken: string,
-  ref?: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${unsubscribeToken}`;
   const html = emailShell(`<p style="margin: 0 0 1.2rem;">paste this into your coding app when you&rsquo;re at your computer:</p>
-  ${emailCmd(onboardCmd(installToken, ref))}
-  <p style="margin: 0 0 1.6rem;">then open a new tab and type ${emailKbd('/a')}.</p>
-  <p style="margin: 0 0 1.8rem;">on your phone? <a href="${SHORTCUT_URL}" style="color: #3d3630;">add the shortcut</a> &mdash; capture anything.</p>`, unsubscribeUrl);
-  return await sendEmail(email, 'alexandria. — your setup message', html, { unsubscribeUrl });
-}
-
-export async function sendOnboardFollowup(
-  email: string,
-  installToken: string,
-  unsubscribeToken: string,
-  nth: number,
-  ref?: string,
-): Promise<{ ok: boolean; error?: string }> {
-  const first = nth <= 1;
-  const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${unsubscribeToken}`;
-  const html = emailShell(`<p style="margin: 0 0 1.2rem;">${first
-    ? 'still here when you are &mdash; paste this into your coding agent when you&rsquo;re back at your computer:'
-    : 'last one from me. the command:'}</p>
-  ${emailCmd(onboardCmd(installToken, ref))}
-  ${first ? '' : ''}`, unsubscribeUrl);
-  return await sendEmail(
-    email,
-    first ? 'alexandria. — ready when you are' : 'alexandria. — last nudge',
-    html,
-    { unsubscribeUrl },
-  );
+  ${emailCmd(onboardCmd())}
+  <p style="margin: 1.6rem 0 0;">this is the only setup email we&rsquo;ll send.</p>`);
+  return await sendEmail(email, 'alexandria. — your setup message', html);
 }
 
 // sendMorningBrief / sendMorningNudge removed: morning brief + nudge are now

@@ -8,25 +8,38 @@
 # passed verification against a manifest signed by the maintainer's Touch ID
 # key. It never auto-applies anything: when a newer signed payload exists
 # upstream it surfaces a notice, and the Author applies it through the local
-# signature verifier. Deleting ~/alexandria/system/hooks/auto-update stops public
-# engine/canon checks; keyed collective calls remain until .api_key is removed.
+# signature verifier. Public engine/canon checks occur only after the Author
+# opts in by creating ~/alexandria/system/hooks/auto-update. An account key
+# alone enables no standing calls.
 #   Audit: https://github.com/benmowinckel/alexandria/blob/main/TRUST.md
 #   Inspect payload: https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/hooks/payload.sh
 
 ALEX_DIR="${ALEXANDRIA_DIR:-$HOME/alexandria}"
+RUNTIME_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." 2>/dev/null && pwd)"
 API_KEY="${ALEXANDRIA_KEY:-$(cat "$ALEX_DIR/system/.api_key" 2>/dev/null)}"
 MODE="$1"
 
 GITHUB_RAW="${ALEX_GITHUB_RAW:-https://raw.githubusercontent.com/benmowinckel/alexandria/main}"
 MANIFEST_URL="$GITHUB_RAW/factory/manifest.txt"
 MANIFEST_SIG_URL="$GITHUB_RAW/factory/manifest.txt.sig"
-SIGNERS_FILE="$ALEX_DIR/system/allowed_signers"
+SIGNERS_FILE="$RUNTIME_DIR/allowed_signers"
 SIGN_NAMESPACE="alexandria"
+
+# Transcripts, logs, and local state created by hooks are private to this user.
+umask 077
 SIGN_IDENTITY="alexandria-payload-signing"
 
-PAYLOAD_FILE="$ALEX_DIR/system/.hooks_payload"
-MARKER_FILE="$ALEX_DIR/system/.payload_verified_sha"
-VERSION_FILE="$ALEX_DIR/system/.factory_version"
+# Setup activates every harness atomically only after its complete core passes
+# functional probes. A failed install/update may leave files for recovery, but
+# must not leave a mixed set of hooks running.
+if [ ! -f "$RUNTIME_DIR/.setup_complete" ]; then
+  [ "$MODE" = "session-start" ] && echo "alexandria: setup incomplete — hooks are off; re-run the verified setup"
+  exit 0
+fi
+
+PAYLOAD_FILE="$RUNTIME_DIR/.hooks_payload"
+MARKER_FILE="$RUNTIME_DIR/.payload_verified_sha"
+VERSION_FILE="$RUNTIME_DIR/.factory_version"
 
 # ── Helpers ──────────────────────────────────────────────────────
 # All file operations work on byte-exact tempfiles (NOT bash string vars —
@@ -89,10 +102,10 @@ fetch_verified_manifest() {
     fi
   fi
 
-  manifest_cache="$ALEX_DIR/system/.canon_manifest.tmp.$$"
+  manifest_cache="$RUNTIME_DIR/.canon_manifest.tmp.$$"
   version_tmp="$VERSION_FILE.tmp.$$"
   if ! cp "$manifest_file" "$manifest_cache" \
-     || ! mv "$manifest_cache" "$ALEX_DIR/system/.canon_manifest" \
+     || ! mv "$manifest_cache" "$RUNTIME_DIR/.canon_manifest" \
      || ! printf '%s\n' "$version" > "$version_tmp" \
      || ! mv "$version_tmp" "$VERSION_FILE"; then
     rm -f "$manifest_file" "$sig_file" "$manifest_cache" "$version_tmp"
@@ -187,18 +200,16 @@ if [ "$MODE" = "session-start" ]; then
         echo "Just installed or updated? Verification needs one fetch of the signed manifest —"
         echo "check your network and open a new session. If this persists, audit"
         echo "https://github.com/benmowinckel/alexandria and reinstall through the local verifier:"
-        echo "  bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh"
+        echo "  bash ~/.local/share/alexandria/scripts/verify-fetch.sh --run setup.sh"
         echo "--- END NOT VERIFIED ---"
         echo ""
       fi
     fi
   fi
 
-  # Update check — NOTIFY ONLY, never applies. The auto-update file is the
-  # update-channel toggle: present (default) = each session checks upstream and
-  # surfaces a newer SIGNED payload as a notice the Author acts on; deleted =
-  # no public update fetch; run the pinned copy forever. Keyed collective calls
-  # remain until system/.api_key is removed.
+  # Optional update check — NOTIFY ONLY, never applies. Without the explicit
+  # marker there is no public update fetch and the pinned copy runs forever.
+  # Separately approved connected features keep their own permission markers.
   if [ "$run_state" = "pinned" ] && [ -f "$ALEX_DIR/system/hooks/auto-update" ]; then
     res=$(fetch_verified_manifest)
     case "$res" in
@@ -219,7 +230,7 @@ if [ "$MODE" = "session-start" ]; then
           echo "signature check. Nothing has changed on this machine — it runs only what"
           echo "you've already approved. AGENT: mention this to the Author once; on their go,"
           echo "apply it through the local verifier (the new payload is verified before its"
-          echo "first run):  bash ~/alexandria/system/scripts/verify-fetch.sh --run setup.sh"
+          echo "first run):  bash ~/.local/share/alexandria/scripts/verify-fetch.sh --run setup.sh"
           echo "--- END UPDATE NOTICE ---"
           echo ""
         fi
@@ -229,7 +240,7 @@ if [ "$MODE" = "session-start" ]; then
   fi
 
   if [ -n "$run_file" ]; then
-    bash "$run_file" session-start "$ALEX_DIR" "$API_KEY" "" "$run_state"
+    ALEXANDRIA_RUNTIME_DIR="$RUNTIME_DIR" bash "$run_file" session-start "$ALEX_DIR" "$API_KEY" "" "$run_state"
   else
     # Bare fallback — just inject constitution
     [ -d "$ALEX_DIR/files/constitution" ] && for f in "$ALEX_DIR/files/constitution/"*.md; do [ -f "$f" ] && cat "$f"; done
@@ -272,7 +283,7 @@ elif [ "$MODE" = "session-end" ]; then
   # A no-space-only grep silently dropped Cursor flushes (ok-but-vault-copy-unverified).
   tp=$(echo "$input" | grep -oE '"transcript_path"[[:space:]]*:[[:space:]]*"[^"]*"' | cut -d'"' -f4)
   if payload_runnable; then
-    ALEX_WAS_ACTIVE=$was_active bash "$PAYLOAD_FILE" session-end "$ALEX_DIR" "$API_KEY" "$tp"
+    ALEXANDRIA_RUNTIME_DIR="$RUNTIME_DIR" ALEX_WAS_ACTIVE=$was_active bash "$PAYLOAD_FILE" session-end "$ALEX_DIR" "$API_KEY" "$tp"
   else
     # Bare fallback — just save transcript to vault
     [ -n "$tp" ] && [ -f "$tp" ] && mkdir -p "$ALEX_DIR/files/vault" && cp "$tp" "$ALEX_DIR/files/vault/$(date +%Y-%m-%d_%H-%M-%S).jsonl"
@@ -280,7 +291,7 @@ elif [ "$MODE" = "session-end" ]; then
 
 elif [ "$MODE" = "subagent" ]; then
   if payload_runnable; then
-    bash "$PAYLOAD_FILE" subagent "$ALEX_DIR"
+    ALEXANDRIA_RUNTIME_DIR="$RUNTIME_DIR" bash "$PAYLOAD_FILE" subagent "$ALEX_DIR"
   else
     # Bare fallback — just inject constitution
     [ -d "$ALEX_DIR/files/constitution" ] && for f in "$ALEX_DIR/files/constitution/"*.md; do [ -f "$f" ] && cat "$f"; done

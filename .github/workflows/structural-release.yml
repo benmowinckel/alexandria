@@ -108,6 +108,10 @@ jobs:
           grep -q 'verify-fetch.sh --run setup.sh' factory/setup.sh
           grep -q 'signed-rollback' factory/scripts/verify-fetch.sh
 
+      - name: Keep the private ai out of company sales
+        working-directory: candidate
+        run: bash factory/scripts/check-private-boundary.sh
+
       - name: Enforce server access boundaries
         working-directory: candidate
         run: |

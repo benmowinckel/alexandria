@@ -10,7 +10,7 @@ import { pageMetadata } from '../lib/config';
 // provenance retains value → the practice that keeps the person involved).
 const TITLE = 'whitepaper — alexandria. when a machine can do everything, what is a person for?';
 const DESCRIPTION =
-  'The full argument, from first principles: what AI leaves for humans, why human provenance can retain value, and the practice that keeps you involved in your own change.';
+  'The full argument, from first principles: how humans remain themselves, survive, and build lives they value as AI removes material necessity.';
 
 const PAGE_META = pageMetadata({
   path: '/whitepaper',
@@ -32,22 +32,23 @@ export const metadata: Metadata = {
   },
 };
 
-// The whitepaper's own suggested questions. Written as a reader actually
-// arrives — most haven't read a word yet, so the honest openers are "what is
-// this", "why now", "what's the counter". Balanced deliberately against
-// becoming a substitute for reading: "explain that last bit" only works
-// alongside the text, and "which part should i read first" points back into
-// it. The mirror is a supplement, not a replacement (founder 2026-07-28).
+// The whitepaper's own suggested questions. Each names an argument the current
+// paper and public shadow both carry, so the mirror can answer on this reader
+// and from the public profile without relying on hidden or invite-tier context.
+// The mirror is a supplement, not a replacement (founder 2026-07-28).
 // The Artifact Loop generates these per piece automatically; the whitepaper is
 // a frozen genesis artifact, so its set is authored here.
 const WHITEPAPER_QUESTIONS = [
-  'what’s this actually about?',
-  'why does it matter now?',
-  'what’s the biggest counter to it?',
-  'explain that last bit in plain english',
-  'what does “a mirror, not a twin” mean?',
-  'which part should i read first?',
-  'what is alexandria?',
+  'if ai can do everything, what remains valuable about a person?',
+  'what does max net human value mean beyond money?',
+  'why is agency the one certain lever in an uncertain future?',
+  'how do the three turns and four Cs describe a life worth living?',
+  'what does the paper mean by human provenance?',
+  'why are atrophy and replacement different risks?',
+  'what is the chair argument?',
+  'what are the filter’s two deaths?',
+  'could a silicon copy really be the same person?',
+  'how do the files and the alexandria loop keep someone involved?',
 ];
 
 export default function WhitepaperPage() {

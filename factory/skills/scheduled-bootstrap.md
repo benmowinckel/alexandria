@@ -13,7 +13,7 @@ bash -c '
 set -euo pipefail
 ALEX_DIR="$HOME/alexandria"
 RAW="${ALEX_GITHUB_RAW:-https://raw.githubusercontent.com/benmowinckel/alexandria/main}"
-SIGNERS="$ALEX_DIR/system/allowed_signers"
+SIGNERS="$HOME/.local/share/alexandria/allowed_signers"
 NS="alexandria"; ID="alexandria-payload-signing"
 fail(){ echo "alexandria: scheduled skill verification failed ($1) — skipping run" >&2; exit 1; }
 

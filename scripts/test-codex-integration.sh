@@ -11,8 +11,10 @@ sha256() {
   fi
 }
 
+RUNTIME="$TEST_ROOT/runtime"
 mkdir -p "$TEST_ROOT/.codex" "$TEST_ROOT/alex/system/hooks" \
-  "$TEST_ROOT/alex/system/scripts" "$TEST_ROOT/alex/files/vault"
+  "$TEST_ROOT/alex/system/scripts" "$TEST_ROOT/alex/files/vault" \
+  "$RUNTIME/hooks"
 
 printf '%s\n' '# Existing user instructions' > "$TEST_ROOT/.codex/AGENTS.md"
 printf '%s\n' '# Legacy file must stay unchanged' > "$TEST_ROOT/.codex/instructions.md"
@@ -22,10 +24,12 @@ JSON
 
 python3 "$ROOT/factory/scripts/configure_codex.py" \
   --codex-home "$TEST_ROOT/.codex" --alex-dir "$TEST_ROOT/alex" \
+  --runtime-dir "$RUNTIME" \
   --ambient "$ROOT/factory/skills/codex-ambient.md" >/dev/null
 FIRST_SHA=$(sha256 "$TEST_ROOT/.codex/hooks.json")
 python3 "$ROOT/factory/scripts/configure_codex.py" \
   --codex-home "$TEST_ROOT/.codex" --alex-dir "$TEST_ROOT/alex" \
+  --runtime-dir "$RUNTIME" \
   --ambient "$ROOT/factory/skills/codex-ambient.md" >/dev/null
 SECOND_SHA=$(sha256 "$TEST_ROOT/.codex/hooks.json")
 
@@ -44,6 +48,7 @@ assert len(hooks["SubagentStart"]) == 1
 end = hooks["SessionEnd"][0]["hooks"][0]
 assert end["timeout"] == 3
 assert end["command"].endswith("codex-session-end")
+assert str(root / "runtime/hooks/shim.sh") in end["command"]
 assert (root / ".codex/instructions.md").read_text() == "# Legacy file must stay unchanged\n"
 agents = (root / ".codex/AGENTS.md").read_text()
 assert agents.startswith("# Existing user instructions\n")
@@ -66,6 +71,7 @@ FULL
 FULL_BEFORE=$(sha256 "$TEST_ROOT/full/.codex/AGENTS.md")
 python3 "$ROOT/factory/scripts/configure_codex.py" \
   --codex-home "$TEST_ROOT/full/.codex" --alex-dir "$TEST_ROOT/full/alex" \
+  --runtime-dir "$TEST_ROOT/full/runtime" \
   --ambient "$ROOT/factory/skills/codex-ambient.md" >/dev/null
 test "$FULL_BEFORE" = "$(sha256 "$TEST_ROOT/full/.codex/AGENTS.md")"
 
@@ -75,17 +81,21 @@ printf '%s\n' '{broken json' > "$TEST_ROOT/bad/.codex/hooks.json"
 BAD_BEFORE=$(sha256 "$TEST_ROOT/bad/.codex/hooks.json")
 if python3 "$ROOT/factory/scripts/configure_codex.py" \
   --codex-home "$TEST_ROOT/bad/.codex" --alex-dir "$TEST_ROOT/bad/alex" \
+  --runtime-dir "$TEST_ROOT/bad/runtime" \
   --ambient "$ROOT/factory/skills/codex-ambient.md" >/dev/null 2>&1; then
   echo "configure_codex unexpectedly accepted malformed hooks" >&2
   exit 1
 fi
 test "$BAD_BEFORE" = "$(sha256 "$TEST_ROOT/bad/.codex/hooks.json")"
 
-cp "$ROOT/factory/hooks/shim.sh" "$TEST_ROOT/alex/system/hooks/shim.sh"
+cp "$ROOT/factory/hooks/shim.sh" "$RUNTIME/hooks/shim.sh"
+cp "$ROOT/factory/hooks/payload.sh" "$RUNTIME/.hooks_payload"
+touch "$RUNTIME/.setup_complete"
+sha256 "$RUNTIME/.hooks_payload" > "$RUNTIME/.payload_verified_sha"
 printf '%s\n' '{"event":"test transcript"}' > "$TEST_ROOT/source.jsonl"
 printf '{"session_id":"test-123","transcript_path":"%s"}\n' "$TEST_ROOT/source.jsonl" | \
   ALEXANDRIA_DIR="$TEST_ROOT/alex" \
-  bash "$TEST_ROOT/alex/system/hooks/shim.sh" codex-session-end
+  bash "$RUNTIME/hooks/shim.sh" codex-session-end
 
 test -f "$TEST_ROOT/alex/system/.codex_session_end_ok"
 test "$(find "$TEST_ROOT/alex/files/vault" -type f -name '*_codex_test-123.jsonl' | wc -l | tr -d ' ')" = "1"
@@ -93,7 +103,7 @@ test "$(find "$TEST_ROOT/alex/system/.codex_session_end_queue" -type f -name '*.
 
 # The next start drains the bounded end receipt through the normal end path.
 ALEXANDRIA_DIR="$TEST_ROOT/alex" \
-  bash "$TEST_ROOT/alex/system/hooks/shim.sh" session-start </dev/null >/dev/null
+  bash "$RUNTIME/hooks/shim.sh" session-start </dev/null >/dev/null
 test "$(find "$TEST_ROOT/alex/system/.codex_session_end_queue" -type f -name '*.json' 2>/dev/null | wc -l | tr -d ' ')" = "0"
 
 echo "Codex integration test passed"

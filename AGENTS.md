@@ -12,9 +12,9 @@ The product is **two felt things**, not a protocol. (1) **What we give you** —
 
 The code maps to four layers:
 
-1. **The collective plumbing** (`server/src/protocol.ts` + `auth.ts` + `kv.ts` + `crypto.ts` + `db.ts` + `file-access.ts` + `marketplace-catalog.ts` + `marketplace.ts` + `audit.ts`) — the incompressible core that makes the library/marketplace/tribe work. 7 endpoints, ~1700 lines including the visibility gate (`file-access.ts`), the module catalog (`marketplace-catalog.ts`), the Author-feedback substrate (`marketplace.ts`), and the tamper-evident access audit (`audit.ts`). Three obligations: account (membership), file (publish monthly), call (communicate). Internally still named `protocol.ts` — a code label for the plumbing, never the public framing.
+1. **The collective plumbing** (`server/src/protocol.ts` + `auth.ts` + `kv.ts` + `crypto.ts` + `db.ts` + `file-access.ts` + `marketplace-catalog.ts` + `marketplace.ts` + `audit.ts`) — optional server infrastructure for the Library, marketplace, and tribe. The incompressible product core is the local loop; it works without this layer. Internally still named `protocol.ts` — a code label for the plumbing, never the public framing.
 
-2. **Factory** (`factory/`) — The founder's system, public on GitHub, forkable. ~48 files: **canon** (modules in two tiers — Foundation: `foundation.md` (universal); Founder: `axioms·methodology·editor·mercury·publisher·library·filter·marketplace·plm·twin·bookshelf` (his default, personalisable) — plus `MODULES.md` index), **hooks** (shim + payload), **setup.sh**, **ship.sh** + signed **manifest.txt**, **skills** (claudecode, codex, cursor, droid, scheduled, install, publish, brief-setup, nudge, …), **systems/** (Author-0 modules, e.g. state-based-sync), **scripts/**, **templates/**, onboarding block. This is the gear — shipped default-on but deletable, forkable, replaceable. The marketplace evolves canon defaults from cross-Author signal. **Everything listed in `manifest.txt` is signature-gated — including `systems/`, `scripts/`, and `tools/` files, not just canon/payload/skills/`block.md`/cursor hooks** (`ship.sh` re-signs `manifest.txt`; widened from three skills 2026-07-30 — `setup.sh` now verifies every manifest-listed file against its signed sha before installing, fail-closed; an unsigned `systems/` push went red on CI 2026-07-31 and had to be reverted — check the manifest, never a remembered list).
+2. **Factory** (`factory/`) — the public, signed distribution. Activation has four layers: **core** (Foundation + local files/hooks/start/close/archive/Git); **default and removable** (`axioms·methodology·editor·mercury·publisher`); **separate opt-ins** (signed update checks, account, Library, marketplace signal, network, cloud, PLM/twin); **extras** (`brief-setup`, `state-based-sync`, `optimise`, community modules). Signed availability is not activation. The marketplace never lists Foundation: it labels the five replaceable methods `default`, Alexandria additions `official`, and everything else by author. **Everything listed in `manifest.txt` is signature-gated**; use `factory/ship.sh` for any manifest-covered change.
 
 3. **Machine** (`~/alexandria/`) — Each Author's personal system. Constitution, vault, marginalia, machine.md, notepad, feedback. Lives locally, never on the server — the sovereign tool running on the Author's own files. The product IS this folder. Alexandria stores what Authors publish, never what they think.
 
@@ -37,7 +37,7 @@ The code maps to four layers:
 - **Split-deploy trap — commit BEFORE you ship, and verify against production, not the working tree.** The two surfaces ship from different sources: `wrangler deploy` bundles the **working tree** (uncommitted edits go live on the Worker), while the **website** ships only from **committed `main`** via `git push`→Vercel — and `push.sh` pushes *commits*, not working-tree edits. So an uncommitted change can go live on the Worker (making the fix *look* deployed) while the website silently ships nothing. Sequence: **commit first**, then `push.sh` (website) and `wrangler deploy` (server) — never tell anyone "shipped" off a working-tree edit. A frontend/API change isn't done until `curl`ing the live URL (not `localhost`, not the diff) shows the new behavior. This exact gap shipped a "fixed" sign-in that was still broken in prod (2026-07-07). Second variant (2026-07-27): Vercel's ignore-build-step used to diff only the push's LAST commit, so a push ending in a non-app commit (ship.sh's manifest re-sign on top of site work) silently skipped deployment while looking shipped — now fixed structurally in `vercel.json` (`ignoreCommand` diffs against the last DEPLOYED sha, failing open to building). Don't re-add a dashboard ignore rule; vercel.json owns it. Verify deploys by `npx vercel list code --yes` (newest row READY, commit sha = HEAD).
 - **Server health:** `curl https://api.alexandria-library.com/health`
 - **Stack:** Vercel (website), Cloudflare (DNS + server + KV + D1 + R2), Resend (email), GitHub (code + OAuth), Stripe (billing), Mercury (banking, API), Claude (intelligence). All hybrid (CLI or API-controllable). Zero external dependencies.
-- **Storage architecture:** Stateless server, sovereign local files (`~/alexandria/` — local + private GitHub; `iCloud/alexandria/` is Apple-native input only), thin persistence for collective Library (D1 for metadata/discovery, R2 for published content, KV for accounts/events).
+- **Storage architecture:** Stateless server, sovereign local files (`~/alexandria/`; setup connects no cloud storage), optional user-owned iCloud/Drive/private-GitHub add-ons after separate consent, thin persistence for collective Library (D1 for metadata/discovery, R2 for published content, KV for accounts/events).
 
 ## Agent-owned operating queues
 
@@ -73,7 +73,7 @@ Operational overhead — OAuth, billing, email, admin:
 | GET | `/account` | Billing portal redirect |
 | DELETE | `/account` | Account deletion (GDPR-ready) |
 | GET | `/account/rotate-key` | Lost-key self-serve rotation (single-use code minted on returning-member OAuth; old key dies atomically) |
-| POST | `/feedback` | Author-explicit feedback (typed into `~/alexandria/system/.session_feedback`, posted at session end, stored in private `benmowinckel/alexandria-feedback` GitHub repo). Mints a `<date>-<hash>` **id** and returns it so the client can address a reply. No per-item founder email; agents drain the repo as the operating queue. |
+| POST | `/feedback` | Author-explicit feedback sent only in the foreground after a direct request; never drafted or posted by session hooks. Stored in private `benmowinckel/alexandria-feedback`; returns an addressable id. |
 | GET/POST | `/email/stop` | Email unsubscribe |
 | POST | `/admin/nudge` | Nudge uninstalled users (admin) |
 | POST | `/admin/email` | Send email (admin) |
@@ -87,20 +87,17 @@ factory/
   ship.sh                   # Sign + commit + push factory changes (re-signs manifest.txt)
   manifest.txt              # Signed sha256 manifest the shim verifies (canon + payload + skills)
   canon/                    # The canon — two tiers (see MODULES.md)
-    MODULES.md              # Index: Foundation (universal) vs Founder (his default)
-    foundation.md           # Foundation — the universal closed loop + invariants
-    axioms.md               # Founder — the thesis (the why)
-    methodology.md          # Founder — the craft (the how)
-    editor.md  mercury.md  publisher.md   # Founder — the three functions (extract/amplify/create)
-    library.md  filter.md   # Founder — Library surface + publishing conventions
-    marketplace.md          # Founder — the active marketplace (proactive read/draft, outbound at explicit go)
-    bookshelf.md            # Founder — reference shelf
+    MODULES.md              # Activation map: core / defaults / opt-ins / extras
+    foundation.md           # Incompressible local closed loop + invariants
+    axioms.md  methodology.md  editor.md  mercury.md  publisher.md  # replaceable defaults
+    library.md  filter.md  marketplace.md  plm.md  twin.md           # dormant opt-in references
+    bookshelf.md            # reference only
   hooks/
     shim.sh                 # Immutable local shim
     payload.sh              # GitHub-delivered hook logic (signed)
   skills/                   # claudecode · codex · cursor · droid · scheduled(-bootstrap) · install · publish · brief-setup · nudge · factory
-  systems/                  # Author-0 modules pulled from the marketplace (e.g. state-based-sync)
-  scripts/                  # brief.py · install.sh · publish(-fork).sh · verify-fetch.sh
+  systems/                  # Additional modules (e.g. state-based-sync)
+  scripts/                  # brief.py · install.sh · publish.sh · verify-fetch.sh
   templates/                # agent · machine · notepad · feedback · module · constitution/ · marginalia/ · vault/ · library/
 ```
 
@@ -122,7 +119,8 @@ factory/
 
 ## Design Constraints
 
-- **First touch is the human's intent plus independently verified provenance — nothing executable and no vendor trust claim (v3, 2026-08-04).** The thing a new user pastes into their agent contains: what the human wants; the exact canonical repo `github.com/benmowinckel/alexandria`; the frozen Touch ID key fingerprint; and the one non-negotiable sequence — before reading or running anything, obtain the account's public signing key from GitHub's account API, verify the current `main` commit against that fingerprint, then read and run `factory/setup.sh` from that exact commit with `ALEXANDRIA_SOURCE_COMMIT` pinned to the same full hash. The agent's own audit is the second gate and it retains a legitimate refusal path ("skipping it is fine"). A different owner, fork, unsigned commit, wrong fingerprint, floating download, or mismatch fails closed as possible impersonation. This provenance choreography is the sole exception to the no-step-by-step rule because order is the security boundary: audit after download is too late, and verifying one commit while installing floating `main` leaves a swap window. It contains NO bash (a pipeline in the paste pattern-matches "random pasted command" before a word gets read) and NO vendor trust claims (claims live in `setup.sh` / TRUST.md / mechanics and the agent tries to refute them). Never ask the downloaded script to authenticate itself — that is circular. History: bare `curl | bash` killed real onboardings on 2026-07-22 and 2026-07-28; v2's pointers left first-install identity implicit. Re-run/sync contexts (an already-trusted install refreshing itself) may keep the raw one-liner because the installed trust root verifies the recurring payload. Everything the paste asserts must stay exactly true.
+- **First touch is the human's plain intent; the trusted agent owns security (v4, 2026-08-09).** The paste contains only: the private local outcome the human wants; the exact public repo `github.com/benmowinckel/alexandria`; an instruction to treat every Alexandria file as untrusted evidence and use the agent's own security process; and a hard write gate — explain in plain English, then wait for the human to say `start`. No bash, fingerprint, setup path, environment variable, referral flag, vendor trust claim, or vendor-authored verification choreography. The earlier fingerprint-heavy paste failed a cold ultra-sensitive gate because the repo, trust root, and verification procedure all arrived in the same untrusted message; the simple request passed three cold agents. The implementation still supports a strong agent-chosen path: verify one signed canonical commit, audit it, and run setup pinned to the same hash. A fingerprint learned from the repo itself is continuity evidence, not an independent trust root; TRUST.md says this honestly. The paste must survive the cold simulation in `factory/redteam.md`, and `factory/scripts/check-private-boundary.sh` blocks structural regression.
+- **The user's ai never sells Alexandria (2026-08-09).** Alexandria-owned surfaces may carry the pitch. Installed prompts, canon, onboarding, openers, closes, nudges, and the user's private map never initiate a join, referral, pricing, membership, marketplace, feedback, or other company ask. The private ai may answer a direct question or operate features the user already chose. It never uses private knowledge to sharpen commercial language. This boundary is release-blocking.
 
 - **Radically simple UX (onboarding law).** Any do-this-now flow: one decision or action per screen; every actionable thing is the same box (one grammar: bold words — muted why, inputs inside boxes); a page line is only legal if the model can't carry it at the moment of need; numerals not prose for sequence; small asks before the point-of-no-return action. Full physics: ~/alexandria/files/core/design.md § Conversion & Sales. Forged on /start + /chat + /join, 2026-07-24/25.
 - **Pure marginal value add.** Alexandria must never override, compete with, or degrade the user's existing workflows, memory, or tools. Passive mode is read-only context + optional marginalia writes. Active mode (/a) is opt-in. The user's existing system is the floor — Alexandria only adds.
@@ -146,7 +144,7 @@ This is the product. Act as a normal Machine would for any Author — this IS th
 - **Constitution.** Write any crystallised signal about the founder as a person to `~/alexandria/files/constitution/`. Opinions, stories, patterns, contradictions revealed this session.
 - **Machine.md.** Rewrite `~/alexandria/files/core/machine.md` — how to work with this Author, what worked, what didn't, cognitive style observations.
 - **Notepad.** Update `~/alexandria/files/core/notepad.md` — parked questions, accretion candidates, what to carry forward.
-- **Feedback.** Append to `~/alexandria/files/core/feedback.md` — what worked, what didn't, methodology observations. (This stays local — the Engine never auto-sends. If the Author wants to push feedback to the marketplace, they type it into `~/alexandria/system/.session_feedback` themselves.)
+- **Feedback.** Append to `~/alexandria/files/core/feedback.md` — what worked, what didn't, methodology observations. This stays local. Sending anything outward is a separate direct request with the exact text shown before it leaves.
 
 Do this silently. No report. This is the product working. If Phase 1 feels wrong, the product is wrong.
 

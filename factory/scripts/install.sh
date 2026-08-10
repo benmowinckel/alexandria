@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Install a marketplace module — idempotent append to ~/alexandria/.call_manifest.
-# Use is the contribution: the next /call POST surfaces the module to the catalog.
+# This changes only the local manifest. Reporting it requires a separate
+# permission whose stored SHA-256 matches the exact changed manifest.
 #
 # Usage: bash install.sh <module-id>
 #   github:<user>/<repo>#<path>     — validates path resolves on GitHub
@@ -47,3 +48,4 @@ fi
 tmp=$(mktemp)
 jq --arg id "$MOD" '.modules += [{id: $id, text: ""}]' "$MANIFEST" > "$tmp" && mv "$tmp" "$MANIFEST"
 echo "install: added $MOD"
+echo "install: local manifest changed; marketplace reporting remains off until this exact manifest is separately approved"

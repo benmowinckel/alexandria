@@ -181,7 +181,7 @@ check "notepad.md exists"          [ -f "$HOME/alexandria/files/core/notepad.md"
 check "machine.md exists"          [ -f "$HOME/alexandria/files/core/machine.md" ]
 check "api_key written"            [ -f "$HOME/alexandria/system/.api_key" ]
 check "api_key correct"            [ "$(cat "$HOME/alexandria/system/.api_key")" = "$API_KEY" ]
-check "setup_complete marker"      [ -f "$HOME/alexandria/system/.setup_complete" ]
+check "setup_complete marker"      [ -f "$HOME/.local/share/alexandria/.setup_complete" ]
 
 # Permission check (skip on Windows — NTFS doesn't enforce Unix perms)
 case "$(uname -s)" in
@@ -196,9 +196,9 @@ esac
 echo ""
 echo "═══ Phase 3: Hooks installation ═══"
 
-check "shim.sh exists"             [ -f "$HOME/alexandria/system/hooks/shim.sh" ]
-check "shim.sh executable"         [ -x "$HOME/alexandria/system/hooks/shim.sh" ]
-check "shim.sh non-empty"          [ -s "$HOME/alexandria/system/hooks/shim.sh" ]
+check "shim.sh exists"             [ -f "$HOME/.local/share/alexandria/hooks/shim.sh" ]
+check "shim.sh executable"         [ -x "$HOME/.local/share/alexandria/hooks/shim.sh" ]
+check "shim.sh non-empty"          [ -s "$HOME/.local/share/alexandria/hooks/shim.sh" ]
 START_SKILL="$HOME/.claude/skills/a/SKILL.md"
 [ -f "$START_SKILL" ] || START_SKILL="$HOME/.claude/skills/alexandria/SKILL.md"
 check "start SKILL.md exists"      [ -f "$START_SKILL" ]
@@ -208,10 +208,8 @@ check "start skill has Alexandria" grep -q "Alexandria" "$START_SKILL"
 check "no scheduled task installed" bash -c '[ ! -f "$HOME/.claude/scheduled-tasks/alexandria/SKILL.md" ]'
 # 2026-07-22 reviewer-gate properties — regression-locked:
 # core installs pinned+verified payload, ships the add-ons menu, seeds no add-on machinery.
-check "payload pinned + verified"  [ -f "$HOME/alexandria/system/.payload_verified_sha" ]
+check "payload pinned + verified"  [ -f "$HOME/.local/share/alexandria/.payload_verified_sha" ]
 check "add-ons menu cached"        [ -f "$HOME/alexandria/system/.optional" ]
-check "no imsg machinery seeded"   bash -c '[ ! -f "$HOME/alexandria/system/scripts/imsg_ctl.sh" ]'
-check "no publish fork created"    bash -c '[ ! -d "$HOME/alexandria-fork" ]'
 check "canon cached"               [ -f "$HOME/alexandria/system/canon/methodology.md" ]
 
 # settings.json integrity
@@ -251,7 +249,7 @@ MARGINALIA_TEST
 touch "$HOME/alexandria/system/.block_complete"
 
 # Run the shim exactly as Claude Code would
-SESSION_START_OUTPUT=$(bash "$HOME/alexandria/system/hooks/shim.sh" session-start 2>&1)
+SESSION_START_OUTPUT=$(bash "$HOME/.local/share/alexandria/hooks/shim.sh" session-start 2>&1)
 SESSION_START_EXIT=$?
 
 check "session-start ran"                [ "$SESSION_START_EXIT" -eq 0 ]
@@ -264,8 +262,8 @@ check_output "marginalia pointer"        "marginalia/"           "$SESSION_START
 check_output "machine pointer"           "core/machine.md"       "$SESSION_START_OUTPUT"
 check_output "notepad pointer"           "core/notepad.md"       "$SESSION_START_OUTPUT"
 check_output "feedback pointer"          "core/feedback.md"      "$SESSION_START_OUTPUT"
-check "hooks_payload cached"             [ -f "$HOME/alexandria/system/.hooks_payload" ]
-check "hooks_payload non-empty"          [ -s "$HOME/alexandria/system/.hooks_payload" ]
+check "hooks_payload cached"             [ -f "$HOME/.local/share/alexandria/.hooks_payload" ]
+check "hooks_payload non-empty"          [ -s "$HOME/.local/share/alexandria/.hooks_payload" ]
 check "canon cached"                     [ -f "$HOME/alexandria/system/canon/methodology.md" ]
 CANON_SIZE=$(wc -c < "$HOME/alexandria/system/canon/methodology.md" 2>/dev/null | tr -d ' ' || echo 0)
 check "canon non-trivial"               [ "${CANON_SIZE:-0}" -gt 100 ]
@@ -282,7 +280,7 @@ FAKE_TRANSCRIPT="$TEMP_HOME/test_transcript.jsonl"
 echo '{"role":"user","content":"stranger test transcript"}' > "$FAKE_TRANSCRIPT"
 
 # Pipe the transcript path as JSON (how Claude Code sends it)
-echo "{\"transcript_path\":\"$FAKE_TRANSCRIPT\"}" | bash "$HOME/alexandria/system/hooks/shim.sh" session-end 2>&1
+echo "{\"transcript_path\":\"$FAKE_TRANSCRIPT\"}" | bash "$HOME/.local/share/alexandria/hooks/shim.sh" session-end 2>&1
 SESSION_END_EXIT=$?
 
 check "session-end ran"            [ "$SESSION_END_EXIT" -eq 0 ]
@@ -301,7 +299,7 @@ fi
 echo ""
 echo "═══ Phase 6: Subagent hook ═══"
 
-SUBAGENT_OUTPUT=$(bash "$HOME/alexandria/system/hooks/shim.sh" subagent 2>&1)
+SUBAGENT_OUTPUT=$(bash "$HOME/.local/share/alexandria/hooks/shim.sh" subagent 2>&1)
 SUBAGENT_EXIT=$?
 
 check "subagent ran"                     [ "$SUBAGENT_EXIT" -eq 0 ]

@@ -8,7 +8,7 @@
 import { Hono } from 'hono';
 import { extractApiKey, findByApiKey } from './auth.js';
 import { updateAccountBilling, getBillingSummary } from './accounts.js';
-import { runHealthDigest, runOnboardFollowups } from './cron.js';
+import { runHealthDigest } from './cron.js';
 import { mirrorPendingAuditBatch, getAuditHead } from './audit.js';
 import { registerProtocol } from './protocol.js';
 import { registerRoutes } from './routes.js';
@@ -158,7 +158,7 @@ for (const { path, scope, limit } of PUBLIC_RATE_LIMITED_ROUTES) {
 }
 
 // ---------------------------------------------------------------------------
-// Protocol — the incompressible core (file, call, library, marketplace)
+// Protocol — optional collective plumbing (file, call, library, marketplace)
 // ---------------------------------------------------------------------------
 
 registerProtocol(app);
@@ -587,26 +587,10 @@ app.options('/follow', (c) => {
 });
 
 // ---------------------------------------------------------------------------
-// Mobile onboarding — "send it to my computer". Phones have no terminal, so
-// the mobile /start flow emails the same non-executable agent message for
-// later. Keyless (no account, no OAuth — this is the free tool). The agent
-// reports the opaque token only after verified setup succeeds; the API never
-// supplies code or instructions to execute.
+// Mobile onboarding — "send it to my computer". This is a one-time delivery
+// of the same non-executable paste shown on /start. It creates no account,
+// waitlist entry, reminder sequence, referral record, or install tracker.
 // ---------------------------------------------------------------------------
-
-const ONBOARD_TTL_SECONDS = 90 * 24 * 60 * 60;
-
-export interface OnboardRecord {
-  email: string;
-  unsubscribe_token: string;
-  created_at: string;
-  installed_at?: string;
-  followups?: number;
-  followup_last_sent_at?: string;
-  /** Referrer login (sanitised [A-Za-z0-9-]) — the emailed setup message
-   *  passes `--ref <login>` so the eventual join keeps kin attribution. */
-  ref?: string;
-}
 
 app.post('/onboard', async (c) => {
   const reqOrigin = c.req.header('Origin') || '';
@@ -633,72 +617,36 @@ app.post('/onboard', async (c) => {
     return c.json({ error: 'Valid email required.' }, 400);
   }
 
-  // Join-decline capture (founder verdict 2026-07-09): the /join page's "not
-  // now" path. Capture-only — a waitlist row so the address is contactable as
-  // the community grows; NO install email and NO nudge thread (they're at the
-  // join step, not the install step — many already run the tool).
+  // /join is an Alexandria-owned commercial surface and keeps its explicit
+  // waitlist path. /start is only a one-time requested delivery.
   const isJoinDecline = body?.source === 'join';
   // The /join page's second path (2026-07-27): "join anyway, but waive the
   // month for me." Same capture, distinct source string so the founder can
   // tell a waive ASK apart from a plain not-now — one is a person who wants
   // in, the other is a person who didn't.
   const isWaiveAsk = isJoinDecline && body?.intent === 'waive';
-  // Referral attribution — sanitised like /join does (GitHub logins are
-  // [A-Za-z0-9-]). Honored on EVERY source, not just join declines: install
-  // intents (/start, mobile) store it on the KV record so the emailed command
-  // carries `--ref <login>` (setup.sh parses it) and the eventual join is
-  // attributed. Dropping it here was where the free-with-3-kin engine lost
-  // most of its attribution (warm-lead audit item 5, 2026-07-15).
+  // Referral attribution exists only on the owned /join surface. It never
+  // enters the private agent paste or local setup.
   const ref = typeof body?.ref === 'string' ? body.ref.replace(/[^A-Za-z0-9-]/g, '').slice(0, 39) : '';
 
   try {
-    const kv = getKV();
-    const db = (globalThis as any).__d1 as D1Database;
-    if (!db) return c.json({ error: 'Database not available.' }, 503);
-
-    // One record per email — resubmits resend the same tokenized setup message
-    // instead of forking a second follow-up thread.
-    const emailIndexKey = `onboard_email:${normalizedEmail}`;
-    let installToken = await kv.get(emailIndexKey);
-    let record: OnboardRecord | null = null;
-    if (installToken) {
-      const raw = await kv.get(`onboard:${installToken}`);
-      if (raw) record = JSON.parse(raw) as OnboardRecord;
-    }
-
-    // The waitlist upsert runs on EVERY submit, not just first capture. Typing
-    // your email into the /start install box (or the /join decline field) is
-    // an explicit opt-in, so it must
-    // (a) guarantee the email is on the list and (b) clear any prior opt-out —
-    // a returning submitter re-engaging from /start overrides an earlier
-    // /email/stop, otherwise the reminders + list membership they just asked
-    // for are silently suppressed. Unsubscribe rides the existing waitlist
-    // substrate (/email/stop resolves waitlist unsubscribe_tokens); COALESCE
-    // keeps whatever token the email already has, and the conflict clause
-    // never touches type/source — a 'follow' subscriber who also leaves their
-    // email at /join stays on the newsletter list.
-    const newToken = generateToken();
-    const upserted = await db.prepare(
-      `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)
-       VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(email) DO UPDATE
-         SET unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token),
-             opted_out_at = NULL
-       RETURNING unsubscribe_token`,
-    ).bind(
-      normalizedEmail,
-      isJoinDecline ? 'join' : 'onboard',
-      isJoinDecline
-        ? `${isWaiveAsk ? 'waive' : 'join_page'}${ref ? `:ref:${ref}` : ''}`
-        : 'public',
-      new Date().toISOString(),
-      newToken,
-    ).first<{ unsubscribe_token: string | null }>();
-
-    // Join declines stop here: list membership is the whole point. No
-    // confirmation email (nothing was requested), no onboard KV record (no
-    // install-nudge sequence).
     if (isJoinDecline) {
+      const db = (globalThis as any).__d1 as D1Database;
+      if (!db) return c.json({ error: 'Database not available.' }, 503);
+      const newToken = generateToken();
+      const upserted = await db.prepare(
+        `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)
+         VALUES (?, 'join', ?, ?, ?)
+         ON CONFLICT(email) DO UPDATE
+           SET unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token),
+               opted_out_at = NULL
+         RETURNING unsubscribe_token`,
+      ).bind(
+        normalizedEmail,
+        `${isWaiveAsk ? 'waive' : 'join_page'}${ref ? `:ref:${ref}` : ''}`,
+        new Date().toISOString(),
+        newToken,
+      ).first<{ unsubscribe_token: string | null }>();
       logEvent('join_email_captured', {
         ref: ref ? 'yes' : 'no',
         intent: isWaiveAsk ? 'waive' : 'not_now',
@@ -707,28 +655,8 @@ app.post('/onboard', async (c) => {
       return c.json({ ok: true });
     }
 
-    if (!record) {
-      installToken = generateToken();
-      record = {
-        email: normalizedEmail,
-        unsubscribe_token: upserted?.unsubscribe_token || newToken,
-        created_at: new Date().toISOString(),
-        followups: 0,
-        ...(ref ? { ref } : {}),
-      };
-      await kv.put(`onboard:${installToken}`, JSON.stringify(record), { expirationTtl: ONBOARD_TTL_SECONDS });
-      await kv.put(emailIndexKey, installToken, { expirationTtl: ONBOARD_TTL_SECONDS });
-    } else if (ref && !record.ref) {
-      // Resubmit carrying a ref the original capture lacked — backfill. First
-      // ref wins: never overwrite an existing attribution on a resubmit.
-      record.ref = ref;
-      await kv.put(`onboard:${installToken}`, JSON.stringify(record), { expirationTtl: ONBOARD_TTL_SECONDS });
-    }
-
-    // Await the send — this email IS what the user asked for; a silent
-    // failure here would read as "sent" in the UI.
-    const result = await sendOnboardCommand(normalizedEmail, installToken!, record.unsubscribe_token, record.ref);
-    logEvent('onboard_email_captured', { new: record.followups === 0 && !record.installed_at ? 'true' : 'false', ref: record.ref ? 'yes' : 'no', sent: result.ok ? 'true' : 'false' });
+    const result = await sendOnboardCommand(normalizedEmail);
+    logEvent('onboard_email_sent', { sent: result.ok ? 'true' : 'false' });
     if (!result.ok) return c.json({ error: 'Could not send just now — try again.' }, 502);
     return c.json({ ok: true });
   } catch (err: any) {
@@ -744,33 +672,6 @@ app.options('/onboard', (c) => {
     c.header('Access-Control-Allow-Origin', reqOrigin);
     c.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
     c.header('Access-Control-Allow-Headers', 'Content-Type');
-  }
-  return c.body(null, 204);
-});
-
-// Completion receipt for the emailed setup message. The coding agent calls it
-// only after the verified installer succeeds. It never returns instructions or
-// executable bytes, so the API is tracking only — not part of the trust chain.
-app.post('/onboard/:token/installed', async (c) => {
-  const token = c.req.param('token');
-  if (!/^[a-f0-9]{24}$/.test(token)) return c.body(null, 204);
-  const ip = c.req.header('cf-connecting-ip') || 'unknown';
-  if (!await enforcePublicRateLimit('onboard', ip)) return c.body(null, 204);
-  try {
-    const kv = getKV();
-    const raw = token ? await kv.get(`onboard:${token}`) : null;
-    if (raw) {
-      const record = JSON.parse(raw) as OnboardRecord;
-      if (!record.installed_at) {
-        record.installed_at = new Date().toISOString();
-        await kv.put(`onboard:${token}`, JSON.stringify(record), { expirationTtl: ONBOARD_TTL_SECONDS });
-        logEvent('onboard_install', {});
-      }
-    } else {
-      logEvent('onboard_token_unknown', { token_prefix: (token || '').slice(0, 8) });
-    }
-  } catch (err) {
-    console.error('Onboard install mark failed:', err);
   }
   return c.body(null, 204);
 });
@@ -944,11 +845,7 @@ export default {
     // Founder-internal health state stays machine-readable in /health; it does
     // not email the founder. Manual founder admin email tools remain
     // founder-triggered.
-    // Onboard follow-ups are the one carve-out: the user typed their email into
-    // "send it to my computer" — an active request for exactly this delivery.
-    // The sequence is finishing that delivery, hard-capped at 2, stops on
-    // install or unsubscribe. Not marketing push; a completion of a user pull.
-    await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing(), runOnboardFollowups()]);
+    await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing()]);
     ctx.waitUntil(flushEvents());
   },
 };

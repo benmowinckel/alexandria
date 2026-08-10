@@ -272,16 +272,17 @@ async function main() {
 
   await test('Waitlist rate limiting works', async () => {
     const email = `ratetest-${Date.now()}@example.com`;
-    // Send 6 requests rapidly
-    const statuses: number[] = [];
-    for (let i = 0; i < 6; i++) {
-      const res = await fetch(`${BASE}/waitlist`, {
+    // Eleven concurrent requests guarantee that at least one fixed minute
+    // receives six hits even if the burst lands exactly across a boundary.
+    // The old six-request sequence could split 5+1 and fail spuriously.
+    const responses = await Promise.all(Array.from({ length: 11 }, () =>
+      fetch(`${BASE}/waitlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
-      });
-      statuses.push(res.status);
-    }
+      })
+    ));
+    const statuses = responses.map(res => res.status);
     const has429 = statuses.some(s => s === 429);
     return {
       test: 'Waitlist rate limit',

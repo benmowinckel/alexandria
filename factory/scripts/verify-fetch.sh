@@ -31,8 +31,9 @@ shift
   exit 1
 }
 ALEX_DIR="$HOME/alexandria"
+RUNTIME_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." 2>/dev/null && pwd)"
 RAW="${ALEX_GITHUB_RAW:-https://raw.githubusercontent.com/benmowinckel/alexandria/main}"
-SIGNERS="$ALEX_DIR/system/allowed_signers"
+SIGNERS="$RUNTIME_DIR/allowed_signers"
 NS="alexandria"; ID="alexandria-payload-signing"
 fail(){ echo "verify-fetch failed ($1) for $REL — refusing to emit" >&2; exit 1; }
 
@@ -40,8 +41,8 @@ command -v ssh-keygen >/dev/null 2>&1 || fail no-ssh-keygen
 [ -f "$SIGNERS" ] || fail no-allowed-signers
 
 f=$(mktemp) || fail mktemp; mf=$(mktemp) || fail mktemp; sg=$(mktemp) || fail mktemp
-manifest_cache="$ALEX_DIR/system/.canon_manifest.tmp.$$"
-version_cache="$ALEX_DIR/system/.factory_version.tmp.$$"
+manifest_cache="$RUNTIME_DIR/.canon_manifest.tmp.$$"
+version_cache="$RUNTIME_DIR/.factory_version.tmp.$$"
 trap 'rm -f "$f" "$mf" "$sg" "$manifest_cache" "$version_cache"' EXIT
 
 curl -sf --max-time 10 "$RAW/factory/$REL"             -o "$f"  || fail fetch
@@ -56,7 +57,7 @@ ssh-keygen -Y verify -f "$SIGNERS" -I "$ID" -n "$NS" -s "$sg" < "$mf" >/dev/null
 # already accepted. Reverts therefore ship as new forward-signed releases.
 version=$(awk '$1=="#" && $2=="alexandria-factory-version" {print $3; exit}' "$mf")
 [[ "$version" =~ ^[0-9]+$ ]] || fail missing-version
-installed=$(cat "$ALEX_DIR/system/.factory_version" 2>/dev/null || true)
+installed=$(cat "$RUNTIME_DIR/.factory_version" 2>/dev/null || true)
 if [ -n "$installed" ]; then
   [[ "$installed" =~ ^[0-9]+$ ]] || fail bad-local-version
   [ "$version" -ge "$installed" ] || fail signed-rollback
@@ -73,8 +74,8 @@ else fail no-sha-tool; fi
 # Pin the highest authenticated release before emitting or executing anything.
 cp "$mf" "$manifest_cache" || fail pin-manifest
 printf '%s\n' "$version" > "$version_cache" || fail pin-version
-mv "$manifest_cache" "$ALEX_DIR/system/.canon_manifest" || fail pin-manifest
-mv "$version_cache" "$ALEX_DIR/system/.factory_version" || fail pin-version
+mv "$manifest_cache" "$RUNTIME_DIR/.canon_manifest" || fail pin-manifest
+mv "$version_cache" "$RUNTIME_DIR/.factory_version" || fail pin-version
 
 # Authentic. The update path runs the verified temporary file directly and
 # marks that fact for setup.sh; the ordinary path emits bytes for callers that

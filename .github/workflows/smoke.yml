@@ -104,12 +104,16 @@ jobs:
       - name: Protocol marketplace listing
         run: |
           # Listing surfaces every catalogued module — skills (with front-matter)
-          # AND canon docs (without). Assert both shapes appear: brief-setup is a
-          # canonical skill; methodology is a canonical canon doc whose name and
-          # description are derived from the file rather than YAML.
+          # AND canon docs (without). Assert both shapes appear: brief-setup is
+          # an official extra; methodology is a replaceable default whose name
+          # and description are derived from the file rather than YAML.
           BODY=$(curl -sf $SERVER/marketplace -H "Authorization: Bearer $API_KEY")
-          echo "$BODY" | grep -q '"brief-setup"' || { echo "::error::Marketplace missing canonical skill (brief-setup)"; exit 1; }
-          echo "$BODY" | grep -q '"methodology"' || { echo "::error::Marketplace missing canonical canon doc (methodology) — frontmatter-tolerant parsing regressed"; exit 1; }
+          echo "$BODY" | grep -q '"brief-setup"' || { echo "::error::Marketplace missing official skill (brief-setup)"; exit 1; }
+          echo "$BODY" | grep -q '"methodology"' || { echo "::error::Marketplace missing default method (methodology) — frontmatter-tolerant parsing regressed"; exit 1; }
+          echo "$BODY" | grep -q '"tier":"default"' || { echo "::error::Marketplace missing default activation tier"; exit 1; }
+          echo "$BODY" | grep -q '"tier":"official"' || { echo "::error::Marketplace missing official activation tier"; exit 1; }
+          ! echo "$BODY" | grep -q 'factory/canon/foundation' || { echo "::error::Foundation leaked into the marketplace"; exit 1; }
+          ! echo "$BODY" | grep -q 'github:mowinckelb/' || { echo "::error::Marketplace exposed the retired founder handle"; exit 1; }
           # Forward-compat envelope: `total` and `next_cursor` keys must be present
           # so future pagination ships without breaking clients.
           echo "$BODY" | grep -q '"total"' || { echo "::error::Marketplace missing total field — forward-compat envelope regressed"; exit 1; }
@@ -185,7 +189,7 @@ jobs:
           fetch_body "$FACTORY/setup.sh" | head -1 | grep -q "bash" || { echo "::error::setup.sh not valid bash"; exit 1; }
           fetch_body "$FACTORY/canon/methodology.md" | wc -c | xargs test 1000 -lt || { echo "::error::methodology.md too small"; exit 1; }
           # Bash scripts must parse before an authenticated installer can run them.
-          for sh in setup.sh scripts/publish-fork.sh hooks/shim.sh hooks/payload.sh; do
+          for sh in setup.sh hooks/shim.sh hooks/payload.sh; do
             body=$(fetch_body "$FACTORY/$sh") || { echo "::error::$sh unreachable on raw after retries"; exit 1; }
             printf '%s' "$body" | bash -n - || { echo "::error::$sh has bash syntax errors"; exit 1; }
           done

@@ -14,6 +14,7 @@ REPO_ROOT="$(cd "$EVAL_DIR/../../.." && pwd)"   # …/public/code
 FACTORY="$REPO_ROOT/factory"
 RUN="$EVAL_DIR/run/home"
 ALEX="$RUN/alexandria"
+RUNTIME="$RUN/.local/share/alexandria"
 
 [ -d "$EVAL_DIR/footprint/home" ] || { echo "ERROR: footprint/home missing — (re)build the footprint from persona-bible.md first (README step 1)"; exit 1; }
 [ -f "$FACTORY/block.md" ] || { echo "ERROR: $FACTORY/block.md not found"; exit 1; }
@@ -27,7 +28,7 @@ mkdir -p "$ALEX/files/vault" "$ALEX/system/hooks" "$ALEX/files/constitution" \
   "$ALEX/files/marginalia" "$ALEX/files/library/public" "$ALEX/files/library/paid" \
   "$ALEX/files/library/invite" "$ALEX/files/library/authors" "$ALEX/files/works" \
   "$ALEX/files/core" "$ALEX/files/vault/input" "$ALEX/files/vault/_input" \
-  "$ALEX/system/canon" "$ALEX/system/scripts"
+  "$ALEX/system/canon" "$ALEX/system/scripts" "$RUNTIME"
 
 # Real template core files (§2)
 for f in agent.md machine.md notepad.md feedback.md shelf.md; do
@@ -39,7 +40,7 @@ cp "$FACTORY/canon/foundation.md"  "$ALEX/system/canon/foundation.md"  2>/dev/nu
 
 # The onboarding instruction the agent reads
 cp "$FACTORY/block.md" "$ALEX/system/.block"
-touch "$ALEX/system/.setup_complete"
+touch "$RUNTIME/.setup_complete"
 
 # All-green setup report so block's install-integrity gate passes and it proceeds to content
 cat > "$ALEX/system/.setup_report" <<'EOF'

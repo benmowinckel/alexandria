@@ -10,11 +10,13 @@ import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
+os.umask(0o077)
+
 
 def _default_followup() -> str:
     return (
         "Alexandria close-out: evaluate the completed output against "
-        "`~/.alexandria/agent.md`. If any material violation exists, name it in one bullet. "
+        "`~/alexandria/files/core/agent.md`. If any material violation exists, name it in one bullet. "
         "If clean, reply exactly: `Alexandria check clean.`"
     )
 
@@ -45,6 +47,11 @@ def _append_jsonl(path: Path, row: dict) -> None:
 
 
 def _run() -> None:
+    root = Path((os.environ.get("ALEXANDRIA_ROOT") or "").strip()).expanduser() \
+        if (os.environ.get("ALEXANDRIA_ROOT") or "").strip() else Path.home() / "alexandria"
+    if not (Path.home() / ".local/share/alexandria/.setup_complete").is_file():
+        _emit({})
+        return
     payload = _parse_payload(sys.stdin.read())
 
     log_path = Path.home() / ".alexandria" / "logs" / "cursor-stop.jsonl"

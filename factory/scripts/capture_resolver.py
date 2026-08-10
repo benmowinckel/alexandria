@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Resolve iOS share captures into markdown.
 
-`vault/input/` is symlinked to iCloud Alexandria/ by setup.sh — iOS Shortcut
-writes raw captures here (HTML for X shares, raw files for everything else).
-This script reads each `.html`, fetches the focal tweet via api.fxtwitter.com
+`vault/input/` is local by default. If the Author separately enables the
+iCloud-capture add-on, that exact path becomes their iCloud capture folder.
+This script reads each `.html`, and only with a separate local permission file
+fetches the focal tweet via api.fxtwitter.com
 (nests the quoted/replied tweet for free), writes resolved markdown to
 `vault/_input/` (the underscore-prefixed derivative folder, local-only — keeps
 derivatives out of iCloud per the dependency-alarm principle), and moves the
@@ -22,6 +23,7 @@ Idempotent — re-running skips any HTML whose `.md` derivative already exists.
 
 from __future__ import annotations
 import json
+import os
 import re
 import shutil
 import sys
@@ -31,11 +33,15 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+os.umask(0o077)
+
 INPUT = Path.home() / "alexandria/files/vault/input"       # raw, iCloud-synced
 OUTPUT = Path.home() / "alexandria/files/vault/_input"     # resolved, local-only derivative
 SAVED = Path.home() / "alexandria/files/vault/saved"       # extracted analyses + ledger
 OFF_SWITCH = Path.home() / "alexandria/system/.extraction_off"      # touch to mute the drain nudge
 PENDING_MARKER = Path.home() / "alexandria/system/.extraction_pending"  # written when items await extraction
+NETWORK_PERMISSION = Path.home() / "alexandria/system/permissions/capture-network"
+RUNTIME_MARKER = Path.home() / ".local/share/alexandria/.setup_complete"
 # A resolved per-item capture stem: YYYYMMDD-HHMMSS-handle-<tweetid> (X) or
 # YYYYMMDD-HHMMSS-link (URL shares). Old/non-X derivatives (bookshelf_*,
 # 2026-03-27.md, *.feedback.md) don't match, so they never get counted as
@@ -339,6 +345,8 @@ def report_pending() -> None:
 
 
 def main() -> int:
+    if not RUNTIME_MARKER.is_file():
+        return 0
     INPUT.mkdir(parents=True, exist_ok=True)
     OUTPUT.mkdir(parents=True, exist_ok=True)
     if not INPUT.exists():
@@ -353,9 +361,13 @@ def main() -> int:
         "fetch_failed": 0,
         "verify_failed": 0,
     }
+    network_approved = NETWORK_PERMISSION.is_file()
     for f in sorted(p for p in INPUT.iterdir() if p.is_file() and not p.name.startswith(".")):
         suffix = f.suffix.lower()
         if suffix == ".html":
+            if not network_approved:
+                stats["in_place"] += 1
+                continue
             # Per-item isolation: one malformed capture must never jam the
             # queue behind it (a single render crash blocked the resolver for
             # days before 2026-06-11).
@@ -381,6 +393,9 @@ def main() -> int:
                 print(f"  ⚠ {f.name}: migrate failed ({e})", file=sys.stderr)
                 stats["skipped"] += 1
         elif suffix in (".txt", ".url"):
+            if not network_approved:
+                stats["in_place"] += 1
+                continue
             try:
                 process_txt(f, stats)
             except Exception as e:

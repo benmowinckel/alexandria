@@ -4,7 +4,7 @@
 set -u
 
 ALEX_DIR="${ALEXANDRIA_DIR:-$HOME/alexandria}"
-SCRIPTS="$ALEX_DIR/system/scripts"
+SCRIPTS="$HOME/.local/share/alexandria/scripts"
 VERIFY_FETCH="$SCRIPTS/verify-fetch.sh"
 SYNC="$SCRIPTS/drive_sync.sh"
 START="$ALEX_DIR/system/.drive-start.md"

@@ -1,34 +1,55 @@
-# Canon modules — Foundation and Founder
+# What ships, what runs, and what waits
+
+*Architecture reference only. It does not activate the Library, marketplace, account, or any Alexandria ask; the private ai leaves those surfaces silent unless the Author directly requests one.*
 
 *The canon is just files on your machine — your `alexandria.md`, the system that develops your mind (the working loop plus how to run it well), like a `design.md` or any script you keep. What it produces is your `mind.md` — your mind itself, the data. Both are yours: edit, replace, or ignore them. Alexandria is an aggregation hub you optionally connect to; it offers strong defaults and aggregates what works across everyone. The only thing that is not a file is the spine (account · file · call) — the connection to the hub itself.*
 
-*Two layers make the canon. Below them sits a third layer that is **not** canon — the marketplace — where person-specific modules live. The line between canon and marketplace is **generality**.*
+*A signed file being available on disk does not mean its feature is active. The activation layers below are the contract.*
 
 ---
 
-## Foundation — the minimal closed loop (objective · universal)
+## core — the incompressible local loop
 
-`foundation.md` — the smallest *complete working system* that develops a mind and connects it to the network: the loop, its invariants, the spine. Incompressible (remove a piece and the loop stops closing), objective (it works for everyone before any personalisation, because none of it is taste). The shared `alexandria.md` core every Author runs. Not marketplace-ranked — it is values, not a guess.
+`foundation.md` — **capture → develop → crystallise → create → and back**, running through the Author's plain files, their own ai, start/close, local hooks, local archive, and Git history. It needs no account or network. Remove a piece and the loop stops closing.
 
-## Founder — the subjective general-optimal (a default · download and personalise)
+`change-closure.md` — the core write invariant: every substantive edit reaches its existing effects without the Author remembering the dependency.
 
-How *Benjamin* runs the loop well — the best *general* starting point for someone else to download and then hyper-personalise. Subjective (it carries his taste) but aimed at a general adopter, not at any one person. Forkable, replaceable, ranked in the marketplace.
+The core is not a marketplace module. It is never ranked, reported, recommended, or listed there.
+
+## defaults — on locally, removable
+
+Five Benjamin-built methods are the starting way the loop runs. They are plain files, fully editable, replaceable, and removable:
 
 - **`axioms.md`** — his thesis: the philosophy at depth, the five operations in full, the civilisational argument, the neuroscience. The *why*.
 - **`methodology.md`** — his craft: how to run the five operations; constitution architecture; passive mode; the notepad; compounding loops.
 - **`editor.md` · `mercury.md` · `publisher.md`** — his three functions (extract, amplify, create).
-- **`library.md` · `filter.md`** — his Library surface and publishing conventions.
-- **`marketplace.md`** — the active marketplace: the Engine works the collective on the Author's behalf — scans and evaluates new modules in isolation, drafts contributions and requests, holds everything outbound at the Author's explicit go. Opt-out is deleting the file.
-- **`plm.md`** — compiling the Author's twin: a queryable language model built from the Constitution (positions) + all the Author's first-person text (voice), trained as one weighted multi-source SFT run, a downstream artifact recompiled each base-model generation, shipped behind the Author's gate.
-- **`twin.md`** — the onboarding companion to `plm.md`: the plain, compelling why an Author reads before deciding to compile — what a twin is, why only their substrate can build it, the weights-floor / context-ceiling split, the honest data bar, and the one-command path. The invitation; `plm.md` is the machine.
-- **`bookshelf.md`** — his reference shelf. Reference, not a survival-ranked module (ships + forkable, but intentionally not in the call-manifest).
 
-## Marketplace — the person-specific (not canon)
+These five defaults may appear in the marketplace with the label **default**. That label means “ships as the starting method,” not “canonical truth.”
 
-Everything optimal for *one specific individual* and no one else — Benjamin's own hooks, schedule, hyper-personal tweaks as Author 0, beside everyone else's modules. Surfaced by survival ranking, pulled by whoever's machine finds them useful. The canon stops where *general* optimality stops; past that line it is personal, and personal lives in the marketplace.
+## separate opt-ins — dormant until directly chosen
+
+- **signed update notices** — public release checks only; nothing applies automatically.
+- **account** — identity connection only; enables nothing else.
+- **Library publication** — `library.md` + `filter.md`; exact files and audiences need exact hash-bound approval.
+- **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
+- **network reading** — only the exact approved Author list is fetched.
+- **cloud bridges and backups** — each service has its own consent and off switch.
+- **PLM / twin compilation** — `plm.md` + `twin.md`; a separate, deliberate build.
+
+Their signed references may be installed so the Author's ai can explain a direct request without fetching instructions first. They do nothing merely because the files exist.
+
+## additional extras — never part of onboarding
+
+`brief-setup`, `state-based-sync`, `optimise`, future community modules, and other specialised additions are installed or used only when the Author asks. Alexandria-built additions are labelled **official** in the marketplace. Everyone else's modules are shown under their author. Neither label implies activation.
+
+`bookshelf.md` is reference material, not an active feature and not marketplace-ranked.
+
+## marketplace — additions, not the product core
+
+The marketplace contains replaceable defaults and opt-in additions. It never contains Foundation. It is available only when the Author directly asks to browse or use it. The private ai never recommends a module from private material, turns browsing into an onboarding step, or reports usage without exact manifest approval.
 
 ---
 
 ## the rule
 
-Foundation is *what Alexandria is* (objective; everyone). Founder is *the best general way to do it* (subjective; a default to personalise). The marketplace is *anyone's specific way* (person-tuned). The line between canon and marketplace is generality. The hub aggregates; it never owns your machine.
+Core closes the local loop. Defaults shape how it starts. Opt-ins connect something external. Extras wait for a direct request. The hub aggregates additions; it never owns or completes the loop.

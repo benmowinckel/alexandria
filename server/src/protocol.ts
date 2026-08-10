@@ -1,11 +1,20 @@
-/** The Alexandria protocol — incompressible core. */
+/** Alexandria's optional collective plumbing. The local loop does not depend on it. */
 
 import type { Hono } from 'hono';
 import { requireAuth, requireAuthor } from './auth.js';
 import { getDB, getR2, ensureFilePriceColumn, ensureFileTitleColumn, clampPaidAmount } from './db.js';
 import { logEvent } from './analytics.js';
 import { saveAccount, getKV } from './kv.js';
-import { resolveModule, authorFromModuleId, deriveKind, parseModuleId } from './marketplace-catalog.js';
+import {
+  resolveModule,
+  authorFromModuleId,
+  canonicalizeModuleId,
+  deriveKind,
+  deriveMarketplaceTier,
+  isMarketplaceModule,
+  moduleIdAliases,
+  parseModuleId,
+} from './marketplace-catalog.js';
 import {
   DEFAULT_CONTENT_TYPE,
   isPutWritableContentType,
@@ -436,7 +445,9 @@ export function registerProtocol(app: Hono) {
       }
       if (!candidateId) continue;
       if (parseModuleId(candidateId).kind === null) continue;
-      rows.push({ mod: candidateId.slice(0, 300), text: candidateText.slice(0, 2000) });
+      const moduleId = canonicalizeModuleId(candidateId);
+      if (!isMarketplaceModule(moduleId)) continue;
+      rows.push({ mod: moduleId.slice(0, 300), text: candidateText.slice(0, 2000) });
     }
     if (rows.length === 0) return c.json({ error: 'no valid modules' }, 400);
 
@@ -509,13 +520,14 @@ export function registerProtocol(app: Hono) {
   // Module bodies live at raw.githubusercontent.com — agents fetch from
   // github directly. The catalog returns metadata only.
   //
-  // No /publish endpoint — modules surface via /call. Use is the contribution.
+  // No /publish endpoint. Public GitHub files are publications; /call reports
+  // a manifest only after that exact manifest has separate local approval.
 
   app.get('/marketplace', async (c, next) => {
     if (new URL(c.req.url).pathname !== '/marketplace') return next();
 
     // Public listing is the catalog only — module identity, name, description,
-    // canonical-or-not, kind. Usage telemetry (counts, recency, per-call text)
+    // activation layer, kind. Usage telemetry (counts, recency, per-call text)
     // is private Marketplace Signal exposed only via the auth-gated
     // `/marketplace/:module` endpoint.
     //
@@ -535,15 +547,21 @@ export function registerProtocol(app: Hono) {
           `SELECT DISTINCT module_id FROM protocol_calls WHERE module_id LIKE 'github:%' AND time > ? LIMIT 1000`
         ).bind(ninetyDaysAgo).all<{ module_id: string }>();
 
-    const rows = results || [];
-    let modules = await Promise.all(rows.map(async (r) => {
-      const meta = await resolveModule(r.module_id);
+    // Old and current founder handles, plus the old modules-repo name, are one
+    // identity. Normalise before resolution so the public catalog never shows
+    // duplicate modules or links back through stale redirects.
+    const ids = [...new Set((results || [])
+      .map((r) => canonicalizeModuleId(r.module_id))
+      .filter(isMarketplaceModule))];
+    let modules = await Promise.all(ids.map(async (moduleId) => {
+      const meta = await resolveModule(moduleId);
       return {
-        id: r.module_id,
-        name: meta?.name || r.module_id,
+        id: moduleId,
+        name: meta?.name || moduleId,
         description: meta?.description || '',
-        author_github_login: authorFromModuleId(r.module_id),
-        kind: deriveKind(r.module_id),
+        author_github_login: authorFromModuleId(moduleId),
+        kind: deriveKind(moduleId),
+        tier: deriveMarketplaceTier(moduleId),
         status: meta?.status || 'unreachable',
       };
     }));
@@ -554,11 +572,10 @@ export function registerProtocol(app: Hono) {
     const authorFilter = c.req.query('author');
     if (authorFilter) modules = modules.filter((m) => m.author_github_login === authorFilter);
 
-    // Canonical (benmowinckel/alexandria) first, then alphabetical by name.
+    // Replaceable defaults first, then official opt-ins, then community.
     modules.sort((a, b) => {
-      const aCanon = a.id.startsWith('github:benmowinckel/alexandria#');
-      const bCanon = b.id.startsWith('github:benmowinckel/alexandria#');
-      if (aCanon !== bCanon) return aCanon ? -1 : 1;
+      const rank = { default: 0, official: 1, community: 2 } as const;
+      if (rank[a.tier] !== rank[b.tier]) return rank[a.tier] - rank[b.tier];
       return a.name.localeCompare(b.name);
     });
 
@@ -607,16 +624,19 @@ export function registerProtocol(app: Hono) {
   });
 
   app.get('/marketplace/:module', async (c, next) => {
-    const module_id = c.req.param('module');
-    if (module_id === 'signal') return next();
+    const requestedModuleId = c.req.param('module');
+    if (requestedModuleId === 'signal') return next();
 
     const auth = await requireAuth(c);
     if (!auth) return c.text('Unauthorized', 401);
 
+    const moduleId = canonicalizeModuleId(requestedModuleId);
+    const aliases = moduleIdAliases(moduleId);
+    const placeholders = aliases.map(() => '?').join(',');
     const { results } = await getDB().prepare(
-      'SELECT account_id, time, text FROM protocol_calls WHERE module_id = ? ORDER BY time DESC LIMIT 10000'
-    ).bind(module_id).all<{ account_id: string; time: string; text: string | null }>();
+      `SELECT account_id, time, text FROM protocol_calls WHERE module_id IN (${placeholders}) ORDER BY time DESC LIMIT 10000`
+    ).bind(...aliases).all<{ account_id: string; time: string; text: string | null }>();
 
-    return c.json({ module: module_id, usage: results || [] });
+    return c.json({ module: moduleId, usage: results || [] });
   });
 }

@@ -20,6 +20,10 @@ echo "reminder: install or sovereignty-surface change? run the relevant red-team
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
+# Known commercial-boundary and first-touch regressions are deterministic and
+# block before Touch ID. The model red-team remains the judgment layer above it.
+bash factory/scripts/check-private-boundary.sh
+
 # A commit includes everything already staged, even when this script later
 # stages explicit paths. Refuse an ambiguous release before asking for Touch ID.
 if ! git diff --cached --quiet; then
@@ -66,11 +70,16 @@ fi
 # template, or helper automatically adds it to the next manifest. The manifest
 # and its signature are the only exclusions because they are the output.
 SIGNED_FILES=()
+DELETED_FILES=()
 while IFS= read -r f; do
   case "$f" in
     factory/manifest.txt|factory/manifest.txt.sig) continue ;;
   esac
-  SIGNED_FILES+=("$f")
+  if [ -f "$f" ]; then
+    SIGNED_FILES+=("$f")
+  else
+    DELETED_FILES+=("$f")
+  fi
 done < <(git ls-files factory | LC_ALL=C sort)
 
 [ "${#SIGNED_FILES[@]}" -gt 0 ] || {
@@ -136,7 +145,6 @@ fi
 {
   printf '# alexandria-factory-version %s\n' "$release_version"
   for f in "${SIGNED_FILES[@]}"; do
-    [ -f "$f" ] || { echo "error: tracked factory file missing: $f" >&2; exit 1; }
     printf '%s  %s\n' "$(shasum -a 256 "$f" | cut -d' ' -f1)" "$f"
   done
 } > factory/manifest.txt
@@ -165,7 +173,11 @@ if [ "${1:-}" = "--sign-only" ]; then
   exit 0
 fi
 
-# Stage only what ship.sh owns. Never `git add -A` — would absorb unrelated WT changes.
+# Stage only what ship.sh owns. `git add -u -- factory` is required for signed
+# releases that deliberately remove factory files; the manifest above describes
+# the exact post-deletion tree. Never `git add -A` — that could absorb unrelated
+# untracked work elsewhere in the repository.
+git add -u -- factory
 git add "${SIGNED_FILES[@]}" factory/manifest.txt factory/manifest.txt.sig
 
 if git diff --cached --quiet; then

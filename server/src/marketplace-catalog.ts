@@ -27,6 +27,21 @@ export interface ParsedModuleId {
   slug?: string;
 }
 
+export type MarketplaceTier = 'default' | 'official' | 'community';
+
+const CURRENT_OWNER = 'benmowinckel';
+const LEGACY_OWNER = 'mowinckelb';
+const FACTORY_REPO = 'alexandria';
+const MODULES_REPO = 'alexandria-modules';
+const LEGACY_MODULES_REPO = 'alexandria-systems';
+const DEFAULT_MODULE_PATHS = new Set([
+  'factory/canon/axioms',
+  'factory/canon/methodology',
+  'factory/canon/editor',
+  'factory/canon/mercury',
+  'factory/canon/publisher',
+]);
+
 const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
 const TTL_OK = 24 * 60 * 60;        // 24h on success
 const TTL_UNREACHABLE = 60 * 60;    // 1h on 404 — retry sooner
@@ -45,6 +60,68 @@ export function parseModuleId(id: string): ParsedModuleId {
 
 export function buildModuleId(user: string, repo: string, path: string): string {
   return `github:${user}/${repo}#${path}`;
+}
+
+/**
+ * Collapse IDs that predate the founder's GitHub handle and module-repo
+ * renames. Stored call history remains immutable; every new write and every
+ * catalog read uses this one public identity.
+ */
+export function canonicalizeModuleId(id: string): string {
+  const parsed = parseModuleId(id);
+  if (parsed.kind !== 'github' || !parsed.user || !parsed.repo || !parsed.path) return id;
+
+  const owner = parsed.user.toLowerCase();
+  const repo = parsed.repo.toLowerCase();
+  if (owner !== CURRENT_OWNER && owner !== LEGACY_OWNER) return id;
+
+  if (repo === FACTORY_REPO) return buildModuleId(CURRENT_OWNER, FACTORY_REPO, parsed.path);
+  if (repo === MODULES_REPO || repo === LEGACY_MODULES_REPO) {
+    return buildModuleId(CURRENT_OWNER, MODULES_REPO, parsed.path);
+  }
+  return id;
+}
+
+/** Historical IDs that should count toward one canonical module identity. */
+export function moduleIdAliases(id: string): string[] {
+  const canonical = canonicalizeModuleId(id);
+  const parsed = parseModuleId(canonical);
+  if (parsed.kind !== 'github' || !parsed.user || !parsed.repo || !parsed.path) return [canonical];
+  if (parsed.user !== CURRENT_OWNER) return [canonical];
+
+  if (parsed.repo === FACTORY_REPO) {
+    return [
+      canonical,
+      buildModuleId(LEGACY_OWNER, FACTORY_REPO, parsed.path),
+    ];
+  }
+  if (parsed.repo === MODULES_REPO) {
+    return [
+      canonical,
+      buildModuleId(LEGACY_OWNER, MODULES_REPO, parsed.path),
+      buildModuleId(CURRENT_OWNER, LEGACY_MODULES_REPO, parsed.path),
+      buildModuleId(LEGACY_OWNER, LEGACY_MODULES_REPO, parsed.path),
+    ];
+  }
+  return [canonical];
+}
+
+/**
+ * Activation layer, not a quality ranking. The local Foundation loop is
+ * deliberately absent from the marketplace. Five replaceable methods ship as
+ * defaults; other Alexandria-built modules are official opt-ins; every other
+ * author is community.
+ */
+export function deriveMarketplaceTier(id: string): MarketplaceTier {
+  const parsed = parseModuleId(canonicalizeModuleId(id));
+  if (parsed.kind !== 'github' || !parsed.user || !parsed.repo || !parsed.path) return 'community';
+  if (parsed.user !== CURRENT_OWNER || parsed.repo !== FACTORY_REPO) return 'community';
+  return DEFAULT_MODULE_PATHS.has(parsed.path) ? 'default' : 'official';
+}
+
+/** Foundation is the local product core, never a marketplace entry. */
+export function isMarketplaceModule(id: string): boolean {
+  return canonicalizeModuleId(id) !== 'github:benmowinckel/alexandria#factory/canon/foundation';
 }
 
 /** Hand-rolled YAML parser — only `name` and `description` matter. */

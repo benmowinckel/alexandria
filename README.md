@@ -20,7 +20,7 @@ The habit afterwards: open a new tab, type `/a`, and leave it. That's a session.
 
 ## Sovereignty
 
-Your files live in `~/alexandria/` on your computer — yours to read, edit, delete. The only copies that leave are backups to *your own* GitHub and iCloud. Full mechanism: [alexandria-library.com/mechanics](https://alexandria-library.com/mechanics).
+Your files live in `~/alexandria/` on your computer — yours to read, edit, delete. Setup connects no cloud storage. iCloud capture, Drive, and backup to your own private GitHub are separate choices you can enable later. Full mechanism: [alexandria-library.com/mechanics](https://alexandria-library.com/mechanics).
 
 ---
 
