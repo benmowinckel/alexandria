@@ -112,13 +112,22 @@ forbid factory/block.md \
   'onboarding still mandates web search from private material'
 
 # The always-read methodology cannot put growth or company solicitation in
-# ordinary openers, closes, or nudges.
+# ordinary closes or nudges. One fixed opener carve-out is allowed (2026-08-10).
 require factory/canon/methodology.md \
   "The Author's private ai never does." \
   'methodology has no permanent private-ai boundary'
+require factory/canon/methodology.md \
+  'share — someone you want the best for' \
+  'methodology is missing the joined share-block carve-out title'
+require factory/canon/methodology.md \
+  'join — unlock everything' \
+  'methodology is missing the not-joined join-block carve-out title'
+require factory/canon/methodology.md \
+  'the `/a` share/join block only' \
+  'methodology no longer names the share/join carve-out'
 forbid factory/canon/methodology.md \
-  'share the referral link|join if not yet joined|make not-trying feel irrational|make leaving feel like loss|tell us the one thing you would change|what the Author pays for' \
-  'methodology contains a proactive company ask or growth instruction'
+  'make not-trying feel irrational|make leaving feel like loss|tell us the one thing you would change|what the Author pays for|first month free|dollar a day|free for good if' \
+  'methodology contains a proactive company ask beyond the fixed share/join carve-out'
 require factory/canon/methodology.md \
   'never treats casual language as permission for speculative profiling' \
   'methodology has no permanent anti-profiling boundary'
