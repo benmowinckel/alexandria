@@ -688,6 +688,11 @@ printf '%s\n' \
   > "$uninstall_home/.config/git/allowed_signers"
 printf '%s\n' 'Alexandria runtime shim' > "$uninstall_home/.local/share/alexandria/hooks/shim.sh"
 printf '%s\n' 'Alexandria statusline' > "$uninstall_home/.local/share/alexandria/scripts/statusline.sh"
+printf '%s\n' 'foreign runtime addition' > "$uninstall_home/.local/share/alexandria/keep.txt"
+{
+  printf '%s  factory/hooks/shim.sh\n' "$(shasum -a 256 "$uninstall_home/.local/share/alexandria/hooks/shim.sh" | awk '{print $1}')"
+  printf '%s  factory/scripts/statusline.sh\n' "$(shasum -a 256 "$uninstall_home/.local/share/alexandria/scripts/statusline.sh" | awk '{print $1}')"
+} > "$uninstall_home/.local/share/alexandria/.canon_manifest"
 ownership_ledger="$uninstall_home/.local/share/alexandria/.owned_integrations"
 for owned_path in \
   "$uninstall_home/.claude/skills/a./SKILL.md" \
@@ -731,8 +736,12 @@ HOME="$uninstall_home" python3 factory/scripts/uninstall.py >/dev/null \
   || fail 'scoped uninstaller left its receipt-owned Cursor hook behind'
 [ -d "$uninstall_home/alexandria" ] \
   || fail 'default uninstaller deleted the Author files'
-[ ! -e "$uninstall_home/.local/share/alexandria" ] \
-  || fail 'scoped uninstaller left the protected runtime behind'
+[ -f "$uninstall_home/.local/share/alexandria/keep.txt" ] \
+  || fail 'scoped uninstaller deleted a foreign runtime addition'
+[ ! -e "$uninstall_home/.local/share/alexandria/hooks/shim.sh" ] \
+  || fail 'scoped uninstaller left an exact signed runtime hook behind'
+[ ! -e "$uninstall_home/.local/share/alexandria/scripts/statusline.sh" ] \
+  || fail 'scoped uninstaller left an exact signed runtime script behind'
 [ -f "$uninstall_home/.alexandria/transcripts/keep.txt" ] \
   || fail 'scoped uninstaller deleted a shared Cursor sidecar by directory name'
 grep -q 'foreign' "$uninstall_home/.claude/settings.json" \

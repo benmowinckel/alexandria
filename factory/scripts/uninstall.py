@@ -347,6 +347,50 @@ def remove_owned_allowed_signer() -> bool:
         return False
 
 
+def remove_signed_runtime_files() -> None:
+    """Remove only exact factory bytes; preserve receipts and unknown additions."""
+    manifest = RUNTIME_DIR / ".canon_manifest"
+    if RUNTIME_DIR.is_symlink():
+        print(f"kept foreign runtime symlink: {RUNTIME_DIR}")
+        return
+    try:
+        expected = {}
+        for line in manifest.read_text(encoding="utf-8").splitlines():
+            digest, separator, source = line.partition("  ")
+            if separator:
+                expected[source] = digest
+    except OSError:
+        print(f"kept runtime without a verified manifest: {RUNTIME_DIR}")
+        return
+
+    for path, source in (
+        (RUNTIME_DIR / "hooks/shim.sh", "factory/hooks/shim.sh"),
+        (RUNTIME_DIR / ".hooks_payload", "factory/hooks/payload.sh"),
+        (RUNTIME_DIR / "codex-ambient.md", "factory/skills/codex-ambient.md"),
+        (RUNTIME_DIR / "scripts/capture_resolver.py", "factory/scripts/capture_resolver.py"),
+        (RUNTIME_DIR / "scripts/configure_codex.py", "factory/scripts/configure_codex.py"),
+        (RUNTIME_DIR / "scripts/statusline.sh", "factory/scripts/statusline.sh"),
+        (RUNTIME_DIR / "scripts/uninstall.py", "factory/scripts/uninstall.py"),
+        (RUNTIME_DIR / "scripts/verify-fetch.sh", "factory/scripts/verify-fetch.sh"),
+    ):
+        if has_symlink_component(path) or not path.is_file():
+            continue
+        try:
+            actual = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError:
+            continue
+        if expected.get(source) == actual:
+            path.unlink()
+        else:
+            print(f"kept changed or foreign runtime file: {path}")
+
+    for directory in (RUNTIME_DIR / "hooks", RUNTIME_DIR / "scripts"):
+        try:
+            directory.rmdir()
+        except OSError:
+            pass
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Remove Alexandria integrations safely")
     parser.add_argument(
@@ -412,10 +456,7 @@ def main() -> int:
         ALEX_DIR / "system/scripts/verify-fetch.sh",
     ):
         remove_owned_file(legacy)
-    if RUNTIME_DIR.is_symlink():
-        RUNTIME_DIR.unlink()
-    elif RUNTIME_DIR.is_dir():
-        shutil.rmtree(RUNTIME_DIR)
+    remove_signed_runtime_files()
 
     if not ok:
         print("Alexandria was disconnected where it was safe to do so, but one malformed config was left unchanged.")
