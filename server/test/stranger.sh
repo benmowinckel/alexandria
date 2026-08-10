@@ -163,8 +163,11 @@ check "source commit is Touch ID signed" git -C "$SOURCE_DIR" \
   verify-commit "$SOURCE_COMMIT"
 check "setup is bash script"         bash -c '[ "$(head -1 "$1")" = "#!/usr/bin/env bash" ]' _ "$SOURCE_DIR/factory/setup.sh"
 
-# Execute only that authenticated commit with the test API key.
+# Execute only that authenticated commit with the dedicated test account. The
+# fixture is the informed approval for this isolated account connection; no
+# connected feature is enabled by setup.
 ALEXANDRIA_SOURCE_COMMIT="$SOURCE_COMMIT" \
+  ALEXANDRIA_ACCOUNT_CONNECT_APPROVED=1 \
   bash "$SOURCE_DIR/factory/setup.sh" "$API_KEY" 2>/dev/null
 
 # Verify directory structure
