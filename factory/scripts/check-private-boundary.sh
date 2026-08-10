@@ -292,6 +292,12 @@ require factory/setup.sh \
 require factory/setup.sh \
   'for rel in hooks/shim.sh scripts/verify-fetch.sh' \
   'runtime ownership is inferred from a marker instead of exact prior signed bytes'
+require factory/setup.sh \
+  '[ ! -L "$RUNTIME_DIR/.canon_manifest" ]' \
+  'setup can follow a redirected prior manifest'
+require factory/scripts/verify-fetch.sh \
+  'if [ "$MODE:$REL" != "run:setup.sh" ]; then' \
+  'verified updates replace the prior manifest before setup can prove the existing runtime'
 forbid factory/setup.sh \
   'date \+%s > "\$ALEX_DIR/system/\.last_maintenance"' \
   'setup still overwrites an unreceipted hidden file in the Author namespace'

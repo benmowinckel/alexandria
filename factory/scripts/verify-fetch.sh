@@ -71,11 +71,16 @@ elif command -v sha256sum >/dev/null 2>&1; then got=$(sha256sum "$f" | cut -d' '
 else fail no-sha-tool; fi
 [ "$want" = "$got" ] || fail hash-mismatch
 
-# Pin the highest authenticated release before emitting or executing anything.
-cp "$mf" "$manifest_cache" || fail pin-manifest
-printf '%s\n' "$version" > "$version_cache" || fail pin-version
-mv "$manifest_cache" "$RUNTIME_DIR/.canon_manifest" || fail pin-manifest
-mv "$version_cache" "$RUNTIME_DIR/.factory_version" || fail pin-version
+# Pin the highest authenticated release before emitting or executing anything,
+# except setup itself. Setup first needs the still-installed manifest to prove
+# ownership of the existing runtime; it then independently verifies and pins
+# this new manifest before replacing any protected byte.
+if [ "$MODE:$REL" != "run:setup.sh" ]; then
+  cp "$mf" "$manifest_cache" || fail pin-manifest
+  printf '%s\n' "$version" > "$version_cache" || fail pin-version
+  mv "$manifest_cache" "$RUNTIME_DIR/.canon_manifest" || fail pin-manifest
+  mv "$version_cache" "$RUNTIME_DIR/.factory_version" || fail pin-version
+fi
 
 # Authentic. The update path runs the verified temporary file directly and
 # marks that fact for setup.sh; the ordinary path emits bytes for callers that
