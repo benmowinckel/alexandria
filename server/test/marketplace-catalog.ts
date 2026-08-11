@@ -3,6 +3,7 @@ import {
   canonicalizeModuleId,
   deriveMarketplaceTier,
   isMarketplaceModule,
+  marketplaceBuiltins,
   moduleIdAliases,
 } from '../src/marketplace-catalog.js';
 
@@ -28,7 +29,11 @@ for (const name of ['axioms', 'methodology', 'editor', 'mercury', 'publisher']) 
   );
 }
 assert.equal(
-  deriveMarketplaceTier('github:benmowinckel/alexandria#factory/canon/library'),
+  deriveMarketplaceTier('github:benmowinckel/alexandria#factory/canon/foundation'),
+  'core',
+);
+assert.equal(
+  deriveMarketplaceTier('github:benmowinckel/alexandria#factory/systems/capture-pipeline'),
   'official',
 );
 assert.equal(
@@ -48,5 +53,26 @@ assert.equal(new Set(moduleIdAliases('github:benmowinckel/alexandria-modules#ver
 assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/foundation'), false);
 assert.equal(isMarketplaceModule('github:mowinckelb/alexandria#factory/canon/foundation'), false);
 assert.equal(isMarketplaceModule(currentDefault), true);
+assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/library'), false);
+assert.equal(isMarketplaceModule('github:benmowinckel/alexandria-modules#optimise'), false);
+assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/bookshelf'), true);
+assert.equal(isMarketplaceModule('github:someone/their-modules#focus'), true);
+
+const builtins = marketplaceBuiltins();
+assert.deepEqual(
+  builtins.map(({ name, tier }) => [name, tier]),
+  [
+    ['foundation', 'core'],
+    ['follow-through', 'core'],
+    ['axioms', 'default'],
+    ['editor', 'default'],
+    ['mercury', 'default'],
+    ['methodology', 'default'],
+    ['publisher', 'default'],
+    ['capture pipeline', 'official'],
+    ['state-based sync', 'official'],
+    ['bookshelf', 'community'],
+  ],
+);
 
 console.log('marketplace catalog identity and activation layers: PASS');

@@ -12,6 +12,7 @@ import {
   deriveKind,
   deriveMarketplaceTier,
   isMarketplaceModule,
+  marketplaceBuiltins,
   moduleIdAliases,
   parseModuleId,
 } from './marketplace-catalog.js';
@@ -510,7 +511,7 @@ export function registerProtocol(app: Hono) {
     return c.json({ ok: true, modules: responseModules, requests_logged: requestRows.length });
   });
 
-  // ── Marketplace: browse module usage ───────────────────────────
+  // ── Marketplace: browse modules ────────────────────────────────
   //
   // Three routes:
   //   GET /marketplace           — public catalog
@@ -531,12 +532,9 @@ export function registerProtocol(app: Hono) {
     // is private Marketplace Signal exposed only via the auth-gated
     // `/marketplace/:module` endpoint.
     //
-    // 90-day recency window — the catalog must be able to forget. Survival
-    // ranking only works if dormant modules drop out. Soft default; revisit
-    // once the catalog has scale. Dormancy is a view-filter, not removal:
-    // `?all=1` lifts the window so dormant modules stay queryable (a2
-    // catalog-hardening decision, 2026-06-09). Zero new state either way —
-    // both views derive from the same call log.
+    // Alexandria's own inventory is explicit and always visible. Community
+    // modules are discovered from approved usage reports and use a 90-day
+    // forget-window; `?all=1` lifts that community-only window.
     const showAll = c.req.query('all') === '1';
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
     const { results } = showAll
@@ -550,10 +548,13 @@ export function registerProtocol(app: Hono) {
     // Old and current founder handles, plus the old modules-repo name, are one
     // identity. Normalise before resolution so the public catalog never shows
     // duplicate modules or links back through stale redirects.
+    const builtins = marketplaceBuiltins();
+    const builtinIds = new Set(builtins.map((module) => module.id));
     const ids = [...new Set((results || [])
       .map((r) => canonicalizeModuleId(r.module_id))
-      .filter(isMarketplaceModule))];
-    let modules = await Promise.all(ids.map(async (moduleId) => {
+      .filter(isMarketplaceModule)
+      .filter((id) => !builtinIds.has(id)))];
+    const communityModules = await Promise.all(ids.map(async (moduleId) => {
       const meta = await resolveModule(moduleId);
       return {
         id: moduleId,
@@ -565,6 +566,7 @@ export function registerProtocol(app: Hono) {
         status: meta?.status || 'unreachable',
       };
     }));
+    let modules = [...builtins, ...communityModules];
 
     // Optional filters — additive query params, no-op when absent.
     const kindFilter = c.req.query('kind');
@@ -572,10 +574,17 @@ export function registerProtocol(app: Hono) {
     const authorFilter = c.req.query('author');
     if (authorFilter) modules = modules.filter((m) => m.author_github_login === authorFilter);
 
-    // Replaceable defaults first, then official opt-ins, then community.
+    // Incompressible core first, then replaceable defaults, official additions,
+    // and author modules.
+    const builtinOrder = new Map(builtins.map((module, index) => [module.id, index]));
     modules.sort((a, b) => {
-      const rank = { default: 0, official: 1, community: 2 } as const;
+      const rank = { core: 0, default: 1, official: 2, community: 3 } as const;
       if (rank[a.tier] !== rank[b.tier]) return rank[a.tier] - rank[b.tier];
+      const aBuiltin = builtinOrder.get(a.id);
+      const bBuiltin = builtinOrder.get(b.id);
+      if (aBuiltin !== undefined && bBuiltin !== undefined) return aBuiltin - bBuiltin;
+      if (aBuiltin !== undefined) return -1;
+      if (bBuiltin !== undefined) return 1;
       return a.name.localeCompare(b.name);
     });
 

@@ -14,9 +14,9 @@
 
 `change-closure.md` — the core write invariant: every substantive edit reaches its existing effects without the Author remembering the dependency.
 
-The visible cue is part of the core because without it the loop depends on the Author remembering to run the product. It is still immediately opt-out: user control and product completeness are different questions. Turning the cue off intentionally removes the automatic return path; it does not convert the cue into a method or marketplace module.
+The visible cue is part of the core because without it the loop depends on the Author remembering to run the product. It is still immediately opt-out: user control and product completeness are different questions. Turning the cue off intentionally removes the automatic return path; it does not convert the cue into a method.
 
-The loop is not a marketplace module. It is never ranked, reported, recommended, or listed there.
+The marketplace lists `foundation.md` and `change-closure.md` as **core** so an Author can see and recover the pieces whose removal breaks the loop. They are references, not choices: never ranked, reported, or recommended against alternatives. The marketplace calls `change-closure.md` **follow-through** because that is what it does in plain English.
 
 ## methods — included, on locally, removable
 
@@ -36,7 +36,7 @@ With all five off, Foundation still runs the passive session, visible cue, `/a` 
 
 Capture inputs and shortcuts, `state-based-sync`, future local modules, and community-built methods extend the loop without becoming its foundation. They are installed or used only for a concrete job the Author asked their ai to solve. A foreign module is untrusted material and is reviewed before adoption.
 
-Alexandria-built additions are labelled **official** in the marketplace. Everyone else's modules are shown under their author. Neither label implies activation. `bookshelf.md` is reference material, not an active feature and not marketplace-ranked.
+Alexandria-built additions are labelled **official** in the marketplace. Everyone else's modules are shown under their author. Neither label implies activation. `bookshelf.md` appears under Benjamin's authorship as personal reference material, not as an Alexandria default.
 
 ## connections — dormant until separately approved
 
@@ -51,9 +51,9 @@ Alexandria-built additions are labelled **official** in the marketplace. Everyon
 
 Their signed references may be installed so the Author's ai can explain a direct request without fetching instructions first. They do nothing merely because the files exist.
 
-## marketplace — additions, not the product core
+## marketplace — the legible inventory
 
-The marketplace is a source for replaceable methods and additions, not a product layer of its own. It never contains the loop. It is available only when the Author directly asks to browse or use it. The private ai never recommends a module from private material, turns browsing into an onboarding step, or reports usage without exact manifest approval.
+The marketplace shows the two core recovery references, the five defaults, curated official additions, and modules published by individual Authors. Alexandria's own inventory is explicit and remains visible even when no recent use has been reported; approved usage only discovers community additions. Internal architecture maps and dormant connection instructions are not modules and stay invisible. The marketplace is available only when the Author directly asks to browse or use it. The private ai never recommends a module from private material, turns browsing into an onboarding step, or reports usage without exact manifest approval.
 
 ---
 

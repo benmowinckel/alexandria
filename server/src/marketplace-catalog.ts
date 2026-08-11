@@ -27,19 +27,25 @@ export interface ParsedModuleId {
   slug?: string;
 }
 
-export type MarketplaceTier = 'default' | 'official' | 'community';
+export type MarketplaceTier = 'core' | 'default' | 'official' | 'community';
+
+export interface MarketplaceCatalogEntry {
+  id: string;
+  name: string;
+  description: string;
+  author_github_login: string | null;
+  kind: string;
+  tier: MarketplaceTier;
+  status: 'ok' | 'unreachable';
+}
 
 const CURRENT_OWNER = 'benmowinckel';
 const LEGACY_OWNER = 'mowinckelb';
 const FACTORY_REPO = 'alexandria';
 const MODULES_REPO = 'alexandria-modules';
 const LEGACY_MODULES_REPO = 'alexandria-systems';
-const DEFAULT_MODULE_PATHS = new Set([
-  'factory/canon/axioms',
-  'factory/canon/methodology',
-  'factory/canon/editor',
-  'factory/canon/mercury',
-  'factory/canon/publisher',
+const RETIRED_MODULE_IDS = new Set([
+  'github:benmowinckel/alexandria-modules#optimise',
 ]);
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
@@ -60,6 +66,103 @@ export function parseModuleId(id: string): ParsedModuleId {
 
 export function buildModuleId(user: string, repo: string, path: string): string {
   return `github:${user}/${repo}#${path}`;
+}
+
+/**
+ * The built-in catalog is product inventory, so it must not disappear merely
+ * because nobody reported using a module recently. Usage history only discovers
+ * community additions; this list states what Alexandria itself currently ships.
+ */
+const MARKETPLACE_BUILTINS = [
+  {
+    path: 'factory/canon/foundation',
+    name: 'foundation',
+    description: 'The complete local loop. Remove it and the loop stops.',
+    kind: 'canon',
+    tier: 'core',
+  },
+  {
+    path: 'factory/canon/change-closure',
+    name: 'follow-through',
+    description: 'When something changes, updates every place that depends on it.',
+    kind: 'canon',
+    tier: 'core',
+  },
+  {
+    path: 'factory/canon/axioms',
+    name: 'axioms',
+    description: 'Why the loop exists and what it is trying to protect.',
+    kind: 'canon',
+    tier: 'default',
+  },
+  {
+    path: 'factory/canon/editor',
+    name: 'editor',
+    description: 'Draws out and sharpens your own thinking.',
+    kind: 'canon',
+    tier: 'default',
+  },
+  {
+    path: 'factory/canon/mercury',
+    name: 'mercury',
+    description: 'Brings useful ideas in and keeps important ones alive.',
+    kind: 'canon',
+    tier: 'default',
+  },
+  {
+    path: 'factory/canon/methodology',
+    name: 'methodology',
+    description: 'How your ai captures, develops, and preserves your thinking.',
+    kind: 'canon',
+    tier: 'default',
+  },
+  {
+    path: 'factory/canon/publisher',
+    name: 'publisher',
+    description: 'Turns developed thinking into finished work.',
+    kind: 'canon',
+    tier: 'default',
+  },
+  {
+    path: 'factory/systems/capture-pipeline',
+    name: 'capture pipeline',
+    description: 'Turns saved links, screenshots, and notes into material you can use.',
+    kind: 'system',
+    tier: 'official',
+  },
+  {
+    path: 'factory/systems/state-based-sync',
+    name: 'state-based sync',
+    description: 'Checks whether the system is true now, not just what changed.',
+    kind: 'system',
+    tier: 'official',
+  },
+  {
+    path: 'factory/canon/bookshelf',
+    name: 'bookshelf',
+    description: "Benjamin's personal shelf of books and ideas worth returning to.",
+    kind: 'reference',
+    tier: 'community',
+  },
+] as const;
+
+const BUILTIN_TIERS = new Map<string, MarketplaceTier>(
+  MARKETPLACE_BUILTINS.map((module) => [
+    buildModuleId(CURRENT_OWNER, FACTORY_REPO, module.path),
+    module.tier,
+  ]),
+);
+
+export function marketplaceBuiltins(): MarketplaceCatalogEntry[] {
+  return MARKETPLACE_BUILTINS.map((module) => ({
+    id: buildModuleId(CURRENT_OWNER, FACTORY_REPO, module.path),
+    name: module.name,
+    description: module.description,
+    author_github_login: CURRENT_OWNER,
+    kind: module.kind,
+    tier: module.tier,
+    status: 'ok',
+  }));
 }
 
 /**
@@ -107,21 +210,29 @@ export function moduleIdAliases(id: string): string[] {
 }
 
 /**
- * Activation layer, not a quality ranking. The local Foundation loop is
- * deliberately absent from the marketplace. Five replaceable methods ship as
- * defaults; other Alexandria-built modules are official opt-ins; every other
- * author is community.
+ * Product role, not a quality ranking. Core files make the local loop work;
+ * five replaceable methods ship as defaults; curated Alexandria additions are
+ * official; everything else is shown under its author.
  */
 export function deriveMarketplaceTier(id: string): MarketplaceTier {
-  const parsed = parseModuleId(canonicalizeModuleId(id));
-  if (parsed.kind !== 'github' || !parsed.user || !parsed.repo || !parsed.path) return 'community';
-  if (parsed.user !== CURRENT_OWNER || parsed.repo !== FACTORY_REPO) return 'community';
-  return DEFAULT_MODULE_PATHS.has(parsed.path) ? 'default' : 'official';
+  const canonical = canonicalizeModuleId(id);
+  return BUILTIN_TIERS.get(canonical) || 'community';
 }
 
-/** Foundation is the local product core, never a marketplace entry. */
+/**
+ * Whether a reported module may enter marketplace signal. Core files are shown
+ * for recovery but never ranked. Founder-repo files enter only through the
+ * explicit inventory above, keeping internal machinery out of the catalog.
+ */
 export function isMarketplaceModule(id: string): boolean {
-  return canonicalizeModuleId(id) !== 'github:benmowinckel/alexandria#factory/canon/foundation';
+  const canonical = canonicalizeModuleId(id);
+  if (RETIRED_MODULE_IDS.has(canonical)) return false;
+  const builtinTier = BUILTIN_TIERS.get(canonical);
+  if (builtinTier) return builtinTier !== 'core';
+
+  const parsed = parseModuleId(canonical);
+  if (parsed.kind !== 'github' || !parsed.user || !parsed.repo) return false;
+  return parsed.user !== CURRENT_OWNER || parsed.repo !== FACTORY_REPO;
 }
 
 /** Hand-rolled YAML parser — only `name` and `description` matter. */

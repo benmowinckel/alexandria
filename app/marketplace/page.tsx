@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   ...pageMetadata({
     path: '/marketplace',
     title: 'marketplace — alexandria.',
-    description: 'Replaceable methods and optional additions for Alexandria loops.',
+    description: 'The core, defaults, and additions for an Alexandria loop.',
   }),
 };
 
@@ -20,7 +20,7 @@ interface MarketplaceModule {
   description: string;
   author_github_login: string | null;
   kind: string;
-  tier?: 'default' | 'official' | 'community';
+  tier?: 'core' | 'default' | 'official' | 'community';
   status: 'ok' | 'unreachable';
 }
 
@@ -54,8 +54,9 @@ const DEFAULT_PATHS = new Set([
   'factory/canon/publisher',
 ]);
 
-function fallbackTier(parsed: ParsedId | null): 'default' | 'official' | 'community' {
+function fallbackTier(parsed: ParsedId | null): 'core' | 'default' | 'official' | 'community' {
   if (!parsed || parsed.user !== 'benmowinckel' || parsed.repo !== 'alexandria') return 'community';
+  if (parsed.path === 'factory/canon/foundation' || parsed.path === 'factory/canon/change-closure') return 'core';
   return DEFAULT_PATHS.has(parsed.path) ? 'default' : 'official';
 }
 
@@ -65,20 +66,18 @@ async function loadModules(): Promise<MarketplaceModule[]> {
     if (!res.ok) return [];
     const data = await res.json() as Partial<MarketplaceResponse>;
     // Rolling-deploy safety: the page may briefly see the previous API. Fold
-    // its legacy founder IDs here too, prefer the current row, and keep
-    // Foundation out even before the server update lands.
+    // its legacy founder IDs here too and prefer the current row.
     const normalized = new Map<string, MarketplaceModule>();
-    for (const module of data.modules || []) {
-      const parsed = parseGithubId(module.id);
-      const id = parsed ? `github:${parsed.user}/${parsed.repo}#${parsed.path}` : module.id;
-      if (id === 'github:benmowinckel/alexandria#factory/canon/foundation') continue;
+    for (const entry of data.modules || []) {
+      const parsed = parseGithubId(entry.id);
+      const id = parsed ? `github:${parsed.user}/${parsed.repo}#${parsed.path}` : entry.id;
       const current = normalized.get(id);
-      const isCurrentId = module.id.startsWith('github:benmowinckel/');
+      const isCurrentId = entry.id.startsWith('github:benmowinckel/');
       if (!current || isCurrentId) {
         normalized.set(id, {
-          ...module,
+          ...entry,
           id,
-          author_github_login: parsed?.user || module.author_github_login,
+          author_github_login: parsed?.user || entry.author_github_login,
         });
       }
     }
