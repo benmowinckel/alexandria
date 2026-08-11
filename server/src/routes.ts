@@ -15,6 +15,7 @@ import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL } from '.
 import { runHealthDigest, runWeekOneCheckIns } from './cron.js';
 import { publishFeedback } from './marketplace.js';
 import { handleGithubPushWebhook } from './marketplace-catalog.js';
+import { mirrorPendingAuditBatch } from './audit.js';
 
 /**
  * KV-backed rate limit for destructive/expensive admin endpoints.
@@ -1274,6 +1275,21 @@ export function registerRoutes(app: Hono) {
     const kv = getKV();
     const raw = await kv.get('cron:health_digest');
     return c.json({ ok: true, result: raw ? JSON.parse(raw) : null });
+  });
+
+  // Authenticated recovery/verification route for the same audit work the
+  // 10-minute trigger runs. It shortens a failed-cron loop without weakening
+  // the public read-only /audit/head boundary.
+  app.post('/admin/cron/audit', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    if (await checkAdminRateLimit('audit', 6, 60)) return c.json({ error: 'Rate limited (6/min)' }, 429);
+    try {
+      const result = await mirrorPendingAuditBatch();
+      return c.json({ ok: true, ...result });
+    } catch (err) {
+      logEvent('audit_mirror_manual_failed', { error: String(err).slice(0, 200) });
+      return c.json({ ok: false, error: String(err).slice(0, 200) }, 500);
+    }
   });
 
   // Manual trigger for week-1 check-in. Same shorter-feedback-loop motivation

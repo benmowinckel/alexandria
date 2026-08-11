@@ -440,7 +440,7 @@ def main() -> int:
     ok = remove_owned_allowed_signer() and ok
 
     for base in (HOME / ".claude/skills", HOME / ".cursor/skills", HOME / ".agents/skills", HOME / ".factory/skills"):
-        for name in ("a", "a.", "alexandria", "alexandria-close"):
+        for name in ("a", "a.", "alexandria", "alexandria-close", "close-alexandria"):
             remove_owned_tree(base / name)
     remove_owned_tree(HOME / ".claude/scheduled-tasks/alexandria", marker="SKILL.md")
 

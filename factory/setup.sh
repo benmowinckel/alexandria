@@ -720,6 +720,21 @@ install_close_skill() {
   record_owned_file "$dir/SKILL.md"
 }
 
+# Windows filesystems strip a trailing dot from directory names, so the
+# canonical `a.` skill path aliases the start skill's `a` directory there.
+# The directory is only storage: keep the public skill name `a.` in a portable
+# directory on Windows. Named fallbacks still preserve genuinely foreign slots.
+close_skill_slots() {
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+      printf '%s\n' 'alexandria-close|alexandria-close' 'close-alexandria|a.'
+      ;;
+    *)
+      printf '%s\n' 'a.|a.' 'alexandria-close|alexandria-close' 'close-alexandria|close-alexandria'
+      ;;
+  esac
+}
+
 # Claude Code — skill + hooks
 
 if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
@@ -733,14 +748,18 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   CLAUDE_START_SKILL="$CLAUDE_A_SKILL"
 
   CLAUDE_CLOSE_SKILL=""
-  for candidate in "a." "alexandria-close"; do
-    if alex_skill_slot_available "$HOME/.claude/skills/$candidate" "skills/aclose.md" "$candidate" "a."; then
-      install_close_skill "$HOME/.claude/skills/$candidate" "$candidate" "skills/aclose.md (session close)" && CLAUDE_CLOSE_SKILL="$candidate"
+  CLAUDE_CLOSE_DIR=""
+  while IFS='|' read -r candidate_dir candidate_name; do
+    if alex_skill_slot_available "$HOME/.claude/skills/$candidate_dir" "skills/aclose.md" "$candidate_name" "a."; then
+      if install_close_skill "$HOME/.claude/skills/$candidate_dir" "$candidate_name" "skills/aclose.md (session close)"; then
+        CLAUDE_CLOSE_SKILL="$candidate_name"
+        CLAUDE_CLOSE_DIR="$candidate_dir"
+      fi
       [ -n "$CLAUDE_CLOSE_SKILL" ] && break
     else
-      echo "  Claude Code: kept foreign /$candidate skill"
+      echo "  Claude Code: kept foreign /$candidate_name skill"
     fi
-  done
+  done < <(close_skill_slots)
 
   # (The scheduled-task bootstrap for the cloud autoloop is RETIRED — /a does
   # that processing interactively. Nothing scheduled installs here.)
@@ -984,14 +1003,18 @@ if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
   CURSOR_START_SKILL="$CURSOR_A_SKILL"
 
   CURSOR_CLOSE_SKILL=""
-  for candidate in "a." "alexandria-close"; do
-    if alex_skill_slot_available "$HOME/.cursor/skills/$candidate" "skills/aclose.md" "$candidate" "a."; then
-      install_close_skill "$HOME/.cursor/skills/$candidate" "$candidate" "skills/aclose.md (cursor session close)" && CURSOR_CLOSE_SKILL="$candidate"
+  CURSOR_CLOSE_DIR=""
+  while IFS='|' read -r candidate_dir candidate_name; do
+    if alex_skill_slot_available "$HOME/.cursor/skills/$candidate_dir" "skills/aclose.md" "$candidate_name" "a."; then
+      if install_close_skill "$HOME/.cursor/skills/$candidate_dir" "$candidate_name" "skills/aclose.md (cursor session close)"; then
+        CURSOR_CLOSE_SKILL="$candidate_name"
+        CURSOR_CLOSE_DIR="$candidate_dir"
+      fi
       [ -n "$CURSOR_CLOSE_SKILL" ] && break
     else
-      echo "  Cursor: kept foreign /$candidate skill"
+      echo "  Cursor: kept foreign /$candidate_name skill"
     fi
-  done
+  done < <(close_skill_slots)
 
   CURSOR_HOOKS_OK=""
   if command -v python3 &>/dev/null; then
@@ -1189,14 +1212,18 @@ if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   done
 
   CODEX_CLOSE_SKILL=""
-  for candidate in "a." "alexandria-close"; do
-    if alex_skill_slot_available "$HOME/.agents/skills/$candidate" "skills/aclose.md" "$candidate" "a."; then
-      install_close_skill "$HOME/.agents/skills/$candidate" "$candidate" "skills/aclose.md (Codex session close)" && CODEX_CLOSE_SKILL="$candidate"
+  CODEX_CLOSE_DIR=""
+  while IFS='|' read -r candidate_dir candidate_name; do
+    if alex_skill_slot_available "$HOME/.agents/skills/$candidate_dir" "skills/aclose.md" "$candidate_name" "a."; then
+      if install_close_skill "$HOME/.agents/skills/$candidate_dir" "$candidate_name" "skills/aclose.md (Codex session close)"; then
+        CODEX_CLOSE_SKILL="$candidate_name"
+        CODEX_CLOSE_DIR="$candidate_dir"
+      fi
       [ -n "$CODEX_CLOSE_SKILL" ] && break
     else
-      echo "  Codex: kept foreign \$$candidate skill"
+      echo "  Codex: kept foreign \$$candidate_name skill"
     fi
-  done
+  done < <(close_skill_slots)
 
   # Merge the current Codex surfaces. Preserve every unknown hook and every
   # byte of the user's instructions outside our own marker. Never write the
@@ -1597,9 +1624,10 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   if [ -n "${CLAUDE_HOOKS_OK:-}" ] && validate_claude_config && \
      [ "${CLAUDE_A_SKILL:-}" = "a" ] && \
      [ -f "$HOME/.claude/skills/a/SKILL.md" ] && \
-     [ "${CLAUDE_CLOSE_SKILL:-}" = "a." ] && \
-     [ -f "$HOME/.claude/skills/a./SKILL.md" ]; then
-    CLAUDE_NAMES="/a + /a."
+     [ -n "${CLAUDE_CLOSE_SKILL:-}" ] && \
+     [ -f "$HOME/.claude/skills/${CLAUDE_CLOSE_DIR:-}/SKILL.md" ] && \
+     grep -q "^name: $CLAUDE_CLOSE_SKILL$" "$HOME/.claude/skills/$CLAUDE_CLOSE_DIR/SKILL.md" 2>/dev/null; then
+    CLAUDE_NAMES="/a + /$CLAUDE_CLOSE_SKILL"
     STATUS_CLAUDE="ok"; DETAIL_CLAUDE="$CLAUDE_NAMES ready; hooks wired; foreign names preserved"
   else
     STATUS_CLAUDE="fail"; DETAIL_CLAUDE="Claude Code cannot safely own the visible /a and /a. route or merge its hooks — resolve the reported collision/error, then re-run setup"
@@ -1615,9 +1643,10 @@ if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
      [ -f "$HOME/.cursor/rules/$CURSOR_RULE_FILE" ] && \
      [ "${CURSOR_A_SKILL:-}" = "a" ] && \
      [ -f "$HOME/.cursor/skills/a/SKILL.md" ] && \
-     [ "${CURSOR_CLOSE_SKILL:-}" = "a." ] && \
-     [ -f "$HOME/.cursor/skills/a./SKILL.md" ]; then
-    STATUS_CURSOR="ok"; DETAIL_CURSOR="hooks + $CURSOR_RULE_FILE + /a + /a.; foreign names preserved"
+     [ -n "${CURSOR_CLOSE_SKILL:-}" ] && \
+     [ -f "$HOME/.cursor/skills/${CURSOR_CLOSE_DIR:-}/SKILL.md" ] && \
+     grep -q "^name: $CURSOR_CLOSE_SKILL$" "$HOME/.cursor/skills/$CURSOR_CLOSE_DIR/SKILL.md" 2>/dev/null; then
+    STATUS_CURSOR="ok"; DETAIL_CURSOR="hooks + $CURSOR_RULE_FILE + /a + /$CURSOR_CLOSE_SKILL; foreign names preserved"
   else
     STATUS_CURSOR="fail"; DETAIL_CURSOR="Cursor cannot safely own the visible /a and /a. route or merge its rules/hooks — resolve the reported collision/error, then re-run setup"
   fi
@@ -1636,8 +1665,9 @@ if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
      grep -q '^user_invocable: true$' "$CODEX_START_FILE" 2>/dev/null && \
      [ -f "$HOME/.agents/skills/$CODEX_START_NAME/agents/openai.yaml" ] && \
      grep -q 'allow_implicit_invocation: false' "$HOME/.agents/skills/$CODEX_START_NAME/agents/openai.yaml" 2>/dev/null && \
-     [ "${CODEX_CLOSE_SKILL:-}" = "a." ] && \
-     [ -f "$HOME/.agents/skills/$CODEX_CLOSE_SKILL/SKILL.md" ]; then
+     [ -n "${CODEX_CLOSE_SKILL:-}" ] && \
+     [ -f "$HOME/.agents/skills/${CODEX_CLOSE_DIR:-}/SKILL.md" ] && \
+     grep -q "^name: $CODEX_CLOSE_SKILL$" "$HOME/.agents/skills/$CODEX_CLOSE_DIR/SKILL.md" 2>/dev/null; then
     CODEX_SKILL_OK=1
   fi
   CODEX_CONFIG_OK=""

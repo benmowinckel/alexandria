@@ -238,6 +238,14 @@ check "start SKILL.md exists"      [ -f "$START_SKILL" ]
 check "start skill has Alexandria" grep -q "Alexandria" "$START_SKILL"
 check "foreign alexandria skill kept" grep -qxF 'foreign start skill — keep this exact line' "$HOME/.claude/skills/alexandria/SKILL.md"
 check "foreign close skill kept" grep -qxF 'foreign close skill — keep this exact line' "$HOME/.claude/skills/alexandria-close/SKILL.md"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    WINDOWS_CLOSE_SKILL="$HOME/.claude/skills/close-alexandria/SKILL.md"
+    check "Windows close alias exists" [ -f "$WINDOWS_CLOSE_SKILL" ]
+    check "Windows close alias keeps /a. name" grep -q '^name: a\.$' "$WINDOWS_CLOSE_SKILL"
+    ;;
+  *) check "canonical close skill exists" [ -f "$HOME/.claude/skills/a./SKILL.md" ] ;;
+esac
 # Inverted 2026-07-22: the scheduled-task bootstrap (retired cloud autoloop)
 # must NOT install — the core installs nothing scheduled.
 check "no scheduled task installed" bash -c '[ ! -f "$HOME/.claude/scheduled-tasks/alexandria/SKILL.md" ]'

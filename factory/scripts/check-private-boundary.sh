@@ -334,6 +334,12 @@ require factory/setup.sh \
   '[ "${CLAUDE_A_SKILL:-}" = "a" ]' \
   'Claude can still report a healthy /a cue while /a belongs to a foreign skill'
 require factory/setup.sh \
+  "'close-alexandria|a.'" \
+  'Windows setup can still collapse the trailing-dot a. close skill into the a start skill'
+require factory/scripts/uninstall.py \
+  '"close-alexandria"' \
+  'the scoped uninstaller leaves the Windows-safe close alias behind'
+require factory/setup.sh \
   '"SessionStart"' \
   'Factory setup no longer installs its supported lifecycle hook'
 require factory/setup.sh \

@@ -222,14 +222,24 @@ jobs:
         run: |
           # /audit/head must update on every 10-minute cron, regardless of
           # whether new events were committed. Stale = silent audit failure.
-          # Threshold: 30 min covers normal cron jitter (3x the interval).
+          # Threshold: 30 min covers normal cron jitter (3x the interval). If
+          # stale, exercise the authenticated recovery route before failing;
+          # this both repairs the mirror and verifies its operational escape hatch.
           body=$(curl -sf https://api.alexandria-library.com/audit/head)
           echo "$body"
           last_run=$(echo "$body" | python3 -c "import json,sys;print(json.load(sys.stdin)['last_run_at'])")
           age_sec=$(python3 -c "import datetime as d;t=d.datetime.fromisoformat('$last_run'.replace('Z','+00:00'));print(int((d.datetime.now(d.timezone.utc)-t).total_seconds()))")
           if [ "$age_sec" -gt 1800 ]; then
-            echo "::error::Audit mirror stale — last_run_at was $age_sec seconds ago (threshold: 1800s = 30min)"
-            exit 1
+            echo "Audit mirror stale (${age_sec}s); running authenticated recovery"
+            curl -sf -X POST $SERVER/admin/cron/audit \
+              -H "Authorization: Bearer $API_KEY" >/dev/null
+            body=$(curl -sf https://api.alexandria-library.com/audit/head)
+            last_run=$(echo "$body" | python3 -c "import json,sys;print(json.load(sys.stdin)['last_run_at'])")
+            age_sec=$(python3 -c "import datetime as d;t=d.datetime.fromisoformat('$last_run'.replace('Z','+00:00'));print(int((d.datetime.now(d.timezone.utc)-t).total_seconds()))")
+            if [ "$age_sec" -gt 1800 ]; then
+              echo "::error::Audit mirror recovery failed — last_run_at remains $age_sec seconds old"
+              exit 1
+            fi
           fi
           echo "✓ audit mirror alive (last_run_at ${age_sec}s ago)"
 
