@@ -73,23 +73,22 @@ jobs:
 
       - name: Protocol call (per-module feedback)
         run: |
-          # `local:` prefix: passes parseModuleId validation at /call ingress, stays
-          # off the public /marketplace listing (filters to github:%). The auth-gated
-          # /marketplace/:module endpoint keys off raw module_id and works regardless.
-          # URLs inlined (no shell var) so check-smoke-paths.sh extracts a real path
-          # via its grep — variable substitution would leave a trailing-slash false
-          # positive.
+          # Report one exact, public module version. Local-only IDs are deliberately
+          # excluded from collective signal; the hash binds this call to the bytes
+          # the checked-out release actually contains.
+          MODULE_ID='github:benmowinckel/alexandria#factory/canon/bookshelf'
+          MODULE_SHA=$(sha256sum factory/canon/bookshelf.md | cut -d' ' -f1)
           curl -sf -X POST $SERVER/call \
             -H "Authorization: Bearer $API_KEY" \
             -H "X-Alexandria-Client: ci-smoke" \
             -H "Content-Type: application/json" \
-            -d '{"modules":[{"id":"local:smoke/methodology","text":"ci smoke verification"}]}' \
+            -d "{\"modules\":[{\"id\":\"$MODULE_ID\",\"text\":\"ci smoke verification\",\"source_sha256\":\"$MODULE_SHA\"}]}" \
             | grep -q '"ok":true' || { echo "::error::Call failed"; exit 1; }
 
-          # Verify call landed in marketplace. Slash in module id encoded as %2F;
-          # colon stays raw (valid in path segment). Hono decodes :module param.
-          MARKET=$(curl -sf $SERVER/marketplace/local:smoke%2Fmethodology -H "Authorization: Bearer $API_KEY")
+          # Verify the exact-version call landed in the authenticated module view.
+          MARKET=$(curl -sf $SERVER/marketplace/github:benmowinckel%2Falexandria%23factory%2Fcanon%2Fbookshelf -H "Authorization: Bearer $API_KEY")
           echo "$MARKET" | grep -q '"ci smoke verification"' || { echo "::error::Call not in marketplace"; exit 1; }
+          echo "$MARKET" | grep -q "$MODULE_SHA" || { echo "::error::Call lost exact source identity"; exit 1; }
 
           # Handshake must reflect the call we just made. Symmetry with the
           # file assertion above — catches any future read/write drift.

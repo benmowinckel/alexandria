@@ -1461,14 +1461,14 @@ if [ -f "$ALEX_DIR/system/hooks/visible-cue.off" ]; then
 elif [ ! -f "$RUNTIME_DIR/scripts/statusline.sh" ]; then
   STATUS_CUE="fail"; DETAIL_CUE="renderer missing — re-run setup"
 else
-  CUE_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer 2>/dev/null)
-  CUE_CODEX_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer-codex 2>/dev/null)
+  CUE_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer 2>/dev/null | tr -d '\r')
+  CUE_CODEX_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer-codex 2>/dev/null | tr -d '\r')
   CUE_PROBE_HOME="$RUNTIME_DIR/.cue-probe.$$"
   mkdir -p "$CUE_PROBE_HOME/system"
   printf 'alexandria-setup-probe %s\n' "$(date +%s)" > "$CUE_PROBE_HOME/system/.active_a_sessions"
   CUE_ACTIVE_RENDERED=$(printf '%s\n' '{"session_id":"alexandria-setup-probe"}' | \
     ALEXANDRIA_HOME="$CUE_PROBE_HOME" ALEXANDRIA_SETUP_PROBE=1 \
-    bash "$RUNTIME_DIR/scripts/statusline.sh" 2>/dev/null)
+    bash "$RUNTIME_DIR/scripts/statusline.sh" 2>/dev/null | tr -d '\r')
   rm -f "$CUE_PROBE_HOME/system/.active_a_sessions"
   rmdir "$CUE_PROBE_HOME/system" "$CUE_PROBE_HOME" 2>/dev/null || true
   if [[ "$CUE_RENDERED" == "→ "*" · start /a in a new chat" ]] && \
