@@ -65,7 +65,7 @@ The onboarding is **substantively excellent and safe** — it does the hard thin
 
 ## Run 3 — Rosa + cold screening/proposal — 2026-08-10/11
 
-**System under test:** local `factory/block.md` (Phase 5 magic close + join geography + evidence grep-or-die) ahead of tip `3342b6aa`. Also: mold-in ownership claims in `setup.sh` (local commit `8c5c6492`, not yet on origin/main).
+**System under test:** `factory/block.md` (Phase 5 magic close + join geography + evidence grep-or-die) + mold-in in `setup.sh`. Eval ran against local ahead of tip; later shipped as `1faecfd7` / factory `20260811044042`.
 
 ### Automated / harness
 
@@ -87,4 +87,4 @@ The onboarding is **substantively excellent and safe** — it does the hard thin
 - A chat that has never seen this product conversation (this harness uses Cursor subagents — colder than this thread, not as cold as a stranger’s laptop)
 
 ### Ship gate
-Ready to sign/ship local factory (mold-in + Phase 5 + methodology join-in-recommended + boundary/rubric) once founder fires `factory/ship.sh`.
+**Shipped** `1faecfd7` to `origin/main` (2026-08-11). Author-0 synced. Cold screening agent in this run inspected pre-ship tip `3342b6aa` — verdict still PASS; live tip now carries the hardened block.

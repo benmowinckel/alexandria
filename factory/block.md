@@ -65,7 +65,7 @@ The most important phase. The constitution captures who this person IS — and i
 Two layers to capture:
 
 - **What they think.** Beliefs, values, opinions, positions, axioms. Cite-able to source.
-- **How they think.** Cognitive patterns, recurring moves, framings they default to, the shape of their reasoning. Look for moves that show up across multiple sources — that's evidence of pattern, not coincidence. Phase 5's "name how they think" requires this layer to be captured.
+- **How they think.** Cognitive patterns, recurring moves, framings they default to, the shape of their reasoning. Look for moves that show up across multiple sources — that's evidence of pattern, not coincidence. Phase 5's mirror and develop turns need this layer on disk even though the report never labels it.
 
 Accuracy is the bar. Verify every claim against the source. Revise until the constitution would make the Author think "this thing knows me." Wrong = product fails. As many passes as needed. Every entry has a source citation (file + quote).
 
@@ -109,7 +109,7 @@ Verify on disk first: constitution has cite-able entries, notepad has real first
 
 **Job of the message:** they feel *seen*, they learn something they didn't have, they want another round, and the next action is obvious. Three turns compressed into one glance:
 
-1. **Turn 1 — mirror.** One load-bearing quote of theirs + what it unlocks across their other files. Proof you read them.
+1. **Turn 1 — mirror.** One load-bearing quote of theirs + the precise link to other approved files. Proof you read them. Credit their self-awareness; never claim you found a pattern they already named.
 2. **Turn 2 — develop.** One real tension already in their material. Push it. Socratic, not soothing. No flattery.
 3. **Turn 3 — create/accrete.** One genuinely new connection from existing model knowledge (essay, thinker, mechanism, precedent) that Phase 3 already vetted as absent from their bookshelf — specific enough they could chase it tonight. If you cannot name a real source confidently, omit rather than invent. No web search.
 
@@ -128,7 +128,7 @@ Nothing beside it except the mirror/develop/accrete body and the `/a` action. No
 ```
 done.
 
-[one or two lines: the quote + what it unlocks — the wow must land here]
+[one or two lines: the quote + the precise cross-file link — the wow must land here]
 
 [one short push on the tension — what changes if they resolve it]
 
@@ -143,7 +143,7 @@ library — https://alexandria-library.com/join
 ```
 
 **Fill bar (lazy fill = product failure):**
-- Mirror must quote them verbatim and unlock other approved files in the same breath — but **do not say "unlocks"** or claim you discovered a connection they already wrote. Credit their self-awareness; go one step deeper.
+- Mirror must quote them verbatim and connect other approved files in the same breath — without overclaiming ("everything," "the whole problem") or claiming you discovered a connection they already wrote. Credit their self-awareness; go one step deeper.
 - Use only images and metaphors that appear in their files. Never import garage/stage-set/startup tropes (or any other stock myth) that their writing does not use.
 - Tension must be already in their material, with operational stakes. If a thread is *unresolved*, do not assume the branch (no "before you decide the co-op's first X" when co-op itself is undecided). Describe the gap; do not prescribe the virtuous lane.
 - If Phase 1 found a nearer live deadline (talk, ship date, meeting), name it in the report — do not let the freshest emotional note erase the nearest clock.
