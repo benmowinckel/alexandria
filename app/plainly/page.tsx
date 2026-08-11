@@ -2,16 +2,15 @@ import type { Metadata } from 'next';
 import PublicDocReader from '../components/PublicDocReader';
 import { pageMetadata } from '../lib/config';
 
-// /plainly — the EXTENDED depth level (2026-07-29, three-level site:
-// simple = back slide · extended = this page · infinite = the ask).
-// The document is THE CANONICAL RUN-THROUGH (a4, locked 2026-07-29,
-// rendered at public/docs/Plainly.md — derive there, edit canon first).
-// The text leads (docked ask beneath): its whole job is converting a
-// zero-context reader into pressing the button; the mirror catches
-// whoever still has a question standing between them and it.
+// /plainly — EXTENDED conversion altitude (not a homepage re-pitch).
+// Homepage already sold deeper · sovereign · unified and coined the
+// alexandria loop. This page only carries what still blocks the click:
+// paste/merge mechanics, passive+active, week-one vs months, influence
+// contestability, worries, optional connector, why-now. Whitepaper stays
+// the philosophy altitude; do not replace this with it.
 const TITLE = 'alexandria, plainly.';
 const DESCRIPTION =
-  'How your own AI builds an owned record of your thinking and its changes, what it helps you do, and why to start today.';
+  'What still sits between you and the button: how the paste works, what changes in week one, how influence stays contestable, and what stays optional.';
 
 const PAGE_META = pageMetadata({
   path: '/plainly',
