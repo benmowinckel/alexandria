@@ -8,9 +8,9 @@ import { pageMetadata } from '../lib/config';
 // value pages in the sitemap. Title names the artifact; description honours
 // the whitepaper's actual argument (what ai leaves for humans → why human
 // provenance retains value → the practice that keeps the person involved).
-const TITLE = 'whitepaper — alexandria. when machines can do everything humans do, what is left — and even then, how does that human remain that human?';
+const TITLE = 'whitepaper — alexandria. when machines can do everything, what is left — and if something is left, how does that person remain themselves?';
 const DESCRIPTION =
-  'The full argument, from first principles: what is left for humans to do as machines match every capability — and even if something remains to do, how that human remains that human through the change.';
+  'The full argument, from first principles: what is left for humans to do as machines match every capability — and if something is left, how the person who does it remains themselves through the change.';
 
 const PAGE_META = pageMetadata({
   path: '/whitepaper',
