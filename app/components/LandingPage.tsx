@@ -304,43 +304,6 @@ export default function LandingPage() {
   // bonus-depth paragraph (map/biographer · control/portability ·
   // library/Strava). Depth is never load-bearing.
   // One open at a time; null = all closed (the resting state).
-  const [openPitch, setOpenPitch] = useState<string | null>(null);
-  // HOVER + CLICK expansion — mousemove-driven so a reveal changing
-  // the item's box never creates a false mouseleave. Every target seen
-  // during the short settle window is queued instead of discarded;
-  // otherwise moving away during the reveal could leave a section stuck
-  // open until the mouse moved again. Touch taps toggle via the click
-  // handler; coarse pointers skip mousemove.
-  const hoverIntent = useRef<{
-    id: string | null;
-    timer: ReturnType<typeof setTimeout> | null;
-  }>({ id: null, timer: null });
-  const settleLock = useRef(0);
-  useEffect(() => {
-    if (window.matchMedia('(pointer: coarse)').matches) return;
-    const onMove = (e: MouseEvent) => {
-      const item = (e.target as Element | null)?.closest?.(
-        '.pitch-item',
-      ) as HTMLElement | null;
-      const id = item?.dataset.pitch ?? null;
-      const intent = hoverIntent.current;
-      if (id === intent.id) return;
-      if (intent.timer) clearTimeout(intent.timer);
-      intent.id = id;
-      const settleRemaining = Math.max(0, settleLock.current - Date.now());
-      const intentDelay = id === null ? 180 : 190;
-      intent.timer = setTimeout(() => {
-        settleLock.current = Date.now() + 360;
-        setOpenPitch(id);
-        intent.timer = null;
-      }, settleRemaining + intentDelay);
-    };
-    window.addEventListener('mousemove', onMove, { passive: true });
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      if (hoverIntent.current.timer) clearTimeout(hoverIntent.current.timer);
-    };
-  }, []);
   // ── Front-slide feature rotation (founder, 2026-07-24: "the front
   // slide be ad rotation / feature rotation things elegantly"; second
   // pass same day: fixed rotation starting on the original hero,
@@ -406,8 +369,8 @@ export default function LandingPage() {
     {
       kind: 'feature',
       name: 'personalisation.',
-      lead: 'Your AI still treats you like a stranger.',
-      sub: 'Every conversation starts mid-thought: your AI already knows your work, your taste, and how you think.',
+      lead: 'Your ai still treats you like a stranger.',
+      sub: 'Every conversation starts mid-thought: your ai already knows your work, your taste, and how you think.',
     },
     // Added 2026-07-24 (founder picked it from the brainstorm): the
     // deepest claim, previously only gestured at by the hero. Canon's
@@ -416,20 +379,20 @@ export default function LandingPage() {
     {
       kind: 'feature',
       name: 'development.',
-      lead: 'Your AI answers you. It should be developing you.',
+      lead: 'Your ai answers you. It should be developing you.',
       sub: 'It pushes your thinking, records its influence, and notices when small changes add up to a different direction.',
     },
     {
       kind: 'feature',
       name: 'saved posts.',
       lead: 'Saved 200 posts you’ll never read?',
-      sub: 'Point your AI at the pile — it reads every one and writes what spoke to you into your own files. The things you saved become things you know.',
+      sub: 'Point your ai at the pile — it reads every one and writes what spoke to you into your own files. The things you saved become things you know.',
     },
     {
       kind: 'feature',
       name: 'capture.',
       lead: 'Your best thoughts die in your notes app.',
-      sub: 'One tap from your phone and it’s kept — days later, mid-conversation, your AI brings it back exactly when it matters.',
+      sub: 'One tap from your phone and it’s kept — days later, mid-conversation, your ai brings it back exactly when it matters.',
     },
     // Added 2026-07-24 (founder: "development and mind"): the
     // fragmentation pain — distinct from i (stranger) and vi (trapped).
@@ -439,13 +402,13 @@ export default function LandingPage() {
       kind: 'feature',
       name: 'one mind.',
       lead: 'Claude knows one you. Cursor another. ChatGPT a third.',
-      sub: 'One history on your machine, shared with the compatible AIs you choose — each can inspect where the others left you.',
+      sub: 'One history on your machine, shared with the compatible ais you choose — each can inspect where the others left you.',
     },
     {
       kind: 'feature',
       name: 'ownership.',
-      lead: 'Switching AI shouldn’t mean starting over.',
-      sub: 'What they know about you lives in a folder you own — move it to the next great AI in a minute, or delete it outright. No one holds you.',
+      lead: 'Switching ai shouldn’t mean starting over.',
+      sub: 'What they know about you lives in a folder you own — move it to the next great ai in a minute, or delete it outright. No one holds you.',
     },
     {
       kind: 'feature',
@@ -463,7 +426,7 @@ export default function LandingPage() {
       kind: 'feature',
       name: 'the mirror.',
       lead: 'You’ve never seen your thinking change.',
-      sub: 'As you use AI, it writes a living record of how you think and change. Read it, contest it, and keep the history yours.',
+      sub: 'As you use ai, it writes a living record of how you think and change. Read it, contest it, and keep the history yours.',
     },
   ];
   // The hand (corrected, founder 2026-07-24 night: "when i say rotate
@@ -950,7 +913,7 @@ export default function LandingPage() {
                       answer … after a couple seconds so it reads as an
                       answer to the question") — see .front-answer's
                       is-live animation. */}
-                  <p className="front-lead">When AI can do everything humans can, what do we do?</p>
+                  <p className="front-lead">When ai can do everything humans can, what do we do?</p>
                   <p className="front-answer">
                     <span className="front-answer-lead">our answer is becoming an</span>
                     <span className="front-answer-nameline"><span className="front-answer-name">alexandrian</span><span className="front-answer-dot">.</span></span>
@@ -1098,211 +1061,39 @@ export default function LandingPage() {
                     pinned below with the CTAs. Copy consolidated this
                     pass — same ideas and richness, fewer words. Section
                     plates (roman numerals) carry the manuscript register. */}
-                {/* The pitch — a manuscript index, not a wall of prose.
-                    Each large sentence carries the causal story on its own;
-                    the quieter line beneath adds precision. Whitespace
-                    separates the four beats, and the chevron alone implies
-                    that each one opens. The final before/after is the fifth
-                    beat: still literal, but typographically distinct. */}
-                <div className="pitch">
-                  <section
-                    data-pitch="instructions"
-                    className={`pitch-item${openPitch === 'instructions' ? ' is-open' : ''}`}
-                  >
-                    <button
-                      type="button"
-                      className="pitch-head"
-                      aria-expanded={openPitch === 'instructions'}
-                      onClick={() =>
-                        setOpenPitch(openPitch === 'instructions' ? null : 'instructions')
-                      }
-                    >
-                      <span className="pitch-lead">
-                        <span className="pitch-thesis">
-                          You start by showing the AI you already use our free
-                          instructions.
-                        </span>
-                        <span className="pitch-detail">
-                          <span className="pitch-detail-inner">
-                            Your AI reads them, then decides with you whether and
-                            how to change the way it works.
-                            <span className="pitch-caret" aria-hidden>›</span>
-                          </span>
-                        </span>
-                      </span>
-                    </button>
-                    <div className="pitch-body">
-                      <div className="pitch-body-inner">
-                        <p className="pitch-more">
-                          Think of the instructions as a recipe handed to a
-                          chef. Your AI is the chef. It reads the purpose and
-                          possible steps, then decides with you which parts make
-                          sense and how to use them. Alexandria is just the name
-                          for this way of working; nothing else is doing the
-                          work.
-                        </p>
-                        <p className="pitch-more">
-                          Starting from nothing? The free download gives you
-                          the full set of instructions our founder uses.
-                          Already have instructions, memory files, notes, or a
-                          vault? Keep them. Your AI fits the new instructions
-                          around what already works for you.
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-                  <section
-                    data-pitch="mirror"
-                    className={`pitch-item${openPitch === 'mirror' ? ' is-open' : ''}`}
-                  >
-                    <button
-                      type="button"
-                      className="pitch-head"
-                      aria-expanded={openPitch === 'mirror'}
-                      onClick={() =>
-                        setOpenPitch(openPitch === 'mirror' ? null : 'mirror')
-                      }
-                    >
-                      <span className="pitch-lead">
-                        <span className="pitch-thesis">
-                          Then your AI starts building a detailed mirror of you
-                          in files you own.
-                        </span>
-                        <span className="pitch-detail">
-                          <span className="pitch-detail-inner">
-                            It writes what it learns about you automatically, then
-                            reads those files whenever they would help.
-                            <span className="pitch-caret" aria-hidden>›</span>
-                          </span>
-                        </span>
-                      </span>
-                    </button>
-                    <div className="pitch-body">
-                      <div className="pitch-body-inner">
-                        <p className="pitch-more">
-                          These are ordinary text files on your computer, not a
-                          profile in our database. They can hold your thoughts,
-                          goals, work, taste, decisions, and way of
-                          reasoning&mdash;in as much detail as your AI can
-                          capture. Open them, edit them, move them, or delete
-                          them. They are yours; we never see them.
-                        </p>
-                        <p className="pitch-more">
-                          The same files can follow you from one AI to another,
-                          so you do not have to explain yourself again or lose
-                          your context when you switch. Most of the writing
-                          happens quietly while you work. When something useful
-                          exists only in your head, your AI can ask you to think
-                          it through and save the result.
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-                  <section
-                    data-pitch="development"
-                    className={`pitch-item${openPitch === 'development' ? ' is-open' : ''}`}
-                  >
-                    <button
-                      type="button"
-                      className="pitch-head"
-                      aria-expanded={openPitch === 'development'}
-                      onClick={() =>
-                        setOpenPitch(openPitch === 'development' ? null : 'development')
-                      }
-                    >
-                      <span className="pitch-lead">
-                        <span className="pitch-thesis">
-                          The mirror stops your thinking from disappearing
-                          between conversations.
-                        </span>
-                        <span className="pitch-detail">
-                          <span className="pitch-detail-inner">
-                            When a thought matters, your AI can bring it back,
-                            develop it with you, and help you act on it.
-                            <span className="pitch-caret" aria-hidden>›</span>
-                          </span>
-                        </span>
-                      </span>
-                    </button>
-                    <div className="pitch-body">
-                      <div className="pitch-body-inner">
-                        <p className="pitch-more">
-                          Without the mirror, a useful thought helps once, then
-                          gets buried. The next conversation cannot build on
-                          it. With the mirror, each conversation can begin with
-                          what you have already learned, what you care about,
-                          and where you want to go.
-                        </p>
-                        <p className="pitch-more">
-                          Your AI can bring a thought back, challenge it,
-                          connect it to new work, and help you turn it into
-                          something real. The thought keeps moving with you
-                          instead of ending with the conversation.
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-                  <section
-                    data-pitch="connector"
-                    className={`pitch-item${openPitch === 'connector' ? ' is-open' : ''}`}
-                  >
-                    <button
-                      type="button"
-                      className="pitch-head"
-                      aria-expanded={openPitch === 'connector'}
-                      onClick={() =>
-                        setOpenPitch(openPitch === 'connector' ? null : 'connector')
-                      }
-                    >
-                      <span className="pitch-lead">
-                        <span className="pitch-thesis">
-                          That repeating read-and-write cycle is your Alexandria
-                          loop.
-                        </span>
-                        <span className="pitch-detail">
-                          <span className="pitch-detail-inner">
-                            The loop is complete on its own. The optional connector
-                            joins it to the Alexandria community.
-                            <span className="pitch-caret" aria-hidden>›</span>
-                          </span>
-                        </span>
-                      </span>
-                    </button>
-                    <div className="pitch-body">
-                      <div className="pitch-body-inner">
-                        <p className="pitch-more">
-                          The connector is the only paid part. It joins you to
-                          people who value their minds enough to keep thinking.
-                          The Library shows what they chose to keep, how they
-                          developed it, and what they did because of it. The
-                          marketplace lets you use and share useful parts of
-                          how their loops work. You choose what to share; your
-                          private files stay private.
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-                  <p className="pitch-coda">
-                    <span className="pitch-coda-copy">
-                      <span className="pitch-coda-line pitch-coda-loss">
-                        Without the loop, important thoughts keep disappearing.
-                      </span>
-                      <span className="pitch-coda-line pitch-coda-gain">
-                        With the loop, your AI saves and develops those thoughts
-                        with you.
-                      </span>
-                    </span>
+                {/* The pitch — three beats: problem → deeper/sovereign/
+                    unified → coin the loop + gift the founder's complete
+                    one (merge in one go) + optional community. */}
+                <div className="pitch pitch-simple">
+                  <p className="pitch-simple-prose">
+                    The better your ai knows you, the better it helps you. Every
+                    native ai memory is a partial version of that — usually
+                    shallow, locked inside one product, and scattered across the
+                    tools you use. The optimal structure is your ai continually
+                    reading and writing a living map of what you think and how
+                    you think.
+                  </p>
+                  <p className="pitch-simple-prose">
+                    The map is deeper, sovereign, and unified. Deeper, so talking
+                    stops feeling like talking to a stranger — your ai helps you
+                    far better, and develops your thinking instead of only
+                    answering. Sovereign, so it lives in private files on your
+                    computer that you own: take it with you, or delete it, and no
+                    company holds you. Unified, so every ai you choose reads the
+                    same you, instead of a different you in each app.
+                  </p>
+                  <p className="pitch-simple-prose">
+                    We call that an alexandria loop. You get the founder&apos;s
+                    complete instructions free. Show them to your ai, and it
+                    merges whatever system you already have into a full loop in
+                    one go. Joining the others who run one — the community — is
+                    optional, whenever you want.
                   </p>
                 </div>
 
-                {/* The turn — the supermarket sequence puts trying before
-                    deciding, then names the exact zero-commitment trial. */}
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  You try a supermarket sample before deciding whether you want
-                  the product.
-                  <br />
-                  Press the button. Show your AI the instructions. Then decide
+                  Press the button — show your ai the instructions and decide
                   together.
                 </p>
 

@@ -1627,13 +1627,8 @@
           display: none;
         }
         /* ─── WHY / WHAT / HOW pillars (2026-07-13 exploration) ─── */
-        /* The back kicker — a faint letter-plate title telling the reader
-           what why/what/how refer to: the answer in full (front gives it
-           in short). Sits where the sections' top margin was. */
-        /* ─── THE PITCH — a manuscript index rather than five equal
-           paragraphs. A large sentence carries each causal beat; the quieter
-           sentence beneath adds detail. Whitespace carries the structure
-           without repeating it in labels. */
+        /* ─── THE PITCH — one flowing skim. Depth lives behind ask us
+           anything / plainly / the whitepaper. */
         .pitch {
           flex: 1 1 auto;
           min-height: 0;
@@ -1642,7 +1637,22 @@
           justify-content: center;
           gap: 34px;
           margin: 0;
-          transition: gap 560ms cubic-bezier(0.33, 0, 0.2, 1);
+        }
+        .pitch-simple {
+          gap: 1em;
+          justify-content: center;
+        }
+        .pitch-simple-prose {
+          margin: 0;
+          max-width: 620px;
+          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 20.5px;
+          line-height: 1.52;
+          letter-spacing: 0.002em;
+          font-feature-settings: 'liga', 'dlig';
+          color: var(--theme-fg);
+          text-wrap: pretty;
         }
         .pitch-item {
           position: relative;
@@ -1677,69 +1687,6 @@
           line-height: 1.34;
           color: var(--theme-fg);
         }
-        .pitch-detail {
-          display: grid;
-          grid-template-rows: 1fr;
-          margin-top: 6px;
-          font-size: 17px;
-          line-height: 1.43;
-          color: var(--theme-fg-muted);
-          opacity: 1;
-          transform: translateY(0);
-          transition:
-            grid-template-rows 520ms cubic-bezier(0.33, 0, 0.2, 1) 140ms,
-            opacity 300ms ease 390ms,
-            transform 520ms cubic-bezier(0.33, 0, 0.2, 1) 140ms;
-        }
-        .pitch-detail-inner {
-          display: block;
-          min-height: 0;
-          overflow: hidden;
-        }
-        .pitch-coda {
-          position: relative;
-          display: block;
-          /* The larger pitch gap opens the four mechanism beats; trim this
-             margin by the same amount so the coda keeps its existing pause. */
-          margin: 12px 0 0;
-          padding: 0;
-          max-width: 660px;
-        }
-        .pitch-coda-copy {
-          display: grid;
-          gap: 2px;
-          min-width: 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: normal;
-          font-weight: 400;
-          font-size: 19px;
-          line-height: 1.45;
-          letter-spacing: 0.002em;
-          font-feature-settings: 'liga', 'dlig';
-          color: var(--theme-fg);
-          max-width: 620px;
-          text-wrap: pretty;
-        }
-        /* The fifth beat is a before/after, carried by typography rather than
-           UI furniture: the loss recedes; the result steps forward. */
-        .pitch-coda-line {
-          display: block;
-        }
-        .pitch-coda-loss {
-          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 0.95em;
-          color: var(--theme-fg-muted);
-        }
-        .pitch-coda-gain {
-          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-weight: 500;
-          font-size: 1.08em;
-          line-height: 1.34;
-          letter-spacing: -0.003em;
-          color: var(--theme-fg);
-        }
         .pitch-para {
           display: block;
           margin: 0;
@@ -1751,8 +1698,8 @@
           max-width: 620px;
           text-wrap: pretty;
         }
-        /* A quiet chevron at the end of each preview implies that the thought
-           continues. It rotates with the expansion; no instructional UI copy. */
+        /* A quiet chevron at the end of each header implies that the
+           thought continues. It rotates with the expansion. */
         .pitch-caret {
           display: inline-block;
           margin-left: 12px;
@@ -1767,10 +1714,6 @@
         .pitch-item.is-open .pitch-caret {
           transform: rotate(90deg);
         }
-        /* The bonus depth opens as one movement: the old reading fades,
-           then geometry makes room while invisible, then the continuation
-           arrives. Closing reverses that sequence, leaving a brief breath
-           before the resting details return. */
         .pitch-body {
           display: grid;
           grid-template-rows: 0fr;
@@ -1801,11 +1744,6 @@
             transform 520ms cubic-bezier(0.33, 0, 0.2, 1) 170ms,
             visibility 0s linear;
         }
-        /* The depth speaks in the same hand as the beats — the
-           EB Garamond italic, a size down and a shade quieter — so an
-           opened expansion reads as the same voice continuing, not a
-           different document (founder, 2026-08-03: the roman body
-           font clashed against the all-italic visible layer). */
         .pitch-more {
           margin: 12px 0 0;
           font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
@@ -1818,32 +1756,13 @@
           max-width: 640px;
           text-wrap: pretty;
         }
-        /* An open explanation needs more vertical room than the resting
-           skim. On desktop, pack the beats from just below the fixed nav
-           instead of re-centring the taller stack under it. All four beats
-           remain visible, so opening one never breaks the causal sequence. */
         @media (min-width: 900px) {
           .pitch:has(.pitch-item.is-open) {
             gap: 22px;
           }
-          /* Keep the whole causal sequence, but let its secondary lines
-             withdraw before the continuation opens. They collapse rather
-             than disappearing from layout in one frame, which lets both
-             the opening and the return read as one calm movement. */
-          .pitch:has(.pitch-item.is-open)
-            .pitch-item:not(.is-open) .pitch-detail {
-            grid-template-rows: 0fr;
-            opacity: 0;
-            transform: translateY(-4px);
-            transition:
-              opacity 160ms ease,
-              transform 320ms cubic-bezier(0.33, 0, 0.2, 1),
-              grid-template-rows 480ms cubic-bezier(0.33, 0, 0.2, 1) 70ms;
-          }
         }
         @media (prefers-reduced-motion: reduce) {
           .pitch,
-          .pitch-detail,
           .pitch-body,
           .pitch-body-inner,
           .pitch-caret {
@@ -1859,13 +1778,13 @@
         }
         .pitch-close {
           margin: 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
-          font-size: 16px;
-          line-height: 1.6;
-          letter-spacing: 0.004em;
-          color: var(--theme-fg);
-          max-width: 620px;
+          font-size: 17px;
+          line-height: 1.55;
+          letter-spacing: 0.002em;
+          color: var(--theme-fg-muted);
+          max-width: 560px;
           text-wrap: pretty;
         }
         /* Air between the close and the buttons. */
@@ -3036,8 +2955,15 @@
           .pitch {
             flex: 0 0 auto;
             justify-content: flex-start;
-            margin-top: 22px;
-            gap: 34px;
+            margin-top: 18px;
+            gap: 28px;
+          }
+          .pitch-simple {
+            gap: 1em;
+          }
+          .pitch-simple-prose {
+            font-size: clamp(18px, 4.6vw, 20px);
+            line-height: 1.45;
           }
           .pitch-item {
             padding: 0;
@@ -3049,24 +2975,8 @@
             font-size: clamp(19.5px, 5.1vw, 21px);
             line-height: 1.34;
           }
-          .pitch-detail {
-            margin-top: 5px;
-            font-size: clamp(16.5px, 4.25vw, 17.5px);
-            line-height: 1.43;
-          }
           .pitch-body {
             margin-left: 0;
-          }
-          .pitch-coda {
-            display: block;
-            margin-top: 9px;
-            margin-left: 0;
-            padding: 0;
-          }
-          .pitch-coda-copy {
-            display: block;
-            font-size: clamp(18px, 4.7vw, 19px);
-            line-height: 1.45;
           }
           .pitch-para {
             font-size: 15.5px;
