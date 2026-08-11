@@ -380,7 +380,7 @@ export default function LandingPage() {
       kind: 'feature',
       name: 'development.',
       lead: 'Your ai answers you. It should be developing you.',
-      sub: 'It pushes your thinking, records its influence, and notices when small changes add up to a different direction.',
+      sub: 'It pushes your ideas further, shows you connections you missed, and keeps you thinking — not just getting answers.',
     },
     {
       kind: 'feature',
@@ -402,7 +402,7 @@ export default function LandingPage() {
       kind: 'feature',
       name: 'one mind.',
       lead: 'Claude knows one you. Cursor another. ChatGPT a third.',
-      sub: 'One history on your machine, shared with the compatible ais you choose — each can inspect where the others left you.',
+      sub: 'One map on your machine — every ai you choose reads the same you.',
     },
     {
       kind: 'feature',
@@ -425,8 +425,8 @@ export default function LandingPage() {
     {
       kind: 'feature',
       name: 'the mirror.',
-      lead: 'You’ve never seen your thinking change.',
-      sub: 'As you use ai, it writes a living record of how you think and change. Read it, contest it, and keep the history yours.',
+      lead: 'You’ve never had a readable map of how you think.',
+      sub: 'As you use ai, it writes a living record of how you think and change. Open it, edit it, keep it yours.',
     },
   ];
   // The hand (corrected, founder 2026-07-24 night: "when i say rotate
