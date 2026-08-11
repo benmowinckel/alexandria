@@ -42,7 +42,7 @@ const overlay = await page.locator('[data-nextjs-dialog], .vite-error-overlay, #
 await button.click();
 await page.waitForFunction(() =>
   Array.from(document.querySelectorAll('button')).some((element) =>
-    element.textContent?.includes('copied — paste it into any chat'),
+    element.textContent?.includes('copied — paste it into claude, chatgpt, or gemini'),
   ),
 );
 const clickedText = await button.innerText();
@@ -58,12 +58,12 @@ await page.screenshot({ path: screenshot, fullPage: true });
 
 await page.goto(`${base}/start`, { waitUntil: 'networkidle' });
 const startBody = (await page.locator('body').innerText()).trim();
-const chatDoor = page.getByRole('link', { name: /^chat/i });
+const chatDoor = page.getByRole('link', { name: /^just a chat/i });
 const startHasUniversalChatDoor =
   (await chatDoor.count()) === 1 &&
   (await chatDoor.getAttribute('href')) === '/chat' &&
   (await chatDoor.innerText()).toLowerCase().includes('claude, chatgpt, gemini');
-await page.getByRole('button', { name: /^local ai agent/i }).click();
+await page.getByRole('button', { name: /^an agent/i }).click();
 await page.getByRole('button', { name: /^yes/i }).click();
 await page.waitForSelector('.act-email');
 const startEmailShape = await page.locator('.act-email').evaluate((element) => {
@@ -83,20 +83,20 @@ const result = {
   title: chatTitle,
   bodyHasContent: body.length > 100,
   hasEmailStep: html.includes('act-email') && html.includes('your email'),
-  hasCopyStep: body.includes('copy the setup — paste it into any chat'),
+  hasCopyStep: body.includes('copy this setup — paste it into claude, chatgpt, or gemini'),
   hasTypeAStep: body.includes('type a — start your first thinking session'),
   buttonCopiedState: clickedText.includes('copied'),
   clipboardExact: clipboard === expected,
   clipboardHasAdditiveGuard: clipboard.includes('Preserve existing instructions, memories, and connections'),
   clipboardHasReviewGate: clipboard.includes('ordinary text to account preferences'),
   clipboardHasTwoActions: clipboard.includes('two short actions'),
-  clipboardHasStoragePlan: clipboard.includes("this app's memory or connected Drive") && clipboard.includes('never mention setup'),
+  clipboardHasStoragePlan: clipboard.includes("use connected Drive if writable; otherwise use this app's memory") && clipboard.includes('never mention setup'),
   emailFieldMatchesStart: JSON.stringify(chatEmailShape) === JSON.stringify(startEmailShape),
   startCopyIsLowercase:
     startBody.includes('start your loop') &&
     startBody.includes('what do you have access to?') &&
-    startBody.includes('local ai agent — claude code, codex, cursor') &&
-    startBody.includes('chat — claude, chatgpt, gemini') &&
+    startBody.includes('an agent — claude code, codex, cursor') &&
+    startBody.includes('just a chat — claude, chatgpt, gemini') &&
     !startBody.includes('If you have both'),
   startHasUniversalChatDoor,
   errorOverlay: overlay > 0,

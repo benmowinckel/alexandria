@@ -90,7 +90,9 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
       <div className="act-row">
         <span className="act-num">2</span>
         <button type="button" className={`door-btn act-box cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
-          {copied ? 'copied — paste it into any chat' : 'copy the setup — paste it into any chat'}
+          {copied
+            ? 'copied — paste it into claude, chatgpt, or gemini'
+            : 'copy this setup — paste it into claude, chatgpt, or gemini'}
         </button>
       </div>
 

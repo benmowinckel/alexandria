@@ -27,7 +27,7 @@ class ChatBootstrapTests(unittest.TestCase):
         self.assertIn("immediately start a thinking session—no setup or tool checks", reviewer)
         self.assertIn("what have you changed your mind about recently?", reviewer)
         self.assertIn("While active, omit the ordinary nudge", reviewer)
-        self.assertIn("this app's memory or connected Drive", reviewer)
+        self.assertIn("use connected Drive if writable; otherwise use this app's memory", reviewer)
         self.assertIn("briefly say what shifted and never save", reviewer)
         self.assertIn("Only after I answer yes", reviewer)
         self.assertIn("never mention setup", reviewer)
