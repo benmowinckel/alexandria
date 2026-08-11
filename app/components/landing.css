@@ -2738,6 +2738,15 @@
             max-width: 420px;
             text-align: center;
           }
+          /* No feature rotation on mobile (founder, 2026-08-11): feature
+             frames are taller than the cream above the arch and cover it.
+             Brand question alone; numerals and feature doors stay desktop. */
+          .front-frame-link {
+            display: none !important;
+          }
+          .front-numerals {
+            display: none;
+          }
           .front-salutation {
             border-bottom: none;
             padding-bottom: 0;
@@ -2772,8 +2781,8 @@
             font-size: 15px;
             margin-top: 14px;
           }
-          /* Mobile — the block is centred text, so the numerals centre
-             beneath it; a touch tighter than desktop. */
+          /* Mobile — numerals are hidden (no rotation); keep the rule
+             so a future re-enable inherits the centred hand. */
           .front-numerals {
             justify-content: center;
             margin-top: 20px;
@@ -2883,7 +2892,7 @@
             flex-wrap: wrap;
             row-gap: 10px;
           }
-          /* The divider becomes a line break — places row, doors row. */
+          /* The divider becomes a line break — doors row, then places. */
           .quiet-div {
             flex-basis: 100%;
             height: 0;

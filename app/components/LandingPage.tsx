@@ -454,6 +454,11 @@ export default function LandingPage() {
   // with the first incoming frame. Reduced-motion users never rotate, so
   // they get the hand immediately (it is their only way to the frames).
   const [numeralsIn, setNumeralsIn] = useState(false);
+  // Mobile (<900px) gets the SQUARE scene assets (see the mobile
+  // .top-slide CSS): its own poster + breeze video, matching the CSS
+  // background swap. Also freezes front-slide feature rotation so the
+  // taller feature frames never cover the arch (founder, 2026-08-11).
+  const [mobileScene, setMobileScene] = useState(false);
   const frameCount = FRONT_FRAMES.length;
   const featureCount = frameCount - 1;
   // Five slots visible; each slot advances 34px (26px numeral + 8px gap
@@ -472,6 +477,14 @@ export default function LandingPage() {
   // Touch swipe — left/right through the frames on coarse pointers.
   const frameTouchX = useRef<number | null>(null);
   useEffect(() => {
+    // Mobile: no feature rotation — the brand question alone sits in the
+    // cream above the arch. Feature frames are taller than that gap and
+    // cover the archway (founder, 2026-08-11); desktop keeps the tour.
+    if (mobileScene) {
+      setFrameIdx(0);
+      setNumeralsIn(false);
+      return;
+    }
     // Reduced motion: no auto-rotation — the page rests on the brand
     // frame (index 0), which is exactly the pre-rotation hero. Manual
     // controls still work (and must be visible: reveal the hand now).
@@ -490,7 +503,7 @@ export default function LandingPage() {
     const t = setTimeout(() => setFrameIdx((i) => (i + 1) % frameCount), 8000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frameIdx, frameHold]);
+  }, [frameIdx, frameHold, mobileScene]);
   // First turn — auto, swipe, or keyboard — reveals the hand for good.
   useEffect(() => {
     if (frameIdx !== 0) setNumeralsIn(true);
@@ -499,6 +512,7 @@ export default function LandingPage() {
   // page; horizontal are unclaimed on this layout).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (window.matchMedia('(max-width: 899px)').matches) return;
       if (e.key === 'ArrowRight') stepFrame(1);
       else if (e.key === 'ArrowLeft') stepFrame(-1);
     };
@@ -517,10 +531,6 @@ export default function LandingPage() {
   // users never download the 923KB MP4 — they get the still PNG and
   // nothing else. Tracks live changes to the OS preference.
   const [showBreeze, setShowBreeze] = useState(false);
-  // Mobile (<900px) gets the SQUARE scene assets (see the mobile
-  // .top-slide CSS): its own poster + breeze video, matching the CSS
-  // background swap. null during SSR — video mounts client-side only.
-  const [mobileScene, setMobileScene] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
   const middleRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -881,6 +891,8 @@ export default function LandingPage() {
           onMouseEnter={() => setFrameHold(true)}
           onMouseLeave={() => setFrameHold(false)}
           onTouchStart={(e) => {
+            // No swipe-step on mobile — rotation is desktop-only there.
+            if (window.matchMedia('(max-width: 899px)').matches) return;
             frameTouchX.current = e.touches[0].clientX;
           }}
           onTouchEnd={(e) => {
@@ -1125,19 +1137,22 @@ export default function LandingPage() {
                   (period marks, 15px medium, spaced). right-col's
                   space-between drops it to the bottom; matching right-lower's
                   752px flex-end box keeps it under the CTAs. */}
-              {/* The shelf — two pairs with a hairline divider (founder,
-                  2026-07-27): the places, then the doors. This is the
-                  demo's ONE home (founder, 2026-08-02 — the archway door
-                  removed). The features door also left this shelf the
-                  same day: the front rotation itself is the features
-                  door now (click any feature frame → /features); the
-                  /features page stays live for direct links. */}
+              {/* The shelf — doors above places (founder, 2026-08-11);
+                  divider is a hairline on desktop and a line break on
+                  mobile. Demo's ONE home (founder, 2026-08-02 — the
+                  archway door removed). Features door left this shelf
+                  the same day: the front rotation is the features door
+                  on desktop (click any feature frame → /features);
+                  /features stays live for direct links. */}
               <p className="quiet-links">
-                <Link href="/library" className="quiet-link">library<span className="shelf-dot">.</span></Link>
-                <Link href="/marketplace" className="quiet-link">marketplace<span className="shelf-dot">.</span></Link>
-                <span className="quiet-div" aria-hidden />
+                {/* Doors above places (founder, 2026-08-11) — on mobile the
+                    divider is a line break, so demo/support sit on the first
+                    row and library/marketplace on the second. */}
                 <DemoFilm className="quiet-link quiet-door"><em>watch the demo</em></DemoFilm>
                 <Link href="/follow" className="quiet-link quiet-door"><em>show your support</em></Link>
+                <span className="quiet-div" aria-hidden />
+                <Link href="/library" className="quiet-link">library<span className="shelf-dot">.</span></Link>
+                <Link href="/marketplace" className="quiet-link">marketplace<span className="shelf-dot">.</span></Link>
               </p>
           </div>
 
