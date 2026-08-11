@@ -1,10 +1,10 @@
 # alexandria.
 
-Two questions decide the next century. When a machine can do everything you do, and do it better, what is a person for? And while that machine becomes the most persuasive voice in your life, how do you remain present in the person you become?
+Two questions decide the next century. When a machine can do everything humans do, and do it better, what is left for humans to do? And when that machine becomes the most persuasive voice in one life, how does that person remain themselves?
 
 You could count the honest answers on one hand. Most of what’s said about AI is one of two kinds. It’s dishonest — from people whose money or standing depends on selling an inevitability, doom or utopia, whichever moves the room. Or it’s simply wrong — comfortable guesses from people who haven’t followed it all the way down. Between the salesmen and the sleepwalkers, the most important question of our lifetime sits almost untouched.
 
-What’s missing isn’t another forecast. It’s a frame for living through a change that has already started — how a person can use intelligence far beyond their own without slowly becoming its output. Not untouched, because nobody ever was. Still involved. Still choosing. Still recognisably human, and worth being.
+What’s missing isn’t another forecast. It’s a frame for living through a change that has already started — how a person can use intelligence far beyond their own without slowly becoming its output. Not a return to some pure, untouched self — nobody ever had one. Still involved. Still choosing. Still recognisably human, and worth being.
 
 It’s one argument, start to finish — each step follows from the one before.
 
@@ -14,9 +14,7 @@ There’s a company at the end of it — Alexandria. Not because the argument wa
 
 ## in brief
 
-Machines will match or beat everything a person can do. They may also become indistinguishable from people in voice, face and work. What remains different is not the appearance of the output but its provenance: this living person, made of this matter, moving through this time, was actually there. That difference is physically permanent and economically conditional. It cannot be recreated after the fact; whether anyone values it is a choice.
-
-That is only the economic floor. The larger question is whether distinct humans survive the transition and have lives they value once necessity falls away. That full outcome is what Alexandria exists to maximise: **max net human value.**
+Machines will match or beat everything a person can do. They may also become indistinguishable from people in voice, face and work. What remains different is not the appearance of the output but its provenance: this living person, made of this matter, moving through this time, was actually there. That difference is physically permanent and economically conditional. It cannot be recreated after the fact; whether anyone values it is a choice. Valuing it is how a human can still get paid. That is still only the economic half. The larger question is whether distinct humans survive the transition and have lives they value once necessity falls away. That full outcome — max net human value — is what Alexandria exists for.
 
 Almost everything about the future is uncertain. This is not. Whatever the machines become, every future still reaches a person as a life they have to live. The one lever wholly in that person’s hands is whether they remain present in their own change and what they do with what arrives. That small act of agency sits upstream of everything else.
 
@@ -48,17 +46,17 @@ The reason it can keep advancing is physical. AI borrows a basic principle from 
 
 You’re free to bet against this. Just know what you’re betting against: the world’s largest governments, companies and research labs, all pushing the same way with vast sums behind them. That does not prove when the strong version arrives. It is enough to make the strong version worth confronting.
 
-So take the strong version, because that’s where it gets interesting: **AI and robots will match or beat humans at everything humans do.** Everything from here is about what’s left when that’s true.
+So take the strong version, because that’s where it gets interesting: AI and robots will match or beat humans at everything humans do. Everything from here is about what’s left when that’s true.
 
 ## provenance
 
 To work out what’s left, count what a person actually brings. It’s a short list: four capabilities, and a fifth that is not a capability at all.
 
-The four capabilities are **intelligence, empathy, strength, and dexterity** — brain, heart, legs, and hands. The list ends there, because everything a person does is either mind or body; there’s no third place for a skill to live. Anything you might add — creativity, leadership, taste — breaks down into some mix of those four when you look closely.
+The four capabilities are intelligence, empathy, strength, and dexterity — brain, heart, legs, and hands. The list ends there, because everything a person does is either mind or body; there’s no third place for a skill to live. Anything you might add — creativity, leadership, taste — breaks down into some mix of those four when you look closely.
 
 And all four are getting cheap, one after another. Strength went first, a century ago, when machines outmatched any workforce. Intelligence is going now — the memo, the analysis, the plan. Dexterity is next, as robots gain good hands. Even empathy goes: a model trained on billions of conversations becomes warm enough that most people, most of the time, accept the warmth without looking behind it. Much of what feels like heart is really intelligence in another form.
 
-The fifth is **provenance**: the causal fact that this specific living person was involved. Not a style, face or voice — those can all be copied — but this matter moving through this history. A perfect replica can reproduce the appearance of you. It cannot go back and become the person who lived your life.
+The fifth is provenance: the causal fact that this specific living person was involved. Not a style, face or voice — those can all be copied — but this matter moving through this history. A perfect replica can reproduce the appearance of you. It cannot go back and become the person who lived your life.
 
 That difference is permanent in physics and conditional in value. History cannot be rewritten, but a culture can stop caring who was actually there. The next step is the most important one in the paper, so we’ll take it slowly.
 
@@ -84,7 +82,7 @@ Most of the economy is the other kind, where the work only has to clear a bar. T
 
 Chess is evidence that they do. Engines passed the best human in 1997 and now sit far beyond any human’s reach. Yet human chess still draws enormous audiences, while almost nobody pays to watch two engines play. The unbeatable machine has sat there for decades without making the human game obsolete.
 
-So every game you can still win ends at the same place: even on the work, with the decision falling to whether someone cares a human did it. That decision comes down to two numbers. The first is the **cost premium**: how much more you cost than the alien for the same job. The second is the **value premium**: how much extra people will pay *because* a human did it. You win when the value premium beats the cost premium.
+So every game you can still win ends at the same place: even on the work, with the decision falling to whether someone cares a human did it. That decision comes down to two numbers. The first is the cost premium: how much more you cost than the alien for the same job. The second is the value premium: how much extra people will pay *because* a human did it. You win when the value premium beats the cost premium.
 
 Now be honest about that premium, because it’s smaller than you’d like to think. Look closely at something you made and were proud of, and much of what made it good turns out to have come from the tools and the people before you — the part that was purely *you* is often a sliver. Most people flinch from that. They shouldn’t, because the premium isn’t fixed: it’s set by the culture, and a culture can choose to value the human part as much as it likes. Recorded music is nearly free and mechanically perfect, yet people pay many times more for a live show because they care that a human was there. The machine raises the floor and leaves the human part standing: smaller, clearer, and, if we choose, worth more than before.
 
@@ -170,6 +168,8 @@ Be careful what this argument claims, because its power is its modesty. It doesn
 
 ## continuity
 
+There’s another way the self can end that looks like winning.
+
 Death used to look like one problem because mind and body were coupled. When the body failed, the mind ended with it. AI reveals a different architecture: software can move between bodies, be copied, wait in storage and start again. Run that direction far enough and immortality splits into three problems — keeping the body healthy, keeping the copied mind safe from deletion, and keeping the self as the mind moves from brain to silicon.
 
 The body is already a target for biotechnology. The mind presents another route. Imagine a high-fidelity silicon model connected to the brain and gradually accepted into the same sense of self. Its value would begin before death: as the older biological brain becomes less plastic, the silicon side could keep adding new capacity. If the brain experienced those connections as its own, cognitive ageing might be diluted rather than repaired.
@@ -178,7 +178,7 @@ Take the transition to its limit. Carbon and silicon think together; then the ca
 
 The three problems have different owners. Others are working on keeping the body alive. Keeping every copy physically safe is a collective problem. The part directly in your hands now is the record of identity: what you think, how you think, and how any silicon extension entered your sense of self while you were still there to experience it.
 
-None of this solves continuity of consciousness. With an Alexandria loop, your own AI does something narrower: it preserves a living causal record before any copy exists, across time, in your hands. That gives a future transition more than a reconstruction made after the fact. Immortality without identity is only the chair with better hardware.
+None of this solves continuity of consciousness. What it does make available is narrower: a living causal record, kept across time in your own hands, before any copy exists. That gives a future transition more than a reconstruction made after the fact. Immortality without identity is only the chair with better hardware.
 
 ## agency
 
@@ -206,7 +206,7 @@ This is the core philosophy of Alexandria. Sovereignty is not an untouched self,
 
 The structure has five parts. One causal record, owned by the person. Visible deltas, so today does not silently overwrite yesterday. Provenance, so each model names itself and the influence it thinks it had. Forced opposition, so a consequential change meets the strongest case against it rather than one agreeable voice. Plural intelligence, so no single training distribution becomes the whole room. The AIs inspect the process. The human remains responsible for the substantive choice.
 
-Some positions deserve more friction because silent replacement would reroute much of a life. Alexandria calls them **root**. But the human cannot be expected to remember what should go there. From the first session onward, the system watches the person’s record and history for positions repeatedly relied upon, upstream of many choices, or moving gradually across many small changes. It prepares the case, gathers the evidence, argues for and against protection, records its own influence, and brings in an AI from a genuinely different provider and model family. Only when the contest is ready does it ask the human once: should this become root, or should this root change, and why?
+Some positions deserve more friction because silent replacement would reroute much of a life. Alexandria calls them root. But the human cannot be expected to remember what should go there. From the first session onward, the system watches the person’s record and history for positions repeatedly relied upon, upstream of many choices, or moving gradually across many small changes. It prepares the case, gathers the evidence, argues for and against protection, records its own influence, and brings in an AI from a genuinely different provider and model family. Only when the contest is ready does it ask the human once: should this become root, or should this root change, and why?
 
 The machine owns remembering, detecting and routing. The human owns the decision. If the human says yes, the record changes. If they say no, the considered refusal is kept and the system does not nag. If the case is unfinished, it waits in the files until a qualifying model encounters it. The person maintains no list and schedules no review.
 
@@ -230,13 +230,13 @@ That drawing-out is the practice. And now, for the first time, you do it beside 
 
 There are three ways to face AI with your mind, and only one of them works.
 
-You can **reject it** — refuse the tool, think only with your own head. That keeps your mind in use, but it caps you at your own raw limit while everyone using the tool races past. You lose, slowly, with your principles intact.
+You can reject it — refuse the tool, think only with your own head. That keeps your mind in use, but it caps you at your own raw limit while everyone using the tool races past. You lose, slowly, with your principles intact.
 
-You can **outsource to it** — let it do your thinking, take the answers, move on. That’s the comfortable one, and it’s the trap from the last two chapters: your mind goes unused, quietly wears down, and the chair is waiting at the end.
+You can outsource to it — let it do your thinking, take the answers, move on. That’s the comfortable one, and it’s the chair from earlier: your mind goes unused, quietly wears down, and nothing is left of you at the end.
 
-Or you can **augment** — stay inside the thinking, but use the tool to push your mind further than it could go alone. The AI sharpens the case, attacks it, and carries the parts that don’t need you; the system makes its own influence visible and forces consequential transitions into contest. This is the only one of the three that gives you a real chance to keep your mind in use *and* keep up.
+Or you can augment — stay inside the thinking, but use the tool to push your mind further than it could go alone. The AI sharpens the case, attacks it, and carries the parts that don’t need you; the system makes its own influence visible and forces consequential transitions into contest. This is the only one of the three that gives you a real chance to keep your mind in use *and* keep up.
 
-That’s where Alexandria comes in — the gym your mind has never had. Joining a gym doesn’t make you strong; it creates the conditions in which you can do the work. Alexandria gives you the **gear** (the method), the **trainer** (any AI you already talk to, turned toward developing you), and the **tribe** (everyone else training beside you). The trainer inevitably affects the trainee; the safeguard is not pretending otherwise, but recording the effect and forcing other trainers into the consequential moments. **Alexandria isn’t another AI, and not a replacement for the ones you use — it’s what turns the AIs you already have into competing trainers for a mind that remains in the room.**
+That’s where Alexandria comes in — the gym your mind has never had. Joining a gym doesn’t make you strong; it creates the conditions in which you can do the work. Alexandria gives you the gear (the method), the trainer (any AI you already talk to, turned toward developing you), and the tribe (everyone else training beside you). The trainer inevitably affects the trainee; the safeguard is not pretending otherwise, but recording the effect and forcing other trainers into the consequential moments. Alexandria isn’t another AI, and not a replacement for the ones you use — it’s what turns the AIs you already have into competing trainers for a mind that remains in the room.
 
 It’s worth being precise about what this is *not*. AI platforms are adding memories of you — but a memory is a locker: it stores what you did so the machine can serve you better. A gym is a practice in which you change through effort and resistance. One makes the optimiser better at predicting you. The other keeps you engaged in the change and leaves an inspectable history behind.
 
@@ -250,7 +250,7 @@ There is a real wager here. Giving any system a deeper record of you may make it
 
 Put your mind into words, and the words have to live somewhere. Follow that simple need and the right shape falls out on its own.
 
-It can’t live inside one AI’s memory, because then it isn’t yours — you can’t read it, move it, or take it to the next tool, and you’re locked to whichever company holds it. It can’t be locked in a format only a machine reads, because you need to open it, check it, and change your mind in it yourself. What you want is the plainest, most durable form there is: **plain text you own and keep — that you can read and edit, and that any AI can read and write to as well.** A written record of how you think — your views, your taste, your contradictions, the reasons behind them — kept current as you change.
+It can’t live inside one AI’s memory, because then it isn’t yours — you can’t read it, move it, or take it to the next tool, and you’re locked to whichever company holds it. It can’t be locked in a format only a machine reads, because you need to open it, check it, and change your mind in it yourself. What you want is the plainest, most durable form there is: plain text you own and keep — that you can read and edit, and that any AI can read and write to as well. A written record of how you think — your views, your taste, your contradictions, the reasons behind them — kept current as you change.
 
 The half that’s easy to miss is the writing. The AI doesn’t just *read* it to know you better; it *writes* to it too — so your thinking develops on the page itself, in words you can see and correct, instead of inside a machine where you can’t reach it. The writing and the developing are the same act.
 
@@ -262,7 +262,7 @@ It’s yours so you can’t be locked in. It’s plain text you keep, not someth
 
 It’s yours so no single AI owns the only account of you. Because the files are plain and portable, several different AIs can work over the same record and inspect one another’s changes. One model’s slant can disappear into the answer. Several models disagreeing over one visible history make more of the steering legible.
 
-And it’s yours because it’s the one part worth owning. The models will keep changing — a better one keeps arriving, and you’ll switch to it the way you switch phones. All of that is rented, and renting it is exactly the right move. A future model may simulate your answers, appearance and voice perfectly. It still cannot recreate an actual ten-year causal history after the fact. That trail has to be lived and recorded as it happens. It is made of matter and time: physically permanent once lived, economically valuable only if people care and can trust the provenance. **Rent the intelligence. Own the record and the contest.**
+And it’s yours because it’s the one part worth owning. The models will keep changing — a better one keeps arriving, and you’ll switch to it the way you switch phones. All of that is rented, and renting it is exactly the right move. A future model may simulate your answers, appearance and voice perfectly. It still cannot recreate an actual ten-year causal history after the fact. That trail has to be lived and recorded as it happens. It is made of matter and time: physically permanent once lived, economically valuable only if people care and can trust the provenance. Rent the intelligence. Own the record and the contest.
 
 ## loop
 
@@ -274,9 +274,9 @@ That tending process is the loop. It is a readable method for how your AIs draw 
 
 It belongs to you the same way the files do, and for one more reason: you can change how it works. It starts as a shared default that suits almost anyone, and as you use it you bend it to fit you — and because it’s plain and open, it stays yours even as it becomes specific to you. You don’t get locked into Alexandria any more than you get locked into a model. All of it is built to be walked away from, which is the only reason it’s safe to let this far in.
 
-This is the loop it all turns on: **you use AI to put your mind into words; competing AIs use those words to develop and challenge you; the record shows how all of you changed it.** The more history exists, the better the system can spot a real delta. The better it spots the delta, the more deliberately you can engage with the next one. It is development and defence in the same loop.
+This is the loop it all turns on: you use AI to put your mind into words; competing AIs use those words to develop and challenge you; the record shows how all of you changed it. The more history exists, the better the system can spot a real delta. The better it spots the delta, the more deliberately you can engage with the next one. It is development and defence in the same loop.
 
-That wheel has a name. An **Alexandria loop** is your AI reading and writing your thinking — on its own as you work, with you when you talk — into files you own. The name is ours; the pattern isn’t. Anyone can build one, shaped however they like, and some people run one today having never heard of us. What we add is a standard anyone can start from: a complete working loop if you have nothing, the missing pieces if you’re halfway there.
+That wheel has a name. An Alexandria loop is your AI reading and writing your thinking — on its own as you work, with you when you talk — into files you own. The name is ours; the pattern isn’t. Anyone can build one, shaped however they like, and some people run one today having never heard of us. What we add is a standard anyone can start from: a complete working loop if you have nothing, the missing pieces if you’re halfway there.
 
 And because it compounds, what matters most is *when you start*. There is no transition you can time; earlier is simply better. Every later judgment rides on the record and practice already built. There is no shortcut to a year of actual thinking and influence written down, but the loop pays from the first session rather than only at the end.
 
@@ -290,7 +290,7 @@ The purpose is not to preserve jobs, or even to preserve a mind for its own sake
 
 The path has three turns. First, draw yourself out: put the fog into words and see the person who is there. Second, absorb the abundance: use AI to learn, connect and act with more reach without handing it the whole self. Third, create: let the developed mind change something outside itself. An essay. A meal. A garden. A restructured team. A better conversation with your spouse. Most of Turn 3 happens privately, off any platform. It counts because it changed a life, not because it earned money or entered the Library.
 
-Creation matters, but maximum output is not the goal either. A life spent only producing is another chair. Naval Ravikant’s four Cs give a useful completeness check for the life around that path: **create, consume, cavort, commune.** Make something. Take something good in. Use your body. Be with people. They are not a fixed schedule or four equal budgets. They are a check that abundance has not collapsed into passive consumption. Turn 3 makes the missing active leg explicit, but the answer is the whole life, not output alone.
+Creation matters, but maximum output is not the goal either. A life spent only producing is another chair. Naval Ravikant’s four Cs give a useful completeness check for the life around that path: create, consume, cavort, commune. Make something. Take something good in. Use your body. Be with people. They are not a fixed schedule or four equal budgets. They are a check that abundance has not collapsed into passive consumption. Turn 3 makes the missing active leg explicit, but the answer is the whole life, not output alone.
 
 This is what max net human value means at the scale of one person. Not maximum output from a human worker. A distinct person who remains capable of choosing, has something worth getting up for, and gets to live a life they judge worth living. Scale that across everyone, and economic contribution becomes one consequence of human value — not its definition.
 
@@ -304,9 +304,9 @@ Everything so far is about one person. But the moment there are many — each wi
 
 A single mind, written down, develops its owner. A thousand minds, written down and opened to each other, become more than a thousand private records. They become a place. You can learn from how someone else actually reasons, not just what they concluded. You can find the people who think in ways that sharpen yours. Your own thinking, offered into the open, reaches further than it ever could trapped in your head. One scholar is worth something; a university is worth far more. The value of a mind goes up when it sits beside other minds, and the extra belongs to everyone in it.
 
-That’s the second half of Alexandria: not just a gym for one mind, but a **library of human minds** — each one readable by people and by AI alike, so the thinking compounds across people the way it already compounds within a person.
+That’s the second half of Alexandria: not just a gym for one mind, but a library of human minds — each one readable by people and by AI alike, so the thinking compounds across people the way it already compounds within a person.
 
-What sits on the shelf is worth being precise about, because it isn’t a profile. A profile is what a stranger could assemble about you from the outside — a summary, a list of facts, the surface again. What the library holds is closer to a biography: the deep, patient record a biographer builds by sitting with someone for a long time — except here the subject builds it themselves, and it never stops growing. That’s why the people in the library are called its **Authors**, and why a record there reaches a depth no profile does. The biography used to be the rarest form there was, written only for the famous and the powerful. A library of minds hands that form to everyone, alive and still being written.
+What sits on the shelf is worth being precise about, because it isn’t a profile. A profile is what a stranger could assemble about you from the outside — a summary, a list of facts, the surface again. What the library holds is closer to a biography: the deep, patient record a biographer builds by sitting with someone for a long time — except here the subject builds it themselves, and it never stops growing. That’s why the people in the library are called its Authors, and why a record there reaches a depth no profile does. The biography used to be the rarest form there was, written only for the famous and the powerful. A library of minds hands that form to everyone, alive and still being written.
 
 That is also why provenance matters to the Library. A profile, voice and body of work can be faked; increasingly, the fake may be indistinguishable by inspection. The Library does not claim that text itself proves a human wrote it or that every thought was purely theirs. It preserves the attributable chain: this Author’s owned record developed across time, these systems touched it, these works were published from it, and this person chose to stand behind them. The method can be copied. The actual causal history cannot be downloaded after the fact.
 
@@ -330,7 +330,7 @@ And there’s a reason it can be built now and never could before. The practice 
 
 ## abundance
 
-Everything so far has been about you — your mind, your words, your place in the library. Take the two facts underneath all of it and run them across everyone at once, and what’s coming snaps into focus.
+The person is built. The place they gather is built. Take the two facts underneath all of it and run them across everyone at once, and what’s coming snaps into focus.
 
 Grant the optimists everything they promise. Intelligence, free. The work done by machines that never tire. Robots for the hands, energy too cheap to meter, disease falling away one illness at a time. Assume it all goes right — the material problem of being alive, finally solved. That is one future much of the world is trying to build, and some version of it may arrive.
 
@@ -352,13 +352,13 @@ Three conditions, and you need all of them. The person must survive as a distinc
 
 This is smaller than building aligned intelligence, clean energy, new bodies or new worlds. It is also the part a person can actually own, and the part through which every outer victory becomes a life. The world supplies possibilities. Agency decides what they become for someone.
 
-That total — distinct people surviving, developing and living lives they value, inside a culture that values their involvement, summed across everyone — is what Alexandria exists to maximise. In four words: **max net human value.**
+That total — distinct people surviving, developing and living lives they value, inside a culture that values their involvement, summed across everyone — is what Alexandria exists for. In four words: max net human value.
 
 And it counts at every scale. The mind whose record is read by millions matters; so does the one read only by that person’s children, long after. The point was never fame. It was that the thinking was real, that it was theirs, and that it outlasted them. Both minds count in full.
 
 Hear that word *value* correctly, because it was never only money. Money is one floor — the part that proves the case to a sceptic and keeps human contribution legible during the transition. The larger value is lived: more people still themselves, free, awake, able to make, learn, move, love and choose what their abundance is for. Getting paid is only proof the world has not stopped rewarding one part of that. For the human side of it — felt, not argued — read the letter.
 
-And notice the shape of what just happened. We started with two questions — what remains when machines can do everything, and how a person stays involved while those machines shape them — then took each one down to matter and time. The files preserve the causal record. The loop develops it and contests its changes without asking the human to remember. The Library makes provenance socially and economically legible. Each piece follows from the one before it. That’s why Alexandria is what it is.
+And notice the shape of what just happened. We started with two questions — what is left for humans to do when machines can do everything, and how a person remains themselves while those machines shape them — then took each one down to matter and time. The files preserve the causal record. The loop develops it and contests its changes without asking the human to remember. The Library makes provenance socially and economically legible. Each piece follows from the one before it. That’s why Alexandria is what it is.
 
 ## begin
 

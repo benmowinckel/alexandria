@@ -90,7 +90,15 @@ export function processNumbered(md: string): { pre: string; frontispiece: string
       }
 
       // Strip the manual `## contents.` block — runs until the next H1.
+      // Close an open frontispiece/abstract first: `## contents` used to
+      // `continue` past their close-on-next-heading logic, which left the
+      // closing %%MDOC_FRONTISPIECE%% marker after the TOC split-point and
+      // leaked the literal token into the rendered preamble.
       if (/^##\s+\*?contents\.?\*?\s*$/i.test(line)) {
+        if (inFrontispiece) {
+          inFrontispiece = false;
+          out.push(FRONTISPIECE_MARKER);
+        }
         if (inAbstract) {
           inAbstract = false;
           out.push(ABSTRACT_MARKER);
