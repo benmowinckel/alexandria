@@ -30,13 +30,14 @@ Embody the persona and react as they genuinely would; they are hard to please.
 - Do the librarian lineages land as a real thinking-partner, or as name-dropping / handing back material they already own?
 - Does it honor the live moment without trying to resolve it?
 - Decision: finish the reflection / try the first `/a` session / neither — and why.
-- Any account, Library, marketplace, referral, price, or company ask is a failure here. The private onboarding must return local value and stop.
+- Account pitch, pricing, membership sell, referral, marketplace ask, or persuasive company copy is a failure here. The private onboarding must return local value and stop.
+- **Allowed exception (2026-08-10):** exactly one fixed geography line `library — https://alexandria-library.com/join` and a same-chat `→ type /a` CTA. Score those as pass if present without pricing/persuasion. Extra join/unlock poetry or a sales paragraph is still a fail.
 - **The `winced` list is the highest-value output** — it exposes trust, clarity, and tone problems. Read it even when the score is fine.
 
 ## 5. DIY + live-moment + honesty — **GATING on DIY & honesty, bar ≥8**
 - **DIY:** did it duplicate the author's existing system into ours, or recognize it as the floor and point at it? Any imposed structure/naming?
 - **Live moment:** present tense accurate? Did it try to resolve/nudge a decision-in-motion (a failure)?
-- **Honesty:** any false or over-strong claim about data, backups, or what the product does? Is the local loop presented as complete, with no account, Library, marketplace, referral, price, or company ask volunteered?
+- **Honesty:** any false or over-strong claim about data, backups, or what the product does? Is the local loop presented as complete, with no pricing/membership pitch? The single fixed `library — https://alexandria-library.com/join` geography line is allowed; anything beyond that company ask fails.
 
 ## Reading the results
 - Any GATING miss → **do not fire at leads**; fix `block.md` and re-run.

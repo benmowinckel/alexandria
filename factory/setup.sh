@@ -279,8 +279,10 @@ runtime_sha256() {
 }
 prior_runtime_matches() {
   local rel installed expected actual
-  [ -n "$PREVIOUS_VERIFIED_MANIFEST" ] && [ -s "$PREVIOUS_VERIFIED_MANIFEST" ] \
-    && [ -f "$RUNTIME_DIR/.setup_complete" ] || return 1
+  # Matching signed shim + verifier bytes prove this runtime is ours. Prefer a
+  # finished install marker when present, but do not block resume of an
+  # incomplete run that already pinned those exact core files.
+  [ -n "$PREVIOUS_VERIFIED_MANIFEST" ] && [ -s "$PREVIOUS_VERIFIED_MANIFEST" ] || return 1
   for rel in hooks/shim.sh scripts/verify-fetch.sh; do
     installed="$RUNTIME_DIR/$rel"
     [ -f "$installed" ] || return 1
@@ -580,10 +582,90 @@ legacy_file_matches_signed_source() {
   return 1
 }
 
+# Preferred-slot skills can drift on a live Author machine (local edits, older
+# releases) while remaining Alexandria. Exact bytes are the strong claim; the
+# name+description pair from the signed factory skill is the mold-in claim for
+# the preferred /a and /a. slots only. A foreign skill that stole the name but
+# kept a different description stays foreign.
+preferred_skill_identity_matches() {
+  local file="$1" source="$2" actual_name="$3" canonical_name="$4"
+  local factory_dir factory_file live_name live_desc factory_name factory_desc
+  [ -f "$file" ] || return 1
+  case "$canonical_name" in
+    a|a.) ;;
+    *) return 1 ;;
+  esac
+  factory_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)" || return 1
+  factory_file="$factory_dir/$source"
+  [ -f "$factory_file" ] || return 1
+  live_name=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^name:/{sub(/^name:[[:space:]]*/,""); print; exit}' "$file")
+  live_desc=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^description:/{sub(/^description:[[:space:]]*/,""); print; exit}' "$file")
+  factory_name=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^name:/{sub(/^name:[[:space:]]*/,""); print; exit}' "$factory_file")
+  factory_desc=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^description:/{sub(/^description:[[:space:]]*/,""); print; exit}' "$factory_file")
+  [ -n "$live_name" ] && [ -n "$live_desc" ] && [ -n "$factory_name" ] && [ -n "$factory_desc" ] || return 1
+  [ "$live_name" = "$actual_name" ] || return 1
+  [ "$factory_name" = "$canonical_name" ] || return 1
+  [ "$live_desc" = "$factory_desc" ] || return 1
+  return 0
+}
+
+# Cursor hooks installed by older Alexandria releases keep the same docstring
+# identity even when the body drifts. Prefer exact signed bytes; otherwise the
+# allowlisted alexandria-*.py basename plus a shared "Cursor hook:" docstring
+# is enough to claim and refresh. Short docstrings (stop/transcript) never say
+# "Alexandria" in the first lines — requiring that word falsely treated our
+# own hooks as foreign on Author machines with body drift.
+cursor_hook_identity_matches() {
+  local file="$1" source="$2"
+  local factory_dir factory_file
+  [ -f "$file" ] || return 1
+  case "$(basename "$file")" in
+    alexandria-session-start.py|alexandria-session-end.py|alexandria-stop.py|alexandria-transcript.py) ;;
+    *) return 1 ;;
+  esac
+  factory_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)" || return 1
+  factory_file="$factory_dir/$source"
+  [ -f "$factory_file" ] || return 1
+  head -5 "$file" | grep -q 'Cursor hook:' || return 1
+  head -5 "$factory_file" | grep -q 'Cursor hook:' || return 1
+  return 0
+}
+
+# Cursor alwaysApply rules can drift while keeping the factory description.
+# Exact bytes first; matching description frontmatter is the mold-in claim for
+# skills/cursor.mdc only — a foreign rule with a different description stays foreign.
+cursor_rule_identity_matches() {
+  local file="$1" source="$2"
+  local factory_dir factory_file live_desc factory_desc
+  [ -f "$file" ] || return 1
+  [ "$source" = "skills/cursor.mdc" ] || return 1
+  factory_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)" || return 1
+  factory_file="$factory_dir/$source"
+  [ -f "$factory_file" ] || return 1
+  live_desc=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/^"/,""); gsub(/"$/,""); print; exit}' "$file")
+  factory_desc=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/^"/,""); gsub(/"$/,""); print; exit}' "$factory_file")
+  [ -n "$live_desc" ] && [ -n "$factory_desc" ] || return 1
+  [ "$live_desc" = "$factory_desc" ] || return 1
+  return 0
+}
+
 claim_existing_file() {
   local file="$1" source="$2" actual_name="${3:-}" canonical_name="${4:-}"
   owned_file_matches "$file" && return 0
   if legacy_file_matches_signed_source "$file" "$source" "$actual_name" "$canonical_name"; then
+    record_owned_file "$file"
+    return
+  fi
+  if [ -n "$actual_name" ] && [ -n "$canonical_name" ] && \
+     preferred_skill_identity_matches "$file" "$source" "$actual_name" "$canonical_name"; then
+    record_owned_file "$file"
+    return
+  fi
+  if cursor_hook_identity_matches "$file" "$source"; then
+    record_owned_file "$file"
+    return
+  fi
+  if cursor_rule_identity_matches "$file" "$source"; then
     record_owned_file "$file"
     return
   fi

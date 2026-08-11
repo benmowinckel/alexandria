@@ -143,9 +143,19 @@ require factory/block.md \
 forbid factory/block.md \
   'Find all of them|open every file on their computer|whole digital footprint|search for unexpected (ones|sources)|psychological file' \
   'onboarding still contains broad private-data or psychological-profiling language'
+# Geography only: the fixed library line is allowed. Pricing / unlock / referral copy is not.
+require factory/block.md \
+  'library — https://alexandria-library.com/join' \
+  'onboarding Phase 5 has no fixed library geography line'
+require factory/block.md \
+  '→ type /a' \
+  'onboarding Phase 5 does not prefer same-chat /a'
 forbid factory/block.md \
-  'JOIN_LINK|alexandria-library\.com/join|first month free|free for good|dollar a day|refer-three|conversion moment|commercial beat' \
-  'onboarding contains a commercial or referral prompt'
+  'first month free|free for good|dollar a day|refer-three|conversion moment|commercial beat|join — unlock everything' \
+  'onboarding contains a commercial or referral pitch'
+forbid factory/block.md \
+  'JOIN_LINK' \
+  'onboarding uses a JOIN_LINK placeholder instead of the fixed geography line'
 require factory/block.md \
   'Do not use web search or any other outbound tool during onboarding.' \
   'onboarding can still turn private material into an outbound query'
@@ -159,11 +169,17 @@ require factory/canon/methodology.md \
   "The Author's private ai never does." \
   'methodology has no permanent private-ai boundary'
 require factory/canon/methodology.md \
-  'There is no opener carve-out' \
-  'methodology still permits a company ask inside the private loop'
+  'recommended` IS the join link' \
+  'methodology has no recommended-until-decision join carve-out'
+require factory/canon/methodology.md \
+  '.join_decision' \
+  'methodology has no join-decision marker'
 forbid factory/canon/methodology.md \
-  'share — someone you want the best for|join — unlock everything|/join\?ref|make not-trying feel irrational|make leaving feel like loss|tell us the one thing you would change|what the Author pays for|first month free|dollar a day|free for good if' \
-  'methodology contains a proactive company ask'
+  'There is no opener carve-out' \
+  'methodology still bans the opener join carve-out'
+forbid factory/canon/methodology.md \
+  'make not-trying feel irrational|make leaving feel like loss|what the Author pays for|first month free|dollar a day|free for good if' \
+  'methodology contains a proactive company pitch beyond the fixed link carve-out'
 require factory/canon/methodology.md \
   'never treats casual language as permission for speculative profiling' \
   'methodology has no permanent anti-profiling boundary'
@@ -296,8 +312,17 @@ require factory/setup.sh \
   'OWNERSHIP_LEDGER="$RUNTIME_DIR/.owned_integrations"' \
   'setup does not keep protected exact ownership receipts'
 require factory/setup.sh \
-  'owned_file_matches "$file" && return 0' \
-  'setup does not require exact recorded bytes before overwriting an integration'
+  'preferred_skill_identity_matches' \
+  'setup cannot claim drifted Alexandria preferred-slot skills by identity'
+require factory/setup.sh \
+  'cursor_hook_identity_matches' \
+  'setup cannot claim drifted Alexandria Cursor hooks by identity'
+require factory/setup.sh \
+  'cursor_rule_identity_matches' \
+  'setup cannot claim drifted Alexandria Cursor rules by identity'
+require factory/setup.sh \
+  'A foreign skill that stole the name but' \
+  'setup no longer documents the foreign-description rejection for preferred slots'
 require factory/setup.sh \
   'Refusing to use a non-empty ~/.local/share/alexandria without exact prior-install proof.' \
   'setup can overwrite a foreign pre-existing runtime namespace'

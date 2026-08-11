@@ -60,3 +60,31 @@ The onboarding is **substantively excellent and safe** — it does the hard thin
 1. **Onboarding is robust across model tiers.** The *read* of the person holds on the mid tier — you do NOT need to force leads onto the top model. (Updates `live-install.md`.)
 2. **Harness bug (fixed):** the judges had no web access and confidently flagged two **real** citations as "almost certainly invented" — the FAccT 2026 paper (arXiv 2604.16106, Vertesi/boyd/Taylor/Shestakofsky, real) and Trebor Scholz's "AI Without Bosses" course + Bangkok "Solidarity AI" conference (Nov 12–15 2026, real). A web-less fabrication auditor produces false positives AND would miss real fabrications. Fixed in `rubric.md` § 1: the auditor MUST have web access; unverifiable ≠ fabricated. **Meta-lesson: I nearly shipped a `block.md` "verify citations" fix on the strength of the judge's unverified claim — the exact failure the fix was about. Verifying the citations myself (they were real) caught it.**
 3. **One small verified product finding:** attributed misquotes ("resolved by tonight" vs. her source "resolved by Thursday"); both tiers slipped. Fixed in `block.md` Phase 5 floor (quotes verbatim) + Phase 3 (web-verify external references before stating them).
+
+---
+
+## Run 3 — Rosa + cold screening/proposal — 2026-08-10/11
+
+**System under test:** local `factory/block.md` (Phase 5 magic close + join geography + evidence grep-or-die) ahead of tip `3342b6aa`. Also: mold-in ownership claims in `setup.sh` (local commit `8c5c6492`, not yet on origin/main).
+
+### Automated / harness
+
+| Test | Result |
+|---|---|
+| `check-private-boundary.sh` | PASS |
+| `server/test/stranger.sh` | **68/68 PASS** |
+| Cold proposal foreign agent | **PASS** (full reach + ask-more + consent; 217 words; no pricing) |
+| Cold paste screening foreign agent | **PASS** — continue; wait for `start`; honest caveats |
+
+### Full onboarding (Rosa footprint)
+
+**Attempt A (pre-harden):** Fabrication 9 PASS · Frame 8 PASS · Accuracy **8 FAIL** (invented Evidence “serial numbers filed off”) · Completeness 8 PASS · DIY 9 PASS · Honesty 9 PASS · Activation diagnostic 7. Block hardened: Evidence grep-or-die; ban unlocks/garage tropes; honor nearest deadline; accurate accretion examples only.
+
+**Attempt B (hardened):** Accuracy **9 PASS** · Completeness **8 PASS**. Prior Evidence fail gone; 33/33 Evidence quotes footprint-verified; REPORT clean of garage/stage-set/unlocks/thermostat. Sample Phase 5 leads with live co-op quote + Thursday talk + Scott *Seeing Like a State* (1998).
+
+### Still not proven
+- A real non-Alexandria human + their own AI on their machine
+- A chat that has never seen this product conversation (this harness uses Cursor subagents — colder than this thread, not as cold as a stranger’s laptop)
+
+### Ship gate
+Ready to sign/ship local factory (mold-in + Phase 5 + methodology join-in-recommended + boundary/rubric) once founder fires `factory/ship.sh`.
