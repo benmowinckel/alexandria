@@ -101,9 +101,6 @@ export default async function MarketplacePage() {
           </Link>
           <p className="mkt-eyebrow">the collective</p>
           <h1 className="mkt-h1">the marketplace</h1>
-          <p className="mkt-lede">
-            The local loop is not listed here. Default methods are replaceable. Official and community additions do nothing until you choose them.
-          </p>
         </header>
 
         {modules.length === 0 ? (

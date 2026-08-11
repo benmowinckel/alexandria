@@ -1944,14 +1944,6 @@ html.app-shell input:focus {
   font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "swsh" 1;
   text-wrap: balance;
 }
-.mkt-lede {
-  margin: 1rem 0 0;
-  max-width: 30rem;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  text-wrap: pretty;
-}
 .mkt-empty { color: var(--text-muted); font-size: 0.95rem; margin-top: 2rem; }
 .mkt-list { margin-top: 2.4rem; display: flex; flex-direction: column; gap: 1.7rem; }
 .mkt-module-link {
@@ -1976,7 +1968,7 @@ html.app-shell input:focus {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  vertical-align: 2px;
+  vertical-align: baseline;
 }
 .mkt-author {
   margin-left: 0.6rem;
@@ -1988,8 +1980,10 @@ html.app-shell input:focus {
   margin: 0.45rem 0 0;
   color: var(--text-muted);
   font-size: 0.92rem;
-  line-height: 1.55;
-  text-wrap: pretty;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 640px) {
