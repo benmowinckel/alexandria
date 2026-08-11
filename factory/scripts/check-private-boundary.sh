@@ -105,10 +105,22 @@ require factory/block.md \
   'The commercial boundary is absolute.' \
   'onboarding has no explicit commercial boundary'
 require factory/block.md \
-  'First do a metadata-only look at the locations the host already exposes; do not open file contents.' \
+  'First do a metadata-only look at whatever this host already lets you see' \
   'onboarding no longer starts with a contents-blind source proposal'
 require factory/block.md \
-  'Their yes covers only the named scope. Anything else requires a new, specific yes.' \
+  'Propose reading **all of that current reach** that could carry who they are' \
+  'onboarding no longer proposes the full already-reachable personal surface'
+require factory/block.md \
+  'Do not cherry-pick a tiny subset to look cautious while leaving richer in-reach material unread.' \
+  'onboarding still allows under-proposing the reachable surface'
+require factory/block.md \
+  'ask whether there is more they want you to open that you cannot see yet' \
+  'onboarding no longer invites extra sources at the proposal'
+require factory/block.md \
+  'Keep the proposal short.' \
+  'onboarding no longer requires a short proposal'
+require factory/block.md \
+  'Their yes covers only that named scope. Anything else later needs a new, specific yes.' \
   'onboarding approval can expand beyond the exact named scope'
 require factory/block.md \
   'Do not expand from an approved file into its parent folder' \
