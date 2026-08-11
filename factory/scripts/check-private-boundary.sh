@@ -336,6 +336,9 @@ require factory/setup.sh \
 require factory/setup.sh \
   "'close-alexandria|a.'" \
   'Windows setup can still collapse the trailing-dot a. close skill into the a start skill'
+require factory/setup.sh \
+  'done <<< "$CLAUDE_CLOSE_SLOTS"' \
+  'Claude close-skill selection still depends on process substitution that Git Bash can skip'
 require factory/scripts/uninstall.py \
   '"close-alexandria"' \
   'the scoped uninstaller leaves the Windows-safe close alias behind'

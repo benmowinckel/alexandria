@@ -749,6 +749,7 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
 
   CLAUDE_CLOSE_SKILL=""
   CLAUDE_CLOSE_DIR=""
+  CLAUDE_CLOSE_SLOTS="$(close_skill_slots)"
   while IFS='|' read -r candidate_dir candidate_name; do
     if alex_skill_slot_available "$HOME/.claude/skills/$candidate_dir" "skills/aclose.md" "$candidate_name" "a."; then
       if install_close_skill "$HOME/.claude/skills/$candidate_dir" "$candidate_name" "skills/aclose.md (session close)"; then
@@ -759,7 +760,7 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
     else
       echo "  Claude Code: kept foreign /$candidate_name skill"
     fi
-  done < <(close_skill_slots)
+  done <<< "$CLAUDE_CLOSE_SLOTS"
 
   # (The scheduled-task bootstrap for the cloud autoloop is RETIRED — /a does
   # that processing interactively. Nothing scheduled installs here.)
@@ -1004,6 +1005,7 @@ if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
 
   CURSOR_CLOSE_SKILL=""
   CURSOR_CLOSE_DIR=""
+  CURSOR_CLOSE_SLOTS="$(close_skill_slots)"
   while IFS='|' read -r candidate_dir candidate_name; do
     if alex_skill_slot_available "$HOME/.cursor/skills/$candidate_dir" "skills/aclose.md" "$candidate_name" "a."; then
       if install_close_skill "$HOME/.cursor/skills/$candidate_dir" "$candidate_name" "skills/aclose.md (cursor session close)"; then
@@ -1014,7 +1016,7 @@ if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then
     else
       echo "  Cursor: kept foreign /$candidate_name skill"
     fi
-  done < <(close_skill_slots)
+  done <<< "$CURSOR_CLOSE_SLOTS"
 
   CURSOR_HOOKS_OK=""
   if command -v python3 &>/dev/null; then
@@ -1213,6 +1215,7 @@ if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
 
   CODEX_CLOSE_SKILL=""
   CODEX_CLOSE_DIR=""
+  CODEX_CLOSE_SLOTS="$(close_skill_slots)"
   while IFS='|' read -r candidate_dir candidate_name; do
     if alex_skill_slot_available "$HOME/.agents/skills/$candidate_dir" "skills/aclose.md" "$candidate_name" "a."; then
       if install_close_skill "$HOME/.agents/skills/$candidate_dir" "$candidate_name" "skills/aclose.md (Codex session close)"; then
@@ -1223,7 +1226,7 @@ if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
     else
       echo "  Codex: kept foreign \$$candidate_name skill"
     fi
-  done < <(close_skill_slots)
+  done <<< "$CODEX_CLOSE_SLOTS"
 
   # Merge the current Codex surfaces. Preserve every unknown hook and every
   # byte of the user's instructions outside our own marker. Never write the
