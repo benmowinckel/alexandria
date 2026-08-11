@@ -602,7 +602,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
             const current = crypto.createHash("sha256").update(fs.readFileSync(abs)).digest("hex");
             if (approved !== current + " " + tier) continue;
             // Last write wins if the same stem appears in multiple tiers.
-            local.set(stem, { tier, abs, contentType: ct });
+            local.set(stem, { tier, abs, contentType: ct, sha256: current });
           }
         }
 
@@ -679,8 +679,35 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
             const r = await fetch(SERVER + "/library/" + LOGIN);
             if (r.ok) {
               const j = await r.json();
-              const serverAfter = new Set((j.files || []).map(f => f.name));
-              for (const n of local.keys()) if (!serverAfter.has(n)) status.drift.push("missing_on_server:" + n);
+              const serverAfter = new Map((j.files || []).map(f => [f.name, f]));
+              for (const [name, meta] of local) {
+                const remote = serverAfter.get(name);
+                if (!remote) {
+                  status.drift.push("missing_on_server:" + name);
+                  continue;
+                }
+                if (remote.visibility !== meta.tier) {
+                  status.drift.push("visibility_mismatch:" + name + ":local=" + meta.tier + ":server=" + remote.visibility);
+                }
+                // Prove the read side too: fetch through the real owner access
+                // gate, hash the returned bytes, and compare with the exact
+                // locally approved bytes that were just PUT. A list-row match
+                // alone can hide a stale or broken R2 object.
+                try {
+                  const bodyRes = await fetch(SERVER + "/library/" + encodeURIComponent(LOGIN) + "/file/" + encodeURIComponent(name), {
+                    headers: { "Authorization": "Bearer " + KEY, "X-Alexandria-Client": CV },
+                  });
+                  if (!bodyRes.ok) {
+                    status.drift.push("read_failed:" + name + ":status=" + bodyRes.status);
+                  } else {
+                    const bytes = Buffer.from(await bodyRes.arrayBuffer());
+                    const remoteSha = crypto.createHash("sha256").update(bytes).digest("hex");
+                    if (remoteSha !== meta.sha256) status.drift.push("content_mismatch:" + name);
+                  }
+                } catch (e) {
+                  status.errors.push("read " + name + ":" + e.message);
+                }
+              }
             }
           } catch (e) { status.errors.push("verify:" + e.message); }
 
@@ -708,18 +735,50 @@ ALEXNODE
 
   marketplace_permission="$ALEX_DIR/system/permissions/marketplace"
   marketplace_manifest="$ALEX_DIR/.call_manifest"
+  marketplace_status="$ALEX_DIR/system/.marketplace_sync_status.json"
+  if [ -f "$marketplace_status" ]; then
+    marketplace_issue=$(node -e "const fs=require('fs');try{const s=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));if(s.ok===false)process.stdout.write('exact usage verification failed for: '+(s.invalid||[]).join(', '));}catch{}" "$marketplace_status" 2>/dev/null)
+    if [ -n "$marketplace_issue" ]; then
+      echo ""
+      echo "--- MARKETPLACE SIGNAL DRIFT (previous session) ---"
+      echo "$marketplace_issue"
+      echo "--- END MARKETPLACE SIGNAL DRIFT ---"
+      echo ""
+    fi
+  fi
   marketplace_approved_sha=$(tr -d '[:space:]' < "$marketplace_permission" 2>/dev/null || true)
   marketplace_current_sha=$(shasum -a 256 "$marketplace_manifest" 2>/dev/null | awk '{print $1}')
   if [ -n "$marketplace_approved_sha" ] && [ "$marketplace_approved_sha" = "$marketplace_current_sha" ]; then
     call_payload=$(cat "$marketplace_manifest" 2>/dev/null)
     if [ -n "$call_payload" ]; then
     (
-      status=$(curl -s --max-time 4 -o /dev/null -w '%{http_code}' -X POST "$SERVER/call" \
+      response_file=$(mktemp "${TMPDIR:-/tmp}/alexandria-marketplace.XXXXXX")
+      status=$(curl -s --max-time 8 -o "$response_file" -w '%{http_code}' -X POST "$SERVER/call" \
         -H "Authorization: Bearer $API_KEY" \
         -H "X-Alexandria-Client: $CLIENT_VERSION" \
         -H "Content-Type: application/json" \
         -d "$call_payload" 2>/dev/null || echo "000")
-      [ "$status" = "200" ] || echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) call POST failed status=$status" >> "$ALEX_DIR/system/.alexandria_errors"
+      if [ "$status" = "200" ]; then
+        node - "$response_file" "$ALEX_DIR/system/.marketplace_sync_status.json" <<'ALEXMARKET' 2>>"$ALEX_DIR/system/.alexandria_errors"
+const fs = require('fs');
+const [source, destination] = process.argv.slice(2);
+const response = JSON.parse(fs.readFileSync(source, 'utf8'));
+const modules = Array.isArray(response.modules) ? response.modules : [];
+const invalid = modules.filter((m) => m.usage_identity !== 'exact' || m.status !== 'ok');
+fs.writeFileSync(destination, JSON.stringify({
+  ok: response.ok === true && invalid.length === 0,
+  ran_at: new Date().toISOString(),
+  modules,
+  invalid: invalid.map((m) => m.id),
+}, null, 2));
+if (invalid.length) process.exitCode = 2;
+ALEXMARKET
+        node_status=$?
+        [ "$node_status" = "0" ] || echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) marketplace signal verification failed" >> "$ALEX_DIR/system/.alexandria_errors"
+      else
+        echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) call POST failed status=$status" >> "$ALEX_DIR/system/.alexandria_errors"
+      fi
+      rm -f "$response_file"
     ) &
     fi
   fi

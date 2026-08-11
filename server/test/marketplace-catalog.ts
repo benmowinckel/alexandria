@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import marketplaceInventory from '../../factory/marketplace.json';
 import {
   canonicalizeModuleId,
   deriveMarketplaceTier,
   isMarketplaceModule,
   marketplaceBuiltins,
   moduleIdAliases,
+  normalizeMarketplaceReport,
+  parseFrontmatter,
 } from '../src/marketplace-catalog.js';
 
 const currentDefault = 'github:benmowinckel/alexandria#factory/canon/methodology';
@@ -59,6 +63,24 @@ assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/b
 assert.equal(isMarketplaceModule('github:someone/their-modules#focus'), true);
 
 const builtins = marketplaceBuiltins();
+for (const module of marketplaceInventory.modules) {
+  const source = new URL(`../../${module.path}.md`, import.meta.url);
+  assert.equal(existsSync(source), true, `marketplace source missing: ${module.path}.md`);
+}
+assert.deepEqual(
+  marketplaceInventory.modules.filter((module) => module.role === 'core').map((module) => module.path),
+  ['factory/canon/foundation', 'factory/canon/change-closure'],
+);
+assert.deepEqual(
+  marketplaceInventory.modules.filter((module) => module.role === 'default').map((module) => module.path).sort(),
+  [
+    'factory/canon/axioms',
+    'factory/canon/editor',
+    'factory/canon/mercury',
+    'factory/canon/methodology',
+    'factory/canon/publisher',
+  ].sort(),
+);
 assert.deepEqual(
   builtins.map(({ name, tier }) => [name, tier]),
   [
@@ -75,4 +97,31 @@ assert.deepEqual(
   ],
 );
 
-console.log('marketplace catalog identity and activation layers: PASS');
+const frontmatter = parseFrontmatter(`---
+name: focus
+description: A reusable focus loop.
+adaptation: personalizable
+derived_from: github:someone/base#focus
+---
+# Focus
+`);
+assert.equal(frontmatter.adaptation, 'personalizable');
+assert.equal(frontmatter.derived_from, 'github:someone/base#focus');
+assert.deepEqual(
+  builtins.map((module) => module.adaptation),
+  marketplaceInventory.modules.map((module) => module.adaptation),
+);
+
+const exactHash = 'A'.repeat(64);
+assert.deepEqual(normalizeMarketplaceReport([
+  { id: 'github:someone/tools#focus', text: 'kept', source_sha256: exactHash },
+  { id: 'github:someone/tools#focus', text: 'duplicate', source_sha256: exactHash.toLowerCase() },
+  { id: 'github:someone/tools#bad', text: '', source_sha256: 'not-a-hash' },
+  'local:someone/private',
+]), [{
+  mod: 'github:someone/tools#focus',
+  text: 'kept',
+  sourceSha256: exactHash.toLowerCase(),
+}]);
+
+console.log('marketplace catalog identity, lifecycle, and activation layers: PASS');

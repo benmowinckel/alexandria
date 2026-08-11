@@ -26,6 +26,17 @@ export async function generateMetadata({ params }: { params: Promise<{ author: s
   }
 }
 
-export default function AuthorPage({ params }: { params: Promise<{ author: string }> }) {
-  return <AuthorPageClient params={params} />;
+export default async function AuthorPage({ params }: { params: Promise<{ author: string }> }) {
+  const { author } = await params;
+  return (
+    <>
+      <link
+        rel="alternate"
+        type="application/vnd.alexandria.library-capabilities+json"
+        href={`/api/library/${encodeURIComponent(author)}/capabilities`}
+        title="How this Library profile works"
+      />
+      <AuthorPageClient params={Promise.resolve({ author })} />
+    </>
+  );
 }

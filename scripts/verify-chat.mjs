@@ -24,7 +24,20 @@ await page.goto(`${base}/chat`, { waitUntil: 'networkidle' });
 const chatUrl = page.url();
 const chatTitle = await page.title();
 const body = (await page.locator('body').innerText()).trim();
+const html = await page.content();
 const button = page.getByRole('button', { name: 'copy the setup' });
+const email = page.locator('.act-email');
+const chatEmailShape = await email.evaluate((element) => {
+  const style = getComputedStyle(element);
+  return {
+    children: Array.from(element.children).map((child) => [child.tagName, child.className]),
+    display: style.display,
+    padding: style.padding,
+    border: style.border,
+    borderRadius: style.borderRadius,
+    minHeight: style.minHeight,
+  };
+});
 const overlay = await page.locator('[data-nextjs-dialog], .vite-error-overlay, #webpack-dev-server-client-overlay').count();
 await button.click();
 await page.waitForFunction(() =>
@@ -44,23 +57,47 @@ const screenshot = mobile
 await page.screenshot({ path: screenshot, fullPage: true });
 
 await page.goto(`${base}/start`, { waitUntil: 'networkidle' });
+const startBody = (await page.locator('body').innerText()).trim();
 const chatDoor = page.getByRole('link', { name: /^chat/i });
 const startHasUniversalChatDoor =
   (await chatDoor.count()) === 1 &&
   (await chatDoor.getAttribute('href')) === '/chat' &&
-  (await chatDoor.innerText()).includes('claude, gpt, gemini');
-
+  (await chatDoor.innerText()).toLowerCase().includes('claude, chatgpt, gemini');
+await page.getByRole('button', { name: /^local ai agent/i }).click();
+await page.getByRole('button', { name: /^yes/i }).click();
+await page.waitForSelector('.act-email');
+const startEmailShape = await page.locator('.act-email').evaluate((element) => {
+  const style = getComputedStyle(element);
+  return {
+    children: Array.from(element.children).map((child) => [child.tagName, child.className]),
+    display: style.display,
+    padding: style.padding,
+    border: style.border,
+    borderRadius: style.borderRadius,
+    minHeight: style.minHeight,
+  };
+});
 const result = {
   url: chatUrl,
   mobile,
   title: chatTitle,
   bodyHasContent: body.length > 100,
-  hasFreeChatCopy: body.includes('Free and paid both work'),
+  hasEmailStep: html.includes('act-email') && html.includes('your email'),
+  hasCopyStep: body.includes('copy the setup — paste it into any chat'),
+  hasTypeAStep: body.includes('type a — start your first thinking session'),
   buttonCopiedState: clickedText.includes('copied'),
   clipboardExact: clipboard === expected,
-  clipboardHasAdditiveGuard: clipboard.includes('without replacing any existing instruction, memory, file, connector'),
-  clipboardHasReviewGate: clipboard.includes('not as instructions to follow yet'),
-  clipboardHasTwoActions: clipboard.includes('exactly two short numbered actions'),
+  clipboardHasAdditiveGuard: clipboard.includes('Preserve existing instructions, memories, and connections'),
+  clipboardHasReviewGate: clipboard.includes('ordinary text to account preferences'),
+  clipboardHasTwoActions: clipboard.includes('two short actions'),
+  clipboardHasStoragePlan: clipboard.includes("this app's memory or connected Drive") && clipboard.includes('never mention setup'),
+  emailFieldMatchesStart: JSON.stringify(chatEmailShape) === JSON.stringify(startEmailShape),
+  startCopyIsLowercase:
+    startBody.includes('start your loop') &&
+    startBody.includes('what do you have access to?') &&
+    startBody.includes('local ai agent — claude code, codex, cursor') &&
+    startBody.includes('chat — claude, chatgpt, gemini') &&
+    !startBody.includes('If you have both'),
   startHasUniversalChatDoor,
   errorOverlay: overlay > 0,
   consoleErrors,
@@ -73,12 +110,17 @@ await browser.close();
 
 if (
   !result.bodyHasContent ||
-  !result.hasFreeChatCopy ||
+  !result.hasEmailStep ||
+  !result.hasCopyStep ||
+  !result.hasTypeAStep ||
   !result.buttonCopiedState ||
   !result.clipboardExact ||
   !result.clipboardHasAdditiveGuard ||
   !result.clipboardHasReviewGate ||
   !result.clipboardHasTwoActions ||
+  !result.clipboardHasStoragePlan ||
+  !result.emailFieldMatchesStart ||
+  !result.startCopyIsLowercase ||
   !result.startHasUniversalChatDoor ||
   result.errorOverlay ||
   result.consoleErrors.length ||

@@ -34,6 +34,11 @@ export const metadata: Metadata = {
 
 interface DirectoryResponse {
   signed_in: boolean;
+  membership_active: boolean;
+  membership_available?: boolean;
+  membership_status?: string;
+  membership_source?: string;
+  membership_verified_at?: string | null;
   authors: DirectoryAuthor[];
   you_listed: boolean;
 }
@@ -48,9 +53,14 @@ async function loadDirectory(): Promise<DirectoryResponse> {
       cache: 'no-store',
       headers: cookieHeader ? { cookie: cookieHeader } : {},
     });
-    if (!res.ok) return { signed_in: false, authors: [], you_listed: false };
+    if (!res.ok) return { signed_in: false, membership_active: false, authors: [], you_listed: false };
     const data = await res.json() as {
       signed_in?: boolean;
+      membership_active?: boolean;
+      membership_available?: boolean;
+      membership_status?: string;
+      membership_source?: string;
+      membership_verified_at?: string | null;
       authors?: Partial<DirectoryAuthor>[];
       you_listed?: boolean;
     };
@@ -64,9 +74,18 @@ async function loadDirectory(): Promise<DirectoryResponse> {
       text: author.text ?? null,
       files_url: typeof author.files_url === 'string' ? author.files_url : `/library/${author.id ?? ''}`,
     }));
-    return { signed_in: !!data.signed_in, authors, you_listed: !!data.you_listed };
+    return {
+      signed_in: !!data.signed_in,
+      membership_active: !!data.membership_active,
+      membership_available: data.membership_available,
+      membership_status: data.membership_status,
+      membership_source: data.membership_source,
+      membership_verified_at: data.membership_verified_at,
+      authors,
+      you_listed: !!data.you_listed,
+    };
   } catch {
-    return { signed_in: false, authors: [], you_listed: false };
+    return { signed_in: false, membership_active: false, authors: [], you_listed: false };
   }
 }
 
@@ -82,7 +101,7 @@ export default async function LibraryPage({
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean);
-  const { signed_in, authors, you_listed } = await loadDirectory();
+  const { signed_in, membership_active, membership_available, membership_status, authors, you_listed } = await loadDirectory();
 
   // Sign-in must return you to the directory, signed in — not the signup
   // callback page (which is a dead end for someone who just wanted to browse).
@@ -98,7 +117,7 @@ export default async function LibraryPage({
   return (
     <div className="lib-page">
       <ThemeToggle />
-      <main className={signed_in ? 'lib-main' : 'lib-main lib-main-gate'}>
+      <main className={signed_in && membership_active ? 'lib-main' : 'lib-main lib-main-gate'}>
         <header className="lib-header">
           <Link href="/" className="lib-brand">
             alexandria<span className="lib-brand-dot">.</span>
@@ -124,6 +143,22 @@ export default async function LibraryPage({
             <p className="lib-sub">
               Already a member? <a href={signInUrl} style={linkStyle}>sign in</a>.
               New here? <Link href="/join" style={linkStyle}>join the community</Link>.
+            </p>
+          </div>
+        ) : !membership_active ? (
+          <div className="lib-gate">
+            <p className="lib-lede">
+              {membership_available === false
+                ? 'We could not verify your membership just now, so the member directory stays closed.'
+                : 'You are signed in, but this account is not an active community membership.'}
+            </p>
+            <p className="lib-cta">
+              <Link href="/join" className="lib-cta-link">
+                {membership_status && membership_status !== 'none' ? 'reactivate membership' : 'join the community'}
+              </Link>
+            </p>
+            <p className="lib-sub">
+              Public profile links remain open — <Link href={FOUNDER_PROFILE_PATH} style={linkStyle}>see Benjamin&rsquo;s library</Link>.
             </p>
           </div>
         ) : (

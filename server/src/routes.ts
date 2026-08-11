@@ -3,13 +3,13 @@
 import { randomBytes } from 'crypto';
 import type { Context, Hono } from 'hono';
 import { logEvent } from './analytics.js';
-import { countActiveKin, createCheckoutSession, createConnectOnboardingLink, createPortalSession, ensurePayoutsReady, getOrCreateConnectAccount, getStripe, recalculateKinPricing, resolveActiveSubscription } from './billing.js';
+import { countActiveKin, createCheckoutSession, createConnectOnboardingLink, createPortalSession, ensurePayoutsReady, getOrCreateConnectAccount, getStripe, recalculateKinPricing, resolveActiveSubscription, resolveMembership } from './billing.js';
 import { authErrorHtml, callbackPageHtml, miniPageHtml, welcomeHandoffUrl } from './templates.js';
 import { getDB, getR2 } from './db.js';
 import { deleteAllProtocolR2 } from './file-access.js';
 import { loadAccounts, loadAccount, saveAccount, setAuthIndex, deleteAccount, getKV, setEmailTokenIndex, getEmailTokenIndex, getAuthIndex, getLoginIndex } from './kv.js';
 import { hashApiKey, generateToken } from './crypto.js';
-import { ACTIVE_AUTHOR_STATUSES, Account, AccountStore, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
+import { Account, AccountStore, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
 import { assignAuthorNumber, generateApiKey, getAccounts, getAccountByLogin, requireAdmin, updateAccountBilling } from './accounts.js';
 import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL } from './email.js';
 import { runHealthDigest, runWeekOneCheckIns } from './cron.js';
@@ -169,6 +169,14 @@ export function registerRoutes(app: Hono) {
   app.get('/alexandria', async (c) => {
     const key = extractApiKey(c);
     const suppliedAuth = Boolean(c.req.header('authorization') || c.req.query('key'));
+    const community = {
+      account: 'One GitHub identity joins Alexandria. Library and Marketplace are two views of that account, not separate memberships.',
+      membership_active: 'Stripe status is trialing, active, or past_due; or the account belongs to the explicit grandfathered free/beta cohort. Stripe is authoritative for paid accounts.',
+      referral_active: 'A referred person counts while that same membership_active test is true. Reading, publishing, calls, and recent app use do not change referral credit.',
+      product_active: 'Operational signal only: the account has made a module call or refreshed a shared file in the last 30 days. This never grants membership or referral credit.',
+      local_core: 'The local Alexandria core remains on the user’s machine. Community sync is optional and permission-gated; turning it off does not break the local loop.',
+      ai_help: 'An AI should GET /alexandria for rules and live account state, GET /marketplace to browse modules, and use authenticated endpoints only after the human has enabled the matching local permission.',
+    };
 
     if (!key && suppliedAuth) {
       return c.json({ connected: false, error: 'Invalid API key' }, 401);
@@ -178,9 +186,9 @@ export function registerRoutes(app: Hono) {
     if (!key) {
       return c.json({
         protocol: 'alexandria',
-        version: '1.0',
+        version: '1.1',
         constants: {
-          account: 'The membership relationship — governed solely by payment (or the free-with-three-kin path). This is the only thing that gates membership.',
+          account: 'The authenticated GitHub identity that connects one person to the collective. Membership is a live state on that account, not a second Library or Marketplace account.',
           file: 'The practice of publishing: keeping at least one public file on the server, refreshed roughly monthly. A rhythm, not a membership condition — nothing here can revoke your account.',
           call: 'The practice of communicating: your machine calls the server, the server responds. Describes how the tool talks to the community, not a condition of belonging.',
         },
@@ -205,6 +213,7 @@ export function registerRoutes(app: Hono) {
             note: 'private Marketplace Signal — usage timestamps + per-call text',
           },
         },
+        community,
         factory: 'https://github.com/benmowinckel/alexandria/tree/main/factory',
         methodology: 'https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/canon/methodology.md',
       });
@@ -217,6 +226,7 @@ export function registerRoutes(app: Hono) {
     }
 
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    const membership = await resolveMembership(account);
 
     // File obligation — ground truth from protocol_files. Scoped to
     // authors-visible files (visibility in {authors, public}); paid/invite
@@ -258,7 +268,8 @@ export function registerRoutes(app: Hono) {
       ? new Date(new Date(callLast).getTime() + thirtyDays).toISOString()
       : new Date(new Date(account.created_at).getTime() + thirtyDays).toISOString();
 
-    // Kin compliance — all three obligations met (account + file + call) in the last 30 days
+    // Kin = current membership only. File/call freshness remains visible product
+    // signal, but it never changes referral credit or membership.
     let kinData = { count: 0, compliant: 0 };
     try {
       kinData = await countActiveKin(account.github_login);
@@ -268,18 +279,26 @@ export function registerRoutes(app: Hono) {
     return c.json({
       connected: true,
       protocol: 'alexandria',
-      version: '1.0',
+      version: '1.1',
       account: {
         // github_login: the client's library sync derives its reconciliation
         // target from this — never from a guessed or hard-coded login (the
         // 2026-07-28 member-path audit: a benmowinckel fallback made every
         // other member reconcile against the founder's library).
         github_login: account.github_login,
-        status: account.subscription_status || 'none',
+        status: membership.status,
+        membership_active: membership.active,
+        membership_available: membership.available,
+        membership_source: membership.source,
+        membership_verified_at: membership.verified_at,
+        cancel_at_period_end: membership.cancel_at_period_end,
+        cancel_at: membership.cancel_at,
         created: account.created_at,
         installed: account.installed_at || null,
       },
+      community,
       obligations: {
+        meaning: 'Operational signal only. These dates do not grant membership or referral credit.',
         file_due: fileDue,
         file_status: fileStatus,
         file_last_edit: fileLastEdit,
@@ -634,12 +653,15 @@ export function registerRoutes(app: Hono) {
         rotateUrl = `${getServerUrl()}/account/rotate-key?code=${rotateCode}`;
       }
 
-      // Skip checkout for anyone already in good standing: payment info on
-      // file, or an active status — which includes the grandfathered
-      // seeding-stage `free` cohort (joined 2026-06-05 → 06-11 while signup
-      // was free; billing turning back on applies to new sign-ins only).
-      // They're founding members already, so claim their #N and show the page.
-      if (updatedAccount.stripe_customer_id || ACTIVE_AUTHOR_STATUSES.has(updatedAccount.subscription_status || '')) {
+      // Skip checkout only when the SAME authoritative membership resolver
+      // used by publishing says this account is active. A Stripe customer id
+      // merely means the person has paid before; it is not membership. Stored
+      // KV status is a cache and may lag a cancellation.
+      const membership = await resolveMembership(updatedAccount);
+      if (!membership.available && (updatedAccount.subscription_id || updatedAccount.stripe_customer_id)) {
+        return c.text('Membership verification is temporarily unavailable. Please try again.', 503);
+      }
+      if (membership.active) {
         if (stateData.intent === 'library' && stateData.next) {
           return c.redirect(handoffUrl(stateData.next));
         }
@@ -1317,6 +1339,71 @@ export function registerRoutes(app: Hono) {
       nudged,
       converted,
       conversion_rate: nudged > 0 ? Number((converted / nudged).toFixed(3)) : 0,
+    });
+  });
+
+  // One read-only community-loop monitor. This is the operational answer to
+  // “can people join, publish, use modules, and produce signal?” without
+  // creating synthetic users or mutating production. Stripe membership is
+  // resolved live; D1 supplies publication/module activity; account KV holds
+  // join/install state. Definitions are returned beside the numbers so a
+  // human or agent cannot silently reinterpret “active.”
+  app.get('/admin/community-loop', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+
+    const accounts = Object.values(await loadAccounts<AccountStore>());
+    const membershipRows: Array<{ account: Account; active: boolean; available: boolean; status: string; verified_at: string | null }> = [];
+    const concurrency = 5;
+    for (let i = 0; i < accounts.length; i += concurrency) {
+      const batch = accounts.slice(i, i + concurrency);
+      membershipRows.push(...await Promise.all(batch.map(async (account) => {
+        const membership = await resolveMembership(account);
+        return { account, ...membership };
+      })));
+    }
+
+    const db = getDB();
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const [publishers, moduleCallers, referrals] = await Promise.all([
+      db.prepare(`SELECT COUNT(DISTINCT account_id) as n FROM protocol_files`).first<{ n: number }>(),
+      db.prepare(`SELECT COUNT(DISTINCT account_id) as n FROM protocol_calls WHERE time > ?`).bind(since).first<{ n: number }>(),
+      db.prepare(`SELECT referred_github_login FROM referrals`).all<{ referred_github_login: string }>(),
+    ]);
+    const membershipByLogin = new Map(membershipRows.map((row) => [row.account.github_login.toLowerCase(), row]));
+    const referralRows = referrals.results || [];
+    const referralActive = referralRows.filter((row) => membershipByLogin.get(row.referred_github_login.toLowerCase())?.active).length;
+    const unavailable = membershipRows.filter((row) => !row.available);
+    const stale = membershipRows.filter((row) => row.account.subscription_id && (
+      !row.verified_at || Date.now() - new Date(row.verified_at).getTime() > 48 * 60 * 60 * 1000
+    ));
+
+    return c.json({
+      generated_at: new Date().toISOString(),
+      definitions: {
+        account: 'A GitHub identity that completed Alexandria OAuth. It may read public/owned Library material without being a member.',
+        member_active: 'Stripe is trialing, active, or past_due; or the account is in the explicit grandfathered free/beta cohort.',
+        referral_active: 'A referral whose member_active value is true. Recent use does not affect referral credit.',
+        product_active_30d: 'At least one module call in the last 30 days. Operational signal only; never a membership gate.',
+        publisher: 'At least one Library protocol file exists for the account.',
+        installed: 'At least one authenticated /call completed, proving the local setup reached the community server.',
+      },
+      accounts: {
+        total: accounts.length,
+        members_active: membershipRows.filter((row) => row.active).length,
+        reader_only_or_inactive: membershipRows.filter((row) => row.available && !row.active).length,
+        membership_unavailable: unavailable.length,
+        installed: accounts.filter((account) => !!account.installed_at).length,
+        publishers: publishers?.n || 0,
+        product_active_30d: moduleCallers?.n || 0,
+      },
+      referrals: {
+        total: referralRows.length,
+        active: referralActive,
+      },
+      issues: [
+        ...unavailable.map((row) => ({ type: 'membership_unavailable', github_login: row.account.github_login })),
+        ...stale.map((row) => ({ type: 'membership_not_verified_48h', github_login: row.account.github_login })),
+      ],
     });
   });
 

@@ -11,12 +11,24 @@
  */
 
 import { getKV } from './kv.js';
+import marketplaceInventory from '../../factory/marketplace.json';
+
+export type ModuleAdaptation = 'universal' | 'personalizable';
 
 export interface ModuleMeta {
   name: string;
   description: string;
+  adaptation: ModuleAdaptation;
+  derived_from: string | null;
+  content_sha256: string | null;
   status: 'ok' | 'unreachable';
   last_fetched: string;
+}
+
+export interface MarketplaceReportRow {
+  mod: string;
+  text: string;
+  sourceSha256: string | null;
 }
 
 export interface ParsedModuleId {
@@ -36,6 +48,9 @@ export interface MarketplaceCatalogEntry {
   author_github_login: string | null;
   kind: string;
   tier: MarketplaceTier;
+  adaptation: ModuleAdaptation;
+  derived_from: string | null;
+  content_sha256: string | null;
   status: 'ok' | 'unreachable';
 }
 
@@ -68,88 +83,30 @@ export function buildModuleId(user: string, repo: string, path: string): string 
   return `github:${user}/${repo}#${path}`;
 }
 
-/**
- * The built-in catalog is product inventory, so it must not disappear merely
- * because nobody reported using a module recently. Usage history only discovers
- * community additions; this list states what Alexandria itself currently ships.
- */
-const MARKETPLACE_BUILTINS = [
-  {
-    path: 'factory/canon/foundation',
-    name: 'foundation',
-    description: 'The complete local loop. Remove it and the loop stops.',
-    kind: 'canon',
-    tier: 'core',
-  },
-  {
-    path: 'factory/canon/change-closure',
-    name: 'upkeep',
-    description: 'When something changes, keeps every dependent part current.',
-    kind: 'canon',
-    tier: 'core',
-  },
-  {
-    path: 'factory/canon/axioms',
-    name: 'axioms',
-    description: 'Why the loop exists and what it is trying to protect.',
-    kind: 'canon',
-    tier: 'default',
-  },
-  {
-    path: 'factory/canon/editor',
-    name: 'editor',
-    description: 'Draws out and sharpens your own thinking.',
-    kind: 'canon',
-    tier: 'default',
-  },
-  {
-    path: 'factory/canon/mercury',
-    name: 'mercury',
-    description: 'Brings useful ideas in and keeps important ones alive.',
-    kind: 'canon',
-    tier: 'default',
-  },
-  {
-    path: 'factory/canon/methodology',
-    name: 'methodology',
-    description: 'How your ai captures, develops, and preserves your thinking.',
-    kind: 'canon',
-    tier: 'default',
-  },
-  {
-    path: 'factory/canon/publisher',
-    name: 'publisher',
-    description: 'Turns developed thinking into finished work.',
-    kind: 'canon',
-    tier: 'default',
-  },
-  {
-    path: 'factory/systems/capture-pipeline',
-    name: 'capture',
-    description: 'Turns saved links, screenshots, and notes into usable material.',
-    kind: 'system',
-    tier: 'official',
-  },
-  {
-    path: 'factory/systems/state-based-sync',
-    name: 'audit',
-    description: 'Checks the whole system against what should be true now.',
-    kind: 'system',
-    tier: 'official',
-  },
-  {
-    path: 'factory/canon/bookshelf',
-    name: 'bookshelf',
-    description: "Benjamin's personal shelf of books and ideas worth returning to.",
-    kind: 'reference',
-    tier: 'community',
-  },
-] as const;
+interface MarketplaceInventoryModule {
+  path: string;
+  name: string;
+  description: string;
+  kind: string;
+  role: MarketplaceTier;
+  adaptation: ModuleAdaptation;
+}
+
+const MARKETPLACE_ROLES = new Set<MarketplaceTier>(['core', 'default', 'official', 'community']);
+const MARKETPLACE_BUILTINS: MarketplaceInventoryModule[] = marketplaceInventory.modules.map((module) => {
+  if (!module.path || !module.name || !MARKETPLACE_ROLES.has(module.role as MarketplaceTier)) {
+    throw new Error('factory/marketplace.json contains an invalid module');
+  }
+  if (module.adaptation !== 'universal' && module.adaptation !== 'personalizable') {
+    throw new Error(`factory/marketplace.json has invalid adaptation for ${module.path}`);
+  }
+  return { ...module, role: module.role as MarketplaceTier, adaptation: module.adaptation as ModuleAdaptation };
+});
 
 const BUILTIN_TIERS = new Map<string, MarketplaceTier>(
   MARKETPLACE_BUILTINS.map((module) => [
     buildModuleId(CURRENT_OWNER, FACTORY_REPO, module.path),
-    module.tier,
+    module.role,
   ]),
 );
 
@@ -160,7 +117,10 @@ export function marketplaceBuiltins(): MarketplaceCatalogEntry[] {
     description: module.description,
     author_github_login: CURRENT_OWNER,
     kind: module.kind,
-    tier: module.tier,
+    tier: module.role,
+    adaptation: module.adaptation,
+    derived_from: null,
+    content_sha256: null,
     status: 'ok',
   }));
 }
@@ -235,11 +195,23 @@ export function isMarketplaceModule(id: string): boolean {
   return parsed.user !== CURRENT_OWNER || parsed.repo !== FACTORY_REPO;
 }
 
-/** Hand-rolled YAML parser — only `name` and `description` matter. */
-export function parseFrontmatter(content: string): { name?: string; description?: string; body: string } {
+/** Hand-rolled YAML parser for the deliberately tiny module identity surface. */
+export function parseFrontmatter(content: string): {
+  name?: string;
+  description?: string;
+  adaptation?: ModuleAdaptation;
+  derived_from?: string;
+  body: string;
+} {
   const m = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
   if (!m) return { body: content };
-  const out: { name?: string; description?: string; body: string } = { body: m[2] };
+  const out: {
+    name?: string;
+    description?: string;
+    adaptation?: ModuleAdaptation;
+    derived_from?: string;
+    body: string;
+  } = { body: m[2] };
   for (const line of m[1].split(/\r?\n/)) {
     const kv = line.match(/^([a-z][a-z0-9_-]*)\s*:\s*(.*)$/i);
     if (!kv) continue;
@@ -249,8 +221,49 @@ export function parseFrontmatter(content: string): { name?: string; description?
     }
     if (kv[1] === 'name') out.name = v;
     else if (kv[1] === 'description') out.description = v;
+    else if (kv[1] === 'adaptation' && (v === 'universal' || v === 'personalizable')) out.adaptation = v;
+    else if (kv[1] === 'derived_from') out.derived_from = v;
   }
   return out;
+}
+
+function normalizedDerivedFrom(raw: string | undefined, id: string): string | null {
+  if (!raw || parseModuleId(raw).kind !== 'github') return null;
+  const canonical = canonicalizeModuleId(raw);
+  return canonical === canonicalizeModuleId(id) ? null : canonical;
+}
+
+async function sha256Hex(content: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Normalize a /call manifest without inventing module identity. */
+export function normalizeMarketplaceReport(input: unknown[]): MarketplaceReportRow[] {
+  const rows = new Map<string, MarketplaceReportRow>();
+  for (const item of input) {
+    let candidateId: string | null = null;
+    let text = '';
+    let sourceSha256: string | null = null;
+    if (typeof item === 'string') {
+      candidateId = item;
+    } else if (item && typeof item === 'object') {
+      const value = item as Record<string, unknown>;
+      if (typeof value.id !== 'string') continue;
+      candidateId = value.id;
+      if (typeof value.text === 'string') text = value.text;
+      if (typeof value.source_sha256 === 'string' && /^[a-f0-9]{64}$/i.test(value.source_sha256)) {
+        sourceSha256 = value.source_sha256.toLowerCase();
+      } else if (value.source_sha256 !== undefined) {
+        continue;
+      }
+    }
+    if (!candidateId || parseModuleId(candidateId).kind === null) continue;
+    const mod = canonicalizeModuleId(candidateId).slice(0, 300);
+    if (!isMarketplaceModule(mod) || rows.has(mod)) continue;
+    rows.set(mod, { mod, text: text.slice(0, 2000), sourceSha256 });
+  }
+  return [...rows.values()];
 }
 
 /**
@@ -356,6 +369,9 @@ async function refreshCache(id: string, parsed: ParsedModuleId): Promise<ModuleM
     const meta: ModuleMeta = {
       name: fallbackName(parsed, id),
       description: '',
+      adaptation: 'universal',
+      derived_from: null,
+      content_sha256: null,
       status: 'unreachable',
       last_fetched: now,
     };
@@ -380,6 +396,9 @@ async function refreshCache(id: string, parsed: ParsedModuleId): Promise<ModuleM
   const meta: ModuleMeta = {
     name,
     description,
+    adaptation: fm.adaptation || 'universal',
+    derived_from: normalizedDerivedFrom(fm.derived_from, id),
+    content_sha256: await sha256Hex(fetched.content),
     status: 'ok',
     last_fetched: now,
   };

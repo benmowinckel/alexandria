@@ -21,6 +21,11 @@ interface MarketplaceModule {
   author_github_login: string | null;
   kind: string;
   tier?: 'core' | 'default' | 'official' | 'community';
+  adaptation?: 'universal' | 'personalizable';
+  signal?: {
+    current_version?: { callers_recent?: number; window_days?: number };
+    module_lineage?: { callers_recent?: number; window_days?: number };
+  };
   status: 'ok' | 'unreachable';
 }
 
@@ -117,6 +122,15 @@ export default async function MarketplacePage() {
               const href = parsed ? `https://github.com/${parsed.user}/${parsed.repo}/blob/HEAD/${parsed.path}.md` : null;
               const tier = m.tier || fallbackTier(parsed);
               const author = tier === 'community' ? (m.author_github_login || parsed?.user) : null;
+              const currentUsers = m.signal?.current_version?.callers_recent || 0;
+              const lineageUsers = m.signal?.module_lineage?.callers_recent || 0;
+              const usage = tier === 'core'
+                ? 'required local core · not ranked'
+                : currentUsers > 0
+                  ? `${currentUsers} ${currentUsers === 1 ? 'member' : 'members'} using these exact bytes`
+                  : lineageUsers > 0
+                    ? `${lineageUsers} ${lineageUsers === 1 ? 'member has' : 'members have'} used this module · current version unreported`
+                    : 'no reported use yet';
               const inner = (
                 <>
                   <h2 className="mkt-module-title">
@@ -133,6 +147,9 @@ export default async function MarketplacePage() {
                       {m.description}
                     </p>
                   )}
+                  <p className="mkt-signal">
+                    {usage}{m.adaptation ? ` · ${m.adaptation}` : ''}
+                  </p>
                 </>
               );
               return (

@@ -1,7 +1,8 @@
 /** Alexandria's optional collective plumbing. The local loop does not depend on it. */
 
 import type { Hono } from 'hono';
-import { requireAuth, requireAuthor } from './auth.js';
+import { requireAuth } from './auth.js';
+import { requireActiveMember, resolveMembership } from './billing.js';
 import { getDB, getR2, ensureFilePriceColumn, ensureFileTitleColumn, clampPaidAmount } from './db.js';
 import { logEvent } from './analytics.js';
 import { saveAccount, getKV } from './kv.js';
@@ -14,7 +15,7 @@ import {
   isMarketplaceModule,
   marketplaceBuiltins,
   moduleIdAliases,
-  parseModuleId,
+  normalizeMarketplaceReport,
 } from './marketplace-catalog.js';
 import {
   DEFAULT_CONTENT_TYPE,
@@ -61,7 +62,7 @@ export function registerProtocol(app: Hono) {
   // ── File obligation ────────────────────────────────────────────
 
   app.put('/file/:name', async (c) => {
-    const auth = await requireAuthor(c);
+    const auth = await requireActiveMember(c);
     if (!auth.ok) return c.text(auth.message, auth.status);
     if (!auth.account.github_id) return c.json({ error: 'Account missing github_id' }, 400);
 
@@ -255,7 +256,7 @@ export function registerProtocol(app: Hono) {
   });
 
   app.delete('/file/:name', async (c) => {
-    const auth = await requireAuthor(c);
+    const auth = await requireActiveMember(c);
     if (!auth.ok) return c.text(auth.message, auth.status);
     if (!auth.account.github_id) return c.json({ error: 'Account missing github_id' }, 400);
 
@@ -330,6 +331,22 @@ export function registerProtocol(app: Hono) {
     const auth = await requireAuth(c);
     if (!auth) return c.text('Unauthorized', 401);
 
+    const isOwner = String(auth.account.github_id) === id;
+    const fileGate = await getDB().prepare(
+      'SELECT visibility FROM protocol_files WHERE account_id = ? AND name = ?'
+    ).bind(id, name).first<{ visibility: string }>();
+    let subscriberValid = false;
+    if (!isOwner && fileGate?.visibility === 'authors') {
+      const membership = await resolveMembership(auth.account);
+      if (!membership.available) {
+        return c.json({ error: 'membership verification unavailable. try again.' }, 503);
+      }
+      if (!membership.active) {
+        return c.json({ error: 'Active membership required', visibility: 'authors', reason: 'membership_required' }, 402);
+      }
+      subscriberValid = true;
+    }
+
     // Protocol route is the canonical Author-to-Author interface — free reads
     // only. No purchase/invite tokens are accepted here; paid/invite flow
     // through the website. The gate inside readProtocolFile enforces this.
@@ -337,6 +354,7 @@ export function registerProtocol(app: Hono) {
       authorGithubId: id,
       fileName: name,
       accessorGithubId: auth.account.github_id ?? null,
+      context: { subscriberValid },
     });
 
     if (!result.ok) return c.json(result.body, result.status);
@@ -362,7 +380,7 @@ export function registerProtocol(app: Hono) {
   // ── Call obligation ────────────────────────────────────────────
 
   app.post('/call', async (c) => {
-    const auth = await requireAuthor(c);
+    const auth = await requireActiveMember(c);
     if (!auth.ok) return c.text(auth.message, auth.status);
     if (!auth.account.github_id) return c.json({ error: 'Account missing github_id' }, 400);
 
@@ -430,27 +448,31 @@ export function registerProtocol(app: Hono) {
     const now = new Date().toISOString();
     const db = getDB();
 
-    // Each module: { id: "module_name", text: "why still using / what changed" }
-    // Validate module ID format at ingress — github:user/repo#path or local:user/slug.
-    // Garbage IDs pollute the catalog as "unreachable" entries forever; reject upfront.
-    const rows: { mod: string; text: string }[] = [];
-    for (const m of body.modules) {
-      let candidateId: string | null = null;
-      let candidateText = '';
-      if (typeof m === 'object' && m?.id && typeof m.id === 'string' && typeof m.text === 'string') {
-        candidateId = m.id;
-        candidateText = m.text;
-      } else if (typeof m === 'string') {
-        // Backward compat: bare string = module id with empty text
-        candidateId = m;
-      }
-      if (!candidateId) continue;
-      if (parseModuleId(candidateId).kind === null) continue;
-      const moduleId = canonicalizeModuleId(candidateId);
-      if (!isMarketplaceModule(moduleId)) continue;
-      rows.push({ mod: moduleId.slice(0, 300), text: candidateText.slice(0, 2000) });
-    }
+    // New installs report the SHA-256 of the exact GitHub bytes the Author's AI
+    // inspected. Old manifests remain accepted as legacy signal, but are marked
+    // unverified in the response. Duplicate IDs collapse to one vote per call.
+    const rows = normalizeMarketplaceReport(body.modules);
     if (rows.length === 0) return c.json({ error: 'no valid modules' }, 400);
+
+    // Identity is binary, not a fuzzy similarity judgment. If one byte changes,
+    // the report no longer counts as use of this published module. The Author
+    // can inspect again, keep a private adaptation unreported, or publish a
+    // derived module under their own GitHub identity.
+    const reportMetas = await Promise.all(rows.map((row) => resolveModule(row.mod)));
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row.sourceSha256) continue;
+      const moduleMeta = reportMetas[i];
+      if (!moduleMeta || moduleMeta.status !== 'ok' || moduleMeta.content_sha256 !== row.sourceSha256) {
+        return c.json({
+          error: 'module bytes changed since inspection',
+          module: row.mod,
+          reported_sha256: row.sourceSha256,
+          current_sha256: moduleMeta?.content_sha256 || null,
+          action: 'inspect the current bytes again before reporting usage',
+        }, 409);
+      }
+    }
 
     // ── Requests: the call without a match (a2 — the demand side) ──
     // Optional free-text wishes the Author has explicitly cleared for the
@@ -475,7 +497,13 @@ export function registerProtocol(app: Hono) {
       }
     }
 
-    const inserts = rows.concat(requestRows).map((r) => db.prepare(
+    const storedRows = rows.map((row) => ({
+      mod: row.mod,
+      text: row.sourceSha256
+        ? JSON.stringify({ v: 1, note: row.text, source_sha256: row.sourceSha256 })
+        : row.text,
+    }));
+    const inserts = storedRows.concat(requestRows).map((r) => db.prepare(
       'INSERT INTO protocol_calls (module_id, account_id, time, text) VALUES (?, ?, ?, ?)'
     ).bind(r.mod, id, now, r.text));
     await db.batch(inserts);
@@ -495,17 +523,29 @@ export function registerProtocol(app: Hono) {
     // these fields are unaffected.
     const ids = rows.map((r) => r.mod);
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-    const placeholders = ids.map(() => '?').join(',');
-    const callerRows = await db.prepare(
-      `SELECT module_id, COUNT(DISTINCT account_id) as n FROM protocol_calls
-       WHERE module_id IN (${placeholders}) AND time > ? GROUP BY module_id`
-    ).bind(...ids, ninetyDaysAgo).all<{ module_id: string; n: number }>();
+    const exactRows = rows.filter((row) => row.sourceSha256);
+    const exactClauses = exactRows.map(() =>
+      `(module_id = ? AND json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.source_sha256') = ?)`
+    ).join(' OR ');
+    const callerRows = exactRows.length === 0
+      ? { results: [] as Array<{ module_id: string; n: number }> }
+      : await db.prepare(
+          `SELECT module_id, COUNT(DISTINCT account_id) as n FROM protocol_calls
+           WHERE time > ? AND (${exactClauses}) GROUP BY module_id`
+        ).bind(
+          ninetyDaysAgo,
+          ...exactRows.flatMap((row) => [row.mod, row.sourceSha256 as string]),
+        ).all<{ module_id: string; n: number }>();
     const callerCounts = new Map((callerRows.results || []).map((r) => [r.module_id, r.n]));
-    const metas = await Promise.all(ids.map((mid) => resolveModule(mid)));
+    const metas = reportMetas;
     const responseModules = ids.map((mid, i) => ({
       id: mid,
       status: metas[i]?.status || 'unknown',
       callers_recent: callerCounts.get(mid) ?? 0,
+      content_sha256: metas[i]?.content_sha256 || null,
+      adaptation: metas[i]?.adaptation || 'universal',
+      derived_from: metas[i]?.derived_from || null,
+      usage_identity: rows[i].sourceSha256 ? 'exact' : 'legacy-unverified',
     }));
 
     return c.json({ ok: true, modules: responseModules, requests_logged: requestRows.length });
@@ -516,7 +556,7 @@ export function registerProtocol(app: Hono) {
   // Three routes:
   //   GET /marketplace           — public catalog
   //   GET /marketplace/requests  — public unmet-demand board (anonymous)
-  //   GET /marketplace/:module   — auth-required usage history
+  //   GET /marketplace/:module   — member-only aggregate + caller's own history
   //
   // Module bodies live at raw.githubusercontent.com — agents fetch from
   // github directly. The catalog returns metadata only.
@@ -527,10 +567,9 @@ export function registerProtocol(app: Hono) {
   app.get('/marketplace', async (c, next) => {
     if (new URL(c.req.url).pathname !== '/marketplace') return next();
 
-    // Public listing is the catalog only — module identity, name, description,
-    // activation layer, kind. Usage telemetry (counts, recency, per-call text)
-    // is private Marketplace Signal exposed only via the auth-gated
-    // `/marketplace/:module` endpoint.
+    // Public listing carries module identity plus anonymous, exact-byte recent
+    // counts. Raw notes never appear here. Member detail adds all-time lineage
+    // counts and only the requesting Author's own history.
     //
     // Alexandria's own inventory is explicit and always visible. Community
     // modules are discovered from approved usage reports and use a 90-day
@@ -548,23 +587,113 @@ export function registerProtocol(app: Hono) {
     // Old and current founder handles, plus the old modules-repo name, are one
     // identity. Normalise before resolution so the public catalog never shows
     // duplicate modules or links back through stale redirects.
-    const builtins = marketplaceBuiltins();
-    const builtinIds = new Set(builtins.map((module) => module.id));
+    const builtinInventory = marketplaceBuiltins();
+    const builtinIds = new Set(builtinInventory.map((module) => module.id));
     const ids = [...new Set((results || [])
       .map((r) => canonicalizeModuleId(r.module_id))
       .filter(isMarketplaceModule)
       .filter((id) => !builtinIds.has(id)))];
+
+    // Public signal is anonymous and exact-byte only. Old plaintext reports and
+    // reports for an earlier revision remain historical rows, but never inflate
+    // the current module's counts.
+    const hashExpression = `json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.source_sha256')`;
+    const [signalRows, lineageRows] = await Promise.all([
+      getDB().prepare(
+        `SELECT module_id, ${hashExpression} as source_sha256,
+                COUNT(*) as calls, COUNT(DISTINCT account_id) as callers, MAX(time) as last_seen
+         FROM protocol_calls
+         WHERE module_id LIKE 'github:%' AND time > ? AND ${hashExpression} IS NOT NULL
+         GROUP BY module_id, source_sha256`
+      ).bind(ninetyDaysAgo).all<{
+        module_id: string;
+        source_sha256: string;
+        calls: number;
+        callers: number;
+        last_seen: string | null;
+      }>(),
+      getDB().prepare(
+        `SELECT module_id, COUNT(*) as calls, COUNT(DISTINCT account_id) as callers, MAX(time) as last_seen
+         FROM protocol_calls
+         WHERE module_id LIKE 'github:%' AND time > ? AND ${hashExpression} IS NOT NULL
+         GROUP BY module_id`
+      ).bind(ninetyDaysAgo).all<{
+        module_id: string;
+        calls: number;
+        callers: number;
+        last_seen: string | null;
+      }>(),
+    ]);
+    const exactSignal = new Map<string, { calls: number; callers: number; last_seen: string | null }>();
+    for (const row of signalRows.results || []) {
+      const canonicalId = canonicalizeModuleId(row.module_id);
+      const key = `${canonicalId}\n${row.source_sha256}`;
+      const prior = exactSignal.get(key);
+      exactSignal.set(key, {
+        calls: (prior?.calls || 0) + row.calls,
+        callers: (prior?.callers || 0) + row.callers,
+        last_seen: !prior?.last_seen || (row.last_seen && row.last_seen > prior.last_seen) ? row.last_seen : prior.last_seen,
+      });
+    }
+    const lineageSignal = new Map<string, { calls: number; callers: number; last_seen: string | null }>();
+    for (const row of lineageRows.results || []) {
+      const canonicalId = canonicalizeModuleId(row.module_id);
+      const prior = lineageSignal.get(canonicalId);
+      lineageSignal.set(canonicalId, {
+        calls: (prior?.calls || 0) + row.calls,
+        callers: (prior?.callers || 0) + row.callers,
+        last_seen: !prior?.last_seen || (row.last_seen && row.last_seen > prior.last_seen) ? row.last_seen : prior.last_seen,
+      });
+    }
+    const withCurrentSignal = (module: ReturnType<typeof marketplaceBuiltins>[number], contentSha256: string | null) => {
+      const current = contentSha256 ? exactSignal.get(`${module.id}\n${contentSha256}`) : undefined;
+      const lineage = lineageSignal.get(module.id);
+      return {
+        ...module,
+        content_sha256: contentSha256,
+        callers_recent: current?.callers || 0,
+        calls_recent: current?.calls || 0,
+        last_seen: current?.last_seen || null,
+        window_days: 90,
+        signal: {
+          current_version: {
+            content_sha256: contentSha256,
+            callers_recent: current?.callers || 0,
+            calls_recent: current?.calls || 0,
+            last_seen: current?.last_seen || null,
+            window_days: 90,
+          },
+          module_lineage: {
+            callers_recent: lineage?.callers || 0,
+            calls_recent: lineage?.calls || 0,
+            last_seen: lineage?.last_seen || null,
+            window_days: 90,
+          },
+        },
+      };
+    };
+    const builtins = await Promise.all(builtinInventory.map(async (module) => {
+      const meta = await resolveModule(module.id);
+      return withCurrentSignal({
+        ...module,
+        adaptation: meta?.adaptation || module.adaptation,
+        derived_from: meta?.derived_from || null,
+      }, meta?.content_sha256 || null);
+    }));
     const communityModules = await Promise.all(ids.map(async (moduleId) => {
       const meta = await resolveModule(moduleId);
-      return {
+      return withCurrentSignal({
         id: moduleId,
         name: meta?.name || moduleId,
         description: meta?.description || '',
         author_github_login: authorFromModuleId(moduleId),
         kind: deriveKind(moduleId),
         tier: deriveMarketplaceTier(moduleId),
+        adaptation: meta?.adaptation || 'universal',
+        derived_from: meta?.derived_from || null,
+        content_sha256: meta?.content_sha256 || null,
         status: meta?.status || 'unreachable',
-      };
+      }, meta?.content_sha256 || null);
     }));
     let modules = [...builtins, ...communityModules];
 
@@ -636,16 +765,76 @@ export function registerProtocol(app: Hono) {
     const requestedModuleId = c.req.param('module');
     if (requestedModuleId === 'signal') return next();
 
-    const auth = await requireAuth(c);
-    if (!auth) return c.text('Unauthorized', 401);
+    const auth = await requireActiveMember(c);
+    if (!auth.ok) return c.text(auth.message, auth.status);
 
     const moduleId = canonicalizeModuleId(requestedModuleId);
     const aliases = moduleIdAliases(moduleId);
     const placeholders = aliases.map(() => '?').join(',');
-    const { results } = await getDB().prepare(
-      `SELECT account_id, time, text FROM protocol_calls WHERE module_id IN (${placeholders}) ORDER BY time DESC LIMIT 10000`
-    ).bind(...aliases).all<{ account_id: string; time: string; text: string | null }>();
+    const db = getDB();
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const meta = await resolveModule(moduleId);
+    const currentHash = meta?.content_sha256 || '';
+    const exactHash = `json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.source_sha256') = ?`;
+    const anyExactHash = `json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.source_sha256') IS NOT NULL`;
+    const [currentAll, currentRecent, lineageAll, lineageRecent, own] = await Promise.all([
+      db.prepare(
+        `SELECT COUNT(*) as calls, COUNT(DISTINCT account_id) as callers, MAX(time) as last_seen
+         FROM protocol_calls WHERE module_id IN (${placeholders}) AND ${exactHash}`
+      ).bind(...aliases, currentHash).first<{ calls: number; callers: number; last_seen: string | null }>(),
+      db.prepare(
+        `SELECT COUNT(*) as calls, COUNT(DISTINCT account_id) as callers
+         FROM protocol_calls WHERE module_id IN (${placeholders}) AND time > ? AND ${exactHash}`
+      ).bind(...aliases, ninetyDaysAgo, currentHash).first<{ calls: number; callers: number }>(),
+      db.prepare(
+        `SELECT COUNT(*) as calls, COUNT(DISTINCT account_id) as callers, MAX(time) as last_seen
+         FROM protocol_calls WHERE module_id IN (${placeholders}) AND ${anyExactHash}`
+      ).bind(...aliases).first<{ calls: number; callers: number; last_seen: string | null }>(),
+      db.prepare(
+        `SELECT COUNT(*) as calls, COUNT(DISTINCT account_id) as callers, MAX(time) as last_seen
+         FROM protocol_calls WHERE module_id IN (${placeholders}) AND time > ? AND ${anyExactHash}`
+      ).bind(...aliases, ninetyDaysAgo).first<{ calls: number; callers: number; last_seen: string | null }>(),
+      db.prepare(
+        `SELECT time, text FROM protocol_calls
+         WHERE module_id IN (${placeholders}) AND account_id = ? ORDER BY time DESC LIMIT 100`
+      ).bind(...aliases, String(auth.account.github_id)).all<{ time: string; text: string | null }>(),
+    ]);
+    const ownUsage = (own.results || []).map((row) => {
+      if (!row.text) return { time: row.time, note: '', source_sha256: null, usage_identity: 'legacy-unverified' };
+      try {
+        const parsed = JSON.parse(row.text) as { v?: number; note?: string; source_sha256?: string };
+        if (parsed.v === 1 && typeof parsed.source_sha256 === 'string') {
+          return { time: row.time, note: parsed.note || '', source_sha256: parsed.source_sha256, usage_identity: 'exact' };
+        }
+      } catch { /* old plaintext usage note */ }
+      return { time: row.time, note: row.text, source_sha256: null, usage_identity: 'legacy-unverified' };
+    });
 
-    return c.json({ module: moduleId, usage: results || [] });
+    return c.json({
+      module: moduleId,
+      adaptation: meta?.adaptation || 'universal',
+      derived_from: meta?.derived_from || null,
+      content_sha256: meta?.content_sha256 || null,
+      signal: {
+        current_version: {
+          content_sha256: meta?.content_sha256 || null,
+          callers_recent: currentRecent?.callers || 0,
+          calls_recent: currentRecent?.calls || 0,
+          callers_all_time: currentAll?.callers || 0,
+          calls_all_time: currentAll?.calls || 0,
+          last_seen: currentAll?.last_seen || null,
+          window_days: 90,
+        },
+        module_lineage: {
+          callers_recent: lineageRecent?.callers || 0,
+          calls_recent: lineageRecent?.calls || 0,
+          callers_all_time: lineageAll?.callers || 0,
+          calls_all_time: lineageAll?.calls || 0,
+          last_seen: lineageAll?.last_seen || null,
+          window_days: 90,
+        },
+      },
+      own_usage: ownUsage,
+    });
   });
 }

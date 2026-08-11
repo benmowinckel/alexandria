@@ -11,6 +11,9 @@
     "test:lifecycle": "tsx test/lifecycle.ts",
     "test:library": "tsx test/library.ts",
     "test:marketplace": "tsx test/marketplace-catalog.ts",
+    "test:marketplace-module": "bash test/marketplace-module-lifecycle.sh",
+    "test:membership": "tsx test/membership-contract.ts",
+    "test:community": "tsx test/community-loop.ts",
     "test:secret-fingerprint": "tsx test/secret-fingerprint.ts"
   },
   "dependencies": {

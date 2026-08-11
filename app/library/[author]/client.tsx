@@ -37,6 +37,15 @@ interface AuthorData {
     socials: { label: string; url: string }[] | null;
     text: string | null;
   };
+  viewer?: {
+    signed_in?: boolean;
+    is_owner?: boolean;
+    capabilities_url?: string;
+    membership_active?: boolean;
+    membership_status?: string | null;
+    membership_source?: string | null;
+    membership_verified_at?: string | null;
+  };
   twin?: { enabled: boolean; label: string | null; variants?: TwinVariantSummary[]; online?: boolean; signed_in?: boolean };
   files?: ProtocolFile[];
   // Optional per-Author profile config — reorder/subset the emergent sections
@@ -246,7 +255,8 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     }));
 
   // General account sign-in — lives at the top of the page, not tied to the twin.
-  const signedIn = data.twin?.signed_in === true;
+  const signedIn = data.viewer?.signed_in === true || data.twin?.signed_in === true;
+  const isOwner = data.viewer?.is_owner === true;
   const signInUrl = librarySignInUrlHere();
   // The router — the bio's links out as one first-class block: website leads,
   // socials follow, contact closes. This is the ground-truth pointer set the
@@ -380,7 +390,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             <Link href="/library" aria-label="back to the library" title="library" style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
             </Link>
-            {!signedIn && (
+            {isOwner ? (
+              <Link href={`/library/${encodeURIComponent(authorId)}/manage`} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }} className="hover:opacity-60">
+                manage
+              </Link>
+            ) : !signedIn && (
               <a href={signInUrl} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }} className="hover:opacity-60">
                 sign in
               </a>

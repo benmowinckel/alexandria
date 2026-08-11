@@ -43,7 +43,7 @@ export async function getAccountByLogin(login: string): Promise<{ storeKey: stri
   return { storeKey, account: accounts[storeKey] as Account };
 }
 
-export async function updateAccountBilling(identifier: string, billing: Partial<Pick<Account, 'stripe_customer_id' | 'subscription_status' | 'subscription_id' | 'current_period_end' | 'email' | 'stripe_connect_account_id' | 'connect_payouts_enabled'>>): Promise<void> {
+export async function updateAccountBilling(identifier: string, billing: Partial<Pick<Account, 'stripe_customer_id' | 'subscription_status' | 'subscription_id' | 'membership_verified_at' | 'current_period_end' | 'email' | 'stripe_connect_account_id' | 'connect_payouts_enabled'>>): Promise<void> {
   // Fast path: API key lookup is indexed (auth:{hash} -> github key)
   if (identifier.startsWith('alex_')) {
     const keyHash = hashApiKey(identifier);

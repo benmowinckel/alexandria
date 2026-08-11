@@ -4,6 +4,8 @@
 
 *The onboarding companion to `plm.md`. That file is the how — the compile, its stages, the hard-won corrections. This one is the why: what a mirror is, why only you can build yours, the one honest bar you have to clear, and how to fire it. If `plm.md` is the machine, this is the invitation. Read it and decide.*
 
+Your mirror runs through **your own model account**. Your ai holds your provider token and private substrate beside you; the Library receives neither. It receives only the address and separate secret for the sidecar you chose to expose. If you disconnect it, the mirror goes offline and the rest of your profile remains intact. Another Author can never inherit the founder's company-funded inference as a fallback.
+
 A mirror is **you, made queryable** — a language model that holds your positions and talks in your voice, compiled entirely from your own writing. Ask it something you've never answered out loud and it replies the way you would: your frame on new ground, your register, your reflexes. Not a chatbot wearing your name off a paragraph of bio. A working model of how you actually think — that other people can ask things of, and that keeps answering after you've stopped writing. After you're gone.
 
 It ships on your Library page, next to your shadow, labelled as a mirror. Your shadow is what you wrote. Your mirror is what you'd *say* — to anyone, about anything, forever.
@@ -42,6 +44,7 @@ You don't need a lab. Your own agent runs the whole compile — `plm.md` is the 
 - It inventories every first-person corpus you have, runs the weighted training pass on rented open-model infrastructure, grades the result against a calibrated bar, and hands you a sheet of answers to sign off.
 - The whole thing costs single-digit dollars and finishes in a day, not a wait on anyone.
 - You get an adapter file you own — portable, revocable, deletable — and, on your say-so, a queryable mirror on your Library page.
+- Your agent connects the serving sidecar using your model account, confirms that the Library reports `author_account_only`, and leaves no provider token in Alexandria's server.
 
 It recompiles from scratch whenever a better base model ships or your substrate meaningfully grows. The weights are disposable; the compounding was always in the substrate, which is yours.
 

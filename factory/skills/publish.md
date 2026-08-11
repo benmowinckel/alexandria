@@ -1,80 +1,43 @@
 ---
 name: publish
-description: Publish a marketplace module — orchestrates the two-phase publish.sh, helps the Author write the body, then commits and pushes. AI inference only on the body; mechanics are scripted.
+description: Create and publish a module in the Author's own GitHub repository, with clear reuse and lineage metadata. No Alexandria upload.
 ---
 
-You are the publish entry point. Use this skill only when the Author directly asks to share a named piece of Alexandria machinery with the marketplace. Never invoke it from ordinary private work or suggest it as a next step.
+Use this skill only when the Author directly asks to publish a Marketplace module. Publishing is an outward action: prepare everything, show the final bytes, and push only after their explicit yes.
 
-## What this does
+## Decide the identity
 
-A module is a single markdown file in a public GitHub repo. Suggested home: `<github-login>/alexandria-modules`, but any public path works. Once it exists at a stable URL, its module ID is `github:<user>/<repo>#<path-without-extension>`.
+Choose a lowercase slug. Then make two calls with the Author:
 
-There is no `/publish` endpoint and no upload UI. The public GitHub file is the publication. Marketplace reporting is a separate action: it stays off unless the Author later asks for it, sees the exact current `.call_manifest`, and approves those bytes.
+- `universal` — the mechanism is meant to be used as published.
+- `personalizable` — the file is a starting point each Author is expected to adapt.
 
-## Steps
+If this module materially adapts another published module, add its canonical ID as `derived_from`. If it stands independently and the source is not needed to explain it, leave lineage empty. There is no percentage test. Attribution is a meaning judgment; module identity is exact bytes.
 
-### 1. Pick the slug
+## Prepare the file
 
-Ask the Author what to name the module if they haven't said. Constraints: lowercase alphanumerics + hyphens, must start with letter or digit (regex: `[a-z0-9][a-z0-9-]*`). One-word slugs are best: `verify-edit`, `capture-links`, `brief-setup`. Confirm before continuing.
-
-### 2. Setup — get the file ready to edit
-
-Run the setup phase. The script ensures `<user>/alexandria-modules` exists on GitHub (creates it via `gh repo create` if not), clones or pulls it locally to `~/alexandria-modules/`, and writes the module template at `<slug>.md` with the slug filled in. The local file path is the only thing on stdout — capture it.
+Run the signed script. It creates or updates the Author's own public `<github-login>/alexandria-modules` repository and writes a local template. Nothing is uploaded in this phase.
 
 ```bash
-# Route the fetch through verify-fetch.sh: it checks the script against the
-# Touch ID-signed manifest and refuses to run tampered/unsigned code (installed
-# by setup.sh; it never self-bootstraps from the web).
-VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
-file=$(bash "$VF" --run scripts/publish.sh setup "<slug>")
+VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"
+[ -f "$VF" ] || { echo "Alexandria's verifier is missing; restore it through https://alexandria-library.com/start before publishing anything."; exit 1; }
+file=$(bash "$VF" --run scripts/publish.sh setup "<slug>" "<universal|personalizable>" "<optional-derived-from-id>")
 echo "$file"
 ```
 
-If the script errors (gh not installed, gh not authenticated, slug invalid), surface the error and stop.
+Write one self-contained Markdown module. It needs a plain description, concrete use and non-use cases, the complete reusable mechanism, and one privacy-safe example. Another AI should be able to inspect and use it without private context or a separate explanation. Keep the module flexible; encode intent and constraints, not assumptions about one harness.
 
-### 3. Write the body
+## Publish the exact bytes
 
-This is the only step that needs you. Read the template that's now at `$file`. The template has four sections:
-
-- **One-paragraph framing** under the H1 — what problem this module solves and for whom.
-- **When to use** — bullet list of triggers. Be specific.
-- **When not to use** — adjacent cases where a different module is better.
-- **Instruction** — the actual reusable mechanism. If it's a skill, the body of the skill. If a script, paste the script. If a ritual, write the steps. Self-contained: another Author should be able to use this without reading anything else.
-- **Example** — one concrete example from real use. Inputs, outputs, what changed. Strip private details — keep the reusable mechanism.
-
-Work with the Author. Probe what makes their version distinct, what edge cases matter, what they'd want a stranger to understand on first read. Don't generate generic content; the marketplace already has enough of that.
-
-When the body reads well to both of you, write it back to `$file`.
-
-### 4. Confirm before publish
-
-Show the Author the final body. They can still edit. They can also abort entirely — `rm "$file"` and skip step 5. Publishing is reversible (delete the file from the repo) but caches and indexes persist; better to confirm now.
-
-### 5. Finalize — commit and push
-
-Run the finalize phase. The script `git add`s the file, commits with message `module: <slug>`, pushes to `main`, and prints the canonical module ID on stdout.
+Read the finished file back. Verify that private details, secrets, machine paths, and accidental dependencies are absent. Show the Author the full final body and destination. After their explicit yes:
 
 ```bash
-VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
 id=$(bash "$VF" --run scripts/publish.sh finalize "<slug>")
 echo "$id"
 ```
 
-### 6. Stop at the requested publication
+The script commits and pushes to the Author's GitHub repository and prints the canonical module ID. That public GitHub file is the publication. Alexandria receives no upload and stores no body.
 
-Report the published module ID and stop. Do not propose installation or another Alexandria action. If the Author separately asks to install that exact module, run `install.sh` against the new ID — that changes only the local `~/alexandria/.call_manifest`. Any prior marketplace-reporting approval becomes invalid because the manifest bytes changed.
+Stop after publication unless the Author separately asks to inspect/register their new public module. Publication does not install, activate, or report it. Registering uses the same exact-byte inspection as every other module; reporting needs a separate approval of the complete manifest hash.
 
-```bash
-VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"; [ -f "$VF" ] || { echo "Alexandria verifier missing — restore through https://alexandria-library.com/start"; exit 1; }
-bash "$VF" --run scripts/install.sh "$id"
-```
-
-## What this does NOT do
-
-- Does not lint, format, or validate the body beyond what the script enforces (slug regex). The body is freeform markdown — the marketplace measures usage, not style.
-- Does not version or tag. The catalog tracks `main`. Edits propagate within 24h via cache TTL.
-- Does not add the module to anyone else's manifest. Other Authors install it themselves; that's how the survival ranking works.
-
-## Source of truth
-
-Script: `factory/scripts/publish.sh`. Template: `factory/templates/module.md`. Architecture and lifecycle: `factory/canon/library.md`. All in the public alexandria repo (`benmowinckel/alexandria`).
+Source: `factory/scripts/publish.sh`. Full lifecycle: `factory/canon/marketplace.md`.

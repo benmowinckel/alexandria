@@ -301,9 +301,16 @@ export async function countActiveKin(githubLogin: string): Promise<{ count: numb
   // Resolve each kin's account in parallel via the login index (O(1) per lookup).
   const kinResults = await Promise.all(kinLogins.map(login => getAccountByLogin(login)));
   let compliant = 0;
-  for (const r of kinResults) {
-    if (!r) continue; // No account — never joined, not a member
-    if (ACTIVE_AUTHOR_STATUSES.has(r.account.subscription_status || '')) compliant++;
+  const memberships = await Promise.all(kinResults.map(async (r) => {
+    if (!r) return null; // No account — never joined, not a member
+    return resolveMembership(r.account);
+  }));
+  for (const membership of memberships) {
+    // A referral counts only when the same authoritative gate that permits
+    // publishing says they are a current member. Stripe outages fail closed;
+    // the next recalculation retries instead of granting a free month from a
+    // stale cache.
+    if (membership?.available && membership.active) compliant++;
   }
 
   return { count: kinLogins.length, compliant };
@@ -485,15 +492,45 @@ export async function recalculateAllKinPricing(): Promise<void> {
       ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
     for (const sub of resp.data) {
-      if (!BILLABLE_STATUSES.has(sub.status)) continue;
       const login = sub.metadata?.github_login || sub.metadata?.api_key;
       if (!login || seenLogins.has(login)) continue;
       seenLogins.add(login);
+      const acct = accountByLogin.get(login);
+      const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer?.id;
+      const periodEndUnix = sub.items?.data?.[0]?.current_period_end ?? null;
+
+      // Daily membership reconciliation. Webhooks remain the instant path;
+      // this independent sweep is the repair loop when a delivery is missed.
+      // It deliberately includes terminal subscriptions, so a stale `active`
+      // KV record cannot keep write or subscriber access alive indefinitely.
+      if (acct && (
+        acct.subscription_id !== sub.id
+        || acct.subscription_status !== sub.status
+        || (customerId && acct.stripe_customer_id !== customerId)
+      )) {
+        try {
+          await updateAccountBilling(login, {
+            subscription_id: sub.id,
+            subscription_status: sub.status,
+            membership_verified_at: new Date().toISOString(),
+            ...(customerId ? { stripe_customer_id: customerId } : {}),
+            ...(periodEndUnix ? { current_period_end: new Date(periodEndUnix * 1000).toISOString() } : {}),
+          });
+          logEvent('membership_status_reconciled', {
+            github_login: login,
+            from: acct.subscription_status || 'none',
+            to: sub.status,
+          });
+        } catch (e) {
+          console.error(`[membership] daily reconciliation failed for ${login}:`, e);
+        }
+      }
+
+      if (!BILLABLE_STATUSES.has(sub.status)) continue;
       // Self-heal: recalculateKinPricing bails when the KV blob lacks
       // subscription_id, so backfill it from the live sub. Read-after-write KV
       // lag may push this cycle's fire to the next daily run, but the 7-day
       // window has seven chances, so the warning still lands before the charge.
-      const acct = accountByLogin.get(login);
       if (acct && acct.subscription_id !== sub.id) {
         try {
           await updateAccountBilling(login, { subscription_id: sub.id });
@@ -543,6 +580,7 @@ export interface BillingInfo {
   stripe_customer_id?: string;
   subscription_status?: string;
   subscription_id?: string;
+  membership_verified_at?: string;
   current_period_end?: string;
   stripe_connect_account_id?: string;
   connect_payouts_enabled?: boolean;
@@ -792,6 +830,138 @@ export interface ResolvedSubscription {
   healed: boolean;
 }
 
+export interface MembershipState {
+  /** The single answer used by every write and subscriber-only read gate. */
+  active: boolean;
+  /** False means Stripe could not be reached, so callers must fail closed as
+   * unavailable rather than mislabel a member as cancelled. */
+  available: boolean;
+  status: string;
+  source: 'stripe' | 'grandfathered' | 'none';
+  verified_at: string | null;
+  cancel_at_period_end: boolean;
+  cancel_at: string | null;
+}
+
+/** Pure membership rule used by the resolver and its regression test. A live
+ * Stripe value always outranks the stored KV value — including terminal
+ * values. Only free/beta are valid without Stripe. */
+export function classifyMembershipStatus(storedStatus: string | null | undefined, stripeStatus?: string | null): {
+  active: boolean;
+  status: string;
+  source: 'stripe' | 'grandfathered' | 'none';
+} {
+  const stored = storedStatus || 'none';
+  if (stripeStatus != null) {
+    return { active: ACTIVE_AUTHOR_STATUSES.has(stripeStatus), status: stripeStatus, source: 'stripe' };
+  }
+  if (stored === 'free' || stored === 'beta') {
+    return { active: true, status: stored, source: 'grandfathered' };
+  }
+  return { active: false, status: stored, source: 'none' };
+}
+
+/**
+ * Resolve membership once, from its real source.
+ *
+ * Account KV is only a derivative cache. Paid/trial memberships are checked
+ * against Stripe and the cache is repaired before this returns. The only
+ * accounts that may be active without Stripe are the explicit free/beta
+ * cohorts. A Stripe outage fails closed as unavailable; it never silently
+ * grants access from stale KV and never tells a real member they cancelled.
+ */
+export async function resolveMembership(account: Account): Promise<MembershipState> {
+  const stored = account.subscription_status || 'none';
+  const now = new Date().toISOString();
+
+  const noStripeState = classifyMembershipStatus(stored);
+  if (!account.subscription_id && noStripeState.source === 'grandfathered') {
+    return {
+      active: noStripeState.active,
+      available: true,
+      status: noStripeState.status,
+      source: noStripeState.source,
+      verified_at: null,
+      cancel_at_period_end: false,
+      cancel_at: null,
+    };
+  }
+
+  try {
+    const sub = account.subscription_id
+      ? shapeResolvedSubscription(await getStripe().subscriptions.retrieve(account.subscription_id), false)
+      : await resolveActiveSubscription(account, { strict: true });
+
+    if (!sub) {
+      const state = classifyMembershipStatus(stored);
+      return {
+        active: state.active,
+        available: true,
+        status: state.status,
+        source: state.source,
+        verified_at: now,
+        cancel_at_period_end: false,
+        cancel_at: null,
+      };
+    }
+
+    account.subscription_status = sub.status;
+    account.subscription_id = sub.subscriptionId;
+    account.stripe_customer_id = sub.customerId;
+    account.membership_verified_at = now;
+    await updateAccountBilling(account.github_login, {
+      stripe_customer_id: sub.customerId,
+      subscription_id: sub.subscriptionId,
+      subscription_status: sub.status,
+      membership_verified_at: now,
+      ...(sub.current_period_end ? { current_period_end: sub.current_period_end } : {}),
+    });
+
+    const state = classifyMembershipStatus(stored, sub.status);
+    return {
+      active: state.active,
+      available: true,
+      status: state.status,
+      source: state.source,
+      verified_at: now,
+      cancel_at_period_end: sub.cancel_at_period_end,
+      cancel_at: sub.cancel_at,
+    };
+  } catch (e) {
+    console.error(`[membership] Stripe verification failed for ${account.github_login}:`, e);
+    return {
+      active: false,
+      available: false,
+      status: 'unavailable',
+      source: 'stripe',
+      verified_at: null,
+      cancel_at_period_end: false,
+      cancel_at: null,
+    };
+  }
+}
+
+export type ActiveMemberAuth =
+  | { ok: true; key: string; account: Account; membership: MembershipState }
+  | { ok: false; status: 401 | 402 | 503; message: string };
+
+export async function requireActiveMember(c: { req: { header: (name: string) => string | undefined; query: (name: string) => string | undefined } }): Promise<ActiveMemberAuth> {
+  const auth = await requireAuth(c);
+  if (!auth) return { ok: false, status: 401, message: 'Unauthorized' };
+  const membership = await resolveMembership(auth.account);
+  if (!membership.available) {
+    return { ok: false, status: 503, message: 'membership verification unavailable. try again.' };
+  }
+  if (!membership.active) {
+    return {
+      ok: false,
+      status: 402,
+      message: 'subscription not active. reactivate at https://alexandria-library.com/signup',
+    };
+  }
+  return { ok: true, key: auth.key, account: auth.account, membership };
+}
+
 function shapeResolvedSubscription(sub: Stripe.Subscription, healed: boolean): ResolvedSubscription {
   const periodEndUnix = sub.cancel_at ?? sub.items?.data?.[0]?.current_period_end ?? null;
   const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
@@ -815,6 +985,7 @@ async function healAccount(account: Account, sub: Stripe.Subscription): Promise<
       stripe_customer_id: customerId,
       subscription_id: sub.id,
       subscription_status: sub.status,
+      membership_verified_at: new Date().toISOString(),
       ...(periodEndUnix ? { current_period_end: new Date(periodEndUnix * 1000).toISOString() } : {}),
     });
     logEvent('subscription_account_healed', {
@@ -862,15 +1033,19 @@ export function subMatchesAccount(sub: Stripe.Subscription, account: Account): b
  *
  * Returns null when no active/trialing subscription exists.
  */
-export async function resolveActiveSubscription(account: Account): Promise<ResolvedSubscription | null> {
+export async function resolveActiveSubscription(account: Account, options: { strict?: boolean } = {}): Promise<ResolvedSubscription | null> {
   const stripe = getStripe();
+  let lookupSucceeded = false;
+  let lastLookupError: unknown = null;
 
   // 1. Fast path — cached subscription_id is valid.
   if (account.subscription_id) {
     try {
       const sub = await stripe.subscriptions.retrieve(account.subscription_id);
+      lookupSucceeded = true;
       return shapeResolvedSubscription(sub, false);
     } catch (e) {
+      lastLookupError = e;
       console.warn(
         `[billing] cached subscription_id ${account.subscription_id} not in Stripe — falling back to metadata sweep:`,
         e,
@@ -881,19 +1056,25 @@ export async function resolveActiveSubscription(account: Account): Promise<Resol
   // 2. Metadata sweep — robust to email mismatch + legacy + patron variants.
   try {
     const recent = await stripe.subscriptions.list({ status: 'all', limit: 100 });
+    lookupSucceeded = true;
     const matched = recent.data.find((s) => subMatchesAccount(s, account));
     if (matched) {
       await healAccount(account, matched);
       return shapeResolvedSubscription(matched, true);
     }
   } catch (e) {
+    lastLookupError = e;
     console.error(`[billing] metadata sweep failed for ${account.github_login}:`, e);
   }
 
   // 3. Email-based customer lookup — fallback when no metadata identifier hit.
-  if (!account.email) return null;
+  if (!account.email) {
+    if (options.strict && !lookupSucceeded && lastLookupError) throw lastLookupError;
+    return null;
+  }
   try {
     const customers = await stripe.customers.list({ email: account.email, limit: 5 });
+    lookupSucceeded = true;
     for (const customer of customers.data) {
       const subs = await stripe.subscriptions.list({
         customer: customer.id,
@@ -916,8 +1097,10 @@ export async function resolveActiveSubscription(account: Account): Promise<Resol
       }
     }
   } catch (e) {
+    lastLookupError = e;
     console.error(`[billing] customer email lookup for ${account.email} failed:`, e);
   }
+  if (options.strict && !lookupSucceeded && lastLookupError) throw lastLookupError;
   return null;
 }
 
@@ -1303,6 +1486,7 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
               stripe_customer_id: customerId,
               subscription_id: sub.id,
               subscription_status: sub.status,
+              membership_verified_at: new Date().toISOString(),
               ...(periodEnd ? { current_period_end: new Date(periodEnd * 1000).toISOString() } : {}),
             });
           }
@@ -1333,7 +1517,7 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
 
           const subLogin = sub.metadata?.github_login || sub.metadata?.api_key;
           if (subLogin) {
-            await onAccountUpdate(subLogin, { subscription_status: 'canceled' });
+            await onAccountUpdate(subLogin, { subscription_status: 'canceled', membership_verified_at: new Date().toISOString() });
           }
           logEvent('billing_subscription_canceled', {
             customer: sub.customer as string,

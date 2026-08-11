@@ -44,13 +44,15 @@ export function isInternalProtocolFileName(name: string): boolean {
 // ---------------------------------------------------------------------------
 
 export type AllowedReason = 'public' | 'owner' | 'authors' | 'invite' | 'paid';
-export type DeniedReason = 'unauthenticated' | 'invite_required' | 'payment_required' | 'unknown_visibility';
+export type DeniedReason = 'unauthenticated' | 'membership_required' | 'invite_required' | 'payment_required' | 'unknown_visibility';
 
 export type FileReadDecision =
   | { allowed: true; reason: AllowedReason }
   | { allowed: false; status: 401 | 402 | 403; reason: DeniedReason; body: Record<string, unknown> };
 
 export interface FileReadContext {
+  /** Caller has authoritatively verified that the accessor is an active member. */
+  subscriberValid?: boolean;
   /** Caller has validated a Stripe checkout session that grants access to THIS file. */
   purchaseValid?: boolean;
   /** Caller has validated an invite code that grants access to THIS author's files. */
@@ -73,7 +75,7 @@ export interface AuthorizeFileReadOpts {
  *   1. public          → anyone, no auth required
  *   2. owner           → file's own author always reads, regardless of visibility
  *   3. unauthenticated → everything below requires auth; deny with 401
- *   4. authors         → any authenticated Author
+ *   4. authors         → an authoritatively active member
  *   5. invite          → context.inviteValid required
  *   6. paid            → context.purchaseValid required
  *   7. unknown         → fail closed with 403
@@ -98,7 +100,15 @@ export function authorizeFileRead(opts: AuthorizeFileReadOpts): FileReadDecision
     };
   }
 
-  if (v === 'authors') return { allowed: true, reason: 'authors' };
+  if (v === 'authors') {
+    if (opts.context?.subscriberValid) return { allowed: true, reason: 'authors' };
+    return {
+      allowed: false,
+      status: 402,
+      reason: 'membership_required',
+      body: { error: 'Active membership required', visibility: 'authors', reason: 'membership_required' },
+    };
+  }
 
   if (v === 'invite') {
     if (opts.context?.inviteValid) return { allowed: true, reason: 'invite' };
@@ -275,15 +285,15 @@ export async function deleteAllProtocolR2(authorGithubId: string | number): Prom
 // ---------------------------------------------------------------------------
 
 export type ShadowAllowedReason = 'owner' | 'public' | 'authors' | 'invite';
-export type ShadowDeniedReason = 'authors_required' | 'invite_required' | 'unknown_visibility';
+export type ShadowDeniedReason = 'authors_required' | 'membership_required' | 'invite_required' | 'unknown_visibility';
 
 export type ShadowDecision =
   | { allowed: true; reason: ShadowAllowedReason }
-  | { allowed: false; status: 401 | 403; reason: ShadowDeniedReason; body: Record<string, unknown> };
+  | { allowed: false; status: 401 | 402 | 403; reason: ShadowDeniedReason; body: Record<string, unknown> };
 
 /**
  * Pure visibility decision for shadows. Owner reads regardless; public is
- * open; authors requires an authenticated Author; invite requires a
+ * open; authors requires an authoritatively active member; invite requires a
  * pre-validated token. Symmetric with `authorizeFileRead` but with shadow's
  * own visibility lexicon and no paid tier.
  */
@@ -291,18 +301,27 @@ export function authorizeShadowRead(opts: {
   visibility: string;
   ownerLogin: string;
   accessorLogin: string | null;
+  subscriberValid?: boolean;
   inviteValid?: boolean;
 }): ShadowDecision {
   const isOwner = !!opts.accessorLogin && opts.accessorLogin === opts.ownerLogin;
   if (isOwner) return { allowed: true, reason: 'owner' };
   if (opts.visibility === 'public') return { allowed: true, reason: 'public' };
   if (opts.visibility === 'authors') {
-    if (opts.accessorLogin) return { allowed: true, reason: 'authors' };
+    if (!opts.accessorLogin) {
+      return {
+        allowed: false,
+        status: 401,
+        reason: 'authors_required',
+        body: { error: 'Sign in required', visibility: 'authors', reason: 'authors_required' },
+      };
+    }
+    if (opts.subscriberValid) return { allowed: true, reason: 'authors' };
     return {
       allowed: false,
-      status: 401,
-      reason: 'authors_required',
-      body: { error: 'Authors only — requires Alexandria API key', visibility: 'authors', reason: 'authors_required' },
+      status: 402,
+      reason: 'membership_required',
+      body: { error: 'Active membership required', visibility: 'authors', reason: 'membership_required' },
     };
   }
   if (opts.visibility === 'invite') {
@@ -331,7 +350,7 @@ interface ShadowRow {
 
 export type ShadowReadResult =
   | { ok: true; reason: ShadowAllowedReason; obj: R2ObjectBody }
-  | { ok: false; status: 401 | 403 | 404; reason: string; body: Record<string, unknown> };
+  | { ok: false; status: 401 | 402 | 403 | 404; reason: string; body: Record<string, unknown> };
 
 /** Shadow by ID, gated by visibility. Owner bypasses. Invite path increments
  * the shadow_tokens counter on success so analytics stay accurate. */
@@ -339,6 +358,7 @@ export async function readShadow(opts: {
   authorId: string;
   shadowId: string;
   accessorLogin: string | null;
+  subscriberValid?: boolean;
   inviteToken: string | null;
 }): Promise<ShadowReadResult> {
   const db = getDB();
@@ -364,6 +384,7 @@ export async function readShadow(opts: {
     visibility: shadow.visibility,
     ownerLogin: shadow.author_id,
     accessorLogin: opts.accessorLogin,
+    subscriberValid: opts.subscriberValid,
     inviteValid,
   });
   if (!decision.allowed) {
@@ -477,6 +498,8 @@ export function authorizeWorkRead(opts: {
   tier: string;
   ownerLogin: string;
   accessor: Account | null;
+  /** Authoritative active-membership result supplied by the route. */
+  subscriberValid?: boolean;
   /** Caller has validated a Stripe checkout session that grants access to THIS work. */
   purchaseValid?: boolean;
 }): WorkDecision {
@@ -493,7 +516,7 @@ export function authorizeWorkRead(opts: {
     };
   }
   if (opts.accessor.github_login === opts.ownerLogin) return { allowed: true, reason: 'owner' };
-  if (opts.accessor.subscription_id) return { allowed: true, reason: 'subscriber' };
+  if (opts.subscriberValid) return { allowed: true, reason: 'subscriber' };
   return {
     allowed: false,
     status: 402,
@@ -517,6 +540,7 @@ export async function readWork(opts: {
   authorId: string;
   workId: string;
   accessor: Account | null;
+  subscriberValid?: boolean;
   purchaseValid?: boolean;
 }): Promise<WorkReadResult> {
   const db = getDB();
@@ -529,6 +553,7 @@ export async function readWork(opts: {
     tier: work.tier,
     ownerLogin: opts.authorId,
     accessor: opts.accessor,
+    subscriberValid: opts.subscriberValid,
     purchaseValid: opts.purchaseValid,
   });
   if (!decision.allowed) {

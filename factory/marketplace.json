@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "modules": [
+    {
+      "path": "factory/canon/foundation",
+      "name": "foundation",
+      "description": "The complete local loop. Remove it and the loop stops.",
+      "kind": "canon",
+      "role": "core",
+      "adaptation": "universal"
+    },
+    {
+      "path": "factory/canon/change-closure",
+      "name": "upkeep",
+      "description": "When something changes, keeps every dependent part current.",
+      "kind": "canon",
+      "role": "core",
+      "adaptation": "universal"
+    },
+    {
+      "path": "factory/canon/axioms",
+      "name": "axioms",
+      "description": "Why the loop exists and what it is trying to protect.",
+      "kind": "canon",
+      "role": "default",
+      "adaptation": "personalizable"
+    },
+    {
+      "path": "factory/canon/editor",
+      "name": "editor",
+      "description": "Draws out and sharpens your own thinking.",
+      "kind": "canon",
+      "role": "default",
+      "adaptation": "personalizable"
+    },
+    {
+      "path": "factory/canon/mercury",
+      "name": "mercury",
+      "description": "Brings useful ideas in and keeps important ones alive.",
+      "kind": "canon",
+      "role": "default",
+      "adaptation": "personalizable"
+    },
+    {
+      "path": "factory/canon/methodology",
+      "name": "methodology",
+      "description": "How your ai captures, develops, and preserves your thinking.",
+      "kind": "canon",
+      "role": "default",
+      "adaptation": "personalizable"
+    },
+    {
+      "path": "factory/canon/publisher",
+      "name": "publisher",
+      "description": "Turns developed thinking into finished work.",
+      "kind": "canon",
+      "role": "default",
+      "adaptation": "personalizable"
+    },
+    {
+      "path": "factory/systems/capture-pipeline",
+      "name": "capture",
+      "description": "Turns saved links, screenshots, and notes into usable material.",
+      "kind": "system",
+      "role": "official",
+      "adaptation": "personalizable"
+    },
+    {
+      "path": "factory/systems/state-based-sync",
+      "name": "audit",
+      "description": "Checks the whole system against what should be true now.",
+      "kind": "system",
+      "role": "official",
+      "adaptation": "universal"
+    },
+    {
+      "path": "factory/canon/bookshelf",
+      "name": "bookshelf",
+      "description": "Benjamin's personal shelf of books and ideas worth returning to.",
+      "kind": "reference",
+      "role": "community",
+      "adaptation": "personalizable"
+    }
+  ]
+}

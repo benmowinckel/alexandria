@@ -60,13 +60,13 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
 
   return (
     <div className="door-block">
-      <p className="door-q">what do you use?</p>
+      <p className="door-q">what do you have access to?</p>
       <div className="door-answers">
         <button className="door-btn" onClick={() => go('device')}>
-          agents<span className="act-why"> — eg claude code, codex, cursor</span>
+          local ai agent<span className="act-why"> — claude code, codex, cursor</span>
         </button>
         <Link href="/chat" className="door-btn door-btn-link">
-          chat<span className="act-why"> — eg claude, gpt, gemini</span>
+          chat<span className="act-why"> — claude, chatgpt, gemini</span>
         </Link>
       </div>
     </div>

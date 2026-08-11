@@ -1,18 +1,37 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import { SERVER_URL } from '../lib/config';
 import { ArrowIcon } from '../join/DoorIcons';
 
-// Chat door: email → copy. No shortcut — nothing pulls the iCloud pile until
-// they have a real loop (/start). Paste goes into any ordinary chat.
 export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
-  const [copied, setCopied] = useState(false);
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
-  const emailRef = useRef<HTMLInputElement>(null);
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [copied, setCopied] = useState(false);
   const [shakeKey, setShakeKey] = useState(0);
+  const emailRef = useRef<HTMLInputElement>(null);
+
+  async function sendEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (mailState === 'sending') return;
+    const trimmed = email.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setShakeKey((key) => key + 1);
+      return;
+    }
+    setMailState('sending');
+    try {
+      const response = await fetch(`${SERVER_URL}/onboard`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed }),
+      });
+      setMailState(response.ok ? 'sent' : 'error');
+    } catch {
+      setMailState('error');
+    }
+  }
 
   async function copy() {
     try {
@@ -22,29 +41,8 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
     } catch {}
   }
 
-  const sendEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (mailState === 'sending') return;
-    const trimmed = email.trim();
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setShakeKey((k) => k + 1);
-      return;
-    }
-    setMailState('sending');
-    try {
-      const resp = await fetch(`${SERVER_URL}/onboard`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      setMailState(resp.ok ? 'sent' : 'error');
-    } catch {
-      setMailState('error');
-    }
-  };
-
   return (
-    <div className="cta-section">
+    <section className="cta-section">
       <div className="act-row">
         <span className="act-num">1</span>
         <form
@@ -70,18 +68,16 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
                 value={email}
                 onFocus={() => setEmailFocused(true)}
                 onBlur={() => setEmailFocused(false)}
-                onChange={(e) => { setEmail(e.target.value); if (mailState === 'error') setMailState('idle'); }}
+                onChange={(event) => { setEmail(event.target.value); if (mailState === 'error') setMailState('idle'); }}
               />
-              {!email.trim() && (
-                <span className="act-why act-email-why"> — so this doesn’t get lost</span>
-              )}
+              {!email.trim() && <span className="act-why act-email-why"> — so this doesn’t get lost</span>}
               {emailFocused && (
                 <button
                   type="submit"
                   className="join-door-go"
                   aria-label={mailState === 'error' ? 'retry' : 'submit email'}
                   disabled={mailState === 'sending'}
-                  onMouseDown={(e) => e.preventDefault()}
+                  onMouseDown={(event) => event.preventDefault()}
                 >
                   <ArrowIcon />
                 </button>
@@ -93,17 +89,15 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
 
       <div className="act-row">
         <span className="act-num">2</span>
-        <button
-          type="button"
-          className={`door-btn act-box cta-btn${copied ? ' is-copied' : ''}`}
-          onClick={copy}
-          aria-label="copy the setup"
-        >
-          {copied
-            ? 'copied — paste it into any chat'
-            : (<>copy the setup<span className="act-why"> — paste it into any chat</span></>)}
+        <button type="button" className={`door-btn act-box cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
+          {copied ? 'copied — paste it into any chat' : 'copy the setup — paste it into any chat'}
         </button>
       </div>
-    </div>
+
+      <div className="act-row">
+        <span className="act-num">3</span>
+        <div className="door-btn act-box">type a<span className="act-why"> — start your first thinking session</span></div>
+      </div>
+    </section>
   );
 }

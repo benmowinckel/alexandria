@@ -225,6 +225,27 @@ export async function runHealthDigest(): Promise<void> {
       escalate('sprint', `KV read failed: ${e instanceof Error ? e.message : String(e)}`);
     }
 
+    // Membership cache freshness. Webhooks are the instant path and the daily
+    // Stripe sweep is the independent repair path. If neither has verified a
+    // paid account in 48h, the community write/referral/read gates may be
+    // correctly failing closed but the loop itself is unhealthy and visible.
+    try {
+      const accounts = await loadAccounts<AccountStore>();
+      const staleCutoff = Date.now() - 48 * 60 * 60 * 1000;
+      const stale = Object.values(accounts).filter((account) => {
+        if (!account.subscription_id) return false;
+        const verified = account.membership_verified_at
+          ? new Date(account.membership_verified_at).getTime()
+          : 0;
+        return !Number.isFinite(verified) || verified < staleCutoff;
+      });
+      if (stale.length > 0) {
+        escalate('sprint', `${stale.length} paid account membership cache(s) not verified against Stripe in 48h`);
+      }
+    } catch (e) {
+      escalate('stroll', `membership freshness probe failed: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
     await probeD1(escalate);
 
     // R2 — Library content storage

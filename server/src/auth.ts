@@ -27,6 +27,10 @@ export interface Account {
   connect_payouts_enabled?: boolean;
   subscription_status?: string;
   subscription_id?: string;
+  /** Last time membership status was checked against Stripe (or written by a
+   * signed Stripe webhook). Stored status is a cache; this timestamp says how
+   * fresh that cache is. Grandfathered free/beta accounts do not need it. */
+  membership_verified_at?: string;
   current_period_end?: string;
   constitution_size?: number;
   /** Founding-member number (alexandrian #N). Sequential, permanent, assigned
@@ -127,26 +131,11 @@ export async function requireAuth(c: { req: { header: (name: string) => string |
  *   - `free`      — grandfathered seeding-stage cohort (joined 2026-06-05 →
  *                   06-11 while signup was free); kept active until the gate
  *   - `trialing`  — first 30 days of a paid sub
- *   - `active`    — paying $10 or free via the kin coupon
+ *   - `active`    — paying the current membership price or free via the kin coupon
  *   - `past_due`  — Stripe is retrying a failed card; grace period
  *   - `beta`      — legacy users from before live billing
- * Anything else (canceled, unpaid, incomplete, undefined) returns 402.
+ * Anything else (canceled, unpaid, incomplete, undefined) is inactive. This
+ * set classifies a CURRENT status only; billing.resolveMembership is the sole
+ * authority that may decide which current status applies to an account.
  */
 export const ACTIVE_AUTHOR_STATUSES = new Set(['free', 'trialing', 'active', 'past_due', 'beta']);
-
-export type AuthorAuth =
-  | { ok: true; key: string; account: Account }
-  | { ok: false; status: 401 | 402; message: string };
-
-export async function requireAuthor(c: { req: { header: (name: string) => string | undefined; query: (name: string) => string | undefined } }): Promise<AuthorAuth> {
-  const auth = await requireAuth(c);
-  if (!auth) return { ok: false, status: 401, message: 'Unauthorized' };
-  if (!ACTIVE_AUTHOR_STATUSES.has(auth.account.subscription_status || '')) {
-    return {
-      ok: false,
-      status: 402,
-      message: 'subscription not active. reactivate at https://alexandria-library.com/signup',
-    };
-  }
-  return { ok: true, key: auth.key, account: auth.account };
-}

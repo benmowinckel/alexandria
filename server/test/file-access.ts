@@ -45,7 +45,7 @@ test('public + stranger → allowed', () => {
 });
 
 // ---------------------------------------------------------------------------
-// authors — any authenticated Author; unauth blocked
+// authors — authoritative active members only; owner bypass remains
 // ---------------------------------------------------------------------------
 
 test('authors + no auth → 401', () => {
@@ -57,8 +57,20 @@ test('authors + no auth → 401', () => {
   }
 });
 
-test('authors + stranger authed → allowed', () => {
+test('authors + signed-in reader → 402 membership_required', () => {
   const d = authorizeFileRead({ visibility: 'authors', authorGithubId: OWNER, accessorGithubId: STRANGER });
+  assert.strictEqual(d.allowed, false);
+  if (!d.allowed) {
+    assert.strictEqual(d.status, 402);
+    assert.strictEqual(d.reason, 'membership_required');
+  }
+});
+
+test('authors + authoritative active member → allowed', () => {
+  const d = authorizeFileRead({
+    visibility: 'authors', authorGithubId: OWNER, accessorGithubId: STRANGER,
+    context: { subscriberValid: true },
+  });
   assert.strictEqual(d.allowed, true);
   if (d.allowed) assert.strictEqual(d.reason, 'authors');
 });
@@ -289,8 +301,19 @@ test('shadow authors + unauth → 401', () => {
   }
 });
 
-test('shadow authors + stranger authed → allowed', () => {
+test('shadow authors + signed-in reader → 402 membership_required', () => {
   const d = authorizeShadowRead({ visibility: 'authors', ownerLogin: SHADOW_OWNER, accessorLogin: SHADOW_STRANGER });
+  assert.strictEqual(d.allowed, false);
+  if (!d.allowed) {
+    assert.strictEqual(d.status, 402);
+    assert.strictEqual(d.reason, 'membership_required');
+  }
+});
+
+test('shadow authors + authoritative active member → allowed', () => {
+  const d = authorizeShadowRead({
+    visibility: 'authors', ownerLogin: SHADOW_OWNER, accessorLogin: SHADOW_STRANGER, subscriberValid: true,
+  });
   assert.strictEqual(d.allowed, true);
 });
 
@@ -369,11 +392,22 @@ test('work paid + authed without subscription + not owner → 402', () => {
   }
 });
 
-test('work paid + authed with subscription → allowed (subscriber)', () => {
+test('work paid + stale stored subscription without authoritative membership → denied', () => {
   const d = authorizeWorkRead({
     tier: 'paid',
     ownerLogin: SHADOW_OWNER,
     accessor: makeAccount(SHADOW_STRANGER, 'sub_123'),
+  });
+  assert.strictEqual(d.allowed, false);
+  if (!d.allowed) assert.strictEqual(d.reason, 'subscription_required');
+});
+
+test('work paid + authoritative active member → allowed (subscriber)', () => {
+  const d = authorizeWorkRead({
+    tier: 'paid',
+    ownerLogin: SHADOW_OWNER,
+    accessor: makeAccount(SHADOW_STRANGER),
+    subscriberValid: true,
   });
   assert.strictEqual(d.allowed, true);
   if (d.allowed) assert.strictEqual(d.reason, 'subscriber');

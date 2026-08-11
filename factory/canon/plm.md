@@ -4,6 +4,12 @@
 
 *Compiling the Author's twin — a queryable language model that thinks like them, built from their own Alexandria data. This file is craft observation: what the compile IS, what it optimises for, and the hard-won corrections that make it land instead of producing a broken twin. How to run each stage is an intelligence decision — the Author's own harness agent is the intelligence; the infra named here (a hosted LoRA API such as Tinker, a mid-size open base such as Qwen) is today's rideable option, not a fixture. User Zero proved the pipeline on himself — and paid for the mistakes now baked in as corrections below; this is the module that lets any Author fire it on their own substrate.*
 
+## Ownership before inference
+
+Every non-founder Author runs inference on a model account and token they control. Their ai runs a sidecar beside their substrate and registers only its URL plus a separate bearer secret with the Library; the model-provider token and private substrate never enter Alexandria's Worker. Registration explicitly acknowledges `own_account: true`. If the connection is missing, malformed, or not author-owned, the mirror is offline. It never falls back to the company's checkpoint, model, sidecar, or token.
+
+The founder's deployment may use the founder compatibility defaults. That exception is bound to the configured founder login before model resolution and sidecar lookup; it cannot spill into another Author's account. Reading shadows and published work never requires inference and keeps working when the sidecar is off.
+
 **Primary:** Creation (a Library artifact). **Secondary:** Development.
 
 The twin is a **downstream artifact**, not a preserved asset. Per Alexandria's ground-truth architecture, downstream artifacts are *regenerated from ground truth, never hand-maintained* — and the twin is exactly that: compiled from the Author's positions (the Constitution) and their voice (all of their first-person text), then recompiled from scratch each base-model generation. The weights are disposable. The compounding was always in the substrate. What the Author owns and keeps is not the model — it is the corpora it compiles from, plus the exported adapter file, which they can port, revoke, or delete at will.
@@ -109,6 +115,7 @@ Roughly **$5–20 per compile** at 2026 rented-infra prices — a test the Autho
 ## Sovereignty
 
 - **Open-weight base** → no lab lock-in on the Author's own mind.
+- **Author-owned inference account** → the Author chooses and pays the model provider directly. Alexandria is the router, not the token owner; disconnecting the sidecar stops inference without touching the Author's files or adapter.
 - **Exportable adapter** → the trained twin is a file in the Author's storage: portable, revocable, deletable. A new canon file type, held under the same publish/unpublish/revoke model as any Library artifact.
 - **Querying the twin is the paid act.** Reading a shadow stays free (the reader's own engine processes it locally, no inference). A twin query is live inference — a new cost surface priced into the paid Library tier with margin. The floor/ceiling revenue architecture does not move.
 - **The twin ships only behind the Author's publish gate**, labelled as a twin, in addition to their shadow — never silently, never as the Author. Consent is captured the same way every Library publish is: an explicit act the Author takes, never a default.

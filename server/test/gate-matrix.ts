@@ -56,7 +56,7 @@ async function resolveKeyLogin(key: string): Promise<string | null> {
 
 interface FileEntry { name: string; visibility: string; }
 type Accessor = 'unauth' | 'owner' | 'stranger';
-interface Cell { label: string; accessor: Accessor; query: string; inviteValid: boolean; purchaseValid: boolean; }
+interface Cell { label: string; accessor: Accessor; query: string; inviteValid: boolean; purchaseValid: boolean; subscriberValid: boolean; }
 
 // Symbolic IDs — authorizeFileRead's decision only turns on owner-vs-not, so
 // any two distinct values work as oracle inputs. No need to know the live
@@ -73,7 +73,7 @@ function expectedStatus(visibility: string, cell: Cell): number {
     visibility,
     authorGithubId: OWNER_SYM,
     accessorGithubId: accessorId,
-    context: { inviteValid: cell.inviteValid, purchaseValid: cell.purchaseValid },
+    context: { inviteValid: cell.inviteValid, purchaseValid: cell.purchaseValid, subscriberValid: cell.subscriberValid },
   });
   return decision.allowed ? 200 : decision.status;
 }
@@ -89,22 +89,22 @@ async function hit(name: string, cell: Cell): Promise<number> {
 
 function cellsFor(file: FileEntry): Cell[] {
   const cells: Cell[] = [
-    { label: `${file.visibility}/${file.name} · unauth`,             accessor: 'unauth',   query: '', inviteValid: false, purchaseValid: false },
-    { label: `${file.visibility}/${file.name} · owner`,              accessor: 'owner',    query: '', inviteValid: false, purchaseValid: false },
+    { label: `${file.visibility}/${file.name} · unauth`,             accessor: 'unauth',   query: '', inviteValid: false, purchaseValid: false, subscriberValid: false },
+    { label: `${file.visibility}/${file.name} · owner`,              accessor: 'owner',    query: '', inviteValid: false, purchaseValid: false, subscriberValid: false },
   ];
   if (STRANGER_KEY) {
-    cells.push({ label: `${file.visibility}/${file.name} · stranger`, accessor: 'stranger', query: '', inviteValid: false, purchaseValid: false });
+    cells.push({ label: `${file.visibility}/${file.name} · stranger`, accessor: 'stranger', query: '', inviteValid: false, purchaseValid: false, subscriberValid: true });
   }
   if (file.visibility === 'invite') {
-    cells.push({ label: `invite/${file.name} · unauth + bogus invite`,   accessor: 'unauth',   query: '?invite=DEFINITELY-NOT-A-REAL-CODE', inviteValid: false, purchaseValid: false });
+    cells.push({ label: `invite/${file.name} · unauth + bogus invite`,   accessor: 'unauth',   query: '?invite=DEFINITELY-NOT-A-REAL-CODE', inviteValid: false, purchaseValid: false, subscriberValid: false });
     if (STRANGER_KEY) {
-      cells.push({ label: `invite/${file.name} · stranger + bogus invite`, accessor: 'stranger', query: '?invite=DEFINITELY-NOT-A-REAL-CODE', inviteValid: false, purchaseValid: false });
+      cells.push({ label: `invite/${file.name} · stranger + bogus invite`, accessor: 'stranger', query: '?invite=DEFINITELY-NOT-A-REAL-CODE', inviteValid: false, purchaseValid: false, subscriberValid: true });
     }
   }
   if (file.visibility === 'paid') {
-    cells.push({ label: `paid/${file.name} · unauth + bogus session`,   accessor: 'unauth',   query: '?session_id=cs_test_bogus_definitely_not_real', inviteValid: false, purchaseValid: false });
+    cells.push({ label: `paid/${file.name} · unauth + bogus session`,   accessor: 'unauth',   query: '?session_id=cs_test_bogus_definitely_not_real', inviteValid: false, purchaseValid: false, subscriberValid: false });
     if (STRANGER_KEY) {
-      cells.push({ label: `paid/${file.name} · stranger + bogus session`, accessor: 'stranger', query: '?session_id=cs_test_bogus_definitely_not_real', inviteValid: false, purchaseValid: false });
+      cells.push({ label: `paid/${file.name} · stranger + bogus session`, accessor: 'stranger', query: '?session_id=cs_test_bogus_definitely_not_real', inviteValid: false, purchaseValid: false, subscriberValid: true });
     }
   }
   return cells;

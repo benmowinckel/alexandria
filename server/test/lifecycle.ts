@@ -12,6 +12,7 @@
 
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { createHash } from 'crypto';
 
 const BASE = process.env.TEST_URL || 'https://api.alexandria-library.com';
 const HOME = process.env.HOME || process.env.USERPROFILE || '';
@@ -239,12 +240,15 @@ async function main() {
   // accumulate. Mirrors the ci-smoke pattern. The internal-name filter in
   // file-access.ts excludes `lifecycle-test` from every public surface.
   const fileName = 'lifecycle-test';
-  // `local:` prefix: parseModuleId validates the format at /call ingress, and the
-  // public /marketplace listing filters to github:%, so test residue stays off the
-  // public catalog. The auth-gated /marketplace/:module endpoint keys off raw
-  // module_id and works regardless of prefix. Module ID stays unique per run
-  // because the call obligation log is intentionally append-only.
-  const moduleId = `local:lifecycle/mod-${stamp}`;
+  // Exact-byte identity: use a real published module and hash the same GitHub
+  // bytes an installing agent inspects. The note remains visible only in this
+  // authenticated account's own history.
+  const moduleId = 'github:benmowinckel/alexandria#factory/canon/methodology';
+  const moduleBytes = await fetch(`${FACTORY_RAW}/canon/methodology.md`).then((res) => {
+    if (!res.ok) throw new Error(`module fetch failed: HTTP ${res.status}`);
+    return res.arrayBuffer();
+  });
+  const moduleSha256 = createHash('sha256').update(Buffer.from(moduleBytes)).digest('hex');
   const callText = `Lifecycle call verification ${stamp}`;
 
   await test('File obligation write accepted', async () => {
@@ -269,7 +273,7 @@ async function main() {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        modules: [{ id: moduleId, text: callText }],
+        modules: [{ id: moduleId, text: callText, source_sha256: moduleSha256 }],
       }),
     });
     const body = await safeJson(res);
@@ -280,24 +284,35 @@ async function main() {
     };
   });
 
-  await test('Marketplace reflects protocol call (auth usage history)', async () => {
+  await test('Marketplace reflects exact call without exposing other callers', async () => {
     const res = await fetch(`${BASE}/marketplace/${encodeURIComponent(moduleId)}`, { headers });
     const body = await safeJson(res);
-    const usage = Array.isArray(body?.usage) ? body.usage as Array<{ text?: string }> : [];
-    const found = usage.some((u) => typeof u.text === 'string' && u.text.includes(callText));
+    const ownUsage = Array.isArray(body?.own_usage) ? body.own_usage as Array<{ note?: string; source_sha256?: string }> : [];
+    const found = ownUsage.some((u) => u.note === callText && u.source_sha256 === moduleSha256);
+    const signal = body?.signal as { current_version?: { callers_recent?: number }; module_lineage?: { callers_recent?: number } } | undefined;
+    const serialized = JSON.stringify(body);
 
     return {
       test: 'Marketplace module feed',
-      passed: res.ok && body?.module === moduleId && found,
-      details: `HTTP ${res.status}, usage_count=${usage.length}, found=${found}`,
+      passed: res.ok
+        && body?.module === moduleId
+        && found
+        && (signal?.current_version?.callers_recent || 0) >= 1
+        && (signal?.module_lineage?.callers_recent || 0) >= 1
+        && !serialized.includes('account_id'),
+      details: `HTTP ${res.status}, own_usage=${ownUsage.length}, found=${found}`,
     };
   });
 
   await test('Marketplace listing envelope', async () => {
     const res = await fetch(`${BASE}/marketplace`);
-    const body = await safeJson(res) as { modules?: Array<{ id: string; status: string; kind: string }>; total?: number; next_cursor?: string | null } | null;
+    const body = await safeJson(res) as { modules?: Array<{ id: string; status: string; kind: string; signal?: { current_version?: unknown; module_lineage?: unknown } }>; total?: number; next_cursor?: string | null } | null;
     const modules = body?.modules || [];
-    const shapeOk = modules.every((m) => typeof m.id === 'string' && typeof m.status === 'string' && typeof m.kind === 'string');
+    const shapeOk = modules.every((m) => typeof m.id === 'string'
+      && typeof m.status === 'string'
+      && typeof m.kind === 'string'
+      && !!m.signal?.current_version
+      && !!m.signal?.module_lineage);
 
     // Catalog-only public projection. We assert envelope shape (modules / total /
     // next_cursor for pagination) and per-entry shape — without inserting a test
