@@ -19,7 +19,7 @@ Universal across Authors: they save things all day from the phone — X posts, l
 
 Five stages, two owners. The Author touches only the ends: one save gesture at the top, paced absorption at the bottom. Everything between is Engine work, run to completion.
 
-1. **Capture (Author, ~2s).** Share sheet → iCloud folder → `vault/input/` (symlinked by setup). X posts arrive as HTML, links as `.txt`, media raw. Capture must never cost more than the gesture.
+1. **Capture (Author, ~2s).** Share sheet → iCloud `alexandria/vault/input/` → local `files/vault/input/` once `icloud-capture` is connected (not by setup — explicit add-on). X posts arrive as HTML, links as `.txt`, media raw. Capture must never cost more than the gesture.
 2. **Resolve (machine, session start).** `capture_resolver.py` (SessionStart hook) turns raw into readable derivatives in `vault/_input/`: X HTML → markdown via the tweet API **with photos downloaded alongside** (visually readable by the model) **and X Article bodies embedded**; `.txt` links → resolved titles (YouTube via keyless oEmbed, else page `<title>`); anything unresolvable stays raw **and is counted in the pending nudge**. Idempotent, per-item isolated, never deletes.
 3. **Extract (Engine, any live session).** Per-item, never gist-of-the-pile: each capture gets a dedicated extraction to `vault/saved/<stem>.analysis.md` (frontmatter: `source`, `captured`, `passes`; body: Signal / Why they saved it / Tension / Gaps) plus one ledger line, then the files move to `saved/`. Parallel subagents make pile size irrelevant (73 items ≈ 10 minutes, measured). **The gap rule: a gap is only legitimate after the fetch chain fails** — local HTML → tweet API → linked article → downloaded media read visually. "Image unviewed" with the URL in hand is a protocol violation, not a gap.
 4. **Land (Engine, same session).** Constitution/marginalia deltas flow live where warranted; the Author's absorption surfaces get restocked.
@@ -48,7 +48,7 @@ Awareness-upstream (the pending nudge + marker make invisible backlog growth imp
 
 ## Operation
 
-Machinery: `capture_resolver.py` as a SessionStart hook (installed by `setup.sh`; intake folders + iCloud symlink also wired there); drain protocol in `canon/methodology.md § Session-start input check`. Known failure classes (the mirror — extend as drains teach):
+Machinery: `capture_resolver.py` as a SessionStart hook (installed by `setup.sh`; intake folders created there). The iCloud symlink is **not** wired by setup — it is the explicit `icloud-capture` add-on (`optional.md`), and the `/a` opener's rung-2 `recommended` coaches that connect after join. Drain protocol in `canon/methodology.md § Session-start input check`. Known failure classes (the mirror — extend as drains teach):
 
 - Listicle accounts put the payload in **reply threads** with bait images attached — media download cannot recover these; only thread capture can. Open gap.
 - Videos (X + YouTube) are catalogued, not transcribed, until a cheap transcription path exists. Open gap.

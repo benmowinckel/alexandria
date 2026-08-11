@@ -48,15 +48,16 @@
 
 ## icloud-capture — phone and share-sheet captures in your own iCloud
 
-- **Does:** connects `~/alexandria/files/vault/input` to an `alexandria` folder in the Author's own iCloud Drive so Apple Shortcuts and Files drops can reach the local loop.
-- **Touches:** one folder in the Author's iCloud Drive and one local symlink. No job, daemon, account, or Alexandria server.
+- **Does:** connects `~/alexandria/files/vault/input` to `alexandria/vault/input` in the Author's own iCloud Drive so Apple Shortcuts and Files drops can reach the local loop.
+- **Touches:** one nested folder in the Author's iCloud Drive and one local symlink. No job, daemon, account, or Alexandria server.
 - **Leaves the machine:** only files the Author puts in that capture folder, through their own iCloud account. Nothing goes to Alexandria. Saved links stay as local raw files unless the separate `capture-link-resolution` add-on below is also enabled.
 - **Needs:** macOS with iCloud Drive enabled.
-- **Enable:** only after the Author says yes to this add-on. If the local input folder already contains files, stop and ask whether they want those moved; never move them silently.
+- **Save-before-connect (product ladder, 2026-08-10):** the Apple Shortcut may be installed and used first — saves pile in the Author's own iCloud `alexandria/vault/input` with no loop connection. The `/a` opener's rung-2 `recommended` is the connect ask: wire this add-on so either new saves enter the loop, or the pile already waiting lands in `vault/input` and drains. Connected proof is the symlink below; decline is `~/alexandria/system/.shortcut_decision` = `no`.
+- **Enable:** only after the Author says yes to this add-on. If the local input folder already contains files, stop and ask whether they want those moved; never move them silently. If the iCloud capture folder already has files from prior shortcut use, connecting is enough — they appear in `vault/input` immediately.
   ```bash
   LOCAL="$HOME/alexandria/files/vault/input"
-  CLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs/alexandria"
-  [ "$(uname)" = "Darwin" ] && [ -d "$(dirname "$CLOUD")" ] || { echo "iCloud Drive is not available"; exit 1; }
+  CLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs/alexandria/vault/input"
+  [ "$(uname)" = "Darwin" ] && [ -d "$(dirname "$(dirname "$CLOUD")")" ] || { echo "iCloud Drive is not available"; exit 1; }
   if [ -L "$LOCAL" ]; then echo "iCloud capture is already connected"; exit 0; fi
   if [ -d "$LOCAL" ] && [ -n "$(find "$LOCAL" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]; then echo "local capture files exist; stop for the Author's choice"; exit 1; fi
   rmdir "$LOCAL" 2>/dev/null || true
@@ -64,6 +65,7 @@
   ln -s "$CLOUD" "$LOCAL"
   ```
 - **Off:** `unlink ~/alexandria/files/vault/input && mkdir -p ~/alexandria/files/vault/input` — captures already in iCloud stay there.
+- **Never** symlink `vault/input` to the iCloud `alexandria` root — that root may hold a full files mirror; only the nested `vault/input` is the capture inbox.
 
 ## capture-link-resolution — fetch links the Author deliberately saved
 

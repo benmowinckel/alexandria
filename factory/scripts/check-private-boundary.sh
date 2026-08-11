@@ -174,6 +174,15 @@ require factory/canon/methodology.md \
 require factory/canon/methodology.md \
   '.join_decision' \
   'methodology has no join-decision marker'
+require factory/canon/methodology.md \
+  'Recommended ladder' \
+  'methodology has no recommended ladder after join'
+require factory/canon/methodology.md \
+  '.shortcut_decision' \
+  'methodology has no shortcut-decision marker'
+require factory/canon/methodology.md \
+  'connect the stuff you' \
+  'methodology has no save-before-connect shortcut recommended body'
 forbid factory/canon/methodology.md \
   'There is no opener carve-out' \
   'methodology still bans the opener join carve-out'
@@ -248,6 +257,12 @@ forbid factory/templates/library/filter.md \
 require factory/optional.md \
   '## icloud-capture — phone and share-sheet captures in your own iCloud' \
   'iCloud capture has no explicit opt-in block'
+require factory/optional.md \
+  'CloudDocs/alexandria/vault/input' \
+  'iCloud capture does not target the nested vault/input capture inbox'
+require factory/optional.md \
+  'Never** symlink `vault/input` to the iCloud `alexandria` root' \
+  'iCloud capture no longer forbids symlinking to the alexandria root'
 require factory/optional.md \
   '## capture-link-resolution — fetch links the Author deliberately saved' \
   'saved-link network resolution has no separate opt-in block'
