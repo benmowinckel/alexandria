@@ -89,6 +89,14 @@ for protected_root in \
   fi
 done
 SOURCE_REF="${ALEXANDRIA_SOURCE_COMMIT:-main}"
+# verify-fetch authenticates tip setup.sh, then runs these bytes. A leftover
+# ALEXANDRIA_SOURCE_COMMIT in the ambient shell must not pin factory fetches to
+# an older commit (that reads as a signed rollback against .factory_version).
+# First-install agents that verified a specific hash set the pin without
+# ALEXANDRIA_VERIFIED_UPDATE=1.
+if [ "${ALEXANDRIA_VERIFIED_UPDATE:-}" = "1" ]; then
+  SOURCE_REF=main
+fi
 if [ "$SOURCE_REF" != main ] && ! [[ "$SOURCE_REF" =~ ^[0-9a-f]{40}$ ]]; then
   echo "Invalid Alexandria source commit; refusing to install." >&2
   exit 1
