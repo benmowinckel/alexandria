@@ -12,7 +12,7 @@ If design is worth a file, your mind is too. A mind.md can hold how you reason, 
 
 The loop is a pattern, not an entity. Your own AI does the work. We give you the complete loop our founder uses, free, and the instructions adapt to you: start from nothing and they provide the setup; already keep notes or a CLAUDE.md and they fit around it; already run your own loop and they take only what improves it.
 
-The optional connector is the company’s hosted part. Add it if you want your loop to learn from what other people chose to keep, how they developed it, what they made, and which parts of their setup helped. The [Library](/library) holds what people share. The [Marketplace](/marketplace) holds reusable parts of their loops.
+The optional connector is the company’s hosted part. The individual loop helps your AI understand you better, so it can help you better. The connector carries that same value into your community: connect the people you choose, and your AI can understand them from their own words — not only from yours — so it can help you better with the parts of life you share. The [Library](/library) holds what people deliberately share. The [Marketplace](/marketplace) holds reusable parts of their loops.
 
 Your AI runs the free loop. Alexandria runs the optional connector for people who want to learn and share across loops. **Keep thinking.**
 
@@ -30,7 +30,11 @@ No, though the files can sit beside your notes. A notes app stores what you writ
 
 ## can’t i just do this myself.
 
-Yes. Plenty of people already run some version by hand. The point is to give everyone a complete starting point, help existing pieces work together, and offer a connector for people who want to learn from other loops. Doing it alone still works.
+Yes. Plenty of people already run some version by hand. The point is to give everyone a complete starting point and help existing pieces work together. Doing it alone still works. What you cannot build alone is shared context from other people’s own loops; that requires them to choose what their AI may share and one connector joining those choices together.
+
+## why would i want my friends on it.
+
+For your own benefit. Your loop helps your AI understand you. If your friends connect their loops and choose what to share, your AI can understand them from their own words too. That gives it better context when helping with plans, gifts, conversations, collaboration, and anything else involving them. Their private files remain private; each person controls what crosses the connection.
 
 ## can’t ai just copy me.
 
@@ -64,7 +68,7 @@ The setup changes files on your machine, so inspect it before you run it. The [s
 
 The complete loop is free. It lives in files you own and keeps working without an account.
 
-The optional connector is the paid part. Membership is $30 a month after the first month, free for good once three active friends join through you, and waived if the price would keep you out. You are paying to connect your loop to the Library, Marketplace, and other people’s loops — never to keep using your own files.
+The optional connector is the paid part. Membership is $30 a month after the first month, free for good once three active friends join through you, and waived if the price would keep you out. You are paying for the shared context that helps your AI understand your community, plus the Library and Marketplace — never to keep using your own files.
 
 ## what’s a founding member.
 

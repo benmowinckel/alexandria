@@ -14,7 +14,9 @@ That power cuts both ways. The same access that develops you can shape the aims 
 
 The usual worries are covered. Private files stay on your computer; our server never receives them. Everything you already use keeps working. Ordinary markdown. Delete the folder and the loop is gone.
 
-The free loop is complete alone. Joining the community is optional — library, marketplace, shared craft, when you want them. The connector is the only paid part. You choose what to publish; private files stay private.
+The free loop is complete alone. It helps your AI understand you better, so it can help you better.
+
+Joining the community is optional. It carries the same idea one level up: connect the people you choose, and your AI can understand them from their own words — not only from yours — so it can help you better with the parts of life you share. The Library and Marketplace connect what people deliberately share; private files stay private. The connector is the only paid part.
 
 One reason not to wait: the map is made of time. A later model may describe you brilliantly, but it cannot backfill what changed, what influenced it, and what you chose. Starting today and meaning to start are not the same decision later.
 

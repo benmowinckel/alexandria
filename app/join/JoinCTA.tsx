@@ -37,35 +37,38 @@ export default function JoinCTA({
   urlRef?: string;
   refSource: string;
 }) {
-  const [validUrlRef, setValidUrlRef] = useState<string | null>(null);
+  const [urlCheck, setUrlCheck] = useState<{ input: string; valid: string | null } | null>(null);
   const [typedRef, setTypedRef] = useState('');
-  const [typedValid, setTypedValid] = useState<string | null>(null);
+  const [typedCheck, setTypedCheck] = useState<{ input: string; valid: string | null } | null>(null);
   const codeRef = useRef<HTMLInputElement>(null);
+  const cleanTypedRef = typedRef.replace(/[^A-Za-z0-9-]/g, '').slice(0, 39);
+  const validUrlRef = urlRef && urlCheck?.input === urlRef ? urlCheck.valid : null;
+  const typedValid = cleanTypedRef && typedCheck?.input === cleanTypedRef ? typedCheck.valid : null;
 
   const [email, setEmail] = useState('');
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [waiveJoinUrl, setWaiveJoinUrl] = useState('');
   const emailRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!urlRef) { setValidUrlRef(null); return; }
+    if (!urlRef) return;
     let live = true;
     (async () => {
       const ok = await checkKin(urlRef);
-      if (live) setValidUrlRef(ok ? urlRef : null);
+      if (live) setUrlCheck({ input: urlRef, valid: ok ? urlRef : null });
     })();
     return () => { live = false; };
   }, [urlRef]);
 
   useEffect(() => {
-    const clean = typedRef.replace(/[^A-Za-z0-9-]/g, '').slice(0, 39);
-    if (!clean) { setTypedValid(null); return; }
+    if (!cleanTypedRef) return;
     let live = true;
     const t = setTimeout(async () => {
-      const ok = await checkKin(clean);
-      if (live) setTypedValid(ok ? clean : null);
+      const ok = await checkKin(cleanTypedRef);
+      if (live) setTypedCheck({ input: cleanTypedRef, valid: ok ? cleanTypedRef : null });
     }, 350);
     return () => { live = false; clearTimeout(t); };
-  }, [typedRef]);
+  }, [cleanTypedRef]);
 
   const effectiveRef = typedValid || validUrlRef || '';
   const joinUrl = githubUrl(effectiveRef, refSource);
@@ -85,7 +88,13 @@ export default function JoinCTA({
           ...(effectiveRef ? { ref: effectiveRef } : {}),
         }),
       });
-      setMailState(resp.ok ? 'sent' : 'error');
+      const result = await resp.json().catch(() => ({}));
+      if (resp.ok && typeof result.join_url === 'string') {
+        setWaiveJoinUrl(result.join_url);
+        setMailState('sent');
+      } else {
+        setMailState('error');
+      }
     } catch {
       setMailState('error');
     }
@@ -99,32 +108,20 @@ export default function JoinCTA({
         Keep thinking, together.
       </h1>
 
-      {/* The pitch (founder 2026-07-27, second pass — the first was a three-item
-          feature list: "is that really the only value we provide?? that's
-          nothing"). Four lines — stake, choice, compounding, timing:
-            1. THE STAKE. The default outcome is homogenisation: same tools,
-               same answers, same voice. Staying particular is now an active
-               act. This is the frame the whole page rests on — the dollar is
-               never argued on its own merits, it's what the act costs.
-            2. THE CHOICE, priced. "Most people won't make it" is the point,
-               not a swipe: the ones who did are who you'd be joining.
-            3. THE COMPOUNDING. The collective isn't a perk on top — the
-               aggregation of particular individuals is what makes each one
-               better. Their systems runnable by you, your library wired into
-               theirs.
-            4. It's early. That's the offer, not an apology: founding member.
-          Never name the category we are NOT in — saying "don't price this like
-          software" puts them in it (founder 2026-07-27, "then they think about
-          it"). Prose, not bullets, and short: the bulleted feature list read as
-          thin, the long paragraph version as too much text. */}
+      {/* The collective value, reduced to the same causal shape as the private
+          tool (founder 2026-08-11): better context makes AI more helpful.
+          First it understands you; through consenting connections it can
+          understand your community from their own words too. Library,
+          marketplace, tribe, and founding status are downstream features,
+          not the lead. */}
       <div className="join-pitch">
         <section>
-          <p className="join-beat">AI averages people by default.</p>
-          <p className="join-sub">Same tools, same answers, same voice. The connector puts your loop beside people working to stay particular.</p>
+          <p className="join-beat">Your loop helps AI understand you.</p>
+          <p className="join-sub">The better it understands you, the better it can help you.</p>
         </section>
         <section>
-          <p className="join-beat">Their progress can strengthen yours.</p>
-          <p className="join-sub">See what they kept thinking about, how they developed it, and what they made. Use the systems that helped.</p>
+          <p className="join-beat">The collective helps it understand your community.</p>
+          <p className="join-sub">Connect the people you choose, and your AI can learn about them from their own words — not only from yours.</p>
         </section>
         <section>
           <p className="join-beat">A dollar a day connects you.</p>
@@ -152,10 +149,12 @@ export default function JoinCTA({
           plain rather than pointed — a person who genuinely can't spare it
           shouldn't be needled on the way in. */}
       <div className="join-exits">
-        <form className="door-btn act-box act-email" onSubmit={sendEmail} onClick={() => emailRef.current?.focus()}>
-          {mailState === 'sent' ? (
-            <span className="act-sent">waived<span className="act-why"> ✓ &mdash; go on in</span></span>
-          ) : (
+        {mailState === 'sent' && waiveJoinUrl ? (
+          <a className="door-btn act-box" href={waiveJoinUrl}>
+            covered<span className="act-why"> ✓ &mdash; continue with github</span>
+          </a>
+        ) : (
+          <form className="door-btn act-box act-email" onSubmit={sendEmail} onClick={() => emailRef.current?.focus()}>
             <>
               <input
                 ref={emailRef}
@@ -175,8 +174,8 @@ export default function JoinCTA({
                 </button>
               )}
             </>
-          )}
-        </form>
+          </form>
+        )}
 
         <div className="door-btn act-box act-email" onClick={() => codeRef.current?.focus()}>
           {typedValid ? (

@@ -29,7 +29,7 @@ export default function Privacy() {
         alexandria.
       </Link>
       <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 400 }}>Privacy Policy</h1>
-      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 9, 2026</p>
+      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 11, 2026</p>
 
       <section style={section}>
         <h2 style={heading}>What Alexandria is</h2>
@@ -46,7 +46,7 @@ export default function Privacy() {
         <h2 style={heading}>What the hosted connector stores</h2>
         <p><strong>Account and billing records.</strong> Your GitHub ID and login, email address, billing status, and Stripe customer or subscription identifiers. Account records are encrypted at rest.</p>
         <p style={detail}><strong>Authentication records.</strong> A SHA-256 hash of your Alexandria API key; the raw key stays on your machine. Short-lived browser session and onboarding tokens are also stored when those flows are used.</p>
-        <p style={detail}><strong>One-time setup email.</strong> If you ask us to email the setup message to your computer, your address goes to our email delivery provider for that send. Alexandria does not add it to an account or waitlist, store it for reminders, or send another setup email.</p>
+        <p style={detail}><strong>Onboarding email.</strong> When you start Alexandria, we store your email so we can send the setup message, help you finish, and occasionally send useful product notes. Every message has an unsubscribe link. Your private files and captures are never part of this email record.</p>
         <p style={detail}><strong>Service activity.</strong> A 60-day log of which Alexandria endpoints your account used and when; module IDs you explicitly approve reporting, with any notes you explicitly attach; Library publishing, access, purchase, account-connection events, and feedback you explicitly submit.</p>
         <p style={detail}><strong>Content you publish.</strong> Files, works, quizzes, profile details, and other material you deliberately send to the Library, together with their titles, access settings, prices, and file metadata.</p>
       </section>

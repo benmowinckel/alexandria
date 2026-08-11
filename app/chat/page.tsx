@@ -9,11 +9,12 @@ export const metadata = pageMetadata({
   path: '/chat',
   title: 'start alexandria.',
   description:
-    'start your alexandria loop in any chat. enter your email, copy the setup, and type a.',
+    'Start your Alexandria loop in any chat. Leave your email, paste one setup — your AI checks it and tells you what to press.',
 });
 
 // Door 2 of the two-door onboarding (agents → /start; chat → here).
-// Copy → paste. Storage is discovered by the chat after the user activates it.
+// Shortcut → required email → chat setup. The chat setup starts now and leaves
+// a closed handoff to the full local computer loop rather than replacing it.
 function readBootstrap(): string {
   const raw = fs.readFileSync(
     path.join(process.cwd(), 'factory', 'chat', 'bootstrap.md'),
@@ -116,25 +117,46 @@ export default function ChatPage() {
         .act-email input {
           flex: none; width: 5.5em; min-width: 0; background: transparent; border: none; outline: none;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: inherit; letter-spacing: 0.01em; color: var(--text-primary); padding: 0;
+          font-size: inherit; letter-spacing: 0.01em; color: var(--text-primary);
+          padding: 0;
         }
         .act-email input.has-val { flex: 1; }
         .act-email .join-door-go { margin-left: auto; }
         .act-email input::placeholder { color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .act-email input[data-shake="on"] { animation: chatShake 320ms ease-in-out; }
-        .act-email-why { flex: none; max-width: 28em; overflow: hidden; opacity: 1; transition: opacity 180ms ease, max-width 220ms ease; }
-        .act-email.is-focused .act-email-why { opacity: 0; max-width: 0; pointer-events: none; }
+        .act-email-why {
+          flex: none; max-width: 28em; overflow: hidden; opacity: 1;
+          transition: opacity 180ms ease, max-width 220ms ease;
+        }
+        .act-email.is-focused .act-email-why {
+          opacity: 0; max-width: 0; pointer-events: none;
+        }
         .act-sent { font-size: inherit; }
         @keyframes chatShake {
           0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-3px); border-bottom-color: #b3261e; }
-          75% { transform: translateX(3px); border-bottom-color: #b3261e; }
+          25%      { transform: translateX(-3px); border-bottom-color: #b3261e; }
+          75%      { transform: translateX(3px);  border-bottom-color: #b3261e; }
         }
         .join-door-go {
-          display: inline-flex; align-items: center; padding: 0; background: none; border: none;
-          color: var(--text-muted); cursor: pointer; animation: chatGoAppear 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+          display: inline-flex; align-items: center; gap: 5px; flex: none;
+          align-self: center; padding: 0; background: none; border: none;
+          color: var(--text-muted); cursor: pointer; text-decoration: none;
+          transition: color 200ms, opacity 200ms;
+          animation: chatGoAppear 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
         }
-        @keyframes chatGoAppear { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: none; } }
+        .join-door-go:hover { color: var(--text-primary); }
+        .join-door-go:disabled { cursor: default; }
+        .join-go-word {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-weight: 500; font-size: 11px; letter-spacing: 0.1em;
+          text-transform: lowercase; font-variant-caps: all-small-caps;
+          font-feature-settings: "smcp" 1, "kern" 1; line-height: 1;
+        }
+        .join-door-go .door-glyph { display: block; }
+        @keyframes chatGoAppear {
+          from { opacity: 0; transform: translateX(-5px); }
+          to { opacity: 1; transform: none; }
+        }
         .cta-btn.is-copied {
           border-color: var(--accent); background: var(--bg-primary);
         }

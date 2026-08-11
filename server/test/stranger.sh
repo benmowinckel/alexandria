@@ -207,6 +207,7 @@ check "setup_complete marker"      [ -f "$HOME/.local/share/alexandria/.setup_co
 check "passive-active loop healthy" grep -q '^  loop: ok$' "$HOME/alexandria/system/.setup_report"
 check "visible cue healthy"       grep -q '^  visible_cue: ok$' "$HOME/alexandria/system/.setup_report"
 check "visible cue reaches /a"    bash -c 'HOME="$1" bash "$1/.local/share/alexandria/scripts/statusline.sh" footer | grep -q "start /a in a new chat"' _ "$HOME"
+check "Codex cue reaches \$a"     bash -c 'HOME="$1" bash "$1/.local/share/alexandria/scripts/statusline.sh" footer-codex | grep -qF "start \$a in a new chat"' _ "$HOME"
 
 # Permission check (skip on Windows — NTFS doesn't enforce Unix perms)
 case "$(uname -s)" in

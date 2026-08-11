@@ -45,6 +45,7 @@ const PLAINLY_QUESTIONS = [
   'do i need to be technical?',
   'what exactly do i own?',
   'why is it free?',
+  'why would i want my friends on it?',
   'what’s the strongest objection to alexandria?',
 ];
 

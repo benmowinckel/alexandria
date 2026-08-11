@@ -138,8 +138,8 @@ wrote it under ~/alexandria/ — only from what you approved; yours to edit or d
 
 library — https://alexandria-library.com/join
 
-→ type /a
-(if that does nothing in this chat, open a new one and type /a)
+→ [the exact start gesture for this host]
+(if that does nothing in this chat, open a new one and use the same gesture)
 ```
 
 **Fill bar (lazy fill = product failure):**
@@ -148,8 +148,9 @@ library — https://alexandria-library.com/join
 - Tension must be already in their material, with operational stakes. If a thread is *unresolved*, do not assume the branch (no "before you decide the co-op's first X" when co-op itself is undecided). Describe the gap; do not prescribe the virtuous lane.
 - If Phase 1 found a nearer live deadline (talk, ship date, meeting), name it in the report — do not let the freshest emotional note erase the nearest clock.
 - Accretion must be specific (person/work/year or clear mechanism) and new to *them*. Prefer examples that actually appear in the cited work (no confident wrong examples — if unsure, omit the example).
-- Prefer `/a` in **this** chat. New chat is only the fallback when the skill does not fire here. Never open a tab for them. Do not end on the old “start /a in a new chat” line as the primary ask — that line stays for ordinary statusline cues elsewhere, not this close.
-- Last visible action the eye hits is `→ type /a` (fallback note may sit under it). Then stop.
+- Use the host detected in Phase 0: `→ type /a` in Claude Code, Cursor, or Factory; `→ type $a` in Codex, with `/alexandria` as its working typed fallback; otherwise `→ say “start an Alexandria session”`. Do not claim `/a` works in Codex, and do not claim any gesture works in a host that does not support it.
+- Prefer that gesture in **this** chat. New chat is only the fallback when the skill does not fire here. Never open a tab for them.
+- Last visible action the eye hits is the exact host-native gesture (fallback note may sit under it). Then stop.
 - On deliver: `touch ~/alexandria/system/.block_complete`.
 
 Test: *"it already knows me, showed me something I didn't have, and I know exactly what to type next."* Lucky-guess mirror, generic tension, re-gifted bookshelf, or a buried CTA = fail.

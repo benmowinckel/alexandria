@@ -27,8 +27,8 @@
 #      ~/.local/share/alexandria/, session hooks where the host supports them,
 #      and active-session skills in detected configs (~/.claude, ~/.cursor,
 #      ~/.codex, ~/.factory, and Codex's shared ~/.agents/skills convention).
-#      Factory currently receives the active droid only and cannot complete the
-#      passive loop by itself. To make the one folder reachable from any
+#      Factory receives its user-invokable /a skill plus lifecycle hooks, preserving foreign
+#      hook groups for the user to review. To make the one folder reachable from any
 #      local project, the merge adds ONLY ~/alexandria to each detected
 #      harness's native additional-directory/writable-root list; every existing
 #      root and permission mode stays. One small extra is visible below: if an
@@ -1094,22 +1094,75 @@ PY
   fi
 fi
 
-# Factory (droid CLI)
+# Factory (Droid CLI)
 if [ -d "$HOME/.factory" ] || command -v droid &>/dev/null; then
-  mkdir -p "$HOME/.factory/droids" 2>/dev/null
-  FACTORY_A_DROID=""
-  if alex_file_slot_available "$HOME/.factory/droids/a.md" "skills/droid.md" "a" "a"; then
-    if fetch_factory "skills/droid.md" "$HOME/.factory/droids/a.md" "skills/droid.md (a droid)" yes; then
-      if record_owned_file "$HOME/.factory/droids/a.md"; then FACTORY_A_DROID="a"; fi
-    fi
+  mkdir -p "$HOME/.factory/skills" 2>/dev/null
+  FACTORY_A_SKILL=""
+  if alex_skill_slot_available "$HOME/.factory/skills/a" "skills/droid.md" "a" "a"; then
+    install_start_skill "skills/droid.md" "$HOME/.factory/skills/a" "a" "skills/droid.md (Factory /a skill)" && FACTORY_A_SKILL="a"
   else
-    echo "  Factory: kept foreign a droid"
+    echo "  Factory: kept foreign /a skill"
   fi
-  FACTORY_START_DROID="$FACTORY_A_DROID"
-  if [ -n "$FACTORY_START_DROID" ]; then
-    echo "  Factory: configured ($FACTORY_START_DROID droid)"
+  FACTORY_START_SKILL="$FACTORY_A_SKILL"
+  if [ -n "$FACTORY_START_SKILL" ]; then
+    echo "  Factory: configured (/$FACTORY_START_SKILL skill)"
   else
-    echo "  Factory: no safe Alexandria droid name was available"
+    echo "  Factory: no safe Alexandria skill name was available"
+  fi
+
+  FACTORY_HOOKS_OK=""
+  if command -v python3 &>/dev/null; then
+    if python3 - <<'PY' 2>/dev/null
+import json
+from pathlib import Path
+
+path = Path.home() / ".factory" / "hooks.json"
+if path.exists():
+    try:
+        hooks = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"refusing to alter unreadable Factory hooks: {exc}") from exc
+else:
+    hooks = {}
+if not isinstance(hooks, dict):
+    raise SystemExit("refusing to alter Factory hooks: top level is not an object")
+
+owned = {
+    "bash $HOME/.local/share/alexandria/hooks/shim.sh session-start",
+    "bash $HOME/.local/share/alexandria/hooks/shim.sh session-end",
+    "python3 $HOME/.local/share/alexandria/scripts/capture_resolver.py 2>/dev/null || true",
+}
+def keep(group):
+    if not isinstance(group, dict):
+        return True
+    nested = group.get("hooks", [])
+    return not isinstance(nested, list) or not any(
+        isinstance(item, dict) and item.get("command") in owned for item in nested
+    )
+def clean(event):
+    current = hooks.get(event, [])
+    if not isinstance(current, list):
+        raise SystemExit(f"refusing to alter Factory hooks: {event} is not an array")
+    return [group for group in current if keep(group)]
+
+hooks["SessionStart"] = clean("SessionStart") + [
+    {"hooks": [{"type": "command", "command": "bash $HOME/.local/share/alexandria/hooks/shim.sh session-start", "timeout": 60}]},
+    {"hooks": [{"type": "command", "command": "python3 $HOME/.local/share/alexandria/scripts/capture_resolver.py 2>/dev/null || true", "timeout": 10}]},
+]
+hooks["SessionEnd"] = clean("SessionEnd") + [
+    {"hooks": [{"type": "command", "command": "bash $HOME/.local/share/alexandria/hooks/shim.sh session-end", "timeout": 30}]},
+]
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(json.dumps(hooks, indent=2) + "\n", encoding="utf-8")
+PY
+    then
+      FACTORY_HOOKS_OK=1
+      printf '%s\n' 'alexandria-config-v1' > "$RUNTIME_DIR/.owned_factory_config"
+      chmod 600 "$RUNTIME_DIR/.owned_factory_config" 2>/dev/null
+      echo "  Factory: lifecycle hooks configured; review once in /hooks"
+    else
+      echo "  Factory: existing hooks could not be merged safely; left unchanged"
+    fi
   fi
 fi
 
@@ -1401,6 +1454,7 @@ fi
 # else. Only the explicit OFF sentinel is a valid skip. A missing or broken
 # renderer is a failed core path, not an inferred user choice.
 CUE_RENDERED=""
+CUE_CODEX_RENDERED=""
 CUE_ACTIVE_RENDERED=""
 if [ -f "$ALEX_DIR/system/hooks/visible-cue.off" ]; then
   STATUS_CUE="skip"; DETAIL_CUE="off by Author choice"
@@ -1408,6 +1462,7 @@ elif [ ! -f "$RUNTIME_DIR/scripts/statusline.sh" ]; then
   STATUS_CUE="fail"; DETAIL_CUE="renderer missing — re-run setup"
 else
   CUE_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer 2>/dev/null)
+  CUE_CODEX_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer-codex 2>/dev/null)
   CUE_PROBE_HOME="$RUNTIME_DIR/.cue-probe.$$"
   mkdir -p "$CUE_PROBE_HOME/system"
   printf 'alexandria-setup-probe %s\n' "$(date +%s)" > "$CUE_PROBE_HOME/system/.active_a_sessions"
@@ -1417,10 +1472,11 @@ else
   rm -f "$CUE_PROBE_HOME/system/.active_a_sessions"
   rmdir "$CUE_PROBE_HOME/system" "$CUE_PROBE_HOME" 2>/dev/null || true
   if [[ "$CUE_RENDERED" == "→ "*" · start /a in a new chat" ]] && \
+     [[ "$CUE_CODEX_RENDERED" == "→ "*' · start $a in a new chat' ]] && \
      [ "$CUE_ACTIVE_RENDERED" = "→ /a. when done · reflect on what moved" ]; then
     STATUS_CUE="ok"; DETAIL_CUE="$CUE_RENDERED"
   else
-    STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce both the /a start and per-session /a. close routes"
+    STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce the Claude/Cursor /a route, Codex \$a route, and per-session a. close route"
   fi
 fi
 
@@ -1602,11 +1658,12 @@ fi
 FACTORY_DETECTED="no"
 if [ -d "$HOME/.factory" ] || command -v droid &>/dev/null; then
   FACTORY_DETECTED="yes"
-  if [ -n "${FACTORY_START_DROID:-}" ] && \
-     [ -f "$HOME/.factory/droids/$FACTORY_START_DROID.md" ]; then
-    STATUS_FACTORY="ok"; DETAIL_FACTORY="$FACTORY_START_DROID droid ready; foreign names preserved"
+  if [ -n "${FACTORY_START_SKILL:-}" ] && \
+     [ -f "$HOME/.factory/skills/$FACTORY_START_SKILL/SKILL.md" ] && \
+     [ -n "${FACTORY_HOOKS_OK:-}" ]; then
+    STATUS_FACTORY="skip"; DETAIL_FACTORY="/$FACTORY_START_SKILL + passive hooks ready; open /hooks once to review externally added definitions"
   else
-    STATUS_FACTORY="fail"; DETAIL_FACTORY="Factory has no safe Alexandria droid name — resolve the named collision/error, then re-run setup"
+    STATUS_FACTORY="fail"; DETAIL_FACTORY="Factory could not safely install both its /a skill and lifecycle hooks — resolve the named collision/error, then re-run setup"
   fi
 fi
 
@@ -1619,25 +1676,24 @@ STATUS_ACTIVE="fail"
 DETAIL_ACTIVE="no supported ai integration is ready"
 if { [ "$CLAUDE_DETECTED" = "yes" ] && [ "$STATUS_CLAUDE" = "ok" ]; } || \
    { [ "$CURSOR_DETECTED" = "yes" ] && [ "$STATUS_CURSOR" = "ok" ]; } || \
-   { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "ok" ]; } || \
-   { [ "$FACTORY_DETECTED" = "yes" ] && [ "$STATUS_FACTORY" = "ok" ]; }; then
+   { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "ok" ]; }; then
   STATUS_ACTIVE="ok"; DETAIL_ACTIVE="active session skill ready"
-elif [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "skip" ]; then
-  STATUS_ACTIVE="skip"; DETAIL_ACTIVE="active skill ready; Codex hooks await one-time trust"
+elif { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "skip" ]; } || \
+     { [ "$FACTORY_DETECTED" = "yes" ] && [ "$STATUS_FACTORY" = "skip" ]; }; then
+  STATUS_ACTIVE="skip"; DETAIL_ACTIVE="active skill ready; host hooks await one-time review"
 fi
 
-# Passive mode needs a host that can actually run session hooks and carry the
-# visible route during ordinary work. Factory currently supplies only the
-# active droid, so a Factory-only machine is intentionally incomplete rather
-# than falsely reported as the full loop.
+# Passive mode needs a host that can run session hooks and carry the visible
+# route during ordinary work. Factory supports this with one-time hook review.
 STATUS_PASSIVE="fail"
 DETAIL_PASSIVE="no supported passive session path is ready"
 if { [ "$CLAUDE_DETECTED" = "yes" ] && [ "$STATUS_CLAUDE" = "ok" ]; } || \
    { [ "$CURSOR_DETECTED" = "yes" ] && [ "$STATUS_CURSOR" = "ok" ]; } || \
    { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "ok" ]; }; then
   STATUS_PASSIVE="ok"; DETAIL_PASSIVE="ordinary-session hooks and cue route ready"
-elif [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "skip" ]; then
-  STATUS_PASSIVE="skip"; DETAIL_PASSIVE="configured; Codex hooks await one-time trust"
+elif { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "skip" ]; } || \
+     { [ "$FACTORY_DETECTED" = "yes" ] && [ "$STATUS_FACTORY" = "skip" ]; }; then
+  STATUS_PASSIVE="skip"; DETAIL_PASSIVE="configured; host hooks await one-time review"
 fi
 
 # A detected host that could not be merged safely keeps the whole runtime

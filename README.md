@@ -6,11 +6,13 @@ Alexandria is a free, local tool: your thinking in plain files on your machine, 
 
 ## Try it
 
-Open [alexandria-library.com/start](https://alexandria-library.com/start), copy the setup message into your coding agent (Claude Code, Cursor, Codex, Factory), and hit enter.
+Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, add the Shortcut, enter your email, and paste the matching setup message into the AI you already use.
 
 The message makes your agent independently prove the GitHub release is ours, read the code, and run one exact signed commit. The website never gives you executable bytes.
 
-The habit afterwards: open a new tab, type `/a`, and leave it. That's a session.
+The capability router is [`factory/onboarding.md`](factory/onboarding.md). Inside the agent branch, the AI verifies whether it can run the full local setup, reach an existing remote computer, or work through a user-owned folder. The chat branch starts a useful lightweight habit now and keeps the later computer handoff explicit.
+
+The habit afterwards: start an Alexandria session and leave it. In Claude Code, Cursor, or Factory, type `/a`. In Codex, type `$a` (or `/alexandria`). In ordinary chat, type `a`.
 
 ## What's in this repo
 

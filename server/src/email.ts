@@ -1,6 +1,7 @@
 /** Email primitives — Resend API (hybrid dependency, API-controllable, free 100/day). */
 
 import { installPrompt } from './install-prompt.js';
+import { chatInstallPrompt } from './chat-prompt.js';
 
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'benmowinckel@gmail.com';
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
@@ -89,10 +90,6 @@ function escapeHtml(value: string): string {
 // The non-executable setup message to paste — the action, as a monospace card.
 function emailCmd(message: string): string {
   return `<pre style="white-space: pre-wrap; margin: 0 0 1.4rem; background: rgba(61,54,48,0.06); border-radius: 8px; padding: 14px 16px; overflow-wrap: anywhere;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem; color: #3d3630;">${escapeHtml(message)}</code></pre>`;
-}
-// Inline key/command chip — e.g. /a in running prose.
-function emailKbd(text: string): string {
-  return `<code style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85em; background: rgba(61,54,48,0.07); border-radius: 4px; padding: 1px 5px; color: #3d3630;">${text}</code>`;
 }
 // A shareable link on its own line (their invite link — a thing to copy, not click).
 function emailLinkLine(url: string, display: string): string {
@@ -183,12 +180,12 @@ export async function sendWelcomeEmail(email: string, githubLogin: string, email
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
   const body = connectCmd
     ? `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">you&rsquo;re in.</p>
-  <p style="margin: 0 0 0.7rem;">paste this into your coding app:</p>
+  <p style="margin: 0 0 0.7rem;">paste this into the AI where you want to use Alexandria:</p>
   ${emailCmd(connectCmd)}
-  <p style="margin: 0 0 0;">then type ${emailKbd('/a')}.</p>
+  <p style="margin: 0 0 0;">it will connect the account to the strongest version that surface can support and tell you the exact way to start.</p>
 `
     : `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">you&rsquo;re in.</p>
-  <p style="margin: 0 0 0;">open a new tab and type ${emailKbd('/a')}.</p>
+  <p style="margin: 0 0 0;">open the AI where your loop lives and start an Alexandria session.</p>
 `;
   await sendEmail(email, 'welcome to alexandria.', emailShell(body, unsubscribeUrl),
     unsubscribeUrl ? { unsubscribeUrl } : undefined);
@@ -253,21 +250,27 @@ export async function sendWeekOneCheckIn(
   return await sendEmail(email, 'checking in.', html, { unsubscribeUrl });
 }
 
-// --- Mobile onboarding — one requested setup-message delivery ---
-// Phones have no terminal, so the email carries the same non-executable agent
-// handoff as /start. No reminder, waitlist, shortcut, or completion tracker.
+// --- Start onboarding ---
+// The email is both a recovery copy of the handoff and the durable human
+// relationship. Private files and install state remain outside the server.
 
-function onboardCmd(): string {
-  return installPrompt();
+function onboardCmd(mode: 'agent' | 'chat'): string {
+  return mode === 'chat' ? chatInstallPrompt() : installPrompt();
 }
 
 export async function sendOnboardCommand(
   email: string,
+  emailToken: string,
+  mode: 'agent' | 'chat' = 'agent',
 ): Promise<{ ok: boolean; error?: string }> {
-  const html = emailShell(`<p style="margin: 0 0 1.2rem;">paste this into your coding app when you&rsquo;re at your computer:</p>
-  ${emailCmd(onboardCmd())}
-  <p style="margin: 1.6rem 0 0;">this is the only setup email we&rsquo;ll send.</p>`);
-  return await sendEmail(email, 'alexandria. — your setup message', html);
+  const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${emailToken}`;
+  const lead = mode === 'chat'
+    ? 'paste this into the chat you already use:'
+    : 'when you are at your computer, paste this into your local agent:';
+  const html = emailShell(`<p style="margin: 0 0 1.2rem;">${lead}</p>
+  ${emailCmd(onboardCmd(mode))}
+  <p style="margin: 1.6rem 0 0;">reply if setup gets stuck. we&rsquo;ll also send occasional notes that are useful to someone building their loop.</p>`, unsubscribeUrl);
+  return await sendEmail(email, 'alexandria. — start your loop', html, { unsubscribeUrl });
 }
 
 // sendMorningBrief / sendMorningNudge removed: morning brief + nudge are now

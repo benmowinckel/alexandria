@@ -172,6 +172,10 @@ def edit_codex_hooks(document: dict) -> bool:
     return remove_hook_entries(document.get("hooks"), mentions_alexandria_hook)
 
 
+def edit_factory_hooks(document: dict) -> bool:
+    return remove_hook_entries(document, mentions_alexandria_hook)
+
+
 def remove_codex_agents_block(path: Path) -> bool:
     if not path.exists():
         return True
@@ -418,6 +422,7 @@ def main() -> int:
         (HOME / ".claude/settings.json", "Claude settings", edit_claude, ".owned_claude_config"),
         (HOME / ".cursor/hooks.json", "Cursor hooks", edit_cursor, ".owned_cursor_config"),
         (HOME / ".codex/hooks.json", "Codex hooks", edit_codex_hooks, ".owned_codex_config"),
+        (HOME / ".factory/hooks.json", "Factory hooks", edit_factory_hooks, ".owned_factory_config"),
     ):
         if not protected_config_marker(marker):
             if path.exists():
@@ -434,7 +439,7 @@ def main() -> int:
         ok = remove_codex_writable_root(HOME / ".codex/config.toml") and ok
     ok = remove_owned_allowed_signer() and ok
 
-    for base in (HOME / ".claude/skills", HOME / ".cursor/skills", HOME / ".agents/skills"):
+    for base in (HOME / ".claude/skills", HOME / ".cursor/skills", HOME / ".agents/skills", HOME / ".factory/skills"):
         for name in ("a", "a.", "alexandria", "alexandria-close"):
             remove_owned_tree(base / name)
     remove_owned_tree(HOME / ".claude/scheduled-tasks/alexandria", marker="SKILL.md")

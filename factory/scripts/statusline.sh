@@ -1,8 +1,8 @@
 #!/bin/bash
 # Alexandria's visible cue renderer.
 #
-# `statusline` is the native-terminal ceiling. `footer` is the
-# portable response-footer floor used by any local agent that can run a file.
+# `statusline` is the native-terminal ceiling. `footer` and `footer-codex`
+# are portable response footers using each host's real skill invocation.
 # This script only reads local state and prints one line: it never opens a tab,
 # starts a session, writes canon, or calls the network.
 
@@ -42,7 +42,9 @@ if [ "$MODE" = "statusline" ]; then
   fi
 fi
 
-if [ "$MODE" = "footer" ]; then
+if [ "$MODE" = "footer-codex" ]; then
+  CTA='start $a in a new chat'
+elif [ "$MODE" = "footer" ]; then
   CTA='start /a in a new chat'
 else
   CTA='start /a in a new tab'

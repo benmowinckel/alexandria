@@ -350,9 +350,10 @@ export function registerRoutes(app: Hono) {
     const refId = c.req.query('ref_id') || '';
     const next = sanitizeNextPath(c.req.query('next'));
     const intent = c.req.query('intent') === 'library' ? 'library' : '';
+    const waive = (c.req.query('waive') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 128);
     await kv.put(
       `oauth:${state}`,
-      JSON.stringify({ valid: true, ref, ref_source: refSource, ref_id: refId, next, intent }),
+      JSON.stringify({ valid: true, ref, ref_source: refSource, ref_id: refId, next, intent, waive }),
       { expirationTtl: 600 },
     );
 
@@ -400,7 +401,7 @@ export function registerRoutes(app: Hono) {
     // deleted just below — and self-expires in 600s. Avoiding a second Set-Cookie
     // here keeps the login session cookie set later in this handler unambiguous.)
     // Parse state — supports both legacy '1' and new JSON format
-    let stateData: { ref?: string; ref_source?: string; ref_id?: string; next?: string; intent?: string } = {};
+    let stateData: { ref?: string; ref_source?: string; ref_id?: string; next?: string; intent?: string; waive?: string } = {};
     try { stateData = JSON.parse(stateRaw); } catch { /* legacy format */ }
     await kv.delete(`oauth:${state}`);
 
@@ -478,6 +479,22 @@ export function registerRoutes(app: Hono) {
         email = existing.email;
       }
 
+      // The quiet "I'll cover it" path is a real join, not a waitlist dead end.
+      // The one-time token is bound to the submitted email and consumed here;
+      // OAuth still establishes the GitHub identity before membership exists.
+      let waived = false;
+      if (stateData.waive) {
+        const waiveKey = `join:waive:${stateData.waive}`;
+        const raw = await kv.get(waiveKey);
+        await kv.delete(waiveKey);
+        let waivedEmail = '';
+        try { waivedEmail = String(JSON.parse(raw || '{}').email || '').toLowerCase().trim(); } catch { /* invalid token */ }
+        if (!waivedEmail || waivedEmail !== email.toLowerCase().trim()) {
+          return c.html(authErrorHtml('use the same email you entered when asking us to cover membership.'), 400);
+        }
+        waived = true;
+      }
+
       // Key is shown once on the callback page, then only the hash is stored.
       // New accounts AND returning uninstalled users get a fresh key. Returning
       // uninstalled users have a `previousHash` we need to rotate out — without
@@ -512,7 +529,7 @@ export function registerRoutes(app: Hono) {
         // `...existing` spread: the grandfathered seeding-stage `free` cohort
         // (joined 2026-06-05 → 06-11) and returning members keep their status and
         // skip checkout via the good-standing branch below.
-        subscription_status: existing?.subscription_status,
+        subscription_status: waived ? 'free' : existing?.subscription_status,
       };
       delete updatedAccount.api_key;
       await saveAccount(key, updatedAccount as unknown as Record<string, unknown>);
@@ -580,6 +597,7 @@ export function registerRoutes(app: Hono) {
       logEvent('prosumer_signup', {
         github_login: user.login,
         returning: isNewAccount ? 'false' : 'true',
+        waived: waived ? 'true' : 'false',
       });
 
       // Track referral — from OAuth state (round-tripped) or query params (direct)
@@ -1462,7 +1480,7 @@ ${body.split('\n').map((line: string) => line.trim() ? `<p style="font-size: 1re
     }
 
     const rows = await db
-      .prepare(`SELECT email, unsubscribe_token FROM waitlist WHERE type = 'follow' AND opted_out_at IS NULL`)
+      .prepare(`SELECT email, unsubscribe_token FROM waitlist WHERE type IN ('follow', 'onboard') AND opted_out_at IS NULL`)
       .all<{ email: string; unsubscribe_token: string | null }>();
     const recipients = rows.results || [];
     if (recipients.length === 0) {

@@ -1103,7 +1103,10 @@ export default function LandingPage() {
                     it{'\u00a0'}— what the loop is, why it matters, how to make
                     yours, and his as the reference{'\u00a0'}— so you close the
                     loop yourself, however close you already are. Joining the
-                    community is optional.
+                    community is optional. If people you know connect their
+                    loops, your ai can understand them from their own words
+                    too{'\u00a0'}— and help you better with the parts of life
+                    you share.
                   </p>
                 </div>
 

@@ -19,6 +19,13 @@ page.on('console', (message) => {
   if (message.type() === 'error') consoleErrors.push(message.text());
 });
 page.on('pageerror', (error) => pageErrors.push(error.message));
+await page.route('**/onboard', async (route) => {
+  await route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ ok: true, delivered: true }),
+  });
+});
 
 await page.goto(`${base}/chat`, { waitUntil: 'networkidle' });
 const chatUrl = page.url();
@@ -40,9 +47,14 @@ const chatEmailShape = await email.evaluate((element) => {
 });
 const overlay = await page.locator('[data-nextjs-dialog], .vite-error-overlay, #webpack-dev-server-client-overlay').count();
 await button.click();
+const copyRequiresEmail = await page.locator('input[aria-invalid="true"]').count() === 1;
+await page.getByLabel('your email').fill('reader@example.com');
+await page.getByLabel('save email').click();
+await page.getByText('email saved', { exact: false }).waitFor();
+await button.click();
 await page.waitForFunction(() =>
   Array.from(document.querySelectorAll('button')).some((element) =>
-    element.textContent?.includes('copied — paste it into claude, chatgpt, or gemini'),
+    element.textContent?.includes('copied — paste into your chat'),
   ),
 );
 const clickedText = await button.innerText();
@@ -58,13 +70,12 @@ await page.screenshot({ path: screenshot, fullPage: true });
 
 await page.goto(`${base}/start`, { waitUntil: 'networkidle' });
 const startBody = (await page.locator('body').innerText()).trim();
-const chatDoor = page.getByRole('link', { name: /^just a chat/i });
+const chatDoor = page.getByRole('link', { name: /^chat/i });
 const startHasUniversalChatDoor =
   (await chatDoor.count()) === 1 &&
   (await chatDoor.getAttribute('href')) === '/chat' &&
   (await chatDoor.innerText()).toLowerCase().includes('claude, chatgpt, gemini');
-await page.getByRole('button', { name: /^an agent/i }).click();
-await page.getByRole('button', { name: /^yes/i }).click();
+await page.getByRole('button', { name: /^agents/i }).click();
 await page.waitForSelector('.act-email');
 const startEmailShape = await page.locator('.act-email').evaluate((element) => {
   const style = getComputedStyle(element);
@@ -82,9 +93,10 @@ const result = {
   mobile,
   title: chatTitle,
   bodyHasContent: body.length > 100,
-  hasEmailStep: html.includes('act-email') && html.includes('your email'),
-  hasCopyStep: body.includes('copy this setup — paste it into claude, chatgpt, or gemini'),
-  hasTypeAStep: body.includes('type a — start your first thinking session'),
+  hasShortcutStep: body.includes('add the shortcut') && body.includes('save thoughts as they happen'),
+  hasEmailStep: html.includes('act-email') && html.includes('your email') && body.includes('setup help and occasional useful notes'),
+  hasCopyStep: body.includes('copy the setup') && body.includes('paste into your chat'),
+  copyRequiresEmail,
   buttonCopiedState: clickedText.includes('copied'),
   clipboardExact: clipboard === expected,
   clipboardHasAdditiveGuard: clipboard.includes('Preserve existing instructions, memories, and connections'),
@@ -94,10 +106,9 @@ const result = {
   emailFieldMatchesStart: JSON.stringify(chatEmailShape) === JSON.stringify(startEmailShape),
   startCopyIsLowercase:
     startBody.includes('start your loop') &&
-    startBody.includes('what do you have access to?') &&
-    startBody.includes('an agent — claude code, codex, cursor') &&
-    startBody.includes('just a chat — claude, chatgpt, gemini') &&
-    !startBody.includes('If you have both'),
+    startBody.includes('what do you use?') &&
+    startBody.includes('agents — eg claude code, codex, cowork') &&
+    startBody.includes('chat — eg claude, chatgpt, gemini'),
   startHasUniversalChatDoor,
   errorOverlay: overlay > 0,
   consoleErrors,
@@ -110,9 +121,10 @@ await browser.close();
 
 if (
   !result.bodyHasContent ||
+  !result.hasShortcutStep ||
   !result.hasEmailStep ||
   !result.hasCopyStep ||
-  !result.hasTypeAStep ||
+  !result.copyRequiresEmail ||
   !result.buttonCopiedState ||
   !result.clipboardExact ||
   !result.clipboardHasAdditiveGuard ||

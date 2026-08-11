@@ -18,11 +18,11 @@ That is the whole engine. It closes on its own, forever, with no account and no 
 
 The product closes that cognitive cycle without making the Author remember it:
 
-**passive session → visible route into `/a` → active session → a better mirror → and back.**
+**passive session → visible route into an Alexandria session → active session → a better mirror → and back.**
 
 - **passive** — during ordinary work, use relevant approved context, archive the conversation locally when the host exposes it, and preserve only clear signal the Author actually supplied.
-- **the route** — after ordinary work, show one small state-aware `/a` cue. It carries accumulated local state into view and asks for no company action.
-- **active** — `/a` develops what accumulated; `a.` closes by preserving what changed in the Author's words.
+- **the route** — after ordinary work, show one small state-aware session cue. It carries accumulated local state into view and asks for no company action.
+- **active** — the host's installed Alexandria skill develops what accumulated; `a.` closes by preserving what changed in the Author's words.
 - **the mirror** — the local files improve, so the next ordinary session begins with a more accurate picture of the Author.
 
 Remove the route and the product depends on the Author remembering to run it; the loop is open. The Author may still turn it off immediately. Incompressible describes the complete product, not a denial of user control.
@@ -32,13 +32,13 @@ Remove the route and the product depends on the Author remembering to run it; th
 Foundation remains usable even if every default method is removed:
 
 - **ordinary work stays ordinary and passive.** Use approved Author context when it materially helps; keep only clear durable signal in their local files; never infer a private profile from casual behaviour.
-- **`/a` starts development.** Read the Author's local constitution, marginalia, notepad, feedback, machine guidance, and new local captures. Take the highest-value live thought through any useful part of the loop, write confirmed signal back to its proper local home, and give the Author one concrete thing worth engaging with. Do not wait for an account, module, network, or company service.
+- **an Alexandria session starts development.** Use the host's native route when installed (`/a` in Claude Code or Cursor; `$a` in Codex), or the plain request `start an Alexandria session` anywhere else. Read the Author's local constitution, marginalia, notepad, feedback, machine guidance, and new local captures. Take the highest-value live thought through any useful part of the loop, write confirmed signal back to its proper local home, and give the Author one concrete thing worth engaging with. Do not wait for an account, module, network, or company service.
 - **`a.` closes it.** First capture unfinished and crystallised signal locally. Then ask the Author what changed for them, preserve their answer in their words, and commit the local history. A close never requires publication or transmission.
 - **the ai supplies the intelligence.** Foundation specifies the closed loop and its boundaries, not a universal style. If a default method is present, use it. If none is present, reason directly from the Author's files and these invariants.
 
 ## the visible route into active work
 
-Every completed ordinary task carries exactly one small, visible `/a` cue. A supported terminal shows it in the native statusline; every other host uses the exact local line from `bash ~/.local/share/alexandria/scripts/statusline.sh footer`. Never show both. During a deliberate Alexandria session use `→ close with a. when done` instead. The cue never opens a chat or starts a session; the Author must do that themselves. `touch ~/alexandria/system/hooks/visible-cue.off` turns the cue off immediately, and removing that file turns it back on.
+Every completed ordinary task carries exactly one small, visible session cue. It uses the route the current host actually supports: `/a` in Claude Code or Cursor, `$a` in Codex, and the plain request `start an Alexandria session` as the vendor-neutral floor. A supported terminal may show it in native chrome; otherwise the agent uses its exact local footer mode. Never show both. During a deliberate Alexandria session use `→ close with a. when done` instead. The cue never opens a chat or starts a session; the Author must do that themselves. `touch ~/alexandria/system/hooks/visible-cue.off` turns the cue off immediately, and removing that file turns it back on.
 
 ## the invariants
 

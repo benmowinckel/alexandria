@@ -587,9 +587,8 @@ app.options('/follow', (c) => {
 });
 
 // ---------------------------------------------------------------------------
-// Mobile onboarding — "send it to my computer". This is a one-time delivery
-// of the same non-executable paste shown on /start. It creates no account,
-// waitlist entry, reminder sequence, referral record, or install tracker.
+// Start onboarding. Email is the durable relationship and recovery path; the
+// private loop itself still works without an account and sends us no thoughts.
 // ---------------------------------------------------------------------------
 
 app.post('/onboard', async (c) => {
@@ -617,8 +616,8 @@ app.post('/onboard', async (c) => {
     return c.json({ error: 'Valid email required.' }, 400);
   }
 
-  // /join is an Alexandria-owned commercial surface and keeps its explicit
-  // waitlist path. /start is only a one-time requested delivery.
+  // /join keeps its distinct interest source. /start is an explicit request
+  // for setup help and occasional useful product notes.
   const isJoinDecline = body?.source === 'join';
   // The /join page's second path (2026-07-27): "join anyway, but waive the
   // month for me." Same capture, distinct source string so the founder can
@@ -638,7 +637,9 @@ app.post('/onboard', async (c) => {
         `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)
          VALUES (?, 'join', ?, ?, ?)
          ON CONFLICT(email) DO UPDATE
-           SET unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token),
+           SET type = 'join',
+               source = excluded.source,
+               unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token),
                opted_out_at = NULL
          RETURNING unsubscribe_token`,
       ).bind(
@@ -652,13 +653,41 @@ app.post('/onboard', async (c) => {
         intent: isWaiveAsk ? 'waive' : 'not_now',
         upserted: upserted ? 'true' : 'false',
       });
+      if (isWaiveAsk) {
+        const waiveCode = generateToken();
+        await getKV().put(
+          `join:waive:${waiveCode}`,
+          JSON.stringify({ email: normalizedEmail, ref }),
+          { expirationTtl: 3600 },
+        );
+        const serverUrl = process.env.SERVER_URL || 'https://api.alexandria-library.com';
+        const query = new URLSearchParams({ waive: waiveCode, ref_source: 'waive' });
+        if (ref) query.set('ref', ref);
+        return c.json({ ok: true, join_url: `${serverUrl}/auth/github?${query}` });
+      }
       return c.json({ ok: true });
     }
 
-    const result = await sendOnboardCommand(normalizedEmail);
-    logEvent('onboard_email_sent', { sent: result.ok ? 'true' : 'false' });
-    if (!result.ok) return c.json({ error: 'Could not send just now — try again.' }, 502);
-    return c.json({ ok: true });
+    const db = (globalThis as any).__d1 as D1Database;
+    if (!db) return c.json({ error: 'Database not available.' }, 503);
+    const newToken = generateToken();
+    const mode = body?.mode === 'chat' ? 'chat' : 'agent';
+    const source = `start:${mode}${ref ? `:ref:${ref}` : ''}`;
+    const saved = await db.prepare(
+      `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)
+       VALUES (?, 'onboard', ?, ?, ?)
+       ON CONFLICT(email) DO UPDATE
+         SET type = 'onboard',
+             source = excluded.source,
+             unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token),
+             opted_out_at = NULL
+       RETURNING unsubscribe_token`,
+    ).bind(normalizedEmail, source, new Date().toISOString(), newToken)
+      .first<{ unsubscribe_token: string | null }>();
+    const unsubscribeToken = saved?.unsubscribe_token || newToken;
+    const result = await sendOnboardCommand(normalizedEmail, unsubscribeToken, mode);
+    logEvent('onboard_email_saved', { sent: result.ok ? 'true' : 'false', mode, ref: ref ? 'yes' : 'no' });
+    return c.json({ ok: true, delivered: result.ok });
   } catch (err: any) {
     console.error('Onboard capture error:', err?.message || err);
     return c.json({ error: 'Failed to send.' }, 500);

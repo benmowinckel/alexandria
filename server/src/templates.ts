@@ -8,11 +8,6 @@ import { installPrompt } from './install-prompt.js';
 
 function getWebsiteUrl() { return process.env.WEBSITE_URL || 'https://alexandria-library.com'; }
 
-// The iCloud capture shortcut — same constant the emails + website use
-// (email.ts, app/lib/config.ts). Save anything from your phone; it becomes
-// a session. Surfaced as a subtle link on the founding-member page.
-const SHORTCUT_URL = 'https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337';
-
 function escapeHtml(value: string): string {
   return value
     .replaceAll('&', '&amp;')
@@ -95,9 +90,10 @@ export function authErrorHtml(message: string): string {
 // Callback page — the first brand moment after signup
 // ---------------------------------------------------------------------------
 
-export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToken = false, authorNumber = 0, _kinCompliant = 0, rotateUrl = ''): Promise<string> {
+export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaToken = false, authorNumber = 0, _kinCompliant = 0, rotateUrl = ''): Promise<string> {
+  void _viaToken;
+  void _kinCompliant;
   const WEBSITE_URL = getWebsiteUrl();
-  const host = WEBSITE_URL.replace(/^https?:\/\//, '');
   // The founding-member page (Strava-for-thought, ground truth e1cd27f). You've
   // just JOINED the community — the local tool was already free. The page leads
   // with belonging (you're in), then two boxes in this order: share your invite
@@ -131,7 +127,6 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
   // The URL is DISPLAYED as well as copied — the visible ref doubles as the
   // member's kin code, so there's no separate code line to explain.
   const inviteUrl = githubLogin ? `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}` : '';
-  const inviteDisplay = githubLogin ? `${host}/invite?ref=${githubLogin}` : '';
   // (Kin progress was cut 2026-07-17 — the count is ~always 0 on this page.
   // The Web Share sheet, cut at the same time, is BACK as of 2026-07-27 and is
   // now the whole of step 1: a copy button parks the link on a clipboard nobody
@@ -395,8 +390,8 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', viaToke
     ? `<button type="button" class="cta-box primary" onclick="shareInvite(this)" aria-label="share your invite link">share your link<span class="cta-why cta-why-inverse">&nbsp;&mdash; bring people, stay free</span><span class="icon"><span class="icon-copy">${ICON_SHARE}</span><span class="icon-check">${ICON_CHECK}</span></span></button>`
     : ''}
   ${isReturning || !connectPrompt
-    ? `<div class="cta-box static">start /a in a new tab<span class="cta-why">&nbsp;&mdash; refine yourself between tasks</span></div>`
-    : `<button type="button" class="cta-box" onclick="copyCmd(this)" aria-label="copy connect command">copy this line<span class="cta-why">&nbsp;&mdash; paste it in your agent</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>`}
+    ? `<div class="cta-box static">start a session where your loop lives<span class="cta-why">&nbsp;&mdash; your AI knows its exact gesture</span></div>`
+    : `<button type="button" class="cta-box" onclick="copyCmd(this)" aria-label="copy connect message">copy the connection<span class="cta-why">&nbsp;&mdash; paste it into the AI you use</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>`}
   <div class="footer">
     ${rotateUrl ? `<p class="fineprint-solo">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a></p>` : ''}
     <p class="fineprint-solo">wrong account? <a href="https://github.com/logout" target="_blank" rel="noopener noreferrer">sign out of github</a></p>

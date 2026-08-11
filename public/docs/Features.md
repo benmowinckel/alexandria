@@ -2,7 +2,7 @@
 
 We give you instructions for your own AI. It chooses what fits, then automatically writes what it learns about you into private files on your computer and reads them whenever they help. Those files become an owned, living record your AI uses to help you keep, develop, and act on what matters. The eight features below are what that one process feels like from different sides. We call it an Alexandria loop.
 
-**Where it runs.** On your computer, inside the AI you already use. The free loop needs no Alexandria account and sends no private files to our server. Only the optional connector is hosted: add it if you want your loop to learn from other people’s loops.
+**Where it runs.** On your computer, inside the AI you already use. The free loop needs no Alexandria account and sends no private files to our server. It helps your AI understand you better, so it can help you better. Only the optional connector is hosted: connect the people you choose and it can understand them from their own words too, helping you better with the parts of life you share.
 
 ## i · personalisation.
 

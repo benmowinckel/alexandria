@@ -9,21 +9,15 @@ export const metadata = pageMetadata({
   path: '/start',
   title: 'start alexandria.',
   description:
-    'start your alexandria loop free. give one setup message to your local ai agent and it inspects the public source, installs the files, and walks you through the rest.',
+    'start your alexandria loop from the AI you already use — local, remote, folder-based, or chat.',
 });
 
-// The front door for someone who already clicked "join the tribe" — bought in,
-// here to act. One job: get the command into their agent. So: brand header, the
-// message, and one quiet line explaining the independent signature check.
-// No product pitch — the homepage/video did that.
+// One front door, then one plain split: agent or chat. Each branch establishes
+// the email relationship and gives that surface a truthful setup handoff.
 //
 // Composition: a single flush-left editorial column (not a centred stack). The
 // eyebrow ("the free tool") is the one accent on the skeleton and names which
 // half of the two things this is — the free tool, vs the community at /join.
-//
-// Two CTAs, switched on input method, not width (a narrow desktop window still
-// has a terminal; a wide iPad doesn't): pointer-fine devices get the copy-paste
-// command, touch devices get the Shortcut + send-it-to-my-computer flow.
 //
 // Invite target: a member's link is /start?ref=THEIR_LOGIN. The ref rides down
 // into StartCTA, which validates it against /check-kin before showing the invite
@@ -56,9 +50,8 @@ export default async function StartPage({
             page; the lede's privacy line lives in the fine print below. */}
         <h1 className="primer-h1">start your loop</h1>
 
-        {/* Two doors, one question (founder 2026-07-24: radical simplicity for
-            stressed/cowork/chat users) — only the chosen door's content shows.
-            The old consolidated layout lives untouched behind the yes-door. */}
+        {/* The person chooses the category they already understand. Inside the
+            agent branch, the agent inspects its actual reach and capability. */}
         <StartDoor refCode={ref} />
 
       </main>
@@ -356,6 +349,7 @@ export default async function StartPage({
         }
         .act-email input.has-val { flex: 1; }
         .act-email .join-door-go { margin-left: auto; }
+        .act-email-error { margin-left: 8px; color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
         .act-email input::placeholder { color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .act-email input[data-shake="on"] { animation: startShake 320ms ease-in-out; }
         .act-email-why {
