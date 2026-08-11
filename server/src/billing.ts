@@ -888,9 +888,10 @@ export async function resolveMembership(account: Account): Promise<MembershipSta
   }
 
   try {
-    const sub = account.subscription_id
-      ? shapeResolvedSubscription(await getStripe().subscriptions.retrieve(account.subscription_id), false)
-      : await resolveActiveSubscription(account, { strict: true });
+    // Always use the full resolver. A cached id can point at an older terminal
+    // subscription while the same account has a newer live one; retrieving the
+    // cached object directly would make that stale cancellation authoritative.
+    const sub = await resolveActiveSubscription(account, { strict: true });
 
     if (!sub) {
       const state = classifyMembershipStatus(stored);
@@ -1004,8 +1005,12 @@ const MANAGEABLE_STATUSES: Stripe.Subscription.Status[] = [
   'active', 'trialing', 'past_due', 'unpaid', 'paused', 'incomplete',
 ];
 
+export function isManageableSubscriptionStatus(status: string): boolean {
+  return MANAGEABLE_STATUSES.includes(status as Stripe.Subscription.Status);
+}
+
 export function subMatchesAccount(sub: Stripe.Subscription, account: Account): boolean {
-  if (!MANAGEABLE_STATUSES.includes(sub.status)) return false;
+  if (!isManageableSubscriptionStatus(sub.status)) return false;
   const md = sub.metadata || {};
   if (md.github_login && md.github_login === account.github_login) return true;
   // Constant-time compare — md.api_key is attacker-controllable (Stripe sub
@@ -1038,12 +1043,19 @@ export async function resolveActiveSubscription(account: Account, options: { str
   let lookupSucceeded = false;
   let lastLookupError: unknown = null;
 
-  // 1. Fast path — cached subscription_id is valid.
+  // 1. Fast path — cached subscription_id is valid and non-terminal. A cached
+  // canceled subscription must fall through so a newer live subscription can
+  // heal the account instead of being hidden behind stale identity.
   if (account.subscription_id) {
     try {
       const sub = await stripe.subscriptions.retrieve(account.subscription_id);
       lookupSucceeded = true;
-      return shapeResolvedSubscription(sub, false);
+      if (isManageableSubscriptionStatus(sub.status)) {
+        return shapeResolvedSubscription(sub, false);
+      }
+      console.warn(
+        `[billing] cached subscription_id ${account.subscription_id} is ${sub.status} — falling back to live subscription sweep`,
+      );
     } catch (e) {
       lastLookupError = e;
       console.warn(
@@ -1088,7 +1100,7 @@ export async function resolveActiveSubscription(account: Account, options: { str
       // this login — or carries no login at all (pre-metadata legacy subs,
       // where email is the only identifier we ever had).
       const active = subs.data.find((s) =>
-        MANAGEABLE_STATUSES.includes(s.status)
+        isManageableSubscriptionStatus(s.status)
         && (!s.metadata?.github_login || s.metadata.github_login === account.github_login)
       );
       if (active) {
