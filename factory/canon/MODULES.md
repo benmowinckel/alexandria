@@ -16,7 +16,7 @@
 
 The visible cue is part of the core because without it the loop depends on the Author remembering to run the product. It is still immediately opt-out: user control and product completeness are different questions. Turning the cue off intentionally removes the automatic return path; it does not convert the cue into a method.
 
-The marketplace lists `foundation.md` and `change-closure.md` as **core** so an Author can see and recover the pieces whose removal breaks the loop. They are references, not choices: never ranked, reported, or recommended against alternatives. The marketplace calls `change-closure.md` **follow-through** because that is what it does in plain English.
+The marketplace lists `foundation.md` and `change-closure.md` as **core** so an Author can see and recover the pieces whose removal breaks the loop. They are references, not choices: never ranked, reported, or recommended against alternatives. The marketplace calls `change-closure.md` **upkeep** because it keeps every dependent part current when something changes.
 
 ## methods — included, on locally, removable
 

@@ -63,14 +63,14 @@ assert.deepEqual(
   builtins.map(({ name, tier }) => [name, tier]),
   [
     ['foundation', 'core'],
-    ['follow-through', 'core'],
+    ['upkeep', 'core'],
     ['axioms', 'default'],
     ['editor', 'default'],
     ['mercury', 'default'],
     ['methodology', 'default'],
     ['publisher', 'default'],
-    ['capture pipeline', 'official'],
-    ['state-based sync', 'official'],
+    ['capture', 'official'],
+    ['audit', 'official'],
     ['bookshelf', 'community'],
   ],
 );

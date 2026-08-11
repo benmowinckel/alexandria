@@ -1,6 +1,6 @@
-# alexandria-factory-version 20260811183237
+# alexandria-factory-version 20260811184825
 ab939f01e8cc48b0ec97c95b56645a3bd922738eaddc44c9abfb2d0ee803c94f  factory/block.md
-7a1e2aaf2d3bd3fb8da8ef7f2e6f87826228c44afecff7f0efcb9947f3e0cce8  factory/canon/MODULES.md
+bcd307946af8eeb61ddff882ae2ddccae188d77140c59ff5e26fd15d36439929  factory/canon/MODULES.md
 ca40ecc217738ea237585205ffe2efd4507667c9be6068f45cb47d99d8cfde6d  factory/canon/axioms.md
 194bba63fa357ef84c4581cb37a373e4c3518101e801aa93f6ee97ae004efdaa  factory/canon/bookshelf.md
 3e14e58ecfe4de2732c645ef137f57d75431d5f9983c57aff85c34ba4b7e4c7c  factory/canon/change-closure.md
