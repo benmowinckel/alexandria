@@ -438,10 +438,11 @@
           inset: 0;
           z-index: 20;
           /* Slide IS the scene — full viewport. Image sized cover so
-             the niche centres horizontally; bg-color matches the
-             image's edge cream so any uncovered area at extreme
-             aspect ratios still reads as the same wall. */
-          background-color: #d8ccb6;
+             the niche centres horizontally. bg-color = paper / first
+             bottom-slide theme (#f7f2ec). The visible wall cream lives
+             in the graded image (~#d7d6c2), so paper matching is done
+             by .top-slide::before wash — not this fill (cover hides it). */
+          background-color: #f7f2ec;
           /* SEA scene (settled 2026-07-09, v8) — the arch window onto
              open water as a memory: dissolved edges, everything faint,
              a quiet blue in the water. The founder's terminal verdict
@@ -479,6 +480,17 @@
           will-change: transform;
           box-shadow: var(--peel-shadow, 0 0 0 rgba(0, 0, 0, 0));
           color: #1a1318;
+        }
+        /* Paper wash — ivory cream pull on the graded sea-arch wall.
+           Stronger near-white ivory (not cold #fff) so the wall reads
+           lighter while keeping the cream look. */
+        .top-slide::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          pointer-events: none;
+          background: color-mix(in srgb, #faf6f0 40%, transparent);
         }
         /* Breeze video — sits on top of the PNG background, below the
            stage. Same crop logic (object-position 75% center) so it
@@ -570,6 +582,7 @@
           justify-content: center;
           padding: 63px 32px 27px;
           box-sizing: border-box;
+          z-index: 2; /* above paper wash (::before z:1) */
         }
         /* Vertical margin rule REMOVED — was distracting against the
            full-bleed wall scene. Kept the selector with no content so
