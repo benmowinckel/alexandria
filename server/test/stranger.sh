@@ -189,6 +189,13 @@ ALEXANDRIA_SOURCE_COMMIT="$SOURCE_COMMIT" \
   ALEXANDRIA_ACCOUNT_CONNECT_APPROVED=1 \
   bash "$SOURCE_DIR/factory/setup.sh" "$API_KEY" 2>/dev/null
 
+# A compact annotation keeps cross-platform core-gate failures diagnosable even
+# when the hosted log archive is unavailable to a public, unauthenticated read.
+if [ -n "${GITHUB_ACTIONS:-}" ] && [ ! -f "$HOME/.local/share/alexandria/.setup_complete" ]; then
+  SETUP_REPORT=$(tr '\r\n' ';;' < "$HOME/alexandria/system/.setup_report" 2>/dev/null || true)
+  printf '::error title=Setup report::%s\n' "${SETUP_REPORT:-missing}"
+fi
+
 # Verify directory structure
 check "alexandria dir exists"      [ -d "$HOME/alexandria" ]
 check "vault dir exists"           [ -d "$HOME/alexandria/files/vault" ]

@@ -4,8 +4,9 @@
  * Lazy-fetches module markdown from public GitHub, parses YAML front-matter,
  * caches in KV with 24h TTL (1h on unreachable, to retry sooner). The act of
  * an Author POSTing an inspected public GitHub module via /call surfaces it —
- * local-only IDs never become collective signal. There is no /publish endpoint
- * by design.
+ * local-only IDs never become collective signal. Older public GitHub reports
+ * without a byte hash remain legible but are marked legacy-unverified. There is
+ * no /publish endpoint by design.
  *
  * Module ID format: `github:<user>/<repo>#<path-without-extension>`. Server
  * appends `.md` when fetching from raw.githubusercontent.com.

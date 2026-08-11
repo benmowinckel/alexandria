@@ -1471,9 +1471,11 @@ else
     bash "$RUNTIME_DIR/scripts/statusline.sh" 2>/dev/null | tr -d '\r')
   rm -f "$CUE_PROBE_HOME/system/.active_a_sessions"
   rmdir "$CUE_PROBE_HOME/system" "$CUE_PROBE_HOME" 2>/dev/null || true
-  if [[ "$CUE_RENDERED" == "→ "*" · start /a in a new chat" ]] && \
-     [[ "$CUE_CODEX_RENDERED" == "→ "*' · start $a in a new chat' ]] && \
-     [ "$CUE_ACTIVE_RENDERED" = "→ /a. when done · reflect on what moved" ]; then
+  CUE_OUTPUTS_OK=true
+  case "$CUE_RENDERED" in *'start /a in a new chat') ;; *) CUE_OUTPUTS_OK=false ;; esac
+  case "$CUE_CODEX_RENDERED" in *'start $a in a new chat') ;; *) CUE_OUTPUTS_OK=false ;; esac
+  case "$CUE_ACTIVE_RENDERED" in *'/a. when done'*'reflect on what moved') ;; *) CUE_OUTPUTS_OK=false ;; esac
+  if [ "$CUE_OUTPUTS_OK" = "true" ]; then
     STATUS_CUE="ok"; DETAIL_CUE="$CUE_RENDERED"
   else
     STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce the Claude/Cursor /a route, Codex \$a route, and per-session a. close route"

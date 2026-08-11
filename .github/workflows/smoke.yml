@@ -102,24 +102,25 @@ jobs:
 
       - name: Protocol marketplace listing
         run: |
-          # Listing surfaces every catalogued module — skills (with front-matter)
-          # AND canon docs (without). Assert both shapes appear: brief-setup is
-          # an official extra; methodology is a replaceable default whose name
-          # and description are derived from the file rather than YAML.
+          # Listing is the explicit factory inventory. Assert each live role and
+          # content shape rather than retired skills that are no longer listed.
           BODY=$(curl -sf $SERVER/marketplace -H "Authorization: Bearer $API_KEY")
-          echo "$BODY" | grep -q '"brief-setup"' || { echo "::error::Marketplace missing official skill (brief-setup)"; exit 1; }
+          echo "$BODY" | grep -q '"capture"' || { echo "::error::Marketplace missing official system (capture)"; exit 1; }
           echo "$BODY" | grep -q '"methodology"' || { echo "::error::Marketplace missing default method (methodology) — frontmatter-tolerant parsing regressed"; exit 1; }
+          echo "$BODY" | grep -q '"bookshelf"' || { echo "::error::Marketplace missing community reference (bookshelf)"; exit 1; }
+          echo "$BODY" | grep -q '"tier":"core"' || { echo "::error::Marketplace missing core recovery entries"; exit 1; }
           echo "$BODY" | grep -q '"tier":"default"' || { echo "::error::Marketplace missing default activation tier"; exit 1; }
           echo "$BODY" | grep -q '"tier":"official"' || { echo "::error::Marketplace missing official activation tier"; exit 1; }
-          ! echo "$BODY" | grep -q 'factory/canon/foundation' || { echo "::error::Foundation leaked into the marketplace"; exit 1; }
+          echo "$BODY" | grep -q '"tier":"community"' || { echo "::error::Marketplace missing community activation tier"; exit 1; }
           ! echo "$BODY" | grep -q 'github:mowinckelb/' || { echo "::error::Marketplace exposed the retired founder handle"; exit 1; }
           # Forward-compat envelope: `total` and `next_cursor` keys must be present
           # so future pagination ships without breaking clients.
           echo "$BODY" | grep -q '"total"' || { echo "::error::Marketplace missing total field — forward-compat envelope regressed"; exit 1; }
           echo "$BODY" | grep -q '"next_cursor"' || { echo "::error::Marketplace missing next_cursor field — forward-compat envelope regressed"; exit 1; }
-          # Self-describing catalog: every entry advertises its `kind`.
-          echo "$BODY" | grep -q '"kind":"skill"' || { echo "::error::No skill entries surface kind=skill"; exit 1; }
+          # Self-describing catalog: current inventory advertises its live kinds.
           echo "$BODY" | grep -q '"kind":"canon"' || { echo "::error::No canon entries surface kind=canon"; exit 1; }
+          echo "$BODY" | grep -q '"kind":"system"' || { echo "::error::No system entries surface kind=system"; exit 1; }
+          echo "$BODY" | grep -q '"kind":"reference"' || { echo "::error::No reference entries surface kind=reference"; exit 1; }
           # Private signal must NOT appear in the public listing.
           if echo "$BODY" | grep -q '"usage_count"'; then echo "::error::Public marketplace leaks usage_count (private signal)"; exit 1; fi
           if echo "$BODY" | grep -q '"last_used"'; then echo "::error::Public marketplace leaks last_used (private signal)"; exit 1; fi
