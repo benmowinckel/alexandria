@@ -1,6 +1,6 @@
 # alexandria.
 
-Two questions decide the next century. When a machine can do everything humans do, and do it better, what is left for humans to do? And if something is left, how does the person who does it remain themselves when that machine becomes the most persuasive voice in their life?
+Two questions decide the next century. When a machine can do everything humans do, and do it better, what is left for humans to do? And even if something is left for humans — how does a person remain themselves when that machine becomes the most persuasive voice in their life?
 
 You could count the honest answers on one hand. Most of what’s said about AI is one of two kinds. It’s dishonest — from people whose money or standing depends on selling an inevitability, doom or utopia, whichever moves the room. Or it’s simply wrong — comfortable guesses from people who haven’t followed it all the way down. Between the salesmen and the sleepwalkers, the most important question of our lifetime sits almost untouched.
 
@@ -14,7 +14,7 @@ There’s a company at the end of it — Alexandria. Not because the argument wa
 
 ## in brief
 
-Machines will match or beat everything a person can do. They may also become indistinguishable from people in voice, face and work. What remains different is not the appearance of the output but its provenance: this living person, made of this matter, moving through this time, was actually there. That difference is physically permanent and economically conditional. It cannot be recreated after the fact; whether anyone values it is a choice. Valuing it is how a human can still get paid. Even that only answers what humans might still do. The larger question is whether the person who does it remains themselves — whether distinct humans survive the transition and have lives they value once necessity falls away. That full outcome — max net human value — is what Alexandria exists for.
+Machines will match or beat everything a person can do. They may also become indistinguishable from people in voice, face and work. What remains different is not the appearance of the output but its provenance: this living person, made of this matter, moving through this time, was actually there. That difference is physically permanent and economically conditional. It cannot be recreated after the fact; whether anyone values it is a choice. Valuing it is how a human can still get paid. Even that only answers what humans might still do. The larger question is whether a person remains themselves through it — whether distinct humans survive the transition and have lives they value once necessity falls away. That full outcome — max net human value — is what Alexandria exists for.
 
 Almost everything about the future is uncertain. This is not. Whatever the machines become, every future still reaches a person as a life they have to live. The one lever wholly in that person’s hands is whether they remain present in their own change and what they do with what arrives. That small act of agency sits upstream of everything else.
 
@@ -358,7 +358,7 @@ And it counts at every scale. The mind whose record is read by millions matters;
 
 Hear that word *value* correctly, because it was never only money. Money is one floor — the part that proves the case to a sceptic and keeps human contribution legible during the transition. The larger value is lived: more people still themselves, free, awake, able to make, learn, move, love and choose what their abundance is for. Getting paid is only proof the world has not stopped rewarding one part of that. For the human side of it — felt, not argued — read the letter.
 
-And notice the shape of what just happened. We started with two questions — what is left for humans to do when machines can do everything, and if something is left, how the person who does it remains themselves while those machines shape them — then took each one down to matter and time. The files preserve the causal record. The loop develops it and contests its changes without asking the human to remember. The Library makes provenance socially and economically legible. Each piece follows from the one before it. That’s why Alexandria is what it is.
+And notice the shape of what just happened. We started with two questions — what is left for humans to do when machines can do everything, and even if something is left for humans, how a person remains themselves while those machines shape them — then took each one down to matter and time. The files preserve the causal record. The loop develops it and contests its changes without asking the human to remember. The Library makes provenance socially and economically legible. Each piece follows from the one before it. That’s why Alexandria is what it is.
 
 ## begin
 
