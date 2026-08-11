@@ -86,12 +86,18 @@ async function main() {
     assert.equal(status.body.account.status, session.body.subscription_status);
     checks.push('one authoritative account/membership state');
 
-    const signal = await json<any>(`/marketplace/${encodeURIComponent(firstModule.id)}`, { headers: auth });
-    assert.equal(signal.response.status, 200);
-    assert.ok(signal.body.signal || signal.body.current_version, 'Marketplace aggregate signal missing');
-    assert.ok(Array.isArray(signal.body.own_usage));
-    assert.equal(JSON.stringify(signal.body).includes('account_id'), false, 'another caller identity is exposed');
-    checks.push('anonymous aggregate + own-only usage history');
+    if (status.body.account.membership_active) {
+      const signal = await json<any>(`/marketplace/${encodeURIComponent(firstModule.id)}`, { headers: auth });
+      assert.equal(signal.response.status, 200);
+      assert.ok(signal.body.signal || signal.body.current_version, 'Marketplace aggregate signal missing');
+      assert.ok(Array.isArray(signal.body.own_usage));
+      assert.equal(JSON.stringify(signal.body).includes('account_id'), false, 'another caller identity is exposed');
+      checks.push('anonymous aggregate + own-only usage history');
+    } else {
+      const signal = await fetch(`${API}/marketplace/${encodeURIComponent(firstModule.id)}`, { headers: auth });
+      assert.equal(signal.status, 402, `inactive member signal should be 402, got ${signal.status}`);
+      checks.push('private Marketplace signal denied for inactive membership');
+    }
 
     const canaryName = 'ci-smoke';
     const canary = `# community loop canary\n\n${new Date().toISOString()}\n`;
