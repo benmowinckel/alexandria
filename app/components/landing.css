@@ -1639,7 +1639,7 @@
           margin: 0;
         }
         .pitch-simple {
-          gap: 1em;
+          gap: 1.15em;
           justify-content: center;
         }
         .pitch-simple-prose {
@@ -1648,11 +1648,14 @@
           font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
           font-size: 20.5px;
-          line-height: 1.52;
+          line-height: 1.55;
           letter-spacing: 0.002em;
           font-feature-settings: 'liga', 'dlig';
           color: var(--theme-fg);
           text-wrap: pretty;
+        }
+        .pitch-nowrap {
+          white-space: nowrap;
         }
         .pitch-item {
           position: relative;
@@ -2959,11 +2962,11 @@
             gap: 28px;
           }
           .pitch-simple {
-            gap: 1em;
+            gap: 1.1em;
           }
           .pitch-simple-prose {
             font-size: clamp(18px, 4.6vw, 20px);
-            line-height: 1.45;
+            line-height: 1.5;
           }
           .pitch-item {
             padding: 0;

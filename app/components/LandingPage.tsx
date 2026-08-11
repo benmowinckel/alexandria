@@ -1061,40 +1061,42 @@ export default function LandingPage() {
                     pinned below with the CTAs. Copy consolidated this
                     pass — same ideas and richness, fewer words. Section
                     plates (roman numerals) carry the manuscript register. */}
-                {/* The pitch — three beats: problem → deeper/sovereign/
-                    unified → coin the loop + gift the founder's complete
-                    one (merge in one go) + optional community. */}
+                {/* The pitch — three sections: problem → triad → loop
+                    gift + merge, with the community line as a soft
+                    second breath inside section three (keeps the count
+                    at three; nowrap holds the em-dash parenthetical). */}
                 <div className="pitch pitch-simple">
                   <p className="pitch-simple-prose">
                     The better your ai knows you, the better it helps you. Every
-                    native ai memory is a partial version of that — usually
-                    shallow, locked inside one product, and scattered across the
-                    tools you use. The optimal structure is your ai continually
-                    reading and writing a living map of what you think and how
-                    you think.
+                    native ai memory is a partial version of that{'\u00a0'}—
+                    usually shallow, locked inside one product, and scattered
+                    across the tools you use. The optimal structure is your ai
+                    continually reading and writing a living map of what you
+                    think and how you think.
                   </p>
                   <p className="pitch-simple-prose">
                     The map is deeper, sovereign, and unified. Deeper, so talking
-                    stops feeling like talking to a stranger — your ai helps you
-                    far better, and develops your thinking instead of only
-                    answering. Sovereign, so it lives in private files on your
-                    computer that you own: take it with you, or delete it, and no
-                    company holds you. Unified, so every ai you choose reads the
-                    same you, instead of a different you in each app.
+                    stops feeling like talking to a stranger{'\u00a0'}— your ai
+                    helps you far better, and develops your thinking instead of
+                    only answering. Sovereign, so it lives in private files on
+                    your computer that you own: take it with you, or delete it,
+                    and no company holds you. Unified, so every ai you choose
+                    reads the same you, instead of a different you in each app.
                   </p>
                   <p className="pitch-simple-prose">
                     We call that an alexandria loop. You get the founder&apos;s
                     complete instructions free. Show them to your ai, and it
                     merges whatever system you already have into a full loop in
-                    one go. Joining the others who run one — the community — is
+                    one go. Joining the others who run one{' '}
+                    <span className="pitch-nowrap">— the community —</span> is
                     optional, whenever you want.
                   </p>
                 </div>
 
                 <div className="pitch-rule" aria-hidden />
                 <p className="pitch-close">
-                  Press the button — show your ai the instructions and decide
-                  together.
+                  Press the button{'\u00a0'}— show your ai the instructions and
+                  decide together.
                 </p>
 
                 <div className="cta-pair">
