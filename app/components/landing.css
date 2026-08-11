@@ -2225,6 +2225,13 @@
           margin: 0 -32px var(--lower-block-bottom) 0;
           transform: translateX(-283px);
         }
+        /* Each shelf pair (doors · places) shares the parent gap, so
+           demo↔support matches library↔marketplace. */
+        .quiet-pair {
+          display: inline-flex;
+          align-items: center;
+          gap: clamp(18px, 1.8vw, 26px);
+        }
         .quiet-link {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: normal;
@@ -2236,7 +2243,18 @@
           transition: color 180ms ease;
         }
         .quiet-link:hover { color: var(--theme-fg); }
-        /* Hairline between the two shelf pairs (places | doors). */
+        /* Middot in the doors gap — pull the flanking flex gaps so the
+           word-to-word spacing still matches the places pair. */
+        .quiet-sep {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 14px;
+          line-height: 1;
+          color: var(--theme-fg-faint);
+          opacity: 0.55;
+          user-select: none;
+          margin-inline: calc(-0.5 * clamp(18px, 1.8vw, 26px));
+        }
+        /* Hairline between the two shelf pairs (doors | places). */
         .quiet-div {
           width: 1px;
           height: 13px;

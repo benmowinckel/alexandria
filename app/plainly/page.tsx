@@ -8,9 +8,12 @@ import { pageMetadata } from '../lib/config';
 // paste/merge mechanics, passive+active, week-one vs months, influence
 // contestability, worries, optional connector, why-now. Whitepaper stays
 // the philosophy altitude; do not replace this with it.
-const TITLE = 'alexandria, plainly.';
+// Title: "ask anything." (1–2 words — founder 2026-08-11; matches the
+// ghost CTA door; was "alexandria, plainly." / "before the button." /
+// "plainly."). Body stays click-blocker altitude.
+const TITLE = 'ask anything.';
 const DESCRIPTION =
-  'What still sits between you and the button: how the paste works, what changes in week one, how influence stays contestable, and what stays optional.';
+  'What still sits between you and starting: how the recipe works, what changes in week one, how influence stays contestable, and what stays optional.';
 
 const PAGE_META = pageMetadata({
   path: '/plainly',
@@ -48,7 +51,7 @@ const PLAINLY_QUESTIONS = [
 export default function PlainlyPage() {
   return (
     <PublicDocReader
-      title="alexandria, plainly"
+      title="ask anything"
       mdSrc="/docs/Plainly.md"
       askQuestions={PLAINLY_QUESTIONS}
     />

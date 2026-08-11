@@ -7,15 +7,13 @@ import ChatCTA from './ChatCTA';
 
 export const metadata = pageMetadata({
   path: '/chat',
-  title: 'alexandria in every chat.',
+  title: 'start alexandria.',
   description:
-    'Paste one setup into any chat. Your AI checks it, recognizes the app, and tells you exactly what to press.',
+    'Start your Alexandria loop in any chat. Leave your email, paste one setup — your AI checks it and tells you what to press.',
 });
 
-// Door 2 of the two-door onboarding (can you run a terminal command? no → here).
-// The copied request is safe to paste into any ordinary chat: the current AI
-// reviews the embedded compact instruction before directing the human to its
-// own durable setting. The durable block still fits free instruction limits.
+// Door 2 of the two-door onboarding (agents → /start; chat → here).
+// Email → copy. No shortcut (nothing receives the pile until they have a real loop).
 function readBootstrap(): string {
   const raw = fs.readFileSync(
     path.join(process.cwd(), 'factory', 'chat', 'bootstrap.md'),
@@ -39,14 +37,8 @@ export default function ChatPage() {
       </header>
 
       <main className="primer-main">
-        <h1 className="primer-h1">Two steps.<br />Then keep chatting normally.</h1>
-
-        <p className="start-grab">
-          Your ai checks the setup first, recognizes the app, and tells you exactly what to press.
-        </p>
-
+        <h1 className="primer-h1">Start your loop</h1>
         <ChatCTA bootstrap={bootstrap} />
-
       </main>
 
       <style>{`
@@ -84,13 +76,6 @@ export default function ChatPage() {
           max-width: 540px; margin: 0 auto; padding: 3rem 32px 6rem; width: 100%;
           text-align: left;
         }
-        .primer-eyebrow {
-          margin: 0 0 18px; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-weight: 500; font-size: 11px; letter-spacing: 0.3em;
-          text-transform: lowercase; font-variant-caps: all-small-caps;
-          font-feature-settings: "smcp" 1, "kern" 1;
-          color: var(--accent); line-height: 1;
-        }
         .primer-h1 {
           margin: 0 0 26px; font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
           font-style: italic; font-weight: 500;
@@ -98,113 +83,87 @@ export default function ChatPage() {
           letter-spacing: -0.01em; color: var(--text-primary); text-wrap: balance;
           font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "calt" 1, "swsh" 1;
         }
-        .start-grab {
-          margin: -6px 0 30px; max-width: 480px;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 16px; line-height: 1.6; color: var(--text-secondary);
-          text-wrap: pretty;
-        }
-        .start-grab strong { font-weight: 600; color: var(--text-primary); }
 
         .cta-section { display: flex; flex-direction: column; align-items: flex-start; gap: 0; margin: 12px 0 0; width: 100%; }
-        .step-line {
-          margin: 0 0 12px;
+        .act-row {
+          position: relative; width: 100%; max-width: 460px; margin: 0 0 10px;
+        }
+        .act-num {
+          position: absolute; left: -24px; top: 50%; transform: translateY(-50%);
+          width: 12px; text-align: right;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 17px; letter-spacing: 0.01em;
-          color: var(--text-primary);
+          font-size: 13px; color: var(--text-muted, rgba(26, 19, 24, 0.4));
+          font-variant-numeric: lining-nums;
         }
-        .step-two { margin: 28px 0 6px; }
-        .step-num { color: var(--text-muted, rgba(26, 19, 24, 0.45)); font-variant-numeric: lining-nums; }
-        .chat-rest {
-          margin: 14px 0 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic; font-size: 14px; letter-spacing: 0.02em;
-          color: var(--text-muted, rgba(26, 19, 24, 0.55));
-        }
-        .chat-where {
-          margin: 3px 0 0; font-size: 14px; color: var(--text-muted, rgba(26, 19, 24, 0.55));
-        }
-        .chat-details {
-          margin: 13px 0 0; font-size: 13px; line-height: 1.55;
-          color: var(--text-muted, rgba(26, 19, 24, 0.55));
-        }
-        .chat-details summary { cursor: pointer; }
-        .chat-details p { margin: 8px 0 0; max-width: 450px; }
-
-        .chat-step {
-          display: grid; grid-template-columns: 24px minmax(0, 1fr);
-          align-items: center; gap: 10px; width: 100%;
-        }
-        .chat-step + .chat-step { margin-top: 14px; }
-        .chat-step-num {
-          font-size: 15px; color: var(--text-muted, rgba(26, 19, 24, 0.48));
-          font-variant-numeric: lining-nums tabular-nums;
-        }
-        .chat-step-card {
-          width: 100%; max-width: 460px; padding: 17px 20px;
-          border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
-          border-radius: 10px; color: var(--text-primary);
-          background: transparent; font-size: 17px; line-height: 1.35;
-        }
-        .chat-after {
-          margin: 28px 0 0; max-width: 460px;
-          font-size: 16px; line-height: 1.55; color: var(--text-secondary);
-        }
-        .chat-after strong { color: var(--text-primary); font-weight: 600; }
-
-
         .door-btn {
-          display: block; width: 100%; max-width: 460px; text-align: left;
+          display: block; width: 100%; text-align: left;
           background: var(--bg-secondary);
-          border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.14)); border-radius: 10px;
-          padding: 17px 20px; cursor: pointer;
+          border: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.14)); border-radius: 9px;
+          padding: 15px 18px; cursor: pointer;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 17px; letter-spacing: 0.01em; color: var(--text-primary);
-          transition: border-color 220ms, transform 120ms, background 220ms;
+          font-size: 16px; letter-spacing: 0.01em; color: var(--text-primary);
+          text-decoration: none;
+          transition: border-color 200ms, transform 120ms;
         }
         .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .door-btn:active { transform: scale(0.992); }
+        .act-box {
+          width: 100%; max-width: none; text-decoration: none; display: block;
+          font-size: 14px; white-space: nowrap;
+        }
         .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
-        .cta-btn.is-copied {
-          border-color: var(--accent); color: var(--text-primary);
-          background: var(--bg-primary);
+        .act-email { display: flex; align-items: center; gap: 0; cursor: text; }
+        .act-email input {
+          flex: none; width: 5.5em; min-width: 0; background: transparent; border: none; outline: none;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: inherit; letter-spacing: 0.01em; color: var(--text-primary);
+          padding: 0;
         }
-        .start-details {
-          margin: 36px 0 0; padding-top: 24px; width: 100%; max-width: 460px;
-          border-top: 1px solid var(--bg-tertiary, rgba(26, 19, 24, 0.10));
-          display: flex; flex-direction: column; gap: 16px;
+        .act-email input.has-val { flex: 1; }
+        .act-email .join-door-go { margin-left: auto; }
+        .act-email input::placeholder { color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
+        .act-email input[data-shake="on"] { animation: chatShake 320ms ease-in-out; }
+        .act-email-why {
+          flex: none; max-width: 28em; overflow: hidden; opacity: 1;
+          transition: opacity 180ms ease, max-width 220ms ease;
         }
-        .start-qa { margin: 0; }
-        .start-qa-q {
-          margin: 0 0 5px; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-weight: 500; font-size: 11px; letter-spacing: 0.12em;
+        .act-email.is-focused .act-email-why {
+          opacity: 0; max-width: 0; pointer-events: none;
+        }
+        .act-sent { font-size: inherit; }
+        @keyframes chatShake {
+          0%, 100% { transform: translateX(0); }
+          25%      { transform: translateX(-3px); border-bottom-color: #b3261e; }
+          75%      { transform: translateX(3px);  border-bottom-color: #b3261e; }
+        }
+        .join-door-go {
+          display: inline-flex; align-items: center; gap: 5px; flex: none;
+          align-self: center; padding: 0; background: none; border: none;
+          color: var(--text-muted); cursor: pointer; text-decoration: none;
+          transition: color 200ms, opacity 200ms;
+          animation: chatGoAppear 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        }
+        .join-door-go:hover { color: var(--text-primary); }
+        .join-door-go:disabled { cursor: default; }
+        .join-go-word {
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-weight: 500; font-size: 11px; letter-spacing: 0.1em;
           text-transform: lowercase; font-variant-caps: all-small-caps;
-          font-feature-settings: "smcp" 1, "kern" 1;
-          color: var(--text-muted, rgba(26, 19, 24, 0.5)); line-height: 1;
+          font-feature-settings: "smcp" 1, "kern" 1; line-height: 1;
         }
-        .start-qa-a {
-          margin: 0; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 13.5px; line-height: 1.6; letter-spacing: 0.01em;
-          color: var(--text-muted, rgba(26, 19, 24, 0.62));
+        .join-door-go .door-glyph { display: block; }
+        @keyframes chatGoAppear {
+          from { opacity: 0; transform: translateX(-5px); }
+          to { opacity: 1; transform: none; }
         }
-        .start-shortcut-a {
-          color: var(--text-primary);
-          text-decoration: underline; text-decoration-color: var(--text-muted, rgba(26, 19, 24, 0.4));
-          text-underline-offset: 3px; text-decoration-thickness: 1px;
-          transition: text-decoration-color 200ms;
-        }
-        .start-shortcut-a:hover { text-decoration-color: var(--text-primary); }
-
-        .primer-coda {
-          margin: 28px 0 0; text-align: left; font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 20px; font-style: italic; color: var(--text-primary);
-          letter-spacing: 0.005em; opacity: 0.72;
+        .cta-btn.is-copied {
+          border-color: var(--accent); background: var(--bg-primary);
         }
 
         @media (max-width: 640px) {
           .primer-main { padding: 2rem 24px 4rem; }
           .primer-h1 { font-size: 28px; line-height: 1.3; margin-bottom: 18px; }
-          .primer-coda { font-size: 18px; margin-top: 52px; }
-          .chat-step { grid-template-columns: 20px minmax(0, 1fr); gap: 8px; }
+          .act-box { font-size: 11.5px; letter-spacing: -0.02em; padding-left: 8px; padding-right: 8px; }
         }
       `}</style>
     </div>

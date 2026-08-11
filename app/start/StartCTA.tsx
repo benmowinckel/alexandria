@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { SERVER_URL } from '../lib/config';
+import { SERVER_URL, SHORTCUT_URL } from '../lib/config';
 import { ArrowIcon } from '../join/DoorIcons';
 
 // The paste expresses the human's intent and leaves every security decision to
@@ -23,9 +23,8 @@ Before anything changes on my computer, explain in radically simple terms:
 
 Tell me clearly whether I should continue. Then wait for me to say \`start\`.`;
 
-// One job per device: copy on a computer; send that same paste to yourself on
-// a phone. No shortcut, account, follow-up funnel, or cloud step is mixed into
-// first touch. `refCode`, not `ref` — `ref` is a reserved React prop name.
+// After the door: shortcut → email → copy (computer only). Same box grammar as
+// /join. `refCode`, not `ref` — `ref` is a reserved React prop name.
 export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'computer' | 'phone' }) {
   const [copied, setCopied] = useState(false);
   const [email, setEmail] = useState('');
@@ -87,7 +86,10 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
       const resp = await fetch(`${SERVER_URL}/onboard`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({
+          email: email.trim(),
+          ...(validRef ? { ref: validRef } : {}),
+        }),
       });
       setMailState(resp.ok ? 'sent' : 'error');
     } catch {
@@ -95,15 +97,31 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
     }
   };
 
+  const emailWhy =
+    mode === 'phone'
+      ? ' — email the setup to yourself once'
+      : ' — so this doesn’t get lost';
+
   return (
     <section className="cta-section">
       {validRef && (
         <p className="install-invite">@{validRef} invited you to alexandria.</p>
       )}
 
-      {mode === 'phone' && <div className="act-row">
-        <span className="act-num" />
-        <form className={`door-btn act-box act-email${emailFocused ? ' is-focused' : ''}`} onSubmit={sendEmail} onClick={() => emailRef.current?.focus()}>
+      <div className="act-row">
+        <span className="act-num">1</span>
+        <a className="door-btn act-box" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">
+          add the shortcut<span className="act-why"> — send it anything worth thinking about</span>
+        </a>
+      </div>
+
+      <div className="act-row">
+        <span className="act-num">2</span>
+        <form
+          className={`door-btn act-box act-email${emailFocused ? ' is-focused' : ''}`}
+          onSubmit={sendEmail}
+          onClick={() => emailRef.current?.focus()}
+        >
           {mailState === 'sent' ? (
             <span className="act-sent">sent<span className="act-why"> ✓</span></span>
           ) : (
@@ -124,22 +142,32 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
                 onBlur={() => setEmailFocused(false)}
                 onChange={(e) => { setEmail(e.target.value); if (mailState === 'error') setMailState('idle'); }}
               />
-              {!email.trim() && <span className="act-why act-email-why"> — email the setup to yourself once</span>}
+              {!email.trim() && <span className="act-why act-email-why">{emailWhy}</span>}
               {emailFocused && (
-                <button type="submit" className="join-door-go" aria-label="submit email" disabled={mailState === 'sending'} onMouseDown={(e) => e.preventDefault()}>
-                  <span className="join-go-word">enter</span>
+                <button
+                  type="submit"
+                  className="join-door-go"
+                  aria-label={mailState === 'error' ? 'retry' : 'submit email'}
+                  disabled={mailState === 'sending'}
+                  onMouseDown={(e) => e.preventDefault()}
+                >
                   <ArrowIcon />
                 </button>
               )}
             </>
           )}
         </form>
-      </div>}
+      </div>
 
       {mode === 'computer' && (
         <div className="act-row">
-          <span className="act-num" />
-          <button type="button" className={`door-btn act-box cta-btn${copied ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
+          <span className="act-num">3</span>
+          <button
+            type="button"
+            className={`door-btn act-box cta-btn${copied ? ' is-copied' : ''}`}
+            onClick={copy}
+            aria-label="copy the setup"
+          >
             {copied
               ? 'copied — paste it into your agent’s chat or terminal'
               : (<>copy the setup<span className="act-why"> — paste it into your agent’s chat or terminal</span></>)}
@@ -147,9 +175,6 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
         </div>
       )}
 
-      {mode !== 'computer' && (
-        <p className="primer-trust">We send this setup message once. No reminders, account, or iCloud connection.</p>
-      )}
       {validRef && (
         <p className="install-new">
           <Link href="/">new here? see what this is &rarr;</Link>

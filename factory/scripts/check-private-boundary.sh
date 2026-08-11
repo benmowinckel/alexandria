@@ -58,8 +58,24 @@ forbid app/start/StartCTA.tsx \
   'SHA256:|ALEXANDRIA_SOURCE_COMMIT|ssh_signing_keys|factory/setup\.sh' \
   'the live paste contains vendor-authored verification choreography'
 forbid app/start/StartCTA.tsx \
-  'SHORTCUT_URL|add the iCloud shortcut|get help as you go' \
+  'add the iCloud shortcut|get help as you go' \
   'first touch still bundles a cloud step or follow-up funnel'
+# The live paste itself must stay free of shortcut/cloud bundling. SHORTCUT_URL
+# may appear in the page UI (stepped boxes) but never inside installCmd.
+node <<'NODE'
+const fs = require('fs');
+const app = fs.readFileSync('app/start/StartCTA.tsx', 'utf8');
+const appMatch = app.match(/const installCmd = \(\) => `([\s\S]*?)`;/);
+if (!appMatch) {
+  console.error('private-boundary check failed: could not find installCmd paste');
+  process.exit(1);
+}
+if (/SHORTCUT_URL|add the iCloud shortcut|get help as you go/i.test(appMatch[1])) {
+  console.error('private-boundary check failed: live paste still bundles a cloud step or follow-up funnel');
+  process.exit(1);
+}
+NODE
+
 
 # The phone email is the same safe human request, not a second hidden prompt.
 require server/src/install-prompt.ts \

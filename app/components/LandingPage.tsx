@@ -408,7 +408,7 @@ export default function LandingPage() {
       kind: 'feature',
       name: 'ownership.',
       lead: 'Switching ai shouldn’t mean starting over.',
-      sub: 'What they know about you lives in a folder you own — move it to the next great ai in a minute, or delete it outright. No one holds you.',
+      sub: 'What they know about you lives in a folder you own — move it to the next great ai in a minute, or delete it outright. No company locks you in.',
     },
     {
       kind: 'feature',
@@ -1082,26 +1082,28 @@ export default function LandingPage() {
                     The better your ai knows you, the better it helps you. Every
                     native ai memory is a partial version of that{'\u00a0'}—
                     usually shallow, locked inside one product, and scattered
-                    across the tools you use. The optimal structure is your ai
-                    continually reading and writing a living map of what you
-                    think and how you think.
+                    across the tools you use, so no single ai ever sees the
+                    whole. The optimal structure is your ai continually reading
+                    and writing a living map of what you think and how you
+                    think, updating it as it learns.
                   </p>
                   <p className="pitch-simple-prose">
                     The map is deeper, sovereign, and unified. Deeper, so talking
                     stops feeling like talking to a stranger{'\u00a0'}— your ai
                     helps you far better, and develops your thinking instead of
-                    only answering. Sovereign, so it lives in private files on
-                    your computer that you own: take it with you, or delete it,
-                    and no company holds you. Unified, so every ai you choose
-                    reads the same you, instead of a different you in each app.
+                    only answering. Sovereign, so it lives in private files you
+                    own: take it with you, or delete it{'\u00a0'}— no company
+                    locks you in. Unified, so every ai reads the same you, not a
+                    different you in each app.
                   </p>
                   <p className="pitch-simple-prose">
-                    We call that an alexandria loop. You get the founder&apos;s
-                    complete instructions free. Show them to your ai, and it
-                    merges whatever system you already have into a full loop in
-                    one go. Joining the others who run one{' '}
-                    <span className="pitch-nowrap">— the community —</span> is
-                    optional, whenever you want.
+                    We call that an alexandria loop{'\u00a0'}— an idea, not
+                    software: a method of working with your own ai. The founder
+                    made his free and open. The button is a recipe you hand to
+                    it{'\u00a0'}— what the loop is, why it matters, how to make
+                    yours, and his as the reference{'\u00a0'}— so you close the
+                    loop yourself, however close you already are. Joining the
+                    community is optional.
                   </p>
                 </div>
 
@@ -1145,14 +1147,19 @@ export default function LandingPage() {
                   on desktop (click any feature frame → /features);
                   /features stays live for direct links. */}
               <p className="quiet-links">
-                {/* Doors above places (founder, 2026-08-11) — on mobile the
-                    divider is a line break, so demo/support sit on the first
-                    row and library/marketplace on the second. */}
-                <DemoFilm className="quiet-link quiet-door"><em>watch the demo</em></DemoFilm>
-                <Link href="/follow" className="quiet-link quiet-door"><em>show your support</em></Link>
+                {/* Paired shelves — same within-pair gap for doors and
+                    places; middot sits in the doors gap without widening
+                    it (founder, 2026-08-11). */}
+                <span className="quiet-pair">
+                  <DemoFilm className="quiet-link quiet-door"><em>watch the demo</em></DemoFilm>
+                  <span className="quiet-sep" aria-hidden>·</span>
+                  <Link href="/follow" className="quiet-link quiet-door"><em>show your support</em></Link>
+                </span>
                 <span className="quiet-div" aria-hidden />
-                <Link href="/library" className="quiet-link">library<span className="shelf-dot">.</span></Link>
-                <Link href="/marketplace" className="quiet-link">marketplace<span className="shelf-dot">.</span></Link>
+                <span className="quiet-pair">
+                  <Link href="/library" className="quiet-link">library<span className="shelf-dot">.</span></Link>
+                  <Link href="/marketplace" className="quiet-link">marketplace<span className="shelf-dot">.</span></Link>
+                </span>
               </p>
           </div>
 
