@@ -1,13 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { checkReferral } from '../lib/referral';
 import StartCTA from './StartCTA';
 
 // First select the truthful contract. The agent path then asks whether the
 // computer is nearby because that changes whether setup happens now or by email.
 export default function StartDoor({ refCode }: { refCode?: string }) {
   const [screen, setScreen] = useState<'choice' | 'nearby' | 'computer' | 'phone'>('choice');
+
+  // The first screen must own referral continuity. Waiting until someone picks
+  // a branch means a fast invitation click reaches /start with the ref intact,
+  // but never saves it for the later /join visit.
+  useEffect(() => {
+    if (!refCode) return;
+    let live = true;
+    checkReferral(refCode).then((valid) => {
+      if (!live || !valid) return;
+      try { window.localStorage.setItem('alexandria-referrer', refCode); } catch { /* storage is optional */ }
+    });
+    return () => { live = false; };
+  }, [refCode]);
 
   if (screen === 'computer' || screen === 'phone') {
     return <StartCTA refCode={refCode} mode={screen} />;

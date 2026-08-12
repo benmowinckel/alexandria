@@ -33,6 +33,11 @@ export default function InviteClient({ refCode }: { refCode?: string }) {
   // stored or credited.
   const startHref = refCode ? `/start?ref=${refCode}` : '/start';
 
+  const rememberCandidate = () => {
+    if (!refCode) return;
+    try { window.localStorage.setItem('alexandria-referrer', refCode); } catch { /* storage is optional */ }
+  };
+
   return (
     <>
       <header className="primer-header">
@@ -50,7 +55,7 @@ export default function InviteClient({ refCode }: { refCode?: string }) {
           )}
         </h1>
 
-        <Link className="invite-start" href={startHref}>
+        <Link className="invite-start" href={startHref} onClick={rememberCandidate}>
           start your loop<span> &mdash; trust their judgment</span>
         </Link>
       </main>
