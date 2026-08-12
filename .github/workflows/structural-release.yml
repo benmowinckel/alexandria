@@ -125,7 +125,7 @@ jobs:
 
       - name: Server type check
         working-directory: candidate/server
-        run: npm ci && npx tsc --noEmit
+        run: npm ci && npx tsc --noEmit && npx tsx test/onboarding-email.ts
 
       - name: Codex integration test
         working-directory: candidate

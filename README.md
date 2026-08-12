@@ -6,7 +6,7 @@ Alexandria is a free, local tool: your thinking in plain files on your machine, 
 
 ## Try it
 
-Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, add the Shortcut, enter your email, and paste the matching setup message into the AI you already use.
+Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, add the Shortcut, optionally add your email, and paste the matching setup message into the AI you already use.
 
 The message makes your agent independently prove the GitHub release is ours, read the code, and run one exact signed commit. The website never gives you executable bytes.
 

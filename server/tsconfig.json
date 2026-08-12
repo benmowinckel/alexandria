@@ -5,12 +5,12 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "..",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "declaration": true,
     "types": ["@cloudflare/workers-types", "node"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "../shared/**/*"]
 }

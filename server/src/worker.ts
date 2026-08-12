@@ -17,7 +17,7 @@ import { registerLibraryRoutes } from './library.js';
 import { getAnalytics, getEventLog, getDashboard, getUserEvents, logEvent, flushEvents } from './analytics.js';
 import { setKV, getKV } from './kv.js';
 import { getDB } from './db.js';
-import { sendFollowerWelcome, sendOnboardCommand } from './email.js';
+import { sendFollowerWelcome, sendOnboardCommand, type OnboardingMode } from './email.js';
 import { generateToken } from './crypto.js';
 import { getAllowedOrigins } from './cors.js';
 import { formatPT } from './time.js';
@@ -670,7 +670,11 @@ app.post('/onboard', async (c) => {
     const db = (globalThis as any).__d1 as D1Database;
     if (!db) return c.json({ error: 'Database not available.' }, 503);
     const newToken = generateToken();
-    const mode = body?.mode === 'chat' ? 'chat' : 'agent';
+    const mode: OnboardingMode = body?.mode === 'chat'
+      ? 'chat'
+      : body?.mode === 'agent-phone'
+        ? 'agent-phone'
+        : 'agent-computer';
     const source = `start:${mode}${ref ? `:ref:${ref}` : ''}`;
     const saved = await db.prepare(
       `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)

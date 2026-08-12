@@ -6,10 +6,10 @@ One new person can choose the AI category they already understand, receive the s
 
 ## Product shape
 
-The website first asks one plain question: agent or chat. Both branches then ask for three actions, in order:
+The website first asks one plain question: agent or chat. The agent branch then asks whether the computer is nearby. Every resulting path offers three actions, in order:
 
 1. Add the Shortcut so a capture route exists before explanation. The button stays platform-neutral; the chosen AI explains any Apple-only limit and gives Android the best real alternative.
-2. Give an email address for setup help and occasional useful Alexandria communication. This is required, stored with an unsubscribe token, and disclosed plainly. It is not described as one-time or optional.
+2. Optionally give an email address for a setup copy and occasional useful Alexandria communication. When provided, it is stored with an unsubscribe token and disclosed plainly. Skipping it never blocks setup.
 3. Copy the branch-specific non-executable setup and paste it into the chosen AI.
 
 Inside the agent branch, the recipient AI determines the execution level from its live capabilities:
@@ -26,9 +26,9 @@ The human never chooses among the technical agent modes. Their agent reports the
 The same copied intent asks the mobile AI to use the strongest live route now:
 
 - If it can reach the person's computer through an existing remote or dispatch connection, continue the local setup there.
-- Otherwise establish the chat loop now, preserve the computer handoff in the current thread and email, and set a reminder when the host genuinely supports reminders.
-- On iPhone, coach the Alexandria Shortcut as the default capture gesture. Installing it may precede linking; saved items wait in the person's own iCloud folder.
-- On Android or any surface without Apple Shortcuts, use the strongest existing writable capture home: the connected local folder, writable Drive/project files, or confirmed native memory. Never imply the Apple Shortcut works there.
+- Otherwise do not substitute a chat loop. Give the exact computer continuation and set a reminder only when the host genuinely supports reminders.
+- Coach the Alexandria Shortcut as the default capture gesture when it is available. Installing it may precede linking; saved items wait in the person's own folder.
+- On a surface without the Shortcut, use the strongest existing private writable capture home. Never imply the Shortcut works there.
 - Later, a local loop may connect the existing capture pile only after one specific approval. Declining records the decision and stops repeated prompts.
 
 ## Email relationship
@@ -42,7 +42,7 @@ The same copied intent asks the mobile AI to use the strongest live route now:
 - never claim the address is discarded after one send;
 - update the privacy surface and every relevant email/footer to match reality.
 
-The page does not unlock the handoff action until the address is accepted. If delivery fails after storage succeeds, the user can still copy the setup and the UI says exactly which half failed.
+The page never gates the handoff action on email. If delivery fails after storage succeeds, copying still works and the UI says exactly which half failed.
 
 ## Local zero-to-one
 
@@ -104,7 +104,7 @@ The page does not unlock the handoff action until the address is accepted. If de
 
 - The private loop continues indefinitely with no functional penalty.
 - No account key or server data connection exists.
-- The person remains contactable through the disclosed onboarding email relationship until unsubscribe.
+- If the person gave an email, they remain contactable through that disclosed relationship until unsubscribe.
 
 ## Failure and recovery matrix
 
@@ -118,7 +118,7 @@ The page does not unlock the handoff action until the address is accepted. If de
 - Native skill name occupied: preserve it and show the verified fallback.
 - Codex hooks untrusted: continue onboarding but call the passive loop incomplete until the user trusts the visible hook definitions and a real start/end marker exists.
 - Factory hooks awaiting review: `/a` is installed and onboarding can continue, but call the passive loop incomplete until the user reviews the externally added definitions in `/hooks` and a real start/end cycle succeeds.
-- Phone has no remote desktop, reminder tool, writable Drive, or durable memory: keep the setup in the thread and email; say that capture is not persistent yet.
+- Phone has no remote desktop or reminder tool: give the exact computer continuation now; the email carries it too only when the person chose to provide one.
 - User installs Shortcut before local connection: captures wait safely in their iCloud folder and connect later with one approval.
 - User joins before installing: welcome carries the same safe intent with the account connection included.
 - User installs before joining: connect rerun is idempotent and preserves the existing Author files.

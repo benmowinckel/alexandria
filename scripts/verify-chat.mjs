@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { computerInstallPrompt, mobileHandoffPrompt } from '../shared/onboarding-prompts.ts';
 
 const base = process.argv[2] || 'http://localhost:3000';
 const mobile = process.argv[3] === 'mobile';
@@ -47,7 +48,12 @@ const chatEmailShape = await email.evaluate((element) => {
 });
 const overlay = await page.locator('[data-nextjs-dialog], .vite-error-overlay, #webpack-dev-server-client-overlay').count();
 await button.click();
-const copyRequiresEmail = await page.locator('input[aria-invalid="true"]').count() === 1;
+await page.waitForFunction(() =>
+  Array.from(document.querySelectorAll('button')).some((element) =>
+    element.textContent?.includes('copied — paste into your chat'),
+  ),
+);
+const chatCopiedWithoutEmail = (await button.innerText()).includes('copied — paste into your chat');
 await page.getByLabel('your email').fill('reader@example.com');
 await page.getByLabel('save email').click();
 await page.getByText('email saved', { exact: false }).waitFor();
@@ -76,6 +82,7 @@ const startHasUniversalChatDoor =
   (await chatDoor.getAttribute('href')) === '/chat' &&
   (await chatDoor.innerText()).toLowerCase().includes('claude, chatgpt, gemini');
 await page.getByRole('button', { name: /^agents/i }).click();
+await page.getByRole('button', { name: /^yes/i }).click();
 await page.waitForSelector('.act-email');
 const startEmailShape = await page.locator('.act-email').evaluate((element) => {
   const style = getComputedStyle(element);
@@ -88,15 +95,26 @@ const startEmailShape = await page.locator('.act-email').evaluate((element) => {
     minHeight: style.minHeight,
   };
 });
+const computerButton = page.getByRole('button', { name: 'copy the setup' });
+await computerButton.click();
+const computerClipboard = await page.evaluate(() => navigator.clipboard.readText());
+
+await page.goto(`${base}/start`, { waitUntil: 'networkidle' });
+await page.getByRole('button', { name: /^agents/i }).click();
+await page.getByRole('button', { name: /^no/i }).click();
+const phoneBody = (await page.locator('body').innerText()).trim();
+const phoneButton = page.getByRole('button', { name: 'copy for your phone' });
+await phoneButton.click();
+const phoneClipboard = await page.evaluate(() => navigator.clipboard.readText());
 const result = {
   url: chatUrl,
   mobile,
   title: chatTitle,
   bodyHasContent: body.length > 100,
-  hasShortcutStep: body.includes('add the shortcut') && body.includes('save thoughts as they happen'),
-  hasEmailStep: html.includes('act-email') && html.includes('your email') && body.includes('setup help and occasional useful notes'),
+  hasShortcutStep: body.includes('add the shortcut') && body.includes('capture thoughts wherever you are'),
+  hasEmailStep: html.includes('act-email') && html.includes('your email') && body.includes('we’ll send your setup, then occasional useful notes'),
   hasCopyStep: body.includes('copy the setup') && body.includes('paste into your chat'),
-  copyRequiresEmail,
+  chatCopiedWithoutEmail,
   buttonCopiedState: clickedText.includes('copied'),
   clipboardExact: clipboard === expected,
   clipboardHasAdditiveGuard: clipboard.includes('Preserve existing instructions, memories, and connections'),
@@ -104,6 +122,11 @@ const result = {
   clipboardHasTwoActions: clipboard.includes('two short actions'),
   clipboardHasStoragePlan: clipboard.includes("use connected Drive if writable; otherwise use this app's memory") && clipboard.includes('never mention setup'),
   emailFieldMatchesStart: JSON.stringify(chatEmailShape) === JSON.stringify(startEmailShape),
+  computerCopiedWithoutEmail: computerClipboard === computerInstallPrompt(),
+  phoneRouteVisible: phoneBody.includes('copy for your phone') && phoneBody.includes('paste into the AI on your phone'),
+  phoneCopiedWithoutEmail: phoneClipboard === mobileHandoffPrompt(),
+  phoneHasExactFallback: phoneClipboard.includes('At your computer, open alexandria-library.com/start and choose agents.'),
+  phoneRefusesChatSubstitute: phoneClipboard.includes('do not replace it with a chat-only version'),
   startCopyIsLowercase:
     startBody.includes('start your loop') &&
     startBody.includes('what do you use?') &&
@@ -124,7 +147,7 @@ if (
   !result.hasShortcutStep ||
   !result.hasEmailStep ||
   !result.hasCopyStep ||
-  !result.copyRequiresEmail ||
+  !result.chatCopiedWithoutEmail ||
   !result.buttonCopiedState ||
   !result.clipboardExact ||
   !result.clipboardHasAdditiveGuard ||
@@ -132,6 +155,11 @@ if (
   !result.clipboardHasTwoActions ||
   !result.clipboardHasStoragePlan ||
   !result.emailFieldMatchesStart ||
+  !result.computerCopiedWithoutEmail ||
+  !result.phoneRouteVisible ||
+  !result.phoneCopiedWithoutEmail ||
+  !result.phoneHasExactFallback ||
+  !result.phoneRefusesChatSubstitute ||
   !result.startCopyIsLowercase ||
   !result.startHasUniversalChatDoor ||
   result.errorOverlay ||

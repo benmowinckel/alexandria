@@ -254,23 +254,42 @@ export async function sendWeekOneCheckIn(
 // The email is both a recovery copy of the handoff and the durable human
 // relationship. Private files and install state remain outside the server.
 
-function onboardCmd(mode: 'agent' | 'chat'): string {
+export type OnboardingMode = 'agent-computer' | 'agent-phone' | 'chat';
+
+function onboardCmd(mode: OnboardingMode): string {
   return mode === 'chat' ? chatInstallPrompt() : installPrompt();
+}
+
+export function onboardEmailContent(mode: OnboardingMode, emailToken: string): { subject: string; html: string } {
+  const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${emailToken}`;
+  const copy = mode === 'chat'
+    ? {
+        subject: 'alexandria. — your chat setup',
+        lead: 'paste this into a new chat in the app you already use:',
+      }
+    : mode === 'agent-phone'
+      ? {
+          subject: 'alexandria. — continue at your computer',
+          lead: 'when you are at your computer, open the agent you use there and paste this:',
+        }
+      : {
+          subject: 'alexandria. — your computer setup',
+          lead: 'here is the setup for the agent on your computer. if you already pasted it, keep this as your backup:',
+        };
+  const html = emailShell(`<p style="margin: 0 0 1.2rem;">${copy.lead}</p>
+  ${emailCmd(onboardCmd(mode))}
+  <p style="margin: 1.6rem 0 0;">reply if you get stuck. we&rsquo;ll also send occasional notes that are useful for your loop.</p>`, unsubscribeUrl);
+  return { subject: copy.subject, html };
 }
 
 export async function sendOnboardCommand(
   email: string,
   emailToken: string,
-  mode: 'agent' | 'chat' = 'agent',
+  mode: OnboardingMode = 'agent-computer',
 ): Promise<{ ok: boolean; error?: string }> {
   const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${emailToken}`;
-  const lead = mode === 'chat'
-    ? 'paste this into the chat you already use:'
-    : 'when you are at your computer, paste this into your local agent:';
-  const html = emailShell(`<p style="margin: 0 0 1.2rem;">${lead}</p>
-  ${emailCmd(onboardCmd(mode))}
-  <p style="margin: 1.6rem 0 0;">reply if setup gets stuck. we&rsquo;ll also send occasional notes that are useful to someone building their loop.</p>`, unsubscribeUrl);
-  return await sendEmail(email, 'alexandria. — start your loop', html, { unsubscribeUrl });
+  const content = onboardEmailContent(mode, emailToken);
+  return await sendEmail(email, content.subject, content.html, { unsubscribeUrl });
 }
 
 // sendMorningBrief / sendMorningNudge removed: morning brief + nudge are now

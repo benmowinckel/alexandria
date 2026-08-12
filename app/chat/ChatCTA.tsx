@@ -36,12 +36,6 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
   }
 
   async function copy() {
-    if (mailState !== 'sent' && mailState !== 'saved') {
-      setShakeKey((key) => key + 1);
-      setMailState('invalid');
-      emailRef.current?.focus();
-      return;
-    }
     let copied = false;
     try {
       await navigator.clipboard.writeText(bootstrap);
@@ -65,7 +59,7 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
       <div className="act-row">
         <span className="act-num">1</span>
         <a className="door-btn act-box" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">
-          add the shortcut<span className="act-why"> — save thoughts as they happen</span>
+          add the shortcut<span className="act-why"> — capture thoughts wherever you are</span>
         </a>
       </div>
 
@@ -96,7 +90,7 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
                 onBlur={() => setEmailFocused(false)}
                 onChange={(event) => { setEmail(event.target.value); if (mailState === 'invalid' || mailState === 'error') setMailState('idle'); }}
               />
-              {!email.trim() && mailState !== 'invalid' && <span className="act-why act-email-why"> — setup help and occasional useful notes</span>}
+              {!email.trim() && mailState !== 'invalid' && <span className="act-why act-email-why"> — we’ll send your setup, then occasional useful notes</span>}
               {mailState === 'invalid' && <span className="act-why act-email-error">enter a real email</span>}
               {mailState === 'error' && <span className="act-why act-email-error">couldn’t save — try again</span>}
               {emailFocused && (

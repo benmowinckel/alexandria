@@ -9,11 +9,11 @@ export const metadata = pageMetadata({
   path: '/chat',
   title: 'start alexandria.',
   description:
-    'Start your Alexandria loop in any chat. Leave your email, paste one setup — your AI checks it and tells you what to press.',
+    'Start your Alexandria loop in any chat. Add your email if you want a copy, then paste one setup.',
 });
 
 // Door 2 of the two-door onboarding (agents → /start; chat → here).
-// Shortcut → required email → chat setup. The chat setup starts now and leaves
+// Shortcut → optional email → chat setup. The chat setup starts now and leaves
 // a closed handoff to the full local computer loop rather than replacing it.
 function readBootstrap(): string {
   const raw = fs.readFileSync(

@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - 'server/src/**'
+      - 'server/test/onboarding-email.ts'
+      - 'shared/**'
       - 'app/**'
       - 'factory/**'
       - 'scripts/test-codex-integration.sh'
@@ -44,7 +46,7 @@ jobs:
           fi
 
       - name: Server type check
-        run: cd server && npm ci && npx tsc --noEmit
+        run: cd server && npm ci && npx tsc --noEmit && npx tsx test/onboarding-email.ts
 
       - name: Codex integration test
         run: bash scripts/test-codex-integration.sh
