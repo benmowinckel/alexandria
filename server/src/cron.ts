@@ -351,9 +351,9 @@ export async function runHealthDigest(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Week-1 check-in — delayed welcome to active users at signup_at + 7d.
-// One-shot per user (idempotent via week_one_email_sent_at). Surfaces the
-// patron slider as the upside-capture path.
+// Week-1 check-in — delayed welcome to installed members at signup_at + 7d.
+// One-shot per user (idempotent via week_one_email_sent_at). Asks what's
+// working. Does not mention join, pricing, or the slider.
 // ---------------------------------------------------------------------------
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;

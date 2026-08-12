@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { onboardEmailContent } from '../src/email.js';
+import { onboardEmailContent, preBillWarningContent, setupFixNudgeContent } from '../src/email.js';
 import { mobileHandoffPrompt } from '../src/install-prompt.js';
 
 const computer = onboardEmailContent('agent-computer', 'TOKEN');
@@ -14,11 +14,13 @@ assert.match(phone.html, /I am at my computer/);
 
 const chat = onboardEmailContent('chat', 'TOKEN');
 assert.equal(chat.subject, 'alexandria. — your chat setup');
-assert.match(chat.html, /paste this into a chat. to keep it across chats, add it here:/);
+assert.match(chat.html, /paste this into a chat, then type a\./);
 assert.match(chat.html, /Settings → Personalization → Custom instructions/);
 assert.match(chat.html, /Settings → Personal context → Your instructions for Gemini/);
 assert.match(chat.html, /Settings → General → Instructions for Claude/);
-assert.match(chat.html, /then type a in a new chat/);
+assert.match(chat.html, /those settings make it last across chats\./);
+assert.doesNotMatch(chat.html, /add it here/);
+assert.doesNotMatch(chat.html, /then type a in a new chat/);
 assert.doesNotMatch(chat.html, /paste this into a new chat in the app you already use/);
 assert.match(chat.html, /I want a private thinking habit/);
 
@@ -32,6 +34,49 @@ assert.match(mobile, /Alexandria Shortcut/);
 for (const content of [computer, phone, chat]) {
   assert.match(content.html, /stop these emails/);
   assert.match(content.html, /reply if you get stuck/);
+  assert.doesNotMatch(content.html, /we&rsquo;ll also send/);
+  assert.doesNotMatch(content.html, /useful for your loop/);
 }
+
+const preBill = preBillWarningContent({
+  githubLogin: 'benmowinckel',
+  kinCompliant: 2,
+  kinNeeded: 1,
+  amountDollars: 30,
+  dueAt: new Date(2026, 7, 20),
+  emailToken: 'TOKEN',
+});
+assert.equal(preBill.subject, 'alexandria. — heads up');
+assert.match(preBill.html, /you&rsquo;re nearly there/);
+assert.match(preBill.html, /2 active friends, just 1 more and it&rsquo;s free/);
+assert.match(preBill.html, /send your link to one more friend/);
+assert.match(preBill.html, /alexandria-library\.com\/invite\?ref=benmowinckel/);
+assert.match(preBill.html, /\$30 on august 20 otherwise/);
+assert.match(preBill.html, /just reply and i&rsquo;ll waive it/);
+assert.match(preBill.html, /Benjamin a\. Mowinckel/);
+assert.match(preBill.html, /stop these emails/);
+assert.doesNotMatch(preBill.html, /the examined life/);
+assert.doesNotMatch(preBill.html, /\/join\?ref=/);
+assert.doesNotMatch(preBill.html, /active kin/);
+
+const short = preBillWarningContent({
+  githubLogin: 'benmowinckel',
+  kinCompliant: 0,
+  kinNeeded: 3,
+  amountDollars: 10,
+  dueAt: null,
+});
+assert.match(short.html, /0 active friends, 3 more and it&rsquo;s free/);
+assert.match(short.html, /send your link to a few friends/);
+assert.match(short.html, /\$10 otherwise/);
+assert.doesNotMatch(short.html, /you&rsquo;re nearly there/);
+assert.doesNotMatch(short.html, /stop these emails/);
+
+const nudge = setupFixNudgeContent('TOKEN');
+assert.equal(nudge.subject, 'alexandria. — quick fix');
+assert.match(nudge.html, /i fixed a setup issue/);
+assert.match(nudge.html, /alexandria-library\.com\/join/);
+assert.match(nudge.html, /Benjamin a\. Mowinckel/);
+assert.doesNotMatch(nudge.html, /we fixed a setup issue/);
 
 console.log('onboarding email and mobile handoff: ok');

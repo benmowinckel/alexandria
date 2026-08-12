@@ -11,7 +11,7 @@ import { loadAccounts, loadAccount, saveAccount, setAuthIndex, deleteAccount, ge
 import { hashApiKey, generateToken } from './crypto.js';
 import { Account, AccountStore, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
 import { assignAuthorNumber, generateApiKey, getAccounts, getAccountByLogin, requireAdmin, updateAccountBilling } from './accounts.js';
-import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL } from './email.js';
+import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL, setupFixNudgeContent } from './email.js';
 import { runHealthDigest, runWeekOneCheckIns } from './cron.js';
 import { publishFeedback } from './marketplace.js';
 import { handleGithubPushWebhook } from './marketplace-catalog.js';
@@ -658,9 +658,8 @@ export function registerRoutes(app: Hono) {
         logEvent('library_signup_referral_dropped_returning', { attempted_ref: ref, source: refSource || 'direct', referred: user.login });
       }
 
-      // Welcome email — carries the deal ($30/month — a dollar a day, first month free, or free
-      // with 3 active kin) and the user's invite link so they have a portable
-      // reference.
+      // Welcome email — the connect command for a new account, so a user who
+      // abandons Stripe after OAuth still has their key.
       if (email && isNewAccount) {
         // Pass the freshly-minted apiKey so the welcome email carries the
         // connect command — a user who abandons Stripe after OAuth still has
@@ -1279,15 +1278,10 @@ export function registerRoutes(app: Hono) {
       !acct.installed_at && acct.email && !acct.engagement_opt_out && acct.github_login !== auth.account.github_login
     );
 
-    const html = (acct: Account) =>
-      '<div style="font-family: \'EB Garamond\', Georgia, serif; max-width: 420px; margin: 0 auto; padding: 40px 20px; color: #3d3630; text-align: center;">' +
-      '<p style="font-size: 1rem; line-height: 1.9; color: #8a8078; margin: 0 0 1.5rem;">we fixed a setup issue. <a href="' + getWebsiteUrl() + '/join" style="color: #3d3630;">sign in</a> to get your updated setup command.</p>' +
-      '<p style="font-size: 0.72rem; color: #bbb4aa; margin-top: 1.5rem;"><a href="' + getServerUrl() + '/email/stop?t=' + acct.email_token + '" style="color: #8a8078;">stop these emails</a></p>' +
-      '</div>';
-
-    const { sent, failed } = await sendEmailsBatched(recipients, acct =>
-      sendEmail(acct.email, 'alexandria. — quick fix', html(acct))
-    );
+    const { sent, failed } = await sendEmailsBatched(recipients, acct => {
+      const content = setupFixNudgeContent(acct.email_token);
+      return sendEmail(acct.email, content.subject, content.html, { unsubscribeUrl: content.unsubscribeUrl });
+    });
     return c.json({ ok: true, sent, failed, total: recipients.length });
   });
 

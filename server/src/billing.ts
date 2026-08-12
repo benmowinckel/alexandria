@@ -15,17 +15,22 @@ import { requireAuth, ACTIVE_AUTHOR_STATUSES, type Account } from './auth.js';
 import { loadAccounts, getKV } from './kv.js';
 import { assignAuthorNumber, getAccountByLogin, updateAccountBilling } from './accounts.js';
 import { getDB } from './db.js';
-import { sendEmail, sendPatronWelcome, sendKinFreeUnlocked, sendKinLapseWarning } from './email.js';
+import { sendPatronWelcome, sendKinFreeUnlocked, sendKinLapseWarning, sendPreBillWarning } from './email.js';
 import { generateToken } from './crypto.js';
 import { safeEqual, hashApiKey } from './crypto.js';
 
 // ---------------------------------------------------------------------------
-// Membership price — single source of truth for Stripe's unit_amount
-// (ensurePrice) and every dollars-derived display (pre-bill warning). A price
-// change edits this one constant; the two can't drift apart.
+// Membership price — source of truth for NEW Stripe prices (ensurePrice).
+// Existing subs keep their own price object; pre-bill copy reads that, not
+// this constant, so a grandfathered $10 member is not told $30.
 // ---------------------------------------------------------------------------
 
 const MEMBERSHIP_PRICE_CENTS = 3000; // $30/mo — 'a dollar a day' (founder experiment 2026-07-25, reversing PRICING CLOSED with eyes open; was 1000. Existing subs keep their old price object — grandfathered by Stripe's own mechanics).
+
+function subscriptionListDollars(sub: Stripe.Subscription): number {
+  const unit = sub.items?.data?.[0]?.price?.unit_amount;
+  return typeof unit === 'number' ? unit / 100 : MEMBERSHIP_PRICE_CENTS / 100;
+}
 
 // ---------------------------------------------------------------------------
 // Stripe client — lazy init (needs env to be populated)
@@ -328,6 +333,9 @@ export interface KinPricingState {
   /** Period end taken straight from the Stripe subscription this call retrieved.
    *  Ground truth — independent of whatever the KV cache happens to hold. */
   currentPeriodEnd: Date | null;
+  /** List price on this subscription, in dollars. Grandfathered $10 subs keep
+   *  their old Stripe price; never substitute MEMBERSHIP_PRICE_CENTS here. */
+  amountDollars: number;
 }
 
 export async function recalculateKinPricing(githubLogin: string): Promise<KinPricingState | null> {
@@ -374,9 +382,9 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
     await stripe.subscriptions.update(user.subscription_id, { discounts: [] });
     nowHasDiscount = false;
     logEvent('kin_pricing_paid', { github_login: user.github_login, compliant_kin: String(kinData.compliant) });
-    // Dropped below three — discount removed, $10 resumes at period end. Warn so
-    // the re-charge is never silent (same once-per-transition guarantee). The
-    // 7-day pre-bill warning is a second net if this one is missed.
+    // Dropped below three — discount removed, a dollar a day resumes at period
+    // end. Warn so the re-charge is never silent (same once-per-transition
+    // guarantee). The 7-day pre-bill warning is a second net if this one is missed.
     if (user.email) {
       try { await sendKinLapseWarning(user.email, user.github_login, currentPeriodEnd, user.email_token); }
       catch (e) { console.error('[billing] kin-lapse warning email failed:', e); }
@@ -391,6 +399,7 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
     kinNeeded: Math.max(0, KIN_THRESHOLD - kinData.compliant),
     nowHasDiscount,
     currentPeriodEnd,
+    amountDollars: subscriptionListDollars(sub),
   };
 }
 
@@ -447,7 +456,20 @@ async function maybeWarnAboutBill(
   const kv = getKV();
   if (await kv.get(idempotencyKey)) return;
 
-  await sendPreBillWarningEmail(email, githubLogin, state, amountDollars, dueAt);
+  let emailToken: string | undefined;
+  try { emailToken = (await getAccountByLogin(githubLogin))?.account.email_token; } catch { /* footer omitted */ }
+
+  const result = await sendPreBillWarning(email, githubLogin, {
+    kinCompliant: state.kinCompliant,
+    kinNeeded: state.kinNeeded,
+    amountDollars,
+    dueAt,
+    emailToken,
+  });
+  if (!result.ok) {
+    logEvent('kin_prebill_warning_failed', { reason: result.error || 'unknown' });
+    return;
+  }
   await kv.put(idempotencyKey, '1', { expirationTtl: 60 * 86400 }); // 60d, longer than any cycle
   logEvent('kin_prebill_warning_sent', { github_login: subLoginForLog(githubLogin), amount: String(amountDollars) });
 }
@@ -460,9 +482,6 @@ async function maybeWarnAboutBill(
  */
 export async function recalculateAllKinPricing(): Promise<void> {
   const sevenDaysFromNow = Date.now() + 7 * 86400 * 1000;
-  // Derived from the same constant ensurePrice() charges — no extra Stripe
-  // call per user per day, and a price change can't drift the warning copy.
-  const billDollars = MEMBERSHIP_PRICE_CENTS / 100;
 
   // Source of truth is Stripe, not the KV `subscription_id` field. An account
   // whose blob never got subscription_id (a webhook that set it missed, a
@@ -562,7 +581,7 @@ export async function recalculateAllKinPricing(): Promise<void> {
         if (state?.currentPeriodEnd) {
           const dueMs = state.currentPeriodEnd.getTime();
           if (dueMs > Date.now() && dueMs <= sevenDaysFromNow) {
-            await maybeWarnAboutBill(state, login, billDollars, state.currentPeriodEnd);
+            await maybeWarnAboutBill(state, login, state.amountDollars, state.currentPeriodEnd);
           }
         }
       } catch (err) {
@@ -1763,68 +1782,5 @@ export async function settleMonthlyTabs(): Promise<void> {
     }
   } catch (e) {
     console.error('[billing] settleMonthlyTabs error:', e);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Pre-bill warning — fired from invoice.upcoming when the user is about to be
-// charged. Lead time lets them recover the discount instead of being surprised.
-// ---------------------------------------------------------------------------
-
-async function sendPreBillWarningEmail(
-  email: string,
-  githubLogin: string,
-  state: KinPricingState,
-  amountDollars: number,
-  dueAt: Date | null,
-): Promise<void> {
-  const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
-  const SERVER_URL = process.env.SERVER_URL || 'https://api.alexandria-library.com';
-  // Every referral starts with the free loop. Referral attribution survives
-  // until the person later joins; urgency about the referrer's bill must not
-  // turn a stranger's first touch into a payment page.
-  const kinLink = `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}`;
-
-  // Unsubscribe footer — every other template carries one; this was the only
-  // send without it. KinPricingState doesn't hold email_token, so resolve it
-  // from the account (one KV read per warning; warnings fire at most once per
-  // cycle). Token missing → footer omitted, same conditional as the others.
-  // The send itself stays unconditional: this is a money-moves-soon notice
-  // (the paid-without-warning failure class), not an engagement email.
-  let emailToken: string | undefined;
-  try { emailToken = (await getAccountByLogin(githubLogin))?.account.email_token; } catch { /* footer omitted */ }
-  const stopUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : '';
-
-  // Warning fires only when not-free — i.e. the author is short of the 3
-  // member-kin needed for the discount. Author usage is no longer a condition
-  // (kin is membership-based, a3 2026-06-25), so the only message is "N more".
-  // "you're nearly there" only when one kin away — saying it at 0 reads as
-  // gaslighting; derived from kinNeeded so it tracks the threshold.
-  const nearlyThere = state.kinNeeded === 1;
-  const affirmationLine = nearlyThere
-    ? `you&rsquo;re nearly there. ${state.kinCompliant} active kin, just ${state.kinNeeded} more and it&rsquo;s free.`
-    : `${state.kinCompliant} active kin, ${state.kinNeeded} more and it&rsquo;s free.`;
-  const actionLine: string | null = 'send your link to a couple friends.';
-
-  const dateStr = dueAt
-    ? dueAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-    : null;
-  const billLine = dateStr
-    ? `$${amountDollars.toFixed(0)} on ${dateStr} otherwise.`
-    : `$${amountDollars.toFixed(0)} otherwise.`;
-
-  const html = `<div style="font-family: 'EB Garamond', Georgia, 'Times New Roman', serif; max-width: 420px; margin: 0 auto; padding: 40px 20px; color: #3d3630; text-align: center;">
-  <p style="font-size: 1.15rem; color: #3d3630; margin: 0 0 1.5rem;">${affirmationLine}</p>
-  ${actionLine ? `<p style="font-size: 1rem; color: #3d3630; margin: 0 0 1.5rem;">${actionLine}</p>` : ''}
-  <p style="font-size: 0.9rem; color: #8a8078; margin: 0 0 2rem;">${billLine}</p>
-  <p style="font-size: 0.85rem; color: #8a8078; margin: 0;"><a href="${kinLink}" style="color: #8a8078;">your kin link</a></p>
-  <p style="font-size: 0.78rem; color: #bbb4aa; margin-top: 2rem;">the examined life.</p>${stopUrl ? `
-  <p style="margin: 1.5rem 0 0; font-size: 0.72rem; color: #bbb4aa;"><a href="${stopUrl}" style="color: #8a8078;">stop these emails</a></p>` : ''}
-</div>`;
-
-  const result = await sendEmail(email, 'alexandria. — heads up', html,
-    stopUrl ? { unsubscribeUrl: stopUrl } : undefined);
-  if (!result.ok) {
-    logEvent('kin_prebill_warning_failed', { reason: result.error || 'unknown' });
   }
 }
