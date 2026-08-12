@@ -259,7 +259,7 @@ RUNTIME_HAD_CONTENT=""
 if [ -d "$RUNTIME_DIR" ] && [ -n "$(find "$RUNTIME_DIR" -mindepth 1 -print -quit 2>/dev/null)" ]; then
   RUNTIME_HAD_CONTENT=1
 fi
-mkdir -p "$ALEX_DIR/files/vault" "$ALEX_DIR/system/hooks" "$ALEX_DIR/files/constitution" "$ALEX_DIR/files/marginalia" "$ALEX_DIR/files/library/public" "$ALEX_DIR/files/library/paid" "$ALEX_DIR/files/library/invite" "$ALEX_DIR/files/library/authors" "$ALEX_DIR/files/works" "$ALEX_DIR/files/core" "$ALEX_DIR/files/vault/input" "$ALEX_DIR/files/vault/_input" "$ALEX_DIR/system/.autoloop" "$ALEX_DIR/system/permissions" "$RUNTIME_DIR/hooks" "$RUNTIME_DIR/scripts"
+mkdir -p "$ALEX_DIR/files/vault" "$ALEX_DIR/system/hooks" "$ALEX_DIR/system/scripts" "$ALEX_DIR/system/git-hooks" "$ALEX_DIR/files/constitution" "$ALEX_DIR/files/marginalia" "$ALEX_DIR/files/library/public" "$ALEX_DIR/files/library/paid" "$ALEX_DIR/files/library/invite" "$ALEX_DIR/files/library/authors" "$ALEX_DIR/files/works" "$ALEX_DIR/files/works/root-packets" "$ALEX_DIR/files/core" "$ALEX_DIR/files/vault/input" "$ALEX_DIR/files/vault/_input" "$ALEX_DIR/system/.autoloop" "$ALEX_DIR/system/permissions" "$RUNTIME_DIR/hooks" "$RUNTIME_DIR/scripts"
 # Keep the previously accepted signed manifest long enough to recognise exact
 # legacy Alexandria bytes during the ownership-ledger migration below. A loose
 # sentence inside a foreign file is never ownership proof.
@@ -406,6 +406,18 @@ fetch_factory "skills/codex-ambient.md" "$RUNTIME_DIR/codex-ambient.md" "skills/
 # they never bootstrap a replacement from the network.
 fetch_factory "scripts/verify-fetch.sh" "$RUNTIME_DIR/scripts/verify-fetch.sh" "scripts/verify-fetch.sh" yes
 chmod +x "$RUNTIME_DIR/scripts/verify-fetch.sh" 2>/dev/null
+# Root habit-pause checker — Author files, overwrite the tool, never the ledger.
+fetch_factory "scripts/root_integrity.py" "$ALEX_DIR/system/scripts/root_integrity.py" "scripts/root_integrity.py" yes
+fetch_factory "scripts/install-root-hook.sh" "$ALEX_DIR/system/scripts/install-root-hook.sh" "scripts/install-root-hook.sh" yes
+chmod +x "$ALEX_DIR/system/scripts/install-root-hook.sh" 2>/dev/null
+fetch_factory "git-hooks/pre-commit" "$ALEX_DIR/system/git-hooks/pre-commit" "git-hooks/pre-commit" yes
+chmod +x "$ALEX_DIR/system/git-hooks/pre-commit" 2>/dev/null
+fetch_factory "templates/works/root.md" "$ALEX_DIR/files/works/root.md" "works/root.md"
+fetch_factory "templates/works/provenance.md" "$ALEX_DIR/files/works/provenance.md" "works/provenance.md"
+fetch_factory "templates/works/root-packets-readme.md" "$ALEX_DIR/files/works/root-packets/README.md" "works/root-packets/README.md"
+if [ -d "$ALEX_DIR/.git" ] && [ -x "$ALEX_DIR/system/scripts/install-root-hook.sh" ]; then
+  (cd "$ALEX_DIR" && bash system/scripts/install-root-hook.sh) >/dev/null 2>&1 || true
+fi
 
 # Optional add-ons doc — the agent-readable menu (backup, iCloud mirror,
 # capture, Drive, and separately consented connections), each with

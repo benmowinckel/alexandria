@@ -32,12 +32,33 @@ export default function ActionButton({
       type="button"
       title={done ? 'done' : title}
       aria-label={done ? 'done' : (title || label)}
-      onClick={() => { onAction(); setDone(true); setTimeout(() => setDone(false), 1400); }}
+      onClick={() => {
+        try { onAction(); } finally {
+          setDone(true);
+          setTimeout(() => setDone(false), 1400);
+        }
+      }}
       style={{ ...style, color: done ? 'var(--accent)' : (style?.color ?? 'var(--text-ghost)') }}
       className={className}
     >
-      {done ? CheckIcon : icon}
+      <span className="ab-swap" aria-hidden="true">
+        <span className="ab-swap-face" data-on={!done || undefined}>{icon}</span>
+        <span className="ab-swap-face" data-on={done || undefined}>{CheckIcon}</span>
+      </span>
       {label && <span>{done ? doneLabel : label}</span>}
+      <style>{`
+        .ab-swap { display: inline-grid; place-items: center; }
+        .ab-swap-face {
+          grid-area: 1 / 1; display: inline-flex;
+          opacity: 0; transform: scale(0.82);
+          transition: opacity 220ms ease, transform 220ms ease, color 200ms ease;
+          pointer-events: none;
+        }
+        .ab-swap-face[data-on] { opacity: 1; transform: none; }
+        @media (prefers-reduced-motion: reduce) {
+          .ab-swap-face { transform: none; transition: opacity 180ms ease, color 180ms ease; }
+        }
+      `}</style>
     </button>
   );
 }

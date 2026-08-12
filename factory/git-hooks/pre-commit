@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Block unresolved conflict markers, then constitution root/provenance integrity.
+# The checker never restores files. An incomplete root landing stays pending.
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+bad=$(git diff --cached --name-only --diff-filter=ACM | while IFS= read -r f; do
+  [ -f "$f" ] && grep -lE '^(<<<<<<<|>>>>>>>)' -- "$f"
+done)
+if [ -n "$bad" ]; then
+  echo "pre-commit BLOCKED: unresolved conflict markers in:" >&2
+  echo "$bad" | sed 's/^/  - /' >&2
+  exit 1
+fi
+if [ -f "$ROOT/system/scripts/root_integrity.py" ]; then
+  python3 "$ROOT/system/scripts/root_integrity.py" pre-commit || exit 1
+fi
+exit 0

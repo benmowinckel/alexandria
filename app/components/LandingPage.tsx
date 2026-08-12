@@ -454,6 +454,12 @@ export default function LandingPage() {
   // with the first incoming frame. Reduced-motion users never rotate, so
   // they get the hand immediately (it is their only way to the frames).
   const [numeralsIn, setNumeralsIn] = useState(false);
+  // First paint mounts only the live frame. All twelve used to grid-stack
+  // in one cell; if landing.css hadn't applied yet (client back-nav), every
+  // slide's copy painted at once as a black jumble. After mount, the rest
+  // join for the dissolve.
+  const [framesReady, setFramesReady] = useState(false);
+  useEffect(() => { setFramesReady(true); }, []);
   // Mobile (<900px) gets the SQUARE scene assets (see the mobile
   // .top-slide CSS): its own poster + breeze video, matching the CSS
   // background swap. Also freezes front-slide feature rotation so the
@@ -912,9 +918,10 @@ export default function LandingPage() {
               navigation — the site's own roman-numeral hand, not
               carousel dots. Arrows returned 2026-07-24 night with the
               sliding window (no longer redundant: they steer past it). */}
-          <div className="front-frames">
-            {FRONT_FRAMES.map((f, i) =>
-              f.kind === 'brand' ? (
+          <div className="front-frames" data-ready={framesReady ? 'true' : 'false'}>
+            {FRONT_FRAMES.map((f, i) => {
+              if (!framesReady && i !== frameIdx) return null;
+              return f.kind === 'brand' ? (
                 <div
                   key={i}
                   className={`front-frame${i === frameIdx ? ' is-live' : ''}`}
@@ -950,8 +957,8 @@ export default function LandingPage() {
                   <p className="front-lead">{f.lead}</p>
                   <p className="front-frame-sub">{f.sub}</p>
                 </Link>
-              ),
-            )}
+              );
+            })}
           </div>
           <div className={`front-numerals${numeralsIn ? ' is-in' : ''}`} aria-label="Slides">
             <button

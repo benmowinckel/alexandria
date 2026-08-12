@@ -1857,6 +1857,15 @@
         .front-frames {
           display: grid;
         }
+        /* First paint of a visit (and back-nav) must not wait the enter delay,
+           or the live frame is blank while CSS catches up. Rotation keeps the
+           sequenced dissolve once the stack is ready. */
+        .front-frames[data-ready="false"] .front-frame.is-live {
+          transition: none;
+          opacity: 1;
+          visibility: visible;
+          transform: none;
+        }
         .front-frame {
           grid-area: 1 / 1;
           align-self: center;
