@@ -1,13 +1,12 @@
 import { NextRequest } from 'next/server';
 import { SERVER_URL } from '../../../../lib/config';
 import { localAuth } from '../../../../lib/dev-auth';
+import { canonicalLibraryLocation } from '../../../../../shared/library-locations';
 
 const OWNER_CONTROLS = new Set([
   'profile',
-  'file-categories',
   'file-order',
   'file-subtitles',
-  'file-questions',
 ]);
 
 export async function PUT(
@@ -24,9 +23,22 @@ export async function PUT(
   if (auth) headers.Authorization = auth;
   Object.assign(headers, localAuth(auth));
 
+  let body = await req.text();
+  if (control === 'profile') {
+    let parsed: Record<string, unknown>;
+    try { parsed = JSON.parse(body || '{}') as Record<string, unknown>; }
+    catch { return Response.json({ error: 'Invalid profile data.' }, { status: 400 }); }
+    if (typeof parsed.location === 'string') {
+      const location = canonicalLibraryLocation(parsed.location);
+      if (parsed.location.trim() && !location) return Response.json({ error: 'Choose a location from the list.' }, { status: 400 });
+      parsed.location = location || '';
+    }
+    body = JSON.stringify(parsed);
+  }
+
   const upstream = await fetch(
     `${SERVER_URL}/library/${encodeURIComponent(author)}/${control}`,
-    { method: 'PUT', headers, body: await req.text() },
+    { method: 'PUT', headers, body },
   );
   return new Response(upstream.body, {
     status: upstream.status,

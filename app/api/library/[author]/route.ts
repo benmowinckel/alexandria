@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { SERVER_URL } from '../../../lib/config';
 import { localAuth } from '../../../lib/dev-auth';
+import { canonicalLibraryLocation, libraryLocationKey } from '../../../../shared/library-locations';
 
 /**
  * Same-origin proxy for an Author's Library directory.
@@ -22,11 +23,17 @@ export async function GET(
   Object.assign(headers, localAuth(auth));
 
   const upstream = await fetch(`${SERVER_URL}/library/${encodeURIComponent(author)}`, { headers });
+  const body = await upstream.json().catch(() => null) as Record<string, unknown> | null;
+  if (body && upstream.ok && body.author && typeof body.author === 'object') {
+    const profile = body.author as Record<string, unknown>;
+    const location = canonicalLibraryLocation(typeof profile.location === 'string' ? profile.location : null);
+    profile.location = location;
+    profile.location_key = libraryLocationKey(location);
+  }
 
-  return new Response(upstream.body, {
+  return Response.json(body, {
     status: upstream.status,
     headers: {
-      'Content-Type': upstream.headers.get('content-type') || 'application/json; charset=utf-8',
       'Cache-Control': 'no-store',
       'X-Content-Type-Options': 'nosniff',
     },

@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import type { CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties, KeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import PromptBox from '../../components/PromptBox';
-import { FETCH_TIMEOUT_MS, SERVER_URL, librarySignInUrlHere } from '../../lib/config';
+import { FETCH_TIMEOUT_MS, librarySignInUrlHere } from '../../lib/config';
 import { safeUrl } from '../../lib/url';
 import { type TwinVariantSummary } from './types';
+import { LIBRARY_LOCATIONS } from '../../../shared/library-locations';
 
 interface ProtocolFile {
   name: string;
@@ -58,6 +59,27 @@ interface AuthorData {
   };
 }
 
+const CATEGORIES = ['works', 'projects', 'shadows', 'other'] as const;
+type Category = (typeof CATEGORIES)[number];
+type EditableIdentity = {
+  display_name: string;
+  location: string;
+  contact: string;
+  website: string;
+  text: string;
+  socials: Array<{ label: string; url: string }>;
+};
+
+const editFieldStyle: CSSProperties = {
+  width: '100%', boxSizing: 'border-box', border: 0, borderRadius: 0,
+  background: 'transparent', color: 'var(--text-primary)', padding: 0,
+  font: 'inherit', lineHeight: 1.45,
+};
+
+function categoryOf(file: ProtocolFile): Category {
+  return CATEGORIES.includes(file.category as Category) ? file.category as Category : 'shadows';
+}
+
 function normalizePreviewText(value: string | null | undefined): string | null {
   if (!value) return null;
   return value.replace(/\uFFFD/g, '-');
@@ -104,31 +126,6 @@ function websiteLabel(raw: string): string {
   return href.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 }
 
-const websiteUrlLineStyle: CSSProperties = {
-  display: 'block',
-  fontSize: '0.85rem',
-  marginTop: '0.4rem',
-  color: 'var(--text-muted)',
-  textDecoration: 'none',
-  wordBreak: 'break-all',
-  lineHeight: 1.45,
-};
-
-function WebsiteUrlLine({ website, style }: { website: string; style?: CSSProperties }) {
-  const href = websiteHref(website);
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{ ...websiteUrlLineStyle, ...style }}
-      className="hover:opacity-60"
-    >
-      {websiteLabel(website)}
-    </a>
-  );
-}
-
 export default function AuthorPageClient({ params }: { params: Promise<{ author: string }> }) {
   const router = useRouter();
   const [authorId, setAuthorId] = useState('');
@@ -143,6 +140,17 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   const [doorShake, setDoorShake] = useState(false);
   const [offlineNote, setOfflineNote] = useState(false);
   const [beliCopied, setBeliCopied] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveNote, setSaveNote] = useState('');
+  const [editFiles, setEditFiles] = useState<ProtocolFile[]>([]);
+  const [identity, setIdentity] = useState<EditableIdentity>({
+    display_name: '', location: '', contact: '', website: '', text: '', socials: [],
+  });
+  const [dragged, setDragged] = useState<{ name: string; category: Category } | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ name: string; after: boolean } | null>(null);
+  const pointerDrag = useRef<{ name: string; category: Category; pointerId: number; startY: number; active: boolean } | null>(null);
+  const dropTargetRef = useRef<{ name: string; after: boolean } | null>(null);
   // Rotating door placeholder — smart example questions cycle through the ghost
   // text instead of rigid hardcoded chips (founder 2026-07-19). Unhurried cadence
   // + the crossfade in PromptBox so it flows, not snaps (founder 2026-07-20).
@@ -159,19 +167,23 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       const timeout = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
       fetch(`/api/library/${encodeURIComponent(author)}`, { signal: ctrl.signal, credentials: 'include' })
         .then(r => { if (!r.ok) throw new Error('not found'); return r.json(); })
-        .then(d => { setData(d); setLoading(false); })
+        .then((d: AuthorData) => {
+          setData(d);
+          setEditFiles(d.files || []);
+          setIdentity({
+            display_name: d.author.display_name || '',
+            location: d.author.location || '',
+            contact: d.author.contact || '',
+            website: d.author.website || '',
+            text: d.author.text || '',
+            socials: d.author.socials || [],
+          });
+          setLoading(false);
+        })
         .catch(e => { setError(e.name === 'AbortError' ? 'unreachable' : e.message); setLoading(false); })
         .finally(() => clearTimeout(timeout));
     });
   }, [params]);
-
-  const openProtocolFile = async (file: ProtocolFile) => {
-    if (file.visibility === 'public') {
-      window.open(`${SERVER_URL}/library/${encodeURIComponent(authorId)}/file/${encodeURIComponent(file.name)}`, '_blank', 'noopener,noreferrer');
-      return;
-    }
-    window.location.href = `/library/${encodeURIComponent(authorId)}/open/${encodeURIComponent(file.name)}`;
-  };
 
   // The door's question rides to the chat page, which auto-fires it (?q=).
   // No standing online/offline label anymore (founder, 2026-08-02: "we dont
@@ -201,6 +213,113 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     return () => clearTimeout(t);
   }, [offlineNote]);
 
+  const editSubtitles = useMemo(
+    () => Object.fromEntries(editFiles.filter((file) => file.subtitle?.trim()).map((file) => [file.name, file.subtitle!.trim()])),
+    [editFiles],
+  );
+
+  const reorderWithinSection = (category: Category, sourceName: string, targetName: string, after = false) => {
+    if (sourceName === targetName) return;
+    setEditFiles((current) => {
+      const sectionItems = current.filter((file) => categoryOf(file) === category);
+      const source = sectionItems.find((file) => file.name === sourceName);
+      if (!source) return current;
+      const without = sectionItems.filter((file) => file.name !== sourceName);
+      const targetIndex = without.findIndex((file) => file.name === targetName);
+      if (targetIndex < 0) return current;
+      without.splice(targetIndex + (after ? 1 : 0), 0, source);
+      let cursor = 0;
+      return current.map((file) => categoryOf(file) === category ? without[cursor++] : file);
+    });
+  };
+
+  const nudgeWithinSection = (event: KeyboardEvent<HTMLElement>, category: Category, name: string) => {
+    if (!event.altKey || !['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+    event.preventDefault();
+    const sectionItems = editFiles.filter((file) => categoryOf(file) === category);
+    const index = sectionItems.findIndex((file) => file.name === name);
+    const target = sectionItems[index + (event.key === 'ArrowUp' ? -1 : 1)];
+    if (target) reorderWithinSection(category, name, target.name, event.key === 'ArrowDown');
+  };
+
+  const setActiveDrop = (value: { name: string; after: boolean } | null) => {
+    dropTargetRef.current = value;
+    setDropTarget(value);
+  };
+
+  const startPointerDrag = (event: ReactPointerEvent<HTMLElement>, category: Category, name: string) => {
+    if (event.button !== 0) return;
+    pointerDrag.current = { name, category, pointerId: event.pointerId, startY: event.clientY, active: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const trackPointerDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    const drag = pointerDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (!drag.active && Math.abs(event.clientY - drag.startY) < 5) return;
+    if (!drag.active) {
+      drag.active = true;
+      setDragged({ name: drag.name, category: drag.category });
+    }
+    event.preventDefault();
+    const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-profile-piece]');
+    if (!target || target.dataset.category !== drag.category || target.dataset.name === drag.name) {
+      setActiveDrop(null);
+      return;
+    }
+    const rect = target.getBoundingClientRect();
+    setActiveDrop({ name: target.dataset.name || '', after: event.clientY > rect.top + rect.height / 2 });
+  };
+
+  const finishPointerDrag = (event: ReactPointerEvent<HTMLElement>) => {
+    const drag = pointerDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (drag.active && dropTargetRef.current) {
+      reorderWithinSection(drag.category, drag.name, dropTargetRef.current.name, dropTargetRef.current.after);
+    }
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    pointerDrag.current = null;
+    setDragged(null);
+    setActiveDrop(null);
+  };
+
+  const saveProfile = async () => {
+    if (!data?.viewer?.is_owner || !authorId || saving) return;
+    setSaving(true);
+    setSaveNote('');
+    const socials = identity.socials
+      .map((social) => ({ label: social.label.trim(), url: social.url.trim() }))
+      .filter((social) => social.label && social.url);
+    const profile = data.profile || {};
+    const writes: Array<[string, Record<string, unknown>]> = [
+      ['profile', { ...identity, socials, order: profile.order || [], hidden: profile.hidden || [], labels: profile.labels || {} }],
+      ['file-order', { order: editFiles.map((file) => file.name) }],
+      ['file-subtitles', { subtitles: editSubtitles }],
+    ];
+    try {
+      for (const [control, body] of writes) {
+        const response = await fetch(`/api/library/${encodeURIComponent(authorId)}/${control}`, {
+          method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+          const result = await response.json().catch(() => ({}));
+          throw new Error(result?.error || `Could not save ${control}.`);
+        }
+      }
+      setData({
+        ...data,
+        author: { ...data.author, ...identity, socials },
+        files: editFiles,
+      });
+      setEditing(false);
+      setSaveNote('saved');
+    } catch (saveError) {
+      setSaveNote(saveError instanceof Error ? saveError.message : 'Could not save the profile.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return (
     <main style={{ maxWidth: '560px', margin: '0 auto', padding: '40vh 2rem', fontFamily: 'var(--font-eb-garamond)', textAlign: 'center' }}>
       <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem', letterSpacing: '0.1em' }}>...</p>
@@ -215,7 +334,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   );
 
   const { author } = data;
-  const files = data.files || [];
+  const files = editing ? editFiles : (data.files || []);
   // The profile is a set of sections, each just hosted text + links — every one
   // rides the existing publish mechanism (a public file the Author names), so
   // there is no backend for any of them. `works` / `projects` / `other` are open
@@ -227,7 +346,6 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // `other` shows when filled and hides when empty (a2 § Library V1), same as
   // every other section. The 4-category vocabulary is fixed; everything about how
   // the sections render is Author-controllable via the optional profile config.
-  const CATEGORY_VOCAB = ['works', 'projects', 'shadows', 'other'] as const;
   const DEFAULT_WHISPER: Record<string, string> = {
     works: 'what’s been made',
     projects: 'what’s being built',
@@ -235,16 +353,16 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     other: 'everything else',
   };
   const profile = data.profile || {};
-  const hiddenCats = new Set((profile.hidden || []).filter((c) => (CATEGORY_VOCAB as readonly string[]).includes(c)));
+  const hiddenCats = new Set((profile.hidden || []).filter((c) => (CATEGORIES as readonly string[]).includes(c)));
   const byCat = new Map<string, ProtocolFile[]>();
   for (const f of files) {
-    const cat = (CATEGORY_VOCAB as readonly string[]).includes(f.category || '') ? (f.category as string) : 'shadows';
+    const cat = (CATEGORIES as readonly string[]).includes(f.category || '') ? (f.category as string) : 'shadows';
     (byCat.get(cat) || byCat.set(cat, []).get(cat)!).push(f);
   }
   // Author order first (valid entries only), then any remaining categories in the
   // default order — so a newly-published section never silently disappears.
-  const orderPref = (profile.order || []).filter((c) => (CATEGORY_VOCAB as readonly string[]).includes(c));
-  const effectiveOrder = [...orderPref, ...CATEGORY_VOCAB.filter((c) => !orderPref.includes(c))];
+  const orderPref = (profile.order || []).filter((c) => (CATEGORIES as readonly string[]).includes(c));
+  const effectiveOrder = [...orderPref, ...CATEGORIES.filter((c) => !orderPref.includes(c))];
   const grouped = effectiveOrder
     .filter((cat) => (byCat.get(cat)?.length || 0) > 0 && !hiddenCats.has(cat))
     .map((cat) => ({
@@ -287,23 +405,6 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       .filter((s) => s && s.label && s.url)
       .map((s) => ({ label: s.label.trim().toLowerCase(), url: safeUrl(cleanUrl(s.url)), sub: linkWhisper(s.label), external: true })),
   ];
-  const renderLinkedText = (text: string) =>
-    text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
-      /^https?:\/\//.test(part) ? (
-        <a
-          key={i}
-          href={safeUrl(part)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:opacity-60"
-          style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}
-        >
-          {part}
-        </a>
-      ) : (
-        <span key={i}>{part}</span>
-      ),
-    );
   const sectionLabelStyle: CSSProperties = {
     color: 'var(--text-ghost)',
     fontSize: '0.9rem',
@@ -314,24 +415,59 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // shadows (founder: the five things on the profile). Word underlined (short,
   // not page-wide), whisper italic behind a symmetric middot.
   const sectionHead = (word: string, whisper: string) => (
-    <p style={{ ...sectionLabelStyle, color: 'var(--text-secondary)' }}>
+    <p className={editing ? 'profile-edit-background' : undefined} style={{ ...sectionLabelStyle, color: 'var(--text-secondary)' }}>
       <span style={{ borderBottom: '1px solid var(--text-ghost)', paddingBottom: '3px' }}>{word}</span>
       <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem' }}>·</span>
       <span style={{ color: 'var(--text-muted)', letterSpacing: 0, fontStyle: 'italic' }}>{whisper}</span>
     </p>
   );
-  const textSection = (label: string, file: ProtocolFile | null) =>
-    file ? (
-      <div key={label} style={{ borderTop: '1px solid var(--border-light)', marginTop: '1.6rem', paddingTop: '1.1rem' }}>
-        <p style={sectionLabelStyle}>{label}</p>
-        <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-          {renderLinkedText(normalizePreviewText(file.text) || '')}
-        </div>
-      </div>
-    ) : null;
-
   // Entry row — title left, tier right, on one baseline, with a bottom hairline.
   const fileRow = (file: ProtocolFile) => {
+    if (editing) {
+      const category = categoryOf(file);
+      const target = dropTarget?.name === file.name ? dropTarget : null;
+      return (
+        <article
+          key={file.name}
+          data-profile-piece
+          data-name={file.name}
+          data-category={category}
+          className="profile-edit-piece"
+          style={{
+            borderTop: target && !target.after ? '2px solid var(--accent)' : '2px solid transparent',
+            borderBottom: target?.after ? '2px solid var(--accent)' : '2px solid transparent',
+            opacity: dragged?.name === file.name ? 0.35 : 1,
+          }}
+        >
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label={`${file.title || fileDisplayName(file.name)}. Drag to reorder within ${category}.`}
+            aria-pressed={dragged?.name === file.name}
+            className="profile-edit-drag"
+            onKeyDown={(event) => nudgeWithinSection(event, category, file.name)}
+            onPointerDown={(event) => startPointerDrag(event, category, file.name)}
+            onPointerMove={trackPointerDrag}
+            onPointerUp={finishPointerDrag}
+            onPointerCancel={finishPointerDrag}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem' }}
+          >
+            <span style={{ color: 'var(--text-primary)', fontSize: '1.06rem' }}>{file.title || fileDisplayName(file.name)}</span>
+            <span className="profile-edit-background" style={{ color: 'var(--text-muted)', fontSize: '0.88rem', letterSpacing: '0.04em', flex: 'none' }}>{visibilityLabel(file.visibility)}</span>
+          </div>
+          <textarea
+            aria-label={`${file.title || fileDisplayName(file.name)} description`}
+            className="profile-edit-field profile-edit-description"
+            style={editFieldStyle}
+            rows={1}
+            value={file.subtitle || ''}
+            placeholder="add a description"
+            onChange={(event) => setEditFiles((current) => current.map((candidate) => candidate.name === file.name ? { ...candidate, subtitle: event.target.value } : candidate))}
+            onPointerDown={(event) => event.stopPropagation()}
+          />
+        </article>
+      );
+    }
     // Explicit always-public teaser wins; else fall back to the first line of
     // the (public-only) text blurb. Gated files rely entirely on the teaser.
     const rawPreview = (file.subtitle && file.subtitle.trim()) || normalizePreviewText(file.text) || '';
@@ -385,15 +521,21 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     <>
       <ThemeToggle />
       <main style={{ maxWidth: '820px', margin: '0 auto', padding: '6rem 2.5rem 4rem', fontFamily: 'var(--font-eb-garamond)' }}>
-        <header style={{ margin: '0 0 2.5rem' }}>
+        <header className={editing ? 'profile-edit-header' : undefined} style={{ margin: '0 0 2.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <Link href="/library" aria-label="back to the library" title="library" style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
             </Link>
             {isOwner ? (
-              <Link href={`/library/${encodeURIComponent(authorId)}/manage`} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }} className="hover:opacity-60">
-                manage
-              </Link>
+              <button
+                type="button"
+                onClick={editing ? saveProfile : () => { setSaveNote(''); setEditing(true); }}
+                disabled={saving}
+                style={{ color: 'var(--text-muted)', border: 0, background: 'none', padding: 0, font: 'inherit', fontSize: '0.9rem', cursor: saving ? 'wait' : 'pointer' }}
+                className="hover:opacity-60"
+              >
+                {saving ? 'saving…' : editing ? 'save' : 'edit'}
+              </button>
             ) : !signedIn && (
               <a href={signInUrl} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }} className="hover:opacity-60">
                 sign in
@@ -407,14 +549,64 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               location · contact pair, uncramped. flex-wrap lets the number
               drop gracefully on narrow screens. */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '1.1rem', flexWrap: 'wrap', margin: '2rem 0 0.35rem' }}>
-            <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 500, letterSpacing: '-0.012em', margin: 0 }}>
-              {author.display_name || author.id}
-            </h1>
-            <span style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', textTransform: 'lowercase' }}>
+            {editing ? (
+              <input
+                aria-label="name"
+                className="profile-edit-field profile-edit-name"
+                style={editFieldStyle}
+                value={identity.display_name}
+                placeholder="your name"
+                onChange={(event) => setIdentity({ ...identity, display_name: event.target.value })}
+              />
+            ) : (
+              <h1 style={{ color: 'var(--text-primary)', fontSize: '2rem', fontWeight: 500, letterSpacing: '-0.012em', margin: 0 }}>
+                {author.display_name || author.id}
+              </h1>
+            )}
+            <span className={editing ? 'profile-edit-background' : undefined} style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', textTransform: 'lowercase' }}>
               {author.alexandria_id}
             </span>
           </div>
-          {(author.location && author.location_key) || author.contact ? (
+          {editing ? (
+            <>
+              <div className="profile-edit-identity">
+                <select aria-label="location" className="profile-edit-field profile-edit-meta profile-edit-location" style={editFieldStyle} value={identity.location} onChange={(event) => setIdentity({ ...identity, location: event.target.value })}>
+                  <option value="">choose location</option>
+                  {LIBRARY_LOCATIONS.map((location) => <option key={location} value={location}>{location}</option>)}
+                </select>
+                <span aria-hidden className="profile-edit-dot" style={{ color: 'var(--text-ghost)' }}>·</span>
+                <input aria-label="contact" className="profile-edit-field profile-edit-meta" style={editFieldStyle} value={identity.contact} placeholder="contact" onChange={(event) => setIdentity({ ...identity, contact: event.target.value })} />
+              </div>
+              <input aria-label="website" inputMode="url" className="profile-edit-field profile-edit-link" style={editFieldStyle} value={identity.website} placeholder="website" onChange={(event) => setIdentity({ ...identity, website: event.target.value })} />
+              <div className="profile-edit-links">
+                <div className="profile-edit-links-head">
+                  <span>links</span>
+                  <button type="button" onClick={() => setIdentity({ ...identity, socials: [...identity.socials, { label: '', url: '' }] })}>add link</button>
+                </div>
+                {identity.socials.map((social, index) => (
+                  <div className="profile-edit-social" key={index}>
+                    <input
+                      aria-label={`link ${index + 1} name`}
+                      className="profile-edit-field profile-edit-social-name"
+                      style={editFieldStyle}
+                      value={social.label}
+                      placeholder="name"
+                      onChange={(event) => setIdentity({ ...identity, socials: identity.socials.map((candidate, candidateIndex) => candidateIndex === index ? { ...candidate, label: event.target.value } : candidate) })}
+                    />
+                    <input
+                      aria-label={`link ${index + 1} url`}
+                      inputMode="url"
+                      className="profile-edit-field profile-edit-social-url"
+                      style={editFieldStyle}
+                      value={social.url}
+                      placeholder="url"
+                      onChange={(event) => setIdentity({ ...identity, socials: identity.socials.map((candidate, candidateIndex) => candidateIndex === index ? { ...candidate, url: event.target.value } : candidate) })}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (author.location && author.location_key) || author.contact ? (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.35rem 0 0', textTransform: 'lowercase' }}>
               {author.location && author.location_key && (
                 <Link href={`/library?locations=${encodeURIComponent(author.location_key)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link>
@@ -435,7 +627,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           {/* Links, slightly underlined so they read as links (founder 2026-07-19).
               Beli has no web page → a click-to-reveal of the copyable handle rather
               than a dead navigation; no extra inline text. */}
-          {routerLinks.length > 0 && (
+          {!editing && routerLinks.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0.3rem 1.15rem', marginTop: '0.85rem', fontSize: '0.98rem' }}>
               {routerLinks.map((l) => {
                 const linkStyle: CSSProperties = { color: 'var(--text-muted)', textDecoration: 'underline', textDecorationColor: 'var(--border-light)', textUnderlineOffset: '3px' };
@@ -510,7 +702,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               // page read flat — a cold visitor must see what to do without
               // reading). A quiet card lifts the door above everything else;
               // example questions make the first move a single tap.
-              <div style={{
+              <div className={editing ? 'profile-edit-static-block' : undefined} style={{
                 // Text inside sits on the PAGE's left edge (one text line for
                 // the whole profile); the card's borders protrude symmetrically
                 // instead — margin mirrors padding (founder, round nine).
@@ -575,10 +767,18 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             </div>
           )}
         </section>
+        {editing && (
+          <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '4rem', paddingTop: '1.4rem', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
+            <span role="status" style={{ color: saveNote.startsWith('Could not') ? 'var(--error, #9b2c2c)' : 'var(--text-muted)', fontSize: '0.9rem' }}>{saveNote}</span>
+            <button type="button" onClick={saveProfile} disabled={saving} className="hover:opacity-60" style={{ color: 'var(--accent)', border: 0, background: 'none', padding: 0, font: 'inherit', fontSize: '1rem', cursor: saving ? 'wait' : 'pointer' }}>
+              {saving ? 'saving…' : 'save'}
+            </button>
+          </div>
+        )}
         {/* A slim footer rounds the page off (founder: borders, a place for
             the one CTA — this profile IS the demo; "build your own" is the
             whole pitch). */}
-        <footer style={{ borderTop: '1px solid var(--border-light)', textAlign: 'center', margin: '4rem 0 0', padding: '1.6rem 0 0' }}>
+        {!editing && <footer style={{ borderTop: '1px solid var(--border-light)', textAlign: 'center', margin: '4rem 0 0', padding: '1.6rem 0 0' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', margin: 0 }}>
             want this for yourself?{' '}
             <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">start your loop</Link>
@@ -588,7 +788,42 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               alexandria<span style={{ fontStyle: 'normal' }}>.</span>
             </Link>
           </p>
-        </footer>
+        </footer>}
+        <style>{`
+          .profile-edit-header { margin-bottom: 3.5rem !important; }
+          .profile-edit-background { opacity: 0.5; }
+          .profile-edit-static-block { opacity: 0.42; pointer-events: none; border-color: transparent !important; box-shadow: none !important; }
+          .profile-edit-field { border-bottom: 1px solid color-mix(in srgb, var(--text-muted) 20%, transparent) !important; background: transparent !important; box-shadow: none !important; padding-bottom: 0.16rem !important; transition: border-color 120ms ease, color 120ms ease; }
+          .profile-edit-field:hover { border-color: color-mix(in srgb, var(--text-secondary) 62%, transparent) !important; }
+          .profile-edit-field:focus { outline: none; border-bottom: 2px solid var(--accent) !important; color: var(--text-primary) !important; }
+          .profile-edit-name { width: min(28rem, 68vw) !important; font-size: 2rem !important; font-weight: 500 !important; letter-spacing: -0.012em; }
+          .profile-edit-identity { display: flex; align-items: baseline; gap: 0.75rem; color: var(--text-muted); }
+          .profile-edit-meta { width: min(15rem, 38vw) !important; color: var(--text-muted) !important; font-size: 0.95rem !important; letter-spacing: 0.02em; }
+          .profile-edit-link { width: min(28rem, 100%) !important; margin-top: 0.9rem; color: var(--text-muted) !important; font-size: 0.98rem !important; }
+          .profile-edit-links { display: grid; gap: 0.65rem; width: min(38rem, 100%); margin-top: 1.4rem; color: var(--text-muted); }
+          .profile-edit-links-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.82rem; letter-spacing: 0.03em; }
+          .profile-edit-links-head button { border: 0; background: none; padding: 0; color: var(--text-muted); font: inherit; cursor: pointer; }
+          .profile-edit-links-head button:hover { color: var(--accent); }
+          .profile-edit-social { display: grid; grid-template-columns: minmax(5.5rem, 0.45fr) minmax(0, 1.55fr); gap: 1.25rem; align-items: baseline; }
+          .profile-edit-social-name { color: var(--text-secondary) !important; font-size: 0.95rem !important; }
+          .profile-edit-social-url { color: var(--text-muted) !important; font-size: 0.9rem !important; }
+          .profile-edit-piece { padding: 0.7rem 0 0.9rem; transition: opacity 120ms ease, border-color 120ms ease; }
+          .profile-edit-drag { position: relative; padding-left: 1.25rem; cursor: grab; touch-action: none; user-select: none; }
+          .profile-edit-drag::before { content: ''; position: absolute; left: 0.1rem; top: 50%; width: 0.55rem; height: 0.28rem; opacity: 0.48; border-top: 1px solid var(--accent); border-bottom: 1px solid var(--accent); transform: translateY(-50%); }
+          .profile-edit-location { cursor: pointer; }
+          .profile-edit-drag:active { cursor: grabbing; }
+          .profile-edit-drag:focus-visible { outline: 1px solid var(--accent); outline-offset: 5px; }
+          .profile-edit-description { field-sizing: content; width: min(38rem, calc(100% - 1.25rem)) !important; min-height: 1.45em; margin: 0.35rem 0 0 1.25rem; border-bottom-color: color-mix(in srgb, var(--text-muted) 12%, transparent) !important; color: var(--text-muted) !important; font-size: 0.92rem !important; resize: none; overflow: hidden; }
+          @media (max-width: 560px) {
+            .profile-edit-identity { flex-wrap: wrap; }
+            .profile-edit-dot { display: none; }
+            .profile-edit-meta { width: 100% !important; }
+            .profile-edit-social { grid-template-columns: 1fr; gap: 0.45rem; }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .profile-edit-field, .profile-edit-piece { transition: none; }
+          }
+        `}</style>
       </main>
     </>
   );

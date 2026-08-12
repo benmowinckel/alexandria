@@ -7,6 +7,7 @@
  */
 
 import { Hono, type Context } from 'hono';
+import { canonicalLibraryLocation, LIBRARY_LOCATIONS, libraryLocationKey } from '../../shared/library-locations.js';
 import { getDB, generateId, ensureFilePriceColumn, ensureFileTitleColumn, clampPaidAmount } from './db.js';
 import { logEvent } from './analytics.js';
 import {
@@ -373,6 +374,10 @@ function slugSlot(value: string | null): string | null {
   return slug || null;
 }
 
+export function libraryLocationOptions(): string[] {
+  return [...LIBRARY_LOCATIONS];
+}
+
 function textSlot(settings: Record<string, unknown>, profile?: CompanyAuthorRow | null): string | null {
   const value = stringSlot(settings, 'text') || profile?.bio || null;
   if (!value) return null;
@@ -386,7 +391,7 @@ function alexandriaId(account: Account, profile: CompanyAuthorRow | null, fallba
 
 function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fallbackIndex: number) {
   const settings = librarySettings(profile);
-  const location = stringSlot(settings, 'location');
+  const location = canonicalLibraryLocation(stringSlot(settings, 'location'));
   const displayName =
     stringSlot(settings, 'display_name')
     || account.github_name?.trim()
@@ -397,7 +402,9 @@ function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fal
     alexandria_id: alexandriaId(account, profile, fallbackIndex),
     display_name: displayName,
     location,
-    location_key: slugSlot(stringSlot(settings, 'location_key')) || slugSlot(location),
+    // One source of truth: the directory key always follows the location people
+    // can see. A separately stored key can silently drift after a profile edit.
+    location_key: libraryLocationKey(location),
     contact: stringSlot(settings, 'contact'),
     website: stringSlot(settings, 'website'),
     // Linked accounts (X, LinkedIn, …) — [{label, url}], rendered as clean links.
@@ -456,13 +463,13 @@ export function libraryCapabilityContract(input: {
     profile: {
       fixed_structure: ['identity', 'mind', 'links', 'published sections'],
       owner_controls: {
-        identity: ['display_name', 'location', 'contact', 'website', 'socials', 'text'],
-        sections: ['order', 'hidden', 'labels'],
-        files: ['order', 'category', 'subtitle', 'suggested questions'],
+        identity: ['display_name', 'location', 'contact', 'website', 'socials'],
+        files: ['order_within_section', 'subtitle'],
+        excluded: ['body', 'visibility', 'permissions', 'category'],
       },
       categories: ['works', 'projects', 'shadows', 'other'],
-      formatting: 'Markdown bodies keep their own structure. The profile controls routing, labels, order, visibility, and teaser copy; it does not rewrite the work.',
-      owner_page: `${site}/library/${author}/manage`,
+      formatting: 'The profile editor changes presentation only. Content, category, visibility, and permissions stay behind their existing publication and access gates.',
+      owner_page: `${site}/library/${author}`,
     },
     shadows: {
       meaning: 'A shadow is an Author-made projection for a named audience tier, never the private constitution or source files.',
@@ -857,6 +864,7 @@ export function registerLibraryRoutes(app: Hono): void {
       },
       twin: { ...twinOut, questions: twinQuestions },
       profile: profileCfg,
+      location_options: libraryLocationOptions(),
       files: orderedFiles.map(file => ({
         name: file.name,
         title: file.title ?? null,
@@ -2529,7 +2537,12 @@ export function registerLibraryRoutes(app: Hono): void {
       if (clean) settings[key] = clean; else delete settings[key];
     };
     setString('display_name', body.display_name, 100);
-    setString('location', body.location, 120);
+    if (typeof body.location === 'string') {
+      const location = canonicalLibraryLocation(body.location);
+      if (body.location.trim() && !location) return c.json({ error: 'Choose a location from the list.' }, 400);
+      if (location) settings.location = location; else delete settings.location;
+      delete settings.location_key;
+    }
     setString('contact', body.contact, 240);
     setString('text', body.text, 160);
     if (typeof body.website === 'string') {
