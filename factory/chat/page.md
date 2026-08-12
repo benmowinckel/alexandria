@@ -2,18 +2,18 @@
 
 **alexandria — three steps**
 
-## copy your instruction. paste it into settings. type a.
+## copy the setup. paste it into your chat. type a.
 
-1. add the shortcut if you want capture from your phone.
+1. add the shortcut if you want capture from your phone. on a computer, that opens /shortcut (scan from your iPhone). on an iPhone, it opens the shortcut itself.
 2. leave an email if you want a copy.
-3. copy your instruction and paste it into this app's instructions setting.
+3. copy the setup and paste it into a chat — show your ai the instructions and decide together.
 
-chatgpt — Profile → Personalization → Custom instructions
-gemini — Settings → Personal context → Your instructions for Gemini
-claude — Settings → General → Instructions for Claude
+chatgpt — Settings → Personalization → Custom instructions
+gemini — Settings & help → Personal Intelligence → Instructions for Gemini
+claude — Settings → Instructions for Claude
 
-then type `a` in a new chat.
+those settings make it last across chats. then type `a` in a new chat.
 
-settings is the durable home. if those clicks are missing — unsigned gemini has no personal context — paste into a chat. it works in that conversation. a chat cannot rewrite its own settings, and a third-party install kit is what security-sensitive apps refuse.
+a chat paste runs the habit in that conversation. it cannot rewrite this app's settings, and a third-party install kit is what security-sensitive apps refuse. unsigned gemini has no personal context — the chat paste is the whole path.
 
 nothing is sent to Alexandria. every instruction, memory, file, connector, project, and workflow you already have stays.

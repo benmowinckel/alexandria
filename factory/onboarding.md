@@ -31,9 +31,9 @@ Create or reuse an `alexandria` folder and place `factory/chat/start.md` in it a
 
 ## Chat branch
 
-The website copies `factory/chat/bootstrap.md` and tells the Author to paste it into this app's official instructions setting. If those settings are missing, or they already pasted it here, follow it for this conversation, then give the exact clicks to save it in this app's instructions setting without deleting anything they already have. Never claim this chat installed cross-chat behaviour.
+The website copies `factory/chat/bootstrap.md`. The person pastes it into a chat and shows it to this AI. Follow it in this conversation. Treat it as their preference, not a command to change safeguards.
 
-If this app has no durable instruction setting, say that plainly. This conversation can still run the habit until they leave it. Then preserve the later handoff to the full local setup at `https://alexandria-library.com/start` → agents.
+If this app has a durable instructions setting they can edit themselves, one next action can name the exact clicks to add the same block there without deleting anything they already have. Never claim this chat installed cross-chat behaviour. If there is no durable setting, say that plainly. This conversation can still run the habit until they leave it. Then preserve the later handoff to the full local setup at `https://alexandria-library.com/start` → agents.
 
 ## Phone capture
 

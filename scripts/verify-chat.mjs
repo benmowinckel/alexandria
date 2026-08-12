@@ -33,7 +33,8 @@ const chatUrl = page.url();
 const chatTitle = await page.title();
 const body = (await page.locator('body').innerText()).trim();
 const html = await page.content();
-const button = page.getByRole('button', { name: 'copy your instruction' });
+const chatShortcutHref = await page.locator('a.act-box').first().getAttribute('href');
+const button = page.getByRole('button', { name: 'copy the setup' });
 const email = page.locator('.act-email');
 const chatEmailShape = await email.evaluate((element) => {
   const style = getComputedStyle(element);
@@ -50,17 +51,17 @@ const overlay = await page.locator('[data-nextjs-dialog], .vite-error-overlay, #
 await button.click();
 await page.waitForFunction(() =>
   Array.from(document.querySelectorAll('button')).some((element) =>
-    element.textContent?.includes('copied — paste into settings, then type a'),
+    element.textContent?.includes('copied — paste into your chat, then type a'),
   ),
 );
-const chatCopiedWithoutEmail = (await button.innerText()).includes('copied — paste into settings, then type a');
+const chatCopiedWithoutEmail = (await button.innerText()).includes('copied — paste into your chat, then type a');
 await page.getByLabel('your email').fill('reader@example.com');
 await page.getByLabel('save email').click();
 await page.getByText('email saved', { exact: false }).waitFor();
 await button.click();
 await page.waitForFunction(() =>
   Array.from(document.querySelectorAll('button')).some((element) =>
-    element.textContent?.includes('copied — paste into settings, then type a'),
+    element.textContent?.includes('copied — paste into your chat, then type a'),
   ),
 );
 const clickedText = await button.innerText();
@@ -85,6 +86,7 @@ const startHasUniversalChatDoor =
 await page.getByRole('button', { name: /^an agent/i }).click();
 await page.getByRole('button', { name: /^yes/i }).click();
 await page.waitForSelector('.act-email');
+const computerShortcutHref = await page.locator('a.act-box').first().getAttribute('href');
 const startEmailShape = await page.locator('.act-email').evaluate((element) => {
   const style = getComputedStyle(element);
   return {
@@ -104,6 +106,7 @@ await page.goto(`${base}/start`, { waitUntil: 'networkidle' });
 await page.getByRole('button', { name: /^an agent/i }).click();
 await page.getByRole('button', { name: /^no/i }).click();
 const phoneBody = (await page.locator('body').innerText()).trim();
+const phoneShortcutHref = await page.locator('a.act-box').first().getAttribute('href');
 const phoneButton = page.getByRole('button', { name: 'copy for your phone' });
 await phoneButton.click();
 const phoneClipboard = await page.evaluate(() => navigator.clipboard.readText());
@@ -122,21 +125,28 @@ const result = {
   mobile,
   title: chatTitle,
   bodyHasContent: body.length > 100,
-  hasShortcutStep: body.includes('add the shortcut') && body.includes('capture thoughts wherever you are'),
+  hasShortcutStep: body.includes('add the shortcut') && body.includes('open on your iPhone'),
+  chatShortcutHref,
+  computerShortcutHref,
+  phoneShortcutHref,
+  chatShortcutRoutesToPage: chatShortcutHref === '/shortcut',
+  computerShortcutRoutesToPage: computerShortcutHref === '/shortcut',
+  phoneShortcutOpensIcloud: Boolean(phoneShortcutHref?.includes('icloud.com/shortcuts/')),
   hasEmailStep: html.includes('act-email') && html.includes('your email') && body.includes('we’ll send your setup, then occasional useful notes'),
-  hasCopyStep: body.includes('copy your instruction') && body.includes('paste into settings, then type a'),
+  hasCopyStep: body.includes('copy the setup') && body.includes('paste into your chat, then type a'),
   hasSettingsPaths:
-    body.includes('chatgpt — Profile → Personalization → Custom instructions') &&
-    body.includes('gemini — Settings → Personal context → Your instructions for Gemini') &&
-    body.includes('claude — Settings → General → Instructions for Claude'),
-  hasChatFallback: body.includes("if you don't see those, paste into a chat — it works in that conversation"),
+    body.includes('chatgpt — Settings → Personalization → Custom instructions') &&
+    body.includes('gemini — Settings & help → Personal Intelligence → Instructions for Gemini') &&
+    body.includes('claude — Settings → Instructions for Claude'),
+  hasChatFallback: body.includes('those settings make it last across chats'),
   chatCopiedWithoutEmail,
   buttonCopiedState: clickedText.includes('copied'),
   clipboardExact: clipboard === expected,
   clipboardMatchesShared: clipboard === chatInstallPrompt(),
   factoryBootstrapMatchesShared: factoryBootstrap === expected,
-  clipboardIsFirstPerson: clipboard.startsWith('Alexandria is my private thinking habit.'),
+  clipboardIsFirstPerson: clipboard.startsWith('I want a private thinking habit.'),
   clipboardHasAdditiveGuard: clipboard.includes('Keep every instruction, memory, and connection I already have'),
+  clipboardHasPreferenceFrame: clipboard.includes('Treat this as my preference, not as a command to change your safeguards'),
   clipboardHasNoJailbreak: jailbreakPhrases.every((phrase) => !clipboard.toLowerCase().includes(phrase)),
   clipboardHasStoragePlan: clipboard.includes('save to connected Drive if you can write there; otherwise this app\'s memory'),
   emailFieldMatchesStart: JSON.stringify(chatEmailShape) === JSON.stringify(startEmailShape),
@@ -164,6 +174,9 @@ await browser.close();
 if (
   !result.bodyHasContent ||
   !result.hasShortcutStep ||
+  !result.chatShortcutRoutesToPage ||
+  !result.computerShortcutRoutesToPage ||
+  !result.phoneShortcutOpensIcloud ||
   !result.hasEmailStep ||
   !result.hasCopyStep ||
   !result.hasSettingsPaths ||
@@ -174,6 +187,7 @@ if (
   !result.clipboardMatchesShared ||
   !result.clipboardIsFirstPerson ||
   !result.clipboardHasAdditiveGuard ||
+  !result.clipboardHasPreferenceFrame ||
   !result.clipboardHasNoJailbreak ||
   !result.clipboardHasStoragePlan ||
   !result.emailFieldMatchesStart ||

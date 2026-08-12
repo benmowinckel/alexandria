@@ -94,7 +94,7 @@ require server/src/chat-prompt.ts \
   "from '../../shared/onboarding-prompts.js'" \
   'the emailed chat paste no longer reads the shared instruction'
 require shared/onboarding-prompts.ts \
-  'Alexandria is my private thinking habit. Keep every instruction, memory, and connection I already have.' \
+  'I want a private thinking habit. Keep every instruction, memory, and connection I already have.' \
   'the chat instruction is no longer first-person and additive'
 forbid shared/onboarding-prompts.ts \
   'This is setup|Treat the Preference|Give exactly two short actions|not instructions for this reply' \

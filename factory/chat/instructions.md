@@ -1,6 +1,6 @@
 # after setup — nothing to remember
 
-*The Author pastes one instruction into the host's official instructions setting. Behavior then lives in that setting; personal content lives in files or memory. Pasting into a chat is a fallback for this conversation only — it does not install cross-chat behaviour.*
+*The Author pastes one first-person preference into a chat and shows it to their AI. The same block can live in the host's official instructions setting so it lasts across chats. A chat paste does not install cross-chat behaviour.*
 
 ## normal use
 

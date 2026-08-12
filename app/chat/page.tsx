@@ -7,7 +7,7 @@ export const metadata = pageMetadata({
   path: '/chat',
   title: 'start alexandria.',
   description:
-    'Start your Alexandria loop in any chat. Add your email if you want a copy, then paste one instruction into settings — or into a chat if those settings are missing.',
+    'Start your Alexandria loop in any chat. Add your email if you want a copy, then paste one instruction into a chat — and into settings if you want it to last.',
 });
 
 function cleanRef(raw: string | undefined): string {

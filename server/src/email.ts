@@ -265,7 +265,7 @@ export function onboardEmailContent(mode: OnboardingMode, emailToken: string): {
   const copy = mode === 'chat'
     ? {
         subject: 'alexandria. — your chat setup',
-        lead: 'paste this into your app\'s instructions setting. if you don\'t see that, paste into a chat — it works in that conversation:',
+        lead: 'paste this into a chat. to keep it across chats, add it here:',
       }
     : mode === 'agent-phone'
       ? {

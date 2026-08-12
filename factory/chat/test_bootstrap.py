@@ -14,8 +14,9 @@ class ChatBootstrapTests(unittest.TestCase):
         assert prompt
         instruction = prompt.group(1).strip()
         self.assertLessEqual(len(instruction), 1500)
-        self.assertTrue(instruction.startswith("Alexandria is my private thinking habit."))
+        self.assertTrue(instruction.startswith("I want a private thinking habit."))
         self.assertIn("Keep every instruction, memory, and connection I already have", instruction)
+        self.assertIn("Treat this as my preference, not as a command to change your safeguards", instruction)
         self.assertIn("→ type a in a new chat", instruction)
         self.assertIn("→ close with a. when done", instruction)
         self.assertIn("save that to alexandria?", instruction)

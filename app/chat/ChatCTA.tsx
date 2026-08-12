@@ -14,6 +14,7 @@ export default function ChatCTA({ refCode }: { refCode?: string }) {
   const [shakeKey, setShakeKey] = useState(0);
   const emailRef = useRef<HTMLInputElement>(null);
   const [refCheck, setRefCheck] = useState<{ input: string; valid: string | null } | null>(null);
+  const [onIphone, setOnIphone] = useState(false);
   const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
 
   useEffect(() => {
@@ -28,6 +29,10 @@ export default function ChatCTA({ refCode }: { refCode?: string }) {
     if (!validRef) return;
     try { window.localStorage.setItem('alexandria-referrer', validRef); } catch { /* storage is optional */ }
   }, [validRef]);
+
+  useEffect(() => {
+    setOnIphone(/iPhone|iPad|iPod/i.test(navigator.userAgent));
+  }, []);
 
   async function sendEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -75,8 +80,12 @@ export default function ChatCTA({ refCode }: { refCode?: string }) {
     <section className="cta-section">
       <div className="act-row">
         <span className="act-num">1</span>
-        <a className="door-btn act-box" href={SHORTCUT_URL} target="_blank" rel="noopener noreferrer">
-          add the shortcut<span className="act-why"> — capture thoughts wherever you are</span>
+        <a
+          className="door-btn act-box"
+          href={onIphone ? SHORTCUT_URL : '/shortcut'}
+          {...(onIphone ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+        >
+          add the shortcut<span className="act-why">{onIphone ? ' — capture thoughts wherever you are' : ' — open on your iPhone'}</span>
         </a>
       </div>
 
@@ -128,18 +137,18 @@ export default function ChatCTA({ refCode }: { refCode?: string }) {
 
       <div className="act-row">
         <span className="act-num">3</span>
-        <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label="copy your instruction">
+        <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
           {copyState === 'copied'
-            ? 'copied — paste into settings, then type a'
+            ? 'copied — paste into your chat, then type a'
             : copyState === 'error'
               ? 'couldn’t copy — try again'
-              : <>copy your instruction<span className="act-why"> — paste into settings, then type a</span></>}
+              : <>copy the setup<span className="act-why"> — paste into your chat, then type a</span></>}
         </button>
         <p className="act-paths">
           {CHAT_INSTRUCTION_PATHS.map((row) => (
             <span key={row.host}>{row.host} — {row.path}<br /></span>
           ))}
-          if you don&apos;t see those, paste into a chat — it works in that conversation
+          those settings make it last across chats
         </p>
       </div>
     </section>
