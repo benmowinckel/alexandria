@@ -153,6 +153,13 @@ export function authorizeFileRead(opts: AuthorizeFileReadOpts): FileReadDecision
 import type { Account } from './auth.js';
 import { getDB, getR2 } from './db.js';
 
+/** Audit archive content read. The caller still owns founder authorization;
+ * this gate owns the storage boundary and can never read outside its prefix. */
+export async function readAuditArchiveObject(key: string): Promise<R2ObjectBody | null> {
+  if (!key.startsWith('audit-archive/') || key.includes('..') || key.length > 300) return null;
+  return getR2().get(key);
+}
+
 export interface ProtocolFileMetadata {
   account_id: string;
   name: string;

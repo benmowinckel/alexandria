@@ -276,21 +276,20 @@ app.get('/health', async (c) => {
 //
 // Returns the latest chain head + cron liveness timestamps. Anyone can poll
 // this and record the head_hash; any future deletion or rewriting of historic
-// audit entries (in the alexandria-audit GitHub repo) would produce a
+// audit entries (in the owned R2 archive) would produce a
 // different head_hash than the values external observers already recorded.
 // This is what makes the audit tamper-evident rather than just "stored."
 //
 // Returns no entries — only the cryptographic summary. Per-author entries
 // live on /library/:author/access-log (author-auth required), full history
-// lives in the audit repo.
+// lives behind the founder-only audit archive route.
 
 app.get('/audit/head', async (c) => {
   try {
     const head = await getAuditHead();
     return c.json({
       ...head,
-      audit_repo: 'benmowinckel/alexandria-audit',
-      verify: 'Walk the hash chain in the audit_repo from genesis; the final entry hash must equal head_hash.',
+      verify: 'Walk the founder-exported R2 archive from genesis; the final entry hash must equal head_hash.',
     }, 200, { 'Cache-Control': 'no-store' });
   } catch (err) {
     return c.json({ error: 'audit head unavailable', detail: String(err).slice(0, 200) }, 500);

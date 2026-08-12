@@ -1,8 +1,8 @@
 /**
  * Tamper-evident access audit log.
  *
- * Every file-view event (success or denial) gets mirrored to a private
- * GitHub repo (alexandria-audit) as a hash-chained JSONL entry. The
+ * Every file-view event (success or denial) gets mirrored to the owned R2
+ * archive as a hash-chained JSONL entry. The
  * chain links every entry to the previous via SHA-256, so any retroactive
  * tampering with a single entry invalidates every entry that came after.
  *
@@ -21,8 +21,8 @@
  *
  * State:
  *   - KV `audit:state` → { last_event_t, head_hash, head_n, last_run_at, last_commit_at }
- *   - Repo: `audit/YYYY-MM-DD/HH-mm-ss-{rand}.jsonl` (one batch per non-empty cron run)
- *   - Repo: `HEAD.json` (mirrors head_hash/head_n — convenience for external observers)
+ *   - R2: `audit-archive/batches/{head_n}-{head_hash}.jsonl` (immutable batches)
+ *   - R2: `audit-archive/HEAD.json` (mirrors head_hash/head_n)
  *
  * Entry format (each line of every JSONL batch):
  *   { t, n, prev_hash, hash, e, ...meta }
@@ -38,13 +38,14 @@
  */
 
 import { logEvent } from './analytics.js';
+import { getR2 } from './db.js';
+import { readAuditArchiveObject } from './file-access.js';
 import { getKV, getRecentDaysEvents } from './kv.js';
 
-const AUDIT_REPO = 'benmowinckel/alexandria-audit';
-const GITHUB_API = 'https://api.github.com';
 const GENESIS_HASH = '0'.repeat(64);
 const EPOCH = '1970-01-01T00:00:00.000Z';   // genesis cursor — no history yet
 const DAY_MS = 24 * 60 * 60 * 1000;
+const ARCHIVE_PREFIX = 'audit-archive/';
 // events:* keys carry a 60-day TTL (kv.ts appendEvent). Anything older than
 // this horizon is already gone from KV and can never be chained — the hard
 // ceiling on how far back an outage-recovery read can reach.
@@ -72,6 +73,7 @@ export interface AuditState {
   head_n: number;             // current chain length (genesis = 0, first real entry = 1)
   last_run_at: string;        // ISO — last time the cron handler ran (even if it committed nothing)
   last_commit_at: string;     // ISO — last time the cron committed a batch
+  archive_key?: string;       // latest immutable R2 batch object
 }
 
 export interface AuditEntry {
@@ -81,12 +83,6 @@ export interface AuditEntry {
   hash: string;
   e: string;
   [key: string]: string | number;
-}
-
-function getGithubToken(): string {
-  const t = process.env.GITHUB_BOT_TOKEN;
-  if (!t) throw new Error('GITHUB_BOT_TOKEN unset — audit mirror disabled');
-  return t;
 }
 
 /** Canonical JSON for hashing: sorted keys, no whitespace. Identical input
@@ -240,101 +236,14 @@ async function chainEvents(
   return { entries, newHead: prevHash, newN: n };
 }
 
-/** PUT a file to the audit repo. Encodes content as base64 per GitHub API. */
-async function putRepoFile(path: string, content: string, message: string): Promise<void> {
-  const token = getGithubToken();
-  const url = `${GITHUB_API}/repos/${AUDIT_REPO}/contents/${path}`;
-
-  // GitHub's Contents API requires the current `sha` of an existing file
-  // before overwriting. New files omit it. HEAD.json is the only file we
-  // ever overwrite; batch files are write-once.
-  let existingSha: string | undefined;
-  if (path === 'HEAD.json') {
-    const getResp = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github+json',
-        'User-Agent': 'alexandria-server',
-      },
-    });
-    if (getResp.ok) {
-      const data = await getResp.json() as { sha?: string };
-      existingSha = data.sha;
-    }
-  }
-
-  const body: Record<string, unknown> = {
-    message,
-    content: btoa(unescape(encodeURIComponent(content))),
-    branch: 'main',
-  };
-  if (existingSha) body.sha = existingSha;
-
-  const resp = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: 'application/vnd.github+json',
-      'User-Agent': 'alexandria-server',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) {
-    const errText = await resp.text();
-    throw new Error(`github put ${path} failed: ${resp.status} ${errText.slice(0, 200)}`);
-  }
-}
-
-function batchPath(now: Date): string {
-  const date = now.toISOString().slice(0, 10);            // YYYY-MM-DD
-  const time = now.toISOString().slice(11, 19).replace(/:/g, '-');  // HH-mm-ss
-  const rand = Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0');
-  return `audit/${date}/${time}-${rand}.jsonl`;
+function batchPath(headN: number, headHash: string): string {
+  // Deterministic: a retry writes identical bytes to the same key instead of
+  // producing duplicate batches after any interrupted run.
+  return `${ARCHIVE_PREFIX}batches/${String(headN).padStart(12, '0')}-${headHash}.jsonl`;
 }
 
 /**
- * External anchor hook — residual trust, made minimal.
- *
- * RESIDUAL TRUST: /audit/head serves head_hash from operator-controlled KV, and
- * the same GITHUB_BOT_TOKEN writes the batch repo. An insider holding BOTH KV
- * write and that token can recompute the whole chain from genesis and overwrite
- * KV + repo consistently — undetectably — because nothing is pinned to a third
- * party the operator cannot rewrite. The hash chain proves internal consistency,
- * not that history wasn't wholesale rewritten.
- *
- * This hook is the minimal countermeasure: when AUDIT_ANCHOR_URL is set, each
- * mirror run POSTs the current head_hash + count to that external append-only
- * endpoint, timestamping the head somewhere the operator cannot silently edit.
- * A later divergence between the anchor's record and KV/repo exposes tampering.
- *
- * It is fail-safe: a down, slow, or misconfigured anchor NEVER breaks the mirror
- * (errors and timeouts are swallowed). When the env var is unset it is a no-op.
- *
- * To make tamper-evidence STRUCTURAL rather than trust-based, the founder must
- * configure AUDIT_ANCHOR_URL to a genuinely independent, append-only surface
- * the operator cannot rewrite — e.g. an OpenTimestamps calendar, a public
- * transparency log, or a notarising endpoint on infrastructure outside this
- * account. No such endpoint is invented or called here.
- */
-async function anchorHead(headHash: string, headN: number): Promise<void> {
-  const url = process.env.AUDIT_ANCHOR_URL;
-  if (!url) return; // unset → no-op
-  try {
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'User-Agent': 'alexandria-server' },
-      body: JSON.stringify({ head_hash: headHash, head_n: headN, at: new Date().toISOString() }),
-      signal: AbortSignal.timeout(5000),
-    });
-  } catch (err) {
-    // Best-effort: the anchor is a safety net, never a dependency of the mirror.
-    console.error('[audit] anchor POST failed (mirror unaffected):', err);
-  }
-}
-
-/**
- * Cron entry point — mirrors any new audited events to the GitHub chain.
+ * Cron entry point — mirrors any new audited events to the owned R2 archive.
  * Updates `last_run_at` every call so /audit/head proves the cron is alive
  * even when there are no new events to commit.
  */
@@ -358,10 +267,21 @@ export async function mirrorPendingAuditBatch(): Promise<{ committed: number; he
   }
   toChain.push(...events);
 
+  // One-time bridge from the retired GitHub archive. The existing public head
+  // remains the previous hash; this marker extends it into the owned archive
+  // even if no new user event happens during the migration window.
+  if (toChain.length === 0 && state.head_n > 0 && !state.archive_key) {
+    toChain.push({
+      t: nowIso,
+      e: 'audit_archive_migration',
+      previous_archive: 'github:benmowinckel/alexandria-audit',
+      note: 'chain storage moved to owned R2; prev_hash is the final legacy archive head',
+    });
+  }
+
   if (toChain.length === 0) {
     state = { ...state, last_run_at: nowIso };
     await saveState(state);
-    await anchorHead(state.head_hash, state.head_n);
     logEvent('audit_mirror_run', { committed: '0' });
     return { committed: 0, head: state.head_hash };
   }
@@ -376,16 +296,22 @@ export async function mirrorPendingAuditBatch(): Promise<{ committed: number; he
   const lastT = entries[entries.length - 1].t;
   const jsonl = entries.map(e => JSON.stringify(e)).join('\n') + '\n';
 
-  const path = batchPath(new Date());
-  await putRepoFile(path, jsonl, `audit batch ${path.split('/').pop()} (${entries.length} entries)`);
+  const path = batchPath(newN, newHead);
+  await getR2().put(path, jsonl, {
+    httpMetadata: { contentType: 'application/x-ndjson' },
+    customMetadata: { head_hash: newHead, head_n: String(newN), entries: String(entries.length) },
+  });
 
   const newHeadJson = JSON.stringify({
     head_hash: newHead,
     head_n: newN,
     last_t: lastT,
     last_commit_at: nowIso,
+    archive_key: path,
   }, null, 2) + '\n';
-  await putRepoFile('HEAD.json', newHeadJson, `HEAD → ${newHead.slice(0, 12)} (n=${newN})`);
+  await getR2().put(`${ARCHIVE_PREFIX}HEAD.json`, newHeadJson, {
+    httpMetadata: { contentType: 'application/json' },
+  });
 
   state = {
     last_event_t: cursorT,
@@ -394,9 +320,9 @@ export async function mirrorPendingAuditBatch(): Promise<{ committed: number; he
     head_n: newN,
     last_run_at: nowIso,
     last_commit_at: nowIso,
+    archive_key: path,
   };
   await saveState(state);
-  await anchorHead(newHead, newN);
 
   logEvent('audit_mirror_run', { committed: String(entries.length), head: newHead.slice(0, 12) });
   return { committed: entries.length, head: newHead };
@@ -408,6 +334,8 @@ export async function getAuditHead(): Promise<{
   head_n: number;
   last_run_at: string;
   last_commit_at: string;
+  archive: 'r2' | 'legacy-github';
+  archive_key: string | null;
 }> {
   const state = await loadState();
   return {
@@ -415,12 +343,60 @@ export async function getAuditHead(): Promise<{
     head_n: state.head_n,
     last_run_at: state.last_run_at,
     last_commit_at: state.last_commit_at,
+    archive: state.archive_key ? 'r2' : 'legacy-github',
+    archive_key: state.archive_key || null,
   };
 }
 
+/** Founder-only archive accessors. HTTP authorization stays in routes.ts; the
+ * storage layer accepts only its own prefix so it cannot become a general R2
+ * read primitive. */
+export async function listAuditArchive(cursor?: string): Promise<{
+  objects: Array<{ key: string; size: number; uploaded: string }>;
+  cursor: string | null;
+}> {
+  const listed = await getR2().list({ prefix: ARCHIVE_PREFIX, cursor, limit: 100 });
+  return {
+    objects: listed.objects.map(obj => ({ key: obj.key, size: obj.size, uploaded: obj.uploaded.toISOString() })),
+    cursor: listed.truncated ? listed.cursor : null,
+  };
+}
+
+export async function readAuditArchive(key: string): Promise<R2ObjectBody | null> {
+  if (!key.startsWith(ARCHIVE_PREFIX) || key.includes('..') || key.length > 300) return null;
+  return readAuditArchiveObject(key);
+}
+
+async function verifyArchivedBatchText(text: string, expectedHead: string): Promise<boolean> {
+  const entries = text.split('\n').filter(Boolean).map(line => JSON.parse(line) as AuditEntry);
+  if (entries.length === 0) return false;
+  let previous = entries[0].prev_hash;
+  for (const entry of entries) {
+    if (entry.prev_hash !== previous) return false;
+    const { hash, ...withoutHash } = entry;
+    if (await computeEntryHash(withoutHash) !== hash) return false;
+    previous = hash;
+  }
+  return previous === expectedHead;
+}
+
+/** Verify the latest private batch in place. Only the boolean result and hash
+ * leave the Worker; audit entries never transit through CI. */
+export async function verifyAuditArchiveHead(): Promise<{
+  ok: boolean;
+  head_hash: string;
+  archive_key: string | null;
+}> {
+  const state = await loadState();
+  if (!state.archive_key) return { ok: false, head_hash: state.head_hash, archive_key: null };
+  const object = await readAuditArchive(state.archive_key);
+  if (!object) return { ok: false, head_hash: state.head_hash, archive_key: state.archive_key };
+  const ok = await verifyArchivedBatchText(await object.text(), state.head_hash).catch(() => false);
+  return { ok, head_hash: state.head_hash, archive_key: state.archive_key };
+}
+
 /** Per-author access log — returns the author's own audited events from the
- *  rolling KV window. Long-term history lives in the GitHub repo, accessible
- *  to the author by cloning. */
+ *  rolling KV window. Long-term history lives in the owned R2 archive. */
 export async function getAuthorAuditEntries(authorLogin: string, limit = 200): Promise<Array<Record<string, string>>> {
   const raw = await getRecentDaysEvents(30);
   if (!raw) return [];
@@ -446,5 +422,7 @@ export const _internal = {
   sha256Hex,
   computeEntryHash,
   chainEvents,
+  batchPath,
+  verifyArchivedBatchText,
   GENESIS_HASH,
 };

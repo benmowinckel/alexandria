@@ -241,7 +241,14 @@ jobs:
               exit 1
             fi
           fi
-          echo "✓ audit mirror alive (last_run_at ${age_sec}s ago)"
+          archive=$(echo "$body" | python3 -c "import json,sys;print(json.load(sys.stdin).get('archive',''))")
+          [ "$archive" = "r2" ] || { echo "::error::Audit archive is not using owned R2 storage"; exit 1; }
+          verify=$(curl -sf "$SERVER/admin/audit/verify" -H "Authorization: Bearer $API_KEY")
+          echo "$verify" | python3 -c "import json,sys;assert json.load(sys.stdin).get('ok') is True" || {
+            echo "::error::Private audit archive failed its in-Worker hash verification"
+            exit 1
+          }
+          echo "✓ audit mirror alive in owned archive (last_run_at ${age_sec}s ago)"
 
       - name: File gate matrix (live route agrees with authorizeFileRead for every cell)
         env:

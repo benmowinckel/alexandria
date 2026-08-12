@@ -104,7 +104,7 @@ async function run() {
   await test('chain is verifiable by walking forward and recomputing', async () => {
     // Simulate a verifier: take stored entries, recompute each hash, compare.
     // This is the algorithm any external observer (an Author auditing us)
-    // would run against the GitHub repo's JSONL files.
+    // would run against the R2 archive's JSONL files.
     const events = [
       { t: '2026-01-01T00:00:00.000Z', e: 'evt', author: 'a' },
       { t: '2026-01-01T00:00:01.000Z', e: 'evt', author: 'b' },
@@ -142,6 +142,25 @@ async function run() {
     assert.notStrictEqual(recomputed, entries[0].hash);
     // And the next entry's prev_hash no longer matches the new tampered hash
     assert.notStrictEqual(entries[1].prev_hash, recomputed);
+  });
+
+  await test('batch path is deterministic and content-addressed', () => {
+    const hash = 'a'.repeat(64);
+    const a = _internal.batchPath(42, hash);
+    const b = _internal.batchPath(42, hash);
+    assert.strictEqual(a, b);
+    assert.strictEqual(a, `audit-archive/batches/000000000042-${hash}.jsonl`);
+  });
+
+  await test('archived batch verifier rejects tampering and accepts the real head', async () => {
+    const events = [
+      { t: '2026-01-01T00:00:00.000Z', e: 'evt', author: 'a' },
+      { t: '2026-01-01T00:00:01.000Z', e: 'evt', author: 'b' },
+    ];
+    const { entries, newHead } = await _internal.chainEvents(events, _internal.GENESIS_HASH, 0);
+    const text = entries.map(entry => JSON.stringify(entry)).join('\n') + '\n';
+    assert.strictEqual(await _internal.verifyArchivedBatchText(text, newHead), true);
+    assert.strictEqual(await _internal.verifyArchivedBatchText(text.replace('"author":"a"', '"author":"x"'), newHead), false);
   });
 
   console.log(`\n  ${passed} tests passed`);

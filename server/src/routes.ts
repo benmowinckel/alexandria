@@ -15,7 +15,7 @@ import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL } from '.
 import { runHealthDigest, runWeekOneCheckIns } from './cron.js';
 import { publishFeedback } from './marketplace.js';
 import { handleGithubPushWebhook } from './marketplace-catalog.js';
-import { mirrorPendingAuditBatch } from './audit.js';
+import { listAuditArchive, mirrorPendingAuditBatch, readAuditArchive, verifyAuditArchiveHead } from './audit.js';
 
 /**
  * KV-backed rate limit for destructive/expensive admin endpoints.
@@ -1290,6 +1290,28 @@ export function registerRoutes(app: Hono) {
       logEvent('audit_mirror_manual_failed', { error: String(err).slice(0, 200) });
       return c.json({ ok: false, error: String(err).slice(0, 200) }, 500);
     }
+  });
+
+  app.get('/admin/audit/archive', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    const result = await listAuditArchive(c.req.query('cursor'));
+    return c.json(result);
+  });
+
+  app.get('/admin/audit/archive/object', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    const key = c.req.query('key') || '';
+    const object = await readAuditArchive(key);
+    if (!object) return c.json({ error: 'Not found' }, 404);
+    c.header('Content-Type', object.httpMetadata?.contentType || 'application/octet-stream');
+    c.header('Cache-Control', 'no-store');
+    return c.body(object.body);
+  });
+
+  app.get('/admin/audit/verify', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    const result = await verifyAuditArchiveHead();
+    return c.json(result, result.ok ? 200 : 500);
   });
 
   // Manual trigger for week-1 check-in. Same shorter-feedback-loop motivation
