@@ -1920,10 +1920,7 @@ html.app-shell input:focus {
 .mkt-brand:hover { opacity: 0.6; }
 .mkt-brand:active { opacity: 0.45; }
 .mkt-brand:focus-visible,
-.mkt-module-link:focus-visible,
-.mkt-filter-button:focus-visible,
-.mkt-filter-option:focus-visible,
-.mkt-filter-clear:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.mkt-module-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .mkt-brand-dot { font-style: normal; }
 .mkt-eyebrow {
   margin: 1.8rem 0 0;
@@ -1947,47 +1944,14 @@ html.app-shell input:focus {
   font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "swsh" 1;
   text-wrap: balance;
 }
-.mkt-search-wrap { position: relative; margin-top: 2.4rem; }
-.mkt-search-row { display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-light); }
+.mkt-search-wrap { margin-top: 2.4rem; }
+.mkt-search-row { border-bottom: 1px solid var(--border-light); }
 .mkt-search {
-  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  width: 100%; min-width: 0; border: 0; outline: 0; background: transparent;
   color: var(--text-primary); font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
   font-size: 1rem; padding: 0 0 0.55rem;
 }
-.mkt-search::placeholder { color: var(--text-ghost); opacity: 1; }
-.mkt-filter-button {
-  display: inline-flex; align-items: center; gap: 0.3rem; border: 0; background: none;
-  color: var(--text-ghost); cursor: pointer; padding: 0 0.1rem 0.55rem;
-  font: inherit; transition: color 150ms ease, opacity 150ms ease;
-}
-.mkt-filter-button:hover { opacity: 0.6; }
-.mkt-filter-button.is-active { color: var(--text-primary); }
-.mkt-filter-backdrop { position: fixed; inset: 0; z-index: 10; border: 0; background: transparent; cursor: default; }
-.mkt-filter-panel {
-  position: absolute; right: 0; top: calc(100% + 0.5rem); z-index: 11;
-  width: min(22rem, calc(100vw - 3rem)); max-height: min(30rem, 70vh); overflow-y: auto;
-  background: var(--bg-primary); border: 1px solid var(--border-light); border-radius: 10px;
-  box-shadow: 0 10px 32px rgba(0,0,0,0.1); padding: 0.5rem;
-}
-.mkt-filter-group + .mkt-filter-group { border-top: 1px solid var(--border-light); margin-top: 0.35rem; padding-top: 0.35rem; }
-.mkt-filter-label {
-  margin: 0; padding: 0.45rem 0.6rem 0.25rem; color: var(--text-ghost);
-  font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
-}
-.mkt-filter-option {
-  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-  width: 100%; border: 0; border-radius: 7px; background: none; color: var(--text-muted);
-  cursor: pointer; padding: 0.48rem 0.6rem; text-align: left;
-  font-family: var(--font-eb-garamond), ui-serif, Georgia, serif; font-size: 0.9rem;
-}
-.mkt-filter-option:hover { color: var(--text-primary); }
-.mkt-filter-option span:last-child { display: inline-flex; opacity: 0; }
-.mkt-filter-option span:last-child.is-selected { opacity: 1; color: var(--text-primary); }
-.mkt-filter-clear {
-  width: 100%; margin-top: 0.35rem; border: 0; border-top: 1px solid var(--border-light);
-  background: none; color: var(--text-ghost); cursor: pointer; padding: 0.65rem 0.6rem 0.4rem;
-  text-align: left; font-family: var(--font-eb-garamond), ui-serif, Georgia, serif; font-size: 0.85rem;
-}
+.mkt-search::placeholder { color: var(--text-muted); opacity: 1; }
 .mkt-empty { color: var(--text-muted); font-size: 0.95rem; margin-top: 2rem; }
 .mkt-list {
   margin-top: 2.6rem; display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 2.25rem;
@@ -2009,14 +1973,6 @@ html.app-shell input:focus {
   font-weight: 400;
   letter-spacing: -0.005em;
 }
-.mkt-tier {
-  color: var(--text-muted);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  vertical-align: baseline;
-}
 .mkt-description {
   margin: 0.45rem 0 0;
   color: var(--text-muted);
@@ -2030,8 +1986,6 @@ html.app-shell input:focus {
   font-size: 0.82rem;
   line-height: 1.35;
 }
-.mkt-handle { color: var(--text-ghost); }
-
 .site-footer {
   display: flex;
   flex-direction: column;
