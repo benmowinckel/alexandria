@@ -181,6 +181,7 @@ check "source commit is Touch ID signed" git -C "$SOURCE_DIR" \
   -c gpg.ssh.allowedSignersFile="$ALLOWED_SIGNERS" \
   verify-commit "$SOURCE_COMMIT"
 check "setup is bash script"         bash -c '[ "$(head -1 "$1")" = "#!/usr/bin/env bash" ]' _ "$SOURCE_DIR/factory/setup.sh"
+check "close selection is Git Bash safe" grep -Fq 'done <<< "$CLAUDE_CLOSE_SLOTS"' "$SOURCE_DIR/factory/setup.sh"
 
 # Execute only that authenticated commit with the dedicated test account. The
 # fixture is the informed approval for this isolated account connection; no
