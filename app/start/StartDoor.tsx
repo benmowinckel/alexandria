@@ -30,13 +30,13 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
   if (screen === 'nearby') {
     return (
       <div className="door-block">
-        <p className="door-q">is your computer nearby?</p>
+        <p className="door-q">can you get to your computer now?</p>
         <div className="door-answers">
           <button className="door-btn" onClick={() => setScreen('computer')}>
-            yes<span className="act-why"> — go grab it</span>
+            yes<span className="act-why"> — set it up there</span>
           </button>
           <button className="door-btn" onClick={() => setScreen('phone')}>
-            no<span className="act-why"> — stay on phone</span>
+            no<span className="act-why"> — only my phone</span>
           </button>
         </div>
       </div>
@@ -45,13 +45,13 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
 
   return (
     <div className="door-block">
-      <p className="door-q">what do you use?</p>
+      <p className="door-q">what do you have access to?</p>
       <div className="door-answers">
         <button className="door-btn" onClick={() => setScreen('nearby')}>
-          agents<span className="act-why"> — eg claude code, codex, cowork</span>
+          an agent<span className="act-why"> — eg codex, cursor, cowork</span>
         </button>
         <Link href={refCode ? `/chat?ref=${encodeURIComponent(refCode)}` : '/chat'} className="door-btn door-btn-link">
-          chat<span className="act-why"> — eg claude, chatgpt, gemini</span>
+          just chat<span className="act-why"> — eg claude, chatgpt, gemini</span>
         </Link>
       </div>
     </div>
