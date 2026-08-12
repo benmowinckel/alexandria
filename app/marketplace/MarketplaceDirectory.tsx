@@ -25,18 +25,6 @@ interface ParsedId {
   path: string;
 }
 
-const svgProps = {
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 1.6,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-  'aria-hidden': true,
-};
-const FilterIcon = <svg width="18" height="18" {...svgProps}><path d="M3 5h18M6 12h12M10 19h4" /></svg>;
-const CheckIcon = <svg width="14" height="14" {...svgProps}><path d="M20 6L9 17l-5-5" /></svg>;
-
 function parseGithubId(id: string): ParsedId | null {
   const match = id.match(/^github:([^/]+)\/([^#]+)#(.+)$/);
   if (!match) return null;
@@ -53,39 +41,8 @@ function normalize(value: string | null | undefined): string {
   return (value || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
 }
 
-function displayType(value: string): string {
-  if (value === 'canon') return 'guidance';
-  if (value === 'system') return 'automation';
-  return value;
-}
-
-function displayRole(value: string): string {
-  if (value === 'core') return 'essential';
-  if (value === 'default') return 'included';
-  if (value === 'official') return 'optional';
-  if (value === 'community') return 'personal';
-  return value;
-}
-
-function toggleValue(value: string, current: string[], update: (next: string[]) => void) {
-  update(current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
-}
-
 export function MarketplaceDirectory({ modules }: { modules: MarketplaceModule[] }) {
   const [query, setQuery] = useState('');
-  const [types, setTypes] = useState<string[]>([]);
-  const [roles, setRoles] = useState<string[]>([]);
-  const [authors, setAuthors] = useState<string[]>([]);
-  const [filterOpen, setFilterOpen] = useState(false);
-
-  const typeOptions = useMemo(() => [...new Set(modules.map((module) => module.kind).filter(Boolean))]
-    .sort((a, b) => displayType(a).localeCompare(displayType(b))), [modules]);
-  const roleOptions = useMemo(() => [...new Set(modules.map((module) => module.tier).filter((value): value is NonNullable<MarketplaceModule['tier']> => !!value))], [modules]);
-  const authorOptions = useMemo(() => [...new Set(modules.map((module) => module.author_github_login).filter((value): value is string => !!value))].sort(), [modules]);
-  const authorNames = useMemo(() => new Map(modules.flatMap((module) => module.author_github_login
-    ? [[module.author_github_login, module.author_name || `@${module.author_github_login}`] as const]
-    : [])), [modules]);
-  const activeCount = types.length + roles.length + authors.length;
 
   const filtered = useMemo(() => {
     const needle = normalize(query.trim());
@@ -96,52 +53,11 @@ export function MarketplaceDirectory({ modules }: { modules: MarketplaceModule[]
         module.author_name,
         module.author_github_login,
         module.kind,
-        displayType(module.kind),
         module.tier,
-        module.tier ? displayRole(module.tier) : null,
       ].filter(Boolean).join(' '));
-      return (!needle || searchable.includes(needle))
-        && (types.length === 0 || types.includes(module.kind))
-        && (roles.length === 0 || (!!module.tier && roles.includes(module.tier)))
-        && (authors.length === 0 || (!!module.author_github_login && authors.includes(module.author_github_login)));
+      return !needle || searchable.includes(needle);
     });
-  }, [authors, modules, query, roles, types]);
-
-  const clearFilters = () => {
-    setTypes([]);
-    setRoles([]);
-    setAuthors([]);
-  };
-
-  const filterGroup = (
-    label: string,
-    values: string[],
-    active: string[],
-    update: (next: string[]) => void,
-    display: (value: string) => string = (value) => value,
-  ) => (
-    values.length > 0 ? (
-      <div className="mkt-filter-group">
-        <p className="mkt-filter-label">{label}</p>
-        {values.map((value) => {
-          const selected = active.includes(value);
-          return (
-            <button
-              key={value}
-              type="button"
-              role="option"
-              aria-selected={selected}
-              className="mkt-filter-option"
-              onClick={() => toggleValue(value, active, update)}
-            >
-              <span>{display(value)}</span>
-              <span className={selected ? 'is-selected' : ''}>{CheckIcon}</span>
-            </button>
-          );
-        })}
-      </div>
-    ) : null
-  );
+  }, [modules, query]);
 
   return (
     <>
@@ -151,33 +67,11 @@ export function MarketplaceDirectory({ modules }: { modules: MarketplaceModule[]
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="search modules and authors"
-            aria-label="Search modules and authors"
+            placeholder="search"
+            aria-label="Search marketplace"
             className="mkt-search"
           />
-          <button
-            type="button"
-            onClick={() => setFilterOpen((open) => !open)}
-            aria-label="Filter marketplace"
-            aria-expanded={filterOpen}
-            className={`mkt-filter-button${activeCount ? ' is-active' : ''}`}
-          >
-            {FilterIcon}
-            {activeCount > 0 && <span>{activeCount}</span>}
-          </button>
         </div>
-
-        {filterOpen && (
-          <>
-            <button type="button" aria-hidden tabIndex={-1} onClick={() => setFilterOpen(false)} className="mkt-filter-backdrop" />
-            <div className="mkt-filter-panel" role="listbox" aria-label="Marketplace filters">
-              {filterGroup('place in your loop', roleOptions, roles, setRoles, displayRole)}
-              {filterGroup('what it is', typeOptions, types, setTypes, displayType)}
-              {filterGroup('made by', authorOptions, authors, setAuthors, (value) => authorNames.get(value) || `@${value}`)}
-              {activeCount > 0 && <button type="button" onClick={clearFilters} className="mkt-filter-clear">clear</button>}
-            </div>
-          </>
-        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -193,13 +87,9 @@ export function MarketplaceDirectory({ modules }: { modules: MarketplaceModule[]
               <>
                 <div className="mkt-module-heading">
                   <h2 className="mkt-module-title">{module.name}</h2>
-                  {module.tier && <span className="mkt-tier">{displayRole(module.tier)}</span>}
                 </div>
                 {module.description && <p className="mkt-description">{module.description}</p>}
-                <p className="mkt-meta">
-                  {displayType(module.kind)}{authorLabel ? ` · made by ${authorLabel}` : ''}
-                  {module.author_name && author ? <span className="mkt-handle"> @{author}</span> : null}
-                </p>
+                {authorLabel && <p className="mkt-meta">{authorLabel}</p>}
               </>
             );
             return (
