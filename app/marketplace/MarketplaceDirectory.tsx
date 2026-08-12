@@ -7,6 +7,7 @@ export interface MarketplaceModule {
   name: string;
   description: string;
   author_github_login: string | null;
+  author_name?: string | null;
   kind: string;
   tier?: 'core' | 'default' | 'official' | 'community';
   adaptation?: 'universal' | 'personalizable';
@@ -53,7 +54,17 @@ function normalize(value: string | null | undefined): string {
 }
 
 function displayType(value: string): string {
-  return value === 'canon' ? 'method' : value;
+  if (value === 'canon') return 'guidance';
+  if (value === 'system') return 'automation';
+  return value;
+}
+
+function displayRole(value: string): string {
+  if (value === 'core') return 'essential';
+  if (value === 'default') return 'included';
+  if (value === 'official') return 'optional';
+  if (value === 'community') return 'personal';
+  return value;
 }
 
 function toggleValue(value: string, current: string[], update: (next: string[]) => void) {
@@ -67,15 +78,28 @@ export function MarketplaceDirectory({ modules }: { modules: MarketplaceModule[]
   const [authors, setAuthors] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const typeOptions = useMemo(() => [...new Set(modules.map((module) => module.kind).filter(Boolean))].sort(), [modules]);
+  const typeOptions = useMemo(() => [...new Set(modules.map((module) => module.kind).filter(Boolean))]
+    .sort((a, b) => displayType(a).localeCompare(displayType(b))), [modules]);
   const roleOptions = useMemo(() => [...new Set(modules.map((module) => module.tier).filter((value): value is NonNullable<MarketplaceModule['tier']> => !!value))], [modules]);
   const authorOptions = useMemo(() => [...new Set(modules.map((module) => module.author_github_login).filter((value): value is string => !!value))].sort(), [modules]);
+  const authorNames = useMemo(() => new Map(modules.flatMap((module) => module.author_github_login
+    ? [[module.author_github_login, module.author_name || `@${module.author_github_login}`] as const]
+    : [])), [modules]);
   const activeCount = types.length + roles.length + authors.length;
 
   const filtered = useMemo(() => {
     const needle = normalize(query.trim());
     return modules.filter((module) => {
-      const searchable = normalize([module.name, module.description, module.author_github_login, module.kind, displayType(module.kind), module.tier].filter(Boolean).join(' '));
+      const searchable = normalize([
+        module.name,
+        module.description,
+        module.author_name,
+        module.author_github_login,
+        module.kind,
+        displayType(module.kind),
+        module.tier,
+        module.tier ? displayRole(module.tier) : null,
+      ].filter(Boolean).join(' '));
       return (!needle || searchable.includes(needle))
         && (types.length === 0 || types.includes(module.kind))
         && (roles.length === 0 || (!!module.tier && roles.includes(module.tier)))
@@ -89,8 +113,14 @@ export function MarketplaceDirectory({ modules }: { modules: MarketplaceModule[]
     setAuthors([]);
   };
 
-  const filterGroup = (label: string, values: string[], active: string[], update: (next: string[]) => void) => (
-    values.length > 1 ? (
+  const filterGroup = (
+    label: string,
+    values: string[],
+    active: string[],
+    update: (next: string[]) => void,
+    display: (value: string) => string = (value) => value,
+  ) => (
+    values.length > 0 ? (
       <div className="mkt-filter-group">
         <p className="mkt-filter-label">{label}</p>
         {values.map((value) => {
@@ -104,7 +134,7 @@ export function MarketplaceDirectory({ modules }: { modules: MarketplaceModule[]
               className="mkt-filter-option"
               onClick={() => toggleValue(value, active, update)}
             >
-              <span>{label === 'authors' ? `@${value}` : label === 'types' ? displayType(value) : value}</span>
+              <span>{display(value)}</span>
               <span className={selected ? 'is-selected' : ''}>{CheckIcon}</span>
             </button>
           );
@@ -141,9 +171,9 @@ export function MarketplaceDirectory({ modules }: { modules: MarketplaceModule[]
           <>
             <button type="button" aria-hidden tabIndex={-1} onClick={() => setFilterOpen(false)} className="mkt-filter-backdrop" />
             <div className="mkt-filter-panel" role="listbox" aria-label="Marketplace filters">
-              {filterGroup('roles', roleOptions, roles, setRoles)}
-              {filterGroup('types', typeOptions, types, setTypes)}
-              {filterGroup('authors', authorOptions, authors, setAuthors)}
+              {filterGroup('place in your loop', roleOptions, roles, setRoles, displayRole)}
+              {filterGroup('what it is', typeOptions, types, setTypes, displayType)}
+              {filterGroup('made by', authorOptions, authors, setAuthors, (value) => authorNames.get(value) || `@${value}`)}
               {activeCount > 0 && <button type="button" onClick={clearFilters} className="mkt-filter-clear">clear</button>}
             </div>
           </>
@@ -158,15 +188,17 @@ export function MarketplaceDirectory({ modules }: { modules: MarketplaceModule[]
             const parsed = parseGithubId(module.id);
             const href = parsed ? `https://github.com/${parsed.user}/${parsed.repo}/blob/HEAD/${parsed.path}.md` : null;
             const author = module.author_github_login || parsed?.user;
+            const authorLabel = module.author_name || (author ? `@${author}` : null);
             const inner = (
               <>
                 <div className="mkt-module-heading">
                   <h2 className="mkt-module-title">{module.name}</h2>
-                  {module.tier && <span className="mkt-tier">{module.tier}</span>}
+                  {module.tier && <span className="mkt-tier">{displayRole(module.tier)}</span>}
                 </div>
                 {module.description && <p className="mkt-description">{module.description}</p>}
                 <p className="mkt-meta">
-                  {displayType(module.kind)}{author ? ` · @${author}` : ''}
+                  {displayType(module.kind)}{authorLabel ? ` · made by ${authorLabel}` : ''}
+                  {module.author_name && author ? <span className="mkt-handle"> @{author}</span> : null}
                 </p>
               </>
             );

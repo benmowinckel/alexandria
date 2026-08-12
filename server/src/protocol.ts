@@ -734,6 +734,7 @@ export function registerProtocol(app: Hono) {
         name: meta?.name || moduleId,
         description: meta?.description || '',
         author_github_login: authorFromModuleId(moduleId),
+        author_name: null,
         kind: deriveKind(moduleId),
         tier: deriveMarketplaceTier(moduleId),
         adaptation: meta?.adaptation || 'universal',

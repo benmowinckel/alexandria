@@ -19,7 +19,7 @@ export default function SiteFooter({
   ctaHref?: string;
 }) {
   return (
-    <footer style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '1rem 1.8rem', marginTop: '4.5rem', padding: '2.2rem 1.2rem 3rem', borderTop: '1px solid var(--border-light)' }}>
+    <footer className="site-footer">
       <Link
         href={ctaHref}
         style={{ fontFamily: 'var(--font-eb-garamond)', color: 'var(--text-muted)', fontSize: '0.9rem', textDecoration: 'none' }}
@@ -33,20 +33,6 @@ export default function SiteFooter({
         className="hover:opacity-60"
       >
         alexandria<span style={{ fontStyle: 'normal' }}>.</span>
-      </Link>
-      <Link
-        href="/privacy"
-        style={{ fontFamily: 'var(--font-eb-garamond)', color: 'var(--text-ghost)', fontSize: '0.82rem', textDecoration: 'none' }}
-        className="hover:opacity-60"
-      >
-        privacy
-      </Link>
-      <Link
-        href="/terms"
-        style={{ fontFamily: 'var(--font-eb-garamond)', color: 'var(--text-ghost)', fontSize: '0.82rem', textDecoration: 'none' }}
-        className="hover:opacity-60"
-      >
-        terms
       </Link>
     </footer>
   );

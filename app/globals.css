@@ -1903,7 +1903,7 @@ html.app-shell input:focus {
   100% { opacity: 1; transform: none; }
 }
 
-.mkt-main { flex: 1; width: 100%; max-width: 1040px; margin: 0 auto; padding: 5.5rem 2rem 2rem; }
+.mkt-main { flex: 1; width: 100%; max-width: 660px; margin: 0 auto; padding: 5.5rem 2rem 2rem; }
 .mkt-header { margin-bottom: 2.6rem; }
 .mkt-brand {
   font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
@@ -1947,12 +1947,12 @@ html.app-shell input:focus {
   font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "swsh" 1;
   text-wrap: balance;
 }
-.mkt-search-wrap { position: relative; max-width: 660px; margin-top: 2.4rem; }
+.mkt-search-wrap { position: relative; margin-top: 2.4rem; }
 .mkt-search-row { display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-light); }
 .mkt-search {
   flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
   color: var(--text-primary); font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
-  font-size: 0.95rem; padding: 0 0 0.55rem;
+  font-size: 1rem; padding: 0 0 0.55rem;
 }
 .mkt-search::placeholder { color: var(--text-ghost); opacity: 1; }
 .mkt-filter-button {
@@ -1990,8 +1990,7 @@ html.app-shell input:focus {
 }
 .mkt-empty { color: var(--text-muted); font-size: 0.95rem; margin-top: 2rem; }
 .mkt-list {
-  margin-top: 2.6rem; display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 4.5rem; row-gap: 2.25rem;
+  margin-top: 2.6rem; display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 2.25rem;
 }
 .mkt-module { min-width: 0; }
 .mkt-module-link {
@@ -2027,13 +2026,27 @@ html.app-shell input:focus {
 }
 .mkt-meta {
   margin: 0.35rem 0 0;
-  color: var(--text-ghost);
-  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
   line-height: 1.35;
 }
+.mkt-handle { color: var(--text-ghost); }
+
+.site-footer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 4.5rem;
+  padding: 2.2rem 1.2rem 3rem;
+  border-top: 1px solid var(--border-light);
+  text-align: center;
+}
+.site-footer a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
 @media (max-width: 760px) {
-  .mkt-list { grid-template-columns: 1fr; row-gap: 1.8rem; }
+  .mkt-list { row-gap: 1.8rem; }
   .mkt-main { padding: 4rem 1.5rem 1.5rem; }
 }
 

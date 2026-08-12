@@ -4,6 +4,7 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import SiteFooter from '../components/SiteFooter';
 import { SERVER_URL, pageMetadata } from '../lib/config';
 import { MarketplaceDirectory, type MarketplaceModule } from './MarketplaceDirectory';
+import marketplaceInventory from '../../factory/marketplace.json';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +47,9 @@ async function loadModules(): Promise<MarketplaceModule[]> {
           ...entry,
           id,
           author_github_login: id.startsWith('github:benmowinckel/') ? 'benmowinckel' : entry.author_github_login,
+          author_name: id.startsWith(`github:${marketplaceInventory.author.github_login}/`)
+            ? marketplaceInventory.author.name
+            : entry.author_name,
         });
       }
     }

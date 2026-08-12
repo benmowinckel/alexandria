@@ -49,6 +49,7 @@ export interface MarketplaceCatalogEntry {
   name: string;
   description: string;
   author_github_login: string | null;
+  author_name: string | null;
   kind: string;
   tier: MarketplaceTier;
   adaptation: ModuleAdaptation;
@@ -96,6 +97,10 @@ interface MarketplaceInventoryModule {
 }
 
 const MARKETPLACE_ROLES = new Set<MarketplaceTier>(['core', 'default', 'official', 'community']);
+const MARKETPLACE_AUTHOR = marketplaceInventory.author;
+if (!MARKETPLACE_AUTHOR?.name || !MARKETPLACE_AUTHOR.github_login) {
+  throw new Error('factory/marketplace.json contains an invalid author');
+}
 const MARKETPLACE_BUILTINS: MarketplaceInventoryModule[] = marketplaceInventory.modules.map((module) => {
   if (!module.path || !module.name || !MARKETPLACE_ROLES.has(module.role as MarketplaceTier)) {
     throw new Error('factory/marketplace.json contains an invalid module');
@@ -118,7 +123,8 @@ export function marketplaceBuiltins(): MarketplaceCatalogEntry[] {
     id: buildModuleId(CURRENT_OWNER, FACTORY_REPO, module.path),
     name: module.name,
     description: module.description,
-    author_github_login: CURRENT_OWNER,
+    author_github_login: MARKETPLACE_AUTHOR.github_login,
+    author_name: MARKETPLACE_AUTHOR.name,
     kind: module.kind,
     tier: module.role,
     adaptation: module.adaptation,

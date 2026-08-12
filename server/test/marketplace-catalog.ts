@@ -63,6 +63,9 @@ assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/b
 assert.equal(isMarketplaceModule('github:someone/their-modules#focus'), true);
 
 const builtins = marketplaceBuiltins();
+assert.equal(marketplaceInventory.author.name, 'Benjamin a. Mowinckel');
+assert.equal(marketplaceInventory.author.github_login, 'benmowinckel');
+assert.equal(builtins.every((module) => module.author_name === marketplaceInventory.author.name), true);
 for (const inventoryModule of marketplaceInventory.modules) {
   const source = new URL(`../../${inventoryModule.path}.md`, import.meta.url);
   assert.equal(existsSync(source), true, `marketplace source missing: ${inventoryModule.path}.md`);
