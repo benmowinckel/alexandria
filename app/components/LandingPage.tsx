@@ -1098,15 +1098,13 @@ export default function LandingPage() {
                   </p>
                   <p className="pitch-simple-prose">
                     We call that an alexandria loop{'\u00a0'}— an idea, not
-                    software: a method of working with your own ai. The founder
-                    made his free and open. The button is a recipe you hand to
-                    it{'\u00a0'}— what the loop is, why it matters, how to make
-                    yours, and his as the reference{'\u00a0'}— so you close the
-                    loop yourself, however close you already are. Joining the
-                    community is optional. If people you know connect their
-                    loops, your ai can understand them from their own words
-                    too{'\u00a0'}— and help you better with the parts of life
-                    you share.
+                    software: a free, open method for working with your own ai.
+                    The button gives your ai the instructions, with the
+                    founder&apos;s complete loop as a reference. It keeps what
+                    already works, adds what is missing, and builds yours. You
+                    get a complete starting point without starting over. Your
+                    ai runs the loop itself; nothing new sits between you and
+                    your ai.
                   </p>
                 </div>
 
