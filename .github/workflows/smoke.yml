@@ -78,12 +78,25 @@ jobs:
           # the checked-out release actually contains.
           MODULE_ID='github:benmowinckel/alexandria#factory/canon/bookshelf'
           MODULE_SHA=$(sha256sum factory/canon/bookshelf.md | cut -d' ' -f1)
-          curl -sf -X POST $SERVER/call \
+          CALL_RESPONSE=$(curl -sS -w '\n%{http_code}' -X POST $SERVER/call \
             -H "Authorization: Bearer $API_KEY" \
             -H "X-Alexandria-Client: ci-smoke" \
             -H "Content-Type: application/json" \
-            -d "{\"modules\":[{\"id\":\"$MODULE_ID\",\"text\":\"ci smoke verification\",\"source_sha256\":\"$MODULE_SHA\"}]}" \
-            | grep -q '"ok":true' || { echo "::error::Call failed"; exit 1; }
+            -d "{\"modules\":[{\"id\":\"$MODULE_ID\",\"text\":\"ci smoke verification\",\"source_sha256\":\"$MODULE_SHA\"}]}" )
+          CALL_STATUS=$(printf '%s\n' "$CALL_RESPONSE" | tail -1)
+          CALL_BODY=$(printf '%s\n' "$CALL_RESPONSE" | sed '$d')
+          if [ "$CALL_STATUS" = 200 ]; then
+            echo "$CALL_BODY" | grep -q '"ok":true' || { echo "::error::Call returned 200 without ok"; exit 1; }
+          elif [ "$CALL_STATUS" = 429 ]; then
+            # A deployment should not need to bypass the real per-Author safety
+            # cap. If an earlier exact smoke event already exists, the read-back
+            # below proves the same contract without manufacturing another row.
+            echo "$CALL_BODY" | grep -q 'Daily /call limit reached' || { echo "::error::Unexpected call rate limit"; exit 1; }
+          else
+            echo "::error::Call failed with HTTP $CALL_STATUS"
+            echo "$CALL_BODY"
+            exit 1
+          fi
 
           # Verify the exact-version call landed in the authenticated module view.
           MARKET=$(curl -sf $SERVER/marketplace/github:benmowinckel%2Falexandria%23factory%2Fcanon%2Fbookshelf -H "Authorization: Bearer $API_KEY")
