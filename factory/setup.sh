@@ -788,7 +788,7 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   CLAUDE_HOOKS_OK=""
   if command -v node &>/dev/null; then
     if node -e "
-      const fs = require('fs'), path = require('path');
+      const fs = require('fs'), os = require('os'), path = require('path');
       const f = path.join(process.env.HOME, '.claude', 'settings.json');
       let settings = {};
       if (fs.existsSync(f)) {
@@ -810,7 +810,10 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
       else if (!Array.isArray(settings.permissions.additionalDirectories) || !settings.permissions.additionalDirectories.every(x => typeof x === 'string')) {
         console.error('Refusing to alter Claude settings: additionalDirectories is not a string array'); process.exit(2);
       }
-      const alexDir = path.join(process.env.HOME, 'alexandria');
+      // os.homedir() and Python's Path.home() resolve to the same native path
+      // on Windows. Git Bash's HOME is /c/Users/..., which names the same
+      // folder but fails an exact health-check comparison with C:\\Users\\....
+      const alexDir = path.join(os.homedir(), 'alexandria');
       if (!settings.permissions.additionalDirectories.includes(alexDir)) settings.permissions.additionalDirectories.push(alexDir);
       // Install the native ceiling when its slot is free; preserve every
       // foreign statusline. One local sentinel is the immediate OFF switch.
@@ -1567,7 +1570,7 @@ PY
   fi
   command -v node >/dev/null 2>&1 || return 1
   node <<'NODE' 2>/dev/null
-const fs = require('fs'), path = require('path');
+const fs = require('fs'), os = require('os'), path = require('path');
 const file = path.join(process.env.HOME, '.claude', 'settings.json');
 const document = JSON.parse(fs.readFileSync(file, 'utf8'));
 if (!document || Array.isArray(document) || typeof document !== 'object') process.exit(1);
@@ -1575,7 +1578,7 @@ if (document.disableAllHooks === true) process.exit(1);
 const hooks = document.hooks, permissions = document.permissions;
 if (!hooks || Array.isArray(hooks) || typeof hooks !== 'object') process.exit(1);
 if (!permissions || Array.isArray(permissions) || typeof permissions !== 'object') process.exit(1);
-const root = path.join(process.env.HOME, 'alexandria');
+const root = path.join(os.homedir(), 'alexandria');
 if (!Array.isArray(permissions.additionalDirectories) || !permissions.additionalDirectories.includes(root)) process.exit(1);
 const required = {
   SessionStart: [
