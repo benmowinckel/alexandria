@@ -571,7 +571,7 @@ require factory/setup.sh \
   'refusing to alter unreadable Cursor hooks' \
   'Cursor config merge does not fail closed on malformed existing JSON'
 require factory/setup.sh \
-  '[ -n "${CLAUDE_HOOKS_OK:-}" ] && validate_claude_config' \
+  'validate_claude_config && CLAUDE_CONFIG_OK=1' \
   'Claude health still trusts text search instead of the parsed finished config'
 require factory/setup.sh \
   'validate_cursor_config' \

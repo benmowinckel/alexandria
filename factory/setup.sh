@@ -1624,15 +1624,25 @@ PY
 CLAUDE_DETECTED="no"
 if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   CLAUDE_DETECTED="yes"
+  CLAUDE_CONFIG_OK=""
+  CLAUDE_START_FILE_OK=""
+  CLAUDE_CLOSE_FILE_OK=""
+  CLAUDE_CLOSE_DECLARED_OK=""
+  validate_claude_config && CLAUDE_CONFIG_OK=1
+  [ -f "$HOME/.claude/skills/a/SKILL.md" ] && CLAUDE_START_FILE_OK=1
+  [ -n "${CLAUDE_CLOSE_DIR:-}" ] && \
+    [ -f "$HOME/.claude/skills/$CLAUDE_CLOSE_DIR/SKILL.md" ] && CLAUDE_CLOSE_FILE_OK=1
+  [ -n "${CLAUDE_CLOSE_SKILL:-}" ] && [ -n "${CLAUDE_CLOSE_DIR:-}" ] && \
+    grep -q "^name: $CLAUDE_CLOSE_SKILL$" "$HOME/.claude/skills/$CLAUDE_CLOSE_DIR/SKILL.md" 2>/dev/null && \
+    CLAUDE_CLOSE_DECLARED_OK=1
   # Ground truth: the shim hook is registered in settings.json (the config
   # Claude Code — CLI and Desktop code tab — actually reads) and the skill is
   # present.
-  if [ -n "${CLAUDE_HOOKS_OK:-}" ] && validate_claude_config && \
+  if [ -n "${CLAUDE_HOOKS_OK:-}" ] && [ -n "$CLAUDE_CONFIG_OK" ] && \
      [ "${CLAUDE_A_SKILL:-}" = "a" ] && \
-     [ -f "$HOME/.claude/skills/a/SKILL.md" ] && \
+     [ -n "$CLAUDE_START_FILE_OK" ] && \
      [ -n "${CLAUDE_CLOSE_SKILL:-}" ] && \
-     [ -f "$HOME/.claude/skills/${CLAUDE_CLOSE_DIR:-}/SKILL.md" ] && \
-     grep -q "^name: $CLAUDE_CLOSE_SKILL$" "$HOME/.claude/skills/$CLAUDE_CLOSE_DIR/SKILL.md" 2>/dev/null; then
+     [ -n "$CLAUDE_CLOSE_FILE_OK" ] && [ -n "$CLAUDE_CLOSE_DECLARED_OK" ]; then
     CLAUDE_NAMES="/a + /$CLAUDE_CLOSE_SKILL"
     STATUS_CLAUDE="ok"; DETAIL_CLAUDE="$CLAUDE_NAMES ready; hooks wired; foreign names preserved"
   else
@@ -1818,6 +1828,7 @@ SETUP_STATUS="ok"
   echo "  loop: $STATUS_LOOP"
   echo "  api_key: $STATUS_KEY"
   [ "$CLAUDE_DETECTED" = "yes" ] && echo "  claude_skill: $STATUS_CLAUDE"
+  [ "$CLAUDE_DETECTED" = "yes" ] && echo "  claude_checks: hooks=${CLAUDE_HOOKS_OK:+ok} config=${CLAUDE_CONFIG_OK:+ok} start_name=${CLAUDE_A_SKILL:-missing} start_file=${CLAUDE_START_FILE_OK:+ok} close_name=${CLAUDE_CLOSE_SKILL:-missing} close_dir=${CLAUDE_CLOSE_DIR:-missing} close_file=${CLAUDE_CLOSE_FILE_OK:+ok} close_declared=${CLAUDE_CLOSE_DECLARED_OK:+ok}"
   [ "$CURSOR_DETECTED" = "yes" ] && echo "  cursor_skill: $STATUS_CURSOR"
   [ "$CODEX_DETECTED" = "yes" ] && echo "  codex_skill: $STATUS_CODEX"
   [ "$FACTORY_DETECTED" = "yes" ] && echo "  factory_skill: $STATUS_FACTORY"
