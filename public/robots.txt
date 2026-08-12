@@ -1,27 +1,5 @@
-# Search engines: index public, block confidential
-User-agent: Googlebot
-User-agent: Bingbot
-User-agent: Yandex
-Disallow: /confidential
-Disallow: /memo
-Disallow: /pitch
-Disallow: /demo
-Disallow: /demo.mp4
-Disallow: /docs/Memo.md
-Disallow: /docs/confidential.concrete.md
-Disallow: /docs/confidential.alexandria.md
-Disallow: /docs/confidential_alexandria.md
-
-# AI agents and LLM crawlers: allow everything
-User-agent: ChatGPT-User
-User-agent: anthropic-ai
-User-agent: Claude-Web
-User-agent: GPTBot
-User-agent: PerplexityBot
-User-agent: Applebot-Extended
-Allow: /
-
-# Default: allow public docs
+# Public pages and documents are open to every crawler. Internal, private,
+# transactional, and account surfaces are not crawl targets.
 User-agent: *
 Allow: /
 Allow: /docs/
@@ -30,7 +8,14 @@ Disallow: /memo
 Disallow: /pitch
 Disallow: /demo
 Disallow: /demo.mp4
+Disallow: /demo-public.mp4
 Disallow: /docs/Memo.md
+Disallow: /docs/confidential
+Disallow: /api/
+Disallow: /auth/
+Disallow: /cancel
+Disallow: /brief
+Disallow: /invite
 Disallow: /signup
 
 Sitemap: https://alexandria-library.com/sitemap.xml

@@ -325,7 +325,7 @@ export function registerRoutes(app: Hono) {
     });
   });
 
-  // --- Kin code validation (public, called by /signup before OAuth) ---
+  // --- Kin code validation (public, called by /join before OAuth) ---
 
   app.get('/check-kin', async (c) => {
     const code = (c.req.query('code') || '').trim();
@@ -602,8 +602,25 @@ export function registerRoutes(app: Hono) {
       });
 
       // Track referral — from OAuth state (round-tripped) or query params (direct)
-      const ref = stateData.ref || c.req.query('ref');
-      const refSource = stateData.ref_source || c.req.query('ref_source');
+      let ref = stateData.ref || c.req.query('ref');
+      let refSource = stateData.ref_source || c.req.query('ref_source');
+      // A referral is allowed to do its real job: let the person try the free
+      // loop first. If they later join on another device or from a clean URL,
+      // recover the validated start referral attached to this exact email.
+      if (!ref && isNewAccount && email) {
+        try {
+          const pending = await getDB().prepare(
+            `SELECT source FROM waitlist WHERE email = ? AND type = 'onboard' LIMIT 1`,
+          ).bind(email.toLowerCase().trim()).first<{ source: string }>();
+          const pendingRef = pending?.source.match(/:ref:([A-Za-z0-9-]{1,39})$/)?.[1];
+          if (pendingRef) {
+            ref = pendingRef;
+            refSource = 'start';
+          }
+        } catch (e) {
+          console.error('[routes] Pending referral recovery failed:', e);
+        }
+      }
       const refId = stateData.ref_id || c.req.query('ref_id');
       if (ref && isNewAccount && ref.toLowerCase() !== user.login.toLowerCase()) {
         // Validate ref maps to an existing github_login before inserting — drop dangling rows.
@@ -762,7 +779,7 @@ export function registerRoutes(app: Hono) {
     if (!auth) return c.text('Unauthorized', 401);
     const { account, key } = auth;
     if (!account.stripe_customer_id) {
-      return c.text('No billing account found. Complete signup at https://alexandria-library.com/signup', 400);
+      return c.text('No billing account found. Join at https://alexandria-library.com/join', 400);
     }
     try {
       const url = await createPortalSession(account.stripe_customer_id);
@@ -772,7 +789,7 @@ export function registerRoutes(app: Hono) {
       // setup-mode checkouts). Clear the stale ID from the account record
       // so re-entry creates a fresh portal flow instead of looping the
       // same failing call. Defensive retry in createCheckoutSession then
-      // creates a fresh live customer on next /signup.
+      // creates a fresh live customer on next /join.
       const e = err as { type?: string; code?: string };
       if (e?.type === 'StripeInvalidRequestError' && e?.code === 'resource_missing') {
         console.warn(`[account] stale stripe_customer_id ${account.stripe_customer_id} — clearing and redirecting`);
@@ -788,7 +805,7 @@ export function registerRoutes(app: Hono) {
         } catch (clearErr) {
           console.error('[account] failed to clear stale customer:', clearErr);
         }
-        return c.redirect(`${getWebsiteUrl()}/signup?billing=refresh`);
+        return c.redirect(`${getWebsiteUrl()}/join?billing=refresh`);
       }
       console.error('Portal error:', err);
       return c.text('Failed to create billing portal session.', 500);
@@ -1251,7 +1268,7 @@ export function registerRoutes(app: Hono) {
 
     const html = (acct: Account) =>
       '<div style="font-family: \'EB Garamond\', Georgia, serif; max-width: 420px; margin: 0 auto; padding: 40px 20px; color: #3d3630; text-align: center;">' +
-      '<p style="font-size: 1rem; line-height: 1.9; color: #8a8078; margin: 0 0 1.5rem;">we fixed a setup issue. <a href="' + getWebsiteUrl() + '/signup" style="color: #3d3630;">sign in</a> to get your updated setup command.</p>' +
+      '<p style="font-size: 1rem; line-height: 1.9; color: #8a8078; margin: 0 0 1.5rem;">we fixed a setup issue. <a href="' + getWebsiteUrl() + '/join" style="color: #3d3630;">sign in</a> to get your updated setup command.</p>' +
       '<p style="font-size: 0.72rem; color: #bbb4aa; margin-top: 1.5rem;"><a href="' + getServerUrl() + '/email/stop?t=' + acct.email_token + '" style="color: #8a8078;">stop these emails</a></p>' +
       '</div>';
 
@@ -1328,7 +1345,7 @@ export function registerRoutes(app: Hono) {
   // Magic-link install — email nudges link here so the user gets the actual
   // onboarding page (copy buttons + shortcut link), no OAuth needed. Token
   // is generated per-nudge with a 14d TTL; expired tokens fall back to
-  // /signup (clean OAuth flow). Redemption is logged so we know whether the
+  // /join (clean OAuth flow). Redemption is logged so we know whether the
   // email actually drove a click (mirror loop between "nudge sent" and
   // "installed_after_nudge"). Single-use: the rendered page carries the live
   // api key, so the token is deleted on first redemption (same pattern as
@@ -1340,7 +1357,7 @@ export function registerRoutes(app: Hono) {
     const stored = await kv.get(`install:${token}`);
     if (!stored) {
       logEvent('install_token_expired', { token_prefix: token.slice(0, 8) });
-      return c.redirect(`${getWebsiteUrl()}/signup`, 302);
+      return c.redirect(`${getWebsiteUrl()}/join`, 302);
     }
     await kv.delete(`install:${token}`);
     const { api_key, github_login } = JSON.parse(stored) as { api_key: string; github_login: string };

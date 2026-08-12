@@ -94,7 +94,7 @@ app.use('*', async (c, next) => {
 
 // Allowed CORS origins — imported from cors.ts (single source of truth)
 
-// CORS for kin code validation (website /signup calls api.alexandria-library.com/check-kin)
+// CORS for kin code validation (website /join calls api.alexandria-library.com/check-kin)
 app.use('/check-kin', async (c, next) => {
   const allowed = getAllowedOrigins();
   const reqOrigin = c.req.header('Origin') || '';
@@ -681,7 +681,11 @@ app.post('/onboard', async (c) => {
        VALUES (?, 'onboard', ?, ?, ?)
        ON CONFLICT(email) DO UPDATE
          SET type = 'onboard',
-             source = excluded.source,
+             source = CASE
+               WHEN excluded.source LIKE '%:ref:%' THEN excluded.source
+               WHEN waitlist.source LIKE 'start:%:ref:%' THEN waitlist.source
+               ELSE excluded.source
+             END,
              unsubscribe_token = COALESCE(waitlist.unsubscribe_token, excluded.unsubscribe_token),
              opted_out_at = NULL
        RETURNING unsubscribe_token`,

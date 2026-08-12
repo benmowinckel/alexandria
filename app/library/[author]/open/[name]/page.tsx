@@ -113,7 +113,7 @@ export default function OpenProtocolFileGatePage({
 
   const signInUrl = useMemo(() => librarySignInUrl(nextPath), [nextPath]);
   const signUpUrl = useMemo(() => (
-    `/signup?ref=${encodeURIComponent(authorId)}&ref_source=library`
+    `/join?ref=${encodeURIComponent(authorId)}&ref_source=library`
   ), [authorId]);
   const purchaseSessionId = (searchParams.get('session_id') || '').trim();
   const canceled = searchParams.get('cancel') === '1';

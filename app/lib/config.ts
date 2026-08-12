@@ -51,6 +51,13 @@ const OG_BASE = {
   type: 'website' as const,
 };
 
+const SHARE_IMAGE = {
+  url: `${SITE_URL}/opengraph-image`,
+  width: 1200,
+  height: 630,
+  alt: 'alexandria. Your AI should know how you think. A free loop, in private files you own.',
+};
+
 // Per-page canonical + og:url + full openGraph block. The root layout sets
 // canonical and og:url to SITE_URL, and `alternates`/`openGraph` are
 // shallow-merged, so every child page inherits canonical=root and
@@ -62,8 +69,9 @@ export function pageMetadata(opts: {
   path: string;
   title: string;
   description: string;
+  type?: 'website' | 'article';
 }) {
-  const { path, title, description } = opts;
+  const { path, title, description, type = 'website' } = opts;
   const url = path === '/' ? SITE_URL : `${SITE_URL}${path}`;
   return {
     // Top-level title/description too (2026-07-17 SEO sweep): callers that
@@ -73,8 +81,22 @@ export function pageMetadata(opts: {
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { ...OG_BASE, title, description, url },
-    twitter: { card: 'summary_large_image' as const, title, description },
+    openGraph: {
+      ...OG_BASE,
+      type,
+      title,
+      description,
+      url,
+      images: [SHARE_IMAGE],
+    },
+    twitter: {
+      card: 'summary_large_image' as const,
+      title,
+      description,
+      images: [SHARE_IMAGE],
+      site: '@benmowinckel',
+      creator: '@benmowinckel',
+    },
   };
 }
 

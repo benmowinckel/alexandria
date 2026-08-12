@@ -9,6 +9,7 @@ on:
       - 'app/**'
       - 'factory/**'
       - 'scripts/test-codex-integration.sh'
+      - 'scripts/check-metadata.mjs'
       - 'package.json'
       - 'server/package.json'
   pull_request:
@@ -53,3 +54,14 @@ jobs:
 
       - name: App build
         run: npm ci && npm run build
+
+      - name: Rendered metadata contract
+        run: |
+          npm run start >/tmp/alexandria-next.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID' EXIT
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            curl -sf http://127.0.0.1:3000 >/dev/null && break
+            sleep 1
+          done
+          npm run audit:metadata

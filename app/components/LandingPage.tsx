@@ -830,6 +830,7 @@ export default function LandingPage() {
            carries the "voice inside your head" register. Whitespace
            is the only ornament. */}
       <div className="top-slide" ref={topRef}>
+        <h1 className="front-page-title">Your mind, in files you own.</h1>
         {/* Breeze video — the same scene as the PNG background, with
             tree-leaf shadows swaying and a faint shimmer on the sea.
             PNG stays as the .top-slide background so first paint is

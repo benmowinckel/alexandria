@@ -1511,7 +1511,7 @@ html.app-shell input:focus {
    page renders correctly even if hydration stalls —
    styled-jsx in Next 16 client components is fragile
    and would leave a critical conversion surface
-   unstyled. Same CSS variables as /signup so the
+   unstyled. Same CSS variables as /join so the
    cathedral aesthetic carries through.
    ============================================ */
 .cancel-page {
@@ -1559,7 +1559,7 @@ html.app-shell input:focus {
 }
 
 /* Letter — body of the page. Single article element, prose typography
-   matching .primer on /signup. Paragraphs handle their own margin. */
+   matching .primer on /join. Paragraphs handle their own margin. */
 .cancel-letter p {
   margin: 0 0 16px;
   font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -1585,7 +1585,7 @@ html.app-shell input:focus {
 }
 
 /* Salutation — museum-plate opener. Letter-spaced italic lowercase to
-   match /signup's .primer-salutation register. */
+   match /join's .primer-salutation register. */
 .cancel-salutation {
   margin: 0 0 28px !important;
   font-style: italic;
@@ -1606,7 +1606,7 @@ html.app-shell input:focus {
 }
 
 /* Contact row — email + call CTAs side-by-side. Italic underlined
-   text-buttons, no filled buttons, mirroring /signup's primary-cta. */
+   text-buttons, no filled buttons, mirroring /join's primary CTA. */
 .cancel-contact {
   display: flex;
   gap: 32px;
@@ -1737,7 +1737,7 @@ html.app-shell input:focus {
 }
 
 /* Action — the destructive button + error. Centered, padded above the
-   letter close. Same fleuron divider trick as /signup so the action
+   letter close. Same fleuron divider trick as /join so the action
    doesn't read as a form submit. */
 .cancel-action {
   display: flex;

@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import PublicDocReader from '../components/PublicDocReader';
 import { pageMetadata } from '../lib/config';
 
@@ -15,23 +14,12 @@ const TITLE = 'ask anything.';
 const DESCRIPTION =
   'What still sits between you and starting: how the recipe works, what changes in week one, how influence stays contestable, and what stays optional.';
 
-const PAGE_META = pageMetadata({
+export const metadata = pageMetadata({
   path: '/plainly',
   title: TITLE,
   description: DESCRIPTION,
+  type: 'article',
 });
-
-export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: PAGE_META.alternates,
-  openGraph: { ...PAGE_META.openGraph, type: 'article' },
-  twitter: {
-    card: 'summary_large_image',
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-};
 
 // The rotation skews to the questions that stand between a convinced
 // reader and the button — the infinite level exists to close, not to

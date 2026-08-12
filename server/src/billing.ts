@@ -633,7 +633,7 @@ export async function createCheckoutSession(opts: {
         submit: { message: 'free if three friends join through you and stay active. otherwise a dollar a day after your first month free.' },
       },
       success_url: `${SERVER_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${WEBSITE_URL}/signup?billing=cancel`,
+      cancel_url: `${WEBSITE_URL}/join?billing=cancel`,
     };
   };
 
@@ -808,7 +808,7 @@ export async function createPortalSession(stripeCustomerId: string): Promise<str
   const configuration = await ensurePortalConfigurationId();
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
-    return_url: `${WEBSITE_URL}/signup`,
+    return_url: `${WEBSITE_URL}/join`,
     configuration,
   });
   return session.url;
@@ -957,7 +957,7 @@ export async function requireActiveMember(c: { req: { header: (name: string) => 
     return {
       ok: false,
       status: 402,
-      message: 'subscription not active. reactivate at https://alexandria-library.com/signup',
+      message: 'subscription not active. reactivate at https://alexandria-library.com/join',
     };
   }
   return { ok: true, key: auth.key, account: auth.account, membership };
@@ -1195,7 +1195,7 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
   app.get('/billing/success', async (c) => {
     const sessionId = c.req.query('session_id');
     if (!sessionId) {
-      return c.redirect(`${WEBSITE_URL}/signup`);
+      return c.redirect(`${WEBSITE_URL}/join`);
     }
 
     try {
@@ -1204,7 +1204,7 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       const login = session.metadata?.github_login || '';
 
       if (!login) {
-        return c.redirect(`${WEBSITE_URL}/signup`);
+        return c.redirect(`${WEBSITE_URL}/join`);
       }
 
       // SECURITY (paywall integrity): this endpoint is UNAUTHENTICATED and the
@@ -1214,7 +1214,7 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       // paid-access bypass. Bounce anything not actually complete.
       if (session.status !== 'complete') {
         logEvent('billing_success_incomplete', { status: session.status || 'unknown' });
-        return c.redirect(`${WEBSITE_URL}/signup`);
+        return c.redirect(`${WEBSITE_URL}/join`);
       }
 
       let customerId = session.customer as string | null;
@@ -1260,7 +1260,7 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       return c.redirect(await welcomeHandoffUrl(kv, sessionToken, apiKey, login, false, number ?? 0, kinCompliant));
     } catch (err) {
       console.error('Billing success page error:', err);
-      return c.redirect(`${WEBSITE_URL}/signup`);
+      return c.redirect(`${WEBSITE_URL}/join`);
     }
   });
 
@@ -1780,10 +1780,10 @@ async function sendPreBillWarningEmail(
 ): Promise<void> {
   const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
   const SERVER_URL = process.env.SERVER_URL || 'https://api.alexandria-library.com';
-  // JOIN door (deliberate — matches sendKinLapseWarning, not the /start TRY
-  // door): the discount needs the friend to become a MEMBER before the charge
-  // lands, so the link opens the membership page directly.
-  const kinLink = `${WEBSITE_URL}/join?ref=${encodeURIComponent(githubLogin)}`;
+  // Every referral starts with the free loop. Referral attribution survives
+  // until the person later joins; urgency about the referrer's bill must not
+  // turn a stranger's first touch into a payment page.
+  const kinLink = `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}`;
 
   // Unsubscribe footer — every other template carries one; this was the only
   // send without it. KinPricingState doesn't hold email_token, so resolve it

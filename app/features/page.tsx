@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import PublicDocReader from '../components/PublicDocReader';
 import { pageMetadata } from '../lib/config';
 
@@ -8,23 +7,12 @@ const TITLE = 'the features — alexandria.';
 const DESCRIPTION =
   'Ask the founder’s mirror anything about Alexandria — or read the eight features plainly: personalisation, development, saved posts, capture, one mind, ownership, plugs in, and the mirror.';
 
-const PAGE_META = pageMetadata({
+export const metadata = pageMetadata({
   path: '/features',
   title: TITLE,
   description: DESCRIPTION,
+  type: 'article',
 });
-
-export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: PAGE_META.alternates,
-  openGraph: { ...PAGE_META.openGraph, type: 'article' },
-  twitter: {
-    card: 'summary_large_image',
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-};
 
 // The page's own suggested questions — the mirror answers with the
 // features doc as focus, so each is guaranteed grounded. Mix of concrete

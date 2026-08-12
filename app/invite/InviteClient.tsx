@@ -2,18 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { SERVER_URL } from '../lib/config';
+import { checkReferral } from '../lib/referral';
 
-// Radically-simple invite (founder, 2026-07-25 — same law as /start, /chat,
-// /join): one hero, one vouch line, ONE primary box, muted terms, exit boxes
-// in the one grammar (bold words — muted why). The friend-vouch frame
-// (2026-07-17) survives compressed: the hero carries who, the vouch line
-// carries why-you, "work it out together" closes the terms.
+// One thought, one action. The invitation is a personal handoff to the free
+// loop, not a miniature sales page.
 //
-// Wiring unchanged: the ref (inviter's GitHub login) only shows once
-// /check-kin confirms a real member; the validated ref rides /start for kin
-// attribution. Exits: the website (see it first) and the /features ask page
-// (the founder's mirror answers a cold reader's questions).
+// The inviter only shows once /check-kin confirms a real member. The sanitized
+// candidate rides /start immediately so a fast click cannot lose it; /start
+// and the OAuth callback validate it again before storage or credit.
 export default function InviteClient({ refCode }: { refCode?: string }) {
   const [validRef, setValidRef] = useState<string | null>(null);
 
@@ -21,18 +17,21 @@ export default function InviteClient({ refCode }: { refCode?: string }) {
     if (!refCode) { setValidRef(null); return; }
     let live = true;
     (async () => {
-      try {
-        const resp = await fetch(`${SERVER_URL}/check-kin?code=${encodeURIComponent(refCode)}`);
-        const data = await resp.json().catch(() => ({ valid: false }));
-        if (live) setValidRef(resp.ok && data.valid ? refCode : null);
-      } catch {
-        if (live) setValidRef(null);
-      }
+      const valid = await checkReferral(refCode);
+      if (live) setValidRef(valid ? refCode : null);
     })();
     return () => { live = false; };
   }, [refCode]);
 
-  const startHref = validRef ? `/start?ref=${validRef}` : '/start';
+  useEffect(() => {
+    if (!validRef) return;
+    try { window.localStorage.setItem('alexandria-referrer', validRef); } catch { /* storage is optional */ }
+  }, [validRef]);
+
+  // Carry the sanitized candidate immediately so a fast click cannot outrun
+  // validation. /start and the OAuth callback validate it again before it is
+  // stored or credited.
+  const startHref = refCode ? `/start?ref=${refCode}` : '/start';
 
   return (
     <>
@@ -45,36 +44,15 @@ export default function InviteClient({ refCode }: { refCode?: string }) {
       <main className="primer-main">
         <h1 className="invite-hero">
           {validRef ? (
-            <>@{validRef} sent you alexandria.</>
+            <>@{validRef} thought of you.</>
           ) : (
-            <>A friend sent you alexandria.</>
+            <>A friend thought of you.</>
           )}
         </h1>
 
-        <p className="invite-vouch">
-          They know you, they know what this is &mdash; and they thought
-          of you.
-        </p>
-
-        <Link className="door-btn act-box act-primary" href={startHref}>
-          start your loop<span className="act-why act-why-inverse"> &mdash; it&rsquo;s free</span>
+        <Link className="invite-start" href={startHref}>
+          start your loop<span> &mdash; trust their judgment</span>
         </Link>
-
-        <p className="invite-terms">
-          About five minutes. Your private files stay on your own computer.
-        </p>
-        <p className="invite-terms">
-          Then work out what it can do together.
-        </p>
-
-        <div className="invite-exits">
-          <Link className="door-btn act-box" href="/">
-            see it first<span className="act-why"> &mdash; the website</span>
-          </Link>
-          <Link className="door-btn act-box" href="/features">
-            ask anything<span className="act-why"> &mdash; about what this is</span>
-          </Link>
-        </div>
       </main>
     </>
   );

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "alexandria — your mind, in files you own";
+export const alt = "alexandria. Your AI should know how you think. A free loop, in private files you own.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -29,10 +29,10 @@ export default async function OpengraphImage() {
 
   return new ImageResponse(
     (
-      // Mirrors the live nav mark (2026-07-16): upright roman wordmark
-      // (the italic left with the argument lines, not the mark), "mentes
-      // aeternae" beneath as on the homepage, and the front slide's pale
-      // cream — far whiter than the old heavy-vignette card.
+      // A shared link has to carry the idea without the page around it:
+      // one mark, one felt benefit, one concrete ownership line. The card
+      // keeps the homepage's pale fresco field and spends its one accent on
+      // the human-facing thesis rather than another product diagram.
       <div
         style={{
           background: "#f1ede2",
@@ -46,11 +46,12 @@ export default async function OpengraphImage() {
           justifyContent: "center",
           fontFamily: "Spectral",
           color: "#1a1318",
+          padding: "72px 96px 80px",
         }}
       >
         <div
           style={{
-            fontSize: 210,
+            fontSize: 104,
             fontStyle: "normal",
             fontWeight: 500,
             letterSpacing: "-0.015em",
@@ -63,15 +64,33 @@ export default async function OpengraphImage() {
         </div>
         <div
           style={{
-            marginTop: 40,
-            fontSize: 38,
+            marginTop: 58,
+            maxWidth: 940,
+            fontSize: 76,
             fontStyle: "italic",
             fontWeight: 500,
-            color: "rgba(26, 19, 24, 0.55)",
-            letterSpacing: "0.06em",
+            lineHeight: 1.08,
+            textAlign: "center",
+            letterSpacing: "-0.025em",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
-          mentes aeternae
+          <span>Your AI should know</span>
+          <span>how you think.</span>
+        </div>
+        <div
+          style={{
+            marginTop: 34,
+            fontSize: 32,
+            fontStyle: "normal",
+            fontWeight: 500,
+            color: "rgba(26, 19, 24, 0.56)",
+            letterSpacing: "0.01em",
+          }}
+        >
+          A free loop, in private files you own.
         </div>
       </div>
     ),

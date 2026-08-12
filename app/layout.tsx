@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { EB_Garamond, Spectral } from "next/font/google";
-import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
@@ -18,7 +17,7 @@ const ebGaramond = EB_Garamond({
 // Spectral is the website + primer face — modern literary serif. Bound
 // globally so any route can use `var(--font-serif)`. Previously bound
 // only on app/page.tsx, which silently fell through to ui-serif on
-// /signup; promoting it here fixes that and keeps the website unchanged.
+// /join; promoting it here fixes that and keeps the website unchanged.
 const spectral = Spectral({
   variable: "--font-serif",
   subsets: ["latin"],
@@ -33,7 +32,7 @@ const SITE_TITLE = "alexandria — your mind, in files you own";
 // keyword-dense, classical, and reads well as a search snippet under the
 // browser tab title.
 const SEO_DESCRIPTION =
-  "Give your AI Alexandria’s instructions. It builds and reads an owned record of your thinking and how it changes, so it can help you keep, develop, and contest what matters.";
+  "Give your AI a free Alexandria loop. It writes what it learns about you into private files you own, then reads them whenever they help.";
 
 // Sharing-optimised description — punchier than the SEO sentence. Lands as
 // the body of social previews (Twitter / Slack / iMessage / LinkedIn).
@@ -49,33 +48,16 @@ export const metadata: Metadata = {
   authors: [{ name: "Benjamin a. Mowinckel", url: "https://x.com/benmowinckel" }],
   creator: "Benjamin a. Mowinckel",
   publisher: "alexandria",
-  keywords: [
-    "alexandria",
-    "alexandria folder",
-    "keep thinking",
-    "library of human minds",
-    "ai personalization",
-    "personal alignment",
-    "ai thought partner",
-    "sovereign cognitive substrate",
-    "ai thinks with you",
-    "singularity",
-    "strava for thought",
-    "mental gym",
-    "claude code",
-    "cursor",
-    "personal ai",
-  ],
   icons: {
     // Opaque cream square + upright black "a." — matches brand mark.
     // Opaque means no platform default backdrop ever leaks through;
     // iOS/Android home screens round the cream square into the brand circle.
     icon: [
-      { url: "/favicon.png?v=4", type: "image/png", sizes: "512x512" },
-      { url: "/icon.svg?v=4", type: "image/svg+xml" },
+      { url: "/favicon-16.png?v=5", type: "image/png", sizes: "16x16" },
+      { url: "/favicon-32.png?v=5", type: "image/png", sizes: "32x32" },
     ],
-    apple: "/apple-touch-icon.png?v=4",
-    shortcut: "/favicon.png?v=4",
+    apple: [{ url: "/apple-touch-icon.png?v=5", sizes: "180x180", type: "image/png" }],
+    shortcut: "/favicon-32.png?v=5",
   },
   manifest: "/manifest.webmanifest",
   openGraph: {
@@ -126,27 +108,43 @@ export const viewport: Viewport = {
 // JSON-LD structured data for search-engine rich snippets. Identifies
 // alexandria as an Organization with founder, logo, social profiles —
 // lets Google show extended snippets and knowledge-panel data.
-const ORGANIZATION_JSONLD = {
+const STRUCTURED_DATA = {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "alexandria",
-  alternateName: ["the library of human minds", "the thinking republic"],
-  url: SITE,
-  logo: `${SITE}/logo_circle_dark.png`,
-  description: SEO_DESCRIPTION,
-  founder: {
-    "@type": "Person",
-    name: "Benjamin a. Mowinckel",
-    url: "https://x.com/benmowinckel",
-  },
-  foundingDate: "2026",
-  foundingLocation: {
-    "@type": "Place",
-    name: "San Francisco",
-  },
-  sameAs: [
-    "https://x.com/benmowinckel",
-    "https://github.com/benmowinckel/alexandria",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE}/#organization`,
+      name: "alexandria",
+      alternateName: "the library of human minds",
+      url: SITE,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE}/logo_circle_dark.png`,
+        width: 800,
+        height: 800,
+      },
+      description: SEO_DESCRIPTION,
+      founder: {
+        "@type": "Person",
+        name: "Benjamin a. Mowinckel",
+        url: `${SITE}/library/benmowinckel`,
+      },
+      foundingDate: "2026",
+      foundingLocation: { "@type": "Place", name: "San Francisco" },
+      sameAs: [
+        "https://x.com/benmowinckel",
+        "https://github.com/benmowinckel/alexandria",
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE}/#website`,
+      url: SITE,
+      name: "alexandria",
+      description: SEO_DESCRIPTION,
+      inLanguage: "en-US",
+      publisher: { "@id": `${SITE}/#organization` },
+    },
   ],
 };
 
@@ -156,7 +154,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <body
         className={`${ebGaramond.variable} ${spectral.variable} antialiased`}
       >
@@ -166,11 +164,10 @@ export default function RootLayout({
           </ThemeProvider>
         </StyledJsxRegistry>
         <Analytics />
-        <Script
+        <script
           id="org-jsonld"
           type="application/ld+json"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSONLD) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
         />
       </body>
     </html>

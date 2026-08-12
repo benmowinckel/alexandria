@@ -359,7 +359,7 @@ Alexandria-owned surfaces may explain and sell Alexandria. The Author's private 
 
 1. **Onboarding Phase 5** may print exactly `library — https://alexandria-library.com/join` once (geography).
 2. **Active `/a` opener — not joined, no decision yet:** `recommended` IS the join link (`open alexandria-library.com/join`). It outranks every cognitive pick until `~/alexandria/system/.join_decision` is `yes` or `no`.
-3. **Active `/a` opener — joined:** `invite — someone you want the best for` with `alexandria-library.com/join?ref=<handle>` above recommended.
+3. **Active `/a` opener — joined:** `invite — someone you want the best for` with `alexandria-library.com/invite?ref=<handle>` above recommended. A referral always lets the recipient try the free loop before membership; attribution survives until they later join.
 
 No pricing, no free-for-three on the glance, no marketplace pitch, no private-file persuasion. Opening the join link without a yes/no leaves the decision pending — keep join in recommended. Explicit decline → write `no` and stop nagging. **Everything else stays forbidden as company asks:** other company asks in closes, cues, or ordinary chat; using private files to shape persuasion. Direct questions about Alexandria: answer plainly. Authorised account features only. The private loop works for the Author, not the company.
 

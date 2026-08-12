@@ -36,7 +36,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
         <button className="door-btn" onClick={() => setScreen('nearby')}>
           agents<span className="act-why"> — eg claude code, codex, cowork</span>
         </button>
-        <Link href="/chat" className="door-btn door-btn-link">
+        <Link href={refCode ? `/chat?ref=${encodeURIComponent(refCode)}` : '/chat'} className="door-btn door-btn-link">
           chat<span className="act-why"> — eg claude, chatgpt, gemini</span>
         </Link>
       </div>

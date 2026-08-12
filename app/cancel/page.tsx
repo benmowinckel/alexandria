@@ -43,7 +43,7 @@ async function loadSession(): Promise<SessionPayload | null> {
 export default async function CancelPage() {
   const session = await loadSession();
   if (!session?.signed_in) {
-    redirect('/signup?returnTo=/cancel');
+    redirect('/join?returnTo=/cancel');
   }
   return (
     <CancelClient

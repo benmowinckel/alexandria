@@ -2,27 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { SERVER_URL } from '../lib/config';
-import { ArrowIcon } from './DoorIcons';
+import { checkReferral } from '../lib/referral';
 
-// Radically-simple join (founder, 2026-07-25 — same law as /start and /chat):
-// one hero, one primary box, two muted lines. One grammar everywhere: bold
-// words — quieter words; inputs live INSIDE their boxes.
-//
-// 2026-07-27 rebuild. Three changes, all founder-dictated:
-//  1. THE COLLECTIVE IS EXPLAINED HERE. The private onboarding block is
-//     structurally silent about joining; Alexandria-owned surfaces carry the
-//     whole sell. The three-line "what it is" block therefore carries the
-//     weight itself: library, marketplace, people.
-//  2. TWO PATHS, BOTH ARE JOINING. Not join-or-decline. Either you take the
-//     free month, or you email and it's waived — you're in on both. The email
-//     field posts intent:'waive' so the founder can tell a waive ASK apart from
-//     a plain not-now in the waitlist source column.
-//  3. NO "free tool" EXIT. It was the third box and it leaked people off the
-//     page at the moment of decision; joining installs the tool anyway (the
-//     welcome page hands them the one-line command, and setup.sh is idempotent).
-//
-// Wiring unchanged: a ref only counts once /check-kin confirms it (link ref or
-// typed code, typed wins).
+// The private loop is complete on its own. Membership makes each use better by
+// connecting it to proven systems, published minds, and consented relationships.
+// Referral attribution affects kin pricing; it is not the value.
 function githubUrl(ref: string, refSource: string): string {
   const q = new URLSearchParams();
   if (ref) q.set('ref', ref);
@@ -38,184 +22,108 @@ export default function JoinCTA({
   refSource: string;
 }) {
   const [urlCheck, setUrlCheck] = useState<{ input: string; valid: string | null } | null>(null);
-  const [typedRef, setTypedRef] = useState('');
-  const [typedCheck, setTypedCheck] = useState<{ input: string; valid: string | null } | null>(null);
-  const codeRef = useRef<HTMLInputElement>(null);
-  const cleanTypedRef = typedRef.replace(/[^A-Za-z0-9-]/g, '').slice(0, 39);
-  const validUrlRef = urlRef && urlCheck?.input === urlRef ? urlCheck.valid : null;
-  const typedValid = cleanTypedRef && typedCheck?.input === cleanTypedRef ? typedCheck.valid : null;
-
-  const [email, setEmail] = useState('');
-  const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
-  const [waiveJoinUrl, setWaiveJoinUrl] = useState('');
-  const emailRef = useRef<HTMLInputElement>(null);
+  const [savedRef, setSavedRef] = useState('');
+  const candidateUrlRef = urlRef || savedRef;
+  const validUrlRef = candidateUrlRef && urlCheck?.input === candidateUrlRef ? urlCheck.valid : null;
+  const urlRefChecked = !!candidateUrlRef && urlCheck?.input === candidateUrlRef;
+  const pendingUrlRef = candidateUrlRef && !urlRefChecked ? candidateUrlRef : '';
+  const [referralEditing, setReferralEditing] = useState(false);
+  const [manualRef, setManualRef] = useState('');
+  const [manualCheck, setManualCheck] = useState<{ input: string; valid: string | null } | null>(null);
+  const referralRef = useRef<HTMLInputElement>(null);
+  const cleanManualRef = manualRef.replace(/[^A-Za-z0-9-]/g, '').slice(0, 39);
+  const manualValid = cleanManualRef && manualCheck?.input === cleanManualRef ? manualCheck.valid : null;
+  const manualInvalid = cleanManualRef && manualCheck?.input === cleanManualRef && !manualCheck.valid;
 
   useEffect(() => {
-    if (!urlRef) return;
-    let live = true;
-    (async () => {
-      const ok = await checkKin(urlRef);
-      if (live) setUrlCheck({ input: urlRef, valid: ok ? urlRef : null });
-    })();
-    return () => { live = false; };
+    if (urlRef) return;
+    try { setSavedRef(window.localStorage.getItem('alexandria-referrer') || ''); } catch { /* storage is optional */ }
   }, [urlRef]);
 
   useEffect(() => {
-    if (!cleanTypedRef) return;
+    if (!candidateUrlRef) return;
     let live = true;
-    const t = setTimeout(async () => {
-      const ok = await checkKin(cleanTypedRef);
-      if (live) setTypedCheck({ input: cleanTypedRef, valid: ok ? cleanTypedRef : null });
+    (async () => {
+      const ok = await checkReferral(candidateUrlRef);
+      if (live) setUrlCheck({ input: candidateUrlRef, valid: ok ? candidateUrlRef : null });
+    })();
+    return () => { live = false; };
+  }, [candidateUrlRef]);
+
+  useEffect(() => {
+    if (!cleanManualRef) return;
+    let live = true;
+    const timer = setTimeout(async () => {
+      const ok = await checkReferral(cleanManualRef);
+      if (live) setManualCheck({ input: cleanManualRef, valid: ok ? cleanManualRef : null });
     }, 350);
-    return () => { live = false; clearTimeout(t); };
-  }, [cleanTypedRef]);
+    return () => { live = false; clearTimeout(timer); };
+  }, [cleanManualRef]);
 
-  const effectiveRef = typedValid || validUrlRef || '';
+  useEffect(() => {
+    if (referralEditing) referralRef.current?.focus();
+  }, [referralEditing]);
+
+  useEffect(() => {
+    if (!manualValid) return;
+    setReferralEditing(false);
+    try { window.localStorage.setItem('alexandria-referrer', manualValid); } catch { /* storage is optional */ }
+  }, [manualValid]);
+
+  // The OAuth callback validates the ref again before awarding credit. Carry a
+  // URL/saved candidate immediately so a fast click cannot outrun the UI check;
+  // remove it here only if the visible check rejects it.
+  const confirmedRef = manualValid || validUrlRef || '';
+  const effectiveRef = confirmedRef || pendingUrlRef || '';
   const joinUrl = githubUrl(effectiveRef, refSource);
-
-  const sendEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.includes('@') || mailState === 'sending') return;
-    setMailState('sending');
-    try {
-      const resp = await fetch(`${SERVER_URL}/onboard`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim(),
-          source: 'join',
-          intent: 'waive',
-          ...(effectiveRef ? { ref: effectiveRef } : {}),
-        }),
-      });
-      const result = await resp.json().catch(() => ({}));
-      if (resp.ok && typeof result.join_url === 'string') {
-        setWaiveJoinUrl(result.join_url);
-        setMailState('sent');
-      } else {
-        setMailState('error');
-      }
-    } catch {
-      setMailState('error');
-    }
-  };
 
   return (
     <>
-      {validUrlRef && <p className="join-invite">@{validUrlRef} invited you in.</p>}
+      <section className="join-section">
+        <h1 className="join-hero">Your mind gets better with other minds.</h1>
 
-      <h1 className="join-hero">
-        Keep thinking, together.
-      </h1>
+        <div className="join-argument">
+          <p className="join-lead">
+            <em>You became yourself through other people.</em> Friends, family, teachers, colleagues, writers, and rivals shaped what you notice, what you value, and how you think. Nearly every worthwhile idea reached you through another mind. A personal system should not isolate you from those people. It should help you keep learning from them, understanding them, and growing with them.
+          </p>
+          <p>
+            <em>Membership gives your Alexandria loop access to what other people have learned.</em> The marketplace offers methods people have tested, while the Library holds ideas and work people chose to publish. With permission, your loop can also understand your friends from their own words, not only yours. It can see not only what you think, but where it came from, who still shapes it, and what could help you now.
+          </p>
+          <p>
+            <em>The value appears the next time you use your loop.</em> It can bring in a proven method, a perspective you would have missed, or context from someone close to you, then turn it into a decision, a conversation, or finished work. When your friends join, you can see what each other makes and follow each other&rsquo;s progress. You grow together, which makes it easier to keep showing up and doing the work.
+          </p>
+        </div>
 
-      {/* The collective value, reduced to the same causal shape as the private
-          tool (founder 2026-08-11): better context makes AI more helpful.
-          First it understands you; through consenting connections it can
-          understand your community from their own words too. Library,
-          marketplace, tribe, and founding status are downstream features,
-          not the lead. */}
-      <div className="join-pitch">
-        <section>
-          <p className="join-beat">Your loop helps AI understand you.</p>
-          <p className="join-sub">The better it understands you, the better it can help you.</p>
-        </section>
-        <section>
-          <p className="join-beat">The collective helps it understand your community.</p>
-          <p className="join-sub">Connect the people you choose, and your AI can learn about them from their own words — not only from yours.</p>
-        </section>
-        <section>
-          <p className="join-beat">A dollar a day connects you.</p>
-          <p className="join-sub">Your loop stays free either way. Your first month is free, and membership is free for good once three friends join through you.</p>
-        </section>
-        <p className="join-pitch-last">Early enough that you&rsquo;d shape what this becomes.</p>
-      </div>
+        <p className="join-close">
+          Bring three friends in your first month, and membership stays free. Otherwise, it is $1 a day. If cost is what stops you, message me and I will waive it. Your loop stays yours if you leave. I just want you to try it for a month, see what it actually does for you, and then decide whether it is worth keeping.
+        </p>
+        <a className="door-btn act-box act-primary" href={joinUrl}>
+          join the collective<span className="act-why act-why-inverse"> &mdash; start with github</span>
+        </a>
 
-      <a className="door-btn act-box act-primary" href={joinUrl}>
-        join with github<span className="act-why act-why-inverse"> &mdash; first month free</span>
-      </a>
-
-      {/* The terms, stated once, plainly, right under the action — the page
-          argues a dollar a day, so the actual deal has to be legible at the
-          point of decision. */}
-      <p className="join-terms">
-        Your loop stays free and yours if you leave. Joining only syncs the files you
-        choose to publish and records which modules your loop uses. Read the{' '}
-        <a href="/privacy">privacy policy</a> and <a href="/terms">terms</a>.
-      </p>
-
-      {/* Below the hairline: the two quiet doors. The waive path lives here
-          rather than beside the join button (founder 2026-07-27: keep it in
-          the background, for the ones still hesitating) and its wording is
-          plain rather than pointed — a person who genuinely can't spare it
-          shouldn't be needled on the way in. */}
-      <div className="join-exits">
-        {mailState === 'sent' && waiveJoinUrl ? (
-          <a className="door-btn act-box" href={waiveJoinUrl}>
-            covered<span className="act-why"> ✓ &mdash; continue with github</span>
-          </a>
-        ) : (
-          <form className="door-btn act-box act-email" onSubmit={sendEmail} onClick={() => emailRef.current?.focus()}>
-            <>
+        {!effectiveRef && <div className="join-referral">
+          {referralEditing ? (
+            <label className="join-referral-field">
+              <span aria-hidden="true">@</span>
               <input
-                ref={emailRef}
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                placeholder="can’t afford it?"
-                className="w-mail"
-                aria-label="your email"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); if (mailState === 'error') setMailState('idle'); }}
-              />
-              {!email.trim() && <span className="act-why act-email-why">&mdash; email me, I&rsquo;ll cover it</span>}
-              {email.trim() && (
-                <button type="submit" className="join-door-go" aria-label="send" disabled={mailState === 'sending'}>
-                  <ArrowIcon />
-                </button>
-              )}
-            </>
-          </form>
-        )}
-
-        <div className="door-btn act-box act-email" onClick={() => codeRef.current?.focus()}>
-          {typedValid ? (
-            <span className="act-sent">code applied<span className="act-why"> ✓ &mdash; @{typedValid}</span></span>
-          ) : (
-            <>
-              <input
-                ref={codeRef}
+                ref={referralRef}
                 type="text"
-                inputMode="text"
-                name="alexandria-referral"
                 autoComplete="off"
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
-                data-1p-ignore="true"
-                data-lpignore="true"
-                data-form-type="other"
-                placeholder="have a code?"
-                className="w-code"
-                aria-label="referral code"
-                value={typedRef}
-                onChange={(e) => setTypedRef(e.target.value)}
+                placeholder="github handle"
+                aria-label="referral"
+                value={manualRef}
+                onChange={(event) => setManualRef(event.target.value)}
               />
-              {!typedRef.trim() && <span className="act-why act-email-why">&mdash; from a friend of yours</span>}
-            </>
+              {manualInvalid && <span className="join-referral-error">not found</span>}
+            </label>
+          ) : (
+            <button type="button" onClick={() => setReferralEditing(true)}>add referral</button>
           )}
-        </div>
-      </div>
+        </div>}
+      </section>
     </>
   );
-}
-
-async function checkKin(code: string): Promise<boolean> {
-  try {
-    const resp = await fetch(`${SERVER_URL}/check-kin?code=${encodeURIComponent(code)}`);
-    if (!resp.ok) return false;
-    const data = await resp.json().catch(() => ({ valid: false }));
-    return data.valid === true;
-  } catch {
-    return false;
-  }
 }

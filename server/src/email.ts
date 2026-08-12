@@ -222,10 +222,10 @@ export async function sendKinLapseWarning(
   resumeDate: Date | null,
   emailToken?: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  // JOIN door (deliberate — not the /start TRY door the other emails use):
-  // "add one more and it's free again" needs the friend to become a MEMBER
-  // before $10 resumes, so the link opens the membership page directly.
-  const kinLink = `${WEBSITE_URL}/join?ref=${encodeURIComponent(githubLogin)}`;
+  // Every referral starts with the free loop. The ref survives /invite → /start
+  // and is recovered when the person later joins; a referrer's bill never gets
+  // to make a stranger's first experience worse.
+  const kinLink = `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}`;
   const when = resumeDate
     ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric' }).format(resumeDate).toLowerCase()
     : null;

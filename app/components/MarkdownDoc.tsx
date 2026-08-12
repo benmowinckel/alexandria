@@ -398,11 +398,14 @@ function NumberedHeading({ level, children }: { level: 1 | 2; children?: React.R
   const id = slugify(children);
   const text = flattenText(children);
   const m = /^(\d+(?:\.\d+)?)\s+(.*)$/.exec(text);
-  const Tag = level === 1 ? 'h1' : 'h2';
   const base = level === 1 ? 'pdoc-h1' : 'pdoc-h2';
   if (!m) {
-    return <Tag id={id} className={`${base}${level === 1 ? ' pdoc-title' : ''}`}>{children}</Tag>;
+    return <h1 id={id} className={`${base} pdoc-title`}>{children}</h1>;
   }
+  // The markdown's H1/H2 pair encodes part/chapter structure. In the rendered
+  // document the unnumbered title owns H1; numbered parts and chapters are H2
+  // and H3 while retaining their established visual classes.
+  const Tag = level === 1 ? 'h2' : 'h3';
   return (
     <Tag id={id} className={base}>
       <span className="pdoc-hnum" aria-hidden>{m[1]}</span>

@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import MarkdownDoc from '../components/MarkdownDoc';
 import { pageMetadata } from '../lib/config';
 
@@ -11,25 +10,12 @@ const TITLE = 'questions — alexandria.';
 const DESCRIPTION =
   'Plain answers about Alexandria: the instructions, the loop, the private files your own AI writes and reads, what is free, and what the optional connector does.';
 
-const PAGE_META = pageMetadata({
+export const metadata = pageMetadata({
   path: '/questions',
   title: TITLE,
   description: DESCRIPTION,
+  type: 'article',
 });
-
-export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: PAGE_META.alternates,
-  // a Q&A document, not a website — override OG_BASE's type while
-  // keeping pageMetadata's canonical/og:url contribution.
-  openGraph: { ...PAGE_META.openGraph, type: 'article' },
-  twitter: {
-    card: 'summary_large_image',
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-};
 
 export default function QuestionsPage() {
   return (

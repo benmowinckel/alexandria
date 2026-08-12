@@ -35,6 +35,21 @@
           -webkit-font-smoothing: antialiased;
         }
 
+        /* One stable document heading for crawlers and assistive technology.
+           The visible hero is a rotating thesis, so none of its changing
+           lines should own the page outline. */
+        .front-page-title {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+
         /* Runway provides scroll range for two sequential peels (top →
            middle, then middle → bottom), each a full 100vh, plus a 40vh
            dwell on slide 2 before its peel starts. Total: 100 (peel1)

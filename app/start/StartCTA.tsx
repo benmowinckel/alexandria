@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { SERVER_URL, SHORTCUT_URL } from '../lib/config';
+import { checkReferral } from '../lib/referral';
 import { ArrowIcon } from '../join/DoorIcons';
 import { computerInstallPrompt, mobileHandoffPrompt } from '../../shared/onboarding-prompts';
 
@@ -17,12 +18,15 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
   const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
 
   useEffect(() => {
+    if (!validRef) return;
+    try { window.localStorage.setItem('alexandria-referrer', validRef); } catch { /* storage is optional */ }
+  }, [validRef]);
+
+  useEffect(() => {
     if (!refCode) return;
     let live = true;
-    fetch(`${SERVER_URL}/check-kin?code=${encodeURIComponent(refCode)}`)
-      .then(async (resp) => ({ ok: resp.ok, data: await resp.json().catch(() => ({ valid: false })) }))
-      .then(({ ok, data }) => { if (live) setRefCheck({ input: refCode, valid: ok && data.valid ? refCode : null }); })
-      .catch(() => { if (live) setRefCheck({ input: refCode, valid: null }); });
+    checkReferral(refCode)
+      .then((valid) => { if (live) setRefCheck({ input: refCode, valid: valid ? refCode : null }); });
     return () => { live = false; };
   }, [refCode]);
 

@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import PublicDocReader from '../components/PublicDocReader';
 import { pageMetadata } from '../lib/config';
 
@@ -8,29 +7,16 @@ import { pageMetadata } from '../lib/config';
 // value pages in the sitemap. Title names the artifact; description honours
 // the whitepaper's actual argument (what ai leaves for humans → why human
 // provenance retains value → the practice that keeps the person involved).
-const TITLE = 'whitepaper — alexandria. when machines can do everything, what is left for humans — and even then, how does a person remain themselves?';
+const TITLE = 'whitepaper — alexandria. the human path through AI';
 const DESCRIPTION =
-  'The full argument, from first principles: what is left for humans to do as machines match every capability — and even if something is left for humans, how a person remains themselves through the change.';
+  'From first principles: what remains for humans when machines can do everything, and how a person remains themselves through the change.';
 
-const PAGE_META = pageMetadata({
+export const metadata = pageMetadata({
   path: '/whitepaper',
   title: TITLE,
   description: DESCRIPTION,
+  type: 'article',
 });
-
-export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: PAGE_META.alternates,
-  // the whitepaper is an article, not a website — override OG_BASE's type
-  // while keeping pageMetadata's canonical/og:url contribution.
-  openGraph: { ...PAGE_META.openGraph, type: 'article' },
-  twitter: {
-    card: 'summary_large_image',
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-};
 
 // The whitepaper's own suggested questions. Each names an argument the current
 // paper and public shadow both carry, so the mirror can answer on this reader

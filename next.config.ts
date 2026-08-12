@@ -14,8 +14,8 @@ const nextConfig: NextConfig = {
       // Two doors, by intent. /start is the keyless primer (the FREE tool — one
       // copy-paste, no account). /join is the founding-member JOIN (the paid
       // collective: GitHub sign-in → Stripe trial → alexandrian #N). Homepage +
-      // library pages link to /signup with a ?ref= invite code; /signup is the
-      // legacy alias that now lands on /join (Next forwards the query, so the ref
+      // Every live path links directly to /join. /signup is the legacy alias
+      // that still lands there (Next forwards the query, so an old ref
       // survives the hop and auto-fills on the join page). NON-permanent so the
       // alias stays movable.
       { source: '/signup', destination: '/join', permanent: false },
@@ -42,6 +42,14 @@ const nextConfig: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()' },
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
         ],
+      },
+      {
+        source: '/docs/Memo.md',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
+      },
+      {
+        source: '/docs/:file(confidential[^/]*)',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
       },
     ];
   },

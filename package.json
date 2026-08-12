@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "audit:metadata": "node scripts/check-metadata.mjs",
     "audit": "node scripts/audit-robustness.cjs",
     "audit:snap": "node scripts/snap-audit.cjs"
   },

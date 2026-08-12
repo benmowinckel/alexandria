@@ -1,16 +1,32 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SERVER_URL, SHORTCUT_URL } from '../lib/config';
+import { checkReferral } from '../lib/referral';
 import { ArrowIcon } from '../join/DoorIcons';
 
-export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
+export default function ChatCTA({ bootstrap, refCode }: { bootstrap: string; refCode?: string }) {
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'saved' | 'invalid' | 'error'>('idle');
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
   const [shakeKey, setShakeKey] = useState(0);
   const emailRef = useRef<HTMLInputElement>(null);
+  const [refCheck, setRefCheck] = useState<{ input: string; valid: string | null } | null>(null);
+  const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
+
+  useEffect(() => {
+    if (!refCode) return;
+    let live = true;
+    checkReferral(refCode)
+      .then((valid) => { if (live) setRefCheck({ input: refCode, valid: valid ? refCode : null }); });
+    return () => { live = false; };
+  }, [refCode]);
+
+  useEffect(() => {
+    if (!validRef) return;
+    try { window.localStorage.setItem('alexandria-referrer', validRef); } catch { /* storage is optional */ }
+  }, [validRef]);
 
   async function sendEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -26,7 +42,7 @@ export default function ChatCTA({ bootstrap }: { bootstrap: string }) {
       const response = await fetch(`${SERVER_URL}/onboard`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed, source: 'start', mode: 'chat' }),
+        body: JSON.stringify({ email: trimmed, source: 'start', mode: 'chat', ...(validRef ? { ref: validRef } : {}) }),
       });
       const result = await response.json().catch(() => ({}));
       setMailState(response.ok ? (result.delivered === false ? 'saved' : 'sent') : 'error');

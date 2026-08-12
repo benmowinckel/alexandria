@@ -12,6 +12,10 @@ export const metadata = pageMetadata({
     'Start your Alexandria loop in any chat. Add your email if you want a copy, then paste one setup.',
 });
 
+function cleanRef(raw: string | undefined): string {
+  return (raw || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 39);
+}
+
 // Door 2 of the two-door onboarding (agents → /start; chat → here).
 // Shortcut → optional email → chat setup. The chat setup starts now and leaves
 // a closed handoff to the full local computer loop rather than replacing it.
@@ -24,7 +28,13 @@ function readBootstrap(): string {
   return m ? m[1].trim() : '';
 }
 
-export default function ChatPage() {
+export default async function ChatPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string }>;
+}) {
+  const params = await searchParams;
+  const ref = cleanRef(params.ref) || undefined;
   const bootstrap = readBootstrap();
 
   return (
@@ -39,7 +49,7 @@ export default function ChatPage() {
 
       <main className="primer-main">
         <h1 className="primer-h1">start your loop</h1>
-        <ChatCTA bootstrap={bootstrap} />
+        <ChatCTA bootstrap={bootstrap} refCode={ref} />
       </main>
 
       <style>{`

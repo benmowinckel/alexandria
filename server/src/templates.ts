@@ -28,14 +28,6 @@ function jsLiteral(value: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Inline SVG icons — small enough to inline, no external deps
-// ---------------------------------------------------------------------------
-
-const ICON_COPY = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-const ICON_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-const ICON_SHARE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`;
-
-// ---------------------------------------------------------------------------
 // Mini page shell — the branded wrapper for tiny Worker pages (auth errors,
 // the unsubscribe confirmation, the API root). Paper/ink in EB Garamond with
 // the same dark-mode support as the welcome page, so no edge surface ever
@@ -94,24 +86,15 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaTok
   void _viaToken;
   void _kinCompliant;
   const WEBSITE_URL = getWebsiteUrl();
-  // The founding-member page (Strava-for-thought, ground truth e1cd27f). You've
-  // just JOINED the community — the local tool was already free. The page leads
-  // with belonging (you're in), then two boxes in this order: share your invite
-  // link — "send it to everyone", NOT "three friends" (founder 2026-07-27: the
-  // three-kin threshold is how the bill goes away, but it is not the ask; the
-  // ask is share as wide as possible, and naming a number caps it at three) —
-  // then
-  // connect the command that links your local install so you can publish + be
-  // seen. Both states — fresh join and returning — are the same two boxes; only
-  // the second differs. No step numerals, no notes under the boxes: the order
-  // IS the sequence and each box says the whole thing (founder 2026-07-27,
-  // "radically simplify"). A founding number IS
-  // assigned server-side, but it is NOT the pitch — nobody cares which number they
-  // are, so the page doesn't headline it.
+  // The founding-member page has one first job: connect the membership to the
+  // person's loop. Sharing matters, but it comes after activation. The two
+  // cards use the same soft paper treatment as /start, /join, and /invite;
+  // hierarchy comes from sequence and language, never a harsh filled CTA.
+  // A founding number is assigned server-side but is not the pitch.
   // `isReturning` is the bare re-login fallback — nothing minted, not a fresh join.
   // `rotateUrl` (set only for returning INSTALLED members, minted per-OAuth by
   // the callback) renders the low-key lost-key escape hatch below.
-  const isReturning = !apiKey && authorNumber <= 0;
+  const isReturning = !apiKey;
   // The connect message is copy-paste, matching /start. (A claude-cli:// deep link was tried
   // and removed 2026-06-24: it auto-ran the script and felt like a terminal hijack — copy-paste
   // is calmer and universal across Claude Code / Cursor / Codex / Factory.) Same message whether
@@ -124,21 +107,9 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaTok
   // that is"). /invite pitches in one line and forwards the ref to /start,
   // where install → eventual join credits kin (validates ref → existing
   // login, rejects self-referral). Three who join and stay = free for good.
-  // The URL is DISPLAYED as well as copied — the visible ref doubles as the
-  // member's kin code, so there's no separate code line to explain.
   const inviteUrl = githubLogin ? `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}` : '';
-  // (Kin progress was cut 2026-07-17 — the count is ~always 0 on this page.
-  // The Web Share sheet, cut at the same time, is BACK as of 2026-07-27 and is
-  // now the whole of step 1: a copy button parks the link on a clipboard nobody
-  // pastes, a share sheet puts it one tap from a real conversation. Sharing is
-  // deliberately ahead of connecting — the moment right after joining is the
-  // only one where they'll actually send it. Tradeoff accepted knowingly: some
-  // fraction will share and never come back for step 2; the connect line is
-  // also in their welcome email, so that path isn't lost.)
-  // Inline Mechanics.md so its copy button runs synchronously inside the click handler.
-  // Async fetch + clipboard.writeText loses user activation and falls back to opening the raw URL.
-  // (block.md is no longer copied here — the agent reads the locally-cached .block after install
-  // and continues into the constitution draft itself; see factory/setup.sh tail.)
+  // The Web Share sheet puts the invite one tap from a real conversation.
+  // Desktop browsers without it fall back to copying the link.
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -156,23 +127,17 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaTok
      <html> overrides the system preference, persisted under the same
      localStorage key the site uses so the choice follows them across. */
   :root {
-    --paper: #f5f0e8; --ink: #3d3630; --ink-secondary: #4d4640;
-    --ink-muted: #8a8078; --ink-faint: #bbb4aa; --accent: #5B1F47;
-    --rule: rgba(61, 54, 48, 0.14); --tip-bg: #3d3630; --tip-fg: #f5f0e8;
-    --btn-bg: #57504a; --btn-fg: #f5f0e8;
+    --paper: #f5f0e8; --surface: #ede8df; --surface-edge: #e6e0d6;
+    --ink: #3d3630; --ink-muted: #8a8078; --ink-faint: #bbb4aa;
   }
   :root[data-theme="dark"] {
-    --paper: #2b2a27; --ink: #ece8e1; --ink-secondary: #cdc8c0;
-    --ink-muted: #9b9690; --ink-faint: #6b6660; --accent: #9F87C5;
-    --rule: rgba(236, 232, 225, 0.14); --tip-bg: #ece8e1; --tip-fg: #2b2a27;
-      --btn-bg: #d9d4cc; --btn-fg: #2b2a27;
+    --paper: #2b2a27; --surface: #333230; --surface-edge: #3b3a37;
+    --ink: #ece8e1; --ink-muted: #9b9690; --ink-faint: #6b6660;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --paper: #2b2a27; --ink: #ece8e1; --ink-secondary: #cdc8c0;
-      --ink-muted: #9b9690; --ink-faint: #6b6660; --accent: #9F87C5;
-      --rule: rgba(236, 232, 225, 0.14); --tip-bg: #ece8e1; --tip-fg: #2b2a27;
-      --btn-bg: #d9d4cc; --btn-fg: #2b2a27;
+      --paper: #2b2a27; --surface: #333230; --surface-edge: #3b3a37;
+      --ink: #ece8e1; --ink-muted: #9b9690; --ink-faint: #6b6660;
     }
   }
   .theme-toggle {
@@ -204,149 +169,32 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaTok
     max-width: 620px; margin: 0 auto; padding: 5rem 40px 6rem; width: 100%;
     text-align: left;
   }
-  .eyebrow {
-    margin: 0 0 18px; font-size: 11.5px; letter-spacing: 0.3em;
-    text-transform: lowercase; font-variant-caps: all-small-caps;
-    color: var(--accent); line-height: 1;
-  }
   .welcome {
-    margin: 0 0 26px; max-width: 560px;
-    font-style: italic; font-weight: 400;
-    font-size: clamp(28px, 1.6rem + 1.6vw, 38px); line-height: 1.2;
-    letter-spacing: -0.01em; color: var(--ink); text-wrap: balance;
+    margin: 0 0 30px; max-width: 560px;
+    font-style: italic; font-weight: 500;
+    font-size: clamp(34px, 2rem + 1.2vw, 46px); line-height: 1.08;
+    letter-spacing: -0.015em; color: var(--ink); text-wrap: balance;
   }
-  .line { font-size: 1.05rem; line-height: 1.75; color: var(--ink); margin-bottom: 16px; max-width: 520px; }
-  /* The two steps — the /start pattern: faint numerals, the copy action IS
-     step 1. Unmistakably the main thing on the page. */
-  .steps { margin-top: 4px; width: 100%; }
-  .step {
-    margin: 0 0 12px; font-size: 1.08rem; line-height: 1.6;
-    color: var(--ink); max-width: 520px;
-  }
-  .step-num { color: var(--ink-faint); }
-  .cmd {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 0.85em; color: var(--ink);
-    background: var(--rule); border-radius: 4px; padding: 1px 6px;
-  }
-  .step-note {
-    margin: -4px 0 26px; font-size: 0.85rem; line-height: 1.65;
-    color: var(--ink-muted); max-width: 480px; font-style: italic;
-  }
-  /* Numbered step label — small-caps spine above each box, so the two moves
-     read as an order (share first, then connect) and not as two peers. */
-  .step-label {
-    margin: 0 0 10px; font-size: 0.72rem; letter-spacing: 0.12em;
-    text-transform: lowercase; font-variant-caps: all-small-caps;
-    color: var(--ink-muted); line-height: 1;
-  }
-  /* The /a habit — NOT a numbered step (it's an ongoing thing, not a
-     one-time action); differentiated by a plum keyline so it reads as the
-     recurring move. One line. */
-  .habit {
-    margin: 22px 0 0; padding: 10px 0 10px 16px;
-    border-left: 2px solid var(--accent);
-    font-size: 1.02rem; line-height: 1.4; color: var(--ink); max-width: 520px;
-  }
-  /* The second beats — invite link + phone shortcut, each a small-caps
-     question, an answer line, and one quiet note (the site's door idiom). */
-  .invite { margin-top: 34px; }
-  .invite-q {
-    margin: 0 0 8px; font-size: 0.72rem; letter-spacing: 0.12em;
-    text-transform: lowercase; font-variant-caps: all-small-caps;
-    color: var(--ink-muted); line-height: 1;
-  }
-  .invite-line { font-size: 0.98rem; line-height: 1.6; color: var(--ink-secondary); max-width: 520px; display: flex; align-items: center; gap: 8px; }
-  .invite-line a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); padding-bottom: 1px; transition: border-color 0.15s; }
-  .invite-line a:hover { border-bottom-color: var(--ink-muted); }
-  .invite-note { margin: 8px 0 0; font-size: 0.85rem; line-height: 1.65; color: var(--ink-muted); max-width: 480px; font-style: italic; }
-  /* Share row — the invite link, made immediately actionable: a filled
-     share button (native sheet, includes copy) + a copy-link button. Both
-     flash a tick. The plain URL sits below for selecting/pasting anywhere. */
-  .sharerow { display: flex; gap: 10px; margin: 14px 0 12px; flex-wrap: wrap; }
-  .sharebtn {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-family: 'EB Garamond', Georgia, serif; font-size: 0.95rem;
-    padding: 9px 18px; border-radius: 8px; cursor: pointer;
-    background: var(--ink); color: var(--paper); border: 1px solid var(--ink);
-    transition: opacity 0.15s;
-  }
-  .sharebtn:hover { opacity: 0.88; }
-  .sharebtn.secondary { background: transparent; color: var(--ink); border-color: var(--rule); }
-  .sharebtn .icon { display: inline-flex; align-items: center; }
-  .sharebtn .icon .icon-check { display: none; }
-  .sharebtn.done .icon .icon-copy { display: none; }
-  .sharebtn.done .icon .icon-check { display: inline; }
-  .invite-link { font-size: 0.82rem; color: var(--ink-muted); margin: 0 0 4px; word-break: break-all; }
-  .invite-link a { color: var(--ink-muted); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); }
-  /* Fine print — one hairline, everything else. */
-  .fineprint {
-    margin-top: 36px; padding-top: 26px; max-width: 520px;
-    border-top: 1px solid var(--rule);
-  }
-  .fineprint p { font-size: 0.84rem; line-height: 1.7; color: var(--ink-muted); margin: 0 0 8px; }
-  .fineprint p:last-child { margin-bottom: 0; }
-  .fineprint a { color: var(--ink-muted); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); transition: color 0.15s, border-color 0.15s; }
-  .fineprint a:hover { color: var(--ink); border-bottom-color: var(--ink-muted); }
   .footer { margin-top: 40px; }
   .fineprint-solo { font-size: 0.8rem; line-height: 1.7; color: var(--ink-faint); margin: 0 0 6px; }
   .fineprint-solo a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--ink-faint); transition: color 0.15s, border-color 0.15s; }
   .fineprint-solo a:hover { color: var(--ink-muted); border-bottom-color: var(--ink-muted); }
-  .lostkey { font-size: 0.78rem; line-height: 1.7; color: var(--ink-faint); margin-top: 16px; }
-  .lostkey a { color: var(--ink-muted); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); transition: color 0.15s, border-color 0.15s; }
-  .lostkey a:hover { color: var(--ink); border-bottom-color: var(--ink-muted); }
-  .coda { margin-top: 48px; font-size: 20px; font-style: italic; color: var(--ink); opacity: 0.72; letter-spacing: 0.005em; }
-  .sub { font-size: 1rem; line-height: 1.6; color: var(--ink-muted); margin: 14px 0 30px; }
-  .sub .cmd, .cmd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; }
   .cta-box {
-    display: flex; align-items: center; width: 100%; max-width: 460px; text-align: left;
-    margin: 0 0 12px; padding: 17px 20px; border-radius: 10px; cursor: pointer;
-    background: var(--paper); color: var(--ink);
-    border: 1px solid var(--rule); font-family: inherit; font-size: 1.02rem; letter-spacing: 0.005em;
-    transition: border-color 0.2s, transform 0.12s, opacity 0.2s;
+    display: flex; align-items: center; gap: 16px;
+    width: 100%; max-width: 486px; text-align: left;
+    margin: 0 0 10px; padding: 17px 20px; border-radius: 10px; cursor: pointer;
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--surface-edge); font-family: inherit;
+    font-size: 1.02rem; line-height: 1.35; letter-spacing: 0.005em;
+    text-decoration: none; white-space: nowrap;
+    transition: border-color 0.18s ease, background 0.18s ease, transform 0.12s ease;
   }
-  .cta-box:hover { border-color: var(--ink-muted); }
+  .cta-box:hover { border-color: color-mix(in srgb, var(--ink) 28%, transparent); background: color-mix(in srgb, var(--surface) 75%, var(--ink) 3%); }
   .cta-box:active { transform: scale(0.992); }
-  /* A step that is a statement, not an action (the /a line) — same box so the
-     two steps share one grammar, but nothing to click. */
-  .cta-box.static { cursor: default; }
-  .cta-box.static:hover { border-color: var(--rule); }
-  .cta-box.static:active { transform: none; }
-  /* Filled, but not the near-black ink slab it was — that read as harsh
-     (founder 2026-07-27). A warm mid-taupe: still unmistakably the first thing
-     to press, no hue. (A plum fill was tried in between and rejected — "no
-     colours".) Dark mode inverts to a warm light fill with dark type. */
-  .cta-box.primary { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
-  .cta-why-inverse { color: var(--btn-fg); opacity: 0.68; }
-  .cta-box.primary .cta-why { color: var(--paper); opacity: 0.6; }
-  .cta-box.primary:hover { opacity: 0.9; }
+  .cta-box:focus-visible { outline: 1px solid currentColor; outline-offset: 8px; }
+  .cta-copy { min-width: 0; flex: 1; }
+  .cta-label { color: var(--ink); }
   .cta-why { color: var(--ink-muted); }
-  .cta-box .icon { display: inline-flex; align-items: center; margin-left: auto; padding-left: 12px; }
-  .cta-box .icon .icon-check { display: none; }
-  .cta-box.done .icon .icon-copy { display: none; }
-  .cta-box.done .icon .icon-check { display: inline; }
-  .action {
-    background: none;
-    border: none;
-    padding: 0;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    vertical-align: baseline;
-    gap: 6px;
-    text-decoration: none;
-    transition: opacity 0.15s;
-  }
-  .action:hover { opacity: 0.6; }
-  .action:focus-visible { outline: 1px dotted var(--ink-muted); outline-offset: 3px; border-radius: 2px; }
-  .action .icon { display: inline-flex; align-items: center; color: var(--ink-faint); transition: color 0.15s; }
-  .action:hover .icon { color: var(--ink); }
-  .action.done .icon { color: var(--ink); }
-  .action .icon .icon-check { display: none; }
-  .action.done .icon .icon-copy { display: none; }
-  .action.done .icon .icon-check { display: inline; }
   .brand-corner {
     position: fixed;
     top: 28px;
@@ -365,8 +213,8 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaTok
   @media (max-width: 640px) {
     .wrap { padding: 4rem 24px 4rem; }
     .brand-corner { top: 22px; left: 22px; font-size: 19px; }
-    .welcome { font-size: 26px; }
-    .coda { font-size: 18px; margin-top: 40px; }
+    .welcome { font-size: 34px; }
+    .cta-box { font-size: 1rem; }
   }
 </style>
 </head>
@@ -385,56 +233,62 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaTok
 </button>
 <a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
 <main class="wrap">
-  <h1 class="welcome">${isReturning ? `welcome back.` : `you\u2019re one of us now.`}</h1>
+  <h1 class="welcome">${isReturning ? `welcome back.` : `welcome to alexandria.`}</h1>
   ${inviteUrl
-    ? `<button type="button" class="cta-box primary" onclick="shareInvite(this)" aria-label="share your invite link">share your link<span class="cta-why cta-why-inverse">&nbsp;&mdash; bring people, stay free</span><span class="icon"><span class="icon-copy">${ICON_SHARE}</span><span class="icon-check">${ICON_CHECK}</span></span></button>`
+    ? `<button type="button" class="cta-box" onclick="shareInvite(this)"><span class="cta-copy"><span class="cta-label">invite people to alexandria</span><span class="cta-sep"> &mdash; </span><span class="cta-why">share it widely</span></span></button>`
     : ''}
-  ${isReturning || !connectPrompt
-    ? `<div class="cta-box static">start a session where your loop lives<span class="cta-why">&nbsp;&mdash; your AI knows its exact gesture</span></div>`
-    : `<button type="button" class="cta-box" onclick="copyCmd(this)" aria-label="copy connect message">copy the connection<span class="cta-why">&nbsp;&mdash; paste it into the AI you use</span><span class="icon"><span class="icon-copy">${ICON_COPY}</span><span class="icon-check">${ICON_CHECK}</span></span></button>`}
-  <div class="footer">
-    ${rotateUrl ? `<p class="fineprint-solo">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a></p>` : ''}
-    <p class="fineprint-solo">wrong account? <a href="https://github.com/logout" target="_blank" rel="noopener noreferrer">sign out of github</a></p>
-  </div>
+  ${!isReturning
+    ? `<button type="button" class="cta-box" onclick="copyCmd(this)"><span class="cta-copy"><span class="cta-label">connect your AI to alexandria</span></span></button>`
+    : ''}
+  ${rotateUrl ? `<div class="footer"><p class="fineprint-solo">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a></p></div>` : ''}
 </main>
 <script>
-function flash(el) {
-  el.classList.add('done');
-  setTimeout(function() { el.classList.remove('done'); }, 2000);
+function flash(el, label, why) {
+  var labelEl = el.querySelector('.cta-label');
+  var whyEl = el.querySelector('.cta-why');
+  var oldLabel = labelEl ? labelEl.textContent : '';
+  var oldWhy = whyEl ? whyEl.textContent : '';
+  if (labelEl && label) labelEl.textContent = label;
+  if (whyEl && why) whyEl.textContent = why;
+  setTimeout(function() {
+    if (labelEl) labelEl.textContent = oldLabel;
+    if (whyEl) whyEl.textContent = oldWhy;
+  }, 2200);
 }
-function copyText(text, el) {
+function copyText(text, el, label, why) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    return navigator.clipboard.writeText(text).then(function() { flash(el); }).catch(function() { manualCopy(text, el); });
+    return navigator.clipboard.writeText(text).then(function() { flash(el, label, why); }).catch(function() { manualCopy(text, el, label, why); });
   }
-  manualCopy(text, el);
+  manualCopy(text, el, label, why);
   return Promise.resolve();
 }
-function manualCopy(text, el) {
+function manualCopy(text, el, label, why) {
   try {
     var ta = document.createElement('textarea');
     ta.value = text; ta.setAttribute('readonly', '');
     ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
     document.execCommand('copy'); document.body.removeChild(ta);
-    flash(el);
+    flash(el, label, why);
   } catch (e) {
     window.prompt('copy this:', text);
   }
 }
-function copyCmd(el) { copyText(${jsLiteral(connectPrompt)}, el); }
+function copyCmd(el) { copyText(${jsLiteral(connectPrompt)}, el, 'copied', 'paste into your computer agent'); }
 // Share, not copy (founder 2026-07-27): the native sheet puts the link one tap
 // from a real conversation — Messages, WhatsApp, wherever they'd actually send
 // it — instead of parking it on a clipboard they never paste. Desktop browsers
-// without navigator.share fall back to the copy behaviour (and the tick flash).
+// without navigator.share fall back to copying the same invitation and link.
 function shareInvite(el) {
   var url = ${jsLiteral(inviteUrl)};
+  var message = 'I joined Alexandria. Come in with me.';
   if (navigator.share) {
-    navigator.share({ title: 'alexandria.', text: 'thinking, together — come in with me.', url: url })
-      .then(function() { flash(el); })
+    navigator.share({ title: 'alexandria.', text: message, url: url })
+      .then(function() { flash(el, 'shared', 'invite someone else'); })
       .catch(function() {});
     return;
   }
-  copyText(url, el);
+  copyText(message + ' ' + url, el, 'copied', 'send it to someone');
 }
 function effectiveTheme() {
   var t = document.documentElement.dataset.theme;

@@ -59,7 +59,7 @@ function SimilarityCard({ card, authorName, authorId }: { card: PulseCard; autho
           style={{ fontSize: '0.58rem', color: 'var(--text-ghost)', textDecoration: 'none', transition: 'opacity 0.15s', letterSpacing: '0.02em' }}
           className="hover:opacity-60"
         >alexandria-library.com/library/{authorId}</Link>
-        <Link href={`/signup?ref=${authorId}&ref_source=library`}
+        <Link href={`/join?ref=${authorId}&ref_source=library`}
           style={{ fontSize: '0.58rem', color: 'var(--text-ghost)', textDecoration: 'none', transition: 'opacity 0.15s', letterSpacing: '0.02em' }}
           className="hover:opacity-60"
         >alexandria-library.com — use code {authorId}</Link>
@@ -97,7 +97,7 @@ function FragmentCard({ card, authorName, authorId }: { card: PulseCard; authorN
           style={{ fontSize: '0.58rem', color: 'var(--text-ghost)', textDecoration: 'none', transition: 'opacity 0.15s', letterSpacing: '0.02em' }}
           className="hover:opacity-60"
         >alexandria-library.com/library/{authorId}</Link>
-        <Link href={`/signup?ref=${authorId}&ref_source=library`}
+        <Link href={`/join?ref=${authorId}&ref_source=library`}
           style={{ fontSize: '0.58rem', color: 'var(--text-ghost)', textDecoration: 'none', transition: 'opacity 0.15s', letterSpacing: '0.02em' }}
           className="hover:opacity-60"
         >alexandria-library.com — use code {authorId}</Link>
