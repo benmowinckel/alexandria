@@ -448,21 +448,28 @@ export function registerProtocol(app: Hono) {
     const now = new Date().toISOString();
     const db = getDB();
 
-    // New installs report the SHA-256 of the exact GitHub bytes the Author's AI
-    // inspected. Old manifests remain accepted as legacy signal, but are marked
-    // unverified in the response. Duplicate IDs collapse to one vote per call.
+    // A stable module ID is the survival identity. Exact reports additionally
+    // prove which published bytes are running; adapted reports say that a
+    // personalizable module's mechanism survived local tailoring. Old manifests
+    // remain legible as lower-confidence self-report. Duplicate IDs collapse to
+    // one vote per call.
     const rows = normalizeMarketplaceReport(body.modules);
     if (rows.length === 0) return c.json({ error: 'no valid modules' }, 400);
 
-    // Identity is binary, not a fuzzy similarity judgment. If one byte changes,
-    // the report no longer counts as use of this published module. The Author
-    // can inspect again, keep a private adaptation unreported, or publish a
-    // derived module under their own GitHub identity.
+    // Exact provenance is binary; module continuity is semantic and explicit.
+    // Exact use must match current published bytes. Adapted use may credit only
+    // a module that declared itself personalizable, and never sends local bytes.
     const reportMetas = await Promise.all(rows.map((row) => resolveModule(row.mod)));
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
-      if (!row.sourceSha256) continue;
       const moduleMeta = reportMetas[i];
+      if (row.relationship === 'adapted' && moduleMeta?.adaptation !== 'personalizable') {
+        return c.json({
+          error: 'only personalizable modules may report adapted use',
+          module: row.mod,
+        }, 400);
+      }
+      if (row.relationship !== 'exact') continue;
       if (!moduleMeta || moduleMeta.status !== 'ok' || moduleMeta.content_sha256 !== row.sourceSha256) {
         return c.json({
           error: 'module bytes changed since inspection',
@@ -499,9 +506,14 @@ export function registerProtocol(app: Hono) {
 
     const storedRows = rows.map((row) => ({
       mod: row.mod,
-      text: row.sourceSha256
-        ? JSON.stringify({ v: 1, note: row.text, source_sha256: row.sourceSha256 })
-        : row.text,
+      text: row.relationship === 'legacy'
+        ? row.text
+        : JSON.stringify({
+            v: 2,
+            note: row.text,
+            relationship: row.relationship,
+            source_sha256: row.sourceSha256,
+          }),
     }));
     const inserts = storedRows.concat(requestRows).map((r) => db.prepare(
       'INSERT INTO protocol_calls (module_id, account_id, time, text) VALUES (?, ?, ?, ?)'
@@ -523,19 +535,11 @@ export function registerProtocol(app: Hono) {
     // these fields are unaffected.
     const ids = rows.map((r) => r.mod);
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-    const exactRows = rows.filter((row) => row.sourceSha256);
-    const exactClauses = exactRows.map(() =>
-      `(module_id = ? AND json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.source_sha256') = ?)`
-    ).join(' OR ');
-    const callerRows = exactRows.length === 0
-      ? { results: [] as Array<{ module_id: string; n: number }> }
-      : await db.prepare(
-          `SELECT module_id, COUNT(DISTINCT account_id) as n FROM protocol_calls
-           WHERE time > ? AND (${exactClauses}) GROUP BY module_id`
-        ).bind(
-          ninetyDaysAgo,
-          ...exactRows.flatMap((row) => [row.mod, row.sourceSha256 as string]),
-        ).all<{ module_id: string; n: number }>();
+    const idPlaceholders = ids.map(() => '?').join(',');
+    const callerRows = await db.prepare(
+      `SELECT module_id, COUNT(DISTINCT account_id) as n FROM protocol_calls
+       WHERE time > ? AND module_id IN (${idPlaceholders}) GROUP BY module_id`
+    ).bind(ninetyDaysAgo, ...ids).all<{ module_id: string; n: number }>();
     const callerCounts = new Map((callerRows.results || []).map((r) => [r.module_id, r.n]));
     const metas = reportMetas;
     const responseModules = ids.map((mid, i) => ({
@@ -545,7 +549,7 @@ export function registerProtocol(app: Hono) {
       content_sha256: metas[i]?.content_sha256 || null,
       adaptation: metas[i]?.adaptation || 'universal',
       derived_from: metas[i]?.derived_from || null,
-      usage_identity: rows[i].sourceSha256 ? 'exact' : 'legacy-unverified',
+      usage_identity: rows[i].relationship,
     }));
 
     return c.json({ ok: true, modules: responseModules, requests_logged: requestRows.length });
@@ -567,8 +571,8 @@ export function registerProtocol(app: Hono) {
   app.get('/marketplace', async (c, next) => {
     if (new URL(c.req.url).pathname !== '/marketplace') return next();
 
-    // Public listing carries module identity plus anonymous, exact-byte recent
-    // counts. Raw notes never appear here. Member detail adds all-time lineage
+    // Public listing carries module identity plus anonymous recent signal. Raw
+    // notes never appear here. Member detail adds all-time lineage
     // counts and only the requesting Author's own history.
     //
     // Alexandria's own inventory is explicit and always visible. Community
@@ -594,57 +598,91 @@ export function registerProtocol(app: Hono) {
       .filter(isMarketplaceModule)
       .filter((id) => !builtinIds.has(id)))];
 
-    // Public signal is anonymous and exact-byte only. Old plaintext reports and
-    // reports for an earlier revision remain historical rows, but never inflate
-    // the current module's counts.
+    // Exact-current signal proves byte freshness. Stable-identity signal asks a
+    // different question: did this module's mechanism survive? It includes
+    // exact, adapted, and legacy self-reports under the stable module ID. The
+    // public page ranks by that durable signal; agents can inspect both layers.
     const hashExpression = `json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.source_sha256')`;
+    const relationshipExpression = `json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.relationship')`;
+    const versionExpression = `json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.v')`;
+    const evidenceExpression = `CASE
+      WHEN ${versionExpression} = 1 OR ${relationshipExpression} = 'exact' THEN 'exact'
+      WHEN ${relationshipExpression} = 'adapted' THEN 'adapted'
+      ELSE 'legacy'
+    END`;
     const [signalRows, lineageRows] = await Promise.all([
       getDB().prepare(
         `SELECT module_id, ${hashExpression} as source_sha256,
-                COUNT(*) as calls, COUNT(DISTINCT account_id) as callers, MAX(time) as last_seen
+                account_id, COUNT(*) as calls, MAX(time) as last_seen
          FROM protocol_calls
          WHERE module_id LIKE 'github:%' AND time > ? AND ${hashExpression} IS NOT NULL
-         GROUP BY module_id, source_sha256`
+           AND (${versionExpression} = 1 OR ${relationshipExpression} = 'exact')
+         GROUP BY module_id, source_sha256, account_id`
       ).bind(ninetyDaysAgo).all<{
         module_id: string;
         source_sha256: string;
+        account_id: string;
         calls: number;
-        callers: number;
         last_seen: string | null;
       }>(),
       getDB().prepare(
-        `SELECT module_id, COUNT(*) as calls, COUNT(DISTINCT account_id) as callers, MAX(time) as last_seen
+        `SELECT module_id, account_id, ${evidenceExpression} as evidence,
+                COUNT(*) as calls, MAX(time) as last_seen
          FROM protocol_calls
-         WHERE module_id LIKE 'github:%' AND time > ? AND ${hashExpression} IS NOT NULL
-         GROUP BY module_id`
+         WHERE module_id LIKE 'github:%' AND time > ?
+         GROUP BY module_id, account_id, evidence`
       ).bind(ninetyDaysAgo).all<{
         module_id: string;
+        account_id: string;
+        evidence: 'exact' | 'adapted' | 'legacy';
         calls: number;
-        callers: number;
         last_seen: string | null;
       }>(),
     ]);
-    const exactSignal = new Map<string, { calls: number; callers: number; last_seen: string | null }>();
+    const exactSets = new Map<string, { calls: number; accounts: Set<string>; last_seen: string | null }>();
     for (const row of signalRows.results || []) {
       const canonicalId = canonicalizeModuleId(row.module_id);
       const key = `${canonicalId}\n${row.source_sha256}`;
-      const prior = exactSignal.get(key);
-      exactSignal.set(key, {
+      const prior = exactSets.get(key);
+      exactSets.set(key, {
         calls: (prior?.calls || 0) + row.calls,
-        callers: (prior?.callers || 0) + row.callers,
+        accounts: new Set([...(prior?.accounts || []), row.account_id]),
         last_seen: !prior?.last_seen || (row.last_seen && row.last_seen > prior.last_seen) ? row.last_seen : prior.last_seen,
       });
     }
-    const lineageSignal = new Map<string, { calls: number; callers: number; last_seen: string | null }>();
+    const exactSignal = new Map([...exactSets].map(([key, value]) => [key, {
+      calls: value.calls,
+      callers: value.accounts.size,
+      last_seen: value.last_seen,
+    }]));
+    const lineageSets = new Map<string, {
+      calls: number;
+      accounts: Set<string>;
+      evidence: Record<'exact' | 'adapted' | 'legacy', Set<string>>;
+      last_seen: string | null;
+    }>();
     for (const row of lineageRows.results || []) {
       const canonicalId = canonicalizeModuleId(row.module_id);
-      const prior = lineageSignal.get(canonicalId);
-      lineageSignal.set(canonicalId, {
+      const prior = lineageSets.get(canonicalId);
+      const evidence = prior?.evidence || { exact: new Set<string>(), adapted: new Set<string>(), legacy: new Set<string>() };
+      evidence[row.evidence].add(row.account_id);
+      lineageSets.set(canonicalId, {
         calls: (prior?.calls || 0) + row.calls,
-        callers: (prior?.callers || 0) + row.callers,
+        accounts: new Set([...(prior?.accounts || []), row.account_id]),
+        evidence,
         last_seen: !prior?.last_seen || (row.last_seen && row.last_seen > prior.last_seen) ? row.last_seen : prior.last_seen,
       });
     }
+    const lineageSignal = new Map([...lineageSets].map(([key, value]) => [key, {
+      calls: value.calls,
+      callers: value.accounts.size,
+      evidence: {
+        exact_callers: value.evidence.exact.size,
+        adapted_callers: value.evidence.adapted.size,
+        legacy_callers: value.evidence.legacy.size,
+      },
+      last_seen: value.last_seen,
+    }]));
     const withCurrentSignal = (module: ReturnType<typeof marketplaceBuiltins>[number], contentSha256: string | null) => {
       const current = contentSha256 ? exactSignal.get(`${module.id}\n${contentSha256}`) : undefined;
       const lineage = lineageSignal.get(module.id);
@@ -663,11 +701,20 @@ export function registerProtocol(app: Hono) {
             last_seen: current?.last_seen || null,
             window_days: 90,
           },
+          stable_identity: {
+            callers_recent: lineage?.callers || 0,
+            calls_recent: lineage?.calls || 0,
+            last_seen: lineage?.last_seen || null,
+            window_days: 90,
+            evidence: lineage?.evidence || { exact_callers: 0, adapted_callers: 0, legacy_callers: 0 },
+          },
+          // Backward-compatible alias for clients shipped before adapted use.
           module_lineage: {
             callers_recent: lineage?.callers || 0,
             calls_recent: lineage?.calls || 0,
             last_seen: lineage?.last_seen || null,
             window_days: 90,
+            evidence: lineage?.evidence || { exact_callers: 0, adapted_callers: 0, legacy_callers: 0 },
           },
         },
       };
@@ -703,11 +750,16 @@ export function registerProtocol(app: Hono) {
     const authorFilter = c.req.query('author');
     if (authorFilter) modules = modules.filter((m) => m.author_github_login === authorFilter);
 
-    // Incompressible core first, then replaceable defaults, official additions,
-    // and author modules.
+    // Core recovery references stay first and unranked. Everything replaceable
+    // competes on sustained use of the stable module identity; product role is
+    // only a tie-breaker, never a hidden editorial ranking.
     const builtinOrder = new Map(builtins.map((module, index) => [module.id, index]));
     modules.sort((a, b) => {
       const rank = { core: 0, default: 1, official: 2, community: 3 } as const;
+      if (a.tier === 'core' || b.tier === 'core') return rank[a.tier] - rank[b.tier];
+      const aUsage = a.signal.stable_identity.callers_recent;
+      const bUsage = b.signal.stable_identity.callers_recent;
+      if (aUsage !== bUsage) return bUsage - aUsage;
       if (rank[a.tier] !== rank[b.tier]) return rank[a.tier] - rank[b.tier];
       const aBuiltin = builtinOrder.get(a.id);
       const bBuiltin = builtinOrder.get(b.id);
@@ -776,24 +828,39 @@ export function registerProtocol(app: Hono) {
     const meta = await resolveModule(moduleId);
     const currentHash = meta?.content_sha256 || '';
     const exactHash = `json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.source_sha256') = ?`;
-    const anyExactHash = `json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.source_sha256') IS NOT NULL`;
-    const [currentAll, currentRecent, lineageAll, lineageRecent, own] = await Promise.all([
+    const detailVersion = `json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.v')`;
+    const detailRelationship = `json_extract(CASE WHEN json_valid(text) THEN text ELSE '{}' END, '$.relationship')`;
+    const exactRelationship = `(${detailVersion} = 1 OR ${detailRelationship} = 'exact')`;
+    const detailEvidence = `CASE
+      WHEN ${detailVersion} = 1 OR ${detailRelationship} = 'exact' THEN 'exact'
+      WHEN ${detailRelationship} = 'adapted' THEN 'adapted'
+      ELSE 'legacy'
+    END`;
+    const [currentAll, currentRecent, lineageAll, lineageRecent, evidenceAll, evidenceRecent, own] = await Promise.all([
       db.prepare(
         `SELECT COUNT(*) as calls, COUNT(DISTINCT account_id) as callers, MAX(time) as last_seen
-         FROM protocol_calls WHERE module_id IN (${placeholders}) AND ${exactHash}`
+         FROM protocol_calls WHERE module_id IN (${placeholders}) AND ${exactHash} AND ${exactRelationship}`
       ).bind(...aliases, currentHash).first<{ calls: number; callers: number; last_seen: string | null }>(),
       db.prepare(
         `SELECT COUNT(*) as calls, COUNT(DISTINCT account_id) as callers
-         FROM protocol_calls WHERE module_id IN (${placeholders}) AND time > ? AND ${exactHash}`
+         FROM protocol_calls WHERE module_id IN (${placeholders}) AND time > ? AND ${exactHash} AND ${exactRelationship}`
       ).bind(...aliases, ninetyDaysAgo, currentHash).first<{ calls: number; callers: number }>(),
       db.prepare(
         `SELECT COUNT(*) as calls, COUNT(DISTINCT account_id) as callers, MAX(time) as last_seen
-         FROM protocol_calls WHERE module_id IN (${placeholders}) AND ${anyExactHash}`
+         FROM protocol_calls WHERE module_id IN (${placeholders})`
       ).bind(...aliases).first<{ calls: number; callers: number; last_seen: string | null }>(),
       db.prepare(
         `SELECT COUNT(*) as calls, COUNT(DISTINCT account_id) as callers, MAX(time) as last_seen
-         FROM protocol_calls WHERE module_id IN (${placeholders}) AND time > ? AND ${anyExactHash}`
+         FROM protocol_calls WHERE module_id IN (${placeholders}) AND time > ?`
       ).bind(...aliases, ninetyDaysAgo).first<{ calls: number; callers: number; last_seen: string | null }>(),
+      db.prepare(
+        `SELECT ${detailEvidence} as evidence, COUNT(DISTINCT account_id) as callers
+         FROM protocol_calls WHERE module_id IN (${placeholders}) GROUP BY evidence`
+      ).bind(...aliases).all<{ evidence: 'exact' | 'adapted' | 'legacy'; callers: number }>(),
+      db.prepare(
+        `SELECT ${detailEvidence} as evidence, COUNT(DISTINCT account_id) as callers
+         FROM protocol_calls WHERE module_id IN (${placeholders}) AND time > ? GROUP BY evidence`
+      ).bind(...aliases, ninetyDaysAgo).all<{ evidence: 'exact' | 'adapted' | 'legacy'; callers: number }>(),
       db.prepare(
         `SELECT time, text FROM protocol_calls
          WHERE module_id IN (${placeholders}) AND account_id = ? ORDER BY time DESC LIMIT 100`
@@ -802,13 +869,28 @@ export function registerProtocol(app: Hono) {
     const ownUsage = (own.results || []).map((row) => {
       if (!row.text) return { time: row.time, note: '', source_sha256: null, usage_identity: 'legacy-unverified' };
       try {
-        const parsed = JSON.parse(row.text) as { v?: number; note?: string; source_sha256?: string };
+        const parsed = JSON.parse(row.text) as { v?: number; note?: string; source_sha256?: string | null; relationship?: string };
+        if (parsed.v === 2 && (parsed.relationship === 'exact' || parsed.relationship === 'adapted')) {
+          return {
+            time: row.time,
+            note: parsed.note || '',
+            source_sha256: parsed.source_sha256 || null,
+            usage_identity: parsed.relationship,
+          };
+        }
         if (parsed.v === 1 && typeof parsed.source_sha256 === 'string') {
           return { time: row.time, note: parsed.note || '', source_sha256: parsed.source_sha256, usage_identity: 'exact' };
         }
       } catch { /* old plaintext usage note */ }
       return { time: row.time, note: row.text, source_sha256: null, usage_identity: 'legacy-unverified' };
     });
+    const evidenceCounts = (rows: Array<{ evidence: 'exact' | 'adapted' | 'legacy'; callers: number }>) => {
+      const counts = { exact_callers: 0, adapted_callers: 0, legacy_callers: 0 };
+      for (const row of rows) counts[`${row.evidence}_callers`] = row.callers;
+      return counts;
+    };
+    const stableEvidenceAll = evidenceCounts(evidenceAll.results || []);
+    const stableEvidenceRecent = evidenceCounts(evidenceRecent.results || []);
 
     return c.json({
       module: moduleId,
@@ -825,6 +907,17 @@ export function registerProtocol(app: Hono) {
           last_seen: currentAll?.last_seen || null,
           window_days: 90,
         },
+        stable_identity: {
+          callers_recent: lineageRecent?.callers || 0,
+          calls_recent: lineageRecent?.calls || 0,
+          callers_all_time: lineageAll?.callers || 0,
+          calls_all_time: lineageAll?.calls || 0,
+          last_seen: lineageAll?.last_seen || null,
+          window_days: 90,
+          evidence_recent: stableEvidenceRecent,
+          evidence_all_time: stableEvidenceAll,
+        },
+        // Backward-compatible alias for clients shipped before adapted use.
         module_lineage: {
           callers_recent: lineageRecent?.callers || 0,
           calls_recent: lineageRecent?.calls || 0,
@@ -832,6 +925,8 @@ export function registerProtocol(app: Hono) {
           calls_all_time: lineageAll?.calls || 0,
           last_seen: lineageAll?.last_seen || null,
           window_days: 90,
+          evidence_recent: stableEvidenceRecent,
+          evidence_all_time: stableEvidenceAll,
         },
       },
       own_usage: ownUsage,

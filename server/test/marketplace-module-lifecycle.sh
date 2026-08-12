@@ -40,14 +40,14 @@ if bash "$repo_root/factory/scripts/install.sh" register "$id" "$(printf '0%.0s'
   exit 1
 fi
 
-register_output=$(bash "$repo_root/factory/scripts/install.sh" register "$id" "$sha")
+register_output=$(bash "$repo_root/factory/scripts/install.sh" register "$id" "$sha" adapted)
 printf '%s\n' "$register_output" | grep -q 'no module was activated or executed'
 jq -e --arg id "$id" --arg sha "$sha" \
-  '.modules == [{id: $id, source_sha256: $sha, text: ""}]' \
+  '.modules == [{id: $id, source_sha256: $sha, relationship: "adapted", text: ""}]' \
   "$ALEXANDRIA_DIR/.call_manifest" >/dev/null
 
 # Registration is idempotent, while any byte change produces a different hash.
-bash "$repo_root/factory/scripts/install.sh" register "$id" "$sha" | grep -q 'already registered'
+bash "$repo_root/factory/scripts/install.sh" register "$id" "$sha" adapted | grep -q 'already registered'
 printf '%s\n' 'changed' >> "$module_body"
 changed_output=$(bash "$repo_root/factory/scripts/install.sh" inspect "$id")
 changed_sha=$(printf '%s\n' "$changed_output" | awk '/^install: sha256 / {print $3}')

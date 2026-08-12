@@ -2,7 +2,7 @@
 # Inspect and register exact marketplace-module bytes without activating them.
 #
 #   install.sh inspect <github:user/repo#path>
-#   install.sh register <github:user/repo#path> <sha256>
+#   install.sh register <github:user/repo#path> <sha256> [exact|adapted]
 #
 # `inspect` fetches untrusted bytes into a content-addressed local store and
 # prints their path for the Author's AI to review. `register` adds only that
@@ -18,13 +18,14 @@ if [[ "$cmd" == github:* ]]; then
 fi
 mod="${2:-}"
 approved_sha="${3:-}"
+relationship="${4:-exact}"
 alex_dir="${ALEXANDRIA_DIR:-$HOME/alexandria}"
 manifest="$alex_dir/.call_manifest"
 store="${ALEXANDRIA_MODULE_STORE:-$alex_dir/modules/sources}"
 
 usage() {
   echo "usage: install.sh inspect <github:user/repo#path>" >&2
-  echo "       install.sh register <github:user/repo#path> <sha256>" >&2
+  echo "       install.sh register <github:user/repo#path> <sha256> [exact|adapted]" >&2
   exit 1
 }
 
@@ -85,6 +86,10 @@ inspect_module() {
 }
 
 register_module() {
+  if [[ "$relationship" != "exact" && "$relationship" != "adapted" ]]; then
+    echo "install: relationship must be exact or adapted" >&2
+    exit 1
+  fi
   if [[ ! "$approved_sha" =~ ^[a-f0-9]{64}$ ]]; then
     echo "install: register requires the exact lowercase SHA-256 shown by inspect" >&2
     exit 1
@@ -107,16 +112,17 @@ register_module() {
     exit 1
   fi
   existing_sha=$(jq -r --arg id "$mod" '.modules[]? | select(.id == $id) | .source_sha256 // ""' "$manifest" | head -1)
-  if [[ "$existing_sha" == "$approved_sha" ]]; then
-    echo "install: $mod already registered at sha256 $approved_sha"
+  existing_relationship=$(jq -r --arg id "$mod" '.modules[]? | select(.id == $id) | .relationship // "legacy"' "$manifest" | head -1)
+  if [[ "$existing_sha" == "$approved_sha" && "$existing_relationship" == "$relationship" ]]; then
+    echo "install: $mod already registered as $relationship use from sha256 $approved_sha"
     exit 0
   fi
   tmp=$(mktemp "${manifest}.XXXXXX")
-  jq --arg id "$mod" --arg sha "$approved_sha" '
-    .modules = ([.modules[] | select(.id != $id)] + [{id: $id, source_sha256: $sha, text: ""}])
+  jq --arg id "$mod" --arg sha "$approved_sha" --arg relationship "$relationship" '
+    .modules = ([.modules[] | select(.id != $id)] + [{id: $id, source_sha256: $sha, relationship: $relationship, text: ""}])
   ' "$manifest" > "$tmp"
   mv "$tmp" "$manifest"
-  echo "install: registered $mod at sha256 $approved_sha"
+  echo "install: registered $mod as $relationship use from sha256 $approved_sha"
   echo "install: no module was activated or executed"
   echo "install: reporting remains off until the Author approves the exact current manifest hash"
 }

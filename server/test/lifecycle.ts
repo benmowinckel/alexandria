@@ -289,7 +289,11 @@ async function main() {
     const body = await safeJson(res);
     const ownUsage = Array.isArray(body?.own_usage) ? body.own_usage as Array<{ note?: string; source_sha256?: string }> : [];
     const found = ownUsage.some((u) => u.note === callText && u.source_sha256 === moduleSha256);
-    const signal = body?.signal as { current_version?: { callers_recent?: number }; module_lineage?: { callers_recent?: number } } | undefined;
+    const signal = body?.signal as {
+      current_version?: { callers_recent?: number };
+      stable_identity?: { callers_recent?: number; evidence_recent?: { exact_callers?: number } };
+      module_lineage?: { callers_recent?: number };
+    } | undefined;
     const serialized = JSON.stringify(body);
 
     return {
@@ -298,6 +302,8 @@ async function main() {
         && body?.module === moduleId
         && found
         && (signal?.current_version?.callers_recent || 0) >= 1
+        && (signal?.stable_identity?.callers_recent || 0) >= 1
+        && (signal?.stable_identity?.evidence_recent?.exact_callers || 0) >= 1
         && (signal?.module_lineage?.callers_recent || 0) >= 1
         && !serialized.includes('account_id'),
       details: `HTTP ${res.status}, own_usage=${ownUsage.length}, found=${found}`,
@@ -306,12 +312,13 @@ async function main() {
 
   await test('Marketplace listing envelope', async () => {
     const res = await fetch(`${BASE}/marketplace`);
-    const body = await safeJson(res) as { modules?: Array<{ id: string; status: string; kind: string; signal?: { current_version?: unknown; module_lineage?: unknown } }>; total?: number; next_cursor?: string | null } | null;
+    const body = await safeJson(res) as { modules?: Array<{ id: string; status: string; kind: string; signal?: { current_version?: unknown; stable_identity?: unknown; module_lineage?: unknown } }>; total?: number; next_cursor?: string | null } | null;
     const modules = body?.modules || [];
     const shapeOk = modules.every((m) => typeof m.id === 'string'
       && typeof m.status === 'string'
       && typeof m.kind === 'string'
       && !!m.signal?.current_version
+      && !!m.signal?.stable_identity
       && !!m.signal?.module_lineage);
 
     // Catalog-only public projection. We assert envelope shape (modules / total /

@@ -63,9 +63,9 @@ assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/b
 assert.equal(isMarketplaceModule('github:someone/their-modules#focus'), true);
 
 const builtins = marketplaceBuiltins();
-for (const module of marketplaceInventory.modules) {
-  const source = new URL(`../../${module.path}.md`, import.meta.url);
-  assert.equal(existsSync(source), true, `marketplace source missing: ${module.path}.md`);
+for (const inventoryModule of marketplaceInventory.modules) {
+  const source = new URL(`../../${inventoryModule.path}.md`, import.meta.url);
+  assert.equal(existsSync(source), true, `marketplace source missing: ${inventoryModule.path}.md`);
 }
 assert.deepEqual(
   marketplaceInventory.modules.filter((module) => module.role === 'core').map((module) => module.path),
@@ -114,7 +114,7 @@ assert.deepEqual(
 
 const exactHash = 'A'.repeat(64);
 assert.deepEqual(normalizeMarketplaceReport([
-  { id: 'github:someone/tools#focus', text: 'kept', source_sha256: exactHash },
+  { id: 'github:someone/tools#focus', text: 'kept', source_sha256: exactHash, relationship: 'adapted' },
   { id: 'github:someone/tools#focus', text: 'duplicate', source_sha256: exactHash.toLowerCase() },
   { id: 'github:someone/tools#bad', text: '', source_sha256: 'not-a-hash' },
   'local:someone/private',
@@ -122,6 +122,25 @@ assert.deepEqual(normalizeMarketplaceReport([
   mod: 'github:someone/tools#focus',
   text: 'kept',
   sourceSha256: exactHash.toLowerCase(),
+  relationship: 'adapted',
+}]);
+
+assert.deepEqual(normalizeMarketplaceReport([
+  { id: 'github:someone/tools#focus', text: 'kept in spirit', relationship: 'adapted' },
+]), [{
+  mod: 'github:someone/tools#focus',
+  text: 'kept in spirit',
+  sourceSha256: null,
+  relationship: 'adapted',
+}]);
+
+assert.deepEqual(normalizeMarketplaceReport([
+  { id: 'github:someone/tools#focus', text: 'unchanged', source_sha256: exactHash },
+]), [{
+  mod: 'github:someone/tools#focus',
+  text: 'unchanged',
+  sourceSha256: exactHash.toLowerCase(),
+  relationship: 'exact',
 }]);
 
 console.log('marketplace catalog identity, lifecycle, and activation layers: PASS');

@@ -28,9 +28,9 @@
 
 ## marketplace-signal — report modules this machine uses
 
-- **Does:** reports the public IDs listed in `~/alexandria/.call_manifest` so Alexandria can count module usage. It does not publish private files or draft contributions.
+- **Does:** reports the public IDs listed in `~/alexandria/.call_manifest` at most once a day, and again after an approved manifest change, so Alexandria can rank modules by sustained use without flooding duplicate events. It does not publish private files or draft contributions.
 - **Touches:** one local permission marker and the connected account's marketplace activity.
-- **Leaves the machine:** the exact module IDs and any text already present in `.call_manifest`; show that file in full before enabling. Editing it changes the hash and stops future sends.
+- **Leaves the machine:** the exact module IDs, whether each is used exactly or in adapted form, the reviewed upstream hash when present, and any text already in `.call_manifest`; show that file in full before enabling. No private adapted bytes leave. Editing the manifest changes its hash and stops future sends.
 - **Needs:** a connected account.
 - **Enable:** after a separate yes to the displayed bytes: `shasum -a 256 ~/alexandria/.call_manifest | awk '{print $1}' > ~/alexandria/system/permissions/marketplace`.
 - **Off:** `rm ~/alexandria/system/permissions/marketplace`.

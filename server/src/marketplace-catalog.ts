@@ -31,6 +31,7 @@ export interface MarketplaceReportRow {
   mod: string;
   text: string;
   sourceSha256: string | null;
+  relationship: 'exact' | 'adapted' | 'legacy';
 }
 
 export interface ParsedModuleId {
@@ -247,6 +248,7 @@ export function normalizeMarketplaceReport(input: unknown[]): MarketplaceReportR
     let candidateId: string | null = null;
     let text = '';
     let sourceSha256: string | null = null;
+    let relationship: MarketplaceReportRow['relationship'] = 'legacy';
     if (typeof item === 'string') {
       candidateId = item;
     } else if (item && typeof item === 'object') {
@@ -256,14 +258,21 @@ export function normalizeMarketplaceReport(input: unknown[]): MarketplaceReportR
       if (typeof value.text === 'string') text = value.text;
       if (typeof value.source_sha256 === 'string' && /^[a-f0-9]{64}$/i.test(value.source_sha256)) {
         sourceSha256 = value.source_sha256.toLowerCase();
+        relationship = 'exact';
       } else if (value.source_sha256 !== undefined) {
         continue;
       }
+      if (value.relationship === 'exact' || value.relationship === 'adapted') {
+        relationship = value.relationship;
+      } else if (value.relationship !== undefined) {
+        continue;
+      }
     }
+    if (relationship === 'exact' && !sourceSha256) continue;
     if (!candidateId || parseModuleId(candidateId).kind === null) continue;
     const mod = canonicalizeModuleId(candidateId).slice(0, 300);
     if (!isMarketplaceModule(mod) || rows.has(mod)) continue;
-    rows.set(mod, { mod, text: text.slice(0, 2000), sourceSha256 });
+    rows.set(mod, { mod, text: text.slice(0, 2000), sourceSha256, relationship });
   }
   return [...rows.values()];
 }

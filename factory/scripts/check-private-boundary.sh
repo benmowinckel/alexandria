@@ -542,6 +542,12 @@ require factory/hooks/payload.sh \
   'marketplace_approved_sha' \
   'marketplace permission is not tied to the exact approved manifest'
 require factory/hooks/payload.sh \
+  'marketplace_report_key' \
+  'marketplace reporting is not deduplicated to one survival heartbeat per day or manifest change'
+require factory/hooks/payload.sh \
+  '.marketplace_report_lock' \
+  'parallel sessions can duplicate the same marketplace survival heartbeat'
+require factory/hooks/payload.sh \
   'abs + ".approved"' \
   'Library publication is not tied to exact approved bytes'
 forbid factory/hooks/payload.sh \

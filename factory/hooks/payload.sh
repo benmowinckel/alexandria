@@ -736,6 +736,7 @@ ALEXNODE
   marketplace_permission="$ALEX_DIR/system/permissions/marketplace"
   marketplace_manifest="$ALEX_DIR/.call_manifest"
   marketplace_status="$ALEX_DIR/system/.marketplace_sync_status.json"
+  marketplace_report_state="$ALEX_DIR/system/.marketplace_report_state"
   if [ -f "$marketplace_status" ]; then
     marketplace_issue=$(node -e "const fs=require('fs');try{const s=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));if(s.ok===false)process.stdout.write('exact usage verification failed for: '+(s.invalid||[]).join(', '));}catch{}" "$marketplace_status" 2>/dev/null)
     if [ -n "$marketplace_issue" ]; then
@@ -750,8 +751,17 @@ ALEXNODE
   marketplace_current_sha=$(shasum -a 256 "$marketplace_manifest" 2>/dev/null | awk '{print $1}')
   if [ -n "$marketplace_approved_sha" ] && [ "$marketplace_approved_sha" = "$marketplace_current_sha" ]; then
     call_payload=$(cat "$marketplace_manifest" 2>/dev/null)
-    if [ -n "$call_payload" ]; then
+    marketplace_report_key="$(date +%Y-%m-%d):$marketplace_current_sha"
+    marketplace_last_report=$(cat "$marketplace_report_state" 2>/dev/null || true)
+    if [ -n "$call_payload" ] && [ "$marketplace_last_report" != "$marketplace_report_key" ]; then
     (
+      marketplace_lock="$ALEX_DIR/system/.marketplace_report_lock"
+      if [ -d "$marketplace_lock" ] && find "$marketplace_lock" -prune -mmin +10 -print 2>/dev/null | grep -q .; then
+        rmdir "$marketplace_lock" 2>/dev/null || true
+      fi
+      mkdir "$marketplace_lock" 2>/dev/null || exit 0
+      trap 'rmdir "$marketplace_lock" 2>/dev/null || true' EXIT
+      [ "$(cat "$marketplace_report_state" 2>/dev/null || true)" = "$marketplace_report_key" ] && exit 0
       response_file=$(mktemp "${TMPDIR:-/tmp}/alexandria-marketplace.XXXXXX")
       status=$(curl -s --max-time 8 -o "$response_file" -w '%{http_code}' -X POST "$SERVER/call" \
         -H "Authorization: Bearer $API_KEY" \
@@ -764,7 +774,8 @@ const fs = require('fs');
 const [source, destination] = process.argv.slice(2);
 const response = JSON.parse(fs.readFileSync(source, 'utf8'));
 const modules = Array.isArray(response.modules) ? response.modules : [];
-const invalid = modules.filter((m) => m.usage_identity !== 'exact' || m.status !== 'ok');
+const validIdentities = new Set(['exact', 'adapted', 'legacy']);
+const invalid = modules.filter((m) => !validIdentities.has(m.usage_identity) || m.status !== 'ok');
 fs.writeFileSync(destination, JSON.stringify({
   ok: response.ok === true && invalid.length === 0,
   ran_at: new Date().toISOString(),
@@ -774,7 +785,13 @@ fs.writeFileSync(destination, JSON.stringify({
 if (invalid.length) process.exitCode = 2;
 ALEXMARKET
         node_status=$?
-        [ "$node_status" = "0" ] || echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) marketplace signal verification failed" >> "$ALEX_DIR/system/.alexandria_errors"
+        if [ "$node_status" = "0" ]; then
+          state_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria-marketplace-state.XXXXXX")
+          printf '%s\n' "$marketplace_report_key" > "$state_tmp"
+          mv "$state_tmp" "$marketplace_report_state"
+        else
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) marketplace signal verification failed" >> "$ALEX_DIR/system/.alexandria_errors"
+        fi
       else
         echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) call POST failed status=$status" >> "$ALEX_DIR/system/.alexandria_errors"
       fi

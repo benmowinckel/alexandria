@@ -12,7 +12,7 @@ Choose a lowercase slug. Then make two calls with the Author:
 - `universal` — the mechanism is meant to be used as published.
 - `personalizable` — the file is a starting point each Author is expected to adapt.
 
-If this module materially adapts another published module, add its canonical ID as `derived_from`. If it stands independently and the source is not needed to explain it, leave lineage empty. There is no percentage test. Attribution is a meaning judgment; module identity is exact bytes.
+If this module materially adapts another published module, add its canonical ID as `derived_from`. If it stands independently and the source is not needed to explain it, leave lineage empty. There is no percentage test. Attribution and module continuity are meaning judgments; the stable public ID carries the mechanism and exact hashes carry provenance.
 
 ## Prepare the file
 

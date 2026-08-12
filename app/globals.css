@@ -1883,8 +1883,8 @@ html.app-shell input:focus {
   .chat-hist-actions { opacity: 1; pointer-events: auto; }
 }
 
-/* Marketplace — one editorial column. The local core is intentionally absent;
-   type labels distinguish replaceable defaults from opt-in additions. */
+/* Marketplace — a desktop directory that collapses cleanly to one mobile
+   column. Usage shapes the order invisibly; the page itself stays human. */
 .mkt-page {
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -1903,7 +1903,7 @@ html.app-shell input:focus {
   100% { opacity: 1; transform: none; }
 }
 
-.mkt-main { flex: 1; width: 100%; max-width: 600px; margin: 0 auto; padding: 5.5rem 2rem 2rem; }
+.mkt-main { flex: 1; width: 100%; max-width: 1040px; margin: 0 auto; padding: 5.5rem 2rem 2rem; }
 .mkt-header { margin-bottom: 2.6rem; }
 .mkt-brand {
   font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
@@ -1920,7 +1920,10 @@ html.app-shell input:focus {
 .mkt-brand:hover { opacity: 0.6; }
 .mkt-brand:active { opacity: 0.45; }
 .mkt-brand:focus-visible,
-.mkt-module-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.mkt-module-link:focus-visible,
+.mkt-filter-button:focus-visible,
+.mkt-filter-option:focus-visible,
+.mkt-filter-clear:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .mkt-brand-dot { font-style: normal; }
 .mkt-eyebrow {
   margin: 1.8rem 0 0;
@@ -1944,8 +1947,53 @@ html.app-shell input:focus {
   font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "swsh" 1;
   text-wrap: balance;
 }
+.mkt-search-wrap { position: relative; max-width: 660px; margin-top: 2.4rem; }
+.mkt-search-row { display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border-light); }
+.mkt-search {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+  color: var(--text-primary); font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
+  font-size: 0.95rem; padding: 0 0 0.55rem;
+}
+.mkt-search::placeholder { color: var(--text-ghost); opacity: 1; }
+.mkt-filter-button {
+  display: inline-flex; align-items: center; gap: 0.3rem; border: 0; background: none;
+  color: var(--text-ghost); cursor: pointer; padding: 0 0.1rem 0.55rem;
+  font: inherit; transition: color 150ms ease, opacity 150ms ease;
+}
+.mkt-filter-button:hover { opacity: 0.6; }
+.mkt-filter-button.is-active { color: var(--text-primary); }
+.mkt-filter-backdrop { position: fixed; inset: 0; z-index: 10; border: 0; background: transparent; cursor: default; }
+.mkt-filter-panel {
+  position: absolute; right: 0; top: calc(100% + 0.5rem); z-index: 11;
+  width: min(22rem, calc(100vw - 3rem)); max-height: min(30rem, 70vh); overflow-y: auto;
+  background: var(--bg-primary); border: 1px solid var(--border-light); border-radius: 10px;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.1); padding: 0.5rem;
+}
+.mkt-filter-group + .mkt-filter-group { border-top: 1px solid var(--border-light); margin-top: 0.35rem; padding-top: 0.35rem; }
+.mkt-filter-label {
+  margin: 0; padding: 0.45rem 0.6rem 0.25rem; color: var(--text-ghost);
+  font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.mkt-filter-option {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  width: 100%; border: 0; border-radius: 7px; background: none; color: var(--text-muted);
+  cursor: pointer; padding: 0.48rem 0.6rem; text-align: left;
+  font-family: var(--font-eb-garamond), ui-serif, Georgia, serif; font-size: 0.9rem;
+}
+.mkt-filter-option:hover { color: var(--text-primary); }
+.mkt-filter-option span:last-child { display: inline-flex; opacity: 0; }
+.mkt-filter-option span:last-child.is-selected { opacity: 1; color: var(--text-primary); }
+.mkt-filter-clear {
+  width: 100%; margin-top: 0.35rem; border: 0; border-top: 1px solid var(--border-light);
+  background: none; color: var(--text-ghost); cursor: pointer; padding: 0.65rem 0.6rem 0.4rem;
+  text-align: left; font-family: var(--font-eb-garamond), ui-serif, Georgia, serif; font-size: 0.85rem;
+}
 .mkt-empty { color: var(--text-muted); font-size: 0.95rem; margin-top: 2rem; }
-.mkt-list { margin-top: 2.4rem; display: flex; flex-direction: column; gap: 1.7rem; }
+.mkt-list {
+  margin-top: 2.6rem; display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 4.5rem; row-gap: 2.25rem;
+}
+.mkt-module { min-width: 0; }
 .mkt-module-link {
   display: block;
   color: inherit;
@@ -1954,6 +2002,7 @@ html.app-shell input:focus {
 }
 .mkt-module-link:hover { opacity: 0.6; }
 .mkt-module-link:active { opacity: 0.45; }
+.mkt-module-heading { display: flex; align-items: baseline; gap: 0.65rem; min-width: 0; }
 .mkt-module-title {
   margin: 0;
   color: var(--text-primary);
@@ -1962,7 +2011,6 @@ html.app-shell input:focus {
   letter-spacing: -0.005em;
 }
 .mkt-tier {
-  margin-left: 0.5rem;
   color: var(--text-muted);
   font-size: 0.7rem;
   font-weight: 600;
@@ -1970,29 +2018,22 @@ html.app-shell input:focus {
   text-transform: uppercase;
   vertical-align: baseline;
 }
-.mkt-author {
-  margin-left: 0.6rem;
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  font-weight: 400;
-}
 .mkt-description {
   margin: 0.45rem 0 0;
   color: var(--text-muted);
   font-size: 0.92rem;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+  text-wrap: pretty;
 }
-.mkt-signal {
+.mkt-meta {
   margin: 0.35rem 0 0;
-  color: var(--text-muted);
+  color: var(--text-ghost);
   font-size: 0.76rem;
   line-height: 1.35;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 760px) {
+  .mkt-list { grid-template-columns: 1fr; row-gap: 1.8rem; }
   .mkt-main { padding: 4rem 1.5rem 1.5rem; }
 }
 
