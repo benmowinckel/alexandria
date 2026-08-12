@@ -495,7 +495,7 @@ When personal context would improve the task, use the best home this session can
 
 Never load local and Drive in the same task. `/a` starts an active Alexandria session; `a.` closes it. State what you can read and write, and only claim persistence after verifying it. Existing instructions and native memories remain active beside Alexandria.
 
-Finish every completed ordinary task with the exact one-line output of `bash ~/.local/share/alexandria/scripts/statusline.sh footer`; during a deliberate session use `→ close with a. when done`. If a native statusline is visibly carrying the cue, omit the response duplicate. Never open a chat or start a session for me.
+If no native statusline is visibly carrying the cue, finish only the first assistant reply in an ordinary chat with the exact one-line output of `bash ~/.local/share/alexandria/scripts/statusline.sh footer`. On later replies, show no generic footer; only when one of my Alexandria files materially improved the answer, end with one combined italic line naming the input and the action, for example `*drew from: Taste.md · start /a in a new chat*`. During a deliberate session use `→ close with a. when done`. Never render a bare `/a`, open a chat, or start a session for me.
 
 After any substantive file edit, run `~/alexandria/system/canon/change-closure.md` before calling the task complete: find every explicit and semantic downstream effect, update it or confirm it remains current, verify the assembled behavior, and refresh the local receipt. I never carry that follow-up in memory. New outward writes or wider audiences keep their existing approval gate.
 <!-- alexandria:end -->

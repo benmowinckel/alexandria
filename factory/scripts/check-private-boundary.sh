@@ -218,7 +218,8 @@ require factory/canon/foundation.md \
   'private material never becomes an outbound query by default.' \
   'Foundation has no permanent private-query boundary'
 require factory/canon/foundation.md \
-  'Every completed ordinary task carries exactly one small, visible session cue.' \
+  'show the state-aware footer on the first assistant reply' \
+  'never repeat a generic footer on every task' \
   'Foundation no longer states the disclosed visible cue clearly'
 require factory/canon/foundation.md \
   '**passive session → visible route into an Alexandria session → active session → a better mirror → and back.**' \

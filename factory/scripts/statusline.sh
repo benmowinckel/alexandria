@@ -1,8 +1,10 @@
 #!/bin/bash
 # Alexandria's visible cue renderer.
 #
-# `statusline` is the native-terminal ceiling. `footer` and `footer-codex`
-# are portable response footers using each host's real skill invocation.
+# `statusline` is the persistent native-terminal ceiling. `footer` and
+# `footer-codex` are portable response footers using each host's real skill
+# invocation; agent instructions decide when they are earned (first reply, or
+# a later answer materially improved by the passive layer).
 # This script only reads local state and prints one line: it never opens a tab,
 # starts a session, writes canon, or calls the network.
 
