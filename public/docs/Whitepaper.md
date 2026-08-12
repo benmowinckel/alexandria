@@ -10,7 +10,7 @@ It’s one argument, start to finish — each step follows from the one before.
 
 There’s a company at the end of it — Alexandria. Not because the argument was built to justify one, but because once you take the frame seriously, something has to exist that nobody is building. Alexandria is it — the missing piece of a future worth reaching.
 
-*This is the full argument. [The letter](/docs/letter.pdf) is its human side — felt rather than argued.*
+*This is the full argument. [The letter](/letter) is its human side — felt rather than argued.*
 
 ## in brief
 
@@ -386,4 +386,4 @@ We are not asking you to believe in Alexandria as the destination. Judge the str
 
 *You don’t need to accept all of it to begin. A few words, five minutes — free, and yours.*
 
-[start your loop](/start) · [read the letter](/docs/letter.pdf) · [browse the library](/library)
+[start your loop](/start) · [read the letter](/letter) · [browse the library](/library)

@@ -6,6 +6,7 @@ import { SERVER_URL, pageMetadata, librarySignInUrl, FOUNDER_PROFILE_PATH } from
 import { LibraryDirectory, type DirectoryAuthor } from './LibraryDirectory';
 import SiteFooter from '../components/SiteFooter';
 import { SignOutLink } from '../components/SignOutLink';
+import { HeaderAction, HeaderActions } from '../components/HeaderActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,9 +15,9 @@ export const dynamic = 'force-dynamic';
 // social preview for /library is indistinguishable from /. Setting them
 // at page level makes shared /library links render this page's own copy;
 // pageMetadata supplies the per-page canonical + og:url.
-const LIBRARY_TITLE = 'the library of human minds — alexandria.';
+const LIBRARY_TITLE = 'the library — alexandria.';
 const LIBRARY_DESCRIPTION =
-  'The member directory of the community — find the Alexandrians near you and reach them. Each mind has its own page, shared by link.';
+  'the library of human minds.';
 
 export const metadata: Metadata = {
   ...pageMetadata({
@@ -118,37 +119,29 @@ export default async function LibraryPage({
   return (
     <div className="lib-page">
       <ThemeToggle />
-      <main className={signed_in && membership_active ? 'lib-main' : 'lib-main lib-main-gate'}>
+      <main className={signed_in && membership_active ? 'lib-main' : signed_in ? 'lib-main lib-main-gate' : 'lib-main lib-main-open'}>
         <header className="lib-header">
           <div className="lib-header-top">
             <Link href="/" className="lib-brand">
               alexandria<span className="lib-brand-dot">.</span>
             </Link>
-            {signed_in ? <SignOutLink /> : null}
+            {signed_in ? (
+              <SignOutLink />
+            ) : (
+              <HeaderActions
+                left={<HeaderAction href={signInUrl}>sign in</HeaderAction>}
+                right={<HeaderAction href="/start">join</HeaderAction>}
+              />
+            )}
           </div>
-          <p className="lib-eyebrow">the collective</p>
+          {signed_in && membership_active ? <p className="lib-eyebrow">the collective</p> : null}
           <h1 className="lib-h1">the library</h1>
         </header>
 
         {!signed_in ? (
-          // The gate a cold, signed-out visitor meets — consolidated to three
-          // crisp blocks (founder 2026-07-23): what it is, the one action worth
-          // taking (see a real mind — no account), and the two doors. The demo
-          // is the centrepiece; sign-in / join sit quiet beneath.
-          <div className="lib-gate">
-            <p className="lib-lede">
-              A living directory of the community — every Alexandrian&rsquo;s mind on its own page.
-              Find who&rsquo;s near you, and reach them.
-            </p>
-            <p className="lib-cta">
-              <span className="lib-cta-lead">See what one looks like — </span>
-              <Link href={FOUNDER_PROFILE_PATH} className="lib-cta-link">Benjamin&rsquo;s mind &amp; library</Link>
-            </p>
-            <p className="lib-sub">
-              Already a member? <a href={signInUrl} style={linkStyle}>sign in</a>.
-              New here? <Link href="/join" style={linkStyle}>join the community</Link>.
-            </p>
-          </div>
+          <nav className="lib-doors" aria-label="open a mind">
+            <Link href={FOUNDER_PROFILE_PATH} className="lib-open">Benjamin a. Mowinckel</Link>
+          </nav>
         ) : !membership_active ? (
           <div className="lib-gate">
             <p className="lib-lede">
@@ -226,6 +219,15 @@ export default async function LibraryPage({
           letter-spacing: -0.01em; color: var(--text-primary);
           font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "swsh" 1;
         }
+        .lib-main-open .lib-header { margin-bottom: 0; }
+        .lib-main-open .lib-h1 { margin-top: 2.8rem; }
+        .lib-doors { margin: 2rem 0 0; }
+        .lib-open {
+          color: var(--text-primary); font-style: italic; font-size: 1.28rem;
+          line-height: 1.35; text-decoration: none; letter-spacing: 0.005em;
+          transition: opacity 200ms ease;
+        }
+        .lib-open:hover { opacity: 0.6; }
 
         .lib-gate { max-width: 30rem; }
         .lib-lede { margin: 0 0 1.9rem; font-size: 1.08rem; line-height: 1.65; color: var(--text-secondary); text-wrap: pretty; }

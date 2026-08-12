@@ -143,7 +143,7 @@ export default function PublicDocReader({
       <p style={{ margin: 0, display: 'flex', alignItems: 'baseline', gap: '0.95rem', fontSize: '0.95rem' }}>
         <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">start your loop</Link>
         <span aria-hidden style={{ color: 'var(--text-ghost)' }}>·</span>
-        <Link href={FOUNDER_PROFILE_PATH} style={{ color: 'var(--text-muted)', textDecoration: 'none' }} className="hover:opacity-70">his library</Link>
+        <Link href={FOUNDER_PROFILE_PATH} style={{ color: 'var(--text-muted)', textDecoration: 'none' }} className="hover:opacity-70">Benjamin’s library</Link>
       </p>
     </div>
   );
@@ -177,6 +177,7 @@ export default function PublicDocReader({
       // (askFirst) already open with the pane up and need nothing.
       dockedAsk={!askFirst}
       footerCta="start your loop"
+      docPage
     />
   );
 }

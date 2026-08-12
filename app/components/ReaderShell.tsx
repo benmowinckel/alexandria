@@ -51,9 +51,9 @@ const isNarrow = () => typeof window !== 'undefined' && window.innerWidth < PANE
 
 const svgProps = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
 const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6-6 6-6" /></svg>;
-const PaneLeftIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
-const LinesIcon = <svg width="19" height="19" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
-const PaneRightIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
+const PaneLeftIcon = <svg width="17" height="17" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
+const LinesIcon = <svg width="17" height="17" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
+const PaneRightIcon = <svg width="17" height="17" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
 // Handoff — an arrow leaving a box. Deliberately not a copy or download glyph:
 // this is the conversation going somewhere else to be continued, not a file.
 const HandoffIcon = <svg width="17" height="17" {...svgProps}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /></svg>;
@@ -72,7 +72,7 @@ const ShareIcon = <svg width="17" height="17" {...svgProps}><circle cx="18" cy="
  * which on iOS Safari shows a zoomed, pan-in-all-directions, first-page-only
  * preview (the letter bug). Re-renders on width change (pane resize / rotate).
  */
-export function PdfView({ url }: { url: string }) {
+export function PdfView({ url, paper }: { url: string; paper?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [err, setErr] = useState(false);
   const widthRef = useRef(0);
@@ -119,7 +119,7 @@ export function PdfView({ url }: { url: string }) {
     return () => { cancelled = true; ro.disconnect(); clearTimeout(t); };
   }, [url]);
   return (
-    <div ref={ref} style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', background: 'var(--bg-secondary)', padding: '16px 12px' }}>
+    <div ref={ref} style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', background: paper ? 'var(--bg-primary)' : 'var(--bg-secondary)', padding: paper ? 0 : '16px 12px' }}>
       {err && <p style={{ color: 'var(--text-ghost)', textAlign: 'center', paddingTop: '2rem' }}>couldn’t render the PDF.</p>}
     </div>
   );
@@ -170,12 +170,10 @@ export type ReaderShellProps = {
    *  survives the first question — see the render. Keep it to a sentence. */
   mirrorNote?: React.ReactNode;
   askFirst?: boolean;                             // open with the ask pane up (mirror-led pages)
-  /** Dock the composer under the piece while the mirror is collapsed — the
-   *  whitepaper and the letter only. They're the two surfaces that open on a
-   *  closed mirror and a long read, so the ask has to be present without a
-   *  label. Everywhere else already carries it: the mirror-led pages open
-   *  with the pane up, and the Library reader opens on a chosen artifact
-   *  (founder 2026-07-27). */
+  /** Dock the composer under the piece while the mirror is collapsed. The
+   *  whitepaper, the letter, and any library artifact: they open on a closed
+   *  mirror and a long read, so the ask has to be present without a label.
+   *  Mirror-led pages (askFirst) already open with the pane up and need nothing. */
   dockedAsk?: boolean;
   footerCta?: string;                             // surface-fitting foot label (SiteFooter doctrine)
   /** Library-only: the invite-code entry, slotted under the sign-in CTA when an
@@ -184,6 +182,9 @@ export type ReaderShellProps = {
    *  reader always has a place to put their code. Website doc readers (always
    *  public) never reach the signin state, so they never pass this. */
   inviteField?: React.ReactNode;
+  /** Public docs (whitepaper, letter): no "whitepaper" / "public" in the header.
+   *  One bar (back + tools), not two. Library leaves this off. */
+  docPage?: boolean;
 };
 
 export default function ReaderShell({
@@ -192,7 +193,7 @@ export default function ReaderShell({
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
   intro, mirrorNote, inviteField, askFirst = false, dockedAsk = false, footerCta = 'start your loop',
-  handoffAuthorId, initialBudget = null,
+  handoffAuthorId, initialBudget = null, docPage = false,
 }: ReaderShellProps) {
   const book = useMemo(
     () => (numbered && markdown ? processNumbered(markdown) : null),
@@ -376,14 +377,13 @@ export default function ReaderShell({
   };
 
   const label = { color: 'var(--text-ghost)', fontSize: '0.72rem', letterSpacing: '0.08em' } as const;
-  const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
-  // One header grammar for all three panes: faint label left, icons right,
-  // collapse always last. Identical metrics so the three border-bottoms
-  // fuse into a single continuous rule across the reader — one line, not
-  // three (founder 2026-07-25: consistent little headers, no line clutter).
-  const paneHead = { flex: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.7rem 1rem 0.4rem', minHeight: '2.4rem', boxSizing: 'border-box', borderBottom: '1px solid var(--border-light)' } as const;
+  const chromeLabel = { ...label, paddingLeft: '0.35rem' } as const;
+  const iconBtn = { display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', width: '2.4rem', height: '2.4rem', border: 'none', background: 'none', cursor: 'pointer', padding: 0, color: 'var(--text-ghost)', transition: 'opacity 0.15s' } as const;
+  // One chrome row for all three panes: 2.4rem, icons centred, collapse in
+  // the same cell as the strip it replaces — so opening a pane never jumps.
+  const paneHead = { flex: 'none', display: 'flex', alignItems: 'center', gap: 0, height: '2.4rem', minHeight: '2.4rem', maxHeight: '2.4rem', padding: 0, overflow: 'hidden', boxSizing: 'border-box' as const } as const;
 
-  const copyText = (t: string) => { try { void navigator.clipboard?.writeText(t); } catch { /* */ } };
+  const copyText = (t: string) => { void navigator.clipboard?.writeText(t).catch(() => {}); };
   const copyArtifact = () => copyText(artifactText || '');
   // The mirror speaks as the mirror in a paste too — never as the Author
   // themself (founder 2026-07-28: "its my mirror, not me"). Notes carry no
@@ -426,14 +426,22 @@ export default function ReaderShell({
           expanded keeps that corner clear so the shrink control stays clickable
           (it used to sit under the fixed toggle) — the toggle returns on exit. */}
       {!expanded && <ThemeToggle />}
-      <div className="reader-shell" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
-        <header style={{ flex: 'none', display: 'flex', alignItems: 'baseline', gap: '0.9rem', padding: '0.85rem 3.6rem 0.85rem 1.2rem', borderBottom: '1px solid var(--border-light)' }}>
+      <div className={`reader-shell${docPage ? ' doc-page' : ''}`} style={{ height: '100dvh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
+        <header style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 3.2rem 0 0.7rem', borderBottom: 'none' }}>
           <Link href={backHref} aria-label={`back to ${backTitle}`} title={backTitle}
-            style={{ color: 'var(--text-muted)', display: 'flex', alignSelf: 'center', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
-          <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>{name}</span>
-          <span style={{ ...label }}>{visibility}</span>
+            style={{ color: 'var(--text-muted)', display: 'flex', flex: 'none', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
+          <span className="doc-title-row">
+            <span className="doc-title">{name}</span>
+            {!docPage && visibility ? (
+              <>
+                <span className="doc-div" aria-hidden>·</span>
+                <span className="doc-vis">{visibility}</span>
+              </>
+            ) : null}
+          </span>
         </header>
 
+        {!docPage && (
         <div className="reader-tabs" style={{ display: 'none', flex: 'none', borderBottom: '1px solid var(--border-light)' }}>
           {(['ask', 'piece'] as const).map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)}
@@ -443,16 +451,17 @@ export default function ReaderShell({
             </button>
           ))}
         </div>
+        )}
 
         <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-tab={tab} data-expanded={expanded ? 'true' : 'false'}
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
-          <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">{PaneLeftIcon}</button>
-          <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
+          <button type="button" className="reader-strip strip-history hover:opacity-60" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">{PaneLeftIcon}</button>
+          <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', minHeight: 0 }}>
             <div style={paneHead}>
               <button type="button" onClick={() => setLeftOpen(false)} aria-label="collapse history" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneLeftIcon}</button>
-              <span style={label}>history</span>
+              <span style={chromeLabel}>history</span>
               <button type="button" onClick={newChat} aria-label="new conversation" title="new conversation"
                 style={{ ...iconBtn, marginLeft: 'auto', fontSize: '1.05rem', lineHeight: 1 }} className="hover:opacity-60">＋</button>
             </div>
@@ -464,33 +473,27 @@ export default function ReaderShell({
             </div>
           </aside>
 
-          {/* chat — slot 2. The strip carries a faint accent wash so the eye
-              knows which of the three matters; the words that explain it are
-              the whisper in the piece header, which fades on its own. */}
-          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask about this piece" title="ask the mirror about this">{LinesIcon}</button>
-          <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
+          {/* chat — slot 2 */}
+          <button type="button" className="reader-strip strip-chat hover:opacity-60" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask about this piece" title="ask the mirror about this">{LinesIcon}</button>
+          <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', minHeight: 0 }}>
             <div style={paneHead}>
-              <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse the mirror" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
+              <button type="button" onClick={() => { setMidOpen(false); setTab('piece'); }} aria-label="collapse the mirror" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
               {/* Not "ask benjamin" — the product is a MIRROR of a mind,
                   never a twin or stand-in (canon; founder 2026-07-25:
                   "this is so key. its the mirror"). One universal label. */}
-              <span style={label}>the mirror</span>
-              {/* What's left, shown only once it's worth knowing. A counter that
-                  sits there from question one reads as a meter running down;
-                  silence until the last few reads as room to think, and then as
-                  a heads-up. The handoff is always offered — a reader may want
-                  their own model long before they run out. */}
+              <span style={chromeLabel}>mirror</span>
+              {/* What's left sits immediately left of export, and only once
+                  it's worth knowing. Export then copy on the right; export
+                  takes the accent when the count is showing. */}
+              <span style={{ marginLeft: 'auto' }} />
               {budget && budget.remaining <= 3 && (
-                <>
-                  <span aria-hidden style={{ ...label, margin: '0 0.15rem', color: 'var(--text-ghost)' }}>·</span>
-                  <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-muted)' }}>
-                    {spent ? 'out of questions' : `${budget.remaining} left`}
-                  </span>
-                </>
+                <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-muted)', paddingRight: '0.15rem' }}>
+                  {spent ? 'out of questions' : budget.remaining === 1 ? '1 question left' : `${budget.remaining} questions left`}
+                </span>
               )}
               <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
                 title="take it with you — copies the mind, the piece and this conversation for your own AI"
-                style={{ ...iconBtn, marginLeft: 'auto', color: spent ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
+                style={{ ...iconBtn, color: budget && budget.remaining <= 3 ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
               {(active?.messages.length ?? 0) > 0 && (
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
               )}
@@ -516,18 +519,18 @@ export default function ReaderShell({
                     // question, so offline never reads as "I don't know".
                     ? <p className="mirror-status">{m.text}</p>
                     : m.role === 'you'
-                    ? <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>{m.text}</p>
+                    ? <p className="msg-you">{m.text}</p>
                     : (
-                      <>
-                        <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '0.9rem', color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}><TwinText text={m.text} /></div>
-                        <ActionButton icon={CopyIcon} onAction={() => copyText(m.text)} title="copy" style={{ ...iconBtn, marginTop: '0.45rem', marginLeft: '0.9rem', padding: 0 }} className="hover:opacity-60" />
-                      </>
+                      <p className="msg-mirror">
+                        <TwinText text={m.text.replace(/\s+$/, '')} />
+                        <ActionButton icon={CopyIcon} onAction={() => copyText(m.text)} title="copy" className="twin-copy hover:opacity-60" />
+                      </p>
                     )}
                 </div>
               ))}
-              {asking && <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem' }}>thinking…</p>}
+              {asking && <p className="mirror-thinking" aria-live="polite">…</p>}
             </div>
-            <div style={{ flex: 'none', padding: '0.9rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
+            <div className="ask-dock" style={{ flex: 'none', borderTop: 'none' }}>
               {spent ? (
                 // A dead input the reader can still type into is a trap, and a
                 // bare button is a shrug — at the one moment someone is stuck,
@@ -562,18 +565,24 @@ export default function ReaderShell({
                   </p>
                 </div>
               ) : (
-                <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} placeholder={rotatingPlaceholder || askPlaceholder} />
+                <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading shakeWhenBusy placeholder={rotatingPlaceholder || askPlaceholder} bare />
               )}
             </div>
           </section>
 
           {/* the piece — slot 3 */}
-          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">{PaneRightIcon}</button>
-          <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
+          <button type="button" className="reader-strip strip-right hover:opacity-60" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">{PaneRightIcon}</button>
+          <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0, position: 'relative' }}>
+            {docPage && expanded && (
+              <button type="button" onClick={toggleExpand} aria-label="exit full screen" title="exit full screen"
+                style={{ ...iconBtn, position: 'absolute', top: '0.7rem', right: '1rem', zIndex: 2 }}
+                className="hover:opacity-60">{CompressIcon}</button>
+            )}
             <div className="piece-head" style={paneHead}>
-              <span style={{ ...label, marginRight: 'auto' }}>{name}</span>
+              <span style={{ marginRight: 'auto' }} />
               {status === 'ok' && (
                 <>
+                  <button type="button" className="mobile-ask" onClick={() => { setMidOpen(true); setTab('ask'); }} aria-label="ask the mirror" title="ask" style={iconBtn}>{LinesIcon}</button>
                   <ActionButton icon={CopyIcon} onAction={copyArtifact} title="copy text" style={iconBtn} className="hover:opacity-60" />
                   {downloadBlob && <ActionButton icon={DownloadIcon} onAction={downloadArtifact} title="download" style={iconBtn} className="hover:opacity-60" />}
                   <ActionButton icon={ShareIcon} onAction={shareArtifact} title="share link" style={iconBtn} className="hover:opacity-60" />
@@ -582,11 +591,10 @@ export default function ReaderShell({
               )}
               <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece" title="collapse" style={iconBtn} className="piece-collapse hover:opacity-60">{PaneRightIcon}</button>
             </div>
-            {/* With the ask docked below, the text fades out as it reaches it
-                rather than being sliced mid-line by the scroll edge — the
-                separation is a dissolve, not another rule. */}
-            <div className={dockedAsk && !midOpen && !pdfUrl ? 'piece-fade' : undefined}
-              style={{ flex: 1, overflow: pdfUrl ? 'hidden' : 'auto', minHeight: 0, padding: pdfUrl ? 0 : '2.2rem clamp(1.4rem, 5vw, 4rem)' }}>
+            {/* Public docs: no dissolve. The fade made the last lines the same
+                grey as the ask, so the page ended in fog. Space, then the line. */}
+            <div className={dockedAsk && !midOpen && !pdfUrl && !docPage ? 'piece-fade' : undefined}
+              style={{ flex: 1, overflow: pdfUrl ? 'hidden' : 'auto', minHeight: 0, padding: pdfUrl ? 0 : (docPage ? '1.35rem clamp(1.1rem, 4vw, 2.2rem)' : '2.2rem clamp(1.4rem, 5vw, 4rem)') }}>
               {status === 'loading' && <p style={{ color: 'var(--text-ghost)' }}>loading…</p>}
               {status === 'signin' && (
                 <div style={{ maxWidth: '32rem' }}>
@@ -609,7 +617,7 @@ export default function ReaderShell({
               )}
               {status === 'error' && <p style={{ color: 'var(--text-ghost)' }}>couldn’t load this piece.</p>}
               {status === 'ok' && (pdfUrl
-                ? <PdfView url={pdfUrl} />
+                ? <PdfView url={pdfUrl} paper={docPage} />
                 : book ? (
                   <>
                     {/* The book setting (the whitepaper) — same pipeline and classes
@@ -661,16 +669,17 @@ export default function ReaderShell({
             {dockedAsk && status === 'ok' && !midOpen && (
               <div className="piece-ask">
                 <PromptBox bare value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
-                  placeholder={readingPlaceholder || askPlaceholder} fillable={readingIsQuestion}
+                  typeWhileLoading shakeWhenBusy placeholder={readingPlaceholder || askPlaceholder} fillable={readingIsQuestion}
                   ariaLabel="ask about this piece" />
               </div>
             )}
+            {midOpen && <div className="piece-foot" aria-hidden />}
           </article>
         </main>
         {/* Slim footer to frame the reader even with the panes open — the one
             CTA (build your own) + the wordmark home, matching the profile and
             PLM three-pane pages (founder 2026-07-19). Drops out in full screen. */}
-        <footer style={{ flex: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.6rem', padding: '1rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
+        <footer style={{ flex: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.6rem', padding: '1rem 1.2rem', borderTop: 'none' }}>
           <Link href="/start" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">{footerCta}</Link>
           <Link href="/" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">alexandria<span style={{ fontStyle: 'normal' }}>.</span></Link>
         </footer>
@@ -687,10 +696,43 @@ export default function ReaderShell({
         .reader-prose hr { border: none; border-top: 1px solid var(--border-light); margin: 2.2rem 0; }
         .reader-prose code { background: var(--bg-secondary); border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.9em; }
 
-        .reader-strip { flex: none; width: 46px; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.85rem;
-          border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
-        .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
-        .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
+        .reader-strip { flex: none; width: 2.4rem; height: 2.4rem; min-height: 2.4rem; max-height: 2.4rem;
+          align-self: flex-start; box-sizing: border-box;
+          display: flex; align-items: center; justify-content: center; padding: 0;
+          border: none; background: none; cursor: pointer; color: var(--text-ghost); }
+        .piece-head button svg, .pane-history button svg, .pane-chat button svg { display: block; }
+        .reader-strip.strip-right { margin-left: auto; }
+        .doc-title-row { display: inline-flex; align-items: baseline; min-width: 0; line-height: 1; }
+        .doc-title { font-style: italic; font-size: 1.05rem; color: var(--text-primary); line-height: 1; }
+        .doc-div { font-style: normal; font-size: 0.72rem; line-height: 1; color: var(--text-ghost); padding: 0 0.55rem; letter-spacing: 0; }
+        .doc-vis { font-style: normal; font-size: 0.72rem; letter-spacing: 0.08em; color: var(--text-ghost); line-height: 1; }
+        .twin-copy {
+          display: inline-flex; align-items: center; margin-left: 0.35em; vertical-align: -0.05em;
+          border: none; background: none; cursor: pointer; padding: 0;
+          color: var(--text-ghost); line-height: 1;
+        }
+        .twin-copy svg { width: 11px; height: 11px; }
+        .mirror-thinking {
+          margin: 0.15rem 0 0; color: var(--text-ghost); font-size: 0.98rem;
+          line-height: 1.65; letter-spacing: 0.18em; font-style: italic;
+          animation: mirror-think 1.6s ease-in-out infinite;
+        }
+        @keyframes mirror-think { 0%, 100% { opacity: 0.22; } 50% { opacity: 0.7; } }
+        .msg-you {
+          margin: 0; color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;
+          font-style: italic;
+        }
+        .msg-mirror {
+          margin: 0; color: var(--text-secondary); font-size: 0.98rem; line-height: 1.65;
+          white-space: pre-wrap;
+        }
+        .reader-shell:not(.doc-page) .msg-mirror {
+          border-left: 2px solid var(--accent); padding-left: 0.9rem;
+        }
+        .ask-dock { padding: 0.7rem 1.2rem 1rem; }
+        .doc-page .ask-dock { padding: 0.7rem 1.2rem 1rem; }
+        .piece-foot { flex: none; height: 0.9rem; }
+        .doc-page .piece-foot { height: 1rem; }
 
         /* The docked ask — held to the text column, separated by space rather
            than a rule (the footer's line already closes the page). */
@@ -705,8 +747,13 @@ export default function ReaderShell({
           color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; font-style: italic; text-wrap: pretty; }
 
         .piece-ask { flex: none; width: min(680px, 100% - 2.8rem); margin: 0 auto; padding: 0.55rem 0 1.15rem; }
+        .doc-page .piece-ask { padding: 0.7rem 0 1rem; }
         .piece-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
           mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }
+
+        .mobile-ask { display: none !important; }
+        .doc-page .mobile-ask { display: none !important; }
+        .doc-page .pdoc-longform .pdoc-h1 { margin-top: 2.2rem; }
 
         @media (min-width: 901px) {
           .reader-tabs { display: none !important; }
@@ -723,12 +770,15 @@ export default function ReaderShell({
           .reader-strip, .pane-history { display: none !important; }
           .chat-collapse, .piece-collapse { display: none !important; }
           .reader-tabs { display: flex !important; }
-          /* Mobile keeps the docked ask too — same model, one thumb away: the
-             tab is for going to the conversation, this is for asking without
-             leaving the page you're reading. Type size is NOT reduced here —
-             iOS zooms the whole page when a focused input is under 16px, and
-             1.05rem clears it. The line fits instead by rotating shorter
-             questions (readingExamples' compact set). */
+          .mobile-ask { display: flex !important; }
+          /* Public docs: no read/ask tab bar. The piece is the page; asking
+             opens the mirror; collapse (shown here) is the way back. */
+          .doc-page .reader-tabs { display: none !important; }
+          .doc-page .chat-collapse { display: flex !important; }
+          .doc-page > header { padding: 0 3.2rem 0 0.85rem !important; height: 48px; }
+          .doc-page .doc-title { font-size: 1.02rem; }
+          .doc-page > footer { padding: 0.65rem 1rem 1.05rem; }
+          .doc-page .pdoc-longform .pdoc-h1 { margin-top: 0.9rem; }
           .piece-ask { width: calc(100% - 2.4rem); padding: 0.45rem 0 0.85rem; }
           main { flex-direction: column !important; }
           .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; order: 0 !important; }
@@ -749,6 +799,7 @@ export default function ReaderShell({
         /* Full screen is pure reading — and the mirror pane it would answer
            into is hidden here, so the composer goes with it. */
         main[data-expanded="true"] .piece-ask,
+        main[data-expanded="true"] .piece-foot,
         main[data-expanded="true"] .piece-collapse { display: none !important; }
         .reader-shell:has(main[data-expanded="true"]) > footer { display: none !important; }
       `}</style>

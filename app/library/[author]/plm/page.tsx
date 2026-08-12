@@ -10,7 +10,7 @@ import ActionButton from '../../../components/ActionButton';
 import TwinText from '../../../components/TwinText';
 import ChatHistoryItem from '../../../components/ChatHistoryItem';
 import { PdfView } from '../../../components/ReaderShell';
-import { useRotatingPlaceholder, authorExamples, pieceExamples } from '../../../lib/useRotatingPlaceholder';
+import { useRotatingPlaceholder, authorExamples, pieceExamples, readingExamples, readingLead } from '../../../lib/useRotatingPlaceholder';
 import { librarySignInUrlHere } from '../../../lib/config';
 import { composeHandoff, fetchHandoffContext, type HandoffAuthor } from '../../../lib/handoff';
 import { type TwinVariantSummary } from '../types';
@@ -40,9 +40,9 @@ type OpenPiece = { name: string; nice: string; content: string; pdfUrl: string; 
 
 const svgProps = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
 const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6-6 6-6" /></svg>;
-const PaneLeftIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
-const LinesIcon = <svg width="19" height="19" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
-const PaneRightIcon = <svg width="19" height="19" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
+const PaneLeftIcon = <svg width="17" height="17" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
+const LinesIcon = <svg width="17" height="17" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
+const PaneRightIcon = <svg width="17" height="17" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
 // Handoff — an arrow leaving a box (identical to ReaderShell's: one gesture,
 // one glyph, wherever a mind can be carried away).
 const HandoffIcon = <svg width="17" height="17" {...svgProps}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /></svg>;
@@ -319,6 +319,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     [open, who, askQuestions],
   );
   const rotatingPlaceholder = useRotatingPlaceholder(askExamples, !question.trim());
+  const readExamples = useMemo(() => readingExamples(who, askQuestions), [who, askQuestions]);
+  const readingPlaceholder = useRotatingPlaceholder(readExamples, !question.trim());
+  const readingIsQuestion = readingPlaceholder !== readingLead(who);
 
   // Mid-thought questions QUEUE instead of bouncing (founder, 2026-07-17): the
   // composer stays typable while the mind is answering (typeWhileLoading), the
@@ -361,6 +364,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     if (!text) return;
     const targetId = activeId;
     setQuestion('');
+    setMidOpen(true);
+    if (typeof window !== 'undefined' && window.innerWidth <= 900) setMtab('chat');
     setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'you', text }] } : c)));
     if (askingRef.current) { queueRef.current.push({ text, convoId: targetId }); return; }
     await fire(text, targetId);
@@ -427,7 +432,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   };
 
   const label = { color: 'var(--text-ghost)', fontSize: '0.78rem', letterSpacing: '0.08em' } as const;
-  const iconBtn = { display: 'flex', border: 'none', background: 'none', cursor: 'pointer', padding: '0.2rem', color: 'var(--text-ghost)', transition: 'color 0.15s' } as const;
+  const chromeLabel = { ...label, paddingLeft: '0.35rem' } as const;
+  const iconBtn = { display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', width: '2.4rem', height: '2.4rem', border: 'none', background: 'none', cursor: 'pointer', padding: 0, color: 'var(--text-ghost)', transition: 'opacity 0.15s' } as const;
+  const paneHead = { flex: 'none', display: 'flex', alignItems: 'center', gap: 0, height: '2.4rem', minHeight: '2.4rem', maxHeight: '2.4rem', padding: 0, overflow: 'visible', boxSizing: 'border-box' as const } as const;
 
   const copyText = (t: string) => { try { void navigator.clipboard?.writeText(t); } catch { /* */ } };
   // "its my mirror, not me" (founder 2026-07-28) — the paste says so too.
@@ -449,14 +456,14 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     <>
       <ThemeToggle />
       <div className="plm-shell" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
-        <header style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.9rem', padding: '0.85rem 3.6rem 0.85rem 1.2rem', borderBottom: '1px solid var(--border-light)' }}>
+        <header style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 3.2rem 0 0.7rem', borderBottom: 'none' }}>
           <Link href={`/library/${encodeURIComponent(author)}`} aria-label="back to the library" title="library"
             style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
           {/* No standing online/offline word here either (founder, 2026-08-02:
               "i also dont need to have that online offline thing again in the
               top left") — a failed ask already answers with the offline note
               in-thread; status only exists in the moment it matters. */}
-          <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>{who}</span>
+          <span className="doc-title">{who}</span>
         </header>
 
         <div className="plm-tabs" style={{ display: 'none', flex: 'none', borderBottom: '1px solid var(--border-light)' }}>
@@ -464,7 +471,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             <button key={t} type="button" onClick={() => setMtab(t)}
               style={{ flex: 1, border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.7rem',
                 color: mtab === t ? 'var(--text-primary)' : 'var(--text-ghost)', borderBottom: mtab === t ? '2px solid var(--accent)' : '2px solid transparent' }}>
-              {t}
+              {t === 'chat' ? 'mirror' : t}
             </button>
           ))}
         </div>
@@ -473,13 +480,13 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
-          <button type="button" className="reader-strip strip-history" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">{PaneLeftIcon}</button>
-          <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
-            <div style={{ flex: 'none', display: 'flex', alignItems: 'center', padding: '0.7rem 0.9rem 0.5rem' }}>
+          <button type="button" className="reader-strip strip-history hover:opacity-60" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">{PaneLeftIcon}</button>
+          <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', minHeight: 0 }}>
+            <div style={paneHead}>
               <button type="button" onClick={() => setLeftOpen(false)} aria-label="collapse history" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneLeftIcon}</button>
-              <span style={{ ...label, marginLeft: '0.55rem' }}>history</span>
+              <span style={chromeLabel}>history</span>
               <button type="button" onClick={newChat} aria-label="new conversation" title="new conversation"
-                style={{ marginLeft: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: 1, padding: 0 }} className="hover:opacity-60">＋</button>
+                style={{ ...iconBtn, marginLeft: 'auto', fontSize: '1.05rem', lineHeight: 1 }} className="hover:opacity-60">＋</button>
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '0.2rem 0.6rem 1rem' }}>
               {convos.map((c) => (
@@ -490,70 +497,47 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           </aside>
 
           {/* chat — slot 2. Opens by default here, so it needs no cue. */}
-          <button type="button" className="reader-strip strip-chat" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask the mind" title="ask the mirror">{LinesIcon}</button>
-          <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', borderRight: '1px solid var(--border-light)', minHeight: 0 }}>
-            <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.7rem 1rem 0.4rem' }}>
-              <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse chat" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
-              <span className="chat-label" style={{ ...label, marginLeft: '-0.45rem' }}>chat</span>
-              {/* No model name. Which vendor's model is answering is our
-                  problem, not the reader's — and naming it dates the page and
-                  invites the wrong comparison (founder 2026-07-29: "delete").
-                  The distinction that IS the reader's business — a mirror built
-                  from writing vs the Author's trained weights — is carried by
-                  the depth toggle beside this. */}
+          <button type="button" className="reader-strip strip-chat hover:opacity-60" style={{ order: 2 }} onClick={() => setMidOpen(true)} aria-label="open the mirror — ask the mind" title="ask the mirror">{LinesIcon}</button>
+          <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', minHeight: 0 }}>
+            <div style={paneHead}>
+              <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse the mirror" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
+              <span className="pane-words">
+                <span className="chat-label">mirror</span>
+                <span className="pane-div" aria-hidden>·</span>
+                <span className="depth-toggle">
+                  <button type="button" className={sel === 'public' && !showCode ? 'is-on' : undefined} onClick={() => { setSel('public'); setShowCode(false); }}>public</button>
+                  {depth === 'invite' ? (
+                    <button type="button" className={sel === 'invite' ? 'is-on' : undefined} onClick={() => setSel('invite')}>invite</button>
+                  ) : showCode ? (
+                    <input
+                      autoFocus
+                      value={codeDraft}
+                      onChange={(e) => setCodeDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { const code = codeDraft.trim(); if (code) setInvite(code); } if (e.key === 'Escape') { setShowCode(false); setCodeDraft(''); } }}
+                      placeholder={'\u2002invite code'}
+                      spellCheck={false}
+                      autoCapitalize="off"
+                      className="depth-code"
+                    />
+                  ) : (
+                    <button type="button" onClick={() => setShowCode(true)}>invite</button>
+                  )}
+                </span>
+              </span>
               {activeVariant === 'weights' && (
-                <span className="chat-model" style={{ ...label }}>weights</span>
+                <span className="chat-model" style={{ ...label, marginLeft: '0.45rem' }}>weights</span>
               )}
+              <span style={{ marginLeft: 'auto' }} />
               {budget && budget.remaining <= 3 && (
-                <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-ghost)' }}>
-                  {spent ? 'no questions left' : `${budget.remaining} left`}
+                <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-muted)', paddingRight: '0.15rem' }}>
+                  {spent ? 'out of questions' : budget.remaining === 1 ? '1 question left' : `${budget.remaining} questions left`}
                 </span>
               )}
               <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
                 title="take it with you — copies the mind, the open piece and this conversation for your own AI"
-                style={{ ...iconBtn, color: spent ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
-              {/* public | invite — the two DEPTHS of the one mind, named like
-                  the pieces' own visibility tags (founder: most queriers are
-                  public; the names must carry the model). Your level is
-                  underlined. Toggling invite without a grant morphs the word
-                  into a code field; a valid code binds on the next question. */}
-              <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'baseline', marginLeft: 'auto' }}>
-                <button type="button" onClick={() => { setSel('public'); setShowCode(false); }}
-                  style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.88rem', padding: '0 0 0.15rem',
-                    color: sel === 'public' && !showCode ? 'var(--text-primary)' : 'var(--text-ghost)',
-                    borderBottom: sel === 'public' && !showCode ? '1px solid var(--accent)' : '1px solid transparent' }}>
-                  public
-                </button>
-                {depth === 'invite' ? (
-                  <button type="button" onClick={() => setSel('invite')}
-                    style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.88rem', padding: '0 0 0.15rem',
-                      color: sel === 'invite' ? 'var(--text-primary)' : 'var(--text-ghost)',
-                      borderBottom: sel === 'invite' ? '1px solid var(--accent)' : '1px solid transparent' }}>
-                    invite
-                  </button>
-                ) : showCode ? (
-                  <input
-                    autoFocus
-                    value={codeDraft}
-                    onChange={(e) => setCodeDraft(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { const code = codeDraft.trim(); if (code) setInvite(code); } if (e.key === 'Escape') { setShowCode(false); setCodeDraft(''); } }}
-                    // Leading en-space keeps the autofocus caret off the ghost text.
-                    placeholder={'\u2002invite code'}
-                    spellCheck={false}
-                    autoCapitalize="off"
-                    style={{ width: '7.5rem', border: 'none', borderBottom: '1px solid var(--border-light)', background: 'none', outline: 'none',
-                      color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: '0.82rem', padding: '0 0 0.15rem' }}
-                  />
-                ) : (
-                  <button type="button" onClick={() => setShowCode(true)}
-                    style={{ border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.82rem', padding: '0 0 0.15rem',
-                      color: 'var(--text-ghost)', borderBottom: '1px solid transparent' }}>
-                    invite
-                  </button>
-                )}
-              </div>
+                style={{ ...iconBtn, color: budget && budget.remaining <= 3 ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
               {(active?.messages.length ?? 0) > 0 && (
-                <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={{ ...iconBtn, marginLeft: '0.4rem' }} className="hover:opacity-60" />
+                <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
               )}
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
@@ -645,7 +629,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 )}
               </div>
             )}
-            <div style={{ flex: 'none', padding: '0.9rem 1.2rem 0.7rem', borderTop: locked ? 'none' : '1px solid var(--border-light)' }}>
+            <div className="ask-dock" style={{ flex: 'none', borderTop: 'none' }}>
               {spent ? (
                 // Same as the reader's: a composer that still accepts typing
                 // when nothing can be answered is a trap, and the way on is the
@@ -671,7 +655,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                   </p>
                 </div>
               ) : (
-                <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading placeholder={rotatingPlaceholder || 'ask anything…'} />
+                <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading placeholder={rotatingPlaceholder || 'ask anything…'} bare />
               )}
               {/* Contextual helper — only while the invite-code field is open:
                   how codes work, the sign-in requirement, and the REQUEST path
@@ -709,13 +693,15 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           </section>
 
           {/* the piece — slot 3 */}
-          <button type="button" className="reader-strip strip-right" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece pane" title="pieces">{PaneRightIcon}</button>
+          <button type="button" className="reader-strip strip-right hover:opacity-60" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece pane" title="pieces">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
-            <div className="piece-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.8rem', padding: '0.7rem 1.4rem 0.4rem', borderBottom: '1px solid var(--border-light)' }}>
-              {open && <button type="button" onClick={() => setOpen(null)} aria-label="back to pieces" title="back" style={iconBtn} className="hover:opacity-60">{ChevronIcon}</button>}
+            <div className="piece-head" style={paneHead}>
               {open
-                ? <span style={{ color: 'var(--text-primary)', fontSize: '0.98rem' }}>{open.nice}</span>
-                : <span className="pieces-label" style={{ ...label }}>pieces</span>}
+                ? <button type="button" onClick={() => setOpen(null)} aria-label="back to pieces" title="back" style={iconBtn} className="hover:opacity-60">{ChevronIcon}</button>
+                : <span className="pieces-label" style={{ width: '2.4rem', flex: 'none' }} aria-hidden />}
+              {open
+                ? <span style={{ ...chromeLabel, color: 'var(--text-primary)', fontSize: '0.98rem', letterSpacing: 0 }}>{open.nice}</span>
+                : <span className="pieces-label" style={chromeLabel}>pieces</span>}
               {open && (
                 <>
                   <ActionButton icon={CopyIcon} onAction={copyPiece} title="copy text" style={{ ...iconBtn, marginLeft: 'auto' }} className="hover:opacity-60" />
@@ -727,7 +713,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               )}
               <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece pane" title="collapse" style={{ ...iconBtn, ...(open ? {} : { marginLeft: 'auto' }) }} className="piece-collapse hover:opacity-60">{PaneRightIcon}</button>
             </div>
-            <div style={{ flex: 1, overflow: open?.pdfUrl ? 'hidden' : 'auto', minHeight: 0 }}>
+            <div className={open && !open.loading && !open.pdfUrl && (mtab === 'pieces' || !midOpen) ? 'piece-fade' : undefined}
+              style={{ flex: 1, overflow: open?.pdfUrl ? 'hidden' : 'auto', minHeight: 0 }}>
               {!open && (
                 // The pieces pane is the Author's readable ARTIFACTS only — works,
                 // projects, shadows. Links live in the bio on the profile now, not
@@ -807,10 +794,18 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 <div className="reader-prose" style={{ padding: '2rem clamp(1.4rem, 4vw, 3rem)' }}><ReactMarkdown remarkPlugins={[remarkGfm]}>{open.content}</ReactMarkdown></div>
               )}
             </div>
+            {open && !open.loading && (mtab === 'pieces' || !midOpen) && (
+              <div className="piece-ask">
+                <PromptBox bare value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
+                  typeWhileLoading placeholder={readingPlaceholder || 'ask about this piece…'} fillable={readingIsQuestion}
+                  ariaLabel="ask about this piece" />
+              </div>
+            )}
+            {open && midOpen && mtab !== 'pieces' && <div className="piece-foot" aria-hidden />}
           </article>
         </main>
         {/* Slim footer to frame the page even with the panes open (founder 2026-07-19). */}
-        <footer style={{ flex: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.6rem', padding: '1rem 1.2rem', borderTop: '1px solid var(--border-light)' }}>
+        <footer style={{ flex: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.6rem', padding: '1rem 1.2rem', borderTop: 'none' }}>
           <Link href="/start" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">start your loop</Link>
           <Link href="/" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">alexandria<span style={{ fontStyle: 'normal' }}>.</span></Link>
         </footer>
@@ -825,12 +820,37 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         .reader-prose ul, .reader-prose ol { margin: 0 0 1.1rem; padding-left: 1.3rem; } .reader-prose li { margin: 0 0 0.4rem; }
         .reader-prose code { background: var(--bg-secondary); border-radius: 4px; padding: 0.1rem 0.35rem; font-size: 0.9em; }
 
-        /* Collapsed panes are icon-only, no label and no motion — identical to
-           ReaderShell's so the two readers stay one grammar. */
-        .reader-strip { flex: none; width: 46px; display: flex; align-items: flex-start; justify-content: center; padding-top: 0.85rem;
-          border: none; border-right: 1px solid var(--border-light); background: var(--bg-secondary); cursor: pointer; color: var(--text-muted); transition: color 0.15s, background 0.15s; }
-        .reader-strip.strip-right { border-right: none; border-left: 1px solid var(--border-light); margin-left: auto; }
-        .reader-strip:hover { color: var(--text-primary); background: var(--border-light); }
+        /* Collapsed panes are icon-only, no gutter — same grammar as ReaderShell
+           so history stays left when the mirror opens, and the piece-collapse
+           lives on the piece-head with copy/download. */
+        .reader-strip { flex: none; width: 2.4rem; height: 2.4rem; min-height: 2.4rem; max-height: 2.4rem;
+          align-self: flex-start; box-sizing: border-box;
+          display: flex; align-items: center; justify-content: center; padding: 0;
+          border: none; background: none; cursor: pointer; color: var(--text-ghost); }
+        .reader-strip svg, .piece-head button svg, .pane-history button svg, .pane-chat button svg { display: block; }
+        .reader-strip.strip-right { margin-left: auto; }
+        .doc-title { font-style: italic; font-size: 1.05rem; color: var(--text-primary); line-height: 1; }
+        .pane-words { display: flex; align-items: baseline; gap: 0; min-width: 0; padding-left: 0.35rem;
+          font-size: 0.78rem; letter-spacing: 0.08em; line-height: 1; color: var(--text-ghost); }
+        .pane-words .pane-div { letter-spacing: 0; color: var(--text-ghost); padding: 0 0.75rem; }
+        .pane-words .chat-label { font-size: inherit; letter-spacing: inherit; line-height: inherit; }
+        .depth-toggle { display: flex; align-items: baseline; gap: 0.7rem; }
+        .depth-toggle button {
+          font-family: inherit; font-size: inherit; letter-spacing: inherit; line-height: inherit;
+          border: none; background: none; padding: 0; cursor: pointer; color: inherit;
+        }
+        .depth-toggle button.is-on {
+          color: var(--text-primary);
+          text-decoration: underline; text-underline-offset: 0.18em;
+          text-decoration-thickness: 1px; text-decoration-color: var(--accent);
+        }
+        .depth-code { width: 7.5rem; border: none; border-bottom: 1px solid var(--border-light); background: none; outline: none;
+          color: var(--text-primary); font-family: inherit; font-size: inherit; letter-spacing: 0.04em; line-height: inherit; padding: 0; }
+        .ask-dock { padding: 0.7rem 1.2rem 1rem; }
+        .piece-ask { flex: none; width: min(680px, 100% - 2.8rem); margin: 0 auto; padding: 0.55rem 0 1.15rem; }
+        .piece-foot { flex: none; height: 0.9rem; }
+        .piece-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
+          mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }
 
         @media (min-width: 901px) {
           .reader-strip { display: none; }
@@ -849,8 +869,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           /* On mobile the "chat"/"pieces" tabs are the only pane labelling, and
              there are no side-by-side panes to collapse — so the pane-toggle
              icons + duplicate labels drop out (founder 2026-07-19). */
-          .chat-collapse, .chat-label, .pieces-label, .piece-collapse { display: none !important; }
+          .chat-collapse, .chat-label, .pane-div, .pieces-label, .piece-collapse { display: none !important; }
           .plm-tabs { display: flex !important; }
+          .piece-ask { width: calc(100% - 2.4rem); padding: 0.45rem 0 0.85rem; }
           main { flex-direction: column !important; }
           .pane-chat, .pane-piece { display: none !important; order: 0 !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; border-right: none !important; }
           main[data-mtab="chat"] .pane-chat { display: flex !important; }

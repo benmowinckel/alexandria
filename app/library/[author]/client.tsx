@@ -540,7 +540,10 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             ) : signedIn ? (
               <SignOutLink />
             ) : (
-              <HeaderAction href={signInUrl}>sign in</HeaderAction>
+              <HeaderActions
+                left={<HeaderAction href={signInUrl}>sign in</HeaderAction>}
+                right={<HeaderAction href="/start">join</HeaderAction>}
+              />
             )}
           </div>
           {/* The member number rides the name line, baseline-aligned at its

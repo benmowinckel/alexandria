@@ -243,6 +243,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
       askFn={askFn}
       handoffAuthorId={author}
       inviteField={inviteField}
+      dockedAsk
     />
   );
 }

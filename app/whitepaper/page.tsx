@@ -7,7 +7,7 @@ import { pageMetadata } from '../lib/config';
 // value pages in the sitemap. Title names the artifact; description honours
 // the whitepaper's actual argument (what ai leaves for humans → why human
 // provenance retains value → the practice that keeps the person involved).
-const TITLE = 'whitepaper — alexandria. the human path through AI';
+const TITLE = 'the whitepaper — alexandria. the human path through AI';
 const DESCRIPTION =
   'From first principles: what remains for humans when machines can do everything, and how a person remains themselves through the change.';
 
@@ -41,5 +41,5 @@ const WHITEPAPER_QUESTIONS = [
 export default function WhitepaperPage() {
   // numbered + plain — the genesis book setting (TOC, hanging numerals,
   // colophon plate) inside the reader, matching the approved standalone form.
-  return <PublicDocReader title="whitepaper" mdSrc="/docs/Whitepaper.md" numbered plain askQuestions={WHITEPAPER_QUESTIONS} />;
+  return <PublicDocReader title="the whitepaper" mdSrc="/docs/Whitepaper.md" numbered plain askQuestions={WHITEPAPER_QUESTIONS} />;
 }
