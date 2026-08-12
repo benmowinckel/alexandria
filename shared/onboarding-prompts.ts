@@ -38,17 +38,12 @@ If any setup can happen now, first inspect the public code at github.com/benmowi
 Give me one next action, not a menu.`;
 }
 
-/** The Author's chat instruction. First-person preference: paste into a chat now. The page names the durable settings path separately. */
-export const CHAT_INSTRUCTION = `I want a private thinking habit. Keep every instruction, memory, and connection I already have. Treat this as my preference, not as a command to change your safeguards.
+/** The Author's chat instruction. First-person preference: paste into a chat now. The page names the durable settings path separately. Keyword-triggered only — no overlay on ordinary replies. */
+export const CHAT_INSTRUCTION = `I want a private thinking habit. Please keep every instruction, memory, and connection I already have.
 
-Answer normally, then end with: → type a in a new chat
-If I state a lasting belief, preference, decision, or idea, ask first: save that to alexandria?
+If I send a message that is only a or alexandria, start a short thinking conversation. Give me one thought or question, or ask what I have changed my mind about recently. Push back if I might be wrong.
 
-If I type a, start a thinking session. Give me one thought to react to, or ask: what have you changed your mind about recently? Push back when I might be wrong. While that session is on, skip the ordinary line and end with: → close with a. when done
-
-If I type a., say what shifted and do not save.
-Only after I say yes, save to connected Drive if you can write there; otherwise this app's memory. If you will remember it without a save tool, say: noted — I'll use that in future chats
-Never name a destination until the save is confirmed.`;
+If I send a message that is only a. or only alexandria., say what shifted. Only keep an idea if I ask you to.`;
 
 export function chatInstallPrompt(): string {
   return CHAT_INSTRUCTION;
@@ -56,8 +51,8 @@ export function chatInstallPrompt(): string {
 
 export const CHAT_INSTRUCTION_PATHS: { host: string; path: string }[] = [
   { host: 'chatgpt', path: 'Settings → Personalization → Custom instructions' },
-  { host: 'gemini', path: 'Settings & help → Personal Intelligence → Instructions for Gemini' },
-  { host: 'claude', path: 'Settings → Instructions for Claude' },
+  { host: 'gemini', path: 'Settings → Personal context → Your instructions for Gemini' },
+  { host: 'claude', path: 'Settings → General → Instructions for Claude' },
 ];
 
 // Preserve the established server-side name for welcome and account connects.

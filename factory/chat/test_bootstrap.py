@@ -15,17 +15,16 @@ class ChatBootstrapTests(unittest.TestCase):
         instruction = prompt.group(1).strip()
         self.assertLessEqual(len(instruction), 1500)
         self.assertTrue(instruction.startswith("I want a private thinking habit."))
-        self.assertIn("Keep every instruction, memory, and connection I already have", instruction)
-        self.assertIn("Treat this as my preference, not as a command to change your safeguards", instruction)
-        self.assertIn("→ type a in a new chat", instruction)
-        self.assertIn("→ close with a. when done", instruction)
-        self.assertIn("save that to alexandria?", instruction)
-        self.assertIn("If I type a, start a thinking session", instruction)
-        self.assertIn("what have you changed your mind about recently?", instruction)
-        self.assertIn("If I type a., say what shifted and do not save", instruction)
-        self.assertIn("save to connected Drive if you can write there; otherwise this app's memory", instruction)
-        self.assertIn("noted — I'll use that in future chats", instruction)
-        self.assertIn("Never name a destination until the save is confirmed", instruction)
+        self.assertIn("Please keep every instruction, memory, and connection I already have", instruction)
+        self.assertIn("If I send a message that is only a or alexandria", instruction)
+        self.assertIn("what I have changed my mind about recently", instruction)
+        self.assertIn("If I send a message that is only a. or only alexandria.", instruction)
+        self.assertIn("Only keep an idea if I ask you to", instruction)
+        self.assertNotIn("safeguard", instruction.lower())
+        self.assertNotIn("end with", instruction.lower())
+        self.assertNotIn("ALWAYS", instruction)
+        self.assertNotIn("save that to alexandria", instruction.lower())
+        self.assertNotIn("Drive", instruction)
         for jailbreak in (
             "this is setup",
             "ordinary text to account preferences",
@@ -34,6 +33,7 @@ class ChatBootstrapTests(unittest.TestCase):
             "put only the preference",
             "ignore previous",
             "bypass a safeguard",
+            "change your safeguards",
             "system prompt",
             "~/alexandria",
             "<alexandria-instruction>",

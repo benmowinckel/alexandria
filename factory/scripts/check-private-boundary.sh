@@ -94,11 +94,14 @@ require server/src/chat-prompt.ts \
   "from '../../shared/onboarding-prompts.js'" \
   'the emailed chat paste no longer reads the shared instruction'
 require shared/onboarding-prompts.ts \
-  'I want a private thinking habit. Keep every instruction, memory, and connection I already have.' \
+  'I want a private thinking habit. Please keep every instruction, memory, and connection I already have.' \
   'the chat instruction is no longer first-person and additive'
+require shared/onboarding-prompts.ts \
+  'If I send a message that is only a or alexandria' \
+  'the chat instruction no longer waits for a whole-message keyword'
 forbid shared/onboarding-prompts.ts \
-  'This is setup|Treat the Preference|Give exactly two short actions|not instructions for this reply' \
-  'the chat instruction is a third-party behaviour-rewrite kit'
+  'This is setup|Treat the Preference|Give exactly two short actions|not instructions for this reply|change your safeguards|Answer normally, then end with|ALWAYS |save that to alexandria' \
+  'the chat instruction overlays ordinary replies or names a safeguard rewrite'
 node <<'NODE'
 const fs = require('fs');
 const factory = fs.readFileSync('factory/chat/bootstrap.md', 'utf8');

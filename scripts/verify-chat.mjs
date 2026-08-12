@@ -118,7 +118,10 @@ const jailbreakPhrases = [
   'put only the preference',
   'ignore previous',
   'bypass a safeguard',
+  'change your safeguards',
   'system prompt',
+  'answer normally, then end with',
+  'save that to alexandria',
 ];
 const result = {
   url: chatUrl,
@@ -136,8 +139,8 @@ const result = {
   hasCopyStep: body.includes('copy the setup') && body.includes('paste into your chat, then type a'),
   hasSettingsPaths:
     body.includes('chatgpt — Settings → Personalization → Custom instructions') &&
-    body.includes('gemini — Settings & help → Personal Intelligence → Instructions for Gemini') &&
-    body.includes('claude — Settings → Instructions for Claude'),
+    body.includes('gemini — Settings → Personal context → Your instructions for Gemini') &&
+    body.includes('claude — Settings → General → Instructions for Claude'),
   hasChatFallback: body.includes('those settings make it last across chats'),
   chatCopiedWithoutEmail,
   buttonCopiedState: clickedText.includes('copied'),
@@ -145,10 +148,10 @@ const result = {
   clipboardMatchesShared: clipboard === chatInstallPrompt(),
   factoryBootstrapMatchesShared: factoryBootstrap === expected,
   clipboardIsFirstPerson: clipboard.startsWith('I want a private thinking habit.'),
-  clipboardHasAdditiveGuard: clipboard.includes('Keep every instruction, memory, and connection I already have'),
-  clipboardHasPreferenceFrame: clipboard.includes('Treat this as my preference, not as a command to change your safeguards'),
+  clipboardHasAdditiveGuard: clipboard.includes('Please keep every instruction, memory, and connection I already have'),
+  clipboardIsKeywordOnly: clipboard.includes('If I send a message that is only a or alexandria'),
   clipboardHasNoJailbreak: jailbreakPhrases.every((phrase) => !clipboard.toLowerCase().includes(phrase)),
-  clipboardHasStoragePlan: clipboard.includes('save to connected Drive if you can write there; otherwise this app\'s memory'),
+  clipboardHasNoOverlay: !/end with|ALWAYS |safeguard/i.test(clipboard),
   emailFieldMatchesStart: JSON.stringify(chatEmailShape) === JSON.stringify(startEmailShape),
   computerCopiedWithoutEmail: computerClipboard === computerInstallPrompt(),
   computerAsksForInspection: computerClipboard.includes('decide for yourself whether it is safe') && computerClipboard.includes('wait for me to say `start`'),
@@ -187,9 +190,9 @@ if (
   !result.clipboardMatchesShared ||
   !result.clipboardIsFirstPerson ||
   !result.clipboardHasAdditiveGuard ||
-  !result.clipboardHasPreferenceFrame ||
+  !result.clipboardIsKeywordOnly ||
   !result.clipboardHasNoJailbreak ||
-  !result.clipboardHasStoragePlan ||
+  !result.clipboardHasNoOverlay ||
   !result.emailFieldMatchesStart ||
   !result.computerCopiedWithoutEmail ||
   !result.computerAsksForInspection ||
