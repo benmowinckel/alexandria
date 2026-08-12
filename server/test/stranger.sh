@@ -225,6 +225,7 @@ check "api_key correct"            [ "$(cat "$HOME/alexandria/system/.api_key")"
 check "setup_complete marker"      [ -f "$HOME/.local/share/alexandria/.setup_complete" ]
 check "passive-active loop healthy" grep -q '^  loop: ok$' "$HOME/alexandria/system/.setup_report"
 check "visible cue healthy"       grep -q '^  visible_cue: ok$' "$HOME/alexandria/system/.setup_report"
+check "Claude root uses native home path" node -e "const fs=require('fs'),os=require('os'),path=require('path');const s=JSON.parse(fs.readFileSync(path.join(process.env.HOME,'.claude','settings.json'),'utf8'));process.exit(s.permissions.additionalDirectories.includes(path.join(os.homedir(),'alexandria'))?0:1)"
 check "visible cue reaches /a"    bash -c 'HOME="$1" bash "$1/.local/share/alexandria/scripts/statusline.sh" footer | grep -q "start /a in a new chat"' _ "$HOME"
 check "Codex cue reaches \$a"     bash -c 'HOME="$1" bash "$1/.local/share/alexandria/scripts/statusline.sh" footer-codex | grep -qF "start \$a in a new chat"' _ "$HOME"
 
