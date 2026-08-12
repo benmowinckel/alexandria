@@ -1,5 +1,8 @@
 name: Smoke
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/smoke.yml']
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch: {}
