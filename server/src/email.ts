@@ -1,7 +1,7 @@
 /** Email primitives — Resend API (hybrid dependency, API-controllable, free 100/day). */
 
 import { installPrompt } from './install-prompt.js';
-import { chatInstallPrompt } from './chat-prompt.js';
+import { chatInstallPrompt, CHAT_INSTRUCTION_PATHS } from './chat-prompt.js';
 
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'benmowinckel@gmail.com';
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
@@ -265,7 +265,7 @@ export function onboardEmailContent(mode: OnboardingMode, emailToken: string): {
   const copy = mode === 'chat'
     ? {
         subject: 'alexandria. — your chat setup',
-        lead: 'paste this into a new chat in the app you already use:',
+        lead: 'paste this into your app\'s instructions setting. if you don\'t see that, paste into a chat — it works in that conversation:',
       }
     : mode === 'agent-phone'
       ? {
@@ -276,8 +276,13 @@ export function onboardEmailContent(mode: OnboardingMode, emailToken: string): {
           subject: 'alexandria. — your computer setup',
           lead: 'here is the setup for the agent on your computer. if you already pasted it, keep this as your backup:',
         };
+  const paths = mode === 'chat'
+    ? `<p style="margin: 0.8rem 0 0; color: #8a8078; font-size: 0.95rem;">${CHAT_INSTRUCTION_PATHS.map((row) => `${row.host} — ${row.path}`).join('<br />')}</p>
+  <p style="margin: 0.8rem 0 0; color: #8a8078; font-size: 0.95rem;">then type a in a new chat.</p>`
+    : '';
   const html = emailShell(`<p style="margin: 0 0 1.2rem;">${copy.lead}</p>
   ${emailCmd(onboardCmd(mode))}
+  ${paths}
   <p style="margin: 1.6rem 0 0;">reply if you get stuck. we&rsquo;ll also send occasional notes that are useful for your loop.</p>`, unsubscribeUrl);
   return { subject: copy.subject, html };
 }

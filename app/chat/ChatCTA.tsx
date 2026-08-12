@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { SERVER_URL, SHORTCUT_URL } from '../lib/config';
 import { checkReferral } from '../lib/referral';
 import { ArrowIcon } from '../join/DoorIcons';
+import { chatInstallPrompt, CHAT_INSTRUCTION_PATHS } from '../../shared/onboarding-prompts';
 
-export default function ChatCTA({ bootstrap, refCode }: { bootstrap: string; refCode?: string }) {
+export default function ChatCTA({ refCode }: { refCode?: string }) {
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'saved' | 'invalid' | 'error'>('idle');
@@ -54,11 +55,11 @@ export default function ChatCTA({ bootstrap, refCode }: { bootstrap: string; ref
   async function copy() {
     let copied = false;
     try {
-      await navigator.clipboard.writeText(bootstrap);
+      await navigator.clipboard.writeText(chatInstallPrompt());
       copied = true;
     } catch {
       const area = document.createElement('textarea');
-      area.value = bootstrap;
+      area.value = chatInstallPrompt();
       area.style.position = 'fixed';
       area.style.opacity = '0';
       document.body.appendChild(area);
@@ -127,13 +128,19 @@ export default function ChatCTA({ bootstrap, refCode }: { bootstrap: string; ref
 
       <div className="act-row">
         <span className="act-num">3</span>
-        <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
+        <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label="copy your instruction">
           {copyState === 'copied'
-            ? 'copied — paste into your chat'
+            ? 'copied — paste into settings, then type a'
             : copyState === 'error'
               ? 'couldn’t copy — try again'
-              : <>copy the setup<span className="act-why"> — paste into your chat</span></>}
+              : <>copy your instruction<span className="act-why"> — paste into settings, then type a</span></>}
         </button>
+        <p className="act-paths">
+          {CHAT_INSTRUCTION_PATHS.map((row) => (
+            <span key={row.host}>{row.host} — {row.path}<br /></span>
+          ))}
+          if you don&apos;t see those, paste into a chat — it works in that conversation
+        </p>
       </div>
     </section>
   );

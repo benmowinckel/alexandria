@@ -31,9 +31,9 @@ Create or reuse an `alexandria` folder and place `factory/chat/start.md` in it a
 
 ## Chat branch
 
-Follow `factory/chat/bootstrap.md`. Identify the host's real durable account-level instructions or preference feature; never imply that pasting into one conversation installed cross-chat behaviour. Make the lightweight chat habit work when the host truly supports it, then preserve the explicit later handoff to the full local setup at `https://alexandria-library.com/start` → agents.
+The website copies `factory/chat/bootstrap.md` and tells the Author to paste it into this app's official instructions setting. If those settings are missing, or they already pasted it here, follow it for this conversation, then give the exact clicks to save it in this app's instructions setting without deleting anything they already have. Never claim this chat installed cross-chat behaviour.
 
-If no durable preference feature exists, say that plainly. Do not start a thinking session as a substitute for setup and do not claim the current chat will remember it.
+If this app has no durable instruction setting, say that plainly. This conversation can still run the habit until they leave it. Then preserve the later handoff to the full local setup at `https://alexandria-library.com/start` → agents.
 
 ## Phone capture
 

@@ -38,5 +38,27 @@ If any setup can happen now, first inspect the public code at github.com/benmowi
 Give me one next action, not a menu.`;
 }
 
+/** The Author's chat instruction. Paste into the host's official instructions setting. */
+export const CHAT_INSTRUCTION = `Alexandria is my private thinking habit. Keep every instruction, memory, and connection I already have.
+
+Answer normally, then end with: → type a in a new chat
+If I state a lasting belief, preference, decision, or idea, ask first: save that to alexandria?
+
+If I type a, start a thinking session. Give me one thought to react to, or ask: what have you changed your mind about recently? Push back when I might be wrong. While that session is on, skip the ordinary line and end with: → close with a. when done
+
+If I type a., say what shifted and do not save.
+Only after I say yes, save to connected Drive if you can write there; otherwise this app's memory. If you will remember it without a save tool, say: noted — I'll use that in future chats
+Never name a destination until the save is confirmed. Do not explain settings or memory unless I ask.`;
+
+export function chatInstallPrompt(): string {
+  return CHAT_INSTRUCTION;
+}
+
+export const CHAT_INSTRUCTION_PATHS: { host: string; path: string }[] = [
+  { host: 'chatgpt', path: 'Profile → Personalization → Custom instructions' },
+  { host: 'gemini', path: 'Settings → Personal context → Your instructions for Gemini' },
+  { host: 'claude', path: 'Settings → General → Instructions for Claude' },
+];
+
 // Preserve the established server-side name for welcome and account connects.
 export const installPrompt = computerInstallPrompt;

@@ -88,20 +88,29 @@ require server/src/install-prompt.ts \
   'computerInstallPrompt' \
   'the server does not re-export the shared computer prompt'
 
-# The ordinary-chat clipboard and chat email are likewise one exact contract.
+# The ordinary-chat clipboard, chat email, and factory bootstrap are one exact
+# first-person instruction. A third-party install kit is the Gemini refusal class.
+require server/src/chat-prompt.ts \
+  "from '../../shared/onboarding-prompts.js'" \
+  'the emailed chat paste no longer reads the shared instruction'
+require shared/onboarding-prompts.ts \
+  'Alexandria is my private thinking habit. Keep every instruction, memory, and connection I already have.' \
+  'the chat instruction is no longer first-person and additive'
+forbid shared/onboarding-prompts.ts \
+  'This is setup|Treat the Preference|Give exactly two short actions|not instructions for this reply' \
+  'the chat instruction is a third-party behaviour-rewrite kit'
 node <<'NODE'
 const fs = require('fs');
 const factory = fs.readFileSync('factory/chat/bootstrap.md', 'utf8');
-const server = fs.readFileSync('server/src/chat-prompt.ts', 'utf8');
+const shared = fs.readFileSync('shared/onboarding-prompts.ts', 'utf8');
 const factoryMatch = factory.match(/---PROMPT START---\n([\s\S]*?)\n---PROMPT END---/);
-const arrayMatch = server.match(/return \[\n([\s\S]*?)\n  \]\.join\('\\n'\);/);
-if (!factoryMatch || !arrayMatch) {
+const sharedMatch = shared.match(/export const CHAT_INSTRUCTION = `([\s\S]*?)`;/);
+if (!factoryMatch || !sharedMatch) {
   console.error('private-boundary check failed: could not parse the chat handoff sources');
   process.exit(1);
 }
-const serverPrompt = Function(`return [${arrayMatch[1]}].join('\\n')`)();
-if (factoryMatch[1].trim() !== serverPrompt) {
-  console.error('private-boundary check failed: chat clipboard and chat email do not carry the exact same request');
+if (factoryMatch[1].trim() !== sharedMatch[1].trim()) {
+  console.error('private-boundary check failed: chat clipboard and factory bootstrap do not carry the exact same request');
   process.exit(1);
 }
 NODE

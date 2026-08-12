@@ -1,6 +1,6 @@
 # after setup — nothing to remember
 
-*The Author pastes one setup request into any chat. That ai reviews the proposed instruction, identifies its own durable instruction surface, and gives exactly two short actions. Behavior then lives in the host's durable instruction field; personal content lives in files or memory. Any later connection or approval is asked for only at the moment the host reserves it for the human.*
+*The Author pastes one instruction into the host's official instructions setting. Behavior then lives in that setting; personal content lives in files or memory. Pasting into a chat is a fallback for this conversation only — it does not install cross-chat behaviour.*
 
 ## normal use
 
@@ -22,6 +22,6 @@ On the first thought you approve saving, the AI checks storage itself. If it can
 
 The user never chooses a mode and never moves material between them. The agent recognizes the current surface, uses the strongest live capability, preserves all existing personalisation, and says honestly when the current surface cannot persist something.
 
-Instructions and memory are not interchangeable. The host's durable instruction setting carries Alexandria's operating behavior; writable files or native personalisation carry the Author's content. The setup request makes the current ai identify the right setting and any limits of the current app instead of making the Author choose a vendor path. Gemini can recall prior-chat preferences even though it cannot perform a named Drive write from chat, so it uses that personalisation without mentioning missing tools.
+Instructions and memory are not interchangeable. The host's durable instruction setting carries Alexandria's operating behavior; writable files or native personalisation carry the Author's content. Gemini can recall prior-chat preferences even though it cannot perform a named Drive write from chat, so it uses that personalisation without mentioning missing tools.
 
 Native host personalisation remains independent. Gemini and Claude may learn from chats under the user's existing account setting before Alexandria asks to save; Alexandria preserves that setting. The yes gate controls Alexandria's explicit save action, not the host's own background memory.

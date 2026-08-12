@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { pageMetadata } from '../lib/config';
@@ -9,7 +7,7 @@ export const metadata = pageMetadata({
   path: '/chat',
   title: 'start alexandria.',
   description:
-    'Start your Alexandria loop in any chat. Add your email if you want a copy, then paste one setup.',
+    'Start your Alexandria loop in any chat. Add your email if you want a copy, then paste one instruction into settings — or into a chat if those settings are missing.',
 });
 
 function cleanRef(raw: string | undefined): string {
@@ -17,17 +15,8 @@ function cleanRef(raw: string | undefined): string {
 }
 
 // Door 2 of the two-door onboarding (agents → /start; chat → here).
-// Shortcut → optional email → chat setup. The chat setup starts now and leaves
-// a closed handoff to the full local computer loop rather than replacing it.
-function readBootstrap(): string {
-  const raw = fs.readFileSync(
-    path.join(process.cwd(), 'factory', 'chat', 'bootstrap.md'),
-    'utf8',
-  );
-  const m = raw.match(/---PROMPT START---\n([\s\S]*?)\n---PROMPT END---/);
-  return m ? m[1].trim() : '';
-}
-
+// Shortcut → optional email → chat setup. The copied instruction lives in
+// shared/onboarding-prompts.ts so the website can ship without a factory re-sign.
 export default async function ChatPage({
   searchParams,
 }: {
@@ -35,7 +24,6 @@ export default async function ChatPage({
 }) {
   const params = await searchParams;
   const ref = cleanRef(params.ref) || undefined;
-  const bootstrap = readBootstrap();
 
   return (
     <div className="primer-page">
@@ -49,7 +37,7 @@ export default async function ChatPage({
 
       <main className="primer-main">
         <h1 className="primer-h1">start your loop</h1>
-        <ChatCTA bootstrap={bootstrap} refCode={ref} />
+        <ChatCTA refCode={ref} />
       </main>
 
       <style>{`
@@ -167,8 +155,16 @@ export default async function ChatPage({
           from { opacity: 0; transform: translateX(-5px); }
           to { opacity: 1; transform: none; }
         }
+        .cta-btn { white-space: normal; }
         .cta-btn.is-copied {
           border-color: var(--accent); background: var(--bg-primary);
+        }
+        .act-paths {
+          margin: 10px 0 0;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 12.5px; line-height: 1.65; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.5));
+          white-space: normal;
         }
 
         @media (max-width: 640px) {

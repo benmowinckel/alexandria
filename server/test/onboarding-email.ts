@@ -14,7 +14,12 @@ assert.match(phone.html, /I am at my computer/);
 
 const chat = onboardEmailContent('chat', 'TOKEN');
 assert.equal(chat.subject, 'alexandria. — your chat setup');
-assert.match(chat.html, /paste this into a new chat in the app you already use/);
+assert.match(chat.html, /paste this into your app's instructions setting. if you don't see that, paste into a chat/);
+assert.match(chat.html, /Profile → Personalization → Custom instructions/);
+assert.match(chat.html, /Your instructions for Gemini/);
+assert.match(chat.html, /Instructions for Claude/);
+assert.match(chat.html, /then type a in a new chat/);
+assert.doesNotMatch(chat.html, /paste this into a new chat in the app you already use/);
 assert.match(chat.html, /Alexandria is my private thinking habit/);
 
 const mobile = mobileHandoffPrompt();

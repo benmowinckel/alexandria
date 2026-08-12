@@ -1,16 +1,19 @@
 # onboarding page — /chat
 
-**alexandria — two steps**
+**alexandria — three steps**
 
-## two steps. then keep chatting normally.
+## copy your instruction. paste it into settings. type a.
 
-1. copy the setup.
-2. paste it into any chat.
+1. add the shortcut if you want capture from your phone.
+2. leave an email if you want a copy.
+3. copy your instruction and paste it into this app's instructions setting.
 
-[copy the setup]
+chatgpt — Profile → Personalization → Custom instructions
+gemini — Settings → Personal context → Your instructions for Gemini
+claude — Settings → General → Instructions for Claude
 
-your ai checks the instruction first, recognizes the app, and tells you exactly what to press. after setup, type `a`: it immediately brings you one specific thought to react to. type `a.` when you are done.
+then type `a` in a new chat.
 
-after that, chat normally. type `a` whenever you want a thinking session. the first time you approve saving a thought, your ai uses the strongest private place it can really write and verifies the save.
+settings is the durable home. if those clicks are missing — unsigned gemini has no personal context — paste into a chat. it works in that conversation. a chat cannot rewrite its own settings, and a third-party install kit is what security-sensitive apps refuse.
 
 nothing is sent to Alexandria. every instruction, memory, file, connector, project, and workflow you already have stays.
