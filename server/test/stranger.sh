@@ -195,6 +195,17 @@ ALEXANDRIA_SOURCE_COMMIT="$SOURCE_COMMIT" \
 if [ -n "${GITHUB_ACTIONS:-}" ] && [ ! -f "$HOME/.local/share/alexandria/.setup_complete" ]; then
   SETUP_REPORT=$(tr '\r\n' ';;' < "$HOME/alexandria/system/.setup_report" 2>/dev/null || true)
   printf '::error title=Setup report::%s\n' "${SETUP_REPORT:-missing}"
+  SKILL_STATE=""
+  for rel in a alexandria alexandria-close close-alexandria 'a.'; do
+    skill_file="$HOME/.claude/skills/$rel/SKILL.md"
+    if [ -f "$skill_file" ]; then
+      skill_name=$(sed -n 's/^name: /name=/p' "$skill_file" | head -1)
+      SKILL_STATE="${SKILL_STATE}${rel}:${skill_name:-no-name};"
+    else
+      SKILL_STATE="${SKILL_STATE}${rel}:missing;"
+    fi
+  done
+  printf '::error title=Setup skill state::platform=%s;%s\n' "$(uname -s)" "$SKILL_STATE"
 fi
 
 # Verify directory structure
