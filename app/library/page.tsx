@@ -5,6 +5,7 @@ import { ThemeToggle } from '../components/ThemeToggle';
 import { SERVER_URL, pageMetadata, librarySignInUrl, FOUNDER_PROFILE_PATH } from '../lib/config';
 import { LibraryDirectory, type DirectoryAuthor } from './LibraryDirectory';
 import SiteFooter from '../components/SiteFooter';
+import { SignOutLink } from '../components/SignOutLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -119,9 +120,12 @@ export default async function LibraryPage({
       <ThemeToggle />
       <main className={signed_in && membership_active ? 'lib-main' : 'lib-main lib-main-gate'}>
         <header className="lib-header">
-          <Link href="/" className="lib-brand">
-            alexandria<span className="lib-brand-dot">.</span>
-          </Link>
+          <div className="lib-header-top">
+            <Link href="/" className="lib-brand">
+              alexandria<span className="lib-brand-dot">.</span>
+            </Link>
+            {signed_in ? <SignOutLink /> : null}
+          </div>
           <p className="lib-eyebrow">the collective</p>
           <h1 className="lib-h1">the library</h1>
         </header>
@@ -202,6 +206,7 @@ export default async function LibraryPage({
            idiom). The signed-in directory keeps the top-aligned scan layout. */
         .lib-main-gate { display: flex; flex-direction: column; justify-content: center; padding-top: 3rem; padding-bottom: 4rem; }
         .lib-header { margin-bottom: 2.4rem; }
+        .lib-header-top { display: flex; justify-content: space-between; align-items: center; min-height: 1.75rem; gap: 1.5rem; }
         .lib-brand {
           font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
           font-style: italic; font-size: 1.25rem; color: var(--text-primary);

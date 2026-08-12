@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { SERVER_URL, SITE_URL } from '../../../lib/config';
+import { SERVER_URL } from '../../../lib/config';
+import { librarySessionSetCookie } from '../../../lib/session-cookie';
 
 /**
  * Sets the library session cookie first-party, from a client-initiated fetch.
@@ -13,15 +14,6 @@ import { SERVER_URL, SITE_URL } from '../../../lib/config';
  * exchanges the one-time code for the session token server-side and returns the
  * Set-Cookie. Only then does the page navigate on to the library, cookie in hand.
  */
-
-function cookieDomain(): string {
-  try {
-    const host = new URL(SITE_URL).hostname.replace(/^(api|www)\./, '');
-    return host ? `; Domain=.${host}` : '';
-  } catch {
-    return '';
-  }
-}
 
 export async function POST(req: NextRequest): Promise<Response> {
   const code = req.nextUrl.searchParams.get('code') || '';
@@ -39,10 +31,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   if (token) {
-    headers.append(
-      'Set-Cookie',
-      `alex_library_session=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}${cookieDomain()}`,
-    );
+    headers.append('Set-Cookie', librarySessionSetCookie(token));
   }
   return new Response(JSON.stringify({ ok: !!token }), { status: 200, headers });
 }

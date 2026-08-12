@@ -740,6 +740,19 @@ export function registerRoutes(app: Hono) {
     }
   });
 
+  // Browser Library sign-out. Cookie only — never the machine API key.
+  // Idempotent: no session is still 200. The website proxy expires the
+  // first-party cookie; this deletes the server token so a copied cookie dies.
+  app.post('/auth/logout', async (c) => {
+    const token = extractLibrarySessionToken(c);
+    if (token) {
+      await getKV().delete(`library:session:${token}`).catch(() => {});
+    }
+    const clear = `alex_library_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0${deriveCookieDomain()}`;
+    c.header('Set-Cookie', clear);
+    return c.json({ ok: true });
+  });
+
   // Session handoff exchange. The OAuth callback stores a short-lived, single-use
   // code → session-token in KV and redirects to the website's /auth/handoff, which
   // calls this SERVER-SIDE to fetch the token and set the library cookie

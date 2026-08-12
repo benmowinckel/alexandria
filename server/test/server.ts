@@ -134,6 +134,16 @@ async function main() {
     };
   });
 
+  await test('Logout is idempotent without a session', async () => {
+    const res = await fetch(`${BASE}/auth/logout`, { method: 'POST' });
+    const body = await safeJson(res);
+    return {
+      test: 'Logout without a session',
+      passed: res.ok && body?.ok === true,
+      details: `HTTP ${res.status}, ok: ${String(body?.ok)}`,
+    };
+  });
+
   await test('GitHub OAuth endpoint redirects to GitHub', async () => {
     const res = await fetch(`${BASE}/auth/github`, { redirect: 'manual' });
     const location = res.headers.get('location') || '';

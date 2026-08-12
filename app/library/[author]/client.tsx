@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import PromptBox from '../../components/PromptBox';
+import { HeaderAction, HeaderActions, headerActionDotStyle } from '../../components/HeaderActions';
+import { SignOutLink } from '../../components/SignOutLink';
 import { FETCH_TIMEOUT_MS, librarySignInUrlHere } from '../../lib/config';
 import { safeUrl } from '../../lib/url';
 import { type TwinVariantSummary } from './types';
@@ -522,24 +524,23 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       <ThemeToggle />
       <main style={{ maxWidth: '820px', margin: '0 auto', padding: '6rem 2.5rem 4rem', fontFamily: 'var(--font-eb-garamond)' }}>
         <header className={editing ? 'profile-edit-header' : undefined} style={{ margin: '0 0 2.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '1.75rem' }}>
             <Link href="/library" aria-label="back to the library" title="library" style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
             </Link>
-            {isOwner ? (
-              <button
-                type="button"
-                onClick={editing ? saveProfile : () => { setSaveNote(''); setEditing(true); }}
-                disabled={saving}
-                style={{ color: 'var(--text-muted)', border: 0, background: 'none', padding: 0, font: 'inherit', fontSize: '0.9rem', cursor: saving ? 'wait' : 'pointer' }}
-                className="hover:opacity-60"
-              >
-                {saving ? 'saving…' : editing ? 'save' : 'edit'}
-              </button>
-            ) : !signedIn && (
-              <a href={signInUrl} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }} className="hover:opacity-60">
-                sign in
-              </a>
+            {isOwner && editing ? (
+              <HeaderAction onClick={saveProfile} busy={saving}>
+                {saving ? 'saving changes' : 'save changes'}
+              </HeaderAction>
+            ) : isOwner ? (
+              <HeaderActions
+                left={<HeaderAction onClick={() => { setSaveNote(''); setEditing(true); }}>edit profile</HeaderAction>}
+                right={<SignOutLink />}
+              />
+            ) : signedIn ? (
+              <SignOutLink />
+            ) : (
+              <HeaderAction href={signInUrl}>sign in</HeaderAction>
             )}
           </div>
           {/* The member number rides the name line, baseline-aligned at its
@@ -574,7 +575,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                   <option value="">choose location</option>
                   {LIBRARY_LOCATIONS.map((location) => <option key={location} value={location}>{location}</option>)}
                 </select>
-                <span aria-hidden className="profile-edit-dot" style={{ color: 'var(--text-ghost)' }}>·</span>
+                <span aria-hidden className="profile-edit-dot" style={headerActionDotStyle}>·</span>
                 <input aria-label="contact" className="profile-edit-field profile-edit-meta" style={editFieldStyle} value={identity.contact} placeholder="contact" onChange={(event) => setIdentity({ ...identity, contact: event.target.value })} />
               </div>
               <input aria-label="website" inputMode="url" className="profile-edit-field profile-edit-link" style={editFieldStyle} value={identity.website} placeholder="website" onChange={(event) => setIdentity({ ...identity, website: event.target.value })} />
@@ -613,7 +614,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               )}
               {author.contact && (
                 <>
-                  {author.location && author.location_key && <>{' '}<span style={{ color: 'var(--text-ghost)' }}>·</span>{' '}</>}
+                  {author.location && author.location_key && <span aria-hidden style={headerActionDotStyle}>·</span>}
                   <a href={contactHref(author.contact)}
                     target={author.contact.startsWith('http') ? '_blank' : undefined}
                     rel={author.contact.startsWith('http') ? 'noopener noreferrer' : undefined}
@@ -770,9 +771,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
         {editing && (
           <div style={{ borderTop: '1px solid var(--border-light)', marginTop: '4rem', paddingTop: '1.4rem', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
             <span role="status" style={{ color: saveNote.startsWith('Could not') ? 'var(--error, #9b2c2c)' : 'var(--text-muted)', fontSize: '0.9rem' }}>{saveNote}</span>
-            <button type="button" onClick={saveProfile} disabled={saving} className="hover:opacity-60" style={{ color: 'var(--accent)', border: 0, background: 'none', padding: 0, font: 'inherit', fontSize: '1rem', cursor: saving ? 'wait' : 'pointer' }}>
-              {saving ? 'saving…' : 'save'}
-            </button>
+            <HeaderAction onClick={saveProfile} busy={saving} tone="accent">
+              {saving ? 'saving changes' : 'save changes'}
+            </HeaderAction>
           </div>
         )}
         {/* A slim footer rounds the page off (founder: borders, a place for
@@ -797,12 +798,12 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           .profile-edit-field:hover { border-color: color-mix(in srgb, var(--text-secondary) 62%, transparent) !important; }
           .profile-edit-field:focus { outline: none; border-bottom: 2px solid var(--accent) !important; color: var(--text-primary) !important; }
           .profile-edit-name { width: min(28rem, 68vw) !important; font-size: 2rem !important; font-weight: 500 !important; letter-spacing: -0.012em; }
-          .profile-edit-identity { display: flex; align-items: baseline; gap: 0.75rem; color: var(--text-muted); }
+          .profile-edit-identity { display: flex; align-items: baseline; gap: 0; color: var(--text-muted); }
           .profile-edit-meta { width: min(15rem, 38vw) !important; color: var(--text-muted) !important; font-size: 0.95rem !important; letter-spacing: 0.02em; }
           .profile-edit-link { width: min(28rem, 100%) !important; margin-top: 0.9rem; color: var(--text-muted) !important; font-size: 0.98rem !important; }
           .profile-edit-links { display: grid; gap: 0.65rem; width: min(38rem, 100%); margin-top: 1.4rem; color: var(--text-muted); }
-          .profile-edit-links-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.82rem; letter-spacing: 0.03em; }
-          .profile-edit-links-head button { border: 0; background: none; padding: 0; color: var(--text-muted); font: inherit; cursor: pointer; }
+          .profile-edit-links-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.95rem; letter-spacing: 0.02em; }
+          .profile-edit-links-head button { border: 0; background: none; padding: 0.2rem 0; color: var(--text-muted); font: inherit; letter-spacing: 0.02em; cursor: pointer; }
           .profile-edit-links-head button:hover { color: var(--accent); }
           .profile-edit-social { display: grid; grid-template-columns: minmax(5.5rem, 0.45fr) minmax(0, 1.55fr); gap: 1.25rem; align-items: baseline; }
           .profile-edit-social-name { color: var(--text-secondary) !important; font-size: 0.95rem !important; }

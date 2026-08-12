@@ -70,6 +70,7 @@ Operational overhead — OAuth, billing, email, admin:
 | GET | `/alexandria` | Protocol handshake (unauthenticated: spec; authenticated: status) |
 | GET | `/auth/github` | OAuth initiation |
 | GET | `/auth/github/callback` | OAuth callback |
+| POST | `/auth/logout` | End the browser Library session (cookie only; does not revoke the API key) |
 | GET | `/account` | Billing portal redirect |
 | DELETE | `/account` | Account deletion (GDPR-ready) |
 | GET | `/account/rotate-key` | Lost-key self-serve rotation (single-use code minted on returning-member OAuth; old key dies atomically) |

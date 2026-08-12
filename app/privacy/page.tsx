@@ -29,7 +29,7 @@ export default function Privacy() {
         alexandria.
       </Link>
       <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 400 }}>Privacy Policy</h1>
-      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 11, 2026</p>
+      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 12, 2026</p>
 
       <section style={section}>
         <h2 style={heading}>What Alexandria is</h2>
@@ -71,6 +71,7 @@ export default function Privacy() {
         <p>Your private mirror is already portable: ordinary files you can read, edit, move, or delete. Deleting <code>~/alexandria/</code> removes the local loop but does not delete an optional hosted account.</p>
         <p style={detail}>Depending on where you live, you may have rights to know or access personal data, correct it, delete it, receive a portable copy, restrict or object to processing, and appeal a decision. We do not sell personal information or share it for cross-context behavioural advertising.</p>
         <p style={detail}>To exercise a right, delete an account, or ask us to remove submitted feedback, email <a href={`mailto:${FOUNDER_EMAIL}`} style={link}>{FOUNDER_EMAIL}</a>. We may need to verify your identity. We will answer within the period required by applicable law.</p>
+        <p style={detail}>You can sign out of the website from the library. That ends the browser session on this device. It does not delete your account or the key on your computer.</p>
       </section>
 
       <section style={section}>

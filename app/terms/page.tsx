@@ -29,7 +29,7 @@ export default function Terms() {
         alexandria.
       </Link>
       <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 400 }}>Terms of Service</h1>
-      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 4, 2026</p>
+      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 12, 2026</p>
 
       <section style={section}>
         <h2 style={heading}>What this is</h2>
@@ -56,7 +56,7 @@ export default function Terms() {
 
       <section style={section}>
         <h2 style={heading}>Accounts</h2>
-        <p>Hosted features use GitHub OAuth and may issue an API key or browser session. Keep those credentials private and tell us if you believe they were compromised. You are responsible for activity performed through your account until it is secured or deleted.</p>
+        <p>Hosted features use GitHub OAuth and may issue an API key or browser session. Keep those credentials private and tell us if you believe they were compromised. You are responsible for activity performed through your account until it is secured or deleted. Sign out ends the browser session on this device; it does not revoke the API key or delete the account.</p>
       </section>
 
       <section style={section}>
