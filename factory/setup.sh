@@ -1530,7 +1530,10 @@ esac
 # working passive loop.
 
 validate_claude_config() {
-  if command -v python3 >/dev/null 2>&1; then
+  # Validate with the same runtime that wrote the config. On Windows, native
+  # Node and Python can spell the same home path differently even when the
+  # finished JSON is correct. Python remains the no-Node fallback.
+  if ! command -v node >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
     python3 - <<'PY' 2>/dev/null
 import json
 from pathlib import Path

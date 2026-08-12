@@ -223,7 +223,7 @@ check "machine.md exists"          [ -f "$HOME/alexandria/files/core/machine.md"
 check "api_key written"            [ -f "$HOME/alexandria/system/.api_key" ]
 check "api_key correct"            [ "$(cat "$HOME/alexandria/system/.api_key")" = "$API_KEY" ]
 check "setup_complete marker"      [ -f "$HOME/.local/share/alexandria/.setup_complete" ]
-check "Claude health checks reported" grep -q '^  claude_checks:' "$HOME/alexandria/system/.setup_report"
+check "Claude config validates after merge" grep -q '^  claude_checks: hooks=ok config=ok' "$HOME/alexandria/system/.setup_report"
 check "passive-active loop healthy" grep -q '^  loop: ok$' "$HOME/alexandria/system/.setup_report"
 check "visible cue healthy"       grep -q '^  visible_cue: ok$' "$HOME/alexandria/system/.setup_report"
 check "Claude root uses native home path" node -e "const fs=require('fs'),os=require('os'),path=require('path');const s=JSON.parse(fs.readFileSync(path.join(process.env.HOME,'.claude','settings.json'),'utf8'));process.exit(s.permissions.additionalDirectories.includes(path.join(os.homedir(),'alexandria'))?0:1)"
