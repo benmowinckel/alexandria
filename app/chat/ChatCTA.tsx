@@ -149,10 +149,10 @@ export default function ChatCTA({
         <span className="act-num">3</span>
         <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the instructions">
           {copyState === 'copied'
-            ? <>copied —<span className="act-rest">paste into {pastePath}</span></>
+            ? <>copied — paste into<span className="act-rest">{pastePath}</span></>
             : copyState === 'error'
               ? 'couldn’t copy — try again'
-              : <>copy the instructions —<span className="act-rest">paste into {pastePath}</span></>}
+              : <>copy the instructions — paste into<span className="act-rest">{pastePath}</span></>}
         </button>
       </div>
 
@@ -168,7 +168,7 @@ export default function ChatCTA({
       <div className="act-row">
         <span className="act-num">{typeANum}</span>
         <p className="door-btn act-box is-note">
-          type a in a new chat<span className="act-why"> — start a thought session</span>
+          type a in a new chat<span className="act-why"> — start your first session</span>
         </p>
       </div>
     </section>

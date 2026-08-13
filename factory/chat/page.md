@@ -6,11 +6,12 @@
 
 1. add the shortcut — capture now for the full version. on a computer that opens /shortcut; on a phone it opens the shortcut itself.
 2. leave an email if you want a copy.
-3. copy the instructions —
-   paste into settings → … (that app's official instructions setting)
-   after copy: copied — paste into the same path.
-4. connect google drive where it can actually write. claude: customize → connectors. chatgpt: if you have it. gemini: skip — it can read drive, not write from chat.
-5. type a in a new chat — start a thought session.
+3. copy the instructions — paste into
+   settings → … (that app's official instructions setting)
+   after copy: copied — paste into
+   the same path.
+4. connect google drive — in every chat you use, if it has it. chatgpt, claude, and gemini all get this step. no invented click path; missing control is fine.
+5. type a in a new chat — start your first session.
 
 chatgpt — settings → personalization → custom instructions
 claude — settings → general → instructions for claude

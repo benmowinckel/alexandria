@@ -24,15 +24,14 @@ assert.doesNotMatch(chat.html, /paste this into a chat, then type a/);
 assert.match(chat.html, /Alexandria is my private thinking habit/);
 
 const chatgpt = onboardEmailContent('chat', 'TOKEN', 'chatgpt');
-assert.match(chatgpt.html, /paste this into chatgpt settings → personalization → custom instructions, connect google drive \(if you have it\), then type a in a new chat/);
+assert.match(chatgpt.html, /paste this into chatgpt settings → personalization → custom instructions, connect google drive \(in every chat you use, if it has it\), then type a in a new chat/);
 assert.doesNotMatch(chatgpt.html, /settings → general → instructions for claude/);
 
 const claude = onboardEmailContent('chat', 'TOKEN', 'claude');
-assert.match(claude.html, /paste this into claude settings → general → instructions for claude, connect google drive \(customize → connectors\), then type a in a new chat/);
+assert.match(claude.html, /paste this into claude settings → general → instructions for claude, connect google drive \(in every chat you use, if it has it\), then type a in a new chat/);
 
 const gemini = onboardEmailContent('chat', 'TOKEN', 'gemini');
-assert.match(gemini.html, /paste this into gemini settings → personal context → your instructions for gemini, then type a in a new chat/);
-assert.doesNotMatch(gemini.html, /connect google drive/);
+assert.match(gemini.html, /paste this into gemini settings → personal context → your instructions for gemini, connect google drive \(in every chat you use, if it has it\), then type a in a new chat/);
 
 const mobile = mobileHandoffPrompt();
 assert.match(mobile, /I am on my phone right now/);

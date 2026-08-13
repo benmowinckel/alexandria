@@ -52,9 +52,10 @@ const setupHtml = await page.content();
 const chatShortcutHref = await page.locator('a.act-box').first().getAttribute('href');
 const button = page.locator('button.cta-btn');
 const copyBefore = await button.innerText();
-const copyIsTwoLines = copyBefore.split('\n').filter(Boolean).length >= 2
-  && copyBefore.includes(`paste into ${chatgptPath}`)
-  && copyBefore.startsWith('copy the instructions');
+const copyLines = copyBefore.split('\n').map((line) => line.trim()).filter(Boolean);
+const copyIsTwoLines = copyLines.length >= 2
+  && copyLines[0] === 'copy the instructions — paste into'
+  && copyLines[1] === chatgptPath;
 const email = page.locator('.act-email');
 await page.mouse.move(0, 0);
 const chatEmailShape = await email.evaluate((element) => {
@@ -71,10 +72,11 @@ await button.click();
 await page.waitForFunction((path) =>
   Array.from(document.querySelectorAll('button')).some((element) => {
     const text = element.innerText || '';
-    return text.includes('copied') && text.includes(`paste into ${path}`);
+    return text.includes('copied — paste into') && text.includes(path);
   }), chatgptPath);
 const copiedIdle = await button.innerText();
-const chatCopiedWithoutEmail = copiedIdle.includes('copied') && copiedIdle.includes(`paste into ${chatgptPath}`);
+const copiedLines = copiedIdle.split('\n').map((line) => line.trim()).filter(Boolean);
+const chatCopiedWithoutEmail = copiedLines[0] === 'copied — paste into' && copiedLines[1] === chatgptPath;
 await page.getByLabel('your email').fill('reader@example.com');
 await page.getByLabel('save email').click();
 await page.getByText('email saved', { exact: false }).waitFor();
@@ -82,7 +84,7 @@ await button.click();
 await page.waitForFunction((path) =>
   Array.from(document.querySelectorAll('button')).some((element) => {
     const text = element.innerText || '';
-    return text.includes('copied') && text.includes(`paste into ${path}`);
+    return text.includes('copied — paste into') && text.includes(path);
   }), chatgptPath);
 const clickedText = await button.innerText();
 const clipboard = await page.evaluate(() => navigator.clipboard.readText());
@@ -178,15 +180,15 @@ const result = {
   computerShortcutRoutesToPage: computerShortcutHref === '/shortcut',
   phoneShortcutOpensIcloud: Boolean(phoneShortcutHref?.includes('icloud.com/shortcuts/')),
   hasEmailStep: setupHtml.includes('act-email') && setupHtml.includes('your email') && body.includes('we’ll send your setup, then occasional useful notes'),
-  hasCopyStep: body.includes('copy the instructions') && body.includes(`paste into ${chatgptPath}`),
+  hasCopyStep: body.includes('copy the instructions — paste into') && body.includes(chatgptPath),
   copyIsTwoLines,
-  chatgptGuidesDriveIfPresent: body.includes('connect google drive') && body.includes('if you have it') && !body.includes('+ beside the message box'),
-  chatgptHasTypeA: body.includes('type a in a new chat') && body.includes('start a thought session'),
+  chatgptGuidesDrive: body.includes('connect google drive') && body.includes('in every chat you use, if it has it') && !body.includes('+ beside the message box'),
+  chatgptHasTypeA: body.includes('type a in a new chat') && body.includes('start your first session'),
   chatgptHasNoThatsIt: !body.toLowerCase().includes('that’s it') && !body.toLowerCase().includes("that's it"),
   claudeGuidesSettings: claudeBody.includes(claudePath),
-  claudeGuidesDrive: claudeBody.includes('connect google drive') && claudeBody.includes('customize → connectors'),
+  claudeGuidesDrive: claudeBody.includes('connect google drive') && claudeBody.includes('in every chat you use, if it has it'),
   geminiGuidesSettings: geminiBody.includes(geminiPath),
-  geminiSkipsDrive: geminiBody.includes('type a in a new chat') && !geminiBody.toLowerCase().includes('connect google drive'),
+  geminiGuidesDrive: geminiBody.includes('connect google drive') && geminiBody.includes('in every chat you use, if it has it'),
   hasNoPathDump: !body.includes('those settings make it last across chats') && !pickerBody.includes('those settings make it last across chats'),
   hasNoDifferentChat: !body.includes('different chat') && !claudeBody.includes('different chat'),
   chatBackGoesOneSlide: backToPicker,
@@ -233,13 +235,13 @@ if (
   !result.hasEmailStep ||
   !result.hasCopyStep ||
   !result.copyIsTwoLines ||
-  !result.chatgptGuidesDriveIfPresent ||
+  !result.chatgptGuidesDrive ||
   !result.chatgptHasTypeA ||
   !result.chatgptHasNoThatsIt ||
   !result.claudeGuidesSettings ||
   !result.claudeGuidesDrive ||
   !result.geminiGuidesSettings ||
-  !result.geminiSkipsDrive ||
+  !result.geminiGuidesDrive ||
   !result.hasNoPathDump ||
   !result.hasNoDifferentChat ||
   !result.chatBackGoesOneSlide ||

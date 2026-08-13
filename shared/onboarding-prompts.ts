@@ -61,17 +61,17 @@ export const CHAT_HOSTS: Record<ChatHost, {
   chatgpt: {
     label: 'chatgpt',
     pastePath: 'settings → personalization → custom instructions',
-    driveWhy: 'if you have it',
+    driveWhy: 'in every chat you use, if it has it',
   },
   claude: {
     label: 'claude',
     pastePath: 'settings → general → instructions for claude',
-    driveWhy: 'customize → connectors',
+    driveWhy: 'in every chat you use, if it has it',
   },
   gemini: {
     label: 'gemini',
     pastePath: 'settings → personal context → your instructions for gemini',
-    driveWhy: null,
+    driveWhy: 'in every chat you use, if it has it',
   },
 };
 
