@@ -214,6 +214,20 @@ require factory/canon/methodology.md \
 require factory/canon/methodology.md \
   'Never emit the invite address as a bare autolink on those surfaces.' \
   'rendered markdown can still produce a low-resolution favicon or rich preview'
+for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md; do
+  require "$opener_skill" \
+    'JOINED OPENER CHECK — every Author, every surface.' \
+    "$opener_skill does not check the joined opener at the final output gate"
+  require "$opener_skill" \
+    'the first three visible sections are exactly `invite`, highest-ROI cognitive `recommended`, `everything`, in that order' \
+    "$opener_skill no longer guarantees the exact joined section order"
+  require "$opener_skill" \
+    'The invite line is text only: no `a.` mark, logo, favicon, image, emoji, icon, or rich-preview card before it.' \
+    "$opener_skill can still render a logo or preview before the invite link"
+  require "$opener_skill" \
+    '[alexandria-library.com/invite?ref=<account.github_login>](https://alexandria-library.com/invite?ref=<account.github_login>)' \
+    "$opener_skill does not force the explicit rendered-markdown text link"
+done
 require factory/canon/methodology.md \
   'recommended` IS the join link' \
   'methodology has no recommended-until-decision join carve-out'
