@@ -201,8 +201,9 @@ const result = {
   clipboardIsFirstPerson: clipboard.startsWith('Alexandria is my private thinking habit.'),
   clipboardHasAdditiveGuard: clipboard.includes('Keep every instruction, memory, and connection I already have'),
   clipboardHasVisibleRoute:
-    clipboard.includes('only on your first reply in that chat') &&
-    clipboard.includes('Never add that line to voice replies') &&
+    clipboard.includes('Only your first reply in a new chat carries a cue') &&
+    clipboard.includes('want me to spin up an Alexandria chat on the side?') &&
+    clipboard.includes('If I say yes, open it, start Alexandria there') &&
     clipboard.includes('saving to it or reading from it would help this exact exchange') &&
     clipboard.includes('save that to alexandria?'),
   clipboardHasNoJailbreak: jailbreakPhrases.every((phrase) => !clipboard.toLowerCase().includes(phrase)),

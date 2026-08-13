@@ -97,11 +97,14 @@ require shared/onboarding-prompts.ts \
   'Alexandria is my private thinking habit. Keep every instruction, memory, and connection I already have.' \
   'the chat instruction is no longer first-person and additive'
 require shared/onboarding-prompts.ts \
-  'only on your first reply in that chat' \
+  'Only your first reply in a new chat carries a cue' \
   'the chat instruction no longer carries the visible route'
 require shared/onboarding-prompts.ts \
-  'Never add that line to voice replies' \
-  'the chat instruction no longer suppresses the generic cue in voice'
+  'want me to spin up an Alexandria chat on the side?' \
+  'the chat instruction no longer carries the medium-native voice offer'
+require shared/onboarding-prompts.ts \
+  'If I say yes, open it, start Alexandria there' \
+  'the chat instruction no longer acts on the Author voice consent'
 require shared/onboarding-prompts.ts \
   'saving to it or reading from it would help this exact exchange' \
   'the chat instruction no longer allows a contextual later route'
@@ -289,12 +292,15 @@ require factory/canon/foundation.md \
   'private material never becomes an outbound query by default.' \
   'Foundation has no permanent private-query boundary'
 require factory/canon/foundation.md \
-  'show the state-aware footer only on the first assistant reply in a new text chat' \
-  'never repeat a generic footer on every task' \
+  'carry it only on the first assistant reply in a new chat' \
+  'never repeat a generic cue on every task' \
   'Foundation no longer states the disclosed visible cue clearly'
 require factory/canon/foundation.md \
-  'Voice never reads a generic Alexandria cue aloud' \
-  'the Foundation no longer suppresses the generic cue in voice'
+  'want me to spin up an Alexandria chat on the side?' \
+  'the Foundation no longer states the medium-native voice offer'
+require factory/canon/foundation.md \
+  'the voice offer does so only after the Author says yes' \
+  'the Foundation no longer keeps voice chat creation behind consent'
 require factory/canon/foundation.md \
   '**passive session → visible route into an Alexandria session → active session → a better mirror → and back.**' \
   'Foundation no longer defines the complete passive-to-active product loop'

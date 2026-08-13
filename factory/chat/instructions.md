@@ -4,9 +4,9 @@
 
 ## normal use
 
-Keep chatting exactly as before. In text chat, only the first reply in a new chat ends with `→ type a in a new chat`. Voice never reads a generic Alexandria cue aloud. Later replies have no generic footer.
+Keep chatting exactly as before. Only the first reply in a new chat carries the route: text ends with `→ type a in a new chat`; voice casually asks `By the way, want me to spin up an Alexandria chat on the side?` after answering. A voice user can simply say yes; the AI opens the new chat and starts Alexandria there while the original conversation continues. Later replies have no generic cue.
 
-If you state a lasting belief, preference, decision, or idea, the AI asks `save that to alexandria?`. Later in a text chat it mentions Alexandria only when saving to it or reading from it would help that exact exchange; then it may use `→ type a in a new chat` as the one action line.
+If you state a lasting belief, preference, decision, or idea, the AI asks `save that to alexandria?`. Later it mentions Alexandria only when saving to it or reading from it would help that exact exchange, using one natural action rather than a generic cue.
 
 Type **a** or **alexandria** for a thinking session. Type **a.** or **alexandria.** to close it.
 
