@@ -228,6 +228,12 @@ for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory
     '[alexandria-library.com/invite?ref=<account.github_login>](https://alexandria-library.com/invite?ref=<account.github_login>)' \
     "$opener_skill does not force the explicit rendered-markdown text link"
 done
+require factory/setup.sh \
+  'when that owned alias still exists, refresh it from the' \
+  'setup no longer refreshes Alexandria-owned legacy Codex aliases'
+require factory/setup.sh \
+  'install_start_skill "skills/codex.md" "$HOME/.agents/skills/alexandria" "alexandria"' \
+  'the legacy Codex alexandria alias is not installed from the current signed skill'
 require factory/canon/methodology.md \
   'recommended` IS the join link' \
   'methodology has no recommended-until-decision join carve-out'

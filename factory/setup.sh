@@ -1209,17 +1209,29 @@ fi
 # Codex
 if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   mkdir -p "$HOME/.codex" 2>/dev/null
-  # Codex discovers user skills from ~/.agents/skills. Install only $a.
+  # Codex discovers user skills from ~/.agents/skills. New installs use the
+  # single preferred $a route. Older Alexandria releases also installed an
+  # $alexandria alias; when that owned alias still exists, refresh it from the
+  # same signed bytes so an existing Author can never invoke stale behavior.
   CODEX_A_SKILL=""
   if alex_skill_slot_available "$HOME/.agents/skills/a" "skills/codex.md" "a" "a"; then
     install_start_skill "skills/codex.md" "$HOME/.agents/skills/a" "a" "skills/codex.md (Codex \$a skill)" && CODEX_A_SKILL="a"
   else
     echo "  Codex: kept foreign \$a skill"
   fi
+  CODEX_ALEXANDRIA_SKILL=""
+  if [ -e "$HOME/.agents/skills/alexandria" ]; then
+    if alex_skill_slot_available "$HOME/.agents/skills/alexandria" "skills/codex.md" "alexandria" "a"; then
+      install_start_skill "skills/codex.md" "$HOME/.agents/skills/alexandria" "alexandria" "skills/codex.md (legacy Codex \$alexandria skill)" && CODEX_ALEXANDRIA_SKILL="alexandria"
+    else
+      echo "  Codex: kept foreign \$alexandria skill"
+    fi
+  fi
   CODEX_START_SKILL="$CODEX_A_SKILL"
 
   CODEX_ALIASES=""
   [ -n "$CODEX_A_SKILL" ] && CODEX_ALIASES="a"
+  [ -n "$CODEX_ALEXANDRIA_SKILL" ] && CODEX_ALIASES="$CODEX_ALIASES alexandria"
   for CODEX_ALIAS in $CODEX_ALIASES; do
     mkdir -p "$HOME/.agents/skills/$CODEX_ALIAS/agents" 2>/dev/null
     CODEX_METADATA="$HOME/.agents/skills/$CODEX_ALIAS/agents/openai.yaml"
