@@ -203,6 +203,18 @@ require factory/canon/methodology.md \
   'then a separate highest-ROI cognitive `recommended`, then `everything`' \
   'methodology no longer guarantees invite then cognitive recommended then everything'
 require factory/canon/methodology.md \
+  'That order is the contract for every joined Author on every surface.' \
+  'methodology no longer makes the joined opener order universal'
+require factory/canon/methodology.md \
+  'The invite link is text only: never put the `a.` mark, a logo, favicon, image, emoji, or any other icon before it.' \
+  'methodology can render a logo or icon before the invite link'
+require factory/canon/methodology.md \
+  '[alexandria-library.com/invite?ref=<account.github_login>](https://alexandria-library.com/invite?ref=<account.github_login>)' \
+  'rendered markdown no longer suppresses invite-link unfurls with an explicit text link'
+require factory/canon/methodology.md \
+  'Never emit the invite address as a bare autolink on those surfaces.' \
+  'rendered markdown can still produce a low-resolution favicon or rich preview'
+require factory/canon/methodology.md \
   'recommended` IS the join link' \
   'methodology has no recommended-until-decision join carve-out'
 require factory/canon/methodology.md \
