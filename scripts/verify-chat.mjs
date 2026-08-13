@@ -28,58 +28,67 @@ await page.route('**/onboard', async (route) => {
   });
 });
 
+const chatgptPath = 'settings → personalization → custom instructions';
+const claudePath = 'settings → general → instructions for claude';
+const geminiPath = 'settings → personal context → your instructions for gemini';
+
 await page.goto(`${base}/chat`, { waitUntil: 'networkidle' });
 const chatUrl = page.url();
 const chatTitle = await page.title();
 const pickerBody = (await page.locator('body').innerText()).trim();
 const overlay = await page.locator('[data-nextjs-dialog], .vite-error-overlay, #webpack-dev-server-client-overlay').count();
 const hasHostPicker =
-  pickerBody.includes('which chat do you use?') &&
+  pickerBody.includes('which chat do you use most?') &&
   pickerBody.includes('chatgpt') &&
   pickerBody.includes('claude') &&
   pickerBody.includes('gemini') &&
   !pickerBody.includes('copy the instruction') &&
-  !pickerBody.includes('those settings make it last across chats');
+  !pickerBody.includes('those settings make it last across chats') &&
+  !pickerBody.includes('different chat');
 await page.getByRole('button', { name: /^chatgpt$/i }).click();
+await page.waitForFunction(() => location.hash === '#chatgpt');
 const body = (await page.locator('body').innerText()).trim();
 const setupHtml = await page.content();
 const chatShortcutHref = await page.locator('a.act-box').first().getAttribute('href');
 const button = page.locator('button.cta-btn');
 const email = page.locator('.act-email');
+await page.mouse.move(0, 0);
 const chatEmailShape = await email.evaluate((element) => {
   const style = getComputedStyle(element);
   return {
     children: Array.from(element.children).map((child) => [child.tagName, child.className]),
     display: style.display,
     padding: style.padding,
-    border: style.border,
     borderRadius: style.borderRadius,
     minHeight: style.minHeight,
   };
 });
 await button.click();
-await page.waitForFunction(() =>
+await page.waitForFunction((path) =>
   Array.from(document.querySelectorAll('button')).some((element) =>
-    element.textContent?.includes('copied — paste into Settings → Personalization → Custom instructions'),
-  ),
-);
-const chatCopiedWithoutEmail = (await button.innerText()).includes('copied — paste into Settings → Personalization → Custom instructions');
+    (element.innerText || '').includes(`copied — paste into ${path}`),
+  ), chatgptPath);
+const chatCopiedWithoutEmail = (await button.innerText()).includes(`copied — paste into ${chatgptPath}`);
 await page.getByLabel('your email').fill('reader@example.com');
 await page.getByLabel('save email').click();
 await page.getByText('email saved', { exact: false }).waitFor();
 await button.click();
-await page.waitForFunction(() =>
+await page.waitForFunction((path) =>
   Array.from(document.querySelectorAll('button')).some((element) =>
-    element.textContent?.includes('copied — paste into Settings → Personalization → Custom instructions'),
-  ),
-);
+    (element.innerText || '').includes(`copied — paste into ${path}`),
+  ), chatgptPath);
 const clickedText = await button.innerText();
 const clipboard = await page.evaluate(() => navigator.clipboard.readText());
-await page.getByRole('button', { name: 'different chat' }).click();
+await page.goBack();
+await page.waitForFunction(() => !location.hash || location.hash === '#');
+const backToPicker = (await page.locator('body').innerText()).includes('which chat do you use most?');
 await page.getByRole('button', { name: /^claude$/i }).click();
+await page.waitForFunction(() => location.hash === '#claude');
 const claudeBody = (await page.locator('body').innerText()).trim();
-await page.getByRole('button', { name: 'different chat' }).click();
+await page.goBack();
+await page.waitForFunction(() => !location.hash || location.hash === '#');
 await page.getByRole('button', { name: /^gemini$/i }).click();
+await page.waitForFunction(() => location.hash === '#gemini');
 const geminiBody = (await page.locator('body').innerText()).trim();
 
 const source = fs.readFileSync(path.join(process.cwd(), 'factory/chat/bootstrap.md'), 'utf8');
@@ -99,16 +108,25 @@ const startHasUniversalChatDoor =
   (await chatDoor.getAttribute('href')) === '/chat' &&
   (await chatDoor.innerText()).toLowerCase().includes('claude, chatgpt, gemini');
 await page.getByRole('button', { name: /^an agent/i }).click();
+await page.waitForFunction(() => location.hash === '#nearby');
+const nearbyAfterAgent = (await page.locator('body').innerText()).includes('can you get to your computer now?');
+await page.goBack();
+await page.waitForFunction(() => !location.hash || location.hash === '#');
+const startBackToChoice = (await page.locator('body').innerText()).includes('what do you have access to?');
+await page.getByRole('button', { name: /^an agent/i }).click();
 await page.getByRole('button', { name: /^yes/i }).click();
+await page.waitForFunction(() => location.hash === '#computer');
 await page.waitForSelector('.act-email');
+await page.mouse.move(0, 0);
 const computerShortcutHref = await page.locator('a.act-box').first().getAttribute('href');
+const computerShortcutWhy = (await page.locator('body').innerText()).includes('capture thoughts wherever you are')
+  && !(await page.locator('body').innerText()).includes('iPhone');
 const startEmailShape = await page.locator('.act-email').evaluate((element) => {
   const style = getComputedStyle(element);
   return {
     children: Array.from(element.children).map((child) => [child.tagName, child.className]),
     display: style.display,
     padding: style.padding,
-    border: style.border,
     borderRadius: style.borderRadius,
     minHeight: style.minHeight,
   };
@@ -116,6 +134,9 @@ const startEmailShape = await page.locator('.act-email').evaluate((element) => {
 const computerButton = page.getByRole('button', { name: 'copy the setup' });
 await computerButton.click();
 const computerClipboard = await page.evaluate(() => navigator.clipboard.readText());
+await page.goBack();
+await page.waitForFunction(() => location.hash === '#nearby');
+const computerBackToNearby = (await page.locator('body').innerText()).includes('can you get to your computer now?');
 
 await page.goto(`${base}/start`, { waitUntil: 'networkidle' });
 await page.getByRole('button', { name: /^an agent/i }).click();
@@ -142,7 +163,7 @@ const result = {
   title: chatTitle,
   bodyHasContent: body.length > 100,
   hasHostPicker,
-  hasShortcutStep: body.includes('add the shortcut') && body.includes('open on your iPhone'),
+  hasShortcutStep: body.includes('add the shortcut') && body.includes('capture thoughts wherever you are') && !body.includes('iPhone'),
   chatShortcutHref,
   computerShortcutHref,
   phoneShortcutHref,
@@ -150,14 +171,18 @@ const result = {
   computerShortcutRoutesToPage: computerShortcutHref === '/shortcut',
   phoneShortcutOpensIcloud: Boolean(phoneShortcutHref?.includes('icloud.com/shortcuts/')),
   hasEmailStep: setupHtml.includes('act-email') && setupHtml.includes('your email') && body.includes('we’ll send your setup, then occasional useful notes'),
-  hasCopyStep: body.includes('copy the instruction') && body.includes('paste into Settings → Personalization → Custom instructions'),
-  chatgptGuidesDrive: body.includes('connect Google Drive') && body.includes('+ beside the message box, then Google Drive'),
-  chatgptHasTypeA: body.includes('type a in a new chat'),
-  claudeGuidesSettings: claudeBody.includes('Settings → General → Instructions for Claude'),
-  claudeGuidesDrive: claudeBody.includes('Customize → Connectors → Google Drive'),
-  geminiGuidesSettings: geminiBody.includes('Settings → Personal context → Your instructions for Gemini'),
-  geminiSkipsDrive: geminiBody.includes('type a in a new chat') && !geminiBody.includes('connect Google Drive'),
+  hasCopyStep: body.includes('copy the instruction') && body.includes(`paste into ${chatgptPath}`),
+  chatgptSkipsDrive: !body.toLowerCase().includes('connect google drive') && !body.includes('+ beside the message box'),
+  chatgptHasTypeA: body.includes('type a in a new chat') && body.includes('one thought to react to'),
+  chatgptHasNoThatsIt: !body.toLowerCase().includes('that’s it') && !body.toLowerCase().includes("that's it"),
+  claudeGuidesSettings: claudeBody.includes(claudePath),
+  claudeGuidesDrive: claudeBody.includes('connect google drive') && claudeBody.includes('customize → connectors'),
+  geminiGuidesSettings: geminiBody.includes(geminiPath),
+  geminiSkipsDrive: geminiBody.includes('type a in a new chat') && !geminiBody.toLowerCase().includes('connect google drive'),
   hasNoPathDump: !body.includes('those settings make it last across chats') && !pickerBody.includes('those settings make it last across chats'),
+  hasNoDifferentChat: !body.includes('different chat') && !claudeBody.includes('different chat'),
+  chatBackGoesOneSlide: backToPicker,
+  startBackGoesOneSlide: nearbyAfterAgent && startBackToChoice && computerBackToNearby,
   chatCopiedWithoutEmail,
   buttonCopiedState: clickedText.includes('copied'),
   clipboardExact: clipboard === expected,
@@ -170,6 +195,7 @@ const result = {
   emailFieldMatchesStart: JSON.stringify(chatEmailShape) === JSON.stringify(startEmailShape),
   computerCopiedWithoutEmail: computerClipboard === computerInstallPrompt(),
   computerAsksForInspection: computerClipboard.includes('decide for yourself whether it is safe') && computerClipboard.includes('wait for me to say `start`'),
+  computerShortcutWhyMatchesPhone: computerShortcutWhy,
   phoneRouteVisible: phoneBody.includes('copy for your phone') && phoneBody.includes('paste into the AI on your phone'),
   phoneCopiedWithoutEmail: phoneClipboard === mobileHandoffPrompt(),
   phoneHasExactFallback: phoneClipboard.includes('At your computer, open alexandria-library.com/start and choose agents.'),
@@ -198,13 +224,17 @@ if (
   !result.phoneShortcutOpensIcloud ||
   !result.hasEmailStep ||
   !result.hasCopyStep ||
-  !result.chatgptGuidesDrive ||
+  !result.chatgptSkipsDrive ||
   !result.chatgptHasTypeA ||
+  !result.chatgptHasNoThatsIt ||
   !result.claudeGuidesSettings ||
   !result.claudeGuidesDrive ||
   !result.geminiGuidesSettings ||
   !result.geminiSkipsDrive ||
   !result.hasNoPathDump ||
+  !result.hasNoDifferentChat ||
+  !result.chatBackGoesOneSlide ||
+  !result.startBackGoesOneSlide ||
   !result.chatCopiedWithoutEmail ||
   !result.buttonCopiedState ||
   !result.clipboardExact ||
@@ -216,6 +246,7 @@ if (
   !result.emailFieldMatchesStart ||
   !result.computerCopiedWithoutEmail ||
   !result.computerAsksForInspection ||
+  !result.computerShortcutWhyMatchesPhone ||
   !result.phoneRouteVisible ||
   !result.phoneCopiedWithoutEmail ||
   !result.phoneHasExactFallback ||

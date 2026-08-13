@@ -2,18 +2,20 @@
 
 **alexandria — which chat, then the steps for that app**
 
-## which chat do you use? then paste into that app's settings.
+## which chat do you use most? then paste into that app's settings.
 
-1. add the shortcut if you want capture from your phone. on a computer, that opens /shortcut (scan from your iPhone). on an iPhone, it opens the shortcut itself.
+1. add the shortcut — capture thoughts wherever you are. on a computer that opens /shortcut; on a phone it opens the shortcut itself.
 2. leave an email if you want a copy.
 3. copy the instruction — paste into that app's official instructions setting.
-4. connect Google Drive where that app can write (chatgpt: + beside the message box; claude: Customize → Connectors). gemini has no write step.
-5. type a in a new chat.
+4. claude only: connect google drive — customize → connectors. chatgpt and gemini have no public drive step.
+5. type a in a new chat — one thought to react to.
 
-chatgpt — Settings → Personalization → Custom instructions
-claude — Settings → General → Instructions for Claude
-gemini — Settings → Personal context → Your instructions for Gemini
+chatgpt — settings → personalization → custom instructions
+claude — settings → general → instructions for claude
+gemini — settings → personal context → your instructions for gemini
 
 the instruction is for the official settings field, not a chat paste. a chat paste cannot rewrite this app's settings. the ALWAYS overlay and save question belong in settings, where the user added them.
+
+browser back returns to the previous slide. there is no on-page different-chat control.
 
 nothing is sent to Alexandria. every instruction, memory, file, connector, project, and workflow you already have stays.

@@ -7,7 +7,7 @@ export const metadata = pageMetadata({
   path: '/chat',
   title: 'start alexandria.',
   description:
-    'Start your Alexandria loop in ChatGPT, Claude, or Gemini. Paste one instruction into that app’s settings, connect Drive if it can write, then type a.',
+    'start your alexandria loop in chatgpt, claude, or gemini. paste one instruction into that app’s settings, then type a.',
 });
 
 function cleanRef(raw: string | undefined): string {
@@ -16,7 +16,7 @@ function cleanRef(raw: string | undefined): string {
 
 // Door 2 of the two-door onboarding (agents → /start; chat → here).
 // Which chat → shortcut → optional email → paste into that app's
-// official instructions → connect Drive if it can write → type a.
+// official instructions → connect Drive only on claude → type a.
 export default async function ChatPage({
   searchParams,
 }: {
@@ -114,22 +114,15 @@ export default async function ChatPage({
         .door-answers { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; }
         .act-box {
           width: 100%; max-width: none; text-decoration: none; display: block;
-          font-size: 14px; white-space: normal;
+          font-size: 14px; white-space: normal; text-wrap: pretty; line-height: 1.4;
         }
         .act-box.is-note {
           cursor: default; margin: 0;
         }
         .act-box.is-note:hover { border-color: var(--bg-tertiary, rgba(26, 19, 24, 0.14)); }
         .act-box.is-note:active { transform: none; }
-        .door-switch {
-          margin: 16px 0 0; padding: 0; border: 0; background: none; cursor: pointer;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 13px; letter-spacing: 0.01em;
-          color: var(--text-muted, rgba(26, 19, 24, 0.55));
-        }
-        .door-switch:hover { color: var(--text-primary); }
         .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
-        .act-email { display: flex; align-items: center; gap: 0; cursor: text; }
+        .act-email { display: flex; align-items: center; gap: 0; cursor: text; white-space: nowrap; }
         .act-email input {
           flex: none; width: 5.5em; min-width: 0; background: transparent; border: none; outline: none;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -173,7 +166,7 @@ export default async function ChatPage({
           from { opacity: 0; transform: translateX(-5px); }
           to { opacity: 1; transform: none; }
         }
-        .cta-btn { white-space: normal; }
+        .cta-btn { white-space: normal; text-wrap: pretty; }
         .cta-btn.is-copied {
           border-color: var(--accent); background: var(--bg-primary);
         }

@@ -9,11 +9,9 @@ import { chatInstallPrompt, CHAT_HOSTS, type ChatHost } from '../../shared/onboa
 export default function ChatCTA({
   refCode,
   host,
-  onChangeHost,
 }: {
   refCode?: string;
   host: ChatHost;
-  onChangeHost: () => void;
 }) {
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
@@ -25,8 +23,7 @@ export default function ChatCTA({
   const [onIphone, setOnIphone] = useState(false);
   const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
   const guide = CHAT_HOSTS[host];
-  const copyWhy = ` — paste into ${guide.pastePath}`;
-  const copiedLabel = `copied — paste into ${guide.pastePath}`;
+  const pastePath = guide.pastePath;
   const typeANum = guide.driveWhy ? '5' : '4';
 
   useEffect(() => {
@@ -97,7 +94,7 @@ export default function ChatCTA({
           href={onIphone ? SHORTCUT_URL : '/shortcut'}
           {...(onIphone ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
         >
-          add the shortcut<span className="act-why">{onIphone ? ' — capture thoughts wherever you are' : ' — open on your iPhone'}</span>
+          add the shortcut<span className="act-why"> — capture thoughts wherever you are</span>
         </a>
       </div>
 
@@ -106,6 +103,7 @@ export default function ChatCTA({
         <form
           className={`door-btn act-box act-email${emailFocused ? ' is-focused' : ''}`}
           onSubmit={sendEmail}
+          noValidate
           onClick={() => emailRef.current?.focus()}
         >
           {mailState === 'sent' || mailState === 'saved' ? (
@@ -151,10 +149,10 @@ export default function ChatCTA({
         <span className="act-num">3</span>
         <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the instruction">
           {copyState === 'copied'
-            ? copiedLabel
+            ? <>copied —<wbr /><span className="act-why"> paste into {pastePath}</span></>
             : copyState === 'error'
               ? 'couldn’t copy — try again'
-              : <>copy the instruction<span className="act-why">{copyWhy}</span></>}
+              : <>copy the instruction —<wbr /><span className="act-why"> paste into {pastePath}</span></>}
         </button>
       </div>
 
@@ -162,7 +160,7 @@ export default function ChatCTA({
         <div className="act-row">
           <span className="act-num">4</span>
           <p className="door-btn act-box is-note">
-            connect Google Drive<span className="act-why"> — {guide.driveWhy}</span>
+            connect google drive<span className="act-why"> — {guide.driveWhy}</span>
           </p>
         </div>
       )}
@@ -170,13 +168,9 @@ export default function ChatCTA({
       <div className="act-row">
         <span className="act-num">{typeANum}</span>
         <p className="door-btn act-box is-note">
-          type a in a new chat<span className="act-why"> — that’s it</span>
+          type a in a new chat<span className="act-why"> — one thought to react to</span>
         </p>
       </div>
-
-      <button type="button" className="door-switch" onClick={onChangeHost}>
-        different chat
-      </button>
     </section>
   );
 }

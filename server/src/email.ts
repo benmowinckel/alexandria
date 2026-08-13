@@ -262,7 +262,7 @@ function chatEmailLead(host?: ChatHost): { lead: string; paths: string } {
   if (host) {
     const row = CHAT_HOSTS[host];
     const drive = row.driveWhy
-      ? ` connect Google Drive (${row.driveWhy}), then`
+      ? ` connect google drive (${row.driveWhy}), then`
       : ' then';
     return {
       lead: `paste this into ${host} ${row.pastePath},${drive} type a in a new chat.`,

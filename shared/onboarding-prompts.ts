@@ -60,17 +60,17 @@ export const CHAT_HOSTS: Record<ChatHost, {
 }> = {
   chatgpt: {
     label: 'chatgpt',
-    pastePath: 'Settings → Personalization → Custom instructions',
-    driveWhy: '+ beside the message box, then Google Drive',
+    pastePath: 'settings → personalization → custom instructions',
+    driveWhy: null,
   },
   claude: {
     label: 'claude',
-    pastePath: 'Settings → General → Instructions for Claude',
-    driveWhy: 'Customize → Connectors → Google Drive',
+    pastePath: 'settings → general → instructions for claude',
+    driveWhy: 'customize → connectors',
   },
   gemini: {
     label: 'gemini',
-    pastePath: 'Settings → Personal context → Your instructions for Gemini',
+    pastePath: 'settings → personal context → your instructions for gemini',
     driveWhy: null,
   },
 };

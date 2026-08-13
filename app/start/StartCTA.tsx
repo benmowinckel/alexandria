@@ -94,7 +94,7 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
           href={mode === 'phone' ? SHORTCUT_URL : '/shortcut'}
           {...(mode === 'phone' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
         >
-          add the shortcut<span className="act-why">{mode === 'phone' ? ' — capture thoughts wherever you are' : ' — open on your iPhone'}</span>
+          add the shortcut<span className="act-why"> — capture thoughts wherever you are</span>
         </a>
       </div>
 

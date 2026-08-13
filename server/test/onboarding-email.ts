@@ -15,22 +15,25 @@ assert.match(phone.html, /I am at my computer/);
 const chat = onboardEmailContent('chat', 'TOKEN');
 assert.equal(chat.subject, 'alexandria. — your chat setup');
 assert.match(chat.html, /paste this into your chat’s custom instructions, then type a\./);
-assert.match(chat.html, /Settings → Personalization → Custom instructions/);
-assert.match(chat.html, /Settings → Personal context → Your instructions for Gemini/);
-assert.match(chat.html, /Settings → General → Instructions for Claude/);
+assert.match(chat.html, /settings → personalization → custom instructions/);
+assert.match(chat.html, /settings → personal context → your instructions for gemini/);
+assert.match(chat.html, /settings → general → instructions for claude/);
 assert.doesNotMatch(chat.html, /those settings make it last across chats\./);
 assert.doesNotMatch(chat.html, /add it here/);
 assert.doesNotMatch(chat.html, /paste this into a chat, then type a/);
 assert.match(chat.html, /Alexandria is my private thinking habit/);
 
 const chatgpt = onboardEmailContent('chat', 'TOKEN', 'chatgpt');
-assert.match(chatgpt.html, /paste this into chatgpt Settings → Personalization → Custom instructions/);
-assert.match(chatgpt.html, /connect Google Drive \(\+ beside the message box, then Google Drive\)/);
-assert.doesNotMatch(chatgpt.html, /Settings → General → Instructions for Claude/);
+assert.match(chatgpt.html, /paste this into chatgpt settings → personalization → custom instructions, then type a in a new chat/);
+assert.doesNotMatch(chatgpt.html, /connect google drive/);
+assert.doesNotMatch(chatgpt.html, /settings → general → instructions for claude/);
+
+const claude = onboardEmailContent('chat', 'TOKEN', 'claude');
+assert.match(claude.html, /paste this into claude settings → general → instructions for claude, connect google drive \(customize → connectors\), then type a in a new chat/);
 
 const gemini = onboardEmailContent('chat', 'TOKEN', 'gemini');
-assert.match(gemini.html, /paste this into gemini Settings → Personal context → Your instructions for Gemini, then type a in a new chat/);
-assert.doesNotMatch(gemini.html, /connect Google Drive/);
+assert.match(gemini.html, /paste this into gemini settings → personal context → your instructions for gemini, then type a in a new chat/);
+assert.doesNotMatch(gemini.html, /connect google drive/);
 
 const mobile = mobileHandoffPrompt();
 assert.match(mobile, /I am on my phone right now/);

@@ -331,7 +331,7 @@ export default async function StartPage({
         }
         .act-box {
           width: 100%; max-width: none; text-decoration: none; display: block;
-          font-size: 14px; white-space: nowrap;
+          font-size: 14px; white-space: normal; text-wrap: pretty; line-height: 1.4;
         }
         .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
         .act-sub {
@@ -340,7 +340,7 @@ export default async function StartPage({
           font-size: 13px; line-height: 1.55; letter-spacing: 0.01em;
           color: var(--text-muted, rgba(26, 19, 24, 0.5));
         }
-        .act-email { display: flex; align-items: center; gap: 0; cursor: text; }
+        .act-email { display: flex; align-items: center; gap: 0; cursor: text; white-space: nowrap; }
         .act-email input {
           flex: none; width: 5.5em; min-width: 0; background: transparent; border: none; outline: none;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
