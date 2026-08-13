@@ -122,6 +122,11 @@ export default async function ChatPage({
         .act-box.is-note:hover { border-color: var(--bg-tertiary, rgba(26, 19, 24, 0.14)); }
         .act-box.is-note:active { transform: none; }
         .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
+        .act-rest {
+          display: block; margin-top: 3px;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+          text-wrap: pretty;
+        }
         .act-email { display: flex; align-items: center; gap: 0; cursor: text; white-space: nowrap; }
         .act-email input {
           flex: none; width: 5.5em; min-width: 0; background: transparent; border: none; outline: none;

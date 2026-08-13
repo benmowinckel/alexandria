@@ -94,7 +94,7 @@ export default function ChatCTA({
           href={onIphone ? SHORTCUT_URL : '/shortcut'}
           {...(onIphone ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
         >
-          add the shortcut<span className="act-why"> — capture thoughts wherever you are</span>
+          add the shortcut<span className="act-why"> — capture now for the full version</span>
         </a>
       </div>
 
@@ -149,10 +149,10 @@ export default function ChatCTA({
         <span className="act-num">3</span>
         <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the instruction">
           {copyState === 'copied'
-            ? <>copied —<wbr /><span className="act-why"> paste into {pastePath}</span></>
+            ? <>copied<span className="act-rest">{pastePath}</span></>
             : copyState === 'error'
               ? 'couldn’t copy — try again'
-              : <>copy the instruction —<wbr /><span className="act-why"> paste into {pastePath}</span></>}
+              : <>copy the instruction<span className="act-rest">{pastePath}</span></>}
         </button>
       </div>
 
@@ -168,7 +168,7 @@ export default function ChatCTA({
       <div className="act-row">
         <span className="act-num">{typeANum}</span>
         <p className="door-btn act-box is-note">
-          type a in a new chat<span className="act-why"> — one thought to react to</span>
+          type a in a new chat<span className="act-why"> — start thinking with it</span>
         </p>
       </div>
     </section>

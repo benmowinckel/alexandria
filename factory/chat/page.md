@@ -4,11 +4,11 @@
 
 ## which chat do you use most? then paste into that app's settings.
 
-1. add the shortcut — capture thoughts wherever you are. on a computer that opens /shortcut; on a phone it opens the shortcut itself.
+1. add the shortcut — capture now for the full version. on a computer that opens /shortcut; on a phone it opens the shortcut itself.
 2. leave an email if you want a copy.
-3. copy the instruction — paste into that app's official instructions setting.
+3. copy the instruction. second line is the settings path, starting with settings →.
 4. claude only: connect google drive — customize → connectors. chatgpt and gemini have no public drive step.
-5. type a in a new chat — one thought to react to.
+5. type a in a new chat — start thinking with it.
 
 chatgpt — settings → personalization → custom instructions
 claude — settings → general → instructions for claude

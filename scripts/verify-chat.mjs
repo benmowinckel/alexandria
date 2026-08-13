@@ -51,6 +51,8 @@ const body = (await page.locator('body').innerText()).trim();
 const setupHtml = await page.content();
 const chatShortcutHref = await page.locator('a.act-box').first().getAttribute('href');
 const button = page.locator('button.cta-btn');
+const copyBefore = await button.innerText();
+const copyIsTwoLines = copyBefore.split('\n').filter(Boolean).length >= 2 && copyBefore.includes(chatgptPath) && copyBefore.startsWith('copy the instruction');
 const email = page.locator('.act-email');
 await page.mouse.move(0, 0);
 const chatEmailShape = await email.evaluate((element) => {
@@ -65,18 +67,21 @@ const chatEmailShape = await email.evaluate((element) => {
 });
 await button.click();
 await page.waitForFunction((path) =>
-  Array.from(document.querySelectorAll('button')).some((element) =>
-    (element.innerText || '').includes(`copied — paste into ${path}`),
-  ), chatgptPath);
-const chatCopiedWithoutEmail = (await button.innerText()).includes(`copied — paste into ${chatgptPath}`);
+  Array.from(document.querySelectorAll('button')).some((element) => {
+    const text = element.innerText || '';
+    return text.includes('copied') && text.includes(path);
+  }), chatgptPath);
+const copiedIdle = await button.innerText();
+const chatCopiedWithoutEmail = copiedIdle.includes('copied') && copiedIdle.includes(chatgptPath);
 await page.getByLabel('your email').fill('reader@example.com');
 await page.getByLabel('save email').click();
 await page.getByText('email saved', { exact: false }).waitFor();
 await button.click();
 await page.waitForFunction((path) =>
-  Array.from(document.querySelectorAll('button')).some((element) =>
-    (element.innerText || '').includes(`copied — paste into ${path}`),
-  ), chatgptPath);
+  Array.from(document.querySelectorAll('button')).some((element) => {
+    const text = element.innerText || '';
+    return text.includes('copied') && text.includes(path);
+  }), chatgptPath);
 const clickedText = await button.innerText();
 const clipboard = await page.evaluate(() => navigator.clipboard.readText());
 await page.goBack();
@@ -163,7 +168,7 @@ const result = {
   title: chatTitle,
   bodyHasContent: body.length > 100,
   hasHostPicker,
-  hasShortcutStep: body.includes('add the shortcut') && body.includes('capture thoughts wherever you are') && !body.includes('iPhone'),
+  hasShortcutStep: body.includes('add the shortcut') && body.includes('capture now for the full version') && !body.includes('iPhone'),
   chatShortcutHref,
   computerShortcutHref,
   phoneShortcutHref,
@@ -171,9 +176,10 @@ const result = {
   computerShortcutRoutesToPage: computerShortcutHref === '/shortcut',
   phoneShortcutOpensIcloud: Boolean(phoneShortcutHref?.includes('icloud.com/shortcuts/')),
   hasEmailStep: setupHtml.includes('act-email') && setupHtml.includes('your email') && body.includes('we’ll send your setup, then occasional useful notes'),
-  hasCopyStep: body.includes('copy the instruction') && body.includes(`paste into ${chatgptPath}`),
+  hasCopyStep: body.includes('copy the instruction') && body.includes(chatgptPath) && !body.includes('paste into'),
+  copyIsTwoLines,
   chatgptSkipsDrive: !body.toLowerCase().includes('connect google drive') && !body.includes('+ beside the message box'),
-  chatgptHasTypeA: body.includes('type a in a new chat') && body.includes('one thought to react to'),
+  chatgptHasTypeA: body.includes('type a in a new chat') && body.includes('start thinking with it'),
   chatgptHasNoThatsIt: !body.toLowerCase().includes('that’s it') && !body.toLowerCase().includes("that's it"),
   claudeGuidesSettings: claudeBody.includes(claudePath),
   claudeGuidesDrive: claudeBody.includes('connect google drive') && claudeBody.includes('customize → connectors'),
@@ -224,6 +230,7 @@ if (
   !result.phoneShortcutOpensIcloud ||
   !result.hasEmailStep ||
   !result.hasCopyStep ||
+  !result.copyIsTwoLines ||
   !result.chatgptSkipsDrive ||
   !result.chatgptHasTypeA ||
   !result.chatgptHasNoThatsIt ||
