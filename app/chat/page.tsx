@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { pageMetadata } from '../lib/config';
-import ChatCTA from './ChatCTA';
+import ChatDoor from './ChatDoor';
 
 export const metadata = pageMetadata({
   path: '/chat',
   title: 'start alexandria.',
   description:
-    'Start your Alexandria loop in any chat. Add your email if you want a copy, then paste one instruction into a chat — and into settings if you want it to last.',
+    'Start your Alexandria loop in ChatGPT, Claude, or Gemini. Paste one instruction into that app’s settings, connect Drive if it can write, then type a.',
 });
 
 function cleanRef(raw: string | undefined): string {
@@ -15,8 +15,8 @@ function cleanRef(raw: string | undefined): string {
 }
 
 // Door 2 of the two-door onboarding (agents → /start; chat → here).
-// Shortcut → optional email → chat setup. The copied instruction lives in
-// shared/onboarding-prompts.ts so the website can ship without a factory re-sign.
+// Which chat → shortcut → optional email → paste into that app's
+// official instructions → connect Drive if it can write → type a.
 export default async function ChatPage({
   searchParams,
 }: {
@@ -37,7 +37,7 @@ export default async function ChatPage({
 
       <main className="primer-main">
         <h1 className="primer-h1">start your loop</h1>
-        <ChatCTA refCode={ref} />
+        <ChatDoor refCode={ref} />
       </main>
 
       <style>{`
@@ -106,10 +106,28 @@ export default async function ChatPage({
         }
         .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .door-btn:active { transform: scale(0.992); }
+        .door-block { margin: 4px 0 0; width: 100%; }
+        .door-q {
+          margin: 0 0 16px; font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 19px; letter-spacing: 0.01em; color: var(--text-primary);
+        }
+        .door-answers { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; }
         .act-box {
           width: 100%; max-width: none; text-decoration: none; display: block;
-          font-size: 14px; white-space: nowrap;
+          font-size: 14px; white-space: normal;
         }
+        .act-box.is-note {
+          cursor: default; margin: 0;
+        }
+        .act-box.is-note:hover { border-color: var(--bg-tertiary, rgba(26, 19, 24, 0.14)); }
+        .act-box.is-note:active { transform: none; }
+        .door-switch {
+          margin: 16px 0 0; padding: 0; border: 0; background: none; cursor: pointer;
+          font-family: var(--font-serif), ui-serif, Georgia, serif;
+          font-size: 13px; letter-spacing: 0.01em;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+        }
+        .door-switch:hover { color: var(--text-primary); }
         .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
         .act-email { display: flex; align-items: center; gap: 0; cursor: text; }
         .act-email input {
@@ -158,13 +176,6 @@ export default async function ChatPage({
         .cta-btn { white-space: normal; }
         .cta-btn.is-copied {
           border-color: var(--accent); background: var(--bg-primary);
-        }
-        .act-paths {
-          margin: 10px 0 0;
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 12.5px; line-height: 1.65; letter-spacing: 0.01em;
-          color: var(--text-muted, rgba(26, 19, 24, 0.5));
-          white-space: normal;
         }
 
         @media (max-width: 640px) {

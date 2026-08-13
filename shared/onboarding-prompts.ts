@@ -38,22 +38,50 @@ If any setup can happen now, first inspect the public code at github.com/benmowi
 Give me one next action, not a menu.`;
 }
 
-/** The Author's chat instruction. First-person preference: paste into a chat now. The page names the durable settings path separately. Keyword-triggered only — no overlay on ordinary replies. */
-export const CHAT_INSTRUCTION = `I want a private thinking habit. Please keep every instruction, memory, and connection I already have.
+/** The Author's chat instruction. Paste into the host's official instructions setting — not into a chat. */
+export const CHAT_INSTRUCTION = `Alexandria is my private thinking habit. Keep every instruction, memory, and connection I already have.
 
-If I send a message that is only a or alexandria, start a short thinking conversation. Give me one thought or question, or ask what I have changed my mind about recently. Push back if I might be wrong.
+ALWAYS answer ordinary requests normally, then add "→ type a in a new chat" on a new final line. If my message contains a lasting belief, preference, decision, or idea—for example "I prefer", "I believe", or "I have decided"—ALWAYS add "save that to alexandria?" on its own line before the nudge. Only my messages trigger this question; never ask to save your own idea. Never explain settings or memory unless I ask.
 
-If I send a message that is only a. or only alexandria., say what shifted. Only keep an idea if I ask you to.`;
+When I type "a", immediately start a thinking session—no setup or tool checks. Give me one thought to react to; otherwise ask "what have you changed your mind about recently?" Challenge and develop my answer. While active, omit the ordinary nudge and end with "→ close with a. when done".
+
+On "a.", briefly say what shifted and never save. Only after I answer yes to the save question, use connected Drive if writable; otherwise use this app's memory. If cross-chat personalisation works without a save tool, say "noted — I’ll use that in future chats"; never mention setup. Name a destination only when confirmed.`;
 
 export function chatInstallPrompt(): string {
   return CHAT_INSTRUCTION;
 }
 
-export const CHAT_INSTRUCTION_PATHS: { host: string; path: string }[] = [
-  { host: 'chatgpt', path: 'Settings → Personalization → Custom instructions' },
-  { host: 'gemini', path: 'Settings → Personal context → Your instructions for Gemini' },
-  { host: 'claude', path: 'Settings → General → Instructions for Claude' },
-];
+export type ChatHost = 'chatgpt' | 'claude' | 'gemini';
+
+export const CHAT_HOSTS: Record<ChatHost, {
+  label: string;
+  pastePath: string;
+  driveWhy: string | null;
+}> = {
+  chatgpt: {
+    label: 'chatgpt',
+    pastePath: 'Settings → Personalization → Custom instructions',
+    driveWhy: '+ beside the message box, then Google Drive',
+  },
+  claude: {
+    label: 'claude',
+    pastePath: 'Settings → General → Instructions for Claude',
+    driveWhy: 'Customize → Connectors → Google Drive',
+  },
+  gemini: {
+    label: 'gemini',
+    pastePath: 'Settings → Personal context → Your instructions for Gemini',
+    driveWhy: null,
+  },
+};
+
+export function isChatHost(value: unknown): value is ChatHost {
+  return value === 'chatgpt' || value === 'claude' || value === 'gemini';
+}
+
+export const CHAT_INSTRUCTION_PATHS: { host: ChatHost; path: string }[] = (
+  Object.keys(CHAT_HOSTS) as ChatHost[]
+).map((host) => ({ host, path: CHAT_HOSTS[host].pastePath }));
 
 // Preserve the established server-side name for welcome and account connects.
 export const installPrompt = computerInstallPrompt;

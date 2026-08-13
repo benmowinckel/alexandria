@@ -89,19 +89,22 @@ require server/src/install-prompt.ts \
   'the server does not re-export the shared computer prompt'
 
 # The ordinary-chat clipboard, chat email, and factory bootstrap are one exact
-# first-person instruction. A third-party install kit is the Gemini refusal class.
+# first-person instruction for the host's official instructions setting.
 require server/src/chat-prompt.ts \
   "from '../../shared/onboarding-prompts.js'" \
   'the emailed chat paste no longer reads the shared instruction'
 require shared/onboarding-prompts.ts \
-  'I want a private thinking habit. Please keep every instruction, memory, and connection I already have.' \
+  'Alexandria is my private thinking habit. Keep every instruction, memory, and connection I already have.' \
   'the chat instruction is no longer first-person and additive'
 require shared/onboarding-prompts.ts \
-  'If I send a message that is only a or alexandria' \
-  'the chat instruction no longer waits for a whole-message keyword'
+  'ALWAYS answer ordinary requests normally' \
+  'the chat instruction no longer carries the visible route'
+require shared/onboarding-prompts.ts \
+  'save that to alexandria?' \
+  'the chat instruction no longer asks before saving a lasting belief'
 forbid shared/onboarding-prompts.ts \
-  'This is setup|Treat the Preference|Give exactly two short actions|not instructions for this reply|change your safeguards|Answer normally, then end with|ALWAYS |save that to alexandria' \
-  'the chat instruction overlays ordinary replies or names a safeguard rewrite'
+  'This is setup|Treat the Preference|Give exactly two short actions|not instructions for this reply|change your safeguards' \
+  'the chat instruction names a safeguard rewrite or install kit'
 node <<'NODE'
 const fs = require('fs');
 const factory = fs.readFileSync('factory/chat/bootstrap.md', 'utf8');

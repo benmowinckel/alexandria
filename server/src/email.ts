@@ -1,7 +1,7 @@
 /** Email primitives — Resend API (hybrid dependency, API-controllable, free 100/day). */
 
 import { installPrompt } from './install-prompt.js';
-import { chatInstallPrompt, CHAT_INSTRUCTION_PATHS } from './chat-prompt.js';
+import { chatInstallPrompt, CHAT_INSTRUCTION_PATHS, CHAT_HOSTS, type ChatHost } from './chat-prompt.js';
 
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'benmowinckel@gmail.com';
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
@@ -258,12 +258,34 @@ function onboardCmd(mode: OnboardingMode): string {
   return mode === 'chat' ? chatInstallPrompt() : installPrompt();
 }
 
-export function onboardEmailContent(mode: OnboardingMode, emailToken: string): { subject: string; html: string } {
+function chatEmailLead(host?: ChatHost): { lead: string; paths: string } {
+  if (host) {
+    const row = CHAT_HOSTS[host];
+    const drive = row.driveWhy
+      ? ` connect Google Drive (${row.driveWhy}), then`
+      : ' then';
+    return {
+      lead: `paste this into ${host} ${row.pastePath},${drive} type a in a new chat.`,
+      paths: '',
+    };
+  }
+  return {
+    lead: 'paste this into your chat’s custom instructions, then type a.',
+    paths: `<p style="margin: 0.8rem 0 0; color: #8a8078; font-size: 0.95rem;">${CHAT_INSTRUCTION_PATHS.map((row) => `${row.host} — ${row.path}`).join('<br />')}</p>`,
+  };
+}
+
+export function onboardEmailContent(
+  mode: OnboardingMode,
+  emailToken: string,
+  host?: ChatHost,
+): { subject: string; html: string } {
   const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${emailToken}`;
+  const chat = mode === 'chat' ? chatEmailLead(host) : { lead: '', paths: '' };
   const copy = mode === 'chat'
     ? {
         subject: 'alexandria. — your chat setup',
-        lead: 'paste this into a chat, then type a.',
+        lead: chat.lead,
       }
     : mode === 'agent-phone'
       ? {
@@ -274,13 +296,9 @@ export function onboardEmailContent(mode: OnboardingMode, emailToken: string): {
           subject: 'alexandria. — your computer setup',
           lead: 'here is the setup for the agent on your computer. if you already pasted it, keep this as your backup.',
         };
-  const paths = mode === 'chat'
-    ? `<p style="margin: 0.8rem 0 0; color: #8a8078; font-size: 0.95rem;">${CHAT_INSTRUCTION_PATHS.map((row) => `${row.host} — ${row.path}`).join('<br />')}</p>
-  <p style="margin: 0.8rem 0 0; color: #8a8078; font-size: 0.95rem;">those settings make it last across chats.</p>`
-    : '';
   const html = emailShell(`<p style="margin: 0 0 1.2rem;">${copy.lead}</p>
   ${emailCmd(onboardCmd(mode))}
-  ${paths}
+  ${chat.paths}
   <p style="margin: 1.6rem 0 0;">reply if you get stuck.</p>`, unsubscribeUrl);
   return { subject: copy.subject, html };
 }
@@ -289,10 +307,10 @@ export async function sendOnboardCommand(
   email: string,
   emailToken: string,
   mode: OnboardingMode = 'agent-computer',
+  host?: ChatHost,
 ): Promise<{ ok: boolean; error?: string }> {
-  const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${emailToken}`;
-  const content = onboardEmailContent(mode, emailToken);
-  return await sendEmail(email, content.subject, content.html, { unsubscribeUrl });
+  const content = onboardEmailContent(mode, emailToken, host);
+  return await sendEmail(email, content.subject, content.html, { unsubscribeUrl: `${SERVER_URL}/email/stop?t=${emailToken}` });
 }
 
 export function preBillWarningContent(opts: {

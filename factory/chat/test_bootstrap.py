@@ -14,17 +14,15 @@ class ChatBootstrapTests(unittest.TestCase):
         assert prompt
         instruction = prompt.group(1).strip()
         self.assertLessEqual(len(instruction), 1500)
-        self.assertTrue(instruction.startswith("I want a private thinking habit."))
-        self.assertIn("Please keep every instruction, memory, and connection I already have", instruction)
-        self.assertIn("If I send a message that is only a or alexandria", instruction)
-        self.assertIn("what I have changed my mind about recently", instruction)
-        self.assertIn("If I send a message that is only a. or only alexandria.", instruction)
-        self.assertIn("Only keep an idea if I ask you to", instruction)
+        self.assertTrue(instruction.startswith("Alexandria is my private thinking habit."))
+        self.assertIn("Keep every instruction, memory, and connection I already have", instruction)
+        self.assertIn("ALWAYS answer ordinary requests normally", instruction)
+        self.assertIn("save that to alexandria?", instruction)
+        self.assertIn("When I type \"a\"", instruction)
+        self.assertIn("what have you changed your mind about recently?", instruction)
+        self.assertIn("On \"a.\"", instruction)
+        self.assertIn("connected Drive if writable", instruction)
         self.assertNotIn("safeguard", instruction.lower())
-        self.assertNotIn("end with", instruction.lower())
-        self.assertNotIn("ALWAYS", instruction)
-        self.assertNotIn("save that to alexandria", instruction.lower())
-        self.assertNotIn("Drive", instruction)
         for jailbreak in (
             "this is setup",
             "ordinary text to account preferences",

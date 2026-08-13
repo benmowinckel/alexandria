@@ -4,9 +4,17 @@ import { useEffect, useRef, useState } from 'react';
 import { SERVER_URL, SHORTCUT_URL } from '../lib/config';
 import { checkReferral } from '../lib/referral';
 import { ArrowIcon } from '../join/DoorIcons';
-import { chatInstallPrompt, CHAT_INSTRUCTION_PATHS } from '../../shared/onboarding-prompts';
+import { chatInstallPrompt, CHAT_HOSTS, type ChatHost } from '../../shared/onboarding-prompts';
 
-export default function ChatCTA({ refCode }: { refCode?: string }) {
+export default function ChatCTA({
+  refCode,
+  host,
+  onChangeHost,
+}: {
+  refCode?: string;
+  host: ChatHost;
+  onChangeHost: () => void;
+}) {
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'saved' | 'invalid' | 'error'>('idle');
@@ -16,6 +24,10 @@ export default function ChatCTA({ refCode }: { refCode?: string }) {
   const [refCheck, setRefCheck] = useState<{ input: string; valid: string | null } | null>(null);
   const [onIphone, setOnIphone] = useState(false);
   const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
+  const guide = CHAT_HOSTS[host];
+  const copyWhy = ` — paste into ${guide.pastePath}`;
+  const copiedLabel = `copied — paste into ${guide.pastePath}`;
+  const typeANum = guide.driveWhy ? '5' : '4';
 
   useEffect(() => {
     if (!refCode) return;
@@ -48,7 +60,7 @@ export default function ChatCTA({ refCode }: { refCode?: string }) {
       const response = await fetch(`${SERVER_URL}/onboard`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed, source: 'start', mode: 'chat', ...(validRef ? { ref: validRef } : {}) }),
+        body: JSON.stringify({ email: trimmed, source: 'start', mode: 'chat', host, ...(validRef ? { ref: validRef } : {}) }),
       });
       const result = await response.json().catch(() => ({}));
       setMailState(response.ok ? (result.delivered === false ? 'saved' : 'sent') : 'error');
@@ -137,20 +149,34 @@ export default function ChatCTA({ refCode }: { refCode?: string }) {
 
       <div className="act-row">
         <span className="act-num">3</span>
-        <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the setup">
+        <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the instruction">
           {copyState === 'copied'
-            ? 'copied — paste into your chat, then type a'
+            ? copiedLabel
             : copyState === 'error'
               ? 'couldn’t copy — try again'
-              : <>copy the setup<span className="act-why"> — paste into your chat, then type a</span></>}
+              : <>copy the instruction<span className="act-why">{copyWhy}</span></>}
         </button>
-        <p className="act-paths">
-          {CHAT_INSTRUCTION_PATHS.map((row) => (
-            <span key={row.host}>{row.host} — {row.path}<br /></span>
-          ))}
-          those settings make it last across chats
+      </div>
+
+      {guide.driveWhy && (
+        <div className="act-row">
+          <span className="act-num">4</span>
+          <p className="door-btn act-box is-note">
+            connect Google Drive<span className="act-why"> — {guide.driveWhy}</span>
+          </p>
+        </div>
+      )}
+
+      <div className="act-row">
+        <span className="act-num">{typeANum}</span>
+        <p className="door-btn act-box is-note">
+          type a in a new chat<span className="act-why"> — that’s it</span>
         </p>
       </div>
+
+      <button type="button" className="door-switch" onClick={onChangeHost}>
+        different chat
+      </button>
     </section>
   );
 }
