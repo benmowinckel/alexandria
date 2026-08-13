@@ -10,7 +10,7 @@ import ActionButton from './ActionButton';
 import TwinText from './TwinText';
 import ChatHistoryItem from './ChatHistoryItem';
 import { useRotatingPlaceholder, pieceExamples, readingExamples, readingLead } from '../lib/useRotatingPlaceholder';
-import { composeHandoff, fetchHandoffContext, type HandoffAuthor } from '../lib/handoff';
+import { composeHandoff, copyToClipboard, fetchHandoffContext, type HandoffAuthor } from '../lib/handoff';
 import {
   processNumbered, TocBlock,
   MD_COMPONENTS, MD_COMPONENTS_NUMBERED, MD_COMPONENTS_NUMBERED_PRE, MD_COMPONENTS_ABSTRACT,
@@ -319,9 +319,20 @@ export default function ReaderShell({
   // client could be wrong about.
   const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(initialBudget);
   useEffect(() => { if (initialBudget) setBudget((b) => b ?? initialBudget); }, [initialBudget]);
-  const [answeredVariant, setAnsweredVariant] = useState<string | null>(null);
   const [handoffCtx, setHandoffCtx] = useState<HandoffAuthor | null>(null);
   const spent = budget !== null && budget.remaining <= 0;
+
+  // Preload the public context so the eventual click stays inside the browser's
+  // clipboard permission window. The bundle is small, public, and the transfer
+  // button must work on the first press — especially once questions run out.
+  useEffect(() => {
+    if (!handoffAuthorId || handoffCtx) return;
+    let live = true;
+    void fetchHandoffContext(handoffAuthorId).then((ctx) => {
+      if (live && ctx) setHandoffCtx(ctx);
+    });
+    return () => { live = false; };
+  }, [handoffAuthorId, handoffCtx]);
 
   // The Author's public half of the handoff, fetched once and only when it's
   // first wanted — most readers never reach for it.
@@ -335,11 +346,15 @@ export default function ReaderShell({
   // Everything the reader needs to carry on somewhere else, on the clipboard.
   const takeItWithYou = async () => {
     const ctx = await loadHandoff();
-    copyText(composeHandoff({
+    if (!ctx) throw new Error('Handoff context unavailable');
+    await copyToClipboard(composeHandoff({
       ctx,
-      piece: artifactText ? { name, content: artifactText } : null,
+      piece: artifactText ? {
+        name,
+        content: artifactText,
+        url: typeof window !== 'undefined' ? window.location.href : undefined,
+      } : null,
       messages: active?.messages || [],
-      variant: answeredVariant,
     }));
   };
 
@@ -360,14 +375,14 @@ export default function ReaderShell({
       if (typeof out.remaining === 'number' && typeof out.limit === 'number') {
         setBudget({ remaining: out.remaining, limit: out.limit, signedIn: !!out.signed_in });
       }
-      if (out.variant) setAnsweredVariant(out.variant);
     } catch (e) {
       // Out of questions is not a failure — it's the handoff moment. The mirror
       // says so in its own voice and the door is already on screen.
       const err = e as { allowanceSpent?: boolean; message?: string; limit?: number; signedIn?: boolean };
       if (err?.allowanceSpent) {
         setBudget({ remaining: 0, limit: err.limit ?? 0, signedIn: !!err.signedIn });
-        add({ role: 'note', text: err.message || 'You’ve used your questions for today — take the conversation with you.' });
+        // The dock says the limit once. Keep the unanswered question in the
+        // transcript so copy and handoff can carry it; add no duplicate note.
       } else {
         add({ role: 'note', text: offlineNote });
       }
@@ -383,7 +398,7 @@ export default function ReaderShell({
   // the same cell as the strip it replaces — so opening a pane never jumps.
   const paneHead = { flex: 'none', display: 'flex', alignItems: 'center', gap: 0, height: '2.4rem', minHeight: '2.4rem', maxHeight: '2.4rem', padding: 0, overflow: 'hidden', boxSizing: 'border-box' as const } as const;
 
-  const copyText = (t: string) => { void navigator.clipboard?.writeText(t).catch(() => {}); };
+  const copyText = (t: string) => copyToClipboard(t);
   const copyArtifact = () => copyText(artifactText || '');
   // The mirror speaks as the mirror in a paste too — never as the Author
   // themself (founder 2026-07-28: "its my mirror, not me"). Notes carry no
@@ -491,9 +506,11 @@ export default function ReaderShell({
                   {budget.remaining === 1 ? '1 question left' : `${budget.remaining} questions left`}
                 </span>
               )}
-              <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
+              <ActionButton icon={HandoffIcon} onAction={takeItWithYou}
                 title="take it with you — copies the mind, the piece and this conversation for your own AI"
                 style={{ ...iconBtn, color: budget && budget.remaining <= 3 ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
+              {/* Copy remains independent of allowance state. Running out
+                  removes the composer, never the reader's conversation. */}
               {(active?.messages.length ?? 0) > 0 && (
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
               )}
@@ -544,8 +561,9 @@ export default function ReaderShell({
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
                     <ActionButton icon={HandoffIcon} label="continue in your own AI" doneLabel="copied — paste it into your AI"
-                      onAction={() => void takeItWithYou()}
+                      onAction={takeItWithYou}
                       title="copies this chat, the piece and the writing behind it — paste it into ChatGPT, Claude, or whatever you use"
+                      failedLabel="couldn’t copy — try again"
                       style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
                         background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderRadius: '999px', padding: '0.4rem 0.85rem',
                         color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}

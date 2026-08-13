@@ -136,6 +136,7 @@ jobs:
         run: |
           npm ci
           npm audit --audit-level=high
+          npm run test:handoff
           npm run build
 
   # Promotion is deliberately absent: GitHub has no Touch ID. scripts/push.sh

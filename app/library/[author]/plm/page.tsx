@@ -12,7 +12,7 @@ import ChatHistoryItem from '../../../components/ChatHistoryItem';
 import { PdfView } from '../../../components/ReaderShell';
 import { useRotatingPlaceholder, authorExamples, pieceExamples, readingExamples, readingLead } from '../../../lib/useRotatingPlaceholder';
 import { librarySignInUrlHere } from '../../../lib/config';
-import { composeHandoff, fetchHandoffContext, type HandoffAuthor } from '../../../lib/handoff';
+import { composeHandoff, copyToClipboard, fetchHandoffContext, type HandoffAuthor } from '../../../lib/handoff';
 import { type TwinVariantSummary } from '../types';
 
 /**
@@ -337,18 +337,31 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [handoffCtx, setHandoffCtx] = useState<HandoffAuthor | null>(null);
   const spent = budget !== null && budget.remaining <= 0;
 
+  useEffect(() => {
+    if (!author || handoffCtx) return;
+    let live = true;
+    void fetchHandoffContext(author).then((ctx) => {
+      if (live && ctx) setHandoffCtx(ctx);
+    });
+    return () => { live = false; };
+  }, [author, handoffCtx]);
+
   const takeItWithYou = async () => {
     let ctx = handoffCtx;
     if (!ctx && author) {
       ctx = await fetchHandoffContext(author);
       if (ctx) setHandoffCtx(ctx);
     }
-    copyText(composeHandoff({
+    if (!ctx) throw new Error('Handoff context unavailable');
+    await copyToClipboard(composeHandoff({
       ctx,
       // On the profile there is no single piece — whatever the reader has open.
-      piece: open?.content ? { name: open.nice, content: open.content } : null,
+      piece: open?.content ? {
+        name: open.nice,
+        content: open.content,
+        url: `${ctx.profile_url}/read/${encodeURIComponent(open.name)}`,
+      } : null,
       messages: active?.messages || [],
-      variant: activeVariant,
     }));
   };
 
@@ -401,9 +414,15 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       if (typeof b?.remaining === 'number' && typeof b?.limit === 'number') {
         setBudget({ remaining: b.remaining, limit: b.limit, signedIn: !!b.signed_in });
       }
-      setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, failed
-        ? { role: 'note' as const, text: b?.handoff ? String(b.error) : offlineNote }
-        : { role: 'twin' as const, text: b.answer }] } : c)));
+      setConvos((cs) => cs.map((c) => {
+        if (c.id !== targetId) return c;
+        // The spent dock carries the limit once. The unanswered question stays
+        // last so both copy and handoff preserve exactly where the reader was.
+        if (failed && b?.handoff) return c;
+        return { ...c, messages: [...c.messages, failed
+          ? { role: 'note' as const, text: offlineNote }
+          : { role: 'twin' as const, text: b.answer }] };
+      }));
       // A valid code binds a grant server-side — re-read the directory so the
       // unlocked state (variants + depth) reflects it: premium lights up and
       // the code field falls away for the rest of the session.
@@ -436,12 +455,12 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const iconBtn = { display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', width: '2.4rem', height: '2.4rem', border: 'none', background: 'none', cursor: 'pointer', padding: 0, color: 'var(--text-ghost)', transition: 'opacity 0.15s' } as const;
   const paneHead = { flex: 'none', display: 'flex', alignItems: 'center', gap: 0, height: '2.4rem', minHeight: '2.4rem', maxHeight: '2.4rem', padding: 0, overflow: 'visible', boxSizing: 'border-box' as const } as const;
 
-  const copyText = (t: string) => { try { void navigator.clipboard?.writeText(t); } catch { /* */ } };
+  const copyText = (t: string) => copyToClipboard(t);
   // "its my mirror, not me" (founder 2026-07-28) — the paste says so too.
   const copyConvo = () => copyText((active?.messages || [])
     .map((m) => (m.role === 'note' ? `[${m.text}]` : `${m.role === 'you' ? 'You' : `${who}’s mirror`}: ${m.text}`))
     .join('\n\n'));
-  const copyPiece = () => { try { void navigator.clipboard?.writeText(open?.content || openTextRef.current || ''); } catch { /* */ } };
+  const copyPiece = () => copyToClipboard(open?.content || openTextRef.current || '');
   const downloadPiece = () => {
     const blob = dlBlobRef.current;
     if (!blob || !open) return;
@@ -533,33 +552,23 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                   {budget.remaining === 1 ? '1 question left' : `${budget.remaining} questions left`}
                 </span>
               )}
-              <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
+              <ActionButton icon={HandoffIcon} onAction={takeItWithYou}
                 title="take it with you — copies the mind, the open piece and this conversation for your own AI"
                 style={{ ...iconBtn, color: budget && budget.remaining <= 3 ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
+              {/* Copy remains available after the allowance is spent. */}
               {(active?.messages.length ?? 0) > 0 && (
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
               )}
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
               {who && (active?.messages.length ?? 0) === 0 && !asking && !cameWithQuestion && (
-                // The first-timer explainer — third-person MIRROR framing (it
-                // reflects the Author, it never IS them). Suppressed when
-                // arriving with a ?q= (else it flashes then vanishes — reads as
-                // a glitch; founder 2026-07-18). Two beats, pronoun-free, same
-                // grammar as the profile door (founder, 2026-08-02: "rephrase
-                // this. simplify. this is super ugly" — the they/them template
-                // read broken next to a named person, and three sentences was
-                // a lecture).
+                // Two beats, no product disclaimer and no competing CTA. The
+                // chrome already says mirror; this tells the reader what to do.
                 <div style={{ padding: '0.6rem 0 0.2rem', color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.65 }}>
                   <p style={{ margin: '0 0 0.9rem' }}>
-                    a <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>mirror of {who.split(' ')[0]}’s mind</strong>, in writing — it speaks about {who.split(' ')[0]}, never as {who.split(' ')[0]}.
+                    explore <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{who.split(' ')[0]}’s thinking.</strong>
                   </p>
-                  <p style={{ margin: '0 0 0.9rem' }}>
-                    ask anything; when it doesn&rsquo;t know, it says so.
-                  </p>
-                  <p style={{ margin: 0 }}>
-                    <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }}>start your loop →</Link>
-                  </p>
+                  <p style={{ margin: 0 }}>ask anything.</p>
                 </div>
               )}
               {active?.messages.map((m, i) => (
@@ -642,8 +651,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                     Answers cost money to run, so everyone gets a few a day.
                   </p>
                   <ActionButton icon={HandoffIcon} label="continue in your own AI" doneLabel="copied — paste it into your AI"
-                    onAction={() => void takeItWithYou()}
+                    onAction={takeItWithYou}
                     title="copies this chat, the open piece and the writing behind it"
+                    failedLabel="couldn’t copy — try again"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
                       background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderRadius: '999px', padding: '0.4rem 0.85rem',
                       color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}

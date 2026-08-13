@@ -120,21 +120,14 @@ export default function PublicDocReader({
     throw new Error(b.error || 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.');
   };
 
-  // Name what you're talking to — a MIRROR of his mind, not a twin or a
-  // stand-in (canon: "Alexandria builds a mirror, not a clone"; it thinks WITH
-  // you, not for you). The framing must read as reflection, never replacement
-  // (founder 2026-07-20). Pinned above the thread rather than living in the
-  // empty state, so it's still there after the first question — which is
-  // exactly when someone who asked from the document arrives here.
-  // Saying it's offline BEFORE the reader types beats letting them find out by
-  // asking (founder 2026-07-28). Naming the model is the honest version of the
-  // whole pitch: rented mechanism, owned mind — so say which mechanism.
+  // Pinned because it survives arriving mid-question from the document. The
+  // chrome already says mirror; this line only tells the reader what to do.
   const mirrorNote = (
     <>
-      A mirror of Benjamin’s mind, built from what he’s written.{' '}
+      Explore Benjamin’s thinking.{' '}
       {twin && !twin.online
         ? <>Offline right now — it runs on his own machine.</>
-        : <>Ask it anything.</>}
+        : <>Ask anything.</>}
     </>
   );
   // The empty state keeps only the two quiet conversion doors.

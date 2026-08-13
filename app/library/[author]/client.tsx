@@ -732,20 +732,8 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing}
                     placeholder={doorQ ? 'ask anything…' : askExamples[phIdx % askExamples.length]} />
                 </div>
-                {/* The architecture, plainly (founder, 2026-08-02: "the
-                    company builds teh mirror, and this is just an ai with
-                    access to the mirror so it can speak on it") — the
-                    MIRROR is the product; this door is an ai reading it.
-                    Access-tier filtering exists but stays unsaid ("idk if
-                    we need to say the filter thing" — we don't). Pronoun-
-                    free so the template holds for any Author. */}
-                {/* De-clunked (founder, 2026-08-02, third pass: "the blurb
-                    texts are too clunky") — "an ai with access to" is implied
-                    by the ask box itself; one name, short clauses, sayable
-                    aloud. */}
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.5, margin: '0.8rem 0 0', textWrap: 'pretty' }}>
-                  a mirror of {first}&rsquo;s mind &mdash; ask it anything. It&rsquo;ll answer, or tell you why it can&rsquo;t.
-                </p>
+                {/* The section says mind and the box invites a question. A
+                    third explanation only repeats both. */}
               </div>
             );
           })()}
