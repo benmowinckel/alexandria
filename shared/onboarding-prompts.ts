@@ -61,7 +61,7 @@ export const CHAT_HOSTS: Record<ChatHost, {
   chatgpt: {
     label: 'chatgpt',
     pastePath: 'settings → personalization → custom instructions',
-    driveWhy: null,
+    driveWhy: 'if you have it',
   },
   claude: {
     label: 'claude',

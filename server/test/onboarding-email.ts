@@ -24,8 +24,7 @@ assert.doesNotMatch(chat.html, /paste this into a chat, then type a/);
 assert.match(chat.html, /Alexandria is my private thinking habit/);
 
 const chatgpt = onboardEmailContent('chat', 'TOKEN', 'chatgpt');
-assert.match(chatgpt.html, /paste this into chatgpt settings → personalization → custom instructions, then type a in a new chat/);
-assert.doesNotMatch(chatgpt.html, /connect google drive/);
+assert.match(chatgpt.html, /paste this into chatgpt settings → personalization → custom instructions, connect google drive \(if you have it\), then type a in a new chat/);
 assert.doesNotMatch(chatgpt.html, /settings → general → instructions for claude/);
 
 const claude = onboardEmailContent('chat', 'TOKEN', 'claude');
