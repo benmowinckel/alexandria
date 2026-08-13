@@ -61,32 +61,15 @@ export function pieceExamples(who?: string, artifactQs?: string[]): string[] {
   ];
 }
 
-/**
- * readingExamples — the rotation for the composer docked under a document
- * (whitepaper, letter). Same prompts as pieceExamples, led once by the line
- * that names what this is: you can ask as you go, and the thing answering is
- * the Author's mirror sitting beside you — not the Author, and not a support
- * bot (founder 2026-07-27: "ask whilst you read… just like the founder was
- * here with you, but it's a mirror not me"). It leads the cycle rather than
- * living as a label, so the framing is read once and then replaced by the
- * questions themselves — nothing standing on the page afterwards.
- */
-export function readingLead(who?: string): string {
-  const first = who ? who.split(' ')[0] : '';
-  return first ? `ask as you read — ${first}’s mirror` : 'ask as you read — this mind’s mirror';
-}
-
-/** Exported so the caller can tell the framing line apart from the questions —
- *  it is the one entry in the rotation that must NOT be takeable with tab: it
- *  describes the mirror, it isn't something to ask it. */
+/** The docked composer rotates only through real questions. The pane already
+ *  says "mirror"; onboarding copy in the input made the control less useful. */
 export function readingExamples(who?: string, artifactQs?: string[]): string[] {
-  const lead = readingLead(who);
   // The questions themselves are NOT filtered by length. A character budget is
   // a proxy for rendered width — wrong the moment the font, the device or the
   // Author's own questions change — and these are generated per piece for
   // every Author. A suggestion too long for the line fades off its right edge
   // instead (PromptBox, bare), which needs no number and never picks wrong.
-  return [lead, ...pieceExamples(who, artifactQs)];
+  return pieceExamples(who, artifactQs);
 }
 
 /**

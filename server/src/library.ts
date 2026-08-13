@@ -1463,7 +1463,7 @@ export function registerLibraryRoutes(app: Hono): void {
       accessor: p.accessor?.github_login || 'anonymous',
     });
 
-    return { ok: true, answer: result.answer, variant: cfg.variant, label: cfg.label, disclaimer: twinDisclaimer(p.displayName, cfg.variant) };
+    return { ok: true, answer: result.answer, variant: cfg.variant, label: cfg.label, disclaimer: twinDisclaimer(p.displayName) };
   }
 
   app.post('/library/:author/ask', async (c) => {

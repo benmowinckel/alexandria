@@ -304,17 +304,10 @@ export function twinPublicSummary(
   };
 }
 
-/** The honest label. The visitor is talking to a compiled model / a model
- *  reading published substrate — not the person. Variant-aware so the context
- *  twin can be honest that it reads the Author's substrate. */
-export function twinDisclaimer(displayName: string, variant: TwinVariant = 'weights'): string {
-  // MIRROR, never "twin" in visitor-facing language (founder, 2026-07-18): the
-  // mirror exists because it REFLECTS the actual human — it never replaces
-  // them. "twin" survives only as the internal code name (like "protocol").
-  if (variant === 'context') {
-    return `this is a mirror of ${displayName}'s mind — a model reflecting everything they've published, not the person. it can be wrong, and may not reflect their real views.`;
-  }
-  return `this is a mirror of ${displayName}'s mind — a model compiled from their published substrate, not the person. it can be wrong, and may not reflect their real views.`;
+/** Compact machine-facing context for API clients. The website communicates
+ *  this through the mirror label and does not render a standing disclaimer. */
+export function twinDisclaimer(displayName: string): string {
+  return `AI reflecting ${displayName}'s published thinking.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -513,7 +506,7 @@ export async function runTwinInference(
     // Offline is NOT "I don't know" — the mirror never ran. Say which, plainly,
     // because a reader can't tell an unreachable mind from a stumped one and
     // will read the failure as the answer (founder 2026-07-28, from production).
-    return { ok: false, status: 503, reason: 'offline', error: 'this mirror is offline — it runs on its author’s own machine, and that machine isn’t reachable right now. your question wasn’t answered.' };
+    return { ok: false, status: 503, reason: 'offline', error: 'this mirror is offline. your question wasn’t answered.' };
   }
 
   // -----------------------------------------------------------------------

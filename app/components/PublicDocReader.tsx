@@ -27,11 +27,8 @@ export default function PublicDocReader({
   askQuestions?: string[]; // this doc's own suggested questions → the rotation
   askFirst?: boolean;      // open with the mirror pane up (the /features ask page)
 }) {
-  // What the mirror is running on, and whether it can answer at all — read from
-  // the Author's own directory rather than hard-coded here, so there is exactly
-  // one place the model is decided (the sidecar, which pays for it). Fetched once;
-  // the Worker caches the health probe for 30s, so this is a cheap JSON GET.
-  const [twin, setTwin] = useState<{ online: boolean; model: string | null } | null>(null);
+  // The allowance comes from the Author's directory rather than a duplicated
+  // client-side limit.
   const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(null);
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
   const [markdown, setMarkdown] = useState('');
@@ -75,12 +72,11 @@ export default function PublicDocReader({
         if (!live) return;
         const t = d?.twin;
         if (!t) return;
-        setTwin({ online: !!t.online, model: typeof t.model === 'string' ? t.model : null });
         if (typeof t.remaining === 'number' && typeof t.limit === 'number') {
           setBudget({ remaining: t.remaining, limit: t.limit, signedIn: !!t.signed_in });
         }
       })
-      .catch(() => { /* the note just stays generic */ });
+      .catch(() => { /* allowance is discovered on the first ask instead */ });
     return () => { live = false; };
   }, []);
 
@@ -120,16 +116,6 @@ export default function PublicDocReader({
     throw new Error(b.error || 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.');
   };
 
-  // Pinned because it survives arriving mid-question from the document. The
-  // chrome already says mirror; this line only tells the reader what to do.
-  const mirrorNote = (
-    <>
-      Explore Benjamin’s thinking.{' '}
-      {twin && !twin.online
-        ? <>Offline right now — it runs on his own machine.</>
-        : <>Ask anything.</>}
-    </>
-  );
   // The empty state keeps only the two quiet conversion doors.
   const intro = (
     <div style={{ color: 'var(--text-muted)', fontSize: '1.02rem', lineHeight: 1.78, textWrap: 'pretty' }}>
@@ -163,7 +149,6 @@ export default function PublicDocReader({
       handoffAuthorId={FOUNDER_LIBRARY_ID}
       initialBudget={budget}
       intro={intro}
-      mirrorNote={mirrorNote}
       askFirst={askFirst}
       // The whitepaper and the letter: they open on a closed mirror and a long
       // read, so the ask is docked under the document. The mirror-led pages

@@ -9,7 +9,7 @@ import PromptBox from './PromptBox';
 import ActionButton from './ActionButton';
 import TwinText from './TwinText';
 import ChatHistoryItem from './ChatHistoryItem';
-import { useRotatingPlaceholder, pieceExamples, readingExamples, readingLead } from '../lib/useRotatingPlaceholder';
+import { useRotatingPlaceholder, pieceExamples, readingExamples } from '../lib/useRotatingPlaceholder';
 import { composeHandoff, copyToClipboard, fetchHandoffContext, type HandoffAuthor } from '../lib/handoff';
 import {
   processNumbered, TocBlock,
@@ -165,10 +165,7 @@ export type ReaderShellProps = {
   /** What this reader has left before they've asked anything. Without it the
    *  allowance is only discoverable by hitting it. */
   initialBudget?: { remaining: number; limit: number; signedIn: boolean } | null;
-  intro?: React.ReactNode;                        // chat empty-state (who you're talking to + CTAs)
-  /** One plain line naming what the mirror is, pinned above the thread so it
-   *  survives the first question — see the render. Keep it to a sentence. */
-  mirrorNote?: React.ReactNode;
+  intro?: React.ReactNode;                        // chat empty-state CTAs, when a surface needs them
   askFirst?: boolean;                             // open with the ask pane up (mirror-led pages)
   /** Dock the composer under the piece while the mirror is collapsed. The
    *  whitepaper, the letter, and any library artifact: they open on a closed
@@ -192,7 +189,7 @@ export default function ReaderShell({
   numbered = false, plain = false,
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
-  intro, mirrorNote, inviteField, askFirst = false, dockedAsk = false, footerCta = 'start your loop',
+  intro, inviteField, askFirst = false, dockedAsk = false, footerCta = 'start your loop',
   handoffAuthorId, initialBudget = null, docPage = false,
 }: ReaderShellProps) {
   const book = useMemo(
@@ -295,14 +292,10 @@ export default function ReaderShell({
   // in view; it pauses the moment the reader starts typing.
   const askExamples = useMemo(() => pieceExamples(who, askQuestions), [who, askQuestions]);
   const rotatingPlaceholder = useRotatingPlaceholder(askExamples, !question.trim());
-  // The docked line runs its own cycle, led once by what this is — see
-  // readingExamples. Its own hook so opening the pane doesn't inherit the
-  // framing line into the chat composer, which already has the intro.
+  // The docked line runs its own cycle so opening the pane doesn't inherit its
+  // current question into the chat composer.
   const readExamples = useMemo(() => readingExamples(who, askQuestions), [who, askQuestions]);
   const readingPlaceholder = useRotatingPlaceholder(readExamples, !question.trim());
-  // Every line in that rotation is a question you can take with tab — except
-  // the lead, which describes the mirror rather than asking it anything.
-  const readingIsQuestion = readingPlaceholder !== readingLead(who);
 
   // One line for every failure, and it says offline. The server distinguishes
   // offline from timeout from upstream error and keeps that in `reason` for us,
@@ -311,8 +304,8 @@ export default function ReaderShell({
   // where they stand (founder 2026-07-28: "just say its offline. even if it is
   // an error"). Never a pronoun for the Author: a mirror belongs to anyone.
   const offlineNote = who
-    ? `${who}’s mirror is offline — your question wasn’t answered. It runs on a personal machine, so it isn’t always up.`
-    : 'This mirror is offline — your question wasn’t answered. It runs on a personal machine, so it isn’t always up.';
+    ? `${who}’s mirror is offline. Your question wasn’t answered.`
+    : 'This mirror is offline. Your question wasn’t answered.';
 
   // What's left of this reader's allowance, and what has been answering. Both
   // come back with the answers themselves — no extra request, and no number the
@@ -515,15 +508,6 @@ export default function ReaderShell({
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
               )}
             </div>
-            {/* What you're talking to, said once and KEPT. It used to live in the
-                empty state, so asking from the document — which opens this pane
-                mid-question — erased the only explanation at the exact moment a
-                first-timer needed it (founder 2026-07-28, from production). It
-                sits above the thread now: outside the scroll, never scrolled
-                away, one quiet line. */}
-            {mirrorNote && (
-              <p className="mirror-note">{mirrorNote}</p>
-            )}
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
               {intro && (active?.messages.length ?? 0) === 0 && !asking && (
                 <div style={{ padding: '0.6rem 0 0.2rem' }}>{intro}</div>
@@ -549,15 +533,10 @@ export default function ReaderShell({
             </div>
             <div className="ask-dock" style={{ flex: 'none', borderTop: 'none' }}>
               {spent ? (
-                // Say the limit once, give its reason, then the immediate way
-                // forward. The accent handoff icon above carries the same action
-                // without repeating the zero-question status.
+                // One status, then the way forward. Copy remains in the header.
                 <div>
-                  <p style={{ margin: '0 0 0.3rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
-                    Out of questions.
-                  </p>
-                  <p style={{ margin: '0 0 0.85rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
-                    Answers cost money to run, so everyone gets a few a day.
+                  <p style={{ margin: '0 0 0.85rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
+                    Out of questions for now.
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
                     <ActionButton icon={HandoffIcon} label="continue in your own AI" doneLabel="copied — paste it into your AI"
@@ -675,7 +654,7 @@ export default function ReaderShell({
             {dockedAsk && status === 'ok' && !midOpen && (
               <div className="piece-ask">
                 <PromptBox bare value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
-                  typeWhileLoading shakeWhenBusy placeholder={readingPlaceholder || askPlaceholder} fillable={readingIsQuestion}
+                  typeWhileLoading shakeWhenBusy placeholder={readingPlaceholder || askPlaceholder} fillable
                   ariaLabel="ask about this piece" />
               </div>
             )}
@@ -740,15 +719,7 @@ export default function ReaderShell({
         .piece-foot { flex: none; height: 0.9rem; }
         .doc-page .piece-foot { height: 1rem; }
 
-        /* The docked ask — held to the text column, separated by space rather
-           than a rule (the footer's line already closes the page). */
-        /* The pinned line above the thread, and the status of a question that
-           never got answered — both quieter than anything either party said. */
-        /* Both of these are read, not glanced at — what the mirror is, and what
-           happened to a question. --text-ghost made them a smudge (founder
-           2026-07-29). Quieter than an answer, still legible. */
-        .mirror-note { flex: none; margin: 0; padding: 0.6rem 1.4rem 0.75rem; color: var(--text-muted);
-          font-size: 0.88rem; line-height: 1.55; font-style: italic; text-wrap: pretty; }
+        /* A failed ask is status, not the mirror speaking. */
         .mirror-status { margin: 0; padding: 0.15rem 0 0.15rem 0.9rem; border-left: 2px solid var(--border-light);
           color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; font-style: italic; text-wrap: pretty; }
 

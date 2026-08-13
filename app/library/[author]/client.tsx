@@ -416,11 +416,13 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // One head style for all five sections — mind · links · works · projects ·
   // shadows (founder: the five things on the profile). Word underlined (short,
   // not page-wide), whisper italic behind a symmetric middot.
-  const sectionHead = (word: string, whisper: string) => (
+  const sectionHead = (word: string, whisper?: string) => (
     <p className={editing ? 'profile-edit-background' : undefined} style={{ ...sectionLabelStyle, color: 'var(--text-secondary)' }}>
       <span style={{ borderBottom: '1px solid var(--text-ghost)', paddingBottom: '3px' }}>{word}</span>
-      <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem' }}>·</span>
-      <span style={{ color: 'var(--text-muted)', letterSpacing: 0, fontStyle: 'italic' }}>{whisper}</span>
+      {whisper && <>
+        <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem' }}>·</span>
+        <span style={{ color: 'var(--text-muted)', letterSpacing: 0, fontStyle: 'italic' }}>{whisper}</span>
+      </>}
     </p>
   );
   // Entry row — title left, tier right, on one baseline, with a bottom hairline.
@@ -715,11 +717,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                 boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 6px 18px rgba(0,0,0,0.04)',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
-                  {/* The whisper matches the other sections' hand — "what's
-                      being mirrored" beside "what's being built / thought"
-                      (founder, 2026-08-02, replacing the spec-register
-                      "a personal language model"). */}
-                  {sectionHead('mind', 'what’s being mirrored')}
+                  {sectionHead('mind')}
                   {/* The old standing online/offline word is gone — the note
                       exists only in the moment an offline ask is attempted. */}
                   {offlineNote && (

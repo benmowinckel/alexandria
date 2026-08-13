@@ -10,7 +10,7 @@ import ActionButton from '../../../components/ActionButton';
 import TwinText from '../../../components/TwinText';
 import ChatHistoryItem from '../../../components/ChatHistoryItem';
 import { PdfView } from '../../../components/ReaderShell';
-import { useRotatingPlaceholder, authorExamples, pieceExamples, readingExamples, readingLead } from '../../../lib/useRotatingPlaceholder';
+import { useRotatingPlaceholder, authorExamples, pieceExamples, readingExamples } from '../../../lib/useRotatingPlaceholder';
 import { librarySignInUrlHere } from '../../../lib/config';
 import { composeHandoff, copyToClipboard, fetchHandoffContext, type HandoffAuthor } from '../../../lib/handoff';
 import { type TwinVariantSummary } from '../types';
@@ -109,17 +109,13 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [invite, setInvite] = useState('');
   const [inviteDraft, setInviteDraft] = useState('');
   const [pendingQ, setPendingQ] = useState('');
-  // Arrived from the profile door WITH a question (?q=)? Then never show the
-  // first-timer explainer — it would flash for the mind-load window and vanish
-  // the instant the question fires, which reads as a glitch (founder 2026-07-18).
-  const [cameWithQuestion, setCameWithQuestion] = useState(false);
   const [beliCopied, setBeliCopied] = useState(false);  // pane links: Beli click-to-reveal
   useEffect(() => {
     try {
       const q = new URLSearchParams(window.location.search);
       const v = q.get('variant'); if (v === 'weights' || v === 'context') setActiveVariant(v);
       const inv = q.get('invite')?.trim(); if (inv) { setInvite(inv); setInviteDraft(inv); }
-      const asked = q.get('q')?.trim(); if (asked) { setPendingQ(asked); setCameWithQuestion(true); }
+      const asked = q.get('q')?.trim(); if (asked) setPendingQ(asked);
     } catch { /* */ }
   }, []);
 
@@ -321,7 +317,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const rotatingPlaceholder = useRotatingPlaceholder(askExamples, !question.trim());
   const readExamples = useMemo(() => readingExamples(who, askQuestions), [who, askQuestions]);
   const readingPlaceholder = useRotatingPlaceholder(readExamples, !question.trim());
-  const readingIsQuestion = readingPlaceholder !== readingLead(who);
 
   // Mid-thought questions QUEUE instead of bouncing (founder, 2026-07-17): the
   // composer stays typable while the mind is answering (typeWhileLoading), the
@@ -369,8 +364,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   // offline-vs-timeout-vs-error, and offline is the true shape of all of them
   // from where they stand (founder 2026-07-28). Never a pronoun for the Author.
   const offlineNote = authorName
-    ? `${authorName}’s mirror is offline — your question wasn’t answered. It runs on a personal machine, so it isn’t always up.`
-    : 'This mirror is offline — your question wasn’t answered. It runs on a personal machine, so it isn’t always up.';
+    ? `${authorName}’s mirror is offline. Your question wasn’t answered.`
+    : 'This mirror is offline. Your question wasn’t answered.';
 
   const ask = async (textArg?: string) => {
     const text = (textArg ?? question).trim();
@@ -561,16 +556,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               )}
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
-              {who && (active?.messages.length ?? 0) === 0 && !asking && !cameWithQuestion && (
-                // Two beats, no product disclaimer and no competing CTA. The
-                // chrome already says mirror; this tells the reader what to do.
-                <div style={{ padding: '0.6rem 0 0.2rem', color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.65 }}>
-                  <p style={{ margin: '0 0 0.9rem' }}>
-                    explore <strong style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{who.split(' ')[0]}’s thinking.</strong>
-                  </p>
-                  <p style={{ margin: 0 }}>ask anything.</p>
-                </div>
-              )}
               {active?.messages.map((m, i) => (
                 <div key={i} ref={i === (active.messages.length - 1) ? lastMsgRef : undefined} style={{ margin: '0 0 1.1rem' }}>
                   {m.role === 'note'
@@ -640,15 +625,10 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             )}
             <div className="ask-dock" style={{ flex: 'none', borderTop: 'none' }}>
               {spent ? (
-                // Same as the reader: say the limit once, give its reason, then
-                // the immediate way forward. The accent icon above carries the
-                // same action without repeating the status.
+                // One status, then the way forward. Copy remains in the header.
                 <div>
-                  <p style={{ margin: '0 0 0.3rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
-                    Out of questions.
-                  </p>
-                  <p style={{ margin: '0 0 0.85rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
-                    Answers cost money to run, so everyone gets a few a day.
+                  <p style={{ margin: '0 0 0.85rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
+                    Out of questions for now.
                   </p>
                   <ActionButton icon={HandoffIcon} label="continue in your own AI" doneLabel="copied — paste it into your AI"
                     onAction={takeItWithYou}
@@ -802,7 +782,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             {open && !open.loading && (mtab === 'pieces' || !midOpen) && (
               <div className="piece-ask">
                 <PromptBox bare value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
-                  typeWhileLoading placeholder={readingPlaceholder || 'ask about this piece…'} fillable={readingIsQuestion}
+                  typeWhileLoading placeholder={readingPlaceholder || 'ask about this piece…'} fillable
                   ariaLabel="ask about this piece" />
               </div>
             )}
