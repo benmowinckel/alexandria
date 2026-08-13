@@ -97,8 +97,14 @@ require shared/onboarding-prompts.ts \
   'Alexandria is my private thinking habit. Keep every instruction, memory, and connection I already have.' \
   'the chat instruction is no longer first-person and additive'
 require shared/onboarding-prompts.ts \
-  'ALWAYS answer ordinary requests normally' \
+  'only on your first reply in that chat' \
   'the chat instruction no longer carries the visible route'
+require shared/onboarding-prompts.ts \
+  'Never add that line to voice replies' \
+  'the chat instruction no longer suppresses the generic cue in voice'
+require shared/onboarding-prompts.ts \
+  'saving to it or reading from it would help this exact exchange' \
+  'the chat instruction no longer allows a contextual later route'
 require shared/onboarding-prompts.ts \
   'save that to alexandria?' \
   'the chat instruction no longer asks before saving a lasting belief'
@@ -191,6 +197,12 @@ require factory/canon/methodology.md \
   "The Author's private ai never does." \
   'methodology has no permanent private-ai boundary'
 require factory/canon/methodology.md \
+  'its `account.membership_active` value is authoritative over every local marker' \
+  'methodology does not resolve live membership before opener routing'
+require factory/canon/methodology.md \
+  'then a separate highest-ROI cognitive `recommended`, then `everything`' \
+  'methodology no longer guarantees invite then cognitive recommended then everything'
+require factory/canon/methodology.md \
   'recommended` IS the join link' \
   'methodology has no recommended-until-decision join carve-out'
 require factory/canon/methodology.md \
@@ -205,6 +217,18 @@ require factory/canon/methodology.md \
 require factory/canon/methodology.md \
   'connect the stuff you' \
   'methodology has no save-before-connect shortcut recommended body'
+require factory/canon/methodology.md \
+  'For joined Authors this is a `system` item, never `recommended`.' \
+  'shortcut setup can still displace a joined Author cognitive recommendation'
+require factory/hooks/payload.sh \
+  '"$SERVER/alexandria"' \
+  'session start no longer fetches authoritative account state'
+require factory/hooks/payload.sh \
+  'typeof j.account.membership_active' \
+  'session start no longer validates the membership state shape'
+require factory/hooks/payload.sh \
+  '"$ALEX_DIR/system/.join_decision"' \
+  'active membership no longer heals the missing local marker'
 forbid factory/canon/methodology.md \
   'There is no opener carve-out' \
   'methodology still bans the opener join carve-out'
@@ -233,9 +257,12 @@ require factory/canon/foundation.md \
   'private material never becomes an outbound query by default.' \
   'Foundation has no permanent private-query boundary'
 require factory/canon/foundation.md \
-  'show the state-aware footer on the first assistant reply' \
+  'show the state-aware footer only on the first assistant reply in a new text chat' \
   'never repeat a generic footer on every task' \
   'Foundation no longer states the disclosed visible cue clearly'
+require factory/canon/foundation.md \
+  'Voice never reads a generic Alexandria cue aloud' \
+  'the Foundation no longer suppresses the generic cue in voice'
 require factory/canon/foundation.md \
   '**passive session → visible route into an Alexandria session → active session → a better mirror → and back.**' \
   'Foundation no longer defines the complete passive-to-active product loop'

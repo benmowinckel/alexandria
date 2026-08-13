@@ -200,7 +200,11 @@ const result = {
   factoryBootstrapMatchesShared: factoryBootstrap === expected,
   clipboardIsFirstPerson: clipboard.startsWith('Alexandria is my private thinking habit.'),
   clipboardHasAdditiveGuard: clipboard.includes('Keep every instruction, memory, and connection I already have'),
-  clipboardHasVisibleRoute: clipboard.includes('ALWAYS answer ordinary requests normally') && clipboard.includes('save that to alexandria?'),
+  clipboardHasVisibleRoute:
+    clipboard.includes('only on your first reply in that chat') &&
+    clipboard.includes('Never add that line to voice replies') &&
+    clipboard.includes('saving to it or reading from it would help this exact exchange') &&
+    clipboard.includes('save that to alexandria?'),
   clipboardHasNoJailbreak: jailbreakPhrases.every((phrase) => !clipboard.toLowerCase().includes(phrase)),
   emailFieldMatchesStart: JSON.stringify(chatEmailShape) === JSON.stringify(startEmailShape),
   computerCopiedWithoutEmail: computerClipboard === computerInstallPrompt(),

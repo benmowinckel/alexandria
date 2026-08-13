@@ -118,6 +118,29 @@ if [ "$MODE" = "session-start" ]; then
 
   mkdir -p "$ALEX_DIR/system/canon" "$ALEX_DIR/files/library/public" 2>/dev/null
 
+  # Resolve the live account before the active-session opener can classify the
+  # Author. The human join-decision marker is a fallback, never authority over
+  # a current membership response. This closes the failure where an active
+  # member with no local marker was shown the generic join page instead of
+  # their invite link and a separate cognitive recommendation.
+  if [ -n "$API_KEY" ]; then
+    account_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria-account.XXXXXX" 2>/dev/null)
+    if [ -n "$account_tmp" ]; then
+      account_http=$(curl -s --max-time 5 -o "$account_tmp" -w '%{http_code}' \
+        -H "Authorization: Bearer $API_KEY" \
+        -H "X-Alexandria-Client: $CLIENT_VERSION" \
+        "$SERVER/alexandria" 2>/dev/null || echo "000")
+      if [ "$account_http" = "200" ] && node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));if(!j.account||typeof j.account.membership_active!=='boolean'||!j.account.github_login)process.exit(1)" "$account_tmp" 2>/dev/null; then
+        mv "$account_tmp" "$ALEX_DIR/system/.protocol_status.json"
+        if node -e "const j=require(process.argv[1]);process.exit(j.account.membership_active===true?0:1)" "$ALEX_DIR/system/.protocol_status.json" 2>/dev/null; then
+          printf 'yes\n' > "$ALEX_DIR/system/.join_decision"
+        fi
+      else
+        rm -f "$account_tmp"
+      fi
+    fi
+  fi
+
   # Deterministic session identity (one id per CC session)
   session_id=$(node -e "const c=require('crypto');console.log(c.randomUUID ? c.randomUUID() : (Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)));" 2>/dev/null)
   [ -z "$session_id" ] && session_id="$(date +%s)-$$"

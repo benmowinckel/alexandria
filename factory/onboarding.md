@@ -31,7 +31,7 @@ Create or reuse an `alexandria` folder and place `factory/chat/start.md` in it a
 
 ## Chat branch
 
-The website copies `factory/chat/bootstrap.md`. The person pastes it into a chat. Follow it in this conversation. Keep their existing setup. Do not add a line to ordinary replies.
+The website copies `factory/chat/bootstrap.md`. The person pastes it into the host's official instructions setting. Keep their existing setup. In text chat, the generic route appears only on the first reply in a new chat; voice omits it; later replies mention Alexandria only when saving to it or reading from it would help that exact exchange.
 
 If this app has a durable instructions setting they can edit themselves, one next action can name the exact clicks to add the same block there without deleting anything they already have. Never claim this chat installed cross-chat behaviour. If there is no durable setting, say that plainly. This conversation can still run the habit until they leave it. Then preserve the later handoff to the full local setup at `https://alexandria-library.com/start` → agents.
 

@@ -4,7 +4,9 @@
 
 ## normal use
 
-Keep chatting exactly as before. Ordinary replies end with `→ type a in a new chat`. If you state a lasting belief, preference, decision, or idea, the AI asks `save that to alexandria?` before that line.
+Keep chatting exactly as before. In text chat, only the first reply in a new chat ends with `→ type a in a new chat`. Voice never reads a generic Alexandria cue aloud. Later replies have no generic footer.
+
+If you state a lasting belief, preference, decision, or idea, the AI asks `save that to alexandria?`. Later in a text chat it mentions Alexandria only when saving to it or reading from it would help that exact exchange; then it may use `→ type a in a new chat` as the one action line.
 
 Type **a** or **alexandria** for a thinking session. Type **a.** or **alexandria.** to close it.
 
