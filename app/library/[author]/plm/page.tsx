@@ -528,9 +528,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 <span className="chat-model" style={{ ...label, marginLeft: '0.45rem' }}>weights</span>
               )}
               <span style={{ marginLeft: 'auto' }} />
-              {budget && budget.remaining <= 3 && (
-                <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-muted)', paddingRight: '0.15rem' }}>
-                  {spent ? 'out of questions' : budget.remaining === 1 ? '1 question left' : `${budget.remaining} questions left`}
+              {budget && budget.remaining > 0 && budget.remaining <= 3 && (
+                <span style={{ ...label, color: 'var(--text-muted)', paddingRight: '0.15rem' }}>
+                  {budget.remaining === 1 ? '1 question left' : `${budget.remaining} questions left`}
                 </span>
               )}
               <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
@@ -631,16 +631,15 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             )}
             <div className="ask-dock" style={{ flex: 'none', borderTop: 'none' }}>
               {spent ? (
-                // Same as the reader's: a composer that still accepts typing
-                // when nothing can be answered is a trap, and the way on is the
-                // reader's own ai — or the product itself.
+                // Same as the reader: say the limit once, give its reason, then
+                // the immediate way forward. The accent icon above carries the
+                // same action without repeating the status.
                 <div>
                   <p style={{ margin: '0 0 0.3rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
-                    You’re out of questions for now.
+                    Out of questions.
                   </p>
                   <p style={{ margin: '0 0 0.85rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
-                    Answers cost money to run, so everyone gets a few a day. You don’t have to wait —
-                    take the conversation to your own AI and keep going there.
+                    Answers cost money to run, so everyone gets a few a day.
                   </p>
                   <ActionButton icon={HandoffIcon} label="continue in your own AI" doneLabel="copied — paste it into your AI"
                     onAction={() => void takeItWithYou()}
@@ -649,10 +648,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                       background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderRadius: '999px', padding: '0.4rem 0.85rem',
                       color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
                     className="hover:opacity-75" />
-                  <p style={{ margin: '0.85rem 0 0', color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.55, textWrap: 'pretty' }}>
-                    Or stop asking about it and try it — <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">start your loop</Link>.
-                    It’s free, and it’s the fastest way to see what this is.
-                  </p>
                 </div>
               ) : (
                 <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading placeholder={rotatingPlaceholder || 'ask anything…'} bare />

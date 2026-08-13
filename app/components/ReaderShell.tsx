@@ -483,12 +483,12 @@ export default function ReaderShell({
                   "this is so key. its the mirror"). One universal label. */}
               <span style={chromeLabel}>mirror</span>
               {/* What's left sits immediately left of export, and only once
-                  it's worth knowing. Export then copy on the right; export
-                  takes the accent when the count is showing. */}
+                  it's worth knowing. At zero, the duplicate count disappears
+                  while export keeps the accent. */}
               <span style={{ marginLeft: 'auto' }} />
-              {budget && budget.remaining <= 3 && (
-                <span style={{ ...label, color: spent ? 'var(--accent)' : 'var(--text-muted)', paddingRight: '0.15rem' }}>
-                  {spent ? 'out of questions' : budget.remaining === 1 ? '1 question left' : `${budget.remaining} questions left`}
+              {budget && budget.remaining > 0 && budget.remaining <= 3 && (
+                <span style={{ ...label, color: 'var(--text-muted)', paddingRight: '0.15rem' }}>
+                  {budget.remaining === 1 ? '1 question left' : `${budget.remaining} questions left`}
                 </span>
               )}
               <ActionButton icon={HandoffIcon} onAction={() => void takeItWithYou()}
@@ -532,23 +532,15 @@ export default function ReaderShell({
             </div>
             <div className="ask-dock" style={{ flex: 'none', borderTop: 'none' }}>
               {spent ? (
-                // A dead input the reader can still type into is a trap, and a
-                // bare button is a shrug — at the one moment someone is stuck,
-                // say what the thing does and what to do with it. Two plain
-                // sentences, one button, one alternative (founder 2026-07-29).
+                // Say the limit once, give its reason, then the immediate way
+                // forward. The accent handoff icon above carries the same action
+                // without repeating the zero-question status.
                 <div>
-                  {/* What, why, then the two ways forward. The why matters —
-                      a cap with no reason reads as arbitrary — but it isn't
-                      about any one Author or an exact number, so it says
-                      neither. And someone who just asked their way through a
-                      day's allowance has already shown the interest: the second
-                      door is the product itself (founder 2026-07-29). */}
                   <p style={{ margin: '0 0 0.3rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
-                    You’re out of questions for now.
+                    Out of questions.
                   </p>
                   <p style={{ margin: '0 0 0.85rem', color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: 1.55, textWrap: 'pretty' }}>
-                    Answers cost money to run, so everyone gets a few a day. You don’t have to wait —
-                    take the conversation to your own AI and keep going there.
+                    Answers cost money to run, so everyone gets a few a day.
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
                     <ActionButton icon={HandoffIcon} label="continue in your own AI" doneLabel="copied — paste it into your AI"
@@ -559,10 +551,6 @@ export default function ReaderShell({
                         color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
                       className="hover:opacity-75" />
                   </div>
-                  <p style={{ margin: '0.85rem 0 0', color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.55, textWrap: 'pretty' }}>
-                    Or stop asking about it and try it — <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-70">start your loop</Link>.
-                    It’s free, and it’s the fastest way to see what this is.
-                  </p>
                 </div>
               ) : (
                 <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading shakeWhenBusy placeholder={rotatingPlaceholder || askPlaceholder} bare />
