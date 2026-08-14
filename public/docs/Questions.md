@@ -24,6 +24,16 @@ That is the risk Alexandria is built around. Hand every thought to AI and your o
 
 Built-in memory is useful and keeps working. The difference is depth and ownership. A company’s memory lives in its product and usually leaves you with raw exports if you move. Your loop builds the understanding itself in plain files you can read, shape, and carry whole to every AI you choose.
 
+## can’t ai infer all of this from my data.
+
+It can infer a great deal from messages, files, calendars, clicks, behaviour, and the things you produce. The loop should use that signal. But inference is not a first-person record of what you meant, almost chose, or never said. If a thought has produced no outside signal, there is nothing for a passive connector to fetch. You have to turn it into words or another symbol; your AI makes that act as easy and useful as possible, then keeps the result in files you own.
+
+That effort is the mental gym. The loop can automate noticing, asking, capturing, filing, returning, and maintenance. It cannot automate away the articulation itself, because articulating the thought is both where the unique context comes from and how your mind develops.
+
+## what does this have to do with ai alignment.
+
+Most AI alignment questions depend on labs, governments, and the whole world. Personal alignment is the part you can work on directly: keep the record yours, make the AI’s influence visible and contestable, and remain involved in what you become. It may not settle the larger risk. It is still the move available to you now.
+
 ## isn’t this just a notes app.
 
 No, though the files can sit beside your notes. A notes app stores what you write. Your loop draws your thinking out, writes it down automatically, and feeds the useful parts back to every compatible AI you give access. The editor is where the files sit; the loop is what makes them useful.
