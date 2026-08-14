@@ -2774,7 +2774,7 @@
             /* Sits in the open cream above the arch (founder 2026-07-20:
                moved up + scene dropped so the answer reveal never overlaps
                the arch on shorter phones). */
-            top: 104px;
+            top: 116px;
             transform: translateX(-50%);
             width: 84vw;
             max-width: 420px;
