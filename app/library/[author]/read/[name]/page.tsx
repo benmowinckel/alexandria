@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import ReaderShell from '../../../../components/ReaderShell';
 import { librarySignInUrlHere } from '../../../../lib/config';
 
@@ -20,6 +21,8 @@ function displayName(name: string): string {
 }
 
 export default function ReaderPage({ params }: { params: Promise<{ author: string; name: string }> }) {
+  const searchParams = useSearchParams();
+  const scope = (searchParams.get('scope') || '').trim();
   const [author, setAuthor] = useState('');
   const [name, setName] = useState('');
   useEffect(() => { params.then((p) => { setAuthor(p.author); setName(p.name); }); }, [params]);
@@ -47,7 +50,6 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const [inviting, setInviting] = useState(false);
   const [inviteErr, setInviteErr] = useState('');
   const pdfTextRef = useRef('');
-  const extractRef = useRef<Promise<void> | null>(null);
   const dlBlobRef = useRef<Blob | null>(null);
   const dlExtRef = useRef('md');
   const attemptRef = useRef(0);       // guards against a stale fetch clobbering a newer unlock
@@ -73,14 +75,14 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
         ]);
         if (!live) return;
         setAuthorName(dir?.author?.display_name || '');
-        const f = (dir?.files || []).find((x: { name: string }) => x.name === name);
+        const f = (dir?.files || []).find((x: { name: string; scope?: string }) => x.name === name && (!scope || x.scope === scope));
         if (f?.visibility) setVisibility(f.visibility);
         if (Array.isArray(f?.questions)) setQuestions(f.questions.filter((q: unknown): q is string => typeof q === 'string'));
         setSignedIn(sess?.signed_in === true);
       } catch { /* non-fatal — the file fetch owns the reader's status */ }
     })();
     return () => { live = false; };
-  }, [author, name]);
+  }, [author, name, scope]);
 
   // Fetch the piece, optionally with an invite code. The single source of the
   // reader's status — called on load (with any seeded code) and on each unlock.
@@ -90,6 +92,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
     const fresh = () => token === attemptRef.current;     // a newer attempt supersedes this one
     const fileUrl = (extra?: Record<string, string>) => {
       const params = new URLSearchParams();
+      if (scope) params.set('scope', scope);
       if (code) params.set('invite', code);
       if (extra) Object.entries(extra).forEach(([k, v]) => params.set(k, v));
       const qs = params.toString();
@@ -110,7 +113,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
           const buf = await blob.arrayBuffer();
           setPdfUrl(URL.createObjectURL(new Blob([buf], { type: 'application/pdf' })));
           setStatus('ok');
-          extractRef.current = (async () => {
+          void (async () => {
             try {
               const tr = await fetch(fileUrl({ format: 'text' }), { credentials: 'include' });
               if (tr.ok) { const t = (await tr.text()).trim(); if (t) { pdfTextRef.current = t; if (fresh()) setContent(t); } }
@@ -143,7 +146,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
     } finally {
       if (fresh()) setInviting(false);
     }
-  }, [author, name, signedIn]);
+  }, [author, name, scope, signedIn]);
 
   // Load once the route resolves, carrying any code seeded from the URL. Kept
   // off `attempt`/`invite` deps so a session resolving (or the error copy
@@ -194,18 +197,15 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
     </div>
   ) : undefined;
 
-  const askFn = async (text: string) => {
-    // Wait for a still-extracting PDF so the mind gets the document, not an empty note.
-    let fc = content || pdfTextRef.current;
-    if (!fc && pdfUrl && extractRef.current) {
-      try { await Promise.race([extractRef.current, new Promise((r) => setTimeout(r, 8000))]); } catch { /* */ }
-      fc = pdfTextRef.current;
-    }
-    const focusText = fc
-      || `(The reader is currently viewing “${nice}”${pdfUrl ? ' (a PDF)' : ''}, a published piece by ${who}. Answer about THIS specific piece unless they clearly ask about something else.)`;
+  const askFn = async (text: string, messages: { role: 'user' | 'assistant'; content: string }[]) => {
     const res = await fetch(`/api/library/${encodeURIComponent(author)}/ask`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-      body: JSON.stringify({ question: text, variant: 'context', focus: { name: nice, content: focusText } }),
+      body: JSON.stringify({
+        question: text,
+        variant: 'context',
+        artifact: { name, scope: scope || visibility },
+        messages,
+      }),
     });
     const b = await res.json().catch(() => ({}));
     if (res.ok && b.answer) {

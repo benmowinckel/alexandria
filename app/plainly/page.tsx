@@ -41,6 +41,7 @@ export default function PlainlyPage() {
   return (
     <PublicDocReader
       title="ask anything"
+      artifactName="plainly"
       mdSrc="/docs/Plainly.md"
       askQuestions={PLAINLY_QUESTIONS}
     />

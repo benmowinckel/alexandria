@@ -162,6 +162,7 @@ export async function readAuditArchiveObject(key: string): Promise<R2ObjectBody 
 
 export interface ProtocolFileMetadata {
   account_id: string;
+  scope: string;
   name: string;
   text: string | null;
   visibility: string;
@@ -174,6 +175,7 @@ export interface ProtocolFileMetadata {
 // only requires extending this map — no route code changes.
 const EXTENSION_BY_CONTENT_TYPE: Record<string, string> = {
   'text/markdown; charset=utf-8': 'md',
+  'text/plain; charset=utf-8': 'txt',
   'application/pdf': 'pdf',
 };
 
@@ -183,6 +185,7 @@ const EXTENSION_BY_CONTENT_TYPE: Record<string, string> = {
 // can name a content_type for without needing multipart.
 const PUT_WRITABLE_CONTENT_TYPES = new Set<string>([
   'text/markdown; charset=utf-8',
+  'text/plain; charset=utf-8',
   'application/pdf',
 ]);
 
@@ -217,6 +220,8 @@ export type ReadProtocolFileResult =
 export interface ReadProtocolFileOpts {
   authorGithubId: string | number;
   fileName: string;
+  /** Exact Library scope. Omit only for the legacy direct-tier URL. */
+  scope?: string;
   accessorGithubId: string | number | null;
   context?: FileReadContext;
 }
@@ -231,11 +236,24 @@ export async function readProtocolFile(opts: ReadProtocolFileOpts): Promise<Read
   const accountId = String(opts.authorGithubId);
   const name = opts.fileName;
 
-  const file = await getDB().prepare(
-    'SELECT account_id, name, text, visibility, updated_at, content_type FROM protocol_files WHERE account_id = ? AND name = ?'
-  ).bind(accountId, name).first<ProtocolFileMetadata>();
+  // Scope-less legacy URLs may resolve only a direct-tier artifact
+  // (`scope = visibility`). They never guess among cohorts.
+  const file = opts.scope
+    ? await getDB().prepare(
+        `SELECT account_id, scope, name, text, visibility, updated_at, content_type
+           FROM protocol_files WHERE account_id = ? AND scope = ? AND name = ?`,
+      ).bind(accountId, opts.scope, name).first<ProtocolFileMetadata>()
+    : await getDB().prepare(
+        `SELECT account_id, scope, name, text, visibility, updated_at, content_type
+           FROM protocol_files WHERE account_id = ? AND name = ? AND scope = visibility LIMIT 1`,
+      ).bind(accountId, name).first<ProtocolFileMetadata>();
   if (!file) {
     return { ok: false, status: 404, reason: 'not_found', body: { error: 'File not found' } };
+  }
+
+  // Stored scope and visibility must agree. Corrupt metadata fails closed.
+  if (file.scope.split('/', 1)[0] !== file.visibility) {
+    return { ok: false, status: 403, reason: 'unknown_visibility', body: { error: 'Access denied', reason: 'scope_mismatch' } };
   }
 
   const decision = authorizeFileRead({
@@ -261,12 +279,23 @@ export async function readProtocolFile(opts: ReadProtocolFileOpts): Promise<Read
   // fetch, no probing, no per-file conditionals.
   const contentType = file.content_type || DEFAULT_CONTENT_TYPE;
   const ext = r2ExtensionForContentType(contentType);
-  const obj = await getR2().get(`protocol/${accountId}/${name}.${ext}`);
+  const scopedKey = protocolR2Key(accountId, file.scope, name, ext);
+  let obj = await getR2().get(scopedKey);
+  // Migration compatibility: direct-tier bytes originally lived at the flat
+  // key. First reconciliation writes the scoped copy; until then, base scopes
+  // can still read the exact pre-migration object. Cohorts never fall back.
+  if (!obj && file.scope === file.visibility) {
+    obj = await getR2().get(`protocol/${accountId}/${name}.${ext}`);
+  }
   if (!obj) {
     return { ok: false, status: 404, reason: 'content_missing', body: { error: 'File content not found' } };
   }
 
   return { ok: true, reason: decision.reason, file, obj, contentType };
+}
+
+export function protocolR2Key(accountId: string, scope: string, name: string, ext: string): string {
+  return `protocol/${accountId}/scopes/${scope}/${name}.${ext}`;
 }
 
 /**

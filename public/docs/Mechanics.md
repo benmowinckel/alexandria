@@ -49,7 +49,7 @@ The setup is one bash script. The hooks payload is one bash script. The shim is 
 | `files/constitution/` | Your beliefs, personality, working style. You write these. |
 | `files/vault/` | Raw input — transcripts, notes, voice memos. You drop things in. `vault/input/` stays local unless you separately enable the iCloud-capture add-on. |
 | `files/marginalia/` | Shared working layer between raw and settled — your developing thoughts + Engine candidates, drains over time. |
-| `files/library/{public,authors,paid,invite}/` | Optional publication outbox. A final file leaves only when Library sync is separately enabled and its adjacent `.approved` file matches both the SHA-256 of its current bytes and that exact tier. |
+| `files/library/{public,authors,paid,invite}/` | Optional publication outbox. Add exact cohort folders below a permission when needed (`invite/friends`, `paid/course`); parent and sibling scopes never inherit. A final file leaves only when Library sync is separately enabled and its adjacent `.approved` file matches both the SHA-256 of its current bytes and that exact scope. |
 | `files/library/filter.md` | Your publishing policy — the canon-driven rule the Engine consults before promoting drafts to final. |
 | `files/core/` | Engine working memory: `agent.md`, `machine.md`, `notepad.md`, `feedback.md`, `shelf.md`. |
 | `files/works/` | Long-form pieces in progress. |
@@ -204,10 +204,10 @@ Cloudflare Worker, stateless re: your private content. KV + D1 + R2.
 | API key — SHA-256 hash only | KV | Auth check |
 | Event log: endpoints you deliberately use, with timestamps and lightweight request context | KV (60-day TTL) | Debugging, abuse signal |
 | Library files you explicitly publish | R2 | Published Library content |
-| Library file metadata (name, visibility tier, content hash, updated_at) | D1 | Discovery, listing |
+| Library file metadata (name, exact scope, visibility, content hash, updated_at) | D1 | Permissioned discovery and listing |
 | Marketplace calls you separately approve: module ID, account ID, timestamp, and exact optional notes/requests in the approved manifest | D1 (`protocol_calls`) | Marketplace listing and request board |
 
-**Not stored anywhere we control:** your constitution, vault, marginalia, transcripts, machine.md, notepad, raw API key, AI-vendor (Anthropic/OpenAI/etc) API keys, or any file outside your `files/library/` publish outbox — the only path the session sync ever `PUT`s. There is no endpoint that accepts them.
+**Not stored anywhere we control:** your constitution, vault, marginalia, transcripts, machine.md, notepad, raw API key, AI-vendor (Anthropic/OpenAI/etc) API keys, or any file outside your `files/library/` publish outbox — the only path the session sync ever `PUT`s. A context PLM receives only the exact published scopes allowed for that reader, plus the active artifact and current conversation; its default local process is sandboxed away from your private tree. There is no endpoint that accepts private-source files.
 
 **What a complete server breach yields:** account emails, GitHub user IDs, hashed (un-reversible) API keys, the 60-day event log, your full `protocol_calls` history (the per-module portion is already exposed by design via the authed marketplace endpoint), published Library content (files you explicitly published), and Cloudflare-level access logs (IPs, timing). It does not yield private cognition, unpublished files, or AI-vendor credentials, because those never reach the server.
 

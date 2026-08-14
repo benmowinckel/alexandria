@@ -246,8 +246,9 @@ test('real Author file names are not internal', () => {
 // Content-type extension + write-eligibility
 // ---------------------------------------------------------------------------
 
-test('extension map: markdown → md, pdf → pdf', () => {
+test('extension map: markdown → md, text → txt, pdf → pdf', () => {
   assert.strictEqual(r2ExtensionForContentType('text/markdown; charset=utf-8'), 'md');
+  assert.strictEqual(r2ExtensionForContentType('text/plain; charset=utf-8'), 'txt');
   assert.strictEqual(r2ExtensionForContentType('application/pdf'), 'pdf');
 });
 
@@ -259,10 +260,11 @@ test('extension map: unknown type defaults to md', () => {
   assert.strictEqual(r2ExtensionForContentType(''), 'md');
 });
 
-test('PUT-writable: markdown and pdf both writable', () => {
-  // Markdown via `body.content` (UTF-8 string). PDF via `body.content_b64`
+test('PUT-writable: markdown, text, and pdf are writable', () => {
+  // Text via `body.content` (UTF-8 string). PDF via `body.content_b64`
   // (base64-encoded bytes) — both round-trip through the JSON PUT.
   assert.strictEqual(isPutWritableContentType('text/markdown; charset=utf-8'), true);
+  assert.strictEqual(isPutWritableContentType('text/plain; charset=utf-8'), true);
   assert.strictEqual(isPutWritableContentType('application/pdf'), true);
 });
 

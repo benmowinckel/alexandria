@@ -612,7 +612,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
 
     # ── Explicitly approved Library files ──
     # Reconcile only exact content-hash approvals: walk
-    # library/{tier}/ for any file that isn't a draft (underscore prefix),
+    # library/{permission}/{optional-cohort}/ recursively for any file that isn't a draft (underscore prefix),
     # filter (filter.md), or readme (README.md). PUT each one; the server
     # hash-skips unchanged content. This standing scope never deletes remote
     # state. Unpublishing is a separate outward action that requires a direct
@@ -629,25 +629,32 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
         const fs = require("fs"), path = require("path"), crypto = require("crypto");
         const root = path.join(process.env.ALEX_DIR, "files/library");
         const SERVER = process.env.SERVER, KEY = process.env.API_KEY, CV = process.env.CLIENT_VERSION;
-        const TYPE_BY_EXT = { ".md": "text/markdown; charset=utf-8", ".pdf": "application/pdf" };
+        const TYPE_BY_EXT = { ".md": "text/markdown; charset=utf-8", ".txt": "text/plain; charset=utf-8", ".pdf": "application/pdf" };
         const skipFile = (n) => n === "filter.md" || n === "README.md" || n.startsWith("_") || n.startsWith(".");
 
-        const local = new Map(); // approved name -> {tier, abs, contentType}
-        let tiers = [];
-        try { tiers = fs.readdirSync(root, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name); } catch {}
-        for (const tier of tiers) {
-          const dir = path.join(root, tier);
+        const local = new Map(); // exact scope/name -> {visibility, scope, abs, contentType}
+        const conflicts = new Set(); // same scope/name with multiple extensions: publish neither
+        const validVisibility = new Set(["public", "authors", "invite", "paid"]);
+        const validSegment = /^[a-z0-9][a-z0-9-]{0,63}$/;
+        function walk(dir) {
           let entries = [];
-          try { entries = fs.readdirSync(dir); } catch { continue; }
-          for (const f of entries) {
+          try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+          for (const entry of entries) {
+            const f = entry.name;
             if (skipFile(f)) continue;
+            const abs = path.join(dir, f);
+            if (entry.isDirectory()) { if (validSegment.test(f)) walk(abs); continue; }
             const ext = path.extname(f).toLowerCase();
             const ct = TYPE_BY_EXT[ext];
             if (!ct) continue;
             const stem = f.slice(0, f.length - ext.length).toLowerCase();
             if (!/^[a-z0-9][a-z0-9-]*$/.test(stem) || stem.length > 64) continue;
+            const scope = path.relative(root, dir).split(path.sep).join("/");
+            const parts = scope.split("/");
+            const visibility = parts[0];
+            if (!validVisibility.has(visibility) || !parts.every(p => validSegment.test(p))) continue;
             // Resolve symlinks; skip dangling.
-            let abs = path.join(dir, f), st;
+            let st;
             try { st = fs.statSync(abs); } catch { continue; }
             if (!st.isFile() || st.size === 0) continue;
             // A content-hash sidecar approves these exact bytes. An edit
@@ -655,11 +662,18 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
             let approved = "";
             try { approved = fs.readFileSync(abs + ".approved", "utf8").trim(); } catch { continue; }
             const current = crypto.createHash("sha256").update(fs.readFileSync(abs)).digest("hex");
-            if (approved !== current + " " + tier) continue;
-            // Last write wins if the same stem appears in multiple tiers.
-            local.set(stem, { tier, abs, contentType: ct, sha256: current });
+            if (approved !== current + " " + scope) continue;
+            const key = scope + "/" + stem;
+            if (conflicts.has(key)) continue;
+            if (local.has(key)) {
+              local.delete(key);
+              conflicts.add(key);
+              continue;
+            }
+            local.set(key, { visibility, scope, abs, contentType: ct, sha256: current, name: stem });
           }
         }
+        walk(root);
 
         // First sentence from a string: up to the first ./!/? boundary, capped.
         function firstSentence(raw) {
@@ -673,7 +687,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
         // Description derives only from the already-approved file bytes. No
         // adjacent file or other private path can silently add outbound data.
         function deriveText(absPath, contentType) {
-          if (contentType === "text/markdown; charset=utf-8") {
+          if (contentType.startsWith("text/")) {
             try {
               const md = fs.readFileSync(absPath, "utf8");
               const italic = md.match(/^\s*(?:#[^\n]*\n+)*\*([^*\n][\s\S]*?)\*/m);
@@ -687,7 +701,8 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
           const buf = fs.readFileSync(meta.abs);
           const isText = meta.contentType.startsWith("text/");
           const body = {
-            visibility: meta.tier,
+            visibility: meta.visibility,
+            scope: meta.scope,
             content_type: meta.contentType,
             text: deriveText(meta.abs, meta.contentType),
           };
@@ -707,6 +722,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
 
         (async () => {
           const status = { published: [], errors: [], drift: [], ran_at: new Date().toISOString() };
+          for (const key of conflicts) status.errors.push("ambiguous_local_artifact:" + key);
 
           // The reconciliation target is THIS account's login, derived from the
           // authed status response — never guessed, never a hard-coded fallback.
@@ -721,46 +737,50 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
           }
           if (!LOGIN) status.errors.push("login_unavailable: publish ran, verification skipped (refusing to guess a library login)");
 
-          for (const [name, meta] of local) {
+          for (const [, meta] of local) {
+            const name = meta.name;
             try {
               const r = await putOne(name, meta);
-              if (r.ok) status.published.push({ name, tier: meta.tier });
-              else status.errors.push("put " + name + " status=" + r.status);
-            } catch (e) { status.errors.push("put " + name + ":" + e.message); }
+              if (r.ok) status.published.push({ name, scope: meta.scope });
+              else status.errors.push("put " + meta.scope + "/" + name + " status=" + r.status);
+            } catch (e) { status.errors.push("put " + meta.scope + "/" + name + ":" + e.message); }
           }
 
           // Verification loop: re-fetch server state, diff against local.
           if (LOGIN) try {
-            const r = await fetch(SERVER + "/library/" + LOGIN);
+            const r = await fetch(SERVER + "/library/" + LOGIN, {
+              headers: { "Authorization": "Bearer " + KEY, "X-Alexandria-Client": CV },
+            });
             if (r.ok) {
               const j = await r.json();
-              const serverAfter = new Map((j.files || []).map(f => [f.name, f]));
-              for (const [name, meta] of local) {
-                const remote = serverAfter.get(name);
+              const serverAfter = new Map((j.files || []).map(f => [f.scope + "/" + f.name, f]));
+              for (const [key, meta] of local) {
+                const name = meta.name;
+                const remote = serverAfter.get(key);
                 if (!remote) {
-                  status.drift.push("missing_on_server:" + name);
+                  status.drift.push("missing_on_server:" + key);
                   continue;
                 }
-                if (remote.visibility !== meta.tier) {
-                  status.drift.push("visibility_mismatch:" + name + ":local=" + meta.tier + ":server=" + remote.visibility);
+                if (remote.visibility !== meta.visibility || remote.scope !== meta.scope) {
+                  status.drift.push("scope_mismatch:" + key + ":server=" + remote.scope);
                 }
                 // Prove the read side too: fetch through the real owner access
                 // gate, hash the returned bytes, and compare with the exact
                 // locally approved bytes that were just PUT. A list-row match
                 // alone can hide a stale or broken R2 object.
                 try {
-                  const bodyRes = await fetch(SERVER + "/library/" + encodeURIComponent(LOGIN) + "/file/" + encodeURIComponent(name), {
+                  const bodyRes = await fetch(SERVER + "/library/" + encodeURIComponent(LOGIN) + "/file/" + encodeURIComponent(name) + "?scope=" + encodeURIComponent(meta.scope), {
                     headers: { "Authorization": "Bearer " + KEY, "X-Alexandria-Client": CV },
                   });
                   if (!bodyRes.ok) {
-                    status.drift.push("read_failed:" + name + ":status=" + bodyRes.status);
+                    status.drift.push("read_failed:" + key + ":status=" + bodyRes.status);
                   } else {
                     const bytes = Buffer.from(await bodyRes.arrayBuffer());
                     const remoteSha = crypto.createHash("sha256").update(bytes).digest("hex");
-                    if (remoteSha !== meta.sha256) status.drift.push("content_mismatch:" + name);
+                    if (remoteSha !== meta.sha256) status.drift.push("content_mismatch:" + key);
                   }
                 } catch (e) {
-                  status.errors.push("read " + name + ":" + e.message);
+                  status.errors.push("read " + key + ":" + e.message);
                 }
               }
             }

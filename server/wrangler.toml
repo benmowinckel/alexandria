@@ -15,7 +15,7 @@ binding = "DB"
 database_name = "alexandria-library"
 database_id = "d76e2219-dbcc-43da-b618-1b0ae0095db8"
 
-# R2 bucket — published artifacts (shadows, pulses, quizzes, works)
+# R2 bucket — deliberately published Library artifacts
 [[r2_buckets]]
 binding = "ARTIFACTS"
 bucket_name = "alexandria-artifacts"
@@ -60,13 +60,13 @@ WEBSITE_URL = "https://alexandria-library.com"
 LIBRARY_CUT_PERCENT = "50"
 KIN_THRESHOLD = "3"
 
-# PLM "ask this mind" twin inference — two variants (plm.md § both-twin arch):
+# PLM "ask this mind" inference — two variants (plm.md § both-twin arch):
 #   • weights twin (privacy floor, default PUBLIC): a LoRA compiled from the
 #     Author's substrate. DEFAULT_TWIN_CHECKPOINT + DEFAULT_TWIN_BASE.
-#   • context twin (fidelity ceiling, default AUTHORS): a frontier model reading
-#     the substrate in context — exposes it, so gated. DEFAULT_TWIN_CONTEXT_MODEL.
-# The Worker relays questions to a sidecar that fronts the model(s) and holds the
-# keys/substrate (never the Worker). Empty TWIN_INFERENCE_URL ⇒ "twin offline"
+#   • context twin: a frontier model receiving only the exact Library scopes
+#     allowed by provider config ∩ reader grant ∩ active artifact. No local files.
+# The Worker is the permission broker and relays the authorized slice to a
+# sidecar that holds model keys, not Author files. Empty TWIN_INFERENCE_URL ⇒ "twin offline"
 # (zero-regret: the surface ships, the engine slots in later). To go live: set
 # TWIN_INFERENCE_URL to the sidecar, `wrangler secret put TWIN_INFERENCE_SECRET`,
 # and set the per-variant defaults here or per-author via POST /library/{id}/twin.

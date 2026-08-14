@@ -1,98 +1,134 @@
-/**
- * Account-based access grants — the invite system that needs near-zero input.
- *
- * A GRANT means "this account may reach this author's invite-visibility content"
- * (twins + protocol files, which share `authorizeFileRead`). It replaces the old
- * "invite code = infinitely-shareable secret re-typed every time" model:
- *
- *   • An author can grant an account directly (by github handle) — no code.
- *   • Or a code, on first use by a LOGGED-IN visitor, BINDS to their account
- *     (creates a grant) — so they never enter it again; every later visit just
- *     works from their session.
- *
- * Grants are keyed on the immutable numeric github_id (not the renamable handle,
- * matching `protocol_files.account_id` and the gate), author-scoped, and soft-
- * revocable (row kept for audit). The schema is created lazily so the code works
- * before any migration is applied (same pattern as ensureCounterSchema).
- */
+/** Exact, account-bound Library scope grants. */
 import { getDB, generateId } from './db.js';
+import { normalizeLibraryScope, visibilityForScope } from './library-scopes.js';
 
 let ensured = false;
 async function ensureGrantSchema(): Promise<void> {
   if (ensured) return;
+  // Fresh databases get the current shape here. Deployed databases are rebuilt
+  // by migration 0026; the lazy create keeps local/test boot order harmless.
   await getDB().prepare(
     `CREATE TABLE IF NOT EXISTS access_grants (
        id TEXT PRIMARY KEY,
        author_id TEXT NOT NULL,
        account_github_id TEXT NOT NULL,
+       scope TEXT NOT NULL DEFAULT 'invite',
+       source_type TEXT NOT NULL DEFAULT 'invite',
+       source_id TEXT,
        code_id TEXT,
        label TEXT,
        created_at TEXT NOT NULL,
        revoked_at TEXT,
-       UNIQUE(author_id, account_github_id)
+       UNIQUE(author_id, account_github_id, scope)
      )`,
   ).run().catch(() => {});
   await getDB().prepare(
-    `CREATE INDEX IF NOT EXISTS idx_grants_lookup ON access_grants(author_id, account_github_id, revoked_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_grants_lookup ON access_grants(author_id, account_github_id, scope, revoked_at)`,
   ).run().catch(() => {});
   ensured = true;
 }
 
-/** Does this account hold a live grant for this author's invite content? */
-export async function hasGrant(authorId: string, accountGithubId: string | number | null): Promise<boolean> {
-  if (accountGithubId == null) return false;
+export type GrantState = 'live' | 'revoked' | 'none';
+export type GrantSource = 'invite' | 'purchase' | 'owner';
+
+function validGrantScope(value: string): string | null {
+  const visibility = visibilityForScope(value);
+  if (visibility !== 'invite' && visibility !== 'paid') return null;
+  return normalizeLibraryScope(value, visibility);
+}
+
+/** Exact means exact: `invite` never answers for `invite/friends`. */
+export async function hasGrantForScope(
+  authorId: string,
+  accountGithubId: string | number | null,
+  scope: string,
+): Promise<boolean> {
+  if (accountGithubId == null || !validGrantScope(scope)) return false;
   await ensureGrantSchema();
   const row = await getDB().prepare(
-    `SELECT id FROM access_grants WHERE author_id = ? AND account_github_id = ? AND revoked_at IS NULL LIMIT 1`,
-  ).bind(authorId, String(accountGithubId)).first<{ id: string }>().catch(() => null);
+    `SELECT id FROM access_grants
+      WHERE author_id = ? AND account_github_id = ? AND scope = ? AND revoked_at IS NULL
+      LIMIT 1`,
+  ).bind(authorId, String(accountGithubId), scope).first<{ id: string }>().catch(() => null);
   return !!row?.id;
 }
 
-export type GrantState = 'live' | 'revoked' | 'none';
+/** All exact live scopes held by an account for this Author. */
+export async function listGrantedScopes(
+  authorId: string,
+  accountGithubId: string | number | null,
+): Promise<string[]> {
+  if (accountGithubId == null) return [];
+  await ensureGrantSchema();
+  const rows = await getDB().prepare(
+    `SELECT scope FROM access_grants
+      WHERE author_id = ? AND account_github_id = ? AND revoked_at IS NULL
+      ORDER BY scope`,
+  ).bind(authorId, String(accountGithubId)).all<{ scope: string }>().catch(() => ({ results: [] as { scope: string }[] }));
+  return (rows.results || []).map((row) => row.scope).filter((scope) => !!validGrantScope(scope));
+}
 
-/** The grant status for an account on an author, three-valued so callers can
- *  distinguish a `revoked` grant from `none`. This is what makes revocation
- *  STRUCTURAL: an owner-revoked account returns `revoked`, and the invite
- *  resolvers refuse to let a still-valid code resurrect it — code-reuse can no
- *  longer undo a revoke (audit B2). Only an explicit owner re-grant clears it. */
-export async function grantState(authorId: string, accountGithubId: string | number | null): Promise<GrantState> {
-  if (accountGithubId == null) return 'none';
+/** Back-compatible base invite check. It deliberately does not include cohorts. */
+export async function hasGrant(authorId: string, accountGithubId: string | number | null): Promise<boolean> {
+  return hasGrantForScope(authorId, accountGithubId, 'invite');
+}
+
+export async function grantState(
+  authorId: string,
+  accountGithubId: string | number | null,
+  scope = 'invite',
+): Promise<GrantState> {
+  if (accountGithubId == null || !validGrantScope(scope)) return 'none';
   await ensureGrantSchema();
   const row = await getDB().prepare(
-    `SELECT revoked_at FROM access_grants WHERE author_id = ? AND account_github_id = ? LIMIT 1`,
-  ).bind(authorId, String(accountGithubId)).first<{ revoked_at: string | null }>().catch(() => null);
+    `SELECT revoked_at FROM access_grants
+      WHERE author_id = ? AND account_github_id = ? AND scope = ? LIMIT 1`,
+  ).bind(authorId, String(accountGithubId), scope).first<{ revoked_at: string | null }>().catch(() => null);
   if (!row) return 'none';
   return row.revoked_at ? 'revoked' : 'live';
 }
 
-/** Grant an account access. Idempotent. Provenance via `codeId`/`label`.
- *  `reactivate` decides what happens to a REVOKED grant on conflict:
- *    • absent/false (code-binding path): DO NOTHING — a revoked grant stays
- *      revoked, so re-entering a still-valid code can't resurrect it (audit B2).
- *      A fresh (state=`none`) bind still inserts normally.
- *    • true (owner path only): un-revoke — the owner is deliberately re-granting. */
 export async function grantAccess(
   authorId: string,
   accountGithubId: string | number,
-  opts?: { codeId?: string; label?: string; reactivate?: boolean },
+  opts?: {
+    scope?: string;
+    sourceType?: GrantSource;
+    sourceId?: string;
+    codeId?: string;
+    label?: string;
+    reactivate?: boolean;
+  },
 ): Promise<void> {
+  const scope = opts?.scope || 'invite';
+  if (!validGrantScope(scope)) throw new Error(`Invalid grant scope: ${scope}`);
   await ensureGrantSchema();
   const now = new Date().toISOString();
+  const sourceType = opts?.sourceType || (opts?.codeId ? 'invite' : 'owner');
+  const sourceId = opts?.sourceId || opts?.codeId || null;
   const onConflict = opts?.reactivate
     ? `DO UPDATE SET revoked_at = NULL,
+                     source_type = excluded.source_type,
+                     source_id = COALESCE(excluded.source_id, access_grants.source_id),
                      code_id = COALESCE(excluded.code_id, access_grants.code_id),
-                     label   = COALESCE(excluded.label, access_grants.label)`
+                     label = COALESCE(excluded.label, access_grants.label)`
     : `DO NOTHING`;
   await getDB().prepare(
-    `INSERT INTO access_grants (id, author_id, account_github_id, code_id, label, created_at, revoked_at)
-     VALUES (?, ?, ?, ?, ?, ?, NULL)
-     ON CONFLICT(author_id, account_github_id) ${onConflict}`,
-  ).bind(generateId(), authorId, String(accountGithubId), opts?.codeId ?? null, opts?.label ?? null, now)
-    .run().catch(() => {});
+    `INSERT INTO access_grants
+       (id, author_id, account_github_id, scope, source_type, source_id, code_id, label, created_at, revoked_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+     ON CONFLICT(author_id, account_github_id, scope) ${onConflict}`,
+  ).bind(
+    generateId(), authorId, String(accountGithubId), scope, sourceType, sourceId,
+    opts?.codeId ?? null, opts?.label ?? null, now,
+  ).run();
 }
 
 export interface GrantRow {
   account_github_id: string;
+  scope: string;
+  source_type: string;
+  source_id: string | null;
   label: string | null;
   created_at: string;
   revoked_at: string | null;
@@ -101,15 +137,17 @@ export interface GrantRow {
 export async function listGrants(authorId: string): Promise<GrantRow[]> {
   await ensureGrantSchema();
   const res = await getDB().prepare(
-    `SELECT account_github_id, label, created_at, revoked_at
+    `SELECT account_github_id, scope, source_type, source_id, label, created_at, revoked_at
        FROM access_grants WHERE author_id = ? ORDER BY created_at DESC LIMIT 500`,
   ).bind(authorId).all<GrantRow>().catch(() => ({ results: [] as GrantRow[] }));
   return res.results || [];
 }
 
-export async function revokeGrant(authorId: string, accountGithubId: string): Promise<void> {
+export async function revokeGrant(authorId: string, accountGithubId: string, scope = 'invite'): Promise<void> {
+  if (!validGrantScope(scope)) return;
   await ensureGrantSchema();
   await getDB().prepare(
-    `UPDATE access_grants SET revoked_at = ? WHERE author_id = ? AND account_github_id = ? AND revoked_at IS NULL`,
-  ).bind(new Date().toISOString(), authorId, String(accountGithubId)).run().catch(() => {});
+    `UPDATE access_grants SET revoked_at = ?
+      WHERE author_id = ? AND account_github_id = ? AND scope = ? AND revoked_at IS NULL`,
+  ).bind(new Date().toISOString(), authorId, String(accountGithubId), scope).run();
 }

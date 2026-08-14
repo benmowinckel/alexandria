@@ -17,5 +17,5 @@ export const metadata = pageMetadata({
 });
 
 export default function LetterPage() {
-  return <PublicDocReader title="the letter" pdfSrc="/docs/letter.pdf" txtSrc="/docs/letter.txt" />;
+  return <PublicDocReader title="the letter" artifactName="letter" pdfSrc="/docs/letter.pdf" txtSrc="/docs/letter.txt" />;
 }

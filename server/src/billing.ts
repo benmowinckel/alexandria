@@ -522,11 +522,12 @@ export async function recalculateAllKinPricing(): Promise<void> {
       // this independent sweep is the repair loop when a delivery is missed.
       // It deliberately includes terminal subscriptions, so a stale `active`
       // KV record cannot keep write or subscriber access alive indefinitely.
-      if (acct && (
+      const membershipChanged = !!acct && (
         acct.subscription_id !== sub.id
         || acct.subscription_status !== sub.status
         || (customerId && acct.stripe_customer_id !== customerId)
-      )) {
+      );
+      if (acct) {
         try {
           await updateAccountBilling(login, {
             subscription_id: sub.id,
@@ -535,11 +536,17 @@ export async function recalculateAllKinPricing(): Promise<void> {
             ...(customerId ? { stripe_customer_id: customerId } : {}),
             ...(periodEndUnix ? { current_period_end: new Date(periodEndUnix * 1000).toISOString() } : {}),
           });
-          logEvent('membership_status_reconciled', {
-            github_login: login,
-            from: acct.subscription_status || 'none',
-            to: sub.status,
-          });
+          // A successful Stripe enumeration is itself authoritative
+          // verification even when the subscription is unchanged. Refresh the
+          // timestamp every sweep; log a reconciliation event only for a real
+          // state change so the event stream stays meaningful.
+          if (membershipChanged) {
+            logEvent('membership_status_reconciled', {
+              github_login: login,
+              from: acct.subscription_status || 'none',
+              to: sub.status,
+            });
+          }
         } catch (e) {
           console.error(`[membership] daily reconciliation failed for ${login}:`, e);
         }
@@ -1427,18 +1434,18 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
               console.error('[billing] Library purchase tab entry failed:', e);
             }
 
-            // Store access grant in KV. Bind to the buyer's github_login when
-            // the purchase was made signed-in, so a leaked ?session_id= success
-            // URL is useless to anyone else (the viewer must BE the buyer).
-            // Anonymous purchases stay bearer-validated by the high-entropy
-            // session_id, but with a much shorter TTL (7d vs 30d) to shrink the
-            // leak window. (audit M2)
+            // Store the short-lived checkout receipt in KV, bound to the signed-in
+            // buyer's github_login. Checkout refuses anonymous buyers, so a leaked
+            // ?session_id= success URL is useless to everyone else. The first
+            // successful read promotes this receipt into the buyer's durable exact
+            // paid-scope grant. (audit M2)
             const buyerLogin = session.metadata?.github_login || null;
             try {
               await getKV().put(`library:access:${session.id}`, JSON.stringify({
                 author_id: authorId,
                 artifact_type: artifactType,
                 artifact_id: session.metadata?.artifact_id || '',
+                scope: session.metadata?.scope || null,
                 buyer_github_login: buyerLogin,
                 granted_at: new Date().toISOString(),
               }), { expirationTtl: (buyerLogin ? 30 : 7) * 24 * 60 * 60 });

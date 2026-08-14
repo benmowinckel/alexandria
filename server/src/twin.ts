@@ -2,32 +2,23 @@
  * PLM — "ask this mind" twin inference. Two variants, one adapter.
  *
  * An Author's mind projects into the Library as up to TWO queryable twins
- * (plm.md § both-twin architecture — "both + router, always a floor"):
+ * (plm.md § both-twin architecture):
  *
- *   • weights twin — the PRIVACY FLOOR. A LoRA adapter compiled from the
- *     Author's substrate + sessions. The constitution is baked irreversibly
- *     into the weights, so nothing at query time exposes the Author's private
- *     thoughts and no prompt-injection can exfiltrate a system prompt that was
- *     never there. Cheap, always-safe → the stranger-facing default. Public by
- *     default. NEVER uses tools (small fine-tuned open model, no native
- *     tool-use; the seam below is inert for this variant).
+ *   • weights twin — a LoRA adapter compiled from the Author's substrate and
+ *     sessions. Raw sources are absent at query time, but public release still
+ *     requires the canary extraction gate: trained weights can memorize. NEVER
+ *     uses tools (small fine-tuned open model; the seam below is inert).
  *
- *   • context twin — the FIDELITY CEILING. A frontier model reading the
- *     Author's substrate in context. Higher fidelity (≈human self-consistency
- *     in the pilot) but it EXPOSES the substrate at query time — whatever runs
- *     inference sees the raw constitution. So it defaults to `authors`
- *     visibility (authenticated Alexandria members, where seeing the substrate
- *     is acceptable) and can be tightened to invite/paid. Runs on a frontier
- *     model that can natively use tools → carries a `tools` capability flag and
- *     the tool-use seam in runTwinInference (execution is a separate epic).
+ *   • context twin — the FIDELITY CEILING. A frontier model receives only the
+ *     exact Library scopes selected by Worker-side access gates, plus the active
+ *     artifact and bounded visitor conversation. It never opens local files.
  *
  * Why an HTTP adapter and not a direct call: Tinker sampling is a Python SDK
  * (client-side tokenizer + renderer + disable-thinking template) and the
- * context twin's substrate loading lives Author-side. A Worker cannot reproduce
- * either and MUST NOT hold TINKER_API_KEY or the substrate. So the ONE
- * integration point is a small inference sidecar (private/plm/twin_server.py)
- * that fronts the model(s) and holds the keys/substrate. The Worker holds only
- * the sidecar URL (TWIN_INFERENCE_URL) + a bearer secret. Empty URL ⇒ the
+ * Worker. The ONE integration point is a small inference sidecar
+ * (private/plm/twin_server.py) that fronts the model(s) and holds model keys.
+ * The Worker holds only deliberately published Library bytes, the sidecar URL,
+ * and a bearer secret—never Author source files or provider keys. Empty URL ⇒ the
  * feature reports "twin offline" — zero-regret: the surface stands, the engine
  * slots in when the founder points it at a live sidecar.
  *
@@ -40,6 +31,7 @@
  */
 
 import { authorizeFileRead, type FileReadDecision } from './file-access.js';
+import { normalizeLibraryScope } from './library-scopes.js';
 
 // ---------------------------------------------------------------------------
 // Per-Author twin config — read from authors.settings.twin (schemaless JSON)
@@ -52,14 +44,12 @@ export type TwinVisibility = 'public' | 'authors' | 'paid' | 'invite';
 const VISIBILITIES: readonly TwinVisibility[] = ['public', 'authors', 'paid', 'invite'];
 
 /**
- * Per-tool capability for the context (deep) twin. Schemaless in
- * `authors.settings.twin.context.tools` (bitter lesson — free JSON, no
- * migration). Two tools today:
+ * Fixed tool boundary for the context twin:
  *   • works — the "living page": retrieval over the Author's OWN published
  *     Library content, so the twin can discuss the Author's essays/projects AS
  *     the Author. Default ON — this is what makes the page come alive.
- *   • web   — web_search + fetch_url. Default OFF (needs a search key on the
- *     sidecar; degrades to "not configured" without one).
+ *   • web   — always OFF while Author context is loaded; untrusted web input
+ *     belongs in a separate dirty-zone process.
  * The weights twin is hard-forced both-off (no native tool-use). */
 export interface TwinToolConfig {
   works: boolean;
@@ -84,8 +74,6 @@ export interface WeightsTwinConfig {
   base: string;
   /** Author-set public label (shown in the UI). */
   label: string | null;
-  /** Identity system line the twin was trained with. */
-  system: string | null;
   /** Always both-off — a small fine-tuned model has no native tool-use. */
   tools: TwinToolConfig;
 }
@@ -94,21 +82,18 @@ export interface ContextTwinConfig {
   variant: 'context';
   /** Published + enabled AND has a resolvable frontier model. */
   enabled: boolean;
-  /** Access tier drawn from the shared visibility system. Default: INVITE —
-   *  the context twin exposes the substrate, so the SAFE default is the tightest
-   *  gate (a single injected authorized querier can extract the whole loaded
-   *  context; blast radius must be the smallest set — security model in plm.md). */
+  /** Optional outer access gate for using this PLM. Document access remains the
+   *  exact scopes intersection below. */
   visibility: TwinVisibility;
-  /** Frontier model id the substrate is read in context by. Not a secret. */
+  /** Frontier model id. Not a secret. */
   model: string | null;
   /** Author-set public label (shown in the UI). */
   label: string | null;
-  /** Identity system line. */
-  system: string | null;
-  /** Per-tool capability for the frontier model (native tool-use). Drives the
-   *  agent loop in the sidecar. Default: { works: true, web: false } — the
-   *  living page (own-works retrieval) is on, web search is opt-in. */
+  /** Fixed context capability: brokered Library retrieval on, live web off. */
   tools: TwinToolConfig;
+  /** Exact Library scopes this PLM may ever receive. Parent scopes never imply
+   * future cohorts. Missing legacy config fails closed to public only. */
+  scopes: string[];
 }
 
 export type TwinConfig = WeightsTwinConfig | ContextTwinConfig;
@@ -147,24 +132,15 @@ function vis(value: unknown): TwinVisibility | null {
   return v && (VISIBILITIES as readonly string[]).includes(v) ? (v as TwinVisibility) : null;
 }
 
-/**
- * Parse the context twin's `tools` slot. Back-compat + schemaless:
- *   • object `{ works?, web? }` → each field read as boolean, defaults applied.
- *   • legacy boolean `true`      → `{ works: true, web: false }` (old "tool-capable").
- *   • legacy boolean `false`     → `{ works: false, web: false }`.
- *   • absent                     → `{ works: true, web: false }` (living page on by default).
- */
-function toolConfig(value: unknown): TwinToolConfig {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    const o = value as Record<string, unknown>;
-    return {
-      works: typeof o.works === 'boolean' ? o.works : true,
-      web: typeof o.web === 'boolean' ? o.web : false,
-    };
+function scopeConfig(value: unknown): string[] {
+  if (!Array.isArray(value)) return ['public'];
+  const out = new Set<string>();
+  for (const raw of value.slice(0, 64)) {
+    if (typeof raw !== 'string') continue;
+    const scope = normalizeLibraryScope(raw, 'public');
+    if (scope) out.add(scope);
   }
-  if (value === true) return { works: true, web: false };
-  if (value === false) return { works: false, web: false };
-  return { works: true, web: false };
+  return out.size ? [...out] : ['public'];
 }
 
 /** Extract the `twin` slot from an already-parsed settings object. */
@@ -176,7 +152,7 @@ export function readTwinSettings(settings: Record<string, unknown> | null | unde
 export interface TwinEnv {
   DEFAULT_TWIN_CHECKPOINT?: string;
   DEFAULT_TWIN_BASE?: string;
-  /** Frontier model the context twin reads substrate in context by. */
+  /** Frontier model used for brokered Library context. */
   DEFAULT_TWIN_CONTEXT_MODEL?: string;
 }
 
@@ -184,7 +160,7 @@ export interface TwinEnv {
  * Resolve BOTH twin variants for an Author.
  *
  * Back-compat: if `settings.twin` has no nested `weights`/`context` keys, a flat
- * legacy blob (`{enabled, checkpoint, base, label, system}`) is read as the
+ * legacy blob (`{enabled, checkpoint, base, label}`) is read as the
  * weights variant — the single-twin config keeps working with zero migration.
  *
  * The checkpoint/base/model fall back to env defaults (the User-Zero path: the
@@ -210,7 +186,6 @@ export function resolveTwinVariants(
     checkpoint,
     base,
     label: str(wRaw.label),
-    system: str(wRaw.system),
     tools: { works: false, web: false },
   };
 
@@ -221,8 +196,8 @@ export function resolveTwinVariants(
     visibility: vis(cRaw.visibility) || 'invite',
     model,
     label: str(cRaw.label),
-    system: str(cRaw.system),
-    tools: toolConfig(cRaw.tools),
+    tools: { works: true, web: false },
+    scopes: scopeConfig(cRaw.scopes),
   };
 
   return { weights, context };
@@ -352,12 +327,10 @@ export function authorizeTwinAccess(opts: {
 // Inference adapter — the single integration point (both variants)
 // ---------------------------------------------------------------------------
 
-/** One published piece the querier is allowed to see, pre-gated by the Worker
- *  (the visibility authority). The sidecar's `search_my_works` tool retrieves
- *  over this corpus — it never re-derives the gate, so visibility is correct by
- *  construction. Content is the Author's PUBLISHED markdown, not private
- *  substrate (the substrate stays sidecar-loaded, never through the Worker). */
+/** One published piece the querier is allowed to see, pre-gated by the Worker.
+ *  The sidecar never opens Author files or re-derives the permission decision. */
 export interface TwinWork {
+  scope: string;
   name: string;
   visibility: string;
   content: string;
@@ -376,22 +349,19 @@ export interface TwinInferenceRequest {
   /** Per-tool capability (context variant only). Passed to the sidecar, which
    *  runs the tool-use agent loop. */
   tools?: TwinToolConfig;
-  /** Author id (github login) — lets the sidecar label the living-page tool and
-   *  fall back to the public Library API if no works are passed inline. */
+  /** Author id (github login) — labels the brokered Library search tool. */
   author?: string | null;
   /** Pre-gated published works for the `search_my_works` tool (context only). */
   works?: TwinWork[];
-  /** The Author's declared links out — website + socials, as shown on the
-   *  profile's links section (context only). The links DECLARE the routed
-   *  graph; the sidecar's capture corpus FILLS it. Passing the declaration on
-   *  every query means the twin can always ROUTE ("that's on my instagram —
-   *  here's the link") even for surfaces with no capture — the graceful floor
-   *  for locked platforms. Public data by definition (it's on the page). */
+  /** Bounded current visitor conversation. It is reader input, never Author substrate. */
+  messages?: { role: 'user' | 'assistant'; content: string }[];
+  /** Exact manifest hash and effective scopes chosen by the Worker. */
+  contextHash?: string;
+  contextScopes?: string[];
+  /** Public links as shown on the profile. They are routing references only;
+   *  neither the Worker nor sidecar crawls them for hidden context. */
   links?: { label: string; url: string }[];
-  /** The twin's visibility tier (context only). The sidecar loads ONLY the
-   *  shadow published at this tier as substrate — never the raw constitution —
-   *  so it's a structural ceiling on what the twin can reveal (plm.md § tiered
-   *  shadow). Worker-set from the twin's configured visibility, never the caller. */
+  /** Coarse display tier derived from the exact effective scopes. */
   tier?: TwinVisibility;
   /** The piece the querier is reading (context only) — passed so the twin can
    *  discuss it. The sidecar injects it as delimited, explicitly-untrusted text
@@ -418,13 +388,13 @@ export interface TwinInferenceOpts {
  *     question, max_tokens} — never any Author private data. An untrusted
  *     inference host sees a question and an opaque weights handle, nothing else.
  *
- *   • context → the sidecar receives {variant, model, system, question,
- *     max_tokens, tools} and loads the Author's substrate ITSELF (Author-side,
- *     never through the Worker). This variant is substrate-exposing by design,
- *     which is why its visibility is gated up-front (default `authors`).
+ *   • context → the sidecar receives the Worker's exact authorized Library
+ *     slice, context manifest hash, active artifact, and bounded conversation.
+ *     It has no local Author-file access and never widens the scope decision.
  *
- * The Worker stays stateless: it never holds the checkpoint weights, the
- * substrate, or the model keys — only the sidecar URL + bearer secret.
+ * The Worker never holds checkpoint weights, private local Author sources, or
+ * model keys. Deliberately published Library files live in D1/R2; the Worker
+ * materializes only this authorized slice in process for the current request.
  */
 /**
  * The sidecar exposes two POST endpoints:
@@ -512,14 +482,10 @@ export async function runTwinInference(
   // -----------------------------------------------------------------------
   // Tool-use routing (context variant, frontier model).
   //
-  // A frontier model can natively call tools. When ANY tool is enabled on a
-  // context query, the request goes to the sidecar's /agent endpoint, which
-  // runs a real tool-use loop (search_my_works over the Author's published
-  // works, plus web_search/fetch_url when configured) and returns the final
-  // answer the model gives AS the Author. Otherwise (no tools, or weights) it
-  // goes to /infer for single-shot sampling. The weights variant never reaches
-  // the agent path (config forces weights.tools all-off).
-  const toolsRequested = req.variant === 'context' && !!req.tools && (req.tools.works || req.tools.web);
+  // Every context query goes to the sidecar's /agent endpoint, which retrieves
+  // only over the exact Library slice already brokered into this request. Live
+  // web is fixed off. Weights go to /infer and never reach the agent path.
+  const toolsRequested = req.variant === 'context';
   const target = toolsRequested ? agentEndpointFrom(url) : url;
 
   const ctrl = new AbortController();
@@ -539,9 +505,11 @@ export async function runTwinInference(
       body.model = req.model;
       body.tools = req.tools ?? { works: false, web: false };
       body.author = req.author ?? null;
-      // The tier the sidecar loads substrate at (structural ceiling). Worker-set,
-      // fail closed to public if somehow unset.
+      // Coarse display tier; the exact context ceiling is context_scopes.
       body.tier = req.tier ?? 'public';
+      body.context_hash = req.contextHash ?? null;
+      body.context_scopes = req.contextScopes ?? [];
+      if (req.messages?.length) body.messages = req.messages;
       // The piece being read (reader workspace) — sidecar puts it in a delimited
       // untrusted USER block so the twin can discuss it without being reframed.
       if (req.focus && req.focus.content) body.focus = req.focus;

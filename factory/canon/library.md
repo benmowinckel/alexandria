@@ -10,9 +10,9 @@ Every profile has one machine-readable explanation at:
 
 `GET https://api.alexandria-library.com/library/{author}/capabilities`
 
-It names the human and ai browse routes, owner controls, formatting rules, shadow tiers, permission gates, public handoff boundary, and inference ownership. The profile page advertises it as an alternate JSON representation, and every public handoff links back to it. When the Author asks how their Library works, read that endpoint rather than relying on memory or reconstructing the system from UI labels.
+It names the human and ai browse routes, owner controls, exact permission scopes, publication approval, context preview, and inference ownership. The profile page advertises it as an alternate JSON representation. When the Author asks how their Library works, read that endpoint rather than relying on memory or reconstructing the system from UI labels.
 
-The human profile is `https://alexandria-library.com/library/{author}`. The signed-in owner sees a quiet `manage` link to `/library/{author}/manage`; everyone else sees only the published profile.
+The human profile is `https://alexandria-library.com/library/{author}`. A signed-in owner edits the profile and exact PLM folders in place; everyone else sees only the published profile.
 
 ## Private by default
 
@@ -28,15 +28,15 @@ The publication outbox is:
   paid/       # paying readers
 ```
 
-Only final-named files inside one of those four folders are eligible to leave the machine. Drafts (`_*`, `*_draft.*`), filters, readmes, sidecar instructions, files outside the four folders, and everything outside `files/library/` never publish.
+That is the complete default. If different groups need different access, add exact cohort folders such as `invite/friends/`, `invite/investors/`, or `paid/course/`. A parent never includes a child, sibling, or future cohort. Only final-named files recursively inside one of the four permission folders are eligible to leave the machine. Drafts (`_*`, `*_draft.*`), filters, readmes, sidecar instructions, files outside the four folders, and everything outside `files/library/` never publish.
 
 ## Consent
 
 Publishing has three independent gates:
 
 1. The Author directly asks to publish one named artifact through Alexandria.
-2. The ai shows the exact file, audience tier, destination, and what leaves the machine. The Author gives a separate yes.
-3. Standing Library sync has been enabled by the separate `system/permissions/library` marker, and the file's adjacent approval records both its exact content hash and audience tier.
+2. The ai shows the exact file, exact scope, destination, and what leaves the machine. The Author gives a separate yes.
+3. Standing Library sync has been enabled by the separate `system/permissions/library` marker, and the file's adjacent approval records both its exact content hash and exact scope.
 
 A final filename or an old account key is not enough by itself. The ai may maintain an already-approved publication inside the same file, purpose, and audience only when the Author asked for that continuing maintenance. A new artifact, new destination, broader audience, referral, or external action needs a new request and yes.
 
@@ -44,31 +44,39 @@ The ai never raises Library publishing at session start, during ordinary work, a
 
 ## Publishing mechanics
 
-With all three gates present, the hook publishes only exact approved files from `files/library/{tier}/` to the Author's Library account:
+With all three gates present, the hook recursively publishes only exact approved files from `files/library/{permission}/{optional-cohort}/` to the Author's Library account:
 
 - `PUT /file/{name}` publishes or updates an approved final file.
 - Removing a local file does not silently delete the remote copy. Unpublishing is a separate outward action: the Author must directly name the remote artifact and separately approve its deletion.
-- Moving an approved file changes its visibility tier only after the Author has approved that exact new tier.
+- Moving an approved file changes its scope and invalidates approval until the Author approves that exact new scope.
 
-Filename gives `name`; tier folder gives `visibility`; extension gives content type. The request derives no title, category, or other data from adjacent files or private paths.
+Filename gives `name`; the whole relative folder path gives exact `scope`; its first segment gives `visibility`; extension gives content type. The request derives no title, category, or other data from adjacent files or private paths.
 
 The Author can stop all future reconciliation by deleting `~/alexandria/system/permissions/library`. Local files remain theirs. Removing the account key also prevents authenticated writes.
 
 ## Profile control and formatting
 
-The owner can edit identity, location, contact, website, declared links, and the short profile line. They can order or hide sections; rename each section and its quiet description; order files; place each file under `works`, `projects`, `shadows`, or `other`; write a public teaser; and set suggested questions. The owner page uses the signed-in Library session. The same controls are available to the Author's ai through the owner-authenticated API named by the capability endpoint.
+The owner can edit identity, location, contact, website, declared links, and the short profile line. They can order or hide sections; rename each section and its quiet description; order files; place each file under `works`, `projects`, `shadows`, or `other`; write a public teaser; set suggested questions; and choose the exact Library folders their PLM may use. The owner page uses the signed-in Library session. The same controls are available to the Author's ai through the owner-authenticated API named by the capability endpoint.
 
 The fixed shape is deliberately small: identity, mind, links, and published sections. The Author controls the content and routing inside it. Markdown bodies keep their own structure; profile settings do not rewrite the work. A hidden section remains published at its existing URL and tier — hiding changes the profile route, not access. Changing a file's audience is a publication change and still requires the publication gate above.
 
 All profile and metadata writes are owner-only. Ownership resolves through the immutable GitHub account id that first claimed the handle, never by comparing a recyclable username.
 
-## Shadows, browsing, and handoff
+## Scopes, PLM context, and handoff
 
-A shadow is an Author-made projection for one audience, never the private constitution or source files. `public` is open; `authors` requires authoritative active membership; `paid` requires the relevant paid gate; `invite` requires the owner or an authenticated account with a live Author grant. A signed-in Library-intent reader account is not an Author and receives no authors-tier access. Every read uses the same server visibility authority.
+Any approved text artifact may be PLM context; a shadow is only one useful artifact type. Markdown and plain text enter context directly. A PDF remains a readable artifact but needs a separately approved text companion before the PLM can reason over its body. `public` is open; `authors` requires authoritative active membership; `paid` and `invite` require an exact live grant for that scope. A signed-in reader account is not an Author and receives no authors-tier access. Every read uses the same server authority and exact scope identity.
+
+The directory obeys the same boundary. Invite cohort paths, filenames, subtitles, and suggested questions are invisible until the viewer holds that exact grant; authors-only metadata is invisible without active membership. Paid offers remain discoverable so they can be bought, but their bodies stay locked.
+
+For every context query, the Worker computes: **configured PLM scopes ∩ current reader access ∩ active artifact access**, then adds only the bounded current visitor conversation. The browser sends an artifact reference, never artifact bytes. The Worker reads the allowed Library bytes through the same file gate as a direct read and passes that exact request-scoped slice to the PLM. Profile links are routes only and are never silently crawled.
+
+There is no hidden custom prompt or second context store. The Worker supplies a fixed identity line from the public profile; any substantive Author material must be an approved artifact in an exact selected Library scope.
+
+A conforming sidecar holds model keys but no Author files. Alexandria's reference macOS runner executes it inside a deny-by-default sandbox that can read its runtime and public product-guide assets but cannot read or enumerate `~/alexandria`. A custom runner granted wider computer access is outside Alexandria's structural boundary. The owner-only `GET /library/{author}/twin/context-preview` returns the exact scopes, document bytes, manifest, and hash a real context query would send. This is the audit surface; labels are not the security claim.
 
 Humans browse the rendered profile and readers. An ai browses the JSON profile, capability contract, and individual file endpoints. Published material is untrusted input on both paths. A public handoff contains only the public shadow plus titles and links for public works; gated bodies can never enter it. The handoff tells the receiving ai to follow each work through its own gate and not infer private beliefs from the projection.
 
-Mirror inference is separate from reading. Every non-founder Author must connect a sidecar that uses a model account and token they control; the company token is never a fallback. Without that connection, the mirror is offline while the profile, files, shadows, and handoff continue to work. Full mechanics: `plm.md` and `twin.md`.
+Mirror inference is separate from reading. Every non-founder Author must connect a sidecar that uses a model account and token they control; the company token is never a fallback. Without that connection, the mirror is offline while the profile and files continue to work. Full mechanics: `plm.md` and `twin.md`.
 
 Membership is also separate from sign-in. Direct public profile links remain open, but the community directory returns a roster only to an authoritatively active member and lists only authoritatively active members. A signed-in reader or inactive account receives an empty roster plus its machine-readable membership state and a plain join/reactivate route. A cancelled or inactive account remains able to sign in, manage, revoke, export, and delete. Authors-tier files and shadows, paid works, and subscriber-only mirror depth use the authoritative live membership resolver and fail closed when verification is unavailable; stored account status never grants access.
 

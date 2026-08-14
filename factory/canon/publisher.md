@@ -45,9 +45,9 @@ For a publication the Author directly requested, the Publisher consults the root
 
 ## The trust boundary
 
-`~/alexandria/files/library/` has four tier sub-folders: `public/`, `authors/`, `invite/`, `paid/`. Canonical hand-authored works live outside it at `~/alexandria/files/works/`. Placement in a tier is not sufficient consent. For a direct publication request, the Author must see the exact current file and tier; after a separate yes, its adjacent `<filename>.approved` records the SHA-256 of those bytes plus that tier. A later edit or move invalidates approval and stays local until approved again. Drafts and every file outside `library/` never ship.
+`~/alexandria/files/library/` has four permission sub-folders: `public/`, `authors/`, `invite/`, `paid/`. Canonical hand-authored works live outside it at `~/alexandria/files/works/`. Named cohort folders may nest below a permission, such as `invite/friends/`; every scope is exact and nothing inherits. Placement is not sufficient consent. For a direct publication request, the Author must see the exact current file and exact scope; after a separate yes, its adjacent `<filename>.approved` records the SHA-256 of those bytes plus that scope. A later edit or move invalidates approval and stays local until approved again. Drafts and every file outside `library/` never ship.
 
-**Publish mapping.** With Library permission and a matching content-hash approval, `library/{tier}/{name}` maps to `PUT /file/{name}` with the approved content and visibility. The protocol accepts `public`, `authors`, `invite`, and `paid`. Any pricing action is handled only when the Author directly asks for that exact publication and price; the private ai never volunteers pricing or turns it into an Alexandria pitch.
+**Publish mapping.** With Library permission and a matching content-hash-plus-scope approval, `library/{scope}/{name}` maps to `PUT /file/{name}` with the approved content, exact scope, and first-segment visibility. The protocol accepts `public`, `authors`, `invite`, and `paid` as the permission prefix and safe nested cohort names below them. Any pricing action is handled only when the Author directly asks for that exact publication and price; the private ai never volunteers pricing or turns it into an Alexandria pitch.
 
 ## The first goodbye
 

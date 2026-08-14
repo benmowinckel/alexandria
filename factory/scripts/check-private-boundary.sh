@@ -378,7 +378,7 @@ forbid factory/canon/filter.md \
   'publishes one file at minimum|Both floors are mandatory|placement selects both consent|The move is the consent|Auto-propagation|ship automatically|Yes — publish' \
   'publishing policy still treats participation, placement, or agent judgment as consent'
 require factory/templates/library/filter.md \
-  'Any edit, rename, or audience change invalidates approval' \
+  'Any edit, rename, move, or audience-scope change invalidates approval' \
   'the installed Author filter does not invalidate stale approval'
 forbid factory/templates/library/filter.md \
   'promote a draft by renaming|^## Auto-OK|auto-publish|standing category is consent' \

@@ -19,11 +19,11 @@
 
 ## library-sync — publish exact approved files
 
-- **Does:** on session start, updates only files with an adjacent approval whose exact hash and audience still match. Drafts and private files outside that folder never ship. It never deletes a remote file; unpublishing is a separate direct request with its own confirmation.
+- **Does:** on session start, recursively updates only files with an adjacent approval whose exact hash and exact scope still match. Drafts and private files outside the four permission folders never ship. It never deletes a remote file; unpublishing is a separate direct request with its own confirmation.
 - **Touches:** one local permission marker and the Author's Alexandria Library.
-- **Leaves the machine:** only a final-named file whose adjacent `<filename>.approved` contains the SHA-256 of its current bytes and the approved visibility tier. Editing it or moving it to another tier stops publication until the new scope is approved. Nearby title/category files and other private paths are never read into the request.
-- **Needs:** a connected account. Before enabling, show the Author every currently publishable local filename and its audience tier; an empty list is valid.
-- **Enable:** after showing one exact file and tier and receiving a separate yes, approve both with `printf '%s %s\n' "$(shasum -a 256 <file> | awk '{print $1}')" '<tier>' > <file>.approved`. After a separate yes to run reconciliation, `touch ~/alexandria/system/permissions/library`.
+- **Leaves the machine:** only a final-named file whose adjacent `<filename>.approved` contains the SHA-256 of its current bytes and the approved exact scope, such as `invite/friends`. Editing or moving it stops publication until the new bytes and scope are approved. Nearby title/category files and other private paths are never read into the request.
+- **Needs:** a connected account. Before enabling, show the Author every currently publishable local filename and exact scope; an empty list is valid.
+- **Enable:** after showing one exact file and scope and receiving a separate yes, approve both with `printf '%s %s\n' "$(shasum -a 256 <file> | awk '{print $1}')" '<exact-scope>' > <file>.approved`. After a separate yes to run reconciliation, `touch ~/alexandria/system/permissions/library`.
 - **Off:** `rm ~/alexandria/system/permissions/library` — stops all future Library reconciliation without deleting either copy.
 
 ## marketplace-signal — report modules this machine uses

@@ -12,11 +12,13 @@ import { FOUNDER_LIBRARY_ID, FOUNDER_PROFILE_PATH } from '../lib/config';
  * the same mind the public reaches on his profile — with the doc being read
  * passed as `focus`. This replaced the old faceless `/api/ask` guide: a reader
  * now talks to Benjamin's actual mind, built with Alexandria, which is itself
- * the pitch. Inference runs on the device sidecar; the twin loads only the
- * public shadow + public product facts (no private substrate in reach).
+ * the pitch. Inference runs on the device sidecar; the browser sends only this
+ * document's Library reference and the Worker supplies the exact authorized
+ * public Library slice. The sidecar has no private Author files in reach.
  */
 export default function PublicDocReader({
   title, mdSrc, pdfSrc, txtSrc, numbered, plain, askQuestions, askFirst,
+  artifactName, artifactScope = 'public',
 }: {
   title: string;
   mdSrc?: string;   // markdown to fetch + render (the whitepaper)
@@ -26,6 +28,8 @@ export default function PublicDocReader({
   plain?: boolean;    // with numbered: the plain (ragged-right) variant
   askQuestions?: string[]; // this doc's own suggested questions → the rotation
   askFirst?: boolean;      // open with the mirror pane up (the /features ask page)
+  artifactName: string;    // server-authoritative Library artifact; browser never sends bytes
+  artifactScope?: string;
 }) {
   // The allowance comes from the Author's directory rather than a duplicated
   // client-side limit.
@@ -83,13 +87,14 @@ export default function PublicDocReader({
   // Ask Benjamin's OWN public context twin (the same mind on his profile), with
   // the doc the reader is on passed as `focus` so the answer is grounded in it.
   // `text` holds the current doc (markdown or the letter's extracted text).
-  const askFn = async (question: string) => {
+  const askFn = async (question: string, messages: { role: 'user' | 'assistant'; content: string }[]) => {
     const res = await fetch(`/api/library/${FOUNDER_LIBRARY_ID}/ask`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         question,
         variant: 'context',
-        ...(text.trim() ? { focus: { name: title, content: text } } : {}),
+        artifact: { name: artifactName, scope: artifactScope },
+        messages,
       }),
     });
     const b = await res.json().catch(() => ({}));

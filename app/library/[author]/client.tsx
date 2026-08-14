@@ -14,12 +14,13 @@ import { type TwinVariantSummary } from './types';
 import { LIBRARY_LOCATIONS } from '../../../shared/library-locations';
 
 interface ProtocolFile {
+  scope: string;
   name: string;
   text: string | null;
   title?: string | null;
-  // Always-public teaser line; used as the subtitle when set. Gated files
-  // (invite/authors) have their `text` blurb suppressed server-side, so this is
-  // the only subtitle source for them.
+  // Owner-authored teaser line. The server returns it only when this exact
+  // artifact is listable to the viewer; hidden invite/authors metadata never
+  // reaches the browser.
   subtitle?: string | null;
   visibility: string;
   category?: string;
@@ -49,7 +50,16 @@ interface AuthorData {
     membership_source?: string | null;
     membership_verified_at?: string | null;
   };
-  twin?: { enabled: boolean; label: string | null; variants?: TwinVariantSummary[]; online?: boolean; signed_in?: boolean };
+  twin?: {
+    enabled: boolean;
+    label: string | null;
+    variants?: TwinVariantSummary[];
+    online?: boolean;
+    signed_in?: boolean;
+    context_enabled?: boolean;
+    context_scopes?: string[];
+    context_preview_url?: string;
+  };
   files?: ProtocolFile[];
   // Optional per-Author profile config — reorder/subset the emergent sections
   // and rename a section's word + whisper. Absent → defaults. The profile is a
@@ -80,6 +90,10 @@ const editFieldStyle: CSSProperties = {
 
 function categoryOf(file: ProtocolFile): Category {
   return CATEGORIES.includes(file.category as Category) ? file.category as Category : 'shadows';
+}
+
+function protocolFileKey(file: Pick<ProtocolFile, 'scope' | 'name'>): string {
+  return `${file.scope}/${file.name}`;
 }
 
 function normalizePreviewText(value: string | null | undefined): string | null {
@@ -146,13 +160,14 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   const [saving, setSaving] = useState(false);
   const [saveNote, setSaveNote] = useState('');
   const [editFiles, setEditFiles] = useState<ProtocolFile[]>([]);
+  const [contextScopes, setContextScopes] = useState<string[]>(['public']);
   const [identity, setIdentity] = useState<EditableIdentity>({
     display_name: '', location: '', contact: '', website: '', text: '', socials: [],
   });
-  const [dragged, setDragged] = useState<{ name: string; category: Category } | null>(null);
-  const [dropTarget, setDropTarget] = useState<{ name: string; after: boolean } | null>(null);
-  const pointerDrag = useRef<{ name: string; category: Category; pointerId: number; startY: number; active: boolean } | null>(null);
-  const dropTargetRef = useRef<{ name: string; after: boolean } | null>(null);
+  const [dragged, setDragged] = useState<{ key: string; category: Category } | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ key: string; after: boolean } | null>(null);
+  const pointerDrag = useRef<{ key: string; category: Category; pointerId: number; startY: number; active: boolean } | null>(null);
+  const dropTargetRef = useRef<{ key: string; after: boolean } | null>(null);
   // Rotating door placeholder — smart example questions cycle through the ghost
   // text instead of rigid hardcoded chips (founder 2026-07-19). Unhurried cadence
   // + the crossfade in PromptBox so it flows, not snaps (founder 2026-07-20).
@@ -178,6 +193,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           }
           setData(d);
           setEditFiles(d.files || []);
+          setContextScopes(d.twin?.context_scopes?.length ? d.twin.context_scopes : ['public']);
           setIdentity({
             display_name: d.author.display_name || '',
             location: d.author.location || '',
@@ -222,18 +238,18 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   }, [offlineNote]);
 
   const editSubtitles = useMemo(
-    () => Object.fromEntries(editFiles.filter((file) => file.subtitle?.trim()).map((file) => [file.name, file.subtitle!.trim()])),
+    () => Object.fromEntries(editFiles.filter((file) => file.subtitle?.trim()).map((file) => [protocolFileKey(file), file.subtitle!.trim()])),
     [editFiles],
   );
 
-  const reorderWithinSection = (category: Category, sourceName: string, targetName: string, after = false) => {
-    if (sourceName === targetName) return;
+  const reorderWithinSection = (category: Category, sourceKey: string, targetKey: string, after = false) => {
+    if (sourceKey === targetKey) return;
     setEditFiles((current) => {
       const sectionItems = current.filter((file) => categoryOf(file) === category);
-      const source = sectionItems.find((file) => file.name === sourceName);
+      const source = sectionItems.find((file) => protocolFileKey(file) === sourceKey);
       if (!source) return current;
-      const without = sectionItems.filter((file) => file.name !== sourceName);
-      const targetIndex = without.findIndex((file) => file.name === targetName);
+      const without = sectionItems.filter((file) => protocolFileKey(file) !== sourceKey);
+      const targetIndex = without.findIndex((file) => protocolFileKey(file) === targetKey);
       if (targetIndex < 0) return current;
       without.splice(targetIndex + (after ? 1 : 0), 0, source);
       let cursor = 0;
@@ -241,23 +257,23 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     });
   };
 
-  const nudgeWithinSection = (event: KeyboardEvent<HTMLElement>, category: Category, name: string) => {
+  const nudgeWithinSection = (event: KeyboardEvent<HTMLElement>, category: Category, key: string) => {
     if (!event.altKey || !['ArrowUp', 'ArrowDown'].includes(event.key)) return;
     event.preventDefault();
     const sectionItems = editFiles.filter((file) => categoryOf(file) === category);
-    const index = sectionItems.findIndex((file) => file.name === name);
+    const index = sectionItems.findIndex((file) => protocolFileKey(file) === key);
     const target = sectionItems[index + (event.key === 'ArrowUp' ? -1 : 1)];
-    if (target) reorderWithinSection(category, name, target.name, event.key === 'ArrowDown');
+    if (target) reorderWithinSection(category, key, protocolFileKey(target), event.key === 'ArrowDown');
   };
 
-  const setActiveDrop = (value: { name: string; after: boolean } | null) => {
+  const setActiveDrop = (value: { key: string; after: boolean } | null) => {
     dropTargetRef.current = value;
     setDropTarget(value);
   };
 
-  const startPointerDrag = (event: ReactPointerEvent<HTMLElement>, category: Category, name: string) => {
+  const startPointerDrag = (event: ReactPointerEvent<HTMLElement>, category: Category, key: string) => {
     if (event.button !== 0) return;
-    pointerDrag.current = { name, category, pointerId: event.pointerId, startY: event.clientY, active: false };
+    pointerDrag.current = { key, category, pointerId: event.pointerId, startY: event.clientY, active: false };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
@@ -267,23 +283,23 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     if (!drag.active && Math.abs(event.clientY - drag.startY) < 5) return;
     if (!drag.active) {
       drag.active = true;
-      setDragged({ name: drag.name, category: drag.category });
+      setDragged({ key: drag.key, category: drag.category });
     }
     event.preventDefault();
     const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-profile-piece]');
-    if (!target || target.dataset.category !== drag.category || target.dataset.name === drag.name) {
+    if (!target || target.dataset.category !== drag.category || target.dataset.key === drag.key) {
       setActiveDrop(null);
       return;
     }
     const rect = target.getBoundingClientRect();
-    setActiveDrop({ name: target.dataset.name || '', after: event.clientY > rect.top + rect.height / 2 });
+    setActiveDrop({ key: target.dataset.key || '', after: event.clientY > rect.top + rect.height / 2 });
   };
 
   const finishPointerDrag = (event: ReactPointerEvent<HTMLElement>) => {
     const drag = pointerDrag.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
     if (drag.active && dropTargetRef.current) {
-      reorderWithinSection(drag.category, drag.name, dropTargetRef.current.name, dropTargetRef.current.after);
+      reorderWithinSection(drag.category, drag.key, dropTargetRef.current.key, dropTargetRef.current.after);
     }
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     pointerDrag.current = null;
@@ -301,8 +317,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     const profile = data.profile || {};
     const writes: Array<[string, Record<string, unknown>]> = [
       ['profile', { ...identity, socials, order: profile.order || [], hidden: profile.hidden || [], labels: profile.labels || {} }],
-      ['file-order', { order: editFiles.map((file) => file.name) }],
+      ['file-order', { order: editFiles.map(protocolFileKey) }],
       ['file-subtitles', { subtitles: editSubtitles }],
+      ['twin', { context: { scopes: contextScopes } }],
     ];
     try {
       for (const [control, body] of writes) {
@@ -379,6 +396,17 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       whisper: profile.labels?.[cat]?.whisper ?? DEFAULT_WHISPER[cat] ?? '',
       items: byCat.get(cat) as ProtocolFile[],
     }));
+  const availableContextScopes = Array.from(new Set([
+    'public',
+    ...editFiles.map((file) => file.scope),
+    ...contextScopes,
+  ])).sort((a, b) => a === 'public' ? -1 : b === 'public' ? 1 : a.localeCompare(b));
+  const toggleContextScope = (scope: string) => {
+    setContextScopes((current) => {
+      if (current.includes(scope)) return current.length === 1 ? current : current.filter((candidate) => candidate !== scope);
+      return [...current, scope].sort();
+    });
+  };
 
   // General account sign-in — lives at the top of the page, not tied to the twin.
   const signedIn = data.viewer?.signed_in === true || data.twin?.signed_in === true;
@@ -433,30 +461,31 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   );
   // Entry row — title left, tier right, on one baseline, with a bottom hairline.
   const fileRow = (file: ProtocolFile) => {
+    const fileKey = protocolFileKey(file);
     if (editing) {
       const category = categoryOf(file);
-      const target = dropTarget?.name === file.name ? dropTarget : null;
+      const target = dropTarget?.key === fileKey ? dropTarget : null;
       return (
         <article
-          key={file.name}
+          key={fileKey}
           data-profile-piece
-          data-name={file.name}
+          data-key={fileKey}
           data-category={category}
           className="profile-edit-piece"
           style={{
             borderTop: target && !target.after ? '2px solid var(--accent)' : '2px solid transparent',
             borderBottom: target?.after ? '2px solid var(--accent)' : '2px solid transparent',
-            opacity: dragged?.name === file.name ? 0.35 : 1,
+            opacity: dragged?.key === fileKey ? 0.35 : 1,
           }}
         >
           <div
             role="button"
             tabIndex={0}
             aria-label={`${file.title || fileDisplayName(file.name)}. Drag to reorder within ${category}.`}
-            aria-pressed={dragged?.name === file.name}
+            aria-pressed={dragged?.key === fileKey}
             className="profile-edit-drag"
-            onKeyDown={(event) => nudgeWithinSection(event, category, file.name)}
-            onPointerDown={(event) => startPointerDrag(event, category, file.name)}
+            onKeyDown={(event) => nudgeWithinSection(event, category, fileKey)}
+            onPointerDown={(event) => startPointerDrag(event, category, fileKey)}
             onPointerMove={trackPointerDrag}
             onPointerUp={finishPointerDrag}
             onPointerCancel={finishPointerDrag}
@@ -472,7 +501,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             rows={1}
             value={file.subtitle || ''}
             placeholder="add a description"
-            onChange={(event) => setEditFiles((current) => current.map((candidate) => candidate.name === file.name ? { ...candidate, subtitle: event.target.value } : candidate))}
+            onChange={(event) => setEditFiles((current) => current.map((candidate) => protocolFileKey(candidate) === fileKey ? { ...candidate, subtitle: event.target.value } : candidate))}
             onPointerDown={(event) => event.stopPropagation()}
           />
         </article>
@@ -520,7 +549,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     // Every entry opens the 3-panel reader (piece + twin + notes); it handles the
     // gate itself (public reads free, invite/paid prompt sign-in).
     return (
-      <Link key={file.name} href={`/library/${encodeURIComponent(authorId)}/read/${encodeURIComponent(file.name)}`}
+      <Link key={`${file.scope}/${file.name}`} href={`/library/${encodeURIComponent(authorId)}/read/${encodeURIComponent(file.name)}?scope=${encodeURIComponent(file.scope)}`}
         className="hover:opacity-60" style={rowStyle}>
         {inner}
       </Link>
@@ -665,6 +694,25 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
         </header>
 
         <section>
+          {editing && data.twin?.context_enabled && (
+            <div className="profile-edit-mirror" style={{ margin: '0 0 3.2rem', padding: '1.25rem 0', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>mirror can use</span>
+                <a href={`/api/library/${encodeURIComponent(authorId)}/context-preview`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)', fontSize: '0.88rem', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+                  see the exact context
+                </a>
+              </div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '0.3rem 0 0.9rem' }}>choose exact Library folders. each folder stands alone.</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.55rem 1rem' }}>
+                {availableContextScopes.map((scope) => (
+                  <label key={scope} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.92rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={contextScopes.includes(scope)} onChange={() => toggleContextScope(scope)} />
+                    <span>{scope}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           {data.twin?.enabled && (() => {
             // The ask-me door — the clearest thing on the page (a2 § Library V1:
             // the twin is why the link spreads). The question rides to the chat

@@ -158,7 +158,10 @@ export type ReaderShellProps = {
   /** The twin call (the wrapper decides which mind). Returning the richer shape
    *  lets the reader see what answered and what's left of their allowance; a
    *  bare string still works. Throw with `allowanceSpent` to trigger the handoff. */
-  askFn: (question: string) => Promise<string | AskResult>;
+  askFn: (
+    question: string,
+    history: { role: 'user' | 'assistant'; content: string }[],
+  ) => Promise<string | AskResult>;
   /** Whose mind this is — enables the handoff (their public shadow + works).
    *  Without it the reader can still take the piece and the conversation. */
   handoffAuthorId?: string;
@@ -398,7 +401,12 @@ export default function ReaderShell({
     if (mobile) setTab('ask');
     const add = (m: Msg) => setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, m] } : c)));
     try {
-      const res = await askFn(text);
+      const history: { role: 'user' | 'assistant'; content: string }[] = [];
+      for (const message of active?.messages || []) {
+        if (message.role === 'you') history.push({ role: 'user', content: message.text });
+        if (message.role === 'twin') history.push({ role: 'assistant', content: message.text });
+      }
+      const res = await askFn(text, history);
       const out: AskResult = typeof res === 'string' ? { answer: res } : res;
       add({ role: 'twin', text: out.answer });
       if (typeof out.remaining === 'number' && typeof out.limit === 'number') {

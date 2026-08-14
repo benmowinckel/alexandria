@@ -10,7 +10,7 @@ type Visibility = 'public' | 'authors' | 'invite' | 'paid' | string;
 
 type AuthorResponse = {
   author?: { display_name?: string | null };
-  files?: Array<{ name: string; visibility: Visibility }>;
+  files?: Array<{ name: string; scope?: string; visibility: Visibility }>;
 };
 
 type SessionResponse = {
@@ -47,6 +47,7 @@ export default function OpenProtocolFileGatePage({
   params: Promise<{ author: string; name: string }>;
 }) {
   const searchParams = useSearchParams();
+  const scope = (searchParams.get('scope') || '').trim();
   const [authorId, setAuthorId] = useState('');
   const [fileName, setFileName] = useState('');
   const [authorName, setAuthorName] = useState('');
@@ -93,7 +94,7 @@ export default function OpenProtocolFileGatePage({
           setSessionLogin(session.github_login || null);
         }
 
-        const file = (authorData.files || []).find((candidate) => candidate.name === name);
+        const file = (authorData.files || []).find((candidate) => candidate.name === name && (!scope || candidate.scope === scope));
         if (!file) {
           setError('file not found.');
         } else {
@@ -105,11 +106,11 @@ export default function OpenProtocolFileGatePage({
         setReady(true);
       }
     });
-  }, [params]);
+  }, [params, scope]);
 
   const nextPath = useMemo(() => (
-    `/library/${encodeURIComponent(authorId)}/open/${encodeURIComponent(fileName)}`
-  ), [authorId, fileName]);
+    `/library/${encodeURIComponent(authorId)}/open/${encodeURIComponent(fileName)}${scope ? `?scope=${encodeURIComponent(scope)}` : ''}`
+  ), [authorId, fileName, scope]);
 
   const signInUrl = useMemo(() => librarySignInUrl(nextPath), [nextPath]);
   const signUpUrl = useMemo(() => (
@@ -130,6 +131,7 @@ export default function OpenProtocolFileGatePage({
 
   const buildFileQuery = (): string => {
     const params = new URLSearchParams();
+    if (scope) params.set('scope', scope);
     const code = inviteCode.trim();
     if (code) params.set('invite', code);
     if (purchaseSessionId) params.set('session_id', purchaseSessionId);
@@ -153,7 +155,7 @@ export default function OpenProtocolFileGatePage({
 
   const startUnauthCheckout = async (): Promise<boolean> => {
     const checkout = await fetch(
-      `/api/library/${encodeURIComponent(authorId)}/checkout/file/${encodeURIComponent(fileName)}`,
+      `/api/library/${encodeURIComponent(authorId)}/checkout/file/${encodeURIComponent(fileName)}${scope ? `?scope=${encodeURIComponent(scope)}` : ''}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -242,7 +244,7 @@ export default function OpenProtocolFileGatePage({
 
   const fetchCodes = async () => {
     try {
-      const res = await fetch(`/api/library/${encodeURIComponent(authorId)}/access-codes`, { credentials: 'include' });
+      const res = await fetch(`/api/library/${encodeURIComponent(authorId)}/access-codes${scope ? `?scope=${encodeURIComponent(scope)}` : ''}`, { credentials: 'include' });
       if (!res.ok) return;
       const body = await res.json() as { codes: Array<{ id: string; code: string; label: string | null; created_at: string; revoked_at: string | null }> };
       setCodes(body.codes || []);
@@ -271,7 +273,7 @@ export default function OpenProtocolFileGatePage({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ label: shareLabel.trim() || undefined }),
+          body: JSON.stringify({ label: shareLabel.trim() || undefined, scope: scope || 'invite' }),
         },
       );
       if (!res.ok) {
@@ -280,7 +282,7 @@ export default function OpenProtocolFileGatePage({
         return;
       }
       const minted = await res.json() as { code: string; label: string | null };
-      const url = `${window.location.origin}${nextPath}?invite=${encodeURIComponent(minted.code)}`;
+      const url = `${window.location.origin}${nextPath}${nextPath.includes('?') ? '&' : '?'}invite=${encodeURIComponent(minted.code)}`;
       setShareUrl(url);
       setShareLabel('');
       // Refresh the list so the new code shows immediately.
@@ -293,7 +295,7 @@ export default function OpenProtocolFileGatePage({
   };
 
   const urlForCode = (code: string): string => (
-    `${window.location.origin}${nextPath}?invite=${encodeURIComponent(code)}`
+    `${window.location.origin}${nextPath}${nextPath.includes('?') ? '&' : '?'}invite=${encodeURIComponent(code)}`
   );
 
   const copyCodeUrl = async (id: string, code: string) => {

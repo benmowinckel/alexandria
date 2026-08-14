@@ -6,9 +6,21 @@
 
 ## Ownership before inference
 
-Every non-founder Author runs inference on a model account and token they control. Their ai runs a sidecar beside their substrate and registers only its URL plus a separate bearer secret with the Library; the model-provider token and private substrate never enter Alexandria's Worker. Registration explicitly acknowledges `own_account: true`. If the connection is missing, malformed, or not author-owned, the mirror is offline. It never falls back to the company's checkpoint, model, sidecar, or token.
+Every non-founder Author runs inference on a model account and token they control. Their sidecar registers only its URL plus a separate bearer secret with the Library; the model-provider token and private source files never enter Alexandria's Worker. Registration explicitly acknowledges `own_account: true`. If the connection is missing, malformed, or not author-owned, the mirror is offline. It never falls back to the company's checkpoint, model, sidecar, or token.
 
 The founder's deployment may use the founder compatibility defaults. That exception is bound to the configured founder login before model resolution and sidecar lookup; it cannot spill into another Author's account. Reading shadows and published work never requires inference and keeps working when the sidecar is off.
+
+## Serve-time boundary — Library is the whole context authority
+
+The compile pipeline below may use private sources only after the Author directly asks to compile. Serving is a different boundary: a context PLM never mounts the Constitution, vault, voice files, project tree, or any other local source.
+
+The Author configures an exact list of Library scopes for that PLM. For each query the Worker computes **configured PLM scopes ∩ current reader access ∩ active artifact access**, then adds only the bounded current visitor conversation. The browser sends an artifact reference, never bytes. Every artifact byte comes through the canonical Library read gate. `public`, `authors`, `invite`, and `paid` are the four permission prefixes; nested cohorts such as `invite/friends` are exact identities with no parent, sibling, or future-child inheritance.
+
+There is no second hidden prompt or context field. The Worker supplies only a fixed identity instruction derived from the public profile; custom Author material must be an approved Library artifact inside an exact selected scope.
+
+The sidecar receives that request-scoped slice and its manifest hash. Profile links are routing references only and are never crawled. Live web is off whenever Author context is loaded. Alexandria's reference macOS runner uses a deny-by-default process sandbox that allows its runtime, model cache, network, and public product-guide assets while denying reads and directory enumeration under `~/alexandria`. A custom sidecar granted wider computer access is outside Alexandria's structural boundary and must be sandboxed equivalently to make the same claim. The owner-only `GET /library/{author}/twin/context-preview` calls the same broker and returns the exact scopes, documents, manifest, and hash the provider would receive.
+
+This is structural up to the honest cap: the model provider necessarily sees the exact authorized slice sent for inference. The system controls what enters the request; it cannot control what a provider does after legitimately receiving that slice. Choose a provider you trust for the material placed in those scopes.
 
 **Primary:** Creation (a Library artifact). **Secondary:** Development.
 
@@ -31,10 +43,10 @@ Voice and judgment want weights. Positions and facts want context. That split is
 
 There are exactly two places to put the Author into a model, and each is genuinely better at half the job. This is fundamental, not a bug to engineer away.
 
-- **Context / RAG** — hand the model a substrate derivative and relevant facts at query time. Great at **positions and facts**: instant, updatable the moment the Author changes their mind, exact on biography. But the model is *acting* as the Author, not *being* them — it reads the positions off a sheet — and it costs tokens on every single query, forever. **The derivative differs by phase, and the difference is the structural privacy line.** At *compile* time the teacher is handed the full Constitution (or a digest) as privileged context — it never leaves the Author's machine. At *serve* time the deployed context-twin is handed only the Author's **tier shadow** (`library/<tier>/shadow.md`): a curated derivative scoped to the querier's trust tier, *never the raw Constitution*. So whatever runs serve-time inference sees a projection the Author authored, not their ground truth — and a total prompt-injection win leaks only what that tier's shadow already held. That gap is the structural privacy ceiling.
+- **Context / RAG** — hand the model deliberately published Library artifacts at query time. Great at **positions and facts**: instant and live-updatable. At compile time a teacher may receive private context only under the separate explicit compile consent above. At serve time the context PLM receives only the exact brokered Library intersection; any approved text artifact can contribute, not only a shadow. A total prompt-injection win is therefore bounded to the exact published slice that reader was already allowed to receive.
 - **Weights / fine-tuning** — bake the Author into an adapter. Great at **voice and reflexes**: the register comes for free on every answer, cheap at serving scale (one query, no giant prefix). But the weights are **frozen** at compile time, and they can only bake in what was *well-represented in the training data* — thin coverage of a topic means the weights learned nothing there.
 
-The optimal twin uses both, matched to their strengths: **weights carry the voice, context carries the positions.** The compile below trains the voice into the adapter and leaves the live-updatable positions to the served tier shadow.
+The optimal twin can use both, matched to their strengths: **weights carry the voice; the exact Library view carries live positions and facts.** The compile below trains the voice into the adapter while the permission broker keeps serve-time context current and bounded.
 
 ## Application-shaped, never recitation-shaped
 
@@ -65,7 +77,7 @@ Assemble the training set from every first-person source (voice) plus teacher-ge
 
 The asymmetry is the whole trick, and it is why the founder's earlier self-distillation attempts collapsed: **the teacher must hold information the student never sees.** A judge or teacher that is the same model as the policy, with the same context, can inject no new signal. Constitution-in-context teacher → no-context student is the gradient.
 
-**The mix — weight voice up.** A starting default of roughly **60–65% voice rows / 35–40% position rows** by training weight. Voice is weighted up because it is the harder statistical target and the thing the early twin lacked; positions ride along and are anyway topped up by the served tier shadow at query time. This balance is a **default, not sacred** — it moves with how much real voice data the Author has and how position-dense their corpus is. Tune it against the sign-off eval, never against loss.
+**The mix — weight voice up.** A starting default of roughly **60–65% voice rows / 35–40% position rows** by training weight. Voice is weighted up because it is the harder statistical target and the thing the early twin lacked; positions ride along and are topped up by the exact brokered Library view at query time. This balance is a **default, not sacred** — it moves with how much real voice data the Author has and how position-dense their corpus is. Tune it against the sign-off eval, never against loss.
 
 ### 2. Hygiene gates
 
@@ -102,7 +114,7 @@ The ship decision. Fresh held-out questions (never in training), the twin answer
 
 ## Cost envelope
 
-Roughly **$5–20 per compile** at 2026 rented-infra prices — a test the Author runs themselves, not a wait on anyone. The teacher generation dominates, and two moves keep it cheap: **batch multiple questions per teacher call** (4 questions amortises the constitution system-prefix ~4×, the single largest lever), and **hand the teacher a compressed constitution digest** rather than the full derivative (cuts prefill ~40% with positions preserved). The **frontier** teacher's constitution prefix re-sent on every call is the cost centre; amortise it with the two moves above — batch multiple questions per call, hand it a digest not the full derivative — and the whole compile lands in single-digit-to-low-double-digit dollars. Serving is cheaper still: one shared open base with the Author's adapter hot-loaded, marginal cost per additional mind ≈ adapter storage. (Weights being cheap at serving scale is exactly the lever from § Two levers — the frozen adapter carries voice for free per query, while live positions come from the served tier shadow.)
+Roughly **$5–20 per compile** at 2026 rented-infra prices — a test the Author runs themselves, not a wait on anyone. The teacher generation dominates, and two moves keep it cheap: **batch multiple questions per teacher call** (4 questions amortises the constitution system-prefix ~4×, the single largest lever), and **hand the teacher a compressed constitution digest** rather than the full derivative (cuts prefill ~40% with positions preserved). The **frontier** teacher's constitution prefix re-sent on every call is the cost centre; amortise it with the two moves above — batch multiple questions per call, hand it a digest not the full derivative — and the whole compile lands in single-digit-to-low-double-digit dollars. Serving is cheaper still: one shared open base with the Author's adapter hot-loaded, marginal cost per additional mind ≈ adapter storage. (Weights being cheap at serving scale is exactly the lever from § Two levers — the frozen adapter carries voice for free per query, while live positions come from the exact brokered Library view.)
 
 ## The compounding loop
 
@@ -124,5 +136,5 @@ Roughly **$5–20 per compile** at 2026 rented-infra prices — a test the Autho
 
 The two twins do **not** ship at the same time, and which goes first is forced by their privacy shape, not by taste.
 
-1. **The context / deep twin ships INVITE-ONLY, first.** It exposes a tier shadow (a curated derivative, never ground truth), so its blast radius is bounded to what that tier's shadow already held — but it is still substrate-adjacent, so it goes only to the Author and the queriers they invite to that tier. Never stranger-facing on day one.
+1. **The context twin may ship first with only `public` configured.** Its blast radius is then exactly the public files already approved for anyone to read. Adding `authors`, `invite/...`, or `paid/...` is a separate exact-scope decision; the reader still needs live access to that same scope. The outer twin visibility may narrow who can ask but can never widen the context intersection.
 2. **The public WEIGHTS twin ships only AFTER a canary extraction eval passes.** The weights twin is the stranger-facing floor, and its whole safety claim is that the substrate is baked irreversibly into the adapter — nowhere in the request at query time. That claim has to be *proven*, because **substrate baked into weights cannot be un-baked**: plant a held-out probe of secrets, firewalled other-company terms, and third-party-private names, then interrogate the trained weights for every one of them. **The weights must return ZERO on all of them.** A single leak fails the gate — you cannot retrain the leak out of a shipped adapter, so this is the one hard gate before any stranger-facing publish. Below the canary bar, the weights twin does not go public, full stop.

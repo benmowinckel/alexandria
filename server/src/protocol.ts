@@ -23,7 +23,14 @@ import {
   PUT_WRITABLE_CONTENT_TYPES,
   r2ExtensionForContentType,
   readProtocolFile,
+  protocolR2Key,
 } from './file-access.js';
+import {
+  canListLibraryArtifact,
+  isLibraryVisibility,
+  libraryArtifactKey,
+  normalizeLibraryScope,
+} from './library-scopes.js';
 
 // Per-account daily rate limit on /call — same self-expiring KV counter idiom
 // as library.ts's twin caps, but /call is NOT a paid inference surface (no model
@@ -83,7 +90,12 @@ export function registerProtocol(app: Hono) {
     // Explicit display title the Author sets at upload (falls back to the pretty
     // filename in the UI when unset). Bounded; null means "don't change".
     const title = typeof body.title === 'string' ? (body.title.trim().slice(0, 200) || null) : null;
-    const visibility = ['authors', 'public', 'invite', 'paid'].includes(body.visibility) ? body.visibility : 'authors';
+    const visibility = isLibraryVisibility(body.visibility) ? body.visibility : 'authors';
+    const scope = normalizeLibraryScope(body.scope, visibility);
+    if (!scope || scope.split('/', 1)[0] !== visibility) {
+      return c.json({ error: 'scope must start with visibility and contain only lowercase words, numbers, and hyphens' }, 400);
+    }
+    const artifactKey = libraryArtifactKey(scope, name);
 
     // Per-file library category (works/projects/shadows/other) — the section
     // the library page groups this file under. Absent → don't change. The
@@ -173,8 +185,8 @@ export function registerProtocol(app: Hono) {
       try {
         const raw = await getKV().get(catKey);
         const map = raw ? JSON.parse(raw) as Record<string, string> : {};
-        if (map[name] !== category) {
-          map[name] = category;
+        if (map[artifactKey] !== category) {
+          map[artifactKey] = category;
           await getKV().put(catKey, JSON.stringify(map));
         }
       } catch { /* non-fatal — see note above */ }
@@ -183,8 +195,8 @@ export function registerProtocol(app: Hono) {
     await ensureFilePriceColumn();
     await ensureFileTitleColumn();
     const existing = await getDB().prepare(
-      'SELECT text, title, visibility, content_type, content_hash, price_cents FROM protocol_files WHERE account_id = ? AND name = ?'
-    ).bind(id, name).first<{ text: string | null; title: string | null; visibility: string; content_type: string; content_hash: string | null; price_cents: number | null }>();
+      'SELECT text, title, visibility, content_type, content_hash, price_cents FROM protocol_files WHERE account_id = ? AND scope = ? AND name = ?'
+    ).bind(id, scope, name).first<{ text: string | null; title: string | null; visibility: string; content_type: string; content_hash: string | null; price_cents: number | null }>();
 
     if (
       existing
@@ -211,11 +223,11 @@ export function registerProtocol(app: Hono) {
       }
     }
 
-    await getR2().put(`protocol/${id}/${name}.${ext}`, bodyBytes);
+    await getR2().put(protocolR2Key(id, scope, name, ext), bodyBytes);
     await getDB().prepare(
-      `INSERT INTO protocol_files (account_id, name, text, title, visibility, updated_at, content_type, content_hash, price_cents)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(account_id, name) DO UPDATE SET
+      `INSERT INTO protocol_files (account_id, scope, name, text, title, visibility, updated_at, content_type, content_hash, price_cents)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(account_id, scope, name) DO UPDATE SET
          text = COALESCE(excluded.text, protocol_files.text),
          title = COALESCE(excluded.title, protocol_files.title),
          visibility = excluded.visibility,
@@ -223,11 +235,12 @@ export function registerProtocol(app: Hono) {
          content_type = excluded.content_type,
          content_hash = excluded.content_hash,
          price_cents = COALESCE(excluded.price_cents, protocol_files.price_cents)`
-    ).bind(id, name, text, title, visibility, now, contentType, contentHash, priceCents).run();
+    ).bind(id, scope, name, text, title, visibility, now, contentType, contentHash, priceCents).run();
 
     logEvent('protocol_file_published', {
       author: auth.account.github_login,
       name,
+      scope,
       visibility,
       content_type: contentType,
     });
@@ -247,12 +260,12 @@ export function registerProtocol(app: Hono) {
       try {
         const raw = await getKV().get(subKey);
         const map = raw ? JSON.parse(raw) as Record<string, string> : {};
-        if (teaser) map[name] = teaser; else delete map[name];
+        if (teaser) map[artifactKey] = teaser; else delete map[artifactKey];
         await getKV().put(subKey, JSON.stringify(map));
       } catch { /* non-fatal — see note above */ }
     }
 
-    return c.json({ ok: true, ...(payoutsRequired ? { payouts_required: true } : {}) });
+    return c.json({ ok: true, scope, ...(payoutsRequired ? { payouts_required: true } : {}) });
   });
 
   app.delete('/file/:name', async (c) => {
@@ -265,34 +278,46 @@ export function registerProtocol(app: Hono) {
       return c.json({ error: 'Invalid name' }, 400);
 
     const id = String(auth.account.github_id);
+    const requestedScope = c.req.query('scope')?.trim() || '';
+    const scope = requestedScope ? normalizeLibraryScope(requestedScope, 'authors') : null;
+    if (requestedScope && !scope) return c.json({ error: 'Invalid scope' }, 400);
 
     // R2 keys carry the content-type extension. We don't know which one the
     // file was stored under without consulting D1 first — delete the row,
     // then drop every extension we might have used. Cheap; missing keys are
     // a no-op in R2.
-    const existing = await getDB().prepare(
-      'SELECT content_type FROM protocol_files WHERE account_id = ? AND name = ?'
-    ).bind(id, name).first<{ content_type: string }>();
+    const existing = scope
+      ? await getDB().prepare(
+          'SELECT scope, visibility, content_type FROM protocol_files WHERE account_id = ? AND scope = ? AND name = ?'
+        ).bind(id, scope, name).first<{ scope: string; visibility: string; content_type: string }>()
+      : await getDB().prepare(
+          'SELECT scope, visibility, content_type FROM protocol_files WHERE account_id = ? AND name = ? AND scope = visibility LIMIT 1'
+        ).bind(id, name).first<{ scope: string; visibility: string; content_type: string }>();
 
     if (!existing) return c.json({ ok: true, missing: true });
 
     await getDB().prepare(
-      'DELETE FROM protocol_files WHERE account_id = ? AND name = ?'
-    ).bind(id, name).run();
+      'DELETE FROM protocol_files WHERE account_id = ? AND scope = ? AND name = ?'
+    ).bind(id, existing.scope, name).run();
 
     const r2 = getR2();
     const ext = r2ExtensionForContentType(existing.content_type);
-    await r2.delete(`protocol/${id}/${name}.${ext}`);
+    await r2.delete(protocolR2Key(id, existing.scope, name, ext));
+    if (existing.scope === existing.visibility) await r2.delete(`protocol/${id}/${name}.${ext}`);
     // Defensive: if content_type ever drifted vs. R2 key, sweep the other
     // writable extensions too. Idempotent — missing keys cost nothing.
     for (const otherType of PUT_WRITABLE_CONTENT_TYPES) {
       const otherExt = r2ExtensionForContentType(otherType);
-      if (otherExt !== ext) await r2.delete(`protocol/${id}/${name}.${otherExt}`);
+      if (otherExt !== ext) {
+        await r2.delete(protocolR2Key(id, existing.scope, name, otherExt));
+        if (existing.scope === existing.visibility) await r2.delete(`protocol/${id}/${name}.${otherExt}`);
+      }
     }
 
     logEvent('protocol_file_deleted', {
       author: auth.account.github_login,
       name,
+      scope: existing.scope,
       content_type: existing.content_type,
     });
 
@@ -309,14 +334,23 @@ export function registerProtocol(app: Hono) {
     if (!auth) return c.text('Unauthorized', 401);
 
     const { results } = await getDB().prepare(
-      'SELECT name, text, visibility, updated_at FROM protocol_files WHERE account_id = ?'
-    ).bind(id).all<{ name: string; text: string | null; visibility: string; updated_at: string }>();
+      'SELECT scope, name, text, visibility, updated_at FROM protocol_files WHERE account_id = ?'
+    ).bind(id).all<{ scope: string; name: string; text: string | null; visibility: string; updated_at: string }>();
 
     if (!results || results.length === 0) return c.json({ error: 'Not found' }, 404);
-    // Owner sees all their own previews; other authors don't get the private
-    // preview blurb of authors/invite files (names stay for discovery). (audit M1)
     const isOwner = String(auth.account.github_id) === id;
-    const files = isOwner ? results : results.map(f => ({
+    const membership = isOwner ? null : await resolveMembership(auth.account);
+    // This endpoint is the free Author-to-Author interface: public and paid
+    // listings are discoverable, authors-only metadata needs a live
+    // membership, and invite metadata stays invisible here. Exact invite
+    // grants are resolved by the website's reader-aware Library route.
+    const listable = results.filter((file) => canListLibraryArtifact({
+      scope: file.scope,
+      grantedScopes: [],
+      subscriberValid: membership?.available === true && membership.active,
+      owner: isOwner,
+    }));
+    const files = isOwner ? listable : listable.map(f => ({
       ...f,
       text: (f.visibility === 'public' || f.visibility === 'paid') ? f.text : null,
     }));
@@ -332,9 +366,16 @@ export function registerProtocol(app: Hono) {
     if (!auth) return c.text('Unauthorized', 401);
 
     const isOwner = String(auth.account.github_id) === id;
-    const fileGate = await getDB().prepare(
-      'SELECT visibility FROM protocol_files WHERE account_id = ? AND name = ?'
-    ).bind(id, name).first<{ visibility: string }>();
+    const requestedScope = c.req.query('scope')?.trim() || '';
+    const scope = requestedScope ? normalizeLibraryScope(requestedScope, 'authors') : null;
+    if (requestedScope && !scope) return c.json({ error: 'Invalid scope' }, 400);
+    const fileGate = scope
+      ? await getDB().prepare(
+          'SELECT visibility FROM protocol_files WHERE account_id = ? AND scope = ? AND name = ?'
+        ).bind(id, scope, name).first<{ visibility: string }>()
+      : await getDB().prepare(
+          'SELECT visibility FROM protocol_files WHERE account_id = ? AND name = ? AND scope = visibility LIMIT 1'
+        ).bind(id, name).first<{ visibility: string }>();
     let subscriberValid = false;
     if (!isOwner && fileGate?.visibility === 'authors') {
       const membership = await resolveMembership(auth.account);
@@ -353,6 +394,7 @@ export function registerProtocol(app: Hono) {
     const result = await readProtocolFile({
       authorGithubId: id,
       fileName: name,
+      scope: scope || undefined,
       accessorGithubId: auth.account.github_id ?? null,
       context: { subscriberValid },
     });
@@ -362,6 +404,7 @@ export function registerProtocol(app: Hono) {
     logEvent('protocol_file_view', {
       author_id: id,
       name,
+      scope: result.file.scope,
       visibility: result.file.visibility,
       accessor: auth.account.github_login,
       access_reason: result.reason,

@@ -41,5 +41,5 @@ const WHITEPAPER_QUESTIONS = [
 export default function WhitepaperPage() {
   // numbered + plain — the genesis book setting (TOC, hanging numerals,
   // colophon plate) inside the reader, matching the approved standalone form.
-  return <PublicDocReader title="the whitepaper" mdSrc="/docs/Whitepaper.md" numbered plain askQuestions={WHITEPAPER_QUESTIONS} />;
+  return <PublicDocReader title="the whitepaper" artifactName="whitepaper" mdSrc="/docs/Whitepaper.md" numbered plain askQuestions={WHITEPAPER_QUESTIONS} />;
 }

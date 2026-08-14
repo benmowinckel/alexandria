@@ -32,7 +32,22 @@ import {
 } from './file-access.js';
 import { getAuditHead, getAuthorAuditEntries } from './audit.js';
 import { generateToken, encrypt, decrypt } from './crypto.js';
-import { hasGrant, grantState, grantAccess, listGrants, revokeGrant } from './grants.js';
+import {
+  grantAccess,
+  grantState,
+  hasGrantForScope,
+  listGrantedScopes,
+  listGrants,
+  revokeGrant,
+} from './grants.js';
+import {
+  canListLibraryArtifact,
+  libraryArtifactKey,
+  effectiveLibraryScopes,
+  normalizeLibraryScope,
+  scopeQuery,
+  visibilityForScope,
+} from './library-scopes.js';
 import {
   resolveTwinVariants,
   twinPublicSummary,
@@ -80,8 +95,8 @@ function twinEnv(authorId: string): TwinEnv {
   }, founderLogin());
 }
 
-// Per-Author inference sidecar. Each Author runs their OWN sidecar (their keys,
-// their substrate) — the Worker holds neither. Registration is a dedicated
+// Per-Author inference sidecar. Each Author runs their OWN sidecar with their
+// model account and keys. The Worker brokers exact published Library context. Registration is a dedicated
 // ENCRYPTED KV entry (`twin_sidecar:{author}`) so the query path and the online
 // check read it the same way and the secret never rides in a settings blob.
 // The founder alone may use the Worker env sidecar. Non-founder Authors fail
@@ -223,12 +238,12 @@ function normalizeProfile(settings: Record<string, unknown>): {
   return { order: cats(p.order), hidden: cats(p.hidden), labels };
 }
 
-// Owner-authored public teaser line per file — the browse-list subtitle. Kept
+// Owner-authored teaser line per file — the browse-list subtitle. Kept
 // separate from the file's `text` blurb ON PURPOSE: `text` is suppressed for
-// authors/invite files (audit M1), so gated pieces would otherwise show a bare
-// title. This map is always public (like `category`) and opt-in per file, so an
-// Author surfaces a one-line teaser for a gated piece without exposing its
-// private preview blurb. Keyed by author slug, mirroring file_categories.
+// authors/invite files (audit M1). The directory gate now hides the entire
+// authors/invite artifact row, including this map value, until the viewer has
+// exact access. Paid offers remain deliberately discoverable. Keyed by author
+// slug, mirroring file_categories.
 async function getFileSubtitles(authorId: string): Promise<Record<string, string>> {
   try {
     const raw = await getKV().get(`file_subtitles:${authorId}`);
@@ -240,10 +255,11 @@ async function getFileSubtitles(authorId: string): Promise<Record<string, string
 // Per-file suggested questions — the artifact's own `.questions` sidecar (the
 // Artifact Loop), a few short prompts per file that seed the rotating ask on the
 // profile door, the PLM chat, and the reader on the piece. Generated FROM the
-// artifact so the PLM context is guaranteed to answer them; always public like
-// the subtitle (they are teasers). Keyed by author slug, mirroring
-// file_subtitles. Empty until the publish flow populates it — surfaces then fall
-// back to generic prompts.
+// artifact so the PLM context is guaranteed to answer them. The directory gate
+// hides them with authors/invite artifact metadata until the viewer has exact
+// access; paid-offer questions stay discoverable. Keyed by author slug,
+// mirroring file_subtitles. Empty until the publish flow populates it — surfaces
+// then fall back to generic prompts.
 async function getFileQuestions(authorId: string): Promise<Record<string, string[]>> {
   try {
     const raw = await getKV().get(`file_questions:${authorId}`);
@@ -278,12 +294,18 @@ async function getFileOrder(authorId: string): Promise<string[]> {
 
 /** Stable sort: named files first in the given order, the rest keep their
  *  existing (recency) order below. */
-function applyFileOrder<T extends { name: string }>(files: T[], order: string[]): T[] {
+function applyFileOrder<T extends { scope: string; name: string; visibility: string }>(files: T[], order: string[]): T[] {
   if (!order.length) return files;
   const rank = new Map(order.map((n, i) => [n, i]));
   return [...files].sort((a, b) => {
-    const ra = rank.has(a.name) ? (rank.get(a.name) as number) : Number.MAX_SAFE_INTEGER;
-    const rb = rank.has(b.name) ? (rank.get(b.name) as number) : Number.MAX_SAFE_INTEGER;
+    const ak = libraryArtifactKey(a.scope, a.name);
+    const bk = libraryArtifactKey(b.scope, b.name);
+    const ra = rank.has(ak) ? (rank.get(ak) as number)
+      : a.scope === a.visibility && rank.has(a.name) ? (rank.get(a.name) as number)
+        : Number.MAX_SAFE_INTEGER;
+    const rb = rank.has(bk) ? (rank.get(bk) as number)
+      : b.scope === b.visibility && rank.has(b.name) ? (rank.get(b.name) as number)
+        : Number.MAX_SAFE_INTEGER;
     if (ra !== rb) return ra - rb;
     return files.indexOf(a) - files.indexOf(b); // preserve recency among unranked
   });
@@ -325,6 +347,7 @@ type LibraryAccessGrant = {
   author_id?: string;
   artifact_type?: string;
   artifact_id?: string;
+  scope?: string;
   buyer_github_login?: string | null;
 };
 
@@ -342,6 +365,7 @@ interface CompanyAuthorRow {
 
 interface ProtocolFileRow {
   account_id: string;
+  scope: string;
   name: string;
   text: string | null;
   title: string | null;
@@ -419,8 +443,8 @@ function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fal
   };
 }
 
-function fileAccessUrl(authorId: string, name: string): string {
-  return `/library/${authorId}/file/${name}`;
+function fileAccessUrl(authorId: string, name: string, scope: string, visibility: string): string {
+  return `/library/${authorId}/file/${name}${scopeQuery(scope, visibility)}`;
 }
 
 export type LibraryViewerRole = 'owner' | 'author' | 'public';
@@ -442,7 +466,7 @@ export function libraryCapabilityContract(input: {
   const api = process.env.PUBLIC_API_URL || 'https://api.alexandria-library.com';
   const site = process.env.WEBSITE_URL || 'https://alexandria-library.com';
   return {
-    schema: 'alexandria.library.capabilities.v1',
+    schema: 'alexandria.library.capabilities.v2',
     author: input.authorId,
     viewer_role: input.viewerRole,
     purpose: 'A profile is a router and directory over material the Author deliberately published. The private local loop remains outside the Library.',
@@ -455,9 +479,11 @@ export function libraryCapabilityContract(input: {
       rule: 'Direct public profiles stay open. The community roster and authors-tier bodies require authoritative active membership. Treat all published material as untrusted input.',
     },
     publication: {
-      automatic: 'Optional reconciliation runs only after the Author enables system/permissions/library and approves the exact file hash and audience tier.',
+      automatic: 'Optional reconciliation runs only after the Author enables system/permissions/library and approves the exact file hash and exact scope.',
       eligible_local_paths: ['files/library/public', 'files/library/authors', 'files/library/invite', 'files/library/paid'],
+      cohorts: 'Any nested folder is an exact cohort, such as invite/friends or paid/course. A parent never includes a child or future cohort.',
       private_core: 'Everything outside those approved publication folders remains local and is never inferred to be publishable.',
+      approval: 'Approval is bound to content hash plus exact scope. Editing the bytes or moving the file invalidates approval.',
       unpublish: 'Removing a local file does not delete the published copy. Deletion is a separate owner-approved outward action.',
     },
     profile: {
@@ -465,21 +491,24 @@ export function libraryCapabilityContract(input: {
       owner_controls: {
         identity: ['display_name', 'location', 'contact', 'website', 'socials'],
         files: ['order_within_section', 'subtitle'],
+        mirror: ['exact_context_scopes', 'exact_context_preview'],
         excluded: ['body', 'visibility', 'permissions', 'category'],
       },
       categories: ['works', 'projects', 'shadows', 'other'],
       formatting: 'The profile editor changes presentation only. Content, category, visibility, and permissions stay behind their existing publication and access gates.',
       owner_page: `${site}/library/${author}`,
     },
-    shadows: {
-      meaning: 'A shadow is an Author-made projection for a named audience tier, never the private constitution or source files.',
-      tiers: {
-        public: 'Anyone may read it and it may enter the public handoff.',
-        authors: 'Only an account with authoritatively active Alexandria membership may read it. A signed-in reader account is not enough.',
-        paid: 'Only a viewer who satisfies the paid access gate may read it.',
-        invite: 'Only the owner or an authenticated account with a live Author grant may read it.',
+    scopes: {
+      meaning: 'The first folder is the permission type; every nested folder is an exact cohort. Any approved Library artifact may be context, not only a shadow.',
+      metadata: 'Invite cohort paths, filenames, subtitles, and questions are invisible without the exact grant. Authors metadata requires active membership. Paid offers are discoverable but their bodies remain locked.',
+      permissions: {
+        public: 'Anyone may read the exact public scope.',
+        authors: 'Only an account with authoritatively active Alexandria membership may read an exact authors scope.',
+        paid: 'Only a viewer with an exact paid-scope grant may read it.',
+        invite: 'Only the owner or a viewer with an exact live invite-scope grant may read it.',
       },
-      public_handoff_limit: 'The handoff contains only the public shadow plus titles and links for public works. It never contains gated bodies.',
+      inheritance: false,
+      example: 'A grant for invite/friends does not open invite, invite/investors, or a cohort created later.',
     },
     inference: {
       ownership: input.ownInferenceRequired ? 'author_account_only' : 'founder_compatibility',
@@ -489,10 +518,15 @@ export function libraryCapabilityContract(input: {
       rule: input.ownInferenceRequired
         ? 'The Author must run and register their own inference sidecar using a model account and token they control. If it is absent, inference is offline.'
         : 'The founder may use the founder compatibility sidecar. No other Author can inherit it.',
-      privacy: 'The Worker stores the sidecar connection secret encrypted and never receives the Author model-provider token or private substrate.',
+      privacy: 'The Worker receives only deliberately published Library bytes selected by the exact scope intersection. It never receives the Author model-provider token or reads local Author files.',
+      hidden_context_fields: false,
+      context_rule: 'model context = configured PLM scopes ∩ viewer access ∩ active artifact access, plus the bounded current visitor conversation.',
+      context_formats: 'Markdown and plain text enter context directly. A PDF remains readable but needs a separately approved text companion before the PLM can reason over its body.',
+      links: 'Profile links are routing references only and are never silently crawled for context.',
+      audit: `${api}/library/${author}/twin/context-preview`,
     },
     permissions: {
-      reads: 'Public reads need no account. Authors-tier reads require authoritative active membership; paid purchases and invites retain their separate explicit grants.',
+      reads: 'Public reads need no account. Authors reads require authoritative active membership. Invite and paid reads require exact-scope grants. No permission inherits into nested or sibling scopes.',
       writes: 'Every profile, file-metadata, shadow, grant, and inference configuration write is owner-authenticated.',
       invites: 'Codes bind to an authenticated account on first use. Revoking that account prevents the code from restoring access.',
     },
@@ -503,86 +537,130 @@ export function libraryCapabilityContract(input: {
       file_order: { method: 'PUT', path: `/library/${author}/file-order` },
       file_subtitles: { method: 'PUT', path: `/library/${author}/file-subtitles` },
       file_questions: { method: 'PUT', path: `/library/${author}/file-questions` },
+      inference_context: { method: 'POST', path: `/library/${author}/twin`, body: { context: { scopes: ['public', 'invite/friends'] } } },
       inference_sidecar: { method: 'PUT', path: `/library/${author}/twin/sidecar`, required_body_acknowledgement: { own_account: true } },
+      context_preview: { method: 'GET', path: `/library/${author}/twin/context-preview` },
       grants: { create: `/library/${author}/grant`, list: `/library/${author}/grants`, revoke: `/library/${author}/grant/{account_id}` },
     },
   };
 }
 
+/** Exact manifest of the text Library bytes the broker sent to the PLM. */
+interface TwinContextManifestEntry {
+  scope: string;
+  name: string;
+  /** Stored hash of the complete published source, when present. */
+  source_content_hash: string | null;
+  /** Hash of the exact text slice included in this model request. */
+  sent_content_hash: string;
+  sent_chars: number;
+  truncated: boolean;
+}
+
+interface TwinContextBundle {
+  works: TwinWork[];
+  focus?: { name: string; content: string };
+  manifest: TwinContextManifestEntry[];
+  contextHash: string;
+}
+
+async function hashTwinContext(value: unknown): Promise<string> {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 /**
- * The living-page corpus for the deep twin's `search_my_works` tool. Two sources:
- *
- *   1. The works product (`works` table) — content gated by readWork(), the
- *      single visibility authority; denied works are skipped.
- *   2. The Library pieces (`protocol_files`) — the surface the Author's profile
- *      actually shows. Readable text pieces enter with CONTENT (gated by
- *      readProtocolFile, same brain as a direct read). Everything else — a piece
- *      this querier can't read, or a PDF the Worker can't extract — enters as a
- *      TEASER entry: title + always-public subtitle + its reader URL. Titles and
- *      teasers are already public on the profile, so this leaks nothing; it lets
- *      the twin KNOW every published piece exists and point the reader there,
- *      instead of denying its own work ("no such passage exists") when asked
- *      about a gated piece.
- *
- * Bounded (12 works + 24 files × 4k chars) to keep the payload sane.
+ * Build the exact model-visible Library view. This function is the broker:
+ * it reads only explicit scopes already intersected by the caller, and every
+ * byte still passes through readProtocolFile. The sidecar receives the result;
+ * it never opens Author files itself.
  */
 async function fetchTwinWorks(
   authorId: string,
   authorGithubId: string | number,
   accessor: Account | null,
-  context?: { inviteValid?: boolean; subscriberValid?: boolean },
-): Promise<TwinWork[]> {
+  scopes: string[],
+  subscriberValid: boolean,
+  activeArtifact?: { name: string; scope: string },
+): Promise<TwinContextBundle> {
   const db = getDB();
-  const { results } = await db.prepare(
-    'SELECT id, title, tier FROM works WHERE author_id = ? ORDER BY published_at DESC LIMIT 12',
-  ).bind(authorId).all<{ id: string; title: string; tier: string }>();
   const out: TwinWork[] = [];
-  for (const w of results ?? []) {
-    const r = await readWork({ authorId, workId: w.id, accessor, subscriberValid: context?.subscriberValid });
-    if (!r.ok || !r.obj?.body) continue; // gate denied or missing → skip
-    let content = '';
-    try { content = await new Response(r.obj.body).text(); } catch { continue; }
-    if (content.trim()) out.push({ name: w.title, visibility: w.tier, content: content.slice(0, 4000) });
+  const manifest: TwinContextManifestEntry[] = [];
+  let focus: { name: string; content: string } | undefined;
+  if (!scopes.length) {
+    return {
+      works: [],
+      manifest: [],
+      contextHash: await hashTwinContext({ scopes: [], works: [], focus: null, manifest: [] }),
+    };
   }
-
+  const placeholders = scopes.map(() => '?').join(',');
   const { results: files } = await db.prepare(
-    'SELECT name, title, visibility, content_type FROM protocol_files WHERE account_id = ? ORDER BY updated_at DESC LIMIT 24',
-  ).bind(String(authorGithubId)).all<{ name: string; title: string | null; visibility: string; content_type: string | null }>();
-  const subtitles = await getFileSubtitles(authorId);
+    `SELECT scope, name, title, visibility, content_type, content_hash
+       FROM protocol_files
+      WHERE account_id = ? AND scope IN (${placeholders})
+      ORDER BY updated_at DESC LIMIT 128`,
+  ).bind(String(authorGithubId), ...scopes).all<{
+    scope: string;
+    name: string;
+    title: string | null;
+    visibility: string;
+    content_type: string | null;
+    content_hash: string | null;
+  }>();
+  let totalChars = 0;
+  const TOTAL_CHAR_CAP = 750_000;
+  const FILE_CHAR_CAP = 50_000;
   for (const f of files ?? []) {
     if (isInternalProtocolFileName(f.name)) continue;
-    if (f.name === 'shadow') continue; // the shadow reaches the twin as substrate, never as a searchable work
     const label = f.title || f.name;
-    const teaser = subtitles[f.name] || '';
     const type = f.content_type || '';
     const textual = !type || type.includes('markdown') || type.startsWith('text/');
-    if (textual) {
-      const r = await readProtocolFile({
-        authorGithubId,
-        fileName: f.name,
-        accessorGithubId: accessor?.github_id ?? null,
-        context: { inviteValid: context?.inviteValid, subscriberValid: context?.subscriberValid },
-      });
-      if (r.ok) {
-        let content = '';
-        try { content = await new Response(r.obj.body).text(); } catch { content = ''; }
-        if (content.trim()) {
-          out.push({ name: label, visibility: f.visibility, content: content.slice(0, 4000) });
-          continue;
-        }
-      }
-    }
-    const gated = f.visibility !== 'public';
-    out.push({
-      name: label,
-      visibility: f.visibility,
-      content: `[${gated ? 'locked' : 'reference'} — '${label}' is a piece I published on my Library`
-        + `${gated ? ` (${f.visibility}-only)` : ''}.${teaser ? ` teaser: ${teaser}` : ''}`
-        + ` the full text isn't loaded in this conversation${gated ? ' — the reader can sign in or use an invite to read it' : ''};`
-        + ` it lives at /library/${authorId}/read/${f.name}.]`,
+    if (!textual || totalChars >= TOTAL_CHAR_CAP) continue;
+    const exactGranted = scopes.includes(f.scope);
+    const r = await readProtocolFile({
+      authorGithubId,
+      fileName: f.name,
+      scope: f.scope,
+      accessorGithubId: accessor?.github_id ?? null,
+      context: {
+        inviteValid: exactGranted,
+        purchaseValid: exactGranted,
+        subscriberValid,
+      },
     });
+    if (!r.ok) continue;
+    let content = '';
+    try { content = await new Response(r.obj.body).text(); } catch { continue; }
+    if (!content.trim()) continue;
+    const remaining = Math.max(0, TOTAL_CHAR_CAP - totalChars);
+    const sent = content.slice(0, Math.min(FILE_CHAR_CAP, remaining));
+    totalChars += sent.length;
+    out.push({ scope: f.scope, name: label, visibility: f.visibility, content: sent });
+    manifest.push({
+      scope: f.scope,
+      name: f.name,
+      source_content_hash: f.content_hash,
+      sent_content_hash: await hashTwinContext(sent),
+      sent_chars: sent.length,
+      truncated: sent.length < content.length,
+    });
+    if (activeArtifact && activeArtifact.scope === f.scope && activeArtifact.name === f.name) {
+      focus = { name: label, content: sent };
+    }
   }
-  return out;
+  // Hash the exact model-visible Library payload, not only database metadata.
+  // Legacy rows may lack a stored source hash; truncation also means the sent
+  // text can differ from the complete source. Including the actual strings
+  // keeps the owner preview an honest exact model-visible audit surface.
+  const contextHash = await hashTwinContext({
+    scopes: [...scopes].sort(),
+    works: out,
+    focus: focus ?? null,
+    manifest,
+  });
+  return { works: out, focus, manifest, contextHash };
 }
 
 // ---------------------------------------------------------------------------
@@ -762,7 +840,7 @@ export function registerLibraryRoutes(app: Hono): void {
 
     await ensureFileTitleColumn();
     const files = await db.prepare(
-      `SELECT account_id, name, text, title, visibility, updated_at
+      `SELECT account_id, scope, name, text, title, visibility, updated_at
        FROM protocol_files
        WHERE account_id = ?
        ORDER BY CASE name WHEN 'shadow' THEN 0 ELSE 1 END, updated_at DESC`
@@ -813,12 +891,19 @@ export function registerLibraryRoutes(app: Hono): void {
     // invite twin with NO code. So evaluate the grant here — the page can show
     // "ask away" (granted) vs "log in" (anon) vs "not on the list" (signed in,
     // no grant) up front, instead of only finding out on submit.
-    const twinGranted = viewer ? await hasGrant(authorId, viewer.github_id) : false;
+    const viewerGrantScopes = viewer ? await listGrantedScopes(authorId, viewer.github_id) : [];
     const twinAccessible = (cfg: TwinConfig): boolean => authorizeTwinAccess({
       visibility: cfg.visibility,
       authorGithubId: account!.github_id,
       accessorGithubId: viewer?.github_id ?? null,
-      context: { inviteValid: twinGranted, subscriberValid: viewerSubscriber },
+      context: {
+        inviteValid: cfg.visibility === 'invite'
+          && (cfg.variant === 'context'
+            ? cfg.scopes.filter((scope) => visibilityForScope(scope) === 'invite')
+                .some((scope) => viewerGrantScopes.includes(scope))
+            : viewerGrantScopes.includes('invite')),
+        subscriberValid: viewerSubscriber,
+      },
     }).allowed;
 
     const twinSummary = twinPublicSummary(twinVariants, twinAccessible);
@@ -827,7 +912,11 @@ export function registerLibraryRoutes(app: Hono): void {
     // Surfaced so the chat can tell the visitor which mind they're speaking
     // with and that a deeper one exists to be invited into — without it the
     // invite tier is invisible and nobody knows to ask for it.
-    const twinDepth: TwinVisibility = twinGranted ? 'invite' : viewerSubscriber ? 'paid' : 'public';
+    const twinDepth: TwinVisibility = viewerGrantScopes.some((scope) => visibilityForScope(scope) === 'invite')
+      ? 'invite'
+      : viewerGrantScopes.some((scope) => visibilityForScope(scope) === 'paid')
+        ? 'paid'
+        : viewerSubscriber ? 'authors' : 'public';
     // Online/offline: only ping the sidecar when the Author actually has a twin
     // enabled (skip the round-trip for the overwhelming majority who don't).
     // `signed_in` lets the client pick "log in" vs "you're not on the list".
@@ -851,11 +940,24 @@ export function registerLibraryRoutes(app: Hono): void {
     const fileQs = await getFileQuestions(authorId);
     const fileOrder = await getFileOrder(authorId);
     const orderedFiles = applyFileOrder(protocolFiles, fileOrder);
+    // The directory itself is part of the privacy boundary. Do not reveal an
+    // invite cohort's path, filenames, subtitles, or derived questions until
+    // the viewer holds that exact grant. Authors-only metadata likewise needs
+    // a live membership. Paid offers remain intentionally discoverable.
+    const visibleFiles = orderedFiles.filter((file) => canListLibraryArtifact({
+      scope: file.scope,
+      grantedScopes: viewerGrantScopes,
+      subscriberValid: viewerSubscriber,
+      owner: viewerIsOwner,
+    }));
     // Aggregate every piece's suggested questions into the twin object so the
     // profile/PLM ask composer can rotate them (deduped, capped). Per-file
     // questions ride with each file for the reader on that specific piece.
     const twinQuestions = Array.from(
-      new Set(orderedFiles.flatMap((f) => fileQs[f.name] || [])),
+      new Set(visibleFiles.flatMap((f) => {
+        const key = libraryArtifactKey(f.scope, f.name);
+        return fileQs[key] || (f.scope === f.visibility ? fileQs[f.name] : null) || [];
+      })),
     ).slice(0, 12);
     // The Author's optional section config (order / hidden / labels). The page
     // is a router over what they published: emergent by default, curatable here.
@@ -871,36 +973,51 @@ export function registerLibraryRoutes(app: Hono): void {
         membership_source: viewerMembership?.source || null,
         membership_verified_at: viewerMembership?.verified_at || null,
       },
-      twin: { ...twinOut, questions: twinQuestions },
+      twin: {
+        ...twinOut,
+        questions: twinQuestions,
+        // Exact PLM folders are private owner configuration. A visitor learns
+        // only the effective content they can already read, never the Author's
+        // full configured ceiling.
+        ...(viewerIsOwner ? {
+          context_enabled: twinVariants.context.enabled,
+          context_scopes: twinVariants.context.scopes,
+          context_preview_url: `/library/${authorId}/twin/context-preview`,
+        } : {}),
+      },
       profile: profileCfg,
       location_options: libraryLocationOptions(),
-      files: orderedFiles.map(file => ({
+      files: visibleFiles.map(file => ({
+        scope: file.scope,
         name: file.name,
         title: file.title ?? null,
-        // The piece's own suggested questions (always public, like subtitle) —
-        // seed the reader's rotating ask on this specific piece.
-        questions: fileQs[file.name] || null,
-        // This route is unauthenticated (public directory). Don't leak the
-        // author's private preview blurb for non-public files: public = open,
-        // paid = sales listing (preview is the teaser), authors/invite =
-        // private → suppress the preview text. Names stay (discovery + the
-        // open page enforces content access). (audit M1)
+        // Suggested questions are returned only after the directory-level
+        // visibility gate above, so they cannot disclose a hidden cohort.
+        questions: fileQs[libraryArtifactKey(file.scope, file.name)]
+          || (file.scope === file.visibility ? fileQs[file.name] : null)
+          || null,
+        // Don't leak the author's private preview blurb for gated files:
+        // public = open, paid = sales listing; authors/invite = private.
         text: (file.visibility === 'public' || file.visibility === 'paid') ? file.text : null,
         // Always-public teaser (opt-in per file). Lets a gated piece show a
         // one-line subtitle in the browse list without exposing its private
         // `text` blurb. Empty for files the Author hasn't set one on.
-        subtitle: fileSubs[file.name] || null,
+        subtitle: fileSubs[libraryArtifactKey(file.scope, file.name)]
+          || (file.scope === file.visibility ? fileSubs[file.name] : null)
+          || null,
         visibility: file.visibility,
-        category: fileCats[file.name] || categoryFallback(file.name),
+        category: fileCats[libraryArtifactKey(file.scope, file.name)]
+          || (file.scope === file.visibility ? fileCats[file.name] : null)
+          || categoryFallback(file.name),
         updated_at: file.updated_at,
-        url: fileAccessUrl(authorId, file.name),
+        url: fileAccessUrl(authorId, file.name, file.scope, file.visibility),
       })),
     });
   });
 
-  // Protocol-backed file content, rendered by the company Library.
-  // Public files are open, paid files are one-time checkout gated,
-  // and author/invite files are read-only and restricted to Authors.
+  // Protocol-backed file content, rendered by the company Library. Public is
+  // open; authors requires active membership; invite and paid require an exact
+  // live scope grant (minted by a code/direct grant or purchase respectively).
   app.post('/library/:author/checkout/file/:name', async (c) => {
     const authorId = c.req.param('author');
     const name = c.req.param('name');
@@ -913,9 +1030,16 @@ export function registerLibraryRoutes(app: Hono): void {
 
     const db = getDB();
     await ensureFilePriceColumn();
-    const file = await db.prepare(
-      'SELECT account_id, name, visibility, price_cents FROM protocol_files WHERE account_id = ? AND name = ?'
-    ).bind(String(authorAccount.github_id), name).first<{ account_id: string; name: string; visibility: string; price_cents: number | null }>();
+    const rawScope = c.req.query('scope')?.trim() || '';
+    const requestedScope = rawScope ? normalizeLibraryScope(rawScope, 'paid') : null;
+    if (rawScope && !requestedScope) return c.json({ error: 'Invalid scope' }, 400);
+    const file = requestedScope
+      ? await db.prepare(
+          'SELECT account_id, scope, name, visibility, price_cents FROM protocol_files WHERE account_id = ? AND scope = ? AND name = ?'
+        ).bind(String(authorAccount.github_id), requestedScope, name).first<{ account_id: string; scope: string; name: string; visibility: string; price_cents: number | null }>()
+      : await db.prepare(
+          'SELECT account_id, scope, name, visibility, price_cents FROM protocol_files WHERE account_id = ? AND name = ? AND scope = visibility LIMIT 1'
+        ).bind(String(authorAccount.github_id), name).first<{ account_id: string; scope: string; name: string; visibility: string; price_cents: number | null }>();
     if (!file) return c.json({ error: 'File not found' }, 404);
     if (file.visibility !== 'paid') return c.json({ error: 'Only paid files can be checked out' }, 400);
 
@@ -949,7 +1073,8 @@ export function registerLibraryRoutes(app: Hono): void {
     const requestedOrigin = typeof body.return_origin === 'string' ? body.return_origin.trim() : '';
     const allowedOrigins = new Set(getAllowedOrigins());
     const returnOrigin = requestedOrigin && allowedOrigins.has(requestedOrigin) ? requestedOrigin : WEBSITE_URL;
-    const gatePath = `/library/${encodeURIComponent(authorId)}/open/${encodeURIComponent(name)}`;
+    const scopeParam = file.scope === file.visibility ? '' : `scope=${encodeURIComponent(file.scope)}`;
+    const gatePath = `/library/${encodeURIComponent(authorId)}/open/${encodeURIComponent(name)}${scopeParam ? `?${scopeParam}` : ''}`;
 
     // Creator payout (Stripe Connect) — fail closed: an Author who has not
     // completed payout onboarding cannot sell (we never take money we can't
@@ -985,12 +1110,13 @@ export function registerLibraryRoutes(app: Hono): void {
         author_id: authorId,
         artifact_type: 'protocol_file',
         artifact_id: name,
+        scope: file.scope,
         platform_fee_cents: String(platformFeeCents),
         author_amount_cents: String(amountCents),
         ...(accessor?.github_login ? { github_login: accessor.github_login } : {}),
       },
-      success_url: `${returnOrigin}${gatePath}?session_id={CHECKOUT_SESSION_ID}&purchased=1`,
-      cancel_url: `${returnOrigin}${gatePath}?cancel=1`,
+      success_url: `${returnOrigin}${gatePath}${scopeParam ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}&purchased=1`,
+      cancel_url: `${returnOrigin}${gatePath}${scopeParam ? '&' : '?'}cancel=1`,
     });
 
     if (!session.url) return c.json({ error: 'Failed to create checkout session' }, 500);
@@ -1005,6 +1131,19 @@ export function registerLibraryRoutes(app: Hono): void {
     const lookup = await getAccountByLogin(authorId);
     const authorAccount = lookup?.account;
     if (!authorAccount?.github_id) return c.json({ error: 'Author not found' }, 404);
+
+    const rawScope = c.req.query('scope')?.trim() || '';
+    const requestedScope = rawScope ? normalizeLibraryScope(rawScope, 'authors') : null;
+    if (rawScope && !requestedScope) return c.json({ error: 'Invalid scope' }, 400);
+    const fileMeta = requestedScope
+      ? await getDB().prepare(
+          'SELECT scope, visibility FROM protocol_files WHERE account_id = ? AND scope = ? AND name = ?'
+        ).bind(String(authorAccount.github_id), requestedScope, name).first<{ scope: string; visibility: string }>()
+      : await getDB().prepare(
+          'SELECT scope, visibility FROM protocol_files WHERE account_id = ? AND name = ? AND scope = visibility LIMIT 1'
+        ).bind(String(authorAccount.github_id), name).first<{ scope: string; visibility: string }>();
+    if (!fileMeta) return c.json({ error: 'File not found' }, 404);
+    const scope = fileMeta.scope;
 
     // Resolve accessor identity from API key or browser session cookie.
     const accessorKey = extractApiKey(c);
@@ -1024,18 +1163,25 @@ export function registerLibraryRoutes(app: Hono): void {
     // binds to the account on use so it's never re-entered. A grant the owner
     // REVOKED is a hard stop for THAT account — a still-valid code cannot
     // resurrect it (audit B2). To cut everyone off, the owner revokes the code.
-    const gState = accessor ? await grantState(authorId, accessor.github_id) : 'none';
+    const gState = accessor ? await grantState(authorId, accessor.github_id, scope) : 'none';
     if (gState === 'live') {
       inviteValid = true;
     } else if (gState === 'revoked') {
       inviteValid = false;
     } else if (inviteCode) {
       const accessRow = await getDB().prepare(
-        'SELECT id FROM access_codes WHERE author_id = ? AND code = ? AND revoked_at IS NULL LIMIT 1'
-      ).bind(authorId, inviteCode).first<{ id: string }>();
+        'SELECT id, scope FROM access_codes WHERE author_id = ? AND code = ? AND scope = ? AND revoked_at IS NULL LIMIT 1'
+      ).bind(authorId, inviteCode, scope).first<{ id: string; scope: string }>();
       inviteValid = !!accessRow?.id;
       inviteCodeId = accessRow?.id || null;
-      if (inviteValid && accessor) await grantAccess(authorId, accessor.github_id, { codeId: inviteCodeId ?? undefined });
+      if (inviteValid && accessor) {
+        await grantAccess(authorId, accessor.github_id, {
+          scope,
+          sourceType: 'invite',
+          sourceId: inviteCodeId ?? undefined,
+          codeId: inviteCodeId ?? undefined,
+        });
+      }
     }
 
     let purchaseValid = false;
@@ -1045,6 +1191,7 @@ export function registerLibraryRoutes(app: Hono): void {
         const grant = parseJson<LibraryAccessGrant>(raw, {});
         const artifactMatch = grant.author_id === authorId
           && grant.artifact_id === name
+          && (grant.scope === scope || (!grant.scope && scope === fileMeta.visibility))
           && grant.artifact_type === 'protocol_file';
         // STRUCTURAL: access requires the viewer to BE the bound buyer. A grant
         // with no buyer (the old anonymous-bearer form) is NEVER honored — a
@@ -1055,7 +1202,21 @@ export function registerLibraryRoutes(app: Hono): void {
         const buyerOk = !!grant.buyer_github_login
           && accessor?.github_login === grant.buyer_github_login;
         purchaseValid = artifactMatch && buyerOk;
+        if (purchaseValid && accessor) {
+          await grantAccess(authorId, accessor.github_id, {
+            scope,
+            sourceType: 'purchase',
+            sourceId: purchaseSessionId,
+            reactivate: true,
+          });
+        }
       }
+    }
+
+    // Once a paid checkout has bound to the account, every artifact deliberately
+    // placed in that exact paid cohort opens without carrying the checkout URL.
+    if (!purchaseValid && accessor && visibilityForScope(scope) === 'paid') {
+      purchaseValid = await hasGrantForScope(authorId, accessor.github_id, scope);
     }
 
     const needsMembership = !!accessor && accessor.github_login !== authorId;
@@ -1063,6 +1224,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const result = await readProtocolFile({
       authorGithubId: authorAccount.github_id,
       fileName: name,
+      scope,
       accessorGithubId: accessor?.github_id ?? null,
       context: {
         purchaseValid,
@@ -1082,6 +1244,7 @@ export function registerLibraryRoutes(app: Hono): void {
       logEvent('library_protocol_file_view', {
         author: authorId,
         name,
+        scope,
         status: String(result.status),
         accessor: accessor?.github_login || 'anonymous',
         access_reason: result.reason,
@@ -1090,7 +1253,7 @@ export function registerLibraryRoutes(app: Hono): void {
       if (result.status === 402) {
         return c.json({
           ...result.body,
-          checkout_url: `${process.env.WEBSITE_URL || 'https://alexandria-library.com'}/library/${encodeURIComponent(authorId)}/checkout/file/${encodeURIComponent(name)}`,
+          checkout_url: `${process.env.WEBSITE_URL || 'https://alexandria-library.com'}/library/${encodeURIComponent(authorId)}/checkout/file/${encodeURIComponent(name)}${scopeQuery(scope, fileMeta.visibility)}`,
         }, 402);
       }
       return c.json(result.body, result.status);
@@ -1099,6 +1262,7 @@ export function registerLibraryRoutes(app: Hono): void {
     logEvent('library_protocol_file_view', {
       author: authorId,
       name,
+      scope,
       status: '200',
       visibility: result.file.visibility,
       accessor: accessor?.github_login || (result.reason === 'paid' ? 'purchase' : result.reason === 'invite' ? 'invite' : 'public'),
@@ -1117,15 +1281,11 @@ export function registerLibraryRoutes(app: Hono): void {
   // TWIN — "ask this mind" (PLM)
   // =========================================================================
   //
-  // The public-safe projection of an Author's mind. A visitor asks the Author's
-  // trained weights-twin a question; the Worker relays it to the inference
-  // sidecar (which holds TINKER_API_KEY) and returns the answer, honestly
-  // labelled as a twin. Weights, not context — nothing at query time exposes
-  // the Author's substrate (plm.md § both-twin architecture, the privacy floor).
-  //
-  // Gated: only Authors who have published+enabled a twin (settings.twin) and
-  // have a resolvable checkpoint. Rate-limited per IP+author. Anonymous callers
-  // are allowed — the weights twin is the stranger-facing floor.
+  // Queryable projection of an Author's published mind. Weights requests carry
+  // no source files. Context requests carry only the Worker's exact authorized
+  // Library slice, manifest, active artifact, and bounded visitor conversation;
+  // the sidecar has no local Author-file access. Both remain honestly labelled
+  // as a twin and rate-limited per visitor and Author.
 
   // Per IP+author KV rate limit — cheap, bounded, self-expiring. Returns true
   // when the request should be blocked.
@@ -1267,12 +1427,12 @@ export function registerLibraryRoutes(app: Hono): void {
   // Invite-code validation for twin queries — same access_codes table the file
   // gate uses. Author-scoped, revocation-aware. Result feeds the shared gate.
   // A valid, un-revoked code for this author → its id (for grant provenance), else null.
-  async function lookupCode(authorId: string, code: string): Promise<string | null> {
+  async function lookupCode(authorId: string, code: string): Promise<{ id: string; scope: string } | null> {
     if (!code) return null;
     const row = await getDB().prepare(
-      'SELECT id FROM access_codes WHERE author_id = ? AND code = ? AND revoked_at IS NULL LIMIT 1'
-    ).bind(authorId, code).first<{ id: string }>().catch(() => null);
-    return row?.id ?? null;
+      'SELECT id, scope FROM access_codes WHERE author_id = ? AND code = ? AND revoked_at IS NULL LIMIT 1'
+    ).bind(authorId, code).first<{ id: string; scope: string }>().catch(() => null);
+    return row?.id && normalizeLibraryScope(row.scope, 'invite') ? row : null;
   }
 
   // The invite decision, account-aware. Access is granted if the (logged-in)
@@ -1281,17 +1441,23 @@ export function registerLibraryRoutes(app: Hono): void {
   // anonymous caller with a valid code passes THIS request but nothing is bound
   // (no account yet); once they log in, the code binds. This one resolver backs
   // both the twin and the file gate.
-  async function resolveInviteAccess(authorId: string, accessor: Account | null, code: string): Promise<boolean> {
-    if (accessor) {
-      const state = await grantState(authorId, accessor.github_id);
-      if (state === 'live') return true;
-      // Owner revoked THIS account — a still-valid code cannot resurrect it (B2).
-      if (state === 'revoked') return false;
+  async function resolveInviteScopes(authorId: string, accessor: Account | null, code: string): Promise<string[]> {
+    const live = accessor
+      ? (await listGrantedScopes(authorId, accessor.github_id)).filter((scope) => visibilityForScope(scope) === 'invite')
+      : [];
+    const codeRow = await lookupCode(authorId, code);
+    if (!codeRow || !accessor) return live;
+    const state = await grantState(authorId, accessor.github_id, codeRow.scope);
+    if (state === 'revoked') return live;
+    if (state === 'none') {
+      await grantAccess(authorId, accessor.github_id, {
+        scope: codeRow.scope,
+        sourceType: 'invite',
+        sourceId: codeRow.id,
+        codeId: codeRow.id,
+      });
     }
-    const codeId = await lookupCode(authorId, code);
-    if (!codeId) return false;
-    if (accessor) await grantAccess(authorId, accessor.github_id, { codeId }); // first bind (state 'none')
-    return true;
+    return Array.from(new Set([...live, codeRow.scope]));
   }
 
   // Resolve the querier from an API key or the browser library session cookie.
@@ -1308,6 +1474,32 @@ export function registerLibraryRoutes(app: Hono): void {
     | { ok: true; answer: string; variant: TwinVariant; label: string | null; disclaimer: string }
     | { ok: false; status: number; body: Record<string, unknown> };
 
+  function sanitizeTwinMessages(value: unknown): { role: 'user' | 'assistant'; content: string }[] {
+    if (!Array.isArray(value)) return [];
+    const out: { role: 'user' | 'assistant'; content: string }[] = [];
+    let chars = 0;
+    for (const raw of value.slice(-20)) {
+      if (!raw || typeof raw !== 'object') continue;
+      const msg = raw as Record<string, unknown>;
+      if (msg.role !== 'user' && msg.role !== 'assistant') continue;
+      if (typeof msg.content !== 'string') continue;
+      const content = msg.content.trim().slice(0, 8000);
+      if (!content || chars + content.length > 60_000) continue;
+      chars += content.length;
+      out.push({ role: msg.role, content });
+    }
+    return out;
+  }
+
+  function sanitizeActiveArtifact(value: unknown): { name: string; scope: string } | undefined {
+    if (!value || typeof value !== 'object') return undefined;
+    const raw = value as Record<string, unknown>;
+    const name = typeof raw.name === 'string' ? raw.name.trim() : '';
+    if (typeof raw.scope !== 'string') return undefined;
+    const scope = normalizeLibraryScope(raw.scope, 'public');
+    return isValidFileName(name) && scope ? { name, scope } : undefined;
+  }
+
   // Shared query core — used by BOTH the website `/ask` box and the
   // programmatic `/v1/twin/:author/query` API. Picks the variant, applies the
   // (reused) visibility gate, relays to the inference sidecar, and writes the
@@ -1321,13 +1513,15 @@ export function registerLibraryRoutes(app: Hono): void {
     question: string;
     requestedVariant: TwinVariant | null;
     accessor: Account | null;
-    inviteValid: boolean;
+    /** Exact account-bound scopes. A parent is never expanded. */
+    grantedScopes: string[];
     /** Caller-requested DOWNGRADE to the public depth (the free toggle). Only
      *  ever honored downward — an invited viewer previewing the free mind. The
      *  structural ceiling (grant/payment) is computed server-side regardless;
      *  a request can never raise depth. */
     requestedDepth?: 'public' | null;
-    focus?: { name: string; content: string };
+    activeArtifact?: { name: string; scope: string };
+    messages?: { role: 'user' | 'assistant'; content: string }[];
     surface: 'library' | 'api';
   }): Promise<TwinQueryOutcome> {
     const variants = resolveTwinVariants(p.settings, twinEnv(p.authorId));
@@ -1347,9 +1541,9 @@ export function registerLibraryRoutes(app: Hono): void {
       };
     }
 
-    // Visibility gate — the SAME file-access brain, no parallel rules. "paid"
+    // Optional outer PLM gate — the SAME file-access brain, no parallel rules. "paid"
     // for a twin means the authoritative membership resolver says the querier
-    // is active. Stored KV status never grants inference or deeper substrate.
+    // is active. Stored KV status never grants inference or Library context.
     const membership = p.accessor ? await resolveMembership(p.accessor) : null;
     const subscriberValid = membership?.available === true && membership.active;
     if (cfg.visibility === 'paid' && p.accessor && membership?.available === false) {
@@ -1359,58 +1553,71 @@ export function registerLibraryRoutes(app: Hono): void {
         body: { error: 'Membership verification is temporarily unavailable. Try again.', reason: 'membership_unavailable', variant: cfg.variant },
       };
     }
+    const providerScopes = cfg.variant === 'context' ? cfg.scopes : [];
+    const inviteGateScopes = providerScopes.filter((scope) => visibilityForScope(scope) === 'invite');
+    const inviteGateValid = cfg.visibility === 'invite'
+      ? (inviteGateScopes.length
+          ? inviteGateScopes.some((scope) => p.grantedScopes.includes(scope))
+          : p.grantedScopes.includes('invite'))
+      : false;
     const decision = authorizeTwinAccess({
       visibility: cfg.visibility,
       authorGithubId: p.authorAccount.github_id,
       accessorGithubId: p.accessor?.github_id ?? null,
-      context: { inviteValid: p.inviteValid, subscriberValid },
+      context: { inviteValid: inviteGateValid, subscriberValid },
     });
     if (!decision.allowed) {
       logEvent('library_twin_ask', { author: p.authorId, surface: p.surface, variant: cfg.variant, status: String(decision.status), reason: decision.reason });
       return { ok: false, status: decision.status, body: { ...decision.body, variant: cfg.variant } };
     }
 
-    // DEPTH is bound to the QUERIER and is STRUCTURAL, not membership-based
-    // (audit B1/S3). The deep shadow (invite/friends.md) is only served to
-    // someone who genuinely earned it: an ACCOUNT holding a live grant for THIS
-    // author, or an account with an authoritatively active membership. An
-    // anonymous caller — even one bearing a valid, shareable code —
-    // never reaches deep: `p.accessor` is null, so a leaked code is a thin-depth
-    // bearer at most, never a key to the deep substrate. Everyone else gets the
-    // public shadow. One public twin, right depth, no toggle (plm.md).
-    const grantValid = !!p.accessor && await hasGrant(p.authorId, p.accessor.github_id);
-    const isPaying = subscriberValid;
-    // LEAST PRIVILEGE (audit F4): the intimate invite/friends shadow loads ONLY for
-    // someone the author PERSONALLY invited (a live grant). A paying-but-uninvited
-    // querier gets the 'paid' shadow; everyone else the 'public' shadow. Depth is no
-    // longer a binary that collapsed every deep querier onto the most intimate tier —
-    // so "they pay" can never surface friends.md; that requires a real invite.
-    let queryTier: TwinVisibility = grantValid ? 'invite' : isPaying ? 'paid' : 'public';
-    // Free-toggle downgrade: an entitled viewer may ASK SHALLOW (preview what a
-    // stranger gets). Down only — the ceiling above is structural.
-    if (p.requestedDepth === 'public') queryTier = 'public';
-    const deep = grantValid || isPaying; // gates only the works tool (each work is separately visibility-gated)
+    // The context ceiling is the exact intersection of PLM configuration and
+    // this viewer's live permissions. No parent, sibling, or future cohort is
+    // implied. Owner bypass applies only inside the PLM's configured scopes.
+    const isOwner = !!p.accessor
+      && String(p.accessor.github_id) === String(p.authorAccount.github_id);
+    const effectiveScopes = effectiveLibraryScopes({
+      providerScopes,
+      grantedScopes: p.grantedScopes,
+      subscriberValid,
+      owner: isOwner,
+      publicOnly: p.requestedDepth === 'public',
+    });
+    // A browser may name an artifact, never provide its bytes. If the artifact
+    // is outside the exact intersection, fail closed instead of quietly asking
+    // the model about some other view.
+    if (p.activeArtifact && !effectiveScopes.includes(p.activeArtifact.scope)) {
+      return {
+        ok: false,
+        status: 403,
+        body: { error: 'This mirror is not permitted to read that piece.', reason: 'artifact_outside_context' },
+      };
+    }
 
-    const system = cfg.system || `You are ${p.displayName}. Speak as yourself.`;
-    // Living page: when the deep twin has the works tool on, hand it the Author's
-    // published works CONTENT — but only the pieces this querier is allowed to see.
-    // readWork() is the visibility authority (same gate as direct reads), so the
-    // corpus is correct by construction — search_my_works never re-derives it.
-    let works: TwinWork[] | undefined;
-    if (cfg.variant === 'context' && cfg.tools?.works) {
-      works = await fetchTwinWorks(
+    // Fixed identity only. There is deliberately no Author-authored system
+    // field outside the exact Library scope broker.
+    const system = `You are ${p.displayName}. Speak as yourself.`;
+    // Build the exact brokered Library view through the same gate as direct reads.
+    let bundle: TwinContextBundle | undefined;
+    if (cfg.variant === 'context') {
+      bundle = await fetchTwinWorks(
         p.authorId,
         p.authorAccount.github_id,
         p.accessor,
-        { inviteValid: grantValid, subscriberValid },
+        effectiveScopes,
+        subscriberValid,
+        p.activeArtifact,
       );
+      if (p.activeArtifact && !bundle.focus) {
+        return {
+          ok: false,
+          status: 404,
+          body: { error: 'The active piece is not available to this mirror.', reason: 'artifact_not_in_context' },
+        };
+      }
     }
-    // The declared links-out graph (website + socials — the profile's router
-    // section), passed on every context query. The links DECLARE the graph so
-    // the twin can always route a visitor onward ("that's on my instagram —
-    // here's the link") even for surfaces with no capture; the sidecar's
-    // capture corpus FILLS the graph with actual content. Public by definition
-    // — this is exactly what the profile page already shows everyone.
+    // Public links are routing references only. Neither sidecar nor Worker
+    // crawls them or treats linked content as hidden context.
     let links: { label: string; url: string }[] | undefined;
     if (cfg.variant === 'context') {
       const website = stringSlot(p.settings, 'website');
@@ -1430,7 +1637,30 @@ export function registerLibraryRoutes(app: Hono): void {
     const result = await runTwinInference(
       cfg.variant === 'weights'
         ? { variant: 'weights', question: p.question, system, maxTokens: 512, checkpoint: cfg.checkpoint, base: cfg.base }
-        : { variant: 'context', question: p.question, system, maxTokens: 512, model: cfg.model, tools: cfg.tools, author: p.authorId, works, links, tier: queryTier, focus: p.focus },
+        : {
+            variant: 'context',
+            question: p.question,
+            system,
+            maxTokens: 512,
+            model: cfg.model,
+            // A context PLM always receives its Library through the brokered
+            // retrieval tool. Live web is never mixed with Author context.
+            tools: { works: true, web: false },
+            author: p.authorId,
+            works: bundle?.works,
+            links,
+            tier: (effectiveScopes.some((scope) => visibilityForScope(scope) === 'invite')
+              ? 'invite'
+              : effectiveScopes.some((scope) => visibilityForScope(scope) === 'paid')
+                ? 'paid'
+                : effectiveScopes.some((scope) => visibilityForScope(scope) === 'authors')
+                  ? 'authors'
+                  : 'public'),
+            focus: bundle?.focus,
+            messages: p.messages,
+            contextHash: bundle?.contextHash,
+            contextScopes: effectiveScopes,
+          },
       { url: sidecar?.url, secret: sidecar?.secret },
     );
 
@@ -1457,7 +1687,14 @@ export function registerLibraryRoutes(app: Hono): void {
         p.accessor?.github_login || 'anonymous',
         'twin',
         cfg.variant,
-        JSON.stringify({ q_len: p.question.length, a_len: result.answer.length, variant: cfg.variant, surface: p.surface }),
+        JSON.stringify({
+          q_len: p.question.length,
+          a_len: result.answer.length,
+          variant: cfg.variant,
+          surface: p.surface,
+          context_hash: bundle?.contextHash || null,
+          context_documents: bundle?.manifest.length || 0,
+        }),
         new Date().toISOString(),
       ).run();
     } catch (e) {
@@ -1492,18 +1729,23 @@ export function registerLibraryRoutes(app: Hono): void {
       return c.json({ error: 'This mind has answered its limit for today — try again tomorrow.' }, 429);
     }
 
-    const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown; focus?: unknown; depth?: unknown };
+    const body = await c.req.json().catch(() => ({})) as {
+      question?: unknown;
+      variant?: unknown;
+      invite?: unknown;
+      artifact?: unknown;
+      messages?: unknown;
+      depth?: unknown;
+    };
     const question = typeof body.question === 'string' ? body.question.trim() : '';
     if (!question) return c.json({ error: 'Ask a question.' }, 400);
     if (question.length > 20000) return c.json({ error: `Question too long — ${question.length} chars, 20000 max. Trim it or paste less.` }, 400);
     const requestedVariant: TwinVariant | null = body.variant === 'weights' || body.variant === 'context' ? body.variant : null;
     // The free toggle: an entitled viewer may request the PUBLIC depth (down only).
     const requestedDepth = body.depth === 'public' ? 'public' as const : null;
-    // The piece being read (reader workspace), if any — bounded so it can't blow the payload.
-    const fRaw = body.focus && typeof body.focus === 'object' ? body.focus as Record<string, unknown> : null;
-    const focus = fRaw && typeof fRaw.content === 'string' && fRaw.content.trim()
-      ? { name: typeof fRaw.name === 'string' ? fRaw.name.slice(0, 200) : '', content: fRaw.content.slice(0, 20000) }
-      : undefined;
+    const activeArtifact = sanitizeActiveArtifact(body.artifact);
+    if (body.artifact && !activeArtifact) return c.json({ error: 'Invalid artifact reference.' }, 400);
+    const messages = sanitizeTwinMessages(body.messages);
 
     const profile = await getDB().prepare('SELECT display_name, settings FROM authors WHERE id = ?')
       .bind(authorId)
@@ -1516,7 +1758,11 @@ export function registerLibraryRoutes(app: Hono): void {
     const accessor = await resolveTwinAccessor(c);
     const inviteCode = c.req.query('invite')?.trim() || (typeof body.invite === 'string' ? body.invite.trim() : '');
     // Grant-aware: a live account grant OR a valid code (which binds to the account).
-    const inviteValid = await resolveInviteAccess(authorId, accessor, inviteCode);
+    const inviteScopes = await resolveInviteScopes(authorId, accessor, inviteCode);
+    const grantedScopes = Array.from(new Set([
+      ...(accessor ? await listGrantedScopes(authorId, accessor.github_id) : []),
+      ...inviteScopes,
+    ]));
 
     // The visitor's own allowance. Checked here (not inside runTwinQuery) because
     // it needs the IP, and read-only so a refused question never spends one.
@@ -1540,7 +1786,18 @@ export function registerLibraryRoutes(app: Hono): void {
     }
 
     const outcome = await runTwinQuery({
-      authorId, authorAccount, displayName, settings, question, requestedVariant, accessor, inviteValid, requestedDepth, focus, surface: 'library',
+      authorId,
+      authorAccount,
+      displayName,
+      settings,
+      question,
+      requestedVariant,
+      accessor,
+      grantedScopes,
+      requestedDepth,
+      activeArtifact,
+      messages,
+      surface: 'library',
     });
     if (!outcome.ok) return c.json(outcome.body, outcome.status as 401 | 402 | 403 | 404 | 502 | 503 | 504);
     await bumpTwinVisitor(authorId, accessor, ip);
@@ -1659,7 +1916,13 @@ export function registerLibraryRoutes(app: Hono): void {
       return c.json({ error: 'This twin has reached its daily limit — try again tomorrow.' }, 429);
     }
 
-    const body = await c.req.json().catch(() => ({})) as { question?: unknown; variant?: unknown; invite?: unknown };
+    const body = await c.req.json().catch(() => ({})) as {
+      question?: unknown;
+      variant?: unknown;
+      invite?: unknown;
+      artifact?: unknown;
+      messages?: unknown;
+    };
     const question = typeof body.question === 'string' ? body.question.trim() : '';
     if (!question) return c.json({ error: 'Provide a question.' }, 400);
     if (question.length > 20000) return c.json({ error: `Question too long — ${question.length} chars, 20000 max. Trim it or paste less.` }, 400);
@@ -1673,32 +1936,35 @@ export function registerLibraryRoutes(app: Hono): void {
     const displayName = profile?.display_name?.trim() || authorAccount.github_name?.trim() || authorId;
 
     const inviteCode = typeof body.invite === 'string' ? body.invite.trim() : (c.req.query('invite')?.trim() || '');
-    const inviteValid = await resolveInviteAccess(authorId, accessor, inviteCode);
+    const inviteScopes = await resolveInviteScopes(authorId, accessor, inviteCode);
+    const grantedScopes = Array.from(new Set([
+      ...await listGrantedScopes(authorId, accessor.github_id),
+      ...inviteScopes,
+    ]));
+    const activeArtifact = sanitizeActiveArtifact(body.artifact);
+    if (body.artifact && !activeArtifact) return c.json({ error: 'Invalid artifact reference.' }, 400);
+    const messages = sanitizeTwinMessages(body.messages);
 
     const outcome = await runTwinQuery({
-      authorId, authorAccount, displayName, settings, question, requestedVariant, accessor, inviteValid, surface: 'api',
+      authorId, authorAccount, displayName, settings, question, requestedVariant, accessor,
+      grantedScopes, activeArtifact, messages, surface: 'api',
     });
     if (!outcome.ok) return c.json(outcome.body, outcome.status as 401 | 402 | 403 | 404 | 502 | 503 | 504);
     return c.json({ answer: outcome.answer, variant: outcome.variant, disclaimer: outcome.disclaimer });
   });
 
   // Owner-only twin config. Configure EITHER variant independently:
-  //   { weights: { enabled, visibility, checkpoint, base, label, system },
-  //     context: { enabled, visibility, model, label, system, tools } }
-  // Legacy flat fields ({ enabled, checkpoint, base, label, system }) still work
+  //   { weights: { enabled, visibility, checkpoint, base, label },
+  //     context: { enabled, visibility, model, label, scopes } }
+  // Legacy flat fields ({ enabled, checkpoint, base, label }) still work
   // and apply to the WEIGHTS variant (back-compat with the single-twin config).
   // The checkpoint/model are not secrets; keeping the write owner-scoped stops
   // anyone else from pointing an Author's twin at other weights. Public read of
   // the variant summary rides GET /library/:author.
   app.post('/library/:author/twin', async (c) => {
     const authorId = c.req.param('author');
-    const accessorKey = extractApiKey(c);
-    const sessionToken = extractLibrarySessionToken(c);
-    const accessor = accessorKey
-      ? await findByApiKey(accessorKey)
-      : sessionToken ? await findByLibrarySessionToken(sessionToken) : null;
-    if (!accessor) return c.json({ error: 'Authentication required' }, 401);
-    if (!(await isHandleOwner(accessor, authorId))) return c.json({ error: 'Only the author can configure their twin' }, 403);
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
 
     const body = await c.req.json().catch(() => ({})) as Record<string, unknown>;
 
@@ -1735,10 +2001,6 @@ export function registerLibraryRoutes(app: Hono): void {
         const label = patch.label.trim().slice(0, 80);
         if (label) target.label = label; else delete target.label;
       }
-      if (typeof patch.system === 'string') {
-        const sys = patch.system.trim().slice(0, 4000);
-        if (sys) target.system = sys; else delete target.system;
-      }
       return null;
     };
 
@@ -1746,7 +2008,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const weightsPatch: Record<string, unknown> = {
       ...(body.weights && typeof body.weights === 'object' ? body.weights as Record<string, unknown> : {}),
     };
-    for (const k of ['enabled', 'checkpoint', 'base', 'label', 'system']) {
+    for (const k of ['enabled', 'checkpoint', 'base', 'label']) {
       if (!(k in weightsPatch) && k in body) weightsPatch[k] = body[k];
     }
     const contextPatch: Record<string, unknown> = body.context && typeof body.context === 'object'
@@ -1768,7 +2030,20 @@ export function registerLibraryRoutes(app: Hono): void {
       const m = contextPatch.model.trim().slice(0, 120);
       if (m) curContext.model = m; else delete curContext.model;
     }
-    if (typeof contextPatch.tools === 'boolean') curContext.tools = contextPatch.tools;
+    if (Array.isArray(contextPatch.scopes)) {
+      const scopes = Array.from(new Set(contextPatch.scopes
+        .filter((value): value is string => typeof value === 'string')
+        .map((value) => normalizeLibraryScope(value, 'public'))
+        .filter((value): value is string => !!value)));
+      if (!scopes.length) return c.json({ error: 'context.scopes must contain at least one exact Library scope' }, 400);
+      curContext.scopes = scopes.slice(0, 64);
+    }
+    // Retire the old arbitrary prompt field. It was a second, hidden context
+    // channel outside the Library permission folders and therefore violated
+    // the structural promise even when the ordinary folder gate was correct.
+    delete curWeights.system;
+    delete curContext.system;
+    delete curContext.tools;
 
     settings.twin = { weights: curWeights, context: curContext };
 
@@ -1791,15 +2066,15 @@ export function registerLibraryRoutes(app: Hono): void {
       ok: true,
       ...twinPublicSummary(variants),
       weights: { enabled: variants.weights.enabled, visibility: variants.weights.visibility, has_checkpoint: !!variants.weights.checkpoint, base: variants.weights.base },
-      context: { enabled: variants.context.enabled, visibility: variants.context.visibility, has_model: !!variants.context.model, tools: variants.context.tools },
+      context: { enabled: variants.context.enabled, visibility: variants.context.visibility, has_model: !!variants.context.model, tools: variants.context.tools, scopes: variants.context.scopes },
     });
   });
 
   // Register / update the Author's inference sidecar (the machine that runs their
-  // twin — their keys, their substrate). Owner-only. Stored ENCRYPTED in a
+  // twin with their model account and keys). Owner-only. Stored ENCRYPTED in a
   // dedicated KV entry; the secret is never returned by any read. This is what
   // makes the twin universal: every Author points Alexandria at their OWN
-  // sidecar, so the Worker holds neither keys nor substrate for anyone.
+  // sidecar. The Worker never holds provider keys or local Author files.
   app.put('/library/:author/twin/sidecar', async (c) => {
     const authorId = c.req.param('author');
     const owner = await resolveOwnerOnly(c, authorId);
@@ -1879,11 +2154,11 @@ export function registerLibraryRoutes(app: Hono): void {
     let works: { name: string; title: string | null; url: string }[] = [];
     try {
       const rows = await getDB().prepare(
-        `SELECT name, title FROM protocol_files WHERE account_id = ? AND visibility = 'public' ORDER BY updated_at DESC LIMIT 40`
-      ).bind(String(lookup.account.github_id)).all<{ name: string; title: string | null }>();
+        `SELECT scope, name, title, visibility FROM protocol_files WHERE account_id = ? AND visibility = 'public' ORDER BY updated_at DESC LIMIT 40`
+      ).bind(String(lookup.account.github_id)).all<{ scope: string; name: string; title: string | null; visibility: string }>();
       works = (rows.results || [])
         .filter((r) => r.name !== 'shadow')
-        .map((r) => ({ name: r.name, title: r.title, url: `${site}/library/${authorId}/read/${encodeURIComponent(r.name)}` }));
+        .map((r) => ({ name: r.name, title: r.title, url: `${site}/library/${authorId}/read/${encodeURIComponent(r.name)}${scopeQuery(r.scope, r.visibility)}` }));
     } catch { /* the shadow alone is a valid bundle */ }
 
     return c.json({
@@ -2322,13 +2597,13 @@ export function registerLibraryRoutes(app: Hono): void {
   // ACCESS CODES — owner mints/lists/revokes invite codes for their files
   // =========================================================================
   //
-  // An access_code is author-scoped, not file-scoped. One code unlocks every
-  // invite-visibility file the author has published. The owner mints a code
+  // An access_code is bound to one exact invite scope. It never opens a parent,
+  // sibling, or future cohort. The owner mints a code
   // and shares the URL `…/library/{author}/open/{name}?invite={code}` with
   // a recipient; the gate page auto-attempts on URL load.
   //
-  // Schema (migrations/0002_private_tier.sql):
-  //   access_codes(id, author_id, code UNIQUE, label?, created_at, revoked_at?)
+  // Schema (migrations/0026_library_scopes.sql):
+  //   access_codes(id, author_id, code UNIQUE, scope, label?, created_at, revoked_at?)
   //
   // Validation happens at the file route (library.ts above): code must exist
   // for that author_id AND revoked_at IS NULL. Revocation is soft — kept in
@@ -2358,13 +2633,62 @@ export function registerLibraryRoutes(app: Hono): void {
     return accessor;
   }
 
+  // Exact PLM view, owner-only. This calls the same broker as a real query and
+  // returns the exact bytes plus their manifest hash, so an Author can verify
+  // what a provider would receive instead of trusting a label or folder name.
+  app.get('/library/:author/twin/context-preview', async (c) => {
+    const authorId = c.req.param('author');
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
+    const lookup = await getAccountByLogin(authorId);
+    if (!lookup?.account?.github_id) return c.json({ error: 'Author not found' }, 404);
+    const row = await getDB().prepare('SELECT settings FROM authors WHERE id = ?')
+      .bind(authorId).first<{ settings: string | null }>().catch(() => null);
+    const cfg = resolveTwinVariants(parseJson<Record<string, unknown>>(row?.settings, {}), twinEnv(authorId)).context;
+    const simulate = (c.req.query('scopes') || '').split(',')
+      .map((value) => normalizeLibraryScope(value, 'public'))
+      .filter((value): value is string => !!value);
+    const scopes = simulate.length
+      ? cfg.scopes.filter((scope) => simulate.includes(scope) || visibilityForScope(scope) === 'public')
+      : cfg.scopes;
+    const artifactName = c.req.query('artifact')?.trim() || '';
+    const artifactScope = normalizeLibraryScope(c.req.query('artifact_scope'), 'public');
+    const activeArtifact = artifactName && isValidFileName(artifactName) && artifactScope
+      ? { name: artifactName, scope: artifactScope }
+      : undefined;
+    const bundle = await fetchTwinWorks(
+      authorId,
+      lookup.account.github_id,
+      owner,
+      scopes,
+      true,
+      activeArtifact,
+    );
+    if (activeArtifact && !bundle.focus) {
+      return c.json({ error: 'The active artifact is not in this exact preview view.' }, 404);
+    }
+    return c.json({
+      schema: 'alexandria.plm-context.v1',
+      author: authorId,
+      scopes,
+      context_hash: bundle.contextHash,
+      manifest: bundle.manifest,
+      active_artifact: activeArtifact || null,
+      documents: bundle.works,
+    });
+  });
+
   app.post('/library/:author/access-code', async (c) => {
     const authorId = c.req.param('author');
     const owner = await resolveOwnerOnly(c, authorId);
     if ('error' in owner) return owner.error;
 
-    const body = await c.req.json<{ label?: string }>().catch(() => ({} as { label?: string }));
+    const body = await c.req.json<{ label?: string; scope?: string }>().catch(() => ({} as { label?: string; scope?: string }));
     const label = typeof body.label === 'string' && body.label.trim() ? body.label.trim().slice(0, 80) : null;
+    const scope = normalizeLibraryScope(body.scope, 'invite');
+    if (!scope || visibilityForScope(scope) !== 'invite') {
+      return c.json({ error: 'Invite codes require an exact invite scope.' }, 400);
+    }
 
     // 12 bytes = 24 hex chars. UNIQUE index on code; retry on the astronomical
     // collision case rather than hand-coding "if exists" pre-check.
@@ -2372,11 +2696,11 @@ export function registerLibraryRoutes(app: Hono): void {
     const code = generateToken(12);
     const now = new Date().toISOString();
     await getDB().prepare(
-      'INSERT INTO access_codes (id, author_id, code, label, created_at) VALUES (?, ?, ?, ?, ?)'
-    ).bind(id, authorId, code, label, now).run();
+      'INSERT INTO access_codes (id, author_id, code, scope, label, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(id, authorId, code, scope, label, now).run();
 
-    logEvent('access_code_minted', { author: authorId, ...(label ? { label } : {}) });
-    return c.json({ id, code, label, created_at: now }, 201);
+    logEvent('access_code_minted', { author: authorId, scope, ...(label ? { label } : {}) });
+    return c.json({ id, code, scope, label, created_at: now }, 201);
   });
 
   app.get('/library/:author/access-codes', async (c) => {
@@ -2384,9 +2708,16 @@ export function registerLibraryRoutes(app: Hono): void {
     const owner = await resolveOwnerOnly(c, authorId);
     if ('error' in owner) return owner.error;
 
-    const result = await getDB().prepare(
-      'SELECT id, code, label, created_at, revoked_at FROM access_codes WHERE author_id = ? ORDER BY created_at DESC LIMIT 200'
-    ).bind(authorId).all<{ id: string; code: string; label: string | null; created_at: string; revoked_at: string | null }>();
+    const rawScope = c.req.query('scope')?.trim() || '';
+    const scope = rawScope ? normalizeLibraryScope(rawScope, 'invite') : null;
+    if (rawScope && (!scope || visibilityForScope(scope) !== 'invite')) return c.json({ error: 'Invalid invite scope' }, 400);
+    const result = scope
+      ? await getDB().prepare(
+          'SELECT id, code, scope, label, created_at, revoked_at FROM access_codes WHERE author_id = ? AND scope = ? ORDER BY created_at DESC LIMIT 200'
+        ).bind(authorId, scope).all<{ id: string; code: string; scope: string; label: string | null; created_at: string; revoked_at: string | null }>()
+      : await getDB().prepare(
+          'SELECT id, code, scope, label, created_at, revoked_at FROM access_codes WHERE author_id = ? ORDER BY created_at DESC LIMIT 200'
+        ).bind(authorId).all<{ id: string; code: string; scope: string; label: string | null; created_at: string; revoked_at: string | null }>();
     return c.json({ codes: result.results || [] });
   });
 
@@ -2422,7 +2753,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const owner = await resolveOwnerOnly(c, authorId);
     if ('error' in owner) return owner.error;
 
-    const body = await c.req.json<{ login?: string; label?: string }>().catch(() => ({} as { login?: string; label?: string }));
+    const body = await c.req.json<{ login?: string; label?: string; scope?: string }>().catch(() => ({} as { login?: string; label?: string; scope?: string }));
     const login = typeof body.login === 'string' ? body.login.trim().replace(/^@/, '') : '';
     if (!login) return c.json({ error: 'Provide the invitee’s github login.' }, 400);
     const lookup = await getAccountByLogin(login);
@@ -2430,11 +2761,13 @@ export function registerLibraryRoutes(app: Hono): void {
     if (!invitee?.github_id) return c.json({ error: `No Alexandria account for "${login}" — they need to sign in once first.` }, 404);
 
     const label = typeof body.label === 'string' && body.label.trim() ? body.label.trim().slice(0, 80) : login;
+    const scope = normalizeLibraryScope(body.scope, 'invite');
+    if (!scope || visibilityForScope(scope) !== 'invite') return c.json({ error: 'Grant requires an exact invite scope.' }, 400);
     // Owner path → reactivate: an explicit owner grant is the ONE way to clear a
     // prior revoke (code-reuse can't — audit B2).
-    await grantAccess(authorId, invitee.github_id, { label, reactivate: true });
-    logEvent('twin_grant_added', { author: authorId, invitee: login });
-    return c.json({ ok: true, login, github_id: invitee.github_id, label });
+    await grantAccess(authorId, invitee.github_id, { scope, sourceType: 'owner', label, reactivate: true });
+    logEvent('twin_grant_added', { author: authorId, invitee: login, scope });
+    return c.json({ ok: true, login, github_id: invitee.github_id, scope, label });
   });
 
   // Set the per-file categories (works/projects/shadows/other) for the neat
@@ -2454,10 +2787,10 @@ export function registerLibraryRoutes(app: Hono): void {
     return c.json({ ok: true, categories: clean });
   });
 
-  // Owner sets the always-public teaser line per file (the browse-list subtitle).
+  // Owner sets the teaser line per file (the browse-list subtitle).
   // Mirrors file-categories. A one-line, unstructured teaser — no schema; the
   // model/author decides the copy. Blank string clears it. Capped to keep it a
-  // teaser, not a body dump. Always public (see getFileSubtitles rationale).
+  // teaser, not a body dump. Read visibility follows the artifact directory gate.
   // Owner-set display order — an array of file names. Custom order wins;
   // unnamed files fall below it by recency (new publishes land at the bottom
   // of the curated shape instead of jumping the queue).
@@ -2494,7 +2827,7 @@ export function registerLibraryRoutes(app: Hono): void {
   // short array of questions per file — unstructured, no schema; generated FROM
   // the artifact so the PLM answers them, feeding the rotating ask. Mirrors
   // file-subtitles. Empty/missing array clears a file. Capped to keep it a
-  // teaser set, not a body dump. Always public (see getFileQuestions rationale).
+  // teaser set, not a body dump. Read visibility follows the artifact directory gate.
   app.put('/library/:author/file-questions', async (c) => {
     const authorId = c.req.param('author');
     const owner = await resolveOwnerOnly(c, authorId);
@@ -2622,8 +2955,13 @@ export function registerLibraryRoutes(app: Hono): void {
     const accountId = c.req.param('accountId');
     const owner = await resolveOwnerOnly(c, authorId);
     if ('error' in owner) return owner.error;
-    await revokeGrant(authorId, accountId);
-    logEvent('twin_grant_revoked', { author: authorId, account: accountId });
+    const rawScope = c.req.query('scope')?.trim() || 'invite';
+    const scope = normalizeLibraryScope(rawScope, 'invite');
+    if (!scope || (visibilityForScope(scope) !== 'invite' && visibilityForScope(scope) !== 'paid')) {
+      return c.json({ error: 'Invalid grant scope' }, 400);
+    }
+    await revokeGrant(authorId, accountId, scope);
+    logEvent('twin_grant_revoked', { author: authorId, account: accountId, scope });
     return c.json({ ok: true });
   });
 

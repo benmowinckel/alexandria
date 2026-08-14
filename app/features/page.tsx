@@ -33,6 +33,7 @@ export default function FeaturesPage() {
   return (
     <PublicDocReader
       title="the features"
+      artifactName="features"
       mdSrc="/docs/Features.md"
       askQuestions={FEATURES_QUESTIONS}
     />

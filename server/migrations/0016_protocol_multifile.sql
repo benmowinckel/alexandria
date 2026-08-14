@@ -6,8 +6,10 @@ CREATE TABLE IF NOT EXISTS protocol_files_v3 (
   account_id TEXT NOT NULL,
   name TEXT NOT NULL,
   text TEXT,
+  title TEXT,
   visibility TEXT DEFAULT 'authors',
   updated_at TEXT NOT NULL,
+  price_cents INTEGER,
   PRIMARY KEY (account_id, name)
 );
 

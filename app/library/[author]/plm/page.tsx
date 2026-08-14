@@ -34,9 +34,9 @@ function displayName(name: string): string {
  *  mind must not read as a mind that doesn't know (founder 2026-07-28). */
 type Msg = { role: 'you' | 'twin' | 'note'; text: string };
 type Convo = { id: string; messages: Msg[]; title?: string };
-type FileMeta = { name: string; visibility?: string; title?: string | null; category?: string };
+type FileMeta = { name: string; scope: string; visibility?: string; title?: string | null; category?: string };
 type LinkedSurface = { label: string; url: string };
-type OpenPiece = { name: string; nice: string; content: string; pdfUrl: string; loading: boolean };
+type OpenPiece = { name: string; scope: string; nice: string; content: string; pdfUrl: string; loading: boolean };
 
 const svgProps = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
 const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6-6 6-6" /></svg>;
@@ -92,6 +92,12 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
 
   const idRef = useRef(2);
   const [convos, setConvos] = useState<Convo[]>([{ id: '1', messages: [] }]);
+  const convosRef = useRef<Convo[]>(convos);
+  const updateConvos = (update: (current: Convo[]) => Convo[]) => {
+    const next = update(convosRef.current);
+    convosRef.current = next;
+    setConvos(next);
+  };
   const [activeId, setActiveId] = useState('1');
   const active = useMemo(() => convos.find((c) => c.id === activeId) ?? convos[0], [convos, activeId]);
   const [question, setQuestion] = useState('');
@@ -120,8 +126,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   }, []);
 
   const who = authorName || author;
-  // One public mind; DEPTH is structural per querier (public shadow for anyone,
-  // the deeper invite shadow for granted friends — server-side). The header
+  // One public mind; context depth is the server-side intersection of the PLM's
+  // configured scopes and this reader's exact live permissions. The header
   const activeCfg = useMemo(() => variants.find((v) => v.variant === activeVariant), [variants, activeVariant]);
   // Either mind can be invite-gated (which one is the Author's call). Show the
   // unlock field whenever the mind in view is enabled but this viewer can't reach
@@ -235,16 +241,18 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     return () => { window.removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs); };
   }, [expanded]);
 
-  const openPiece = async (fileName: string) => {
-    const nice = files.find((x) => x.name === fileName)?.title || displayName(fileName);
+  const openPiece = async (file: FileMeta) => {
+    const fileName = file.name;
+    const nice = file.title || displayName(fileName);
+    const scopeParam = `scope=${encodeURIComponent(file.scope)}`;
     openTextRef.current = '';
     openExtractRef.current = null;
     setRightOpen(true);
     if (typeof window !== 'undefined' && window.innerWidth <= 900) setMtab('pieces');
-    setOpen({ name: fileName, nice, content: '', pdfUrl: '', loading: true });
+    setOpen({ name: fileName, scope: file.scope, nice, content: '', pdfUrl: '', loading: true });
     try {
-      const res = await fetch(`/api/library/${encodeURIComponent(author)}/file/${encodeURIComponent(fileName)}`, { credentials: 'include' });
-      if (!res.ok) { setOpen({ name: fileName, nice, content: '', pdfUrl: '', loading: false }); return; }
+      const res = await fetch(`/api/library/${encodeURIComponent(author)}/file/${encodeURIComponent(fileName)}?${scopeParam}`, { credentials: 'include' });
+      if (!res.ok) { setOpen({ name: fileName, scope: file.scope, nice, content: '', pdfUrl: '', loading: false }); return; }
       const blob = await res.blob();
       dlBlobRef.current = blob;
       const head = await blob.slice(0, 5).text();
@@ -252,25 +260,25 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         dlExtRef.current = 'pdf';
         const buf = await blob.arrayBuffer();
         const url = URL.createObjectURL(new Blob([buf], { type: 'application/pdf' }));
-        setOpen({ name: fileName, nice, content: '', pdfUrl: url, loading: false });
+        setOpen({ name: fileName, scope: file.scope, nice, content: '', pdfUrl: url, loading: false });
         openExtractRef.current = (async () => {
           try {
-            const tr = await fetch(`/api/library/${encodeURIComponent(author)}/file/${encodeURIComponent(fileName)}?format=text`, { credentials: 'include' });
-            if (tr.ok) { const t = (await tr.text()).trim(); if (t) { openTextRef.current = t; setOpen((o) => (o && o.name === fileName ? { ...o, content: t } : o)); } }
+            const tr = await fetch(`/api/library/${encodeURIComponent(author)}/file/${encodeURIComponent(fileName)}?${scopeParam}&format=text`, { credentials: 'include' });
+            if (tr.ok) { const t = (await tr.text()).trim(); if (t) { openTextRef.current = t; setOpen((o) => (o && o.name === fileName && o.scope === file.scope ? { ...o, content: t } : o)); } }
           } catch { /* title-scoped focus fallback */ }
         })();
       } else {
         dlExtRef.current = 'md';
-        setOpen({ name: fileName, nice, content: await blob.text(), pdfUrl: '', loading: false });
+        setOpen({ name: fileName, scope: file.scope, nice, content: await blob.text(), pdfUrl: '', loading: false });
       }
     } catch {
-      setOpen({ name: fileName, nice, content: '', pdfUrl: '', loading: false });
+      setOpen({ name: fileName, scope: file.scope, nice, content: '', pdfUrl: '', loading: false });
     }
   };
 
   const referenced = (text: string) => {
     const lc = text.toLowerCase();
-    return files.filter((f) => { const n = displayName(f.name); return n.length >= 5 && lc.includes(n.toLowerCase()) && f.name !== open?.name; });
+    return files.filter((f) => { const n = displayName(f.name); return n.length >= 5 && lc.includes(n.toLowerCase()) && !(f.name === open?.name && f.scope === open?.scope); });
   };
   // Linked surfaces the answer names get an "open …" chip too — the mind
   // routes you OUT to the artifact, not only talks about it (locked platforms
@@ -289,7 +297,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
 
   const newChat = () => {
     const id = String(idRef.current++);
-    setConvos((cs) => [{ id, messages: [] }, ...cs]);
+    updateConvos((cs) => [{ id, messages: [] }, ...cs]);
     setActiveId(id);
     setQuestion('');
   };
@@ -297,9 +305,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   // the chat, minting a fresh empty one if it was the last so the pane is never
   // bare. The effect below realigns the active id after a delete.
   const renameChat = (id: string, title: string) =>
-    setConvos((cs) => cs.map((c) => (c.id === id ? { ...c, title } : c)));
+    updateConvos((cs) => cs.map((c) => (c.id === id ? { ...c, title } : c)));
   const deleteChat = (id: string) =>
-    setConvos((cs) => {
+    updateConvos((cs) => {
       const next = cs.filter((c) => c.id !== id);
       return next.length ? next : [{ id: String(idRef.current++), messages: [] }];
     });
@@ -320,8 +328,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
 
   // Mid-thought questions QUEUE instead of bouncing (founder, 2026-07-17): the
   // composer stays typable while the mind is answering (typeWhileLoading), the
-  // new question lands in the thread immediately, and it fires as soon as the
-  // in-flight answer returns — FIFO, conversation order preserved.
+  // new question fires as soon as the in-flight answer returns, then lands in
+  // the thread at the start of its actual turn — FIFO, conversation order and
+  // model continuity preserved.
   const queueRef = useRef<{ text: string; convoId: string }[]>([]);
   const askingRef = useRef(false);
 
@@ -354,7 +363,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       piece: open?.content ? {
         name: open.nice,
         content: open.content,
-        url: `${ctx.profile_url}/read/${encodeURIComponent(open.name)}`,
+        url: `${ctx.profile_url}/read/${encodeURIComponent(open.name)}?scope=${encodeURIComponent(open.scope)}`,
       } : null,
       messages: active?.messages || [],
     }));
@@ -379,22 +388,26 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     setQuestion('');
     setMidOpen(true);
     if (typeof window !== 'undefined' && window.innerWidth <= 900) setMtab('chat');
-    setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'you', text }] } : c)));
     if (askingRef.current) { queueRef.current.push({ text, convoId: targetId }); return; }
     await fire(text, targetId);
   };
 
   const fire = async (text: string, targetId: string): Promise<void> => {
+    // A queued question enters the transcript only when its turn actually
+    // begins. That keeps Q1 → A1 → Q2 → A2 ordering and lets the next request
+    // derive continuity from the answer that just completed.
+    const prior = convosRef.current.find((conversation) => conversation.id === targetId)?.messages || [];
+    updateConvos((cs) => cs.map((c) => (
+      c.id === targetId ? { ...c, messages: [...c.messages, { role: 'you', text }] } : c
+    )));
     askingRef.current = true;
     setAsking(true);
     try {
-      // If a PDF piece is open and still extracting, wait so the PLM gets its text.
-      let fc = open ? (open.content || openTextRef.current) : '';
-      if (open && open.pdfUrl && !fc && openExtractRef.current) {
-        try { await Promise.race([openExtractRef.current, new Promise((r) => setTimeout(r, 8000))]); } catch { /* */ }
-        fc = openTextRef.current;
+      const messages: { role: 'user' | 'assistant'; content: string }[] = [];
+      for (const message of prior) {
+        if (message.role === 'you') messages.push({ role: 'user', content: message.text });
+        if (message.role === 'twin') messages.push({ role: 'assistant', content: message.text });
       }
-      const focus = open ? { name: open.nice, content: fc || `(The reader is looking at “${open.nice}”${open.pdfUrl ? ' (a PDF)' : ''} by ${who}.)` } : undefined;
       const res = await fetch(`/api/library/${encodeURIComponent(author)}/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -406,7 +419,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           // public depth (server honors depth requests downward only).
           ...(depth === 'invite' && sel === 'public' ? { depth: 'public' } : {}),
           ...(invite ? { invite } : {}),
-          ...(focus ? { focus } : {}),
+          ...(open && activeVariant === 'context' ? { artifact: { name: open.name, scope: open.scope } } : {}),
+          messages,
         }),
       });
       const b = await res.json().catch(() => ({}));
@@ -414,7 +428,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       if (typeof b?.remaining === 'number' && typeof b?.limit === 'number') {
         setBudget({ remaining: b.remaining, limit: b.limit, signedIn: !!b.signed_in });
       }
-      setConvos((cs) => cs.map((c) => {
+      updateConvos((cs) => cs.map((c) => {
         if (c.id !== targetId) return c;
         // The spent dock carries the limit once. The unanswered question stays
         // last so both copy and handoff preserve exactly where the reader was.
@@ -438,7 +452,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           }).catch(() => { /* */ });
       }
     } catch {
-      setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'note', text: offlineNote }] } : c)));
+      updateConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'note', text: offlineNote }] } : c)));
     } finally {
       const next = queueRef.current.shift();
       if (next) {
@@ -570,7 +584,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                         <div style={{ paddingLeft: '0.9rem' }}>
                           <ActionButton icon={CopyIcon} onAction={() => copyText(m.text)} title="copy" style={{ ...iconBtn, marginTop: '0.45rem', marginRight: '0.5rem', padding: 0 }} className="hover:opacity-60" />
                           {referenced(m.text).map((f) => (
-                            <button key={f.name} type="button" onClick={() => void openPiece(f.name)} className="hover:opacity-70"
+                            <button key={`${f.scope}/${f.name}`} type="button" onClick={() => void openPiece(f)} className="hover:opacity-70"
                               style={{ display: 'inline-flex', alignItems: 'center', marginTop: '0.6rem', marginRight: '0.4rem', border: '1px solid var(--border-light)',
                                 color: 'var(--text-muted)', background: 'transparent', borderRadius: 999, fontFamily: 'inherit', fontSize: '0.85rem', padding: '0.28rem 0.75rem', cursor: 'pointer' }}>
                               pull up · {displayName(f.name).toLowerCase()}
@@ -756,7 +770,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                         <div key={cat} style={{ margin: '0 0 1.5rem' }}>
                           <p style={{ ...label, margin: '0 0 0.15rem' }}>{cat}</p>
                           {items.map((f) => (
-                            <button key={f.name} type="button" onClick={() => void openPiece(f.name)}
+                            <button key={`${f.scope}/${f.name}`} type="button" onClick={() => void openPiece(f)}
                               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', width: '100%', textAlign: 'left',
                                 border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.55rem 0' }}
                               className="hover:opacity-60">

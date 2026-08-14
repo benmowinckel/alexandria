@@ -2,9 +2,9 @@
  * Static structural contract for the human profile editor.
  *
  * This deliberately tests the boundary rather than the current UI behavior:
- * the browser may only reach presentation controls; each Worker write must
- * re-authenticate the immutable account owner; bodies and visibility remain
- * outside this surface.
+ * the browser may reach presentation controls plus the exact PLM-scope ceiling;
+ * each Worker write must re-authenticate the immutable account owner; artifact
+ * bodies, visibility, grants, and publishing remain outside this surface.
  */
 
 import assert from 'node:assert/strict';
@@ -21,11 +21,15 @@ assert.deepEqual(controls, [
   'profile',
   'file-order',
   'file-subtitles',
+  'twin',
 ]);
 
-for (const forbidden of ['file-visibility', 'access-code', '/grant', '/twin', 'file-categories', 'file-questions']) {
+for (const forbidden of ['file-visibility', 'access-code', '/grant', 'file-categories', 'file-questions']) {
   assert.equal(page.includes(forbidden), false, `profile editor must not expose ${forbidden}`);
 }
+assert.match(page, /context: \{ scopes: contextScopes \}/);
+assert.match(page, /see the exact context/);
+assert.match(page, /each folder stands alone/);
 
 assert.match(page, /data\.viewer\?\.is_owner/);
 assert.match(page, />edit profile<\/HeaderAction>/);
@@ -63,7 +67,8 @@ assert.match(ownerGate, /Authentication required/);
 assert.match(ownerGate, /403/);
 
 for (const control of controls) {
-  const marker = `app.put('/library/:author/${control}'`;
+  const method = control === 'twin' ? 'post' : 'put';
+  const marker = `app.${method}('/library/:author/${control}'`;
   const start = library.indexOf(marker);
   assert.notEqual(start, -1, `${control} endpoint must exist`);
   const nextRoute = library.indexOf('\n  app.', start + marker.length);
@@ -79,4 +84,4 @@ for (const control of controls) {
   assert.ok(gate < firstWrite, `${control} must authenticate before writing`);
 }
 
-console.log('profile boundary: owner-only presentation controls; no content or permission writes');
+console.log('profile boundary: owner-only presentation + exact PLM scopes; no content, publication, or grant writes');

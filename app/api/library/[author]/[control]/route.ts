@@ -7,7 +7,36 @@ const OWNER_CONTROLS = new Set([
   'profile',
   'file-order',
   'file-subtitles',
+  'twin',
 ]);
+
+export async function GET(
+  req: NextRequest,
+  ctx: { params: Promise<{ author: string; control: string }> },
+): Promise<Response> {
+  const { author, control } = await ctx.params;
+  if (control !== 'context-preview') return Response.json({ error: 'Unknown Library control' }, { status: 404 });
+
+  const headers: Record<string, string> = {};
+  const cookie = req.headers.get('cookie');
+  const auth = req.headers.get('authorization');
+  if (cookie) headers.Cookie = cookie;
+  if (auth) headers.Authorization = auth;
+  Object.assign(headers, localAuth(auth));
+
+  const upstream = await fetch(
+    `${SERVER_URL}/library/${encodeURIComponent(author)}/twin/context-preview${req.nextUrl.search}`,
+    { headers },
+  );
+  return new Response(upstream.body, {
+    status: upstream.status,
+    headers: {
+      'Content-Type': upstream.headers.get('content-type') || 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
+}
 
 export async function PUT(
   req: NextRequest,
@@ -36,9 +65,10 @@ export async function PUT(
     body = JSON.stringify(parsed);
   }
 
+  const upstreamPath = control === 'twin' ? 'twin' : control;
   const upstream = await fetch(
-    `${SERVER_URL}/library/${encodeURIComponent(author)}/${control}`,
-    { method: 'PUT', headers, body },
+    `${SERVER_URL}/library/${encodeURIComponent(author)}/${upstreamPath}`,
+    { method: control === 'twin' ? 'POST' : 'PUT', headers, body },
   );
   return new Response(upstream.body, {
     status: upstream.status,

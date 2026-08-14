@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ThemeToggle } from '../../../../../components/ThemeToggle';
 import { SERVER_URL } from '../../../../../lib/config';
 
 type AuthorResponse = {
   author?: { display_name?: string | null };
-  files?: Array<{ name: string; visibility: string }>;
+  files?: Array<{ name: string; scope?: string; visibility: string }>;
 };
 
 export default function ProtocolFileCheckoutPage({
@@ -15,6 +16,8 @@ export default function ProtocolFileCheckoutPage({
 }: {
   params: Promise<{ author: string; name: string }>;
 }) {
+  const searchParams = useSearchParams();
+  const scope = (searchParams.get('scope') || '').trim();
   const [authorId, setAuthorId] = useState('');
   const [fileName, setFileName] = useState('');
   const [authorName, setAuthorName] = useState('');
@@ -32,7 +35,7 @@ export default function ProtocolFileCheckoutPage({
         if (!res.ok) throw new Error('Author not found');
         const data = await res.json() as AuthorResponse;
         setAuthorName((data.author?.display_name || author).trim());
-        const file = (data.files || []).find((candidate) => candidate.name === name);
+        const file = (data.files || []).find((candidate) => candidate.name === name && (!scope || candidate.scope === scope));
         if (!file || file.visibility !== 'paid') {
           setIsPaidFile(false);
           setError('this file is not a paid listing.');
@@ -43,7 +46,7 @@ export default function ProtocolFileCheckoutPage({
         setReady(true);
       }
     });
-  }, [params]);
+  }, [params, scope]);
 
   const checkoutLabel = useMemo(() => {
     if (!fileName) return 'checkout';
@@ -55,7 +58,7 @@ export default function ProtocolFileCheckoutPage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${SERVER_URL}/library/${encodeURIComponent(authorId)}/checkout/file/${encodeURIComponent(fileName)}`, {
+      const res = await fetch(`${SERVER_URL}/library/${encodeURIComponent(authorId)}/checkout/file/${encodeURIComponent(fileName)}${scope ? `?scope=${encodeURIComponent(scope)}` : ''}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
