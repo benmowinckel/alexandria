@@ -466,10 +466,10 @@ export default async function StartPage({
           .install-cmd { font-size: 12.5px; }
           .primer-coda { font-size: 18px; margin-top: 52px; }
           .act-box { font-size: 14px; padding-left: 12px; padding-right: 12px; }
-          .act-email { flex-wrap: wrap; white-space: normal; }
+          .act-email { flex-wrap: nowrap; white-space: nowrap; overflow: hidden; }
           .act-email-why {
-            flex-basis: 100%; max-width: 100%; margin-top: 3px;
-            white-space: normal; overflow: visible;
+            flex: 1 1 auto; min-width: 0; max-width: none; margin-top: 0;
+            white-space: nowrap; overflow: hidden;
           }
           .act-email.is-focused { flex-wrap: nowrap; }
           .act-email.is-focused .act-email-why { flex-basis: 0; margin-top: 0; }

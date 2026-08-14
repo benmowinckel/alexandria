@@ -473,7 +473,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
 
   return (
     <>
-      <ThemeToggle />
+      {/* Full-screen reading owns the top-right corner: the mirror switch sits
+          there, so the fixed theme control must leave until the piece closes. */}
+      {!expanded && <ThemeToggle />}
       <div className="plm-shell" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
         <header className="plm-global-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 3.2rem 0 0.7rem', borderBottom: 'none' }}>
           <Link href={`/library/${encodeURIComponent(author)}`} aria-label="back to the library" title="library"

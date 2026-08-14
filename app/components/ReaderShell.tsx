@@ -269,6 +269,24 @@ export default function ReaderShell({
     return () => cancelAnimationFrame(id);
   }, [midOpen, tab]);
 
+  // iOS can leave the outer page offset after the docked composer closes its
+  // keyboard. The reader panes scroll internally, so every mobile pane change
+  // belongs at document top: the global header and title must remain visible.
+  useEffect(() => {
+    if (!isNarrow()) return;
+    const restorePageTop = () => {
+      window.scrollTo(0, 0);
+      document.scrollingElement?.scrollTo(0, 0);
+    };
+    restorePageTop();
+    const frame = requestAnimationFrame(restorePageTop);
+    const afterKeyboard = window.setTimeout(restorePageTop, 320);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(afterKeyboard);
+    };
+  }, [tab]);
+
   const newChat = () => {
     const id = String(idRef.current++);
     setConvos((cs) => [{ id, messages: [] }, ...cs]);

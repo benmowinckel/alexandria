@@ -83,7 +83,7 @@ export default function StartCTA({ refCode, mode, host }: { refCode?: string; mo
     }
   };
 
-  const emailWhy = ' — we’ll send your setup, then occasional useful notes';
+  const emailWhy = ' — setup and notes';
   const emailSentWhy = mode === 'phone'
     ? ' — open it at your computer ✓'
     : ' — backup is in your inbox ✓';
