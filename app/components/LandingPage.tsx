@@ -1089,11 +1089,11 @@ export default function LandingPage() {
                   <p className="pitch-simple-prose">
                     The better your ai knows you, the better it helps you. Every
                     native ai memory is a partial version of that{'\u00a0'}—
-                    usually shallow, locked inside one product, and scattered
-                    across the tools you use, so no single ai ever sees the
+                    shallow, locked inside one product, and scattered across
+                    the tools you use, so no single ai sees the
                     whole. The optimal structure is your ai continually reading
                     and writing a living map of what you think and how you
-                    think, updating it as it learns.
+                    think, built from passive signal and active reflection.
                   </p>
                   <p className="pitch-simple-prose">
                     The map is deeper, sovereign, and unified. Deeper, so talking
