@@ -169,7 +169,9 @@ export function registerProtocol(app: Hono) {
     // The factory hook reconciles the full Library every session-start by
     // PUT-ing every local file. Hash-compare against the stored row so we
     // skip R2 write, updated_at bump, and analytics event when nothing
-    // actually changed — keeps reconciliation cheap and the event log clean.
+    // actually changed — but only if the exact scope-keyed R2 object exists.
+    // That final check self-migrates pre-scope objects whose D1 rows were
+    // upgraded by 0026 while their bytes still live at the legacy R2 key.
     const hashBuf = await crypto.subtle.digest('SHA-256', bodyBytes);
     const contentHash = [...new Uint8Array(hashBuf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 
@@ -206,6 +208,7 @@ export function registerProtocol(app: Hono) {
       && (existing.text ?? null) === (text ?? null)
       && (existing.title ?? null) === (title ?? null)
       && (priceCents === null || priceCents === (existing.price_cents ?? null))
+      && (await getR2().head(protocolR2Key(id, scope, name, ext))) !== null
     ) {
       return c.json({ ok: true, unchanged: true, ...(payoutsRequired ? { payouts_required: true } : {}) });
     }

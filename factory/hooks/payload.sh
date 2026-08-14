@@ -220,9 +220,9 @@ To adopt it, tell me to pull $module (verified against the signed manifest befor
 
 ## $module.md — update available (not applied)
 
-```diff
+~~~diff
 $(diff -u "$local_path" "$fresh_tmp" 2>/dev/null | head -n 200)
-```
+~~~
 
 To apply, tell me to pull $module (verified). To keep your version, do nothing."
         fi
@@ -822,7 +822,10 @@ ALEXNODE
       echo ""
     fi
   fi
-  marketplace_approved_sha=$(tr -d '[:space:]' < "$marketplace_permission" 2>/dev/null || true)
+  marketplace_approved_sha=""
+  if [ -f "$marketplace_permission" ]; then
+    marketplace_approved_sha=$(tr -d '[:space:]' < "$marketplace_permission" 2>/dev/null || true)
+  fi
   marketplace_current_sha=$(shasum -a 256 "$marketplace_manifest" 2>/dev/null | awk '{print $1}')
   if [ -n "$marketplace_approved_sha" ] && [ "$marketplace_approved_sha" = "$marketplace_current_sha" ]; then
     call_payload=$(cat "$marketplace_manifest" 2>/dev/null)
