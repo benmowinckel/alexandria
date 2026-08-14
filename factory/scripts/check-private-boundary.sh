@@ -209,14 +209,14 @@ require factory/canon/methodology.md \
   'That order is the contract for every joined Author on every surface.' \
   'methodology no longer makes the joined opener order universal'
 require factory/canon/methodology.md \
-  'The invite link is text only: never put the `a.` mark, a logo, favicon, image, emoji, or any other icon before it.' \
-  'methodology can render a logo or icon before the invite link'
+  'The referral URL is the universal sharing floor and stays directly clickable.' \
+  'methodology no longer keeps the referral URL directly clickable'
 require factory/canon/methodology.md \
   '[alexandria-library.com/invite?ref=<account.github_login>](https://alexandria-library.com/invite?ref=<account.github_login>)' \
-  'rendered markdown no longer suppresses invite-link unfurls with an explicit text link'
+  'rendered markdown no longer uses the explicit full-address invite link'
 require factory/canon/methodology.md \
-  'Never emit the invite address as a bare autolink on those surfaces.' \
-  'rendered markdown can still produce a low-resolution favicon or rich preview'
+  'Host-generated favicon or preview chrome is automatic and accepted.' \
+  'methodology still promises control over host-generated link chrome'
 for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md; do
   require "$opener_skill" \
     'JOINED OPENER CHECK — every Author, every surface.' \
@@ -225,11 +225,14 @@ for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory
     'the first three visible sections are exactly `invite`, highest-ROI cognitive `recommended`, `everything`, in that order' \
     "$opener_skill no longer guarantees the exact joined section order"
   require "$opener_skill" \
-    'The invite line is text only: no `a.` mark, logo, favicon, image, emoji, icon, or rich-preview card before it.' \
-    "$opener_skill can still render a logo or preview before the invite link"
+    'The invite body is the direct clickable referral URL.' \
+    "$opener_skill no longer keeps the referral URL directly clickable"
   require "$opener_skill" \
     '[alexandria-library.com/invite?ref=<account.github_login>](https://alexandria-library.com/invite?ref=<account.github_login>)' \
     "$opener_skill does not force the explicit rendered-markdown text link"
+  require "$opener_skill" \
+    'Host-generated favicon or preview chrome is automatic and accepted.' \
+    "$opener_skill still promises control over host-generated link chrome"
 done
 require factory/setup.sh \
   'when that owned alias still exists, refresh it from the' \
