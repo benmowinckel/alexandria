@@ -321,8 +321,31 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
   if [ -n "$network_approved_sha" ] && [ "$network_approved_sha" = "$network_current_sha" ]; then
     network_cache="$ALEX_DIR/files/network"
     mkdir -p "$network_cache" 2>/dev/null
+
+    # The cache is derived, not owned data. Prune people who are no longer on
+    # the exact approved list before any model can see stale relational context.
+    network_allowed_slugs=""
+    while IFS= read -r line; do
+      trimmed=$(echo "$line" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')
+      [[ "$trimmed" =~ ^# ]] && continue
+      [ -z "$trimmed" ] && continue
+      url=$(echo "$trimmed" | grep -oE 'https?://[^[:space:]]+' | head -1)
+      [ -z "$url" ] && url="$trimmed"
+      slug=$(echo "$url" | sed -E 's#https?://[^/]+/library/##; s#/.*$##' | tr -cd 'a-zA-Z0-9_-')
+      [ -n "$slug" ] && network_allowed_slugs="${network_allowed_slugs}${slug}
+"
+    done < "$network_file"
+    for author_dir in "$network_cache"/*; do
+      [ -d "$author_dir" ] || continue
+      author_slug=$(basename "$author_dir")
+      if ! printf '%s' "$network_allowed_slugs" | grep -Fxq "$author_slug"; then
+        rm -rf -- "$author_dir"
+      fi
+    done
+
     network_needs_sync="yes"
-    if [ -f "$network_cache/.last_synced" ]; then
+    cached_approved_sha=$(cat "$network_cache/.approved_sha" 2>/dev/null || true)
+    if [ "$cached_approved_sha" = "$network_current_sha" ] && [ -f "$network_cache/.last_synced" ]; then
       last_sync=$(cat "$network_cache/.last_synced" 2>/dev/null || echo 0)
       [ -n "$last_sync" ] && [ "$(($(date +%s) - last_sync))" -lt 86400 ] && network_needs_sync="no"
     fi
@@ -367,8 +390,17 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
           rm -f "$author_dir/shadow.md.tmp"
           [ -n "$fetched" ] && echo "$trimmed" > "$author_dir/_annotation.md"
         done < "$network_file"
+        echo "$network_current_sha" > "$network_cache/.approved_sha"
         date -u +%s > "$network_cache/.last_synced"
       ) 2>/dev/null &
+    fi
+  else
+    # Missing or changed consent means the collective layer is off now, not
+    # merely unable to refresh. Remove only the downloaded cache; the Author's
+    # own network.md remains untouched and can be re-approved later.
+    network_cache="$ALEX_DIR/files/network"
+    if [ -d "$network_cache" ]; then
+      rm -rf -- "$network_cache"
     fi
   fi
 

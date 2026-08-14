@@ -9,7 +9,7 @@ import type { KeyboardEvent } from 'react';
  * newline. Dictation is the phone's — not a second product in the box.
  */
 
-export type PromptBoxHandle = { focus: () => void };
+export type PromptBoxHandle = { focus: () => void; blur: () => void };
 
 /** Send — the house right arrow (same glyph as the join/start doors). The
  *  line runs left-to-right; the arrow says go. */
@@ -74,7 +74,10 @@ const PromptBox = forwardRef<PromptBoxHandle, {
 
   // Let callers drop the cursor in the box (e.g. when a collapsed chat pane
   // expands) so you can start typing immediately.
-  useImperativeHandle(ref, () => ({ focus: () => taRef.current?.focus() }), []);
+  useImperativeHandle(ref, () => ({
+    focus: () => taRef.current?.focus(),
+    blur: () => taRef.current?.blur(),
+  }), []);
 
   // Grow from one line as content is added (Shift+Enter or wrapping), capped.
   useEffect(() => {
@@ -121,7 +124,7 @@ const PromptBox = forwardRef<PromptBoxHandle, {
   };
 
   return (
-    <div className={shake ? 'pb-shake' : undefined} style={{ display: 'flex', alignItems: 'stretch' }}>
+    <div className={`${bare ? 'pb-bare' : 'pb-boxed'}${shake ? ' pb-shake' : ''}`} style={{ display: 'flex', alignItems: 'stretch' }}>
       <style>{`
         @keyframes pb-shake {
           0%, 100% { transform: translateX(0); }
@@ -137,10 +140,26 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           border: none; background: none; padding: 0; line-height: 0;
         }
         .pb-send svg { display: block; }
+        @media (max-width: 900px) {
+          .pb-bare .pb-textarea {
+            min-height: 4.15rem !important;
+            overflow-y: auto !important;
+          }
+          .pb-bare .pb-ghost {
+            white-space: normal !important;
+            overflow: hidden !important;
+            overflow-wrap: anywhere;
+            text-wrap: pretty;
+            max-height: 3.65rem;
+            -webkit-mask-image: none !important;
+            mask-image: none !important;
+          }
+        }
       `}</style>
       <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
         <textarea
           ref={taRef}
+          className="pb-textarea"
           rows={1}
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -185,7 +204,7 @@ const PromptBox = forwardRef<PromptBoxHandle, {
             jumps (founder, 2026-08-02: "the ghost text is higher than the
             actual text… it all needs to be consistent" — supersedes the
             07-20 nudge-right, which put the ghost 0.4rem off the typed line). */}
-        <div aria-hidden style={{
+        <div aria-hidden className="pb-ghost" style={{
           position: 'absolute', left: bare ? 0 : '1px', top: bare ? 0 : '1px', right: bare ? 0 : '2.5rem',
           padding: bare ? '0.35rem 0 0.5rem 0' : '0.62rem 0 0.62rem 0.95rem',
           pointerEvents: 'none', color: 'var(--text-ghost)',

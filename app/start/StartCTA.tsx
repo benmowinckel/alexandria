@@ -5,10 +5,19 @@ import Link from 'next/link';
 import { SERVER_URL, SHORTCUT_URL } from '../lib/config';
 import { checkReferral } from '../lib/referral';
 import { ArrowIcon } from '../join/DoorIcons';
-import { computerInstallPrompt, mobileHandoffPrompt } from '../../shared/onboarding-prompts';
+import {
+  CHAT_HOSTS,
+  CHAT_INSTRUCTION,
+  computerInstallPrompt,
+  mobileHandoffPrompt,
+  type ChatHost,
+} from '../../shared/onboarding-prompts';
 
-export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'computer' | 'phone' }) {
-  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
+type CopyState = 'idle' | 'copied' | 'error';
+
+export default function StartCTA({ refCode, mode, host }: { refCode?: string; mode: 'computer' | 'phone'; host?: ChatHost }) {
+  const [setupCopyState, setSetupCopyState] = useState<CopyState>('idle');
+  const [instructionCopyState, setInstructionCopyState] = useState<CopyState>('idle');
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'saved' | 'invalid' | 'error'>('idle');
@@ -30,15 +39,16 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
     return () => { live = false; };
   }, [refCode]);
 
-  const copy = async () => {
-    const command = mode === 'phone' ? mobileHandoffPrompt() : computerInstallPrompt();
+  const phoneGuide = mode === 'phone' && host ? CHAT_HOSTS[host] : null;
+
+  const copy = async (text: string, setState: (state: CopyState) => void) => {
     let success = false;
     try {
-      await navigator.clipboard.writeText(command);
+      await navigator.clipboard.writeText(text);
       success = true;
     } catch {
       const area = document.createElement('textarea');
-      area.value = command;
+      area.value = text;
       area.style.position = 'fixed';
       area.style.opacity = '0';
       document.body.appendChild(area);
@@ -46,8 +56,8 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
       try { success = document.execCommand('copy'); } catch { /* noop */ }
       document.body.removeChild(area);
     }
-    setCopyState(success ? 'copied' : 'error');
-    setTimeout(() => setCopyState('idle'), 4000);
+    setState(success ? 'copied' : 'error');
+    setTimeout(() => setState('idle'), 4000);
   };
 
   const sendEmail = async (event: React.FormEvent) => {
@@ -77,11 +87,10 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
   const emailSentWhy = mode === 'phone'
     ? ' — open it at your computer ✓'
     : ' — backup is in your inbox ✓';
-  const copyLabel = mode === 'phone' ? 'copy for your phone' : 'copy the setup';
-  const copyWhy = mode === 'phone' ? ' — paste into the AI on your phone' : ' — paste into your agent';
-  const copiedLabel = mode === 'phone'
-    ? 'copied — paste into the AI on your phone'
-    : 'copied — paste into your agent';
+  const copyLabel = 'copy the setup';
+  const copyWhy = ' — paste into your agent';
+  const copiedLabel = mode === 'phone' ? 'copied' : 'copied — paste into your agent';
+  const phoneCopyWhy = ' — paste in a normal chat';
 
   return (
     <section className="cta-section">
@@ -134,16 +143,65 @@ export default function StartCTA({ refCode, mode }: { refCode?: string; mode: 'c
         </form>
       </div>
 
-      <div className="act-row">
-        <span className="act-num">3</span>
-        <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label={copyLabel}>
-          {copyState === 'copied'
-            ? copiedLabel
-            : copyState === 'error'
-              ? 'couldn’t copy — try again'
-              : <>{copyLabel}<span className="act-why">{copyWhy}</span></>}
-        </button>
-      </div>
+      {phoneGuide && (
+        <>
+          <div className="act-row">
+            <span className="act-num">3</span>
+            <button
+              type="button"
+              className={`door-btn act-box cta-btn${instructionCopyState === 'copied' ? ' is-copied' : ''}`}
+              onClick={() => copy(CHAT_INSTRUCTION, setInstructionCopyState)}
+              aria-label="copy the alexandria instructions"
+            >
+              {instructionCopyState === 'copied'
+                ? <>copied<span className="act-rest">paste in {phoneGuide.phonePastePath}</span></>
+                : instructionCopyState === 'error'
+                  ? 'couldn’t copy — try again'
+                  : <>copy the alexandria instructions<span className="act-rest">paste in {phoneGuide.phonePastePath}</span></>}
+            </button>
+          </div>
+
+          <div className="act-row">
+            <span className="act-num">4</span>
+            <button
+              type="button"
+              className={`door-btn act-box cta-btn setup-copy${setupCopyState === 'copied' ? ' is-copied' : ''}`}
+              onClick={() => copy(mobileHandoffPrompt(), setSetupCopyState)}
+              aria-label={copyLabel}
+            >
+              {setupCopyState === 'copied'
+                ? <>{copiedLabel}<span className="act-why">{phoneCopyWhy}</span></>
+                : setupCopyState === 'error'
+                  ? 'couldn’t copy — try again'
+                  : <>{copyLabel}<span className="act-why">{phoneCopyWhy}</span></>}
+            </button>
+          </div>
+
+          <div className="act-row">
+            <span className="act-num">5</span>
+            <p className="door-btn act-box is-note">
+              type “a” in a new chat<span className="act-why"> — start your first session</span>
+            </p>
+          </div>
+        </>
+      )}
+      {!phoneGuide && (
+        <div className="act-row">
+          <span className="act-num">3</span>
+          <button
+            type="button"
+            className={`door-btn act-box cta-btn setup-copy${setupCopyState === 'copied' ? ' is-copied' : ''}`}
+            onClick={() => copy(computerInstallPrompt(), setSetupCopyState)}
+            aria-label={copyLabel}
+          >
+            {setupCopyState === 'copied'
+              ? copiedLabel
+              : setupCopyState === 'error'
+                ? 'couldn’t copy — try again'
+                : <>{copyLabel}<span className="act-why">{copyWhy}</span></>}
+          </button>
+        </div>
+      )}
       {validRef && <p className="install-new"><Link href="/">new here? see what this is &rarr;</Link></p>}
     </section>
   );

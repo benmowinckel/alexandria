@@ -9,7 +9,7 @@ export const metadata = pageMetadata({
   path: '/start',
   title: 'start alexandria.',
   description:
-    'start your alexandria loop from the AI you already use — local, remote, folder-based, or chat.',
+    'start your alexandria loop from the ai you already use — local, remote, folder-based, or chat.',
 });
 
 // One front door, then one plain split: agent or chat. Each branch establishes
@@ -332,8 +332,18 @@ export default async function StartPage({
         .act-box {
           width: 100%; max-width: none; text-decoration: none; display: block;
           font-size: 14px; white-space: normal; text-wrap: pretty; line-height: 1.4;
+          max-inline-size: 100%; overflow-wrap: anywhere;
         }
         .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
+        .act-rest {
+          display: block; margin-top: 3px;
+          color: var(--text-muted, rgba(26, 19, 24, 0.55));
+          white-space: normal; font-size: 12px; line-height: 1.35; letter-spacing: 0;
+          max-inline-size: 100%; overflow-wrap: anywhere;
+        }
+        .setup-copy {
+          white-space: nowrap; text-wrap: nowrap; overflow-wrap: normal; letter-spacing: 0;
+        }
         .act-sub {
           margin: -2px 0 14px 46px; max-width: 420px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -455,7 +465,15 @@ export default async function StartPage({
           .primer-lede { font-size: 16px; margin-bottom: 36px; }
           .install-cmd { font-size: 12.5px; }
           .primer-coda { font-size: 18px; margin-top: 52px; }
-          .act-box { font-size: 11.5px; letter-spacing: -0.02em; padding-left: 8px; padding-right: 8px; }
+          .act-box { font-size: 14px; padding-left: 12px; padding-right: 12px; }
+          .act-email { flex-wrap: wrap; white-space: normal; }
+          .act-email-why {
+            flex-basis: 100%; max-width: 100%; margin-top: 3px;
+            white-space: normal; overflow: visible;
+          }
+          .act-email.is-focused { flex-wrap: nowrap; }
+          .act-email.is-focused .act-email-why { flex-basis: 0; margin-top: 0; }
+          .act-email input { font-size: 16px; }
         }
       `}</style>
     </div>

@@ -101,13 +101,15 @@ Each fragment is a lure, not a wall. Arguments land harder than descriptions. Me
 
 Do not connect iCloud, Google Drive, GitHub, an Alexandria account, publishing, or any other external service during onboarding. Do not offer them as a bundle or as a next step. The local loop is the complete product the Author requested. If the Author later asks for capture, backup, chat access, publishing, or the collective, read the matching block in `~/alexandria/system/.optional`, explain exactly what it touches and what leaves the machine, and get a separate yes for that one thing.
 
+Install and verify this host's normal Alexandria hooks and the full private local loop before asking the Author to touch any account setting. Do not front-load other apps before they have seen the product work.
+
 Commit the generated local files to the local Git repository so the Author can inspect and reverse changes. A local commit is not an upload.
 
 ## Phase 5 — Verify and Report
 
 Verify on disk first: constitution has cite-able entries, notepad has real first-/a ammunition, machine.md has observations. Thin = go back. Then deliver **one short magic message** — not a brief, not a checklist, not a product tour.
 
-**Job of the message:** they feel *seen*, they learn something they didn't have, they want another round, and the next action is obvious. Three turns compressed into one glance:
+**Job of the message:** they feel *seen*, they learn something they didn't have, and they want another round. This is the value before the remaining account setup. Three turns compressed into one glance:
 
 1. **Turn 1 — mirror.** One load-bearing quote of theirs + the precise link to other approved files. Proof you read them. Credit their self-awareness; never claim you found a pattern they already named.
 2. **Turn 2 — develop.** One real tension already in their material. Push it. Socratic, not soothing. No flattery.
@@ -121,7 +123,7 @@ Verify on disk first: constitution has cite-able entries, notepad has real first
 
 `library — https://alexandria-library.com/join`
 
-Nothing beside it except the mirror/develop/accrete body and the `/a` action. No “you should,” no dollar amounts, no free-month language.
+Nothing beside it except the mirror/develop/accrete body and the one plain other-app question. No “you should,” no dollar amounts, no free-month language.
 
 **The close — write every line yourself; shape holds:**
 
@@ -138,8 +140,7 @@ wrote it under ~/alexandria/ — only from what you approved; yours to edit or d
 
 library — https://alexandria-library.com/join
 
-→ [the exact start gesture for this host]
-(if that does nothing in this chat, open a new one and use the same gesture)
+which other AI app do you use most?
 ```
 
 **Fill bar (lazy fill = product failure):**
@@ -148,9 +149,31 @@ library — https://alexandria-library.com/join
 - Tension must be already in their material, with operational stakes. If a thread is *unresolved*, do not assume the branch (no "before you decide the co-op's first X" when co-op itself is undecided). Describe the gap; do not prescribe the virtuous lane.
 - If Phase 1 found a nearer live deadline (talk, ship date, meeting), name it in the report — do not let the freshest emotional note erase the nearest clock.
 - Accretion must be specific (person/work/year or clear mechanism) and new to *them*. Prefer examples that actually appear in the cited work (no confident wrong examples — if unsure, omit the example).
-- Use the host detected in Phase 0: `→ type /a` in Claude Code, Cursor, or Factory; `→ type $a` in Codex, with `/alexandria` as its working typed fallback; otherwise `→ say “start an Alexandria session”`. Do not claim `/a` works in Codex, and do not claim any gesture works in a host that does not support it.
-- Prefer that gesture in **this** chat. New chat is only the fallback when the skill does not fire here. Never open a tab for them.
-- Last visible action the eye hits is the exact host-native gesture (fallback note may sit under it). Then stop.
 - On deliver: `touch ~/alexandria/system/.block_complete`.
 
-Test: *"it already knows me, showed me something I didn't have, and I know exactly what to type next."* Lucky-guess mirror, generic tension, re-gifted bookshelf, or a buried CTA = fail.
+## Phase 6 — Add Alexandria to their other AI apps
+
+This begins only after Phase 5 has shown the first personalized result. The Author has already been asked `which other AI app do you use most?` Do not ask for a list. Take the one app they name, then:
+
+1. Open `~/alexandria/system/.account-instructions.md` and show the exact Alexandria instructions.
+2. Give one direct path to that app's durable account or project instructions.
+3. Tell them to keep their current instructions and paste the Alexandria instructions below them.
+4. Wait for them to say it is saved; never claim you changed a cloud setting yourself.
+
+Current paths:
+
+- ChatGPT: `settings → personalization → custom instructions`
+- Claude: `settings → general → instructions for claude`
+- Gemini: `settings → personal context → your instructions for gemini`
+
+For another app, name its real durable instructions field if one exists. If it has no such setting, say so instead of inventing one. Skip these manual instructions wherever working Alexandria hooks already provide the behavior. In no-hooks folder tools such as Cowork or ChatGPT Work, the Alexandria instructions tell the AI to open `_start` at every new task. Do not mention vendor-specific slash commands in the universal instructions: the installed host already has its native command; plain `a` and `a.` are the portable floor.
+
+After one app is confirmed, ask only `any other AI app you use?` and repeat one at a time. If they say no, finish with the host detected in Phase 0:
+
+```
+→ type /a
+```
+
+Use `→ type /a` in Claude Code, Cursor, or Factory; `→ type $a` in Codex, with `/alexandria` as its working typed fallback; otherwise `→ say “start an Alexandria session”`. Prefer the gesture in **this** chat. Only add `(if that does nothing in this chat, open a new one and use the same gesture)` when needed. Never open a tab for them. Then stop.
+
+Test: *"it already knows me, showed me something I didn't have, every AI app I use knows how to reach it, and I know exactly what to type next."* Lucky-guess mirror, generic tension, re-gifted bookshelf, a settings checklist before value, or a buried CTA = fail.

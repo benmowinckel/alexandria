@@ -170,6 +170,12 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       fetch(`/api/library/${encodeURIComponent(author)}`, { signal: ctrl.signal, credentials: 'include' })
         .then(r => { if (!r.ok) throw new Error('not found'); return r.json(); })
         .then((d: AuthorData) => {
+          // The server resolves sticky legacy GitHub handles by immutable account
+          // id. Keep every link and the visible URL on the current handle too.
+          if (d.author.id && d.author.id !== author) {
+            setAuthorId(d.author.id);
+            router.replace(`/library/${encodeURIComponent(d.author.id)}`);
+          }
           setData(d);
           setEditFiles(d.files || []);
           setIdentity({
@@ -185,7 +191,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
         .catch(e => { setError(e.name === 'AbortError' ? 'unreachable' : e.message); setLoading(false); })
         .finally(() => clearTimeout(timeout));
     });
-  }, [params]);
+  }, [params, router]);
 
   // The door's question rides to the chat page, which auto-fires it (?q=).
   // No standing online/offline label anymore (founder, 2026-08-02: "we dont
@@ -726,6 +732,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                     </span>
                   )}
                 </div>
+                <p className="mirror-explainer" style={{ color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.55, margin: '0.75rem 0 0', textWrap: 'pretty' }}>
+                  a mirror of {first}’s mind, built from what {first} has chosen to share. when it doesn’t know, it says so.
+                </p>
                 <div className={doorShake ? 'twin-door-shake' : undefined} style={{ margin: '0.9rem -0.98rem 0' }}>
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing}
                     placeholder={doorQ ? 'ask anything…' : askExamples[phIdx % askExamples.length]} />
@@ -805,6 +814,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           .profile-edit-drag:focus-visible { outline: 1px solid var(--accent); outline-offset: 5px; }
           .profile-edit-description { field-sizing: content; width: min(38rem, calc(100% - 1.25rem)) !important; min-height: 1.45em; margin: 0.35rem 0 0 1.25rem; border-bottom-color: color-mix(in srgb, var(--text-muted) 12%, transparent) !important; color: var(--text-muted) !important; font-size: 0.92rem !important; resize: none; overflow: hidden; }
           @media (max-width: 560px) {
+            .mirror-explainer { max-width: 28rem; }
             .profile-edit-identity { flex-wrap: wrap; }
             .profile-edit-dot { display: none; }
             .profile-edit-meta { width: 100% !important; }

@@ -89,6 +89,7 @@ jobs:
           awk '$1 !~ /^#/ {print $2}' factory/manifest.txt \
             | LC_ALL=C sort > "$RUNNER_TEMP/manifest_paths"
           diff -u "$RUNNER_TEMP/expected_factory_paths" "$RUNNER_TEMP/manifest_paths"
+          python3 -m unittest factory/chat/test_bootstrap.py
           version="$(awk '$1=="#" && $2=="alexandria-factory-version" {print $3; exit}' factory/manifest.txt)"
           [[ "$version" =~ ^[0-9]{14}$ ]]
 
@@ -110,7 +111,9 @@ jobs:
 
       - name: Keep the private ai out of company sales
         working-directory: candidate
-        run: bash factory/scripts/check-private-boundary.sh
+        run: |
+          bash factory/scripts/check-private-boundary.sh
+          bash scripts/test-network-consent.sh
 
       - name: Enforce server access boundaries
         working-directory: candidate
@@ -125,7 +128,12 @@ jobs:
 
       - name: Server type check
         working-directory: candidate/server
-        run: npm ci && npx tsc --noEmit && npx tsx test/onboarding-email.ts
+        run: |
+          npm ci
+          npx tsc --noEmit
+          for test in audit cron-scanner file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
+            npx tsx "test/$test.ts"
+          done
 
       - name: Codex integration test
         working-directory: candidate
@@ -138,6 +146,16 @@ jobs:
           npm audit --audit-level=high
           npm run test:handoff
           npm run build
+          npx playwright install --with-deps chromium
+          npm run start >/tmp/alexandria-next.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID' EXIT
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            curl -sf http://127.0.0.1:3000 >/dev/null && break
+            sleep 1
+          done
+          node scripts/verify-chat.mjs http://127.0.0.1:3000
+          node scripts/verify-chat.mjs http://127.0.0.1:3000 mobile
 
   # Promotion is deliberately absent: GitHub has no Touch ID. scripts/push.sh
   # waits for both jobs above, then the Mac releases those exact bytes.

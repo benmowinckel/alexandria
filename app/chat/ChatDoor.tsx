@@ -15,7 +15,7 @@ export default function ChatDoor({ refCode }: { refCode?: string }) {
 
   return (
     <div className="door-block">
-      <p className="door-q">which chat do you use most?</p>
+      <p className="door-q">which ai do you use most?</p>
       <div className="door-answers">
         {HOSTS.map((id) => (
           <button key={id} type="button" className="door-btn" onClick={() => go(id)}>

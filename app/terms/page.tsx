@@ -33,7 +33,7 @@ export default function Terms() {
 
       <section style={section}>
         <h2 style={heading}>What this is</h2>
-        <p>Alexandria provides instructions and support files that your own AI can use to build and read a private mirror of your thinking. The free loop runs on your machine or, for the chat version, in documents in your own Google Drive. Alexandria also offers an optional hosted connector: accounts, membership, the Library, the Marketplace, publishing, and related payment features.</p>
+        <p>Alexandria provides instructions and support files that your own AI can use to build and read a private mirror of your thinking. The free loop runs on your machine or, for the chat version, through your AI provider’s personalisation and documents in your own Google Drive when available. Alexandria also offers an optional hosted connector: accounts, membership, the Library, the Marketplace, publishing, and related payment features.</p>
         <p style={detail}>These terms govern the website and hosted connector. The public source and files on your own machine remain subject to any notices included with them.</p>
       </section>
 

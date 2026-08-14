@@ -4,9 +4,11 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { checkReferral } from '../lib/referral';
 import { useDoorStep } from '../lib/door-step';
+import { CHAT_HOSTS, isChatHost, type ChatHost } from '../../shared/onboarding-prompts';
 import StartCTA from './StartCTA';
 
-const STEPS = ['nearby', 'computer', 'phone'] as const;
+const PHONE_HOSTS = Object.keys(CHAT_HOSTS) as ChatHost[];
+const STEPS = ['nearby', 'computer', 'phone', 'phone-chatgpt', 'phone-claude', 'phone-gemini'] as const;
 
 // First select the truthful contract. The agent path then asks whether the
 // computer is nearby because that changes whether setup happens now or by email.
@@ -26,8 +28,28 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
     return () => { live = false; };
   }, [refCode]);
 
-  if (screen === 'computer' || screen === 'phone') {
-    return <StartCTA refCode={refCode} mode={screen} />;
+  if (screen === 'computer') {
+    return <StartCTA refCode={refCode} mode="computer" />;
+  }
+
+  const phoneHost = screen?.startsWith('phone-') ? screen.slice('phone-'.length) : null;
+  if (isChatHost(phoneHost)) {
+    return <StartCTA refCode={refCode} mode="phone" host={phoneHost} />;
+  }
+
+  if (screen === 'phone') {
+    return (
+      <div className="door-block">
+        <p className="door-q">which ai do you use most?</p>
+        <div className="door-answers">
+          {PHONE_HOSTS.map((host) => (
+            <button className="door-btn" key={host} onClick={() => go(`phone-${host}`)}>
+              {CHAT_HOSTS[host].label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (screen === 'nearby') {

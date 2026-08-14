@@ -42,7 +42,7 @@
 - **Leaves the machine:** the account key on authenticated reads; no private content is sent.
 - **Needs:** a connected account and a user-authored `network.md` list. Editing the list changes the hash and stops future fetches.
 - **Enable:** after showing the exact list and receiving a separate yes: `shasum -a 256 ~/alexandria/files/network.md | awk '{print $1}' > ~/alexandria/system/permissions/network`.
-- **Off:** `rm ~/alexandria/system/permissions/network`.
+- **Off:** `rm ~/alexandria/system/permissions/network && rm -rf ~/alexandria/files/network` — stops future reads and removes the downloaded copies. It never touches `network.md`, so the Author's list remains theirs.
 
 ---
 

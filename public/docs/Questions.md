@@ -60,15 +60,15 @@ No. Your AI runs the loop. You talk in plain words and it handles the files. If 
 
 ## what do i need to run it.
 
-For the full local version, any compatible AI that can reach files on your computer — Claude Code, Cursor, Codex, or Claude Desktop’s code tab. If you only use regular Claude chat, the [chat version](/chat) keeps its documents in your own Google Drive instead.
+For the full local version, any compatible AI that can reach files on your computer — Claude Code, Cursor, Codex, or Claude Desktop’s code tab. If you use regular ChatGPT, Claude or Gemini, the [chat version](/chat) adds the same habit to that ai and keeps its record in your own Google Drive when the app can write there.
 
 ## how do i start.
 
-One line gives the instructions to the AI you already use. It inspects the setup, installs the files if everything checks out, and walks you through your first conversation. Add the [iPhone shortcut](/shortcut) if you want voice notes, articles, and passing thoughts to land in the same inbox. Your first session is already the first page of the record.
+Choose agent or chat. Both routes offer the [iPhone Shortcut](/shortcut) first so you can capture thoughts immediately. An agent inspects the public setup, explains it and waits for your approval before changing anything. Chat takes two pastes: one adds the loop to your existing ai instructions; the second has that ai guide Drive, build and read back the fullest accurate first record it can from what it already knows, and prove the result in a fresh chat. The full agent version can later process those captures automatically and add the community.
 
 ## is my data mine.
 
-Entirely. The private record is plain text on your computer and never reaches our server. We store account and service records for the optional connector, plus only the Library files you deliberately publish. We do not sell your data or train on your private files. Delete the local folder to remove the loop; delete your account to remove the hosted copy of what you published.
+Entirely. The private record is plain text on your computer or documents in your own Google Drive; it never reaches our server. We store account and service records for the optional connector, plus only the Library files you deliberately publish. We do not sell your data or train on your private files. Delete your own record to remove the loop; delete your account to remove the hosted copy of what you published.
 
 ## is it safe to install.
 

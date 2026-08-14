@@ -743,13 +743,22 @@ export function registerLibraryRoutes(app: Hono): void {
   });
 
   app.get('/library/:author', async (c) => {
-    const authorId = c.req.param('author');
+    const requestedAuthorId = c.req.param('author');
     const db = getDB();
-    const result = await getAccountByLogin(authorId);
+    const result = await getAccountByLogin(requestedAuthorId);
     const account = result?.account || null;
     const accountId = account?.github_id ? String(account.github_id) : null;
 
     if (!accountId) return c.json({ error: 'Author not found' }, 404);
+
+    // A sticky login index deliberately keeps an old GitHub handle resolving
+    // to the immutable account that first owned it. Once that account is
+    // resolved, every profile-side read must use its current canonical login:
+    // D1 author settings and KV presentation/twin metadata are keyed by the
+    // current login, while published files are keyed by immutable github_id.
+    // Reading those stores with requestedAuthorId made a legacy profile URL
+    // render stale defaults even though it belonged to the same account.
+    const authorId = account!.github_login;
 
     await ensureFileTitleColumn();
     const files = await db.prepare(

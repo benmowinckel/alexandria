@@ -5,7 +5,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ThemeToggle } from './ThemeToggle';
-import PromptBox from './PromptBox';
+import PromptBox, { type PromptBoxHandle } from './PromptBox';
 import ActionButton from './ActionButton';
 import TwinText from './TwinText';
 import ChatHistoryItem from './ChatHistoryItem';
@@ -233,7 +233,8 @@ export default function ReaderShell({
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
-  const promptRef = useRef<{ focus: () => void } | null>(null);
+  const promptRef = useRef<PromptBoxHandle | null>(null);
+  const placeSubmittedAtTopRef = useRef(false);
 
   // Land a new answer at ITS OWN TOP, not the bottom of the thread. An answer
   // is read from the first line down, so scrolling past it to the end means
@@ -247,15 +248,23 @@ export default function ReaderShell({
     const msgs = active?.messages || [];
     const last = msgs[msgs.length - 1];
     const el = lastMsgRef.current;
-    if (last && last.role !== 'you' && el) box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'smooth' });
-    else box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+    if (last?.role === 'you' && placeSubmittedAtTopRef.current && el) {
+      placeSubmittedAtTopRef.current = false;
+      box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'auto' });
+    } else if (last && last.role !== 'you' && el) {
+      box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'smooth' });
+    } else {
+      box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+    }
   }, [active?.messages, asking]);
 
   // When the chat pane becomes visible (expand it on desktop, or switch to the
   // ask tab on mobile), drop the cursor in the composer so you can type at once.
   useEffect(() => {
-    const mobile = isNarrow();
-    if (mobile ? tab !== 'ask' : !midOpen) return;
+    // Never summon the phone keyboard just because the reader changed panes.
+    // On mobile the pane switch is for seeing the conversation; the composer
+    // remains one deliberate tap away. Desktop keeps its typing-first focus.
+    if (isNarrow() || !midOpen) return;
     const id = requestAnimationFrame(() => promptRef.current?.focus());
     return () => cancelAnimationFrame(id);
   }, [midOpen, tab]);
@@ -354,12 +363,21 @@ export default function ReaderShell({
   const ask = async () => {
     const text = question.trim();
     if (!text || asking) return;
+    const mobile = isNarrow();
+    const enteringMirror = mobile && tab === 'piece';
+    if (enteringMirror) {
+      // The first question is sent from the artifact. Close the soft keyboard
+      // before opening the mirror, and do not immediately summon it again from
+      // the mirror's normal auto-focus behavior.
+      placeSubmittedAtTopRef.current = true;
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    }
     const targetId = activeId;
     setAsking(true);
     setQuestion('');
     setMidOpen(true);
     setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, { role: 'you', text }] } : c)));
-    if (isNarrow()) setTab('ask');
+    if (mobile) setTab('ask');
     const add = (m: Msg) => setConvos((cs) => cs.map((c) => (c.id === targetId ? { ...c, messages: [...c.messages, m] } : c)));
     try {
       const res = await askFn(text);
@@ -434,8 +452,8 @@ export default function ReaderShell({
           expanded keeps that corner clear so the shrink control stays clickable
           (it used to sit under the fixed toggle) — the toggle returns on exit. */}
       {!expanded && <ThemeToggle />}
-      <div className={`reader-shell${docPage ? ' doc-page' : ''}`} style={{ height: '100dvh', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
-        <header style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 3.2rem 0 0.7rem', borderBottom: 'none' }}>
+      <div className={`reader-shell${docPage ? ' doc-page' : ''}`} style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
+        <header className="reader-global-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 3.2rem 0 0.7rem', borderBottom: 'none' }}>
           <Link href={backHref} aria-label={`back to ${backTitle}`} title={backTitle}
             style={{ color: 'var(--text-muted)', display: 'flex', flex: 'none', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
           <span className="doc-title-row">
@@ -486,6 +504,7 @@ export default function ReaderShell({
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', minHeight: 0 }}>
             <div style={paneHead}>
               <button type="button" onClick={() => { setMidOpen(false); setTab('piece'); }} aria-label="collapse the mirror" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
+              <button type="button" onClick={() => { setMidOpen(false); setTab('piece'); }} aria-label="read the artifact" title="read" style={iconBtn} className="mobile-piece hover:opacity-60">{PaneRightIcon}</button>
               {/* Not "ask benjamin" — the product is a MIRROR of a mind,
                   never a twin or stand-in (canon; founder 2026-07-25:
                   "this is so key. its the mirror"). One universal label. */}
@@ -558,11 +577,6 @@ export default function ReaderShell({
           {/* the piece — slot 3 */}
           <button type="button" className="reader-strip strip-right hover:opacity-60" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0, position: 'relative' }}>
-            {docPage && expanded && (
-              <button type="button" onClick={toggleExpand} aria-label="exit full screen" title="exit full screen"
-                style={{ ...iconBtn, position: 'absolute', top: '0.7rem', right: '1rem', zIndex: 2 }}
-                className="hover:opacity-60">{CompressIcon}</button>
-            )}
             <div className="piece-head" style={paneHead}>
               <span style={{ marginRight: 'auto' }} />
               {status === 'ok' && (
@@ -728,8 +742,7 @@ export default function ReaderShell({
         .piece-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
           mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }
 
-        .mobile-ask { display: none !important; }
-        .doc-page .mobile-ask { display: none !important; }
+        .mobile-ask, .mobile-piece { display: none !important; }
         .doc-page .pdoc-longform .pdoc-h1 { margin-top: 2.2rem; }
 
         @media (min-width: 901px) {
@@ -746,19 +759,19 @@ export default function ReaderShell({
         @media (max-width: 900px) {
           .reader-strip, .pane-history { display: none !important; }
           .chat-collapse, .piece-collapse { display: none !important; }
-          .reader-tabs { display: flex !important; }
-          .mobile-ask { display: flex !important; }
-          /* Public docs: no read/ask tab bar. The piece is the page; asking
-             opens the mirror; collapse (shown here) is the way back. */
-          .doc-page .reader-tabs { display: none !important; }
-          .doc-page .chat-collapse { display: flex !important; }
+          .reader-tabs { display: none !important; }
+          .mobile-ask, .mobile-piece { display: flex !important; }
+          .reader-global-head {
+            position: sticky; top: 0; z-index: 30;
+            background: var(--bg-primary);
+          }
           .doc-page > header { padding: 0 3.2rem 0 0.85rem !important; height: 48px; }
           .doc-page .doc-title { font-size: 1.02rem; }
           .doc-page > footer { padding: 0.65rem 1rem 1.05rem; }
           .doc-page .pdoc-longform .pdoc-h1 { margin-top: 0.9rem; }
           .piece-ask { width: calc(100% - 2.4rem); padding: 0.45rem 0 0.85rem; }
-          main { flex-direction: column !important; }
-          .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; order: 0 !important; }
+          main { flex-direction: column !important; min-height: 0 !important; overflow: hidden; }
+          .pane-chat, .pane-piece { display: none !important; width: 100% !important; flex: 1 1 0 !important; min-width: 0 !important; min-height: 0 !important; overflow: hidden; order: 0 !important; }
           main[data-tab="piece"] .pane-piece { display: flex !important; }
           main[data-tab="ask"] .pane-chat { display: flex !important; }
         }

@@ -1,7 +1,13 @@
 /** Email primitives — Resend API (hybrid dependency, API-controllable, free 100/day). */
 
 import { installPrompt } from './install-prompt.js';
-import { chatInstallPrompt, CHAT_INSTRUCTION_PATHS, CHAT_HOSTS, type ChatHost } from './chat-prompt.js';
+import {
+  chatInstallPrompt,
+  chatSetupPrompt,
+  CHAT_INSTRUCTION_PATHS,
+  CHAT_HOSTS,
+  type ChatHost,
+} from './chat-prompt.js';
 
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'benmowinckel@gmail.com';
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
@@ -104,7 +110,7 @@ export async function sendEmail(
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const body = {
-      from: 'Alexandria <a@alexandria-library.com>',
+      from: 'alexandria <a@alexandria-library.com>',
       reply_to: 'a@alexandria-library.com',
       to,
       subject,
@@ -183,7 +189,7 @@ export async function sendWelcomeEmail(email: string, githubLogin: string, email
   <p style="margin: 0 0 0;">it will connect your account and tell you how to start.</p>
 `
     : `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">you&rsquo;re in.</p>
-  <p style="margin: 0 0 0;">open the ai you already use and start an Alexandria session.</p>
+  <p style="margin: 0 0 0;">open the ai you already use and start an alexandria session.</p>
 `;
   await sendEmail(email, 'welcome to alexandria.', emailShell(body, unsubscribeUrl),
     unsubscribeUrl ? { unsubscribeUrl } : undefined);
@@ -254,24 +260,17 @@ export async function sendWeekOneCheckIn(
 
 export type OnboardingMode = 'agent-computer' | 'agent-phone' | 'chat';
 
-function onboardCmd(mode: OnboardingMode): string {
-  return mode === 'chat' ? chatInstallPrompt() : installPrompt();
-}
-
 function chatEmailLead(host?: ChatHost): { lead: string; paths: string } {
   if (host) {
     const row = CHAT_HOSTS[host];
-    const drive = row.driveWhy
-      ? ` connect google drive (${row.driveWhy}), then`
-      : ' then';
     return {
-      lead: `paste this into ${host} ${row.pastePath},${drive} type a in a new chat.`,
+      lead: `1. paste these alexandria instructions into ${host} at ${escapeHtml(row.pastePath)} without deleting your current instructions.`,
       paths: '',
     };
   }
   return {
-    lead: 'paste this into your chat’s custom instructions, then type a.',
-    paths: `<p style="margin: 0.8rem 0 0; color: #8a8078; font-size: 0.95rem;">${CHAT_INSTRUCTION_PATHS.map((row) => `${row.host} — ${row.path}`).join('<br />')}</p>`,
+    lead: '1. paste these alexandria instructions into your chat’s custom instructions without deleting your current instructions.',
+    paths: `<p style="margin: 0.8rem 0 0; color: #8a8078; font-size: 0.95rem;">${CHAT_INSTRUCTION_PATHS.map((row) => `${row.host} — ${escapeHtml(row.path)}`).join('<br />')}</p>`,
   };
 }
 
@@ -296,9 +295,14 @@ export function onboardEmailContent(
           subject: 'alexandria. — your computer setup',
           lead: 'here is the setup for the agent on your computer. if you already pasted it, keep this as your backup.',
         };
-  const html = emailShell(`<p style="margin: 0 0 1.2rem;">${copy.lead}</p>
-  ${emailCmd(onboardCmd(mode))}
+  const commands = mode === 'chat'
+    ? `${emailCmd(chatInstallPrompt())}
   ${chat.paths}
+  <p style="margin: 1.6rem 0 1.2rem;">2. paste this into a normal chat. your ai will take it from there.</p>
+  ${emailCmd(chatSetupPrompt())}`
+    : emailCmd(installPrompt());
+  const html = emailShell(`<p style="margin: 0 0 1.2rem;">${copy.lead}</p>
+  ${commands}
   <p style="margin: 1.6rem 0 0;">reply if you get stuck.</p>`, unsubscribeUrl);
   return { subject: copy.subject, html };
 }

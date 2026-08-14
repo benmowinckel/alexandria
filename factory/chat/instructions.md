@@ -1,29 +1,37 @@
 # after setup — nothing to remember
 
-*The Author pastes one first-person preference into the host's official instructions setting. `/chat` asks which app they use and names the exact clicks. A chat paste is a fallback for that conversation only — it is not an install.*
+*Every Author keeps their existing ai and adds one compact account instruction. The chat page then gives one separate normal-chat setup prompt. Hooks remain primary on surfaces that have them; the account instruction is the portable fallback and cross-app bridge.*
+
+## first run
+
+The setup chat first proves the account instructions landed by explaining the behavioral change: alexandria is not another assistant, app or entity. It is a loop in how the user's existing ai works — personal context improves normal answers, lasting signal can be saved with permission, `a` starts a deliberate thinking session and `a.` closes it. If those instructions are not active, stop and help the user add them without deleting what is already there.
+
+If the host supports Google Drive, the ai gives the exact native connection steps one action at a time and waits for the user to perform them. It never claims it can change the setting itself. If Drive is unavailable, it continues with the durable personalisation already present without making the user choose a technical substitute or claiming Drive exists.
+
+The first population is a small version of full agentic onboarding. With one explicit setup permission, the ai mines everything it genuinely knows from account memory and accessible past-chat context — not the rest of Drive — and builds the fullest accurate initial record it can. It preserves useful evidence, separates facts from inference, marks uncertainty, avoids raw transcript dumps and creates whatever plain documents best fit. `_start` is the concise map future chats read first.
+
+Every write is read back. A failed read or write is a failed setup, never a success with a caveat. The ai then proves value now: one specific mirror, one real tension, one new connection and one sharp question. It develops the answer and saves only what the user confirms.
+
+Only after the free chat loop works may the ai explain that the full version needs a computer agent, processes Shortcut captures automatically and adds the alexandria community. It asks once whether the user wants help setting that up. This optional explanation never interrupts or conditions the free loop.
+
+The final test is a fresh chat containing only `a`. It passes only if that chat reads the record and opens with a valuable, specific thread from the user rather than generic onboarding.
 
 ## normal use
 
-Keep chatting exactly as before. Only the first reply in a new chat carries the route: text ends with `→ type a in a new chat`; voice casually asks `By the way, want me to spin up an Alexandria chat on the side?` after answering. A voice user can simply say yes; the AI opens the new chat and starts Alexandria there while the original conversation continues. Later replies have no generic cue.
+Keep chatting exactly as before. Outside setup, only the first reply in each new ordinary chat asks `Want me to start an alexandria chat on the side?` in both text and voice. If the user says yes, open it with `a` when the host can, otherwise tell them how. Never repeat the route in that chat. Setup uses it only for its final test. Later replies mention alexandria only when reading or saving would help that exchange.
 
-If you state a lasting belief, preference, decision, or idea, the AI asks `save that to alexandria?`. Later it mentions Alexandria only when saving to it or reading from it would help that exact exchange, using one natural action rather than a generic cue.
+If the user states a lasting belief, preference, decision or idea, ask `save that to alexandria?`. Save only after yes and verify the write. Never ask to save the ai's own idea.
 
-Type **a** or **alexandria** for a thinking session. Type **a.** or **alexandria.** to close it.
+Type **a** or **alexandria** for a thinking session. Read the available record first, select its highest-value live thread and begin immediately. Use a generic question only when no personal context exists. Challenge, connect, resurface or help create — whichever has the highest value now. During the session, end with `→ close with “a.” when done`.
 
-`a` starts immediately with one thought or question, or asks what you have changed your mind about recently. It is okay for the AI to disagree. While that session is on, the ordinary line is replaced by `→ close with a. when done`.
+Type **a.** or **alexandria.** to close. Briefly say what shifted, save only changes the user already confirmed and verify the write. Never silently turn an inference into a position.
 
-On `a.`, the AI says what shifted and does not save.
+## access ladder
 
-If you answer yes to the save question and it can write Google Drive, it creates or reuses `alexandria/_start` and reads the write back. Otherwise it uses the app's strongest existing private personalisation. If that works across chats without exposing a manual write, it can say it will use the thought in future chats. You never have to guess which mode you are in.
+1. Working hooks — use the native loop and commands.
+2. Local writable `~/alexandria` without hooks — open the foundation manually.
+3. An attached writable alexandria folder or project — folder-only mode, including Cowork and ChatGPT Work. Open `_start` at each task.
+4. Writable Google Drive — connected chat mode.
+5. Host memory — the lightweight floor when writable files are unavailable; name the real persistence limit when it matters.
 
-## storage ladder
-
-1. Local writable `~/alexandria` — full sovereign mode.
-2. Writable Google Drive — connected chat mode.
-3. Native memory — the lightweight content store when no writable files exist.
-
-The user never chooses a mode and never moves material between them. The agent recognizes the current surface, uses the strongest live capability, preserves all existing personalisation, and says honestly when the current surface cannot persist something.
-
-Instructions and memory are not interchangeable. The host's durable instruction setting carries Alexandria's operating behavior; writable files or native personalisation carry the Author's content. Gemini can recall prior-chat preferences even though it cannot perform a named Drive write from chat, so it uses that personalisation without mentioning missing tools.
-
-Native host personalisation remains independent. Gemini and Claude may learn from chats under the user's existing account setting. Alexandria does not ask the model to change that setting.
+The user never chooses a mode or moves material between them. The ai uses the strongest verified capability, preserves existing personalisation and never mixes two Alexandria sources in one session. Instructions carry behavior; files or durable host personalisation carry the user's content.

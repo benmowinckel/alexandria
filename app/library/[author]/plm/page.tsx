@@ -5,7 +5,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ThemeToggle } from '../../../components/ThemeToggle';
-import PromptBox from '../../../components/PromptBox';
+import PromptBox, { type PromptBoxHandle } from '../../../components/PromptBox';
 import ActionButton from '../../../components/ActionButton';
 import TwinText from '../../../components/TwinText';
 import ChatHistoryItem from '../../../components/ChatHistoryItem';
@@ -97,7 +97,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [question, setQuestion] = useState('');
   const [asking, setAsking] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
-  const promptRef = useRef<{ focus: () => void } | null>(null);
+  const promptRef = useRef<PromptBoxHandle>(null);
   const openTextRef = useRef('');                    // extracted text of the open piece (race-safe)
   const openExtractRef = useRef<Promise<void> | null>(null);
   const dlBlobRef = useRef<Blob | null>(null);       // raw bytes of the open piece, for download
@@ -122,7 +122,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const who = authorName || author;
   // One public mind; DEPTH is structural per querier (public shadow for anyone,
   // the deeper invite shadow for granted friends — server-side). The header
-  const usable = useMemo(() => variants.filter((v) => v.enabled && (v.accessible || v.needsInvite)), [variants]);
   const activeCfg = useMemo(() => variants.find((v) => v.variant === activeVariant), [variants, activeVariant]);
   // Either mind can be invite-gated (which one is the Author's call). Show the
   // unlock field whenever the mind in view is enabled but this viewer can't reach
@@ -180,7 +179,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     const msgs = active?.messages || [];
     const last = msgs[msgs.length - 1];
     const el = lastMsgRef.current;
-    if (last && last.role !== 'you' && el) box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'smooth' });
+    const firstMobileQuestion = typeof window !== 'undefined' && window.innerWidth <= 900 && msgs.length === 1 && last?.role === 'you';
+    if (last && (last.role !== 'you' || firstMobileQuestion) && el) box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'smooth' });
     else box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
   }, [active?.messages, asking]);
 
@@ -201,11 +201,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingQ, author, variants]);
 
-  // Drop the cursor in the composer whenever the chat pane is visible (this page
-  // opens chat-first, and again each time it's re-expanded) so you can just type.
+  // Desktop is typing-first. Mobile is reading-first: changing panes must not
+  // summon the keyboard over the question the reader just came to see.
   useEffect(() => {
     const mobile = typeof window !== 'undefined' && window.innerWidth <= 900;
-    if (mobile ? mtab !== 'chat' : !midOpen) return;
+    if (mobile || !midOpen) return;
     const id = requestAnimationFrame(() => promptRef.current?.focus());
     return () => cancelAnimationFrame(id);
   }, [midOpen, mtab]);
@@ -371,6 +371,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     const text = (textArg ?? question).trim();
     if (!text) return;
     const targetId = activeId;
+    const firstMobileQuestion = typeof window !== 'undefined' && window.innerWidth <= 900 && (active?.messages.length ?? 0) === 0;
+    if (firstMobileQuestion) {
+      promptRef.current?.blur();
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    }
     setQuestion('');
     setMidOpen(true);
     if (typeof window !== 'undefined' && window.innerWidth <= 900) setMtab('chat');
@@ -470,7 +475,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     <>
       <ThemeToggle />
       <div className="plm-shell" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
-        <header style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 3.2rem 0 0.7rem', borderBottom: 'none' }}>
+        <header className="plm-global-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 3.2rem 0 0.7rem', borderBottom: 'none' }}>
           <Link href={`/library/${encodeURIComponent(author)}`} aria-label="back to the library" title="library"
             style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
           {/* No standing online/offline word here either (founder, 2026-08-02:
@@ -480,23 +485,13 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           <span className="doc-title">{who}</span>
         </header>
 
-        <div className="plm-tabs" style={{ display: 'none', flex: 'none', borderBottom: '1px solid var(--border-light)' }}>
-          {(['chat', 'pieces'] as const).map((t) => (
-            <button key={t} type="button" onClick={() => setMtab(t)}
-              style={{ flex: 1, border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.7rem',
-                color: mtab === t ? 'var(--text-primary)' : 'var(--text-ghost)', borderBottom: mtab === t ? '2px solid var(--accent)' : '2px solid transparent' }}>
-              {t === 'chat' ? 'mirror' : t}
-            </button>
-          ))}
-        </div>
-
         <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-mtab={mtab} data-expanded={expanded ? 'true' : 'false'}
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
 
           {/* history — slot 1 */}
           <button type="button" className="reader-strip strip-history hover:opacity-60" style={{ order: 1 }} onClick={() => setLeftOpen(true)} aria-label="open history" title="history">{PaneLeftIcon}</button>
           <aside className="reader-pane pane-history" style={{ order: 1, flex: 'none', width: '240px', flexDirection: 'column', minHeight: 0 }}>
-            <div style={paneHead}>
+            <div className="pane-head" style={paneHead}>
               <button type="button" onClick={() => setLeftOpen(false)} aria-label="collapse history" title="collapse" style={iconBtn} className="hover:opacity-60">{PaneLeftIcon}</button>
               <span style={chromeLabel}>history</span>
               <button type="button" onClick={newChat} aria-label="new conversation" title="new conversation"
@@ -554,6 +549,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               {(active?.messages.length ?? 0) > 0 && (
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
               )}
+              <button type="button" onClick={() => setMtab('pieces')} aria-label="open pieces" title="pieces"
+                style={iconBtn} className="mobile-pane-switch hover:opacity-60">{PaneRightIcon}</button>
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
               {active?.messages.map((m, i) => (
@@ -680,12 +677,12 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           {/* the piece — slot 3 */}
           <button type="button" className="reader-strip strip-right hover:opacity-60" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece pane" title="pieces">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0 }}>
-            <div className="piece-head" style={paneHead}>
+            <div className="piece-head pane-head" style={paneHead}>
               {open
                 ? <button type="button" onClick={() => setOpen(null)} aria-label="back to pieces" title="back" style={iconBtn} className="hover:opacity-60">{ChevronIcon}</button>
                 : <span className="pieces-label" style={{ width: '2.4rem', flex: 'none' }} aria-hidden />}
               {open
-                ? <span style={{ ...chromeLabel, color: 'var(--text-primary)', fontSize: '0.98rem', letterSpacing: 0 }}>{open.nice}</span>
+                ? <span className="piece-title" style={{ ...chromeLabel, color: 'var(--text-primary)', fontSize: '0.98rem', letterSpacing: 0 }}>{open.nice}</span>
                 : <span className="pieces-label" style={chromeLabel}>pieces</span>}
               {open && (
                 <>
@@ -697,6 +694,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 </>
               )}
               <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece pane" title="collapse" style={{ ...iconBtn, ...(open ? {} : { marginLeft: 'auto' }) }} className="piece-collapse hover:opacity-60">{PaneRightIcon}</button>
+              <button type="button" onClick={() => { setExpanded(false); setMtab('chat'); }} aria-label="open the mirror" title="mirror"
+                style={iconBtn} className="mobile-pane-switch hover:opacity-60">{LinesIcon}</button>
             </div>
             <div className={open && !open.loading && !open.pdfUrl && (mtab === 'pieces' || !midOpen) ? 'piece-fade' : undefined}
               style={{ flex: 1, overflow: open?.pdfUrl ? 'hidden' : 'auto', minHeight: 0 }}>
@@ -836,6 +835,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         .piece-foot { flex: none; height: 0.9rem; }
         .piece-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
           mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }
+        .mobile-pane-switch { display: none !important; }
 
         @media (min-width: 901px) {
           .reader-strip { display: none; }
@@ -851,12 +851,17 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         }
         @media (max-width: 900px) {
           .reader-strip, .pane-history { display: none !important; }
-          /* On mobile the "chat"/"pieces" tabs are the only pane labelling, and
-             there are no side-by-side panes to collapse — so the pane-toggle
-             icons + duplicate labels drop out (founder 2026-07-19). */
+          /* Mobile is two direct rooms, not three desktop panes squeezed into
+             tabs: each fixed pane header carries the one route to the other. */
           .chat-collapse, .chat-label, .pane-div, .pieces-label, .piece-collapse { display: none !important; }
-          .plm-tabs { display: flex !important; }
+          .mobile-pane-switch { display: flex !important; margin-left: auto !important; }
+          .piece-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          .plm-global-head, .pane-head {
+            position: sticky; top: 0; z-index: 20; background: var(--bg-primary);
+          }
+          .plm-global-head { z-index: 30; }
           .piece-ask { width: calc(100% - 2.4rem); padding: 0.45rem 0 0.85rem; }
+          .ask-dock, .piece-ask { min-width: 0; overflow: hidden; }
           main { flex-direction: column !important; }
           .pane-chat, .pane-piece { display: none !important; order: 0 !important; width: 100% !important; flex: 1 1 auto !important; min-width: 0 !important; border-right: none !important; }
           main[data-mtab="chat"] .pane-chat { display: flex !important; }
@@ -870,8 +875,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           top: 0 !important; left: 0 !important; width: 100vw !important; height: 100dvh !important;
           min-width: 0 !important; z-index: 120; background: var(--bg-primary);
         }
-        .plm-shell:has(main[data-expanded="true"]) .plm-tabs,
         .plm-shell:has(main[data-expanded="true"]) > footer { display: none !important; }
+        main[data-expanded="true"] .piece-collapse { display: none !important; }
       `}</style>
     </>
   );

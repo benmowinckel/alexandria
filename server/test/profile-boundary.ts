@@ -28,7 +28,8 @@ for (const forbidden of ['file-visibility', 'access-code', '/grant', '/twin', 'f
 }
 
 assert.match(page, /data\.viewer\?\.is_owner/);
-assert.match(page, /editing \? 'save' : 'edit'/);
+assert.match(page, />edit profile<\/HeaderAction>/);
+assert.match(page, /saving \? 'saving changes' : 'save changes'/);
 assert.match(page, /reorderWithinSection/);
 
 const directoryAuthor = library.slice(
@@ -37,6 +38,20 @@ const directoryAuthor = library.slice(
 );
 assert.match(directoryAuthor, /location_key: libraryLocationKey\(location\)/);
 assert.doesNotMatch(directoryAuthor, /stringSlot\(settings, 'location_key'\)/);
+
+// A renamed GitHub handle remains a permanent route alias through the sticky
+// login index, but profile presentation data is keyed by the account's current
+// login. After resolving the immutable owner, the route must never use the
+// requested alias for a D1/KV/twin read or for response metadata.
+const profileRoute = library.slice(
+  library.indexOf("app.get('/library/:author',"),
+  library.indexOf("app.post('/library/:author/checkout/file/:name'"),
+);
+assert.match(profileRoute, /const requestedAuthorId = c\.req\.param\('author'\)/);
+assert.match(profileRoute, /getAccountByLogin\(requestedAuthorId\)/);
+assert.match(profileRoute, /const authorId = account!\.github_login/);
+const canonicalProfileReads = profileRoute.slice(profileRoute.indexOf('const authorId = account!.github_login'));
+assert.doesNotMatch(canonicalProfileReads, /\brequestedAuthorId\b/);
 
 const ownerGate = library.slice(
   library.indexOf('async function isHandleOwner'),

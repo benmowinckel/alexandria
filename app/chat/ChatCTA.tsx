@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { SERVER_URL, SHORTCUT_URL } from '../lib/config';
 import { checkReferral } from '../lib/referral';
 import { ArrowIcon } from '../join/DoorIcons';
-import { chatInstallPrompt, CHAT_HOSTS, type ChatHost } from '../../shared/onboarding-prompts';
+import {
+  chatInstallPrompt,
+  chatSetupPrompt,
+  CHAT_HOSTS,
+  type ChatHost,
+} from '../../shared/onboarding-prompts';
+
+type CopyState = 'idle' | 'copied' | 'error';
 
 export default function ChatCTA({
   refCode,
@@ -16,7 +23,8 @@ export default function ChatCTA({
   const [email, setEmail] = useState('');
   const [emailFocused, setEmailFocused] = useState(false);
   const [mailState, setMailState] = useState<'idle' | 'sending' | 'sent' | 'saved' | 'invalid' | 'error'>('idle');
-  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>('idle');
+  const [instructionCopyState, setInstructionCopyState] = useState<CopyState>('idle');
+  const [setupCopyState, setSetupCopyState] = useState<CopyState>('idle');
   const [shakeKey, setShakeKey] = useState(0);
   const emailRef = useRef<HTMLInputElement>(null);
   const [refCheck, setRefCheck] = useState<{ input: string; valid: string | null } | null>(null);
@@ -24,7 +32,6 @@ export default function ChatCTA({
   const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
   const guide = CHAT_HOSTS[host];
   const pastePath = guide.pastePath;
-  const typeANum = guide.driveWhy ? '5' : '4';
 
   useEffect(() => {
     if (!refCode) return;
@@ -40,7 +47,10 @@ export default function ChatCTA({
   }, [validRef]);
 
   useEffect(() => {
-    setOnIphone(/iPhone|iPad|iPod/i.test(navigator.userAgent));
+    const frame = window.requestAnimationFrame(() => {
+      setOnIphone(/iPhone|iPad|iPod/i.test(navigator.userAgent));
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   async function sendEmail(e: React.FormEvent) {
@@ -66,14 +76,14 @@ export default function ChatCTA({
     }
   }
 
-  async function copy() {
+  async function copy(text: string, setState: (state: CopyState) => void) {
     let copied = false;
     try {
-      await navigator.clipboard.writeText(chatInstallPrompt());
+      await navigator.clipboard.writeText(text);
       copied = true;
     } catch {
       const area = document.createElement('textarea');
-      area.value = chatInstallPrompt();
+      area.value = text;
       area.style.position = 'fixed';
       area.style.opacity = '0';
       document.body.appendChild(area);
@@ -81,8 +91,8 @@ export default function ChatCTA({
       try { copied = document.execCommand('copy'); } catch { /* noop */ }
       document.body.removeChild(area);
     }
-    setCopyState(copied ? 'copied' : 'error');
-    setTimeout(() => setCopyState('idle'), 4000);
+    setState(copied ? 'copied' : 'error');
+    setTimeout(() => setState('idle'), 4000);
   }
 
   return (
@@ -94,7 +104,7 @@ export default function ChatCTA({
           href={onIphone ? SHORTCUT_URL : '/shortcut'}
           {...(onIphone ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
         >
-          add the shortcut<span className="act-why"> — capture now for the full version</span>
+          add the shortcut<span className="act-why"> — capture thoughts wherever you are</span>
         </a>
       </div>
 
@@ -147,29 +157,34 @@ export default function ChatCTA({
 
       <div className="act-row">
         <span className="act-num">3</span>
-        <button type="button" className={`door-btn act-box cta-btn${copyState === 'copied' ? ' is-copied' : ''}`} onClick={copy} aria-label="copy the instructions">
-          {copyState === 'copied'
-            ? <>copied — paste into<span className="act-rest">{pastePath}</span></>
-            : copyState === 'error'
+        <button
+          type="button"
+          className={`door-btn act-box cta-btn${instructionCopyState === 'copied' ? ' is-copied' : ''}`}
+          onClick={() => copy(chatInstallPrompt(), setInstructionCopyState)}
+          aria-label="copy the alexandria instructions"
+        >
+          {instructionCopyState === 'copied'
+            ? <>copied<span className="act-rest">paste in {pastePath}</span></>
+            : instructionCopyState === 'error'
               ? 'couldn’t copy — try again'
-              : <>copy the instructions — paste into<span className="act-rest">{pastePath}</span></>}
+              : <>copy the alexandria instructions<span className="act-rest">paste in {pastePath}</span></>}
         </button>
       </div>
 
-      {guide.driveWhy && (
-        <div className="act-row">
-          <span className="act-num">4</span>
-          <p className="door-btn act-box is-note">
-            connect google drive<span className="act-why"> — {guide.driveWhy}</span>
-          </p>
-        </div>
-      )}
-
       <div className="act-row">
-        <span className="act-num">{typeANum}</span>
-        <p className="door-btn act-box is-note">
-          type a in a new chat<span className="act-why"> — start your first session</span>
-        </p>
+        <span className="act-num">4</span>
+        <button
+          type="button"
+          className={`door-btn act-box cta-btn setup-copy${setupCopyState === 'copied' ? ' is-copied' : ''}`}
+          onClick={() => copy(chatSetupPrompt(), setSetupCopyState)}
+          aria-label="copy the setup"
+        >
+          {setupCopyState === 'copied'
+            ? <>copied<span className="act-why"> — paste in a normal chat</span></>
+            : setupCopyState === 'error'
+              ? 'couldn’t copy — try again'
+              : <>copy the setup<span className="act-why"> — paste in a normal chat</span></>}
+        </button>
       </div>
     </section>
   );

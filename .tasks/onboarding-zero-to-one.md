@@ -6,30 +6,30 @@ One new person can choose the AI category they already understand, receive the s
 
 ## Product shape
 
-The website first asks one plain question: agent or chat. The agent branch then asks whether the computer is nearby. Every resulting path offers three actions, in order:
+The website first asks one plain question: agent or chat. The agent branch then asks whether the computer is nearby and keeps its established three actions:
 
 1. Add the Shortcut so a capture route exists before explanation. The button stays platform-neutral; the chosen AI explains any Apple-only limit and gives Android the best real alternative.
 2. Optionally give an email address for a setup copy and occasional useful Alexandria communication. When provided, it is stored with an unsubscribe token and disclosed plainly. Skipping it never blocks setup.
-3. Copy the branch-specific non-executable setup and paste it into the chosen AI.
+3. Copy the non-executable setup and paste it into the chosen AI.
 
 Inside the agent branch, the recipient AI determines the execution level from its live capabilities:
 
 1. **Full local loop** — a local coding agent can inspect and run the signed installer, wire supported hooks, build the first reflection, and expose its native session gesture.
 2. **Remote-to-local loop** — a phone or web AI already connected to a desktop agent uses that path. Codex Remote, Claude Cowork/Dispatch, and equivalent future surfaces belong here only when the computer is genuinely reachable.
 3. **Local-folder work loop** — Cowork, ChatGPT Work, or another agent can read and write an approved local folder but cannot provide the complete terminal-hook path. It uses the Author files directly and says which automatic capture/session features are absent.
-The chat branch instead installs only durable account instructions or preferences when the host truly has them. It never claims local files, hooks, transcript capture, saving, or reminders that were not verified. It always keeps the later computer handoff explicit.
+The chat branch keeps the same capture-first opening and has four actions: add the Shortcut; optional recovery email; copy the additive alexandria instructions into the host's exact account-instructions field; copy the one-time setup into a normal chat. It does not configure Drive on the page. Their own ai explains its changed behavior, guides any native Drive connection, builds and reads back the fullest accurate first record it can, runs a miniature personal loop, then explains the optional computer-agent version and community. The final fresh-chat `a` must retrieve that record and begin personally.
 
 The human never chooses among the technical agent modes. Their agent reports the mode it verified and gives one next action.
 
 ## Phone branch
 
-The same copied intent asks the mobile AI to use the strongest live route now:
+After the person chooses the AI on their phone, the page completes the current phone product directly:
 
-- If it can reach the person's computer through an existing remote or dispatch connection, continue the local setup there.
-- Otherwise do not substitute a chat loop. Give the exact computer continuation and set a reminder only when the host genuinely supports reminders.
-- Coach the Alexandria Shortcut as the default capture gesture when it is available. Installing it may precede linking; saved items wait in the person's own folder.
-- On a surface without the Shortcut, use the strongest existing private writable capture home. Never imply the Shortcut works there.
-- Later, a local loop may connect the existing capture pile only after one specific approval. Declining records the decision and stops repeated prompts.
+- The first-chat paste explains the Shortcut and asks for the exact computer reminder only when the host genuinely supports reminders. It never claims to reach or change the computer.
+- Step 3 copies the universal Alexandria instructions and names that app's exact mobile settings path. The person pastes them below their current instructions. Step 4 copies the setup for a normal phone chat. Google Drive stays out of this phone-agent path.
+- The page then says to type `a` in a new chat.
+- The Shortcut may precede linking; saved items wait in the person's own folder. A later local loop connects that pile only after one specific approval.
+- On a surface without the Shortcut, the AI says so and uses only a verified private capture home; it never implies the Shortcut works there.
 
 ## Email relationship
 
@@ -52,7 +52,8 @@ The page never gates the handoff action on email. If delivery fails after storag
 4. On `start`, it installs or configures only that verified mode.
 5. Full-local setup proves the functional matrix before reading private content.
 6. The AI names reachable personal sources, asks one informed read/write question, and builds the first reflection on disk.
-7. The final result contains one real mirror, one tension, one new connection, the collective link, and the exact native session action:
+7. The first result contains one real mirror, one tension, one new connection, and the fixed collective location. Only after that value lands does the agent ask which other AI app the Author uses most and guide the additive block one app at a time.
+8. Once those apps are done, the agent ends with the exact native session action:
    - Claude Code / Cursor: `/a`
    - Codex: `$a`, with `/alexandria` as the working fallback; never `/a`
    - Factory: `/a`
@@ -96,8 +97,9 @@ The page never gates the handoff action on email. If delivery fails after storag
 
 ### Chat only
 
-- `a` starts a session immediately from verified account memory, current context, or writable Drive/project files.
-- Durable signal is saved only after confirmation.
+- The setup chat mines useful durable knowledge already available through account memory and accessible past-chat context, never the rest of Drive. It writes the fullest accurate first record the material supports, reads every write back, and runs one miniature personal loop before completion.
+- `a` reads that record and starts immediately from its highest-value specific thread. A generic opener is legal only when no personal context exists.
+- Durable signal is saved only after confirmation; `a.` preserves confirmed changes and verifies the write.
 - A later local setup adopts or syncs the existing material through the documented Drive/chat bridge rather than creating a competing mind.
 
 ### No join
@@ -118,7 +120,10 @@ The page never gates the handoff action on email. If delivery fails after storag
 - Native skill name occupied: preserve it and show the verified fallback.
 - Codex hooks untrusted: continue onboarding but call the passive loop incomplete until the user trusts the visible hook definitions and a real start/end marker exists.
 - Factory hooks awaiting review: `/a` is installed and onboarding can continue, but call the passive loop incomplete until the user reviews the externally added definitions in `/hooks` and a real start/end cycle succeeds.
-- Phone has no remote desktop or reminder tool: give the exact computer continuation now; the email carries it too only when the person chose to provide one.
+- Phone has no reminder tool: state that no reminder was set and give the exact computer continuation now; the email carries it too only when the person chose to provide one.
+- Chat host cannot connect writable Drive: continue with its existing durable personalisation without a technical menu, but never claim Drive or a file write exists.
+- Any first-record write cannot be read back: setup remains failed and the ai says exactly what did not work.
+- Fresh-chat `a` asks a generic question despite a populated record: setup failed; repair retrieval before asking the user to continue.
 - User installs Shortcut before local connection: captures wait safely in their iCloud folder and connect later with one approval.
 - User joins before installing: welcome carries the same safe intent with the account connection included.
 - User installs before joining: connect rerun is idempotent and preserves the existing Author files.
@@ -126,7 +131,7 @@ The page never gates the handoff action on email. If delivery fails after storag
 ## Verification
 
 1. Browser-run the organic, invited, invalid-invite, desktop, phone, email failure, clipboard failure, chat, and join-return routes.
-2. Cold-run the agent handoff in Claude Code, Cursor, Codex, Factory, Claude Cowork, and ChatGPT Work; cold-run the chat handoff in Claude chat, ChatGPT chat, and Gemini. Record the verified execution level and exact user-visible actions.
+2. Cold-run the agent handoff in Claude Code, Cursor, Codex, Factory, Claude Cowork, and ChatGPT Work; cold-run both chat pastes in Claude chat, ChatGPT chat, and Gemini. Verify native Drive guidance, maximum-accurate first population, readback, the miniature loop and the fresh-chat `a` retrieval test.
 3. Run scratch-home installers for every local host. Exercise real session start/end hooks where the host exposes them.
 4. Exercise both first-session-first and join-first orders.
 5. Exercise Shortcut-before-connect and connect-before-first-capture.

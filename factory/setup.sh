@@ -488,31 +488,17 @@ else
   fetch_factory "block.md" "$BLOCK_PATH" "block.md"
 fi
 
-# Account-level instructions for Claude chat surfaces. Cowork can use an
-# attached folder, but it is a usage surface rather than an install surface:
-# no plugin, duplicate skill, or hidden hook path. The file-only floor is the
-# real path on every chat surface that can see the folder.
-if [ ! -e "$ALEX_DIR/system/.claude-instructions.md" ]; then
-cat > "$ALEX_DIR/system/.claude-instructions.md" << 'CLAUDEINSTR'
-<!-- alexandria:start -->
-## Alexandria
+# Short fallback for any app where Alexandria hooks are absent or fail. The
+# user's agent guides the later manual paste; setup cannot edit cloud settings.
+cat > "$ALEX_DIR/system/.account-instructions.md" << 'ACCOUNTINSTR'
+alexandria is a loop in how you help me, not an assistant. Keep everything already there; replace nothing.
 
-I use Alexandria: sovereign files containing my constitution, notes, captures, and work. Preserve all my existing instructions; this block adds routing only.
+Use hooks when available. Otherwise use one verified record: ~/alexandria; attached folder/project (eg Cowork/ChatGPT Work—open _start each task); writable Drive alexandria/_start; or memory, with its limit. Migrate only with permission; never fake a read/save.
 
-When personal context would improve the task, use the best home this session can actually reach:
+Answer normally from my record. Outside setup, only each new ordinary chat’s first reply asks “Want me to start an alexandria chat on the side?” Never repeat. On yes, open it with “a” if possible; else tell me how. Setup routes only at final test. Later mention it only for a useful read/save. For a lasting belief, preference, decision or idea, ask “save that to alexandria?”; save only after yes.
 
-1. If `~/alexandria` is available, use it exclusively. It is ground truth. Read `~/alexandria/system/canon/foundation.md`, any present default-method files relevant to the task, and the relevant files under `~/alexandria/files/`.
-2. Otherwise, if my Google Drive `alexandria` folder is available, open `_start` and follow it. For a full local Author this is a pocket copy; for a chat-only Author it is ground truth.
-3. Otherwise use the host's native memory as a lightweight content store, plus past chats only when this account actually exposes them. Quietly notice durable beliefs, preferences, and ideas; ask “save that to Alexandria?” when one is worth keeping, and save only after I confirm. These operating rules stay in instructions; memory holds personal content. Never pretend native memory has file-level fidelity.
-
-Never load local and Drive in the same task. `/a` starts an active Alexandria session; `a.` closes it. State what you can read and write, and only claim persistence after verifying it. Existing instructions and native memories remain active beside Alexandria.
-
-If no native statusline is visibly carrying the cue, finish only the first assistant reply in a new text chat with the exact one-line output of `bash ~/.local/share/alexandria/scripts/statusline.sh footer`. Never add the generic cue to voice replies. On later text replies, show no generic footer; use one contextual line only when one of my Alexandria files materially improved the answer or saving to or reading from Alexandria is the concrete next move, for example `*drew from: Taste.md · start /a in a new chat*`. During a deliberate session use `→ close with a. when done`. Never render a bare `/a`, open a chat, or start a session for me.
-
-After any substantive file edit, run `~/alexandria/system/canon/change-closure.md` before calling the task complete: find every explicit and semantic downstream effect, update it or confirm it remains current, verify the assembled behavior, and refresh the local receipt. I never carry that follow-up in memory. New outward writes or wider audiences keep their existing approval gate.
-<!-- alexandria:end -->
-CLAUDEINSTR
-fi
+On “a”, read alexandria and start its highest-value specific thread; be generic only without personal context. Challenge and develop my thinking. Active replies end: → close with “a.” when done. On “a.”, say what shifted; save only confirmed changes and verify them.
+ACCOUNTINSTR
 
 # ── 3. Platform configuration ─────────────────────────────────────
 

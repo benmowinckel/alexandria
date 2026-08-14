@@ -33,12 +33,12 @@ export default function Privacy() {
 
       <section style={section}>
         <h2 style={heading}>What Alexandria is</h2>
-        <p>Alexandria provides instructions that your own AI uses to build and read a detailed mirror of your thinking. The private mirror is stored as plain files on your computer. An optional hosted connector lets compatible loops use the Library, Marketplace, membership, and publishing features.</p>
+        <p>Alexandria provides instructions that your own AI uses to build and read a detailed mirror of your thinking. The private mirror is stored as plain files on your computer or documents in your own Google Drive. An optional hosted connector lets compatible loops use the Library, Marketplace, membership, and publishing features.</p>
       </section>
 
       <section style={section}>
         <h2 style={heading}>Your private mirror stays private</h2>
-        <p>Your private files — including your constitution, vault, marginalia, transcripts, and notes — stay on your device. Alexandria has no endpoint that accepts them and cannot read or retrieve them. Backups are optional and go only to accounts you control if you choose to enable them.</p>
+        <p>Your private files — including your constitution, vault, marginalia, transcripts, and notes — stay on your device or in your own connected Drive. Alexandria has no endpoint that accepts them and cannot read or retrieve them. Backups are optional and go only to accounts you control if you choose to enable them.</p>
         <p style={detail}>This promise covers the private mirror. Information you deliberately publish, feedback you submit, and the connector records described below do reach services we operate.</p>
       </section>
 
