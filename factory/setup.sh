@@ -38,8 +38,9 @@
 #      binary is part of setup.
 #   2. OUTBOUND: without a separately approved account connection, setup only
 #      fetches verified public files and sends nothing. Connecting an account
-#      sends its key once for validation and stores it locally, but enables no publishing, marketplace signal,
-#      network fetch, telemetry, or feedback send. Each connected feature has
+#      sends its key for validation, stores it locally, and uses it for a small
+#      account-status read at session start. It enables no publishing, marketplace signal,
+#      network reading, telemetry, or feedback send. Each data-carrying feature has
 #      its own separate permission marker and informed yes; see .optional.
 #   3. OPTIONAL ADD-ONS (iCloud capture, Google Drive, GitHub backup to the
 #      USER'S own private repo, iCloud mirror, Library, marketplace signal,
@@ -467,6 +468,7 @@ for module in library filter stand bookshelf plm twin marketplace; do
   fetch_factory "canon/$module.md" "$ALEX_DIR/system/canon/$module.md" "canon/$module.md"
 done
 fetch_factory "canon/MODULES.md" "$ALEX_DIR/system/canon/MODULES.md" "canon/MODULES.md"
+fetch_factory "module-system.json" "$ALEX_DIR/system/modules.json" "module-system.json" yes
 
 # Block (cache locally for easy access — system, not user content). Never infer
 # ownership from this public filename. A pending block may be replaced only
@@ -1404,10 +1406,12 @@ fi
 # mean every session start/end/call POSTs against a dead auth and we
 # never find out until the Author wonders why nothing happened.
 KEY_STATUS=""
+KEY_RESPONSE=""
 if [ "$KEYLESS" = "true" ]; then
   KEY_STATUS="none"          # free mode — no key to verify, no server contacted
 elif command -v curl &>/dev/null; then
-  KEY_STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+  KEY_RESPONSE=$(mktemp "${TMPDIR:-/tmp}/alexandria-account.XXXXXX" 2>/dev/null)
+  KEY_STATUS=$(curl -s -o "${KEY_RESPONSE:-/dev/null}" -w '%{http_code}' \
     -H "Authorization: Bearer $API_KEY" \
     --max-time 8 \
     "$SERVER/alexandria" 2>/dev/null || echo "000")
@@ -1426,6 +1430,10 @@ if [ -n "$API_KEY" ] && [ "$KEYLESS" != "true" ]; then
   if [ "$KEY_STATUS" = "200" ]; then
     echo "$API_KEY" > "$ALEX_DIR/system/.api_key"
     chmod 600 "$ALEX_DIR/system/.api_key"
+    if [ -n "$KEY_RESPONSE" ] && node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));if(j.connected!==true||!j.account||typeof j.account.membership_active!=='boolean'||!j.module_system||!Number.isInteger(j.module_system.version))process.exit(1)" "$KEY_RESPONSE" 2>/dev/null; then
+      mv "$KEY_RESPONSE" "$ALEX_DIR/system/.protocol_status.json"
+      KEY_RESPONSE=""
+    fi
   elif [ "$KEY_STATUS" = "401" ]; then
     if [ -f "$ALEX_DIR/system/.api_key" ] && \
        [ "$(tr -d '[:space:]' < "$ALEX_DIR/system/.api_key" 2>/dev/null)" = "$API_KEY" ]; then
@@ -1433,6 +1441,7 @@ if [ -n "$API_KEY" ] && [ "$KEYLESS" != "true" ]; then
     fi
   fi
 fi
+[ -z "$KEY_RESPONSE" ] || rm -f "$KEY_RESPONSE"
 
 # ── Functional probes ─────────────────────────────────────────────
 # Each subsystem is verified by exercising it (write-test, syntax-check,
@@ -2021,7 +2030,7 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
     else
       echo "AGENT: read ~/alexandria/system/.block now and follow it end-to-end. Open by"
       echo "proposing the plan in your own words — what you'll read, what you'll write,"
-      echo "that the connected account enabled no network feature, and get their ok before"
+      echo "that the connected account enabled no data-carrying feature, and get their ok before"
       echo "opening their files."
       echo "Once they say yes, they can step away."
     fi

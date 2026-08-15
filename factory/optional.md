@@ -8,9 +8,9 @@
 
 ## account — connect identity only
 
-- **Does:** validates and stores the Author's Alexandria account key locally. This alone enables no publishing, marketplace reporting, network fetch, telemetry, or feedback send.
-- **Touches:** `~/alexandria/system/.api_key` (0600) and one account-status request to Alexandria for validation.
-- **Leaves the machine:** the account key in that validation request; no personal files.
+- **Does:** validates and stores the Author's Alexandria account key locally, then refreshes live account state and the static module-map version at session start. This alone enables no publishing, marketplace reporting, network reading, telemetry, or feedback send.
+- **Touches:** `~/alexandria/system/.api_key` (0600), `~/alexandria/system/.protocol_status.json`, and the account-status endpoint.
+- **Leaves the machine:** the account key plus a client-version hash in each status request; no personal files or private content.
 - **Enable:** after the Author directly asks to connect the account, explain the lines above and wait for the exact word `connect`. Then run the installed verifier with the key and the consent flag:
   ```bash
   ALEXANDRIA_ACCOUNT_CONNECT_APPROVED=1 bash ~/.local/share/alexandria/scripts/verify-fetch.sh --run setup.sh "$ALEXANDRIA_ACCOUNT_KEY"

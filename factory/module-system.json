@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "groups": {
+    "core": {
+      "default_state": "on",
+      "items": [
+        { "id": "foundation", "local_ref": "canon/foundation.md" },
+        { "id": "upkeep", "local_ref": "canon/change-closure.md" }
+      ]
+    },
+    "methods": {
+      "default_state": "on_removable",
+      "items": [
+        { "id": "axioms", "local_ref": "canon/axioms.md" },
+        { "id": "methodology", "local_ref": "canon/methodology.md" },
+        { "id": "editor", "local_ref": "canon/editor.md" },
+        { "id": "mercury", "local_ref": "canon/mercury.md" },
+        { "id": "publisher", "local_ref": "canon/publisher.md" }
+      ]
+    },
+    "additions": {
+      "default_state": "off_until_useful",
+      "items": [
+        { "id": "capture", "marketplace_ref": "factory/systems/capture-pipeline" },
+        { "id": "audit", "marketplace_ref": "factory/systems/state-based-sync" }
+      ]
+    },
+    "connections": {
+      "default_state": "off_until_exact_approval",
+      "items": [
+        { "id": "account", "local_ref": "system/.api_key" },
+        { "id": "library", "local_ref": "canon/library.md" },
+        { "id": "library-stand", "local_ref": "canon/stand.md" },
+        { "id": "marketplace", "local_ref": "canon/marketplace.md" },
+        { "id": "network", "local_ref": "system/permissions/network" },
+        { "id": "updates", "local_ref": "system/hooks/auto-update" },
+        { "id": "cloud-and-backup", "local_ref": "system/.optional" },
+        { "id": "outbound", "local_ref": "system/.optional" },
+        { "id": "plm", "local_ref": "canon/plm.md" },
+        { "id": "twin", "local_ref": "canon/twin.md" }
+      ]
+    }
+  },
+  "rules": {
+    "local_state_authority": "local_files_and_permissions",
+    "community_availability_authority": "authenticated_alexandria_handshake",
+    "foreign_module_trust": "untrusted_until_inspected",
+    "updates": "notify_only_explicit_apply",
+    "connections": "separate_exact_scope_consent",
+    "private_data": "never_needed_for_module_discovery"
+  }
+}

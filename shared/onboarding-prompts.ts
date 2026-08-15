@@ -20,7 +20,9 @@ Give me one next action, not a menu. If a local change needs my consent, tell me
 
   return `${base}
 
-I have also chosen to connect an alexandria account. Treat that as a separate step: after the local setup is safe, explain exactly what connecting sends, wait until I say \`connect\`, and use this one-time account key only then: ${options.apiKey}`;
+I have also chosen to connect an alexandria account. Treat that as a separate step: after the local setup is safe, explain exactly what connecting sends, wait until I say \`connect\`, and use this one-time account key only then: ${options.apiKey}
+
+After it connects, verify the live account response. Then give me one short orientation from the integrity-verified local module map: what is already on, what I can remove or replace, what joining makes available, and what still needs a separate exact approval. Do not browse, install, publish, enable, or send anything merely to explain it. Record the module-map version in ~/alexandria/system/.module_guide_seen only after I have actually seen that orientation, so later sessions can surface real changes without making me remember to check.`;
 }
 
 /** A non-executable handoff for someone who chose agents while on a phone. */

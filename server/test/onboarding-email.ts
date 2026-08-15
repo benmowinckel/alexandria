@@ -14,6 +14,13 @@ assert.doesNotMatch(computerPrompt, /which other ai app/);
 assert.doesNotMatch(computerPrompt, /account or project instructions/);
 assert.ok(computerPrompt.trim().endsWith('wait for me to say `start`.'));
 
+const joinedComputerPrompt = computerInstallPrompt({ apiKey: 'PREVIEW-NOT-A-REAL-KEY' });
+assert.match(joinedComputerPrompt, /verify the live account response/);
+assert.match(joinedComputerPrompt, /integrity-verified local module map/);
+assert.match(joinedComputerPrompt, /what joining makes available, and what still needs a separate exact approval/);
+assert.match(joinedComputerPrompt, /Do not browse, install, publish, enable, or send anything merely to explain it/);
+assert.match(joinedComputerPrompt, /Record the module-map version in ~\/alexandria\/system\/\.module_guide_seen only after I have actually seen that orientation/);
+
 const phone = onboardEmailContent('agent-phone', 'TOKEN');
 assert.equal(phone.subject, 'alexandria. — continue at your computer');
 assert.match(phone.html, /when you are at your computer, open the agent you use there/);

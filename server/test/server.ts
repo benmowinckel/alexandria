@@ -69,10 +69,11 @@ async function main() {
   await test('Protocol endpoint (/alexandria)', async () => {
     const res = await fetch(`${BASE}/alexandria`);
     const body = await safeJson(res);
+    const moduleSystem = body?.module_system as Record<string, unknown> | undefined;
     return {
       test: 'Protocol endpoint',
-      passed: res.ok && body?.protocol === 'alexandria' && typeof body?.version === 'string',
-      details: `HTTP ${res.status}, protocol: ${String(body?.protocol)}, version: ${String(body?.version)}`,
+      passed: res.ok && body?.protocol === 'alexandria' && typeof body?.version === 'string' && Number.isInteger(moduleSystem?.version),
+      details: `HTTP ${res.status}, protocol: ${String(body?.protocol)}, version: ${String(body?.version)}, module map: ${String(moduleSystem?.version)}`,
     };
   });
 

@@ -135,6 +135,24 @@ grep -q 'allow_implicit_invocation: false' factory/skills/codex-openai.yaml || {
   exit 1
 }
 
+# The joined handoff compares this semantic version with the version each
+# Author has already seen. A changed map with an unchanged number would make a
+# real packaging change invisible, so block that release structurally.
+current_module_version="$(node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('factory/module-system.json','utf8'));if(!Number.isInteger(j.version)||j.version<1)process.exit(1);process.stdout.write(String(j.version))")" || {
+  echo "error: factory/module-system.json has no positive integer version" >&2
+  exit 1
+}
+if git cat-file -e HEAD:factory/module-system.json 2>/dev/null; then
+  previous_module_version="$(git show HEAD:factory/module-system.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);if(!Number.isInteger(j.version)||j.version<1)process.exit(1);process.stdout.write(String(j.version))})")" || {
+    echo "error: committed factory/module-system.json has no valid version" >&2
+    exit 1
+  }
+  if ! git diff --quiet HEAD -- factory/module-system.json && [ "$current_module_version" -le "$previous_module_version" ]; then
+    echo "error: module-system.json changed without increasing its version" >&2
+    exit 1
+  fi
+fi
+
 previous_version="$(awk '$1=="#" && $2=="alexandria-factory-version" {print $3; exit}' factory/manifest.txt 2>/dev/null)"
 release_version="$(date -u +%Y%m%d%H%M%S)"
 case "$previous_version" in ''|[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]) ;; *) echo "error: existing factory version is malformed" >&2; exit 1 ;; esac

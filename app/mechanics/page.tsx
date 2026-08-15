@@ -2,7 +2,7 @@ import MarkdownDoc from '../components/MarkdownDoc';
 import { pageMetadata } from '../lib/config';
 
 // The auditor's page. Alexandria's install puts files on your machine and
-// pulls signed code from GitHub each session — this is the plain account
+// can optionally check signed code and connected-account status — this is the plain account
 // of exactly what runs, what the server holds, and how to verify it.
 // Linked from the FAQ ("is it safe to install?"), not the landing footer.
 const TITLE = 'mechanics — alexandria. what the install does';

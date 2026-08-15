@@ -16,6 +16,7 @@ import { runHealthDigest, runWeekOneCheckIns } from './cron.js';
 import { publishFeedback } from './marketplace.js';
 import { handleGithubPushWebhook } from './marketplace-catalog.js';
 import { listAuditArchive, mirrorPendingAuditBatch, readAuditArchive, verifyAuditArchiveHead } from './audit.js';
+import moduleSystem from '../../factory/module-system.json';
 
 /**
  * KV-backed rate limit for destructive/expensive admin endpoints.
@@ -215,6 +216,7 @@ export function registerRoutes(app: Hono) {
           },
         },
         community,
+        module_system: moduleSystem,
         factory: 'https://github.com/benmowinckel/alexandria/tree/main/factory',
         methodology: 'https://raw.githubusercontent.com/benmowinckel/alexandria/main/factory/canon/methodology.md',
       });
@@ -298,6 +300,7 @@ export function registerRoutes(app: Hono) {
         installed: account.installed_at || null,
       },
       community,
+      module_system: moduleSystem,
       obligations: {
         meaning: 'Operational signal only. These dates do not grant membership or referral credit.',
         file_due: fileDue,

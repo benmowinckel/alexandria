@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import marketplaceInventory from '../../factory/marketplace.json';
+import moduleSystem from '../../factory/module-system.json';
 import {
   canonicalizeModuleId,
   deriveMarketplaceTier,
@@ -74,6 +75,36 @@ assert.deepEqual(
   marketplaceInventory.modules.filter((module) => module.role === 'core').map((module) => module.path),
   ['factory/canon/foundation', 'factory/canon/change-closure'],
 );
+
+assert.equal(moduleSystem.version, 1);
+assert.deepEqual(
+  moduleSystem.groups.core.items.map((module) => module.id),
+  ['foundation', 'upkeep'],
+);
+assert.deepEqual(
+  moduleSystem.groups.methods.items.map((module) => module.id).sort(),
+  marketplaceInventory.modules
+    .filter((module) => module.role === 'default' && module.name !== 'stand')
+    .map((module) => module.name)
+    .sort(),
+);
+assert.deepEqual(
+  moduleSystem.groups.additions.items.map((module) => module.id).sort(),
+  marketplaceInventory.modules
+    .filter((module) => module.role === 'official')
+    .map((module) => module.name)
+    .sort(),
+);
+assert.equal(moduleSystem.groups.additions.default_state, 'off_until_useful');
+assert.equal(moduleSystem.groups.connections.default_state, 'off_until_exact_approval');
+assert.equal(moduleSystem.groups.connections.items.some((module) => module.id === 'plm'), true);
+assert.equal(moduleSystem.rules.private_data, 'never_needed_for_module_discovery');
+for (const group of [moduleSystem.groups.core, moduleSystem.groups.methods, moduleSystem.groups.connections]) {
+  for (const moduleEntry of group.items) {
+    if (!('local_ref' in moduleEntry) || !moduleEntry.local_ref.startsWith('canon/')) continue;
+    assert.equal(existsSync(new URL(`../../factory/${moduleEntry.local_ref}`, import.meta.url)), true, `module map reference missing: ${moduleEntry.local_ref}`);
+  }
+}
 assert.deepEqual(
   marketplaceInventory.modules.filter((module) => module.role === 'default').map((module) => module.path).sort(),
   [

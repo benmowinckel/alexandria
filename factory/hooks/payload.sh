@@ -484,6 +484,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
       check_drift "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md" "  cursor /alexandria skill (~/.cursor/skills/alexandria/SKILL.md)" "rename-alexandria"
     fi
     check_drift "$RUNTIME_DIR/hooks/shim.sh" "hooks/shim.sh" "  hook shim (~/.local/share/alexandria/hooks/shim.sh)"
+    check_drift "$ALEX_DIR/system/modules.json" "module-system.json" "  module map (~/alexandria/system/modules.json)"
 
     # Codex case — only compare the compact block Alexandria owns in the
     # current global instruction surface. A full Author-managed AGENTS.md is
@@ -604,8 +605,8 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
     echo "Alexandria passive mode active. Follow the canon's passive mode instructions. After any substantive file edit, run system/canon/change-closure.md before calling the task complete; the Author never remembers downstream effects. Product feedback stays local unless the Author directly asks to send exact text and separately approves that send."
   fi
 
-  # An account key alone enables no standing network activity. Each connected
-  # feature has its own explicit permission marker.
+  # The account key's standing call is the small status read above. Every
+  # data-carrying connected feature has its own explicit permission marker.
   if [ -n "$API_KEY" ]; then
   if [ -f "$ALEX_DIR/system/permissions/library" ]; then
     mkdir -p "$ALEX_DIR/files/library" 2>/dev/null

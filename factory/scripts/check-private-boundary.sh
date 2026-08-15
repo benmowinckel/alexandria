@@ -146,6 +146,12 @@ require shared/onboarding-prompts.ts \
   'If there is too little real context, say so and ask one high-signal question instead of inventing.' \
   'the one-time chat setup can invent personal context when none exists'
 require shared/onboarding-prompts.ts \
+  'Do not browse, install, publish, enable, or send anything merely to explain it.' \
+  'the joined handoff can turn orientation into activation'
+require shared/onboarding-prompts.ts \
+  'Record the module-map version in ~/alexandria/system/.module_guide_seen only after I have actually seen that orientation' \
+  'the joined handoff can mark module orientation complete before the user sees it'
+require shared/onboarding-prompts.ts \
   'Only after that works' \
   'the full-version explanation can precede free personal value'
 require shared/onboarding-prompts.ts \
@@ -276,7 +282,40 @@ for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory
   require "$opener_skill" \
     'Host-generated favicon or preview chrome is automatic and accepted.' \
     "$opener_skill still promises control over host-generated link chrome"
+  require "$opener_skill" \
+    'MODULE MAP CHECK — joined Authors only.' \
+    "$opener_skill no longer makes joined module changes discoverable"
+  require "$opener_skill" \
+    'Do not browse, install, activate, publish, or send anything as part of orientation.' \
+    "$opener_skill can activate a module merely while explaining it"
 done
+require factory/module-system.json \
+  '"default_state": "off_until_exact_approval"' \
+  'the machine-readable module map no longer keeps connections separately consented'
+require factory/module-system.json \
+  '"id": "plm"' \
+  'the PLM connection is absent from the machine-readable module map'
+require factory/module-system.json \
+  '"private_data": "never_needed_for_module_discovery"' \
+  'module discovery can depend on private user material'
+require factory/redteam.md \
+  'when the authenticated module-map version is missing from or differs from the version the Author has already seen' \
+  'the cold-agent audit still mistakes safe joined module orientation for a commercial prompt'
+require factory/redteam.md \
+  '`factory/module-system.json`' \
+  'the cold-agent audit no longer inspects the signed module map'
+require factory/redteam.md \
+  'fetches no community module body, activates nothing, and marks the version seen only after the human actually sees the orientation' \
+  'the cold-agent audit no longer checks the joined orientation safety boundary'
+require factory/ship.sh \
+  'module-system.json changed without increasing its version' \
+  'factory release no longer forces module-map changes to become visible to existing users'
+require factory/setup.sh \
+  'fetch_factory "module-system.json" "$ALEX_DIR/system/modules.json" "module-system.json" yes' \
+  'setup no longer installs the signed portable module map'
+require server/src/routes.ts \
+  'module_system: moduleSystem' \
+  'the live handshake no longer carries the current module-map version'
 require factory/setup.sh \
   'when that owned alias still exists, refresh it from the' \
   'setup no longer refreshes Alexandria-owned legacy Codex aliases'

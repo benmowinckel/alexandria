@@ -1,6 +1,6 @@
 # What ships, what runs, and what waits
 
-*Architecture reference only. It does not activate the Library, marketplace, account, or any Alexandria ask; the private ai leaves those surfaces silent unless the Author directly requests one.*
+*Architecture reference only. It does not activate the Library, marketplace, account, or any Alexandria ask. Before membership, the private ai leaves those surfaces silent unless the Author directly requests one. After membership is connected, it may explain the signed module map once and surface a later map-version change as a compact `system` action; that is product orientation for an existing member, never a pitch or permission to activate anything.*
 
 *The canon is just files on your machine — your `alexandria.md`, the system that develops your mind (the working loop plus how to run it well), like a `design.md` or any script you keep. What it produces is your `mind.md` — your mind itself, the data. Both are yours: edit, replace, or ignore them. Alexandria is an aggregation hub you optionally connect to; it offers strong defaults and aggregates what works across everyone. The only thing that is not a file is the spine (account · file · call) — the connection to the hub itself.*
 
@@ -41,7 +41,7 @@ Alexandria-built additions are labelled **official** in the marketplace. Everyon
 ## connections — dormant until separately approved
 
 - **signed update notices** — public release checks only; nothing applies automatically.
-- **account** — identity connection only; enables nothing else.
+- **account** — establishes identity and live membership state; it does not activate any other local connection.
 - **Library publication** — `library.md` + `filter.md`; exact files and audiences need exact hash-bound approval.
 - **Library stand** — `stand.md`; Benjamin's personalizable starting shape for that connection, installed as a reference, inert until the Author asks, and free to fork or replace.
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
@@ -56,10 +56,12 @@ Their signed references may be installed so the Author's ai can explain a direct
 
 ## marketplace — the legible inventory
 
-The marketplace shows the two core recovery references, the five method defaults, the founder-stand default, curated official additions, and modules published by individual Authors. Alexandria's own inventory is explicit and remains visible even when no recent use has been reported; approved usage only discovers community additions. Internal architecture maps and dormant connection instructions are not modules and stay invisible. The marketplace is available only when the Author directly asks to browse or use it. The private ai never recommends a module from private material, turns browsing into an onboarding step, or reports usage without exact manifest approval.
+The marketplace shows the two core recovery references, the five method defaults, the founder-stand default, curated official additions, and modules published by individual Authors. Alexandria's own inventory is explicit and remains visible even when no recent use has been reported; approved usage only discovers community additions. Internal architecture maps and dormant connection instructions are not marketplace listings and stay invisible there.
+
+The signed `~/alexandria/system/modules.json` is the portable local map; the authenticated `/alexandria` handshake carries its current version so a joined Author's ai notices a real packaging change without the Author remembering to check. A version change permits one compact `system` action only. The ai explains new details from the integrity-verified local map after a signed refresh, not from network text. Browsing community modules or fetching their bodies still requires the Author to ask. The private ai never recommends from private material, turns browsing into a sales step, or reports usage without exact manifest approval.
 
 ---
 
 ## the rule
 
-The loop is passive → cue → active. Methods shape how it runs. Additions extend it locally. Connections cross a boundary and therefore wait for exact approval. The hub aggregates methods, additions, and sovereign stands; it never owns or completes the loop. Alexandria owns the square's minimum shared rules, not how an Author chooses to inhabit it.
+The loop is passive → cue → active. Methods shape how it runs. Additions extend it locally. Connections cross a boundary and therefore wait for exact approval. Joining makes the square legible; it does not silently move anything into or out of the Author's home. The hub aggregates methods, additions, and sovereign stands; it never owns or completes the loop. Alexandria owns the square's minimum shared rules, not how an Author chooses to inhabit it.
