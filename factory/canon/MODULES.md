@@ -43,6 +43,7 @@ Alexandria-built additions are labelled **official** in the marketplace. Everyon
 - **signed update notices** — public release checks only; nothing applies automatically.
 - **account** — identity connection only; enables nothing else.
 - **Library publication** — `library.md` + `filter.md`; exact files and audiences need exact hash-bound approval.
+- **Library stand** — `stand.md`; Benjamin's personalizable starting shape for that connection, installed as a reference, inert until the Author asks, and free to fork or replace.
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
 - **network reading** — only the exact approved Author list is fetched.
 - **cloud bridges and backups** — each service has its own consent and off switch.
@@ -51,12 +52,14 @@ Alexandria-built additions are labelled **official** in the marketplace. Everyon
 
 Their signed references may be installed so the Author's ai can explain a direct request without fetching instructions first. They do nothing merely because the files exist.
 
+`stand.md` may appear in the marketplace as **default** even though the Library connection remains dormant. Here default means “the starting choice if you turn this feature on,” not “already active.” It copies structure, never Benjamin's content.
+
 ## marketplace — the legible inventory
 
-The marketplace shows the two core recovery references, the five defaults, curated official additions, and modules published by individual Authors. Alexandria's own inventory is explicit and remains visible even when no recent use has been reported; approved usage only discovers community additions. Internal architecture maps and dormant connection instructions are not modules and stay invisible. The marketplace is available only when the Author directly asks to browse or use it. The private ai never recommends a module from private material, turns browsing into an onboarding step, or reports usage without exact manifest approval.
+The marketplace shows the two core recovery references, the five method defaults, the founder-stand default, curated official additions, and modules published by individual Authors. Alexandria's own inventory is explicit and remains visible even when no recent use has been reported; approved usage only discovers community additions. Internal architecture maps and dormant connection instructions are not modules and stay invisible. The marketplace is available only when the Author directly asks to browse or use it. The private ai never recommends a module from private material, turns browsing into an onboarding step, or reports usage without exact manifest approval.
 
 ---
 
 ## the rule
 
-The loop is passive → cue → active. Methods shape how it runs. Additions extend it locally. Connections cross a boundary and therefore wait for exact approval. The hub aggregates methods and additions; it never owns or completes the loop.
+The loop is passive → cue → active. Methods shape how it runs. Additions extend it locally. Connections cross a boundary and therefore wait for exact approval. The hub aggregates methods, additions, and sovereign stands; it never owns or completes the loop. Alexandria owns the square's minimum shared rules, not how an Author chooses to inhabit it.

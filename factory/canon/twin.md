@@ -2,13 +2,13 @@
 
 *Dormant unless the Author directly asks about compiling or publishing a mirror. The private ai never proposes this feature, uses private cognition to sell it, or treats a growing corpus as consent. This file is a reference for that explicit request only.*
 
-*The onboarding companion to `plm.md`. That file is the how — the compile, its stages, the hard-won corrections. This one is the why: what a mirror is, why only you can build yours, the one honest bar you have to clear, and how to fire it. If `plm.md` is the machine, this is the invitation. Read it and decide.*
+*The optional onboarding companion to `plm.md`. This is one module Benjamin chose for his stand, not something a Library page must have. That file is the how — the compile, its stages, the hard-won corrections. This one is the why: what a mirror is, why only you can build yours, the one honest bar you have to clear, and how to fire it. Read it and decide.*
 
 Your mirror runs through **your own model account**. Your chosen sidecar holds the provider token. For the context version it holds no private substrate: Alexandria sends it only the exact Library slice authorized for that request. A weights compile may use private sources only in the separate run you explicitly start; those sources never become a serve-time mount. The Library receives neither the provider token nor the private sources. It stores only the sidecar address and separate secret you chose to register. If you disconnect it, the mirror goes offline and the rest of your profile remains intact. Another Author can never inherit the founder's company-funded inference as a fallback.
 
 A mirror is **you, made queryable** — a language model that holds your positions and talks in your voice, compiled entirely from your own writing. Ask it something you've never answered out loud and it replies the way you would: your frame on new ground, your register, your reflexes. Not a chatbot wearing your name off a paragraph of bio. A working model of how you actually think — that other people can ask things of, and that keeps answering after you've stopped writing. After you're gone.
 
-It ships on your Library page, next to your shadow, labelled as a mirror. Your shadow is what you wrote. Your mirror is what you'd *say* — to anyone, about anything, forever.
+If you choose to publish it, it ships on your Library page labelled as a mirror. It may sit beside a shadow, a work, a project, or any other deliberately published context. A shadow is useful, not mandatory. Your published files are what you wrote. Your mirror is what you'd *say* — within the honest limits of the model and the exact context you allowed.
 
 ## why only you can build yours
 

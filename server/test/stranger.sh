@@ -222,6 +222,7 @@ check "notepad.md exists"          [ -f "$HOME/alexandria/files/core/notepad.md"
 check "machine.md exists"          [ -f "$HOME/alexandria/files/core/machine.md" ]
 check "api_key written"            [ -f "$HOME/alexandria/system/.api_key" ]
 check "api_key correct"            [ "$(cat "$HOME/alexandria/system/.api_key")" = "$API_KEY" ]
+check "founder stand installed"    [ -s "$HOME/alexandria/system/canon/stand.md" ]
 check "setup_complete marker"      [ -f "$HOME/.local/share/alexandria/.setup_complete" ]
 check "Claude config validates after merge" grep -q '^  claude_checks: hooks=ok config=ok' "$HOME/alexandria/system/.setup_report"
 check "passive-active loop healthy" grep -q '^  loop: ok$' "$HOME/alexandria/system/.setup_report"

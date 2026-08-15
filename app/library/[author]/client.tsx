@@ -8,7 +8,7 @@ import { ThemeToggle } from '../../components/ThemeToggle';
 import PromptBox from '../../components/PromptBox';
 import { HeaderAction, HeaderActions, headerActionDotStyle } from '../../components/HeaderActions';
 import { SignOutLink } from '../../components/SignOutLink';
-import { FETCH_TIMEOUT_MS, librarySignInUrlHere } from '../../lib/config';
+import { FETCH_TIMEOUT_MS, FOUNDER_LIBRARY_ID, FOUNDER_STAND_PROMPT, FOUNDER_STAND_URL, librarySignInUrlHere } from '../../lib/config';
 import { safeUrl } from '../../lib/url';
 import { type TwinVariantSummary } from './types';
 import { LIBRARY_LOCATIONS } from '../../../shared/library-locations';
@@ -71,8 +71,8 @@ interface AuthorData {
   };
 }
 
-const CATEGORIES = ['works', 'projects', 'shadows', 'other'] as const;
-type Category = (typeof CATEGORIES)[number];
+const DEFAULT_CATEGORIES = ['works', 'projects', 'shadows', 'other'] as const;
+type Category = string;
 type EditableIdentity = {
   display_name: string;
   location: string;
@@ -89,7 +89,26 @@ const editFieldStyle: CSSProperties = {
 };
 
 function categoryOf(file: ProtocolFile): Category {
-  return CATEGORIES.includes(file.category as Category) ? file.category as Category : 'shadows';
+  return file.category && /^[a-z][a-z0-9-]{0,39}$/.test(file.category) ? file.category : (/^shadow/i.test(file.name) ? 'shadows' : 'works');
+}
+
+async function copyText(value: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch { /* fall through to the local DOM copy path */ }
+  const node = document.createElement('textarea');
+  node.value = value;
+  node.setAttribute('readonly', '');
+  node.style.position = 'fixed';
+  node.style.opacity = '0';
+  document.body.appendChild(node);
+  node.select();
+  const copied = document.execCommand('copy');
+  node.remove();
+  return copied;
 }
 
 function protocolFileKey(file: Pick<ProtocolFile, 'scope' | 'name'>): string {
@@ -156,6 +175,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   const [doorShake, setDoorShake] = useState(false);
   const [offlineNote, setOfflineNote] = useState(false);
   const [beliCopied, setBeliCopied] = useState(false);
+  const [standCopyNote, setStandCopyNote] = useState('');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveNote, setSaveNote] = useState('');
@@ -345,6 +365,12 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     }
   };
 
+  const copyFounderStand = async () => {
+    const copied = await copyText(FOUNDER_STAND_PROMPT);
+    setStandCopyNote(copied ? 'copied — paste into your ai' : 'copy failed — open the stand');
+    setTimeout(() => setStandCopyNote(''), 3200);
+  };
+
   if (loading) return (
     <main style={{ maxWidth: '560px', margin: '0 auto', padding: '40vh 2rem', fontFamily: 'var(--font-eb-garamond)', textAlign: 'center' }}>
       <p style={{ color: 'var(--text-ghost)', fontSize: '0.85rem', letterSpacing: '0.1em' }}>...</p>
@@ -360,17 +386,10 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
 
   const { author } = data;
   const files = editing ? editFiles : (data.files || []);
-  // The profile is a set of sections, each just hosted text + links — every one
-  // rides the existing publish mechanism (a public file the Author names), so
-  // there is no backend for any of them. `works` / `projects` / `other` are open
-  // text sections rendered inline with clickable URLs; `other` is the freeform
-  // catch-all (invisible until the Author publishes it). Everything else is a
-  // The profile is a ROUTER over whatever the Author published — emergent, not a
-  // fixed template. Visible sections = the categories that actually have files,
-  // in the Author's order (or the default works → projects → shadows → other).
-  // `other` shows when filled and hides when empty (a2 § Library V1), same as
-  // every other section. The 4-category vocabulary is fixed; everything about how
-  // the sections render is Author-controllable via the optional profile config.
+  // The shared profile is a safe router over whatever the Author published, not
+  // a required stand architecture. Benjamin's four sections are the useful
+  // default; safe custom slugs arrive through owner-authenticated metadata and
+  // render with the same restrained component. Empty sections disappear.
   const DEFAULT_WHISPER: Record<string, string> = {
     works: 'what’s been made',
     projects: 'what’s being built',
@@ -378,16 +397,21 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     other: 'everything else',
   };
   const profile = data.profile || {};
-  const hiddenCats = new Set((profile.hidden || []).filter((c) => (CATEGORIES as readonly string[]).includes(c)));
+  const validCategory = (value: string) => /^[a-z][a-z0-9-]{0,39}$/.test(value);
+  const hiddenCats = new Set((profile.hidden || []).filter(validCategory));
   const byCat = new Map<string, ProtocolFile[]>();
   for (const f of files) {
-    const cat = (CATEGORIES as readonly string[]).includes(f.category || '') ? (f.category as string) : 'shadows';
+    const cat = categoryOf(f);
     (byCat.get(cat) || byCat.set(cat, []).get(cat)!).push(f);
   }
-  // Author order first (valid entries only), then any remaining categories in the
-  // default order — so a newly-published section never silently disappears.
-  const orderPref = (profile.order || []).filter((c) => (CATEGORIES as readonly string[]).includes(c));
-  const effectiveOrder = [...orderPref, ...CATEGORIES.filter((c) => !orderPref.includes(c))];
+  // Author order first, founder defaults second, then newly published custom
+  // sections. No new section can silently disappear because settings lagged it.
+  const orderPref = (profile.order || []).filter(validCategory);
+  const effectiveOrder = [
+    ...orderPref,
+    ...DEFAULT_CATEGORIES.filter((c) => !orderPref.includes(c)),
+    ...Array.from(byCat.keys()).filter((c) => !orderPref.includes(c) && !(DEFAULT_CATEGORIES as readonly string[]).includes(c)),
+  ];
   const grouped = effectiveOrder
     .filter((cat) => (byCat.get(cat)?.length || 0) > 0 && !hiddenCats.has(cat))
     .map((cat) => ({
@@ -796,9 +820,18 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               body is works / projects / shadows only. */}
           {grouped.length === 0 ? (
             !data.twin?.enabled && (
-              <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>
-                nothing published yet.
-              </p>
+              isOwner ? (
+                <div style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>
+                  <p style={{ margin: 0 }}>nothing published yet.</p>
+                  <button type="button" onClick={copyFounderStand}
+                    style={{ border: 0, background: 'none', color: 'var(--accent)', padding: '0.65rem 0 0', font: 'inherit', cursor: 'pointer' }}
+                    className="hover:opacity-60">
+                    {standCopyNote || 'start with Benjamin’s stand'}
+                  </button>
+                </div>
+              ) : (
+                <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>nothing published yet.</p>
+              )
             )
           ) : (
             // The library zone — one hairline breaks it from mind + links
@@ -827,8 +860,19 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             whole pitch). */}
         {!editing && <footer style={{ borderTop: '1px solid var(--border-light)', textAlign: 'center', margin: '4rem 0 0', padding: '1.6rem 0 0' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', margin: 0 }}>
-            want this for yourself?{' '}
-            <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">start your loop</Link>
+            {authorId === FOUNDER_LIBRARY_ID ? <>
+              want this for yourself?{' '}
+              {standCopyNote === 'copy failed — open the stand' ? (
+                <a href={FOUNDER_STAND_URL} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">open the stand</a>
+              ) : (
+                <button type="button" onClick={copyFounderStand} style={{ border: 0, background: 'none', color: 'var(--accent)', padding: 0, font: 'inherit', cursor: 'pointer' }} className="hover:opacity-60">
+                  {standCopyNote || 'copy this stand'}
+                </button>
+              )}
+            </> : <>
+              want this for yourself?{' '}
+              <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">start your loop</Link>
+            </>}
           </p>
           <p style={{ margin: '1.4rem 0 0' }}>
             <Link href="/" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '1rem', letterSpacing: '0.01em', textDecoration: 'none' }} className="hover:opacity-60">

@@ -883,7 +883,12 @@ export default {
     // Founder-internal health state stays machine-readable in /health; it does
     // not email the founder. Manual founder admin email tools remain
     // founder-triggered.
-    await Promise.all([runHealthDigest(), settleMonthlyTabs(), recalculateAllKinPricing()]);
+    // Membership is the repair pass and health is its assertion. Running them
+    // concurrently let the digest inspect stale cache timestamps milliseconds
+    // before the same cron refreshed them, leaving a false degraded state for a
+    // day. Repair first; then verify and settle independently.
+    await recalculateAllKinPricing();
+    await Promise.all([runHealthDigest(), settleMonthlyTabs()]);
     ctx.waitUntil(flushEvents());
   },
 };

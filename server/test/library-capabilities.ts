@@ -10,6 +10,7 @@ import { resolve } from 'node:path';
 import {
   acceptsAuthorSidecar,
   inferenceEnvForAuthor,
+  isLibraryCategory,
   libraryLocationOptions,
   libraryCapabilityContract,
 } from '../src/library.js';
@@ -47,7 +48,16 @@ const contract = libraryCapabilityContract({
   authorId: 'someone', viewerRole: 'owner', ownInferenceRequired: true,
   inferenceConnected: false, twinEnabled: false,
 });
-assert.equal(contract.schema, 'alexandria.library.capabilities.v2');
+assert.equal(contract.schema, 'alexandria.library.capabilities.v3');
+assert.equal(isLibraryCategory('works'), true);
+assert.equal(isLibraryCategory('field-notes'), true);
+assert.equal(isLibraryCategory('Field Notes'), false);
+assert.equal(isLibraryCategory('../private'), false);
+assert.deepEqual(contract.profile.default_sections, ['works', 'projects', 'shadows', 'other']);
+assert.match(contract.profile.custom_sections, /lowercase slug/);
+assert.match(contract.profile.custom_surfaces, /separate surface/);
+assert.match(contract.stand.module_id, /factory\/canon\/stand$/);
+assert.match(contract.stand.rule, /starting point, not Library law/);
 assert.equal(contract.inference.ownership, 'author_account_only');
 assert.equal(contract.inference.company_token_fallback, false);
 assert.equal(contract.inference.connected, false);
@@ -68,4 +78,4 @@ assert.equal(contract.owner_api.inference_sidecar.required_body_acknowledgement.
 const ownerPage = resolve(process.cwd(), '..', 'app', 'library', '[author]', 'page.tsx');
 assert.equal(existsSync(ownerPage), true, 'capability contract must not advertise a dead owner page');
 
-console.log('Library capability contract: 25 checks passed');
+console.log('Library capability contract: modular stand + exact-scope boundary passed');

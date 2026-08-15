@@ -180,8 +180,9 @@ export function moduleIdAliases(id: string): string[] {
 
 /**
  * Product role, not a quality ranking. Core files make the local loop work;
- * five replaceable methods ship as defaults; curated Alexandria additions are
- * official; everything else is shown under its author.
+ * replaceable starting modules ship as defaults; curated Alexandria additions
+ * are official; everything else is shown under its author. A feature-specific
+ * default such as `stand` remains dormant until that feature is chosen.
  */
 export function deriveMarketplaceTier(id: string): MarketplaceTier {
   const canonical = canonicalizeModuleId(id);

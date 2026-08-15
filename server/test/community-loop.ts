@@ -58,9 +58,10 @@ async function main() {
 
   const capabilities = await json<any>(`/library/${encodeURIComponent(AUTHOR)}/capabilities`);
   assert.equal(capabilities.response.status, 200);
-  assert.equal(capabilities.body.schema, 'alexandria.library.capabilities.v1');
+  assert.equal(capabilities.body.schema, 'alexandria.library.capabilities.v3');
+  assert.match(capabilities.body.stand?.module_id || '', /factory\/canon\/stand$/);
   assert.equal(capabilities.body.inference?.company_token_fallback, false);
-  checks.push('Library controls, shadows, permissions, own-token contract');
+  checks.push('Library stand, controls, permissions, own-token contract');
 
   const handoff = await json<any>(`/library/${encodeURIComponent(AUTHOR)}/handoff`);
   assert.equal(handoff.response.status, 200);

@@ -185,23 +185,24 @@ async function twinOnline(authorId: string): Promise<boolean> {
   return (await twinStatus(authorId)).online;
 }
 
-// Per-file category map (name → 'works'|'projects'|'shadows'|'other'), stored in
-// a dedicated KV entry the owner sets. Lets the library page group entries into
-// neat sections like the demo. Empty map = everything falls to 'shadows'.
+// Per-file section map, stored in a dedicated KV entry the owner sets. The
+// founder stand supplies four useful defaults; safe custom slugs keep the
+// shared renderer modular without accepting arbitrary markup or code.
 async function getFileCategories(authorId: string): Promise<Record<string, string>> {
   try {
     const raw = await getKV().get(`file_categories:${authorId}`);
-    if (raw) return JSON.parse(raw) as Record<string, string>;
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, string] => isLibraryCategory(entry[1])));
+    }
   } catch { /* ignore */ }
   return {};
 }
 
-// The fixed 4-category vocabulary the library page groups files under. Fixed
-// scaffolding (a values decision, not intelligence): the vocab is constant even
-// though everything about how the sections render is Author-controllable.
-const LIBRARY_CATEGORIES = ['works', 'projects', 'shadows', 'other'] as const;
-function isLibraryCategory(v: unknown): v is (typeof LIBRARY_CATEGORIES)[number] {
-  return typeof v === 'string' && (LIBRARY_CATEGORIES as readonly string[]).includes(v);
+const DEFAULT_LIBRARY_CATEGORIES = ['works', 'projects', 'shadows', 'other'] as const;
+const LIBRARY_CATEGORY_RE = /^[a-z][a-z0-9-]{0,39}$/;
+export function isLibraryCategory(v: unknown): v is string {
+  return typeof v === 'string' && LIBRARY_CATEGORY_RE.test(v);
 }
 
 // When a file has no category in the map yet (published before the category
@@ -466,7 +467,7 @@ export function libraryCapabilityContract(input: {
   const api = process.env.PUBLIC_API_URL || 'https://api.alexandria-library.com';
   const site = process.env.WEBSITE_URL || 'https://alexandria-library.com';
   return {
-    schema: 'alexandria.library.capabilities.v2',
+    schema: 'alexandria.library.capabilities.v3',
     author: input.authorId,
     viewer_role: input.viewerRole,
     purpose: 'A profile is a router and directory over material the Author deliberately published. The private local loop remains outside the Library.',
@@ -486,16 +487,24 @@ export function libraryCapabilityContract(input: {
       approval: 'Approval is bound to content hash plus exact scope. Editing the bytes or moving the file invalidates approval.',
       unpublish: 'Removing a local file does not delete the published copy. Deletion is a separate owner-approved outward action.',
     },
+    stand: {
+      module_id: 'github:benmowinckel/alexandria#factory/canon/stand',
+      source: 'https://github.com/benmowinckel/alexandria/blob/main/factory/canon/stand.md',
+      rule: 'Benjamin\'s stand is a personalizable starting point, not Library law. Copy its mechanism, never his content; any Author may reshape, replace, externally render, or ignore it.',
+      shared_square: 'Alexandria owns stable Author addresses, safe shared rendering, exact access and revocation, invitations and payments, and this capability API.',
+    },
     profile: {
-      fixed_structure: ['identity', 'mind', 'links', 'published sections'],
+      shared_renderer: ['identity', 'optional mind', 'links', 'published sections'],
       owner_controls: {
         identity: ['display_name', 'location', 'contact', 'website', 'socials'],
-        files: ['order_within_section', 'subtitle'],
+        files: ['section', 'order_within_section', 'subtitle'],
         mirror: ['exact_context_scopes', 'exact_context_preview'],
-        excluded: ['body', 'visibility', 'permissions', 'category'],
+        excluded: ['body', 'visibility', 'permissions'],
       },
-      categories: ['works', 'projects', 'shadows', 'other'],
-      formatting: 'The profile editor changes presentation only. Content, category, visibility, and permissions stay behind their existing publication and access gates.',
+      default_sections: DEFAULT_LIBRARY_CATEGORIES,
+      custom_sections: 'Any lowercase slug matching ^[a-z][a-z0-9-]{0,39}$ is accepted. Order, labels, and visibility on the profile are Author-controlled; empty sections disappear.',
+      custom_surfaces: 'The Author may ignore the shared renderer and build a separate surface from the public profile, capability, and file APIs. Author code never runs on Alexandria\'s shared origin.',
+      formatting: 'Presentation metadata never changes artifact bytes, visibility, or permissions. A new section is not a new audience.',
       owner_page: `${site}/library/${author}`,
     },
     scopes: {
@@ -2770,17 +2779,17 @@ export function registerLibraryRoutes(app: Hono): void {
     return c.json({ ok: true, login, github_id: invitee.github_id, scope, label });
   });
 
-  // Set the per-file categories (works/projects/shadows/other) for the neat
-  // library layout. Owner-only. Body: { categories: { "<file-name>": "works", ... } }.
+  // Set each file's safe presentation section. The founder stand supplies four
+  // defaults, but any lowercase slug may be used. Owner-only; this never changes
+  // artifact bytes, visibility, or grants.
   app.put('/library/:author/file-categories', async (c) => {
     const authorId = c.req.param('author');
     const owner = await resolveOwnerOnly(c, authorId);
     if ('error' in owner) return owner.error;
     const body = await c.req.json<{ categories?: Record<string, unknown> }>().catch(() => ({} as { categories?: Record<string, unknown> }));
-    const VALID = new Set(['works', 'projects', 'shadows', 'other']);
     const clean: Record<string, string> = {};
     for (const [name, kind] of Object.entries(body.categories || {})) {
-      if (typeof kind === 'string' && VALID.has(kind)) clean[name] = kind;
+      if (isLibraryCategory(kind)) clean[name] = kind;
     }
     await getKV().put(`file_categories:${authorId}`, JSON.stringify(clean));
     logEvent('file_categories_set', { author: authorId, count: String(Object.keys(clean).length) });
@@ -2852,9 +2861,8 @@ export function registerLibraryRoutes(app: Hono): void {
   // merged independently, so an ai or the human editor can make a focused
   // change without wiping unrelated settings.
   // Stored in the authors.settings blob via read-merge-upsert (mirroring the twin
-  // config); the public read rides GET /library/:author. The 4-category
-  // vocabulary and fixed scaffolding (identity, mind door, footer, visibility
-  // tiers) remain constant; the Author controls the content and routing.
+  // config); the public read rides GET /library/:author. The safe renderer and
+  // visibility tiers remain shared; section slugs and routing belong to the Author.
   app.put('/library/:author/profile', async (c) => {
     const authorId = c.req.param('author');
     const owner = await resolveOwnerOnly(c, authorId);

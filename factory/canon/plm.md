@@ -2,9 +2,11 @@
 
 *Dormant unless the Author directly asks to compile a personal model. The private ai never proposes compilation, account connection, or publication from private corpus growth. Nothing here grants consent to send training data or model weights anywhere.*
 
-*Compiling the Author's twin — a queryable language model that thinks like them, built from their own Alexandria data. This file is craft observation: what the compile IS, what it optimises for, and the hard-won corrections that make it land instead of producing a broken twin. How to run each stage is an intelligence decision — the Author's own harness agent is the intelligence; the infra named here (a hosted LoRA API such as Tinker, a mid-size open base such as Qwen) is today's rideable option, not a fixture. User Zero proved the pipeline on himself — and paid for the mistakes now baked in as corrections below; this is the module that lets any Author fire it on their own substrate.*
+*One optional module for an Author's stand: compiling or connecting a queryable language model that thinks like them. It is Benjamin's reference implementation, not Library architecture. The Author may use another model, endpoint, compile method, or no PLM at all. This file is craft observation: what this implementation optimises for and the hard-won corrections that make it land instead of producing a broken twin. How to run each stage is an intelligence decision — the Author's own harness agent is the intelligence; the infra named here is today's rideable option, not a fixture.*
 
 ## Ownership before inference
+
+Alexandria provides the aggregation area and permission broker, not the model. The Author chooses the provider, model, endpoint, and payment account. A stand can remove this module without changing its profile, publications, grants, or address.
 
 Every non-founder Author runs inference on a model account and token they control. Their sidecar registers only its URL plus a separate bearer secret with the Library; the model-provider token and private source files never enter Alexandria's Worker. Registration explicitly acknowledges `own_account: true`. If the connection is missing, malformed, or not author-owned, the mirror is offline. It never falls back to the company's checkpoint, model, sidecar, or token.
 

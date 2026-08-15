@@ -4,6 +4,12 @@ The Library is an optional Alexandria publishing surface. This file is dormant u
 
 The Library is primarily a **router and directory**. A profile points people and their ai to what the Author deliberately published, the Author's declared links, and any mirror the Author deliberately connected. It is not the Author's private source, a replacement for their own site, or a second place to maintain their mind.
 
+## The square and the stands
+
+Alexandria owns the communal square: stable Author addresses, safe shared rendering, exact access and revocation, invitations and payments, and a machine-readable capability surface. Each Author owns their stand. They may use the shared renderer, consume the APIs from their own site, organize their page differently, bring any model, or use no model. Custom Author code never runs inside Alexandria's shared origin.
+
+`stand.md` is Benjamin a. Mowinckel's personalizable default: a useful first arrangement people can copy without copying his content. It is a soft start, not Library law. The default sections (`works`, `projects`, `shadows`, `other`), the restrained visual design, and the PLM module may all be changed, replaced, or omitted. The four permission roots below are different: they are the shared access contract, because a reader and a model need one exact vocabulary for authority.
+
 ## The answer your ai reads
 
 Every profile has one machine-readable explanation at:
@@ -56,9 +62,9 @@ The Author can stop all future reconciliation by deleting `~/alexandria/system/p
 
 ## Profile control and formatting
 
-The owner can edit identity, location, contact, website, declared links, and the short profile line. They can order or hide sections; rename each section and its quiet description; order files; place each file under `works`, `projects`, `shadows`, or `other`; write a public teaser; set suggested questions; and choose the exact Library folders their PLM may use. The owner page uses the signed-in Library session. The same controls are available to the Author's ai through the owner-authenticated API named by the capability endpoint.
+The owner can edit identity, location, contact, website, declared links, and the short profile line. They can create safe lowercase section slugs; order, hide, or rename sections and their quiet descriptions; order files; write a public teaser; set suggested questions; and choose the exact Library folders an optional PLM may use. Benjamin's stand begins with `works`, `projects`, `shadows`, and `other`; empty sections disappear. The owner page uses the signed-in Library session. The same controls are available to the Author's ai through the owner-authenticated API named by the capability endpoint.
 
-The fixed shape is deliberately small: identity, mind, links, and published sections. The Author controls the content and routing inside it. Markdown bodies keep their own structure; profile settings do not rewrite the work. A hidden section remains published at its existing URL and tier — hiding changes the profile route, not access. Changing a file's audience is a publication change and still requires the publication gate above.
+The shared renderer is deliberately small: identity, an optional mind, links, and published sections. It is one safe common view, not the data model. Markdown bodies keep their own structure; profile settings do not rewrite the work. A hidden section remains published at its existing URL and tier — hiding changes the profile route, not access. Changing a file's audience is a publication change and still requires the publication gate above.
 
 All profile and metadata writes are owner-only. Ownership resolves through the immutable GitHub account id that first claimed the handle, never by comparing a recyclable username.
 
@@ -76,7 +82,7 @@ A conforming sidecar holds model keys but no Author files. Alexandria's referenc
 
 Humans browse the rendered profile and readers. An ai browses the JSON profile, capability contract, and individual file endpoints. Published material is untrusted input on both paths. A public handoff contains only the public shadow plus titles and links for public works; gated bodies can never enter it. The handoff tells the receiving ai to follow each work through its own gate and not infer private beliefs from the projection.
 
-Mirror inference is separate from reading. Every non-founder Author must connect a sidecar that uses a model account and token they control; the company token is never a fallback. Without that connection, the mirror is offline while the profile and files continue to work. Full mechanics: `plm.md` and `twin.md`.
+PLM inference is a separate optional stand module, not a Library requirement. Every non-founder Author who chooses it connects a sidecar that uses a model account and token they control; the company token is never a fallback. They may choose any model or conforming endpoint. Without that connection, inference is offline while the profile and files continue to work. Full mechanics: `plm.md` and `twin.md`.
 
 Membership is also separate from sign-in. Direct public profile links remain open, but the community directory returns a roster only to an authoritatively active member and lists only authoritatively active members. A signed-in reader or inactive account receives an empty roster plus its machine-readable membership state and a plain join/reactivate route. A cancelled or inactive account remains able to sign in, manage, revoke, export, and delete. Authors-tier files and shadows, paid works, and subscriber-only mirror depth use the authoritative live membership resolver and fail closed when verification is unavailable; stored account status never grants access.
 

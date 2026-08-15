@@ -35,6 +35,11 @@ assert.match(page, /data\.viewer\?\.is_owner/);
 assert.match(page, />edit profile<\/HeaderAction>/);
 assert.match(page, /saving \? 'saving changes' : 'save changes'/);
 assert.match(page, /reorderWithinSection/);
+assert.match(page, /start with Benjamin’s stand/);
+assert.match(page, /copy this stand/);
+assert.match(page, /FOUNDER_STAND_PROMPT/);
+assert.match(page, /DEFAULT_CATEGORIES/);
+assert.doesNotMatch(page, /const CATEGORIES =/);
 
 const directoryAuthor = library.slice(
   library.indexOf('function directoryAuthor'),

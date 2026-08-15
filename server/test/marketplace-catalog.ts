@@ -26,7 +26,7 @@ assert.equal(
   'github:someone/alexandria-systems#verify-edit',
 );
 
-for (const name of ['axioms', 'methodology', 'editor', 'mercury', 'publisher']) {
+for (const name of ['axioms', 'methodology', 'editor', 'mercury', 'publisher', 'stand']) {
   assert.equal(
     deriveMarketplaceTier(`github:benmowinckel/alexandria#factory/canon/${name}`),
     'default',
@@ -82,6 +82,7 @@ assert.deepEqual(
     'factory/canon/mercury',
     'factory/canon/methodology',
     'factory/canon/publisher',
+    'factory/canon/stand',
   ].sort(),
 );
 assert.deepEqual(
@@ -94,6 +95,7 @@ assert.deepEqual(
     ['mercury', 'default'],
     ['methodology', 'default'],
     ['publisher', 'default'],
+    ['stand', 'default'],
     ['capture', 'official'],
     ['audit', 'official'],
     ['bookshelf', 'community'],

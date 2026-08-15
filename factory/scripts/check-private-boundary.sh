@@ -362,6 +362,12 @@ forbid factory/canon/library.md \
 require factory/canon/library.md \
   'The private ai never proposes publishing, joining, contributing, inviting, referring, pricing, quizzes, pulses, marketplace activity, or an Alexandria account.' \
   'library canon has no user-invoked-only boundary'
+require factory/canon/stand.md \
+  'A stand never publishes, connects a model, creates an invite, charges anyone, or widens an audience by being present on disk.' \
+  'the founder stand has no dormant-by-default boundary'
+require factory/canon/stand.md \
+  'Copy the mechanism, never his content.' \
+  'the founder stand does not separate reusable structure from founder content'
 forbid factory/canon/methodology.md \
   'Library file compliance check|System contribution check|Shadow liveness|Monthly pulse generation|no pairing.*invite|no others.*contribute|prepare.*outbound work proactively' \
   'methodology still turns private work into Alexandria growth prompts'

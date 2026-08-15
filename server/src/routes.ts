@@ -3,7 +3,7 @@
 import { randomBytes } from 'crypto';
 import type { Context, Hono } from 'hono';
 import { logEvent } from './analytics.js';
-import { countActiveKin, createCheckoutSession, createConnectOnboardingLink, createPortalSession, ensurePayoutsReady, getOrCreateConnectAccount, getStripe, recalculateKinPricing, resolveActiveSubscription, resolveMembership } from './billing.js';
+import { countActiveKin, createCheckoutSession, createConnectOnboardingLink, createPortalSession, ensurePayoutsReady, getOrCreateConnectAccount, getStripe, recalculateAllKinPricing, recalculateKinPricing, resolveActiveSubscription, resolveMembership } from './billing.js';
 import { authErrorHtml, callbackPageHtml, miniPageHtml, welcomeHandoffUrl } from './templates.js';
 import { getDB, getR2 } from './db.js';
 import { deleteAllProtocolR2 } from './file-access.js';
@@ -1299,6 +1299,18 @@ export function registerRoutes(app: Hono) {
     const kv = getKV();
     const raw = await kv.get('cron:health_digest');
     return c.json({ ok: true, result: raw ? JSON.parse(raw) : null });
+  });
+
+  // The daily scheduled path repairs membership caches before checking health.
+  // This founder-only endpoint exposes the same sequence for immediate recovery
+  // when /health reports stale Stripe verification instead of waiting a day.
+  app.post('/admin/cron/membership-reconcile', async (c) => {
+    if (!await requireAdmin(c)) return c.text('Unauthorized', 403);
+    if (await checkAdminRateLimit('membership-reconcile', 6, 60)) return c.json({ error: 'Rate limited (6/min)' }, 429);
+    await recalculateAllKinPricing();
+    await runHealthDigest();
+    const raw = await getKV().get('cron:health_digest');
+    return c.json({ ok: true, health: raw ? JSON.parse(raw) : null });
   });
 
   // Authenticated recovery/verification route for the same audit work the

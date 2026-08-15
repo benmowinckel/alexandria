@@ -463,7 +463,7 @@ for module in axioms methodology editor mercury publisher; do
   [ -f "$ALEX_DIR/system/canon/disabled/$module.md" ] && continue
   fetch_factory "canon/$module.md" "$ALEX_DIR/system/canon/$module.md" "canon/$module.md"
 done
-for module in library filter bookshelf plm twin marketplace; do
+for module in library filter stand bookshelf plm twin marketplace; do
   fetch_factory "canon/$module.md" "$ALEX_DIR/system/canon/$module.md" "canon/$module.md"
 done
 fetch_factory "canon/MODULES.md" "$ALEX_DIR/system/canon/MODULES.md" "canon/MODULES.md"
