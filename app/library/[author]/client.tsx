@@ -8,7 +8,7 @@ import { ThemeToggle } from '../../components/ThemeToggle';
 import PromptBox from '../../components/PromptBox';
 import { HeaderAction, HeaderActions, headerActionDotStyle } from '../../components/HeaderActions';
 import { SignOutLink } from '../../components/SignOutLink';
-import { FETCH_TIMEOUT_MS, FOUNDER_LIBRARY_ID, FOUNDER_STAND_PROMPT, FOUNDER_STAND_URL, librarySignInUrlHere } from '../../lib/config';
+import { FETCH_TIMEOUT_MS, librarySignInUrlHere } from '../../lib/config';
 import { safeUrl } from '../../lib/url';
 import { type TwinVariantSummary } from './types';
 import { LIBRARY_LOCATIONS } from '../../../shared/library-locations';
@@ -92,25 +92,6 @@ function categoryOf(file: ProtocolFile): Category {
   return file.category && /^[a-z][a-z0-9-]{0,39}$/.test(file.category) ? file.category : (/^shadow/i.test(file.name) ? 'shadows' : 'works');
 }
 
-async function copyText(value: string): Promise<boolean> {
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(value);
-      return true;
-    }
-  } catch { /* fall through to the local DOM copy path */ }
-  const node = document.createElement('textarea');
-  node.value = value;
-  node.setAttribute('readonly', '');
-  node.style.position = 'fixed';
-  node.style.opacity = '0';
-  document.body.appendChild(node);
-  node.select();
-  const copied = document.execCommand('copy');
-  node.remove();
-  return copied;
-}
-
 function protocolFileKey(file: Pick<ProtocolFile, 'scope' | 'name'>): string {
   return `${file.scope}/${file.name}`;
 }
@@ -175,7 +156,6 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   const [doorShake, setDoorShake] = useState(false);
   const [offlineNote, setOfflineNote] = useState(false);
   const [beliCopied, setBeliCopied] = useState(false);
-  const [standCopyNote, setStandCopyNote] = useState('');
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveNote, setSaveNote] = useState('');
@@ -363,12 +343,6 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     } finally {
       setSaving(false);
     }
-  };
-
-  const copyFounderStand = async () => {
-    const copied = await copyText(FOUNDER_STAND_PROMPT);
-    setStandCopyNote(copied ? 'copied — paste into your ai' : 'copy failed — open the stand');
-    setTimeout(() => setStandCopyNote(''), 3200);
   };
 
   if (loading) return (
@@ -820,18 +794,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               body is works / projects / shadows only. */}
           {grouped.length === 0 ? (
             !data.twin?.enabled && (
-              isOwner ? (
-                <div style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>
-                  <p style={{ margin: 0 }}>nothing published yet.</p>
-                  <button type="button" onClick={copyFounderStand}
-                    style={{ border: 0, background: 'none', color: 'var(--accent)', padding: '0.65rem 0 0', font: 'inherit', cursor: 'pointer' }}
-                    className="hover:opacity-60">
-                    {standCopyNote || 'start with Benjamin’s stand'}
-                  </button>
-                </div>
-              ) : (
-                <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>nothing published yet.</p>
-              )
+              <p style={{ color: 'var(--text-ghost)', fontSize: '0.9rem', margin: 0 }}>nothing published yet.</p>
             )
           ) : (
             // The library zone — one hairline breaks it from mind + links
@@ -860,19 +823,8 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             whole pitch). */}
         {!editing && <footer style={{ borderTop: '1px solid var(--border-light)', textAlign: 'center', margin: '4rem 0 0', padding: '1.6rem 0 0' }}>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', margin: 0 }}>
-            {authorId === FOUNDER_LIBRARY_ID ? <>
-              want this for yourself?{' '}
-              {standCopyNote === 'copy failed — open the stand' ? (
-                <a href={FOUNDER_STAND_URL} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">open the stand</a>
-              ) : (
-                <button type="button" onClick={copyFounderStand} style={{ border: 0, background: 'none', color: 'var(--accent)', padding: 0, font: 'inherit', cursor: 'pointer' }} className="hover:opacity-60">
-                  {standCopyNote || 'copy this stand'}
-                </button>
-              )}
-            </> : <>
-              want this for yourself?{' '}
-              <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">start your loop</Link>
-            </>}
+            want this for yourself?{' '}
+            <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">start your loop</Link>
           </p>
           <p style={{ margin: '1.4rem 0 0' }}>
             <Link href="/" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '1rem', letterSpacing: '0.01em', textDecoration: 'none' }} className="hover:opacity-60">

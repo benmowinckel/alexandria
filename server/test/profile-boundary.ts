@@ -14,6 +14,7 @@ import { resolve } from 'node:path';
 const root = resolve(process.cwd(), '..');
 const proxy = readFileSync(resolve(root, 'app/api/library/[author]/[control]/route.ts'), 'utf8');
 const page = readFileSync(resolve(root, 'app/library/[author]/client.tsx'), 'utf8');
+const config = readFileSync(resolve(root, 'app/lib/config.ts'), 'utf8');
 const library = readFileSync(resolve(process.cwd(), 'src/library.ts'), 'utf8');
 
 const controls = [...proxy.matchAll(/^\s+'([^']+)',$/gm)].map((match) => match[1]);
@@ -35,9 +36,9 @@ assert.match(page, /data\.viewer\?\.is_owner/);
 assert.match(page, />edit profile<\/HeaderAction>/);
 assert.match(page, /saving \? 'saving changes' : 'save changes'/);
 assert.match(page, /reorderWithinSection/);
-assert.match(page, /start with Benjamin’s stand/);
-assert.match(page, /copy this stand/);
-assert.match(page, /FOUNDER_STAND_PROMPT/);
+assert.match(page, /start your loop/);
+assert.doesNotMatch(page, /copy this stand|start with Benjamin’s stand|FOUNDER_STAND/);
+assert.doesNotMatch(config, /FOUNDER_STAND/);
 assert.match(page, /DEFAULT_CATEGORIES/);
 assert.doesNotMatch(page, /const CATEGORIES =/);
 
