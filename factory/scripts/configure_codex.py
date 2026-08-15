@@ -132,16 +132,19 @@ def entry_commands(entry: object) -> set[str]:
 
 
 def is_alexandria_hook(entry: object, runtime_dir: Path) -> bool:
-    shim = shlex.quote(str(runtime_dir / "hooks" / "shim.sh"))
-    resolver = shlex.quote(str(runtime_dir / "scripts" / "capture_resolver.py"))
-    owned = {
-        f"bash {shim} session-start",
-        f"bash {shim} session-end",
-        f"bash {shim} codex-session-end",
-        f"bash {shim} subagent",
-        f"python3 {resolver} 2>/dev/null || true",
-    }
-    return bool(entry_commands(entry) & owned)
+    owned_markers = (
+        str(runtime_dir / "hooks" / "shim.sh").replace("\\", "/") + " ",
+        str(runtime_dir / "scripts" / "capture_resolver.py").replace("\\", "/") + " ",
+        "/.local/share/alexandria/hooks/shim.sh ",
+        "/.local/share/alexandria/scripts/capture_resolver.py ",
+        "/alexandria/system/hooks/shim.sh ",
+        "/alexandria/system/scripts/capture_resolver.py ",
+    )
+    return any(
+        marker in command.replace("\\", "/")
+        for command in entry_commands(entry)
+        for marker in owned_markers
+    )
 
 
 def clean_event(

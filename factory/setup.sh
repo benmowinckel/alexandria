@@ -830,15 +830,17 @@ if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
           console.error('Refusing to alter Claude settings: ' + event + ' is not an array'); process.exit(2);
         }
       }
-      const ownedCommands = new Set([
-        'bash $HOME/.local/share/alexandria/hooks/shim.sh session-start',
-        'bash $HOME/.local/share/alexandria/hooks/shim.sh session-end',
-        'bash $HOME/.local/share/alexandria/hooks/shim.sh subagent',
-        'python3 $HOME/.local/share/alexandria/scripts/capture_resolver.py 2>/dev/null || true',
-      ]);
+      const ownedCommandMarkers = [
+        '/.local/share/alexandria/hooks/shim.sh ',
+        '/.local/share/alexandria/scripts/capture_resolver.py ',
+        '/alexandria/system/hooks/shim.sh ',
+        '/alexandria/system/scripts/capture_resolver.py ',
+      ];
+      const isAlexandriaCommand = command => typeof command === 'string'
+        && ownedCommandMarkers.some(marker => command.includes(marker));
       const filter = arr => (arr || []).filter(group => {
         const nested = group && Array.isArray(group.hooks) ? group.hooks : [];
-        return !nested.some(hook => hook && ownedCommands.has(hook.command));
+        return !nested.some(hook => hook && isAlexandriaCommand(hook.command));
       });
       settings.hooks.SessionStart = filter(settings.hooks.SessionStart);
       settings.hooks.SessionEnd = filter(settings.hooks.SessionEnd);
@@ -920,12 +922,17 @@ if settings.get("statusLine") == alex_status_line and cue_off:
 elif "statusLine" not in settings and not cue_off:
     settings["statusLine"] = alex_status_line
 
-owned_commands = {
-    "bash $HOME/.local/share/alexandria/hooks/shim.sh session-start",
-    "bash $HOME/.local/share/alexandria/hooks/shim.sh session-end",
-    "bash $HOME/.local/share/alexandria/hooks/shim.sh subagent",
-    "python3 $HOME/.local/share/alexandria/scripts/capture_resolver.py 2>/dev/null || true",
-}
+owned_command_markers = (
+    "/.local/share/alexandria/hooks/shim.sh ",
+    "/.local/share/alexandria/scripts/capture_resolver.py ",
+    "/alexandria/system/hooks/shim.sh ",
+    "/alexandria/system/scripts/capture_resolver.py ",
+)
+
+def is_alexandria_command(command):
+    if not isinstance(command, str):
+        return False
+    return any(marker in command.replace("\\", "/") for marker in owned_command_markers)
 
 def keep(entry):
     if not isinstance(entry, dict):
@@ -934,7 +941,7 @@ def keep(entry):
     if not isinstance(nested, list):
         return True
     return not any(
-        isinstance(hook, dict) and hook.get("command") in owned_commands
+        isinstance(hook, dict) and is_alexandria_command(hook.get("command"))
         for hook in nested
     )
 
@@ -1153,17 +1160,22 @@ else:
 if not isinstance(hooks, dict):
     raise SystemExit("refusing to alter Factory hooks: top level is not an object")
 
-owned = {
-    "bash $HOME/.local/share/alexandria/hooks/shim.sh session-start",
-    "bash $HOME/.local/share/alexandria/hooks/shim.sh session-end",
-    "python3 $HOME/.local/share/alexandria/scripts/capture_resolver.py 2>/dev/null || true",
-}
+owned_command_markers = (
+    "/.local/share/alexandria/hooks/shim.sh ",
+    "/.local/share/alexandria/scripts/capture_resolver.py ",
+    "/alexandria/system/hooks/shim.sh ",
+    "/alexandria/system/scripts/capture_resolver.py ",
+)
+def is_alexandria_command(command):
+    if not isinstance(command, str):
+        return False
+    return any(marker in command.replace("\\", "/") for marker in owned_command_markers)
 def keep(group):
     if not isinstance(group, dict):
         return True
     nested = group.get("hooks", [])
     return not isinstance(nested, list) or not any(
-        isinstance(item, dict) and item.get("command") in owned for item in nested
+        isinstance(item, dict) and is_alexandria_command(item.get("command")) for item in nested
     )
 def clean(event):
     current = hooks.get(event, [])

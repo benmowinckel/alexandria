@@ -1,6 +1,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import importlib.util
+import json
 import unittest
 
 
@@ -108,6 +109,64 @@ class WritableRootTests(unittest.TestCase):
             self.assertIn(str(runtime / "hooks" / "shim.sh"), text)
             self.assertIn(str(runtime / "scripts" / "capture_resolver.py"), text)
             self.assertNotIn(str(alex / "system" / "hooks" / "shim.sh"), text)
+
+    def test_hooks_replace_legacy_and_duplicate_entries_idempotently(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            codex = root / ".codex"
+            alex = root / "alexandria"
+            runtime = root / ".local" / "share" / "alexandria"
+            codex.mkdir()
+            alex.mkdir()
+            runtime.mkdir(parents=True)
+            legacy_shim = alex / "system" / "hooks" / "shim.sh"
+            current_shim = runtime / "hooks" / "shim.sh"
+            current_resolver = runtime / "scripts" / "capture_resolver.py"
+            hooks = {
+                "hooks": {
+                    "SessionStart": [
+                        {"hooks": [{"command": "foreign"}]},
+                        {"hooks": [{"command": f"bash {legacy_shim} session-start"}]},
+                        {"hooks": [{"command": f"bash {current_shim} session-start"}]},
+                        {"hooks": [{"command": f"bash {current_shim} session-start"}]},
+                        {"hooks": [{"command": f"python3 {current_resolver} 2>/dev/null || true"}]},
+                    ],
+                    "SessionEnd": [
+                        {"hooks": [{"command": f"bash {legacy_shim} codex-session-end"}]},
+                        {"hooks": [{"command": f"bash {current_shim} codex-session-end"}]},
+                    ],
+                    "SubagentStart": [
+                        {"hooks": [{"command": f"bash {legacy_shim} subagent"}]},
+                        {"hooks": [{"command": f"bash {current_shim} subagent"}]},
+                    ],
+                }
+            }
+            (codex / "hooks.json").write_text(json.dumps(hooks), encoding="utf-8")
+
+            changed, events = MODULE.merge_hooks(codex, alex, runtime)
+            self.assertTrue(changed)
+            self.assertEqual(events, {"SessionStart", "SessionEnd", "SubagentStart"})
+            document = json.loads((codex / "hooks.json").read_text(encoding="utf-8"))
+            commands = [
+                hook["command"]
+                for entries in document["hooks"].values()
+                for group in entries
+                for hook in group.get("hooks", [])
+                if ".local/share/alexandria/" in hook.get("command", "")
+            ]
+            self.assertEqual(len(commands), 4)
+            self.assertEqual(
+                sum("hooks/shim.sh session-start" in command for command in commands), 1
+            )
+            self.assertEqual(
+                sum("scripts/capture_resolver.py" in command for command in commands), 1
+            )
+            self.assertIn("foreign", (codex / "hooks.json").read_text(encoding="utf-8"))
+            self.assertNotIn("/alexandria/system/hooks/shim.sh", (codex / "hooks.json").read_text(encoding="utf-8"))
+
+            changed_again, events_again = MODULE.merge_hooks(codex, alex, runtime)
+            self.assertFalse(changed_again)
+            self.assertEqual(events_again, set())
 
     def test_adds_root_without_changing_existing_config(self) -> None:
         with TemporaryDirectory() as tmp:
