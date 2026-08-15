@@ -26,4 +26,8 @@ Joining the community is optional. It carries the same idea one level up: connec
 
 One reason not to wait: the map is made of time. A later model may describe you brilliantly, but it cannot backfill what changed, what influenced it, and what you chose. Starting today and meaning to start are not the same decision later.
 
-Press the button. Show your ai the instructions and decide together.
+The explanation is longer than the decision because the loop touches something important. The decision at the button is still small.
+
+A free sample at a supermarket separates trying from buying. You do not need to decide whether you want the box or whether it belongs in your weekly shop. The sample leaves those larger decisions until you know what is being offered for yourself. Unless an allergy gives you a reason to refuse it, you accept what is offered and continue down the aisle.
+
+The loop works the same way. You are not deciding whether to join the community or share anything. You are deciding whether to let your AI inspect the instructions and put the free loop in place with you. Every larger decision can wait.

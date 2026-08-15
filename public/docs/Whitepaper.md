@@ -72,7 +72,7 @@ Picture the alien weaving a blanket identical to your grandmother’s. Same wool
 
 And it works at two levels. *An actual human made this* can be worth something. *This specific human made this* — your grandmother, your friend, you — can be worth far more. The four capabilities compete on what gets made, and there the alien wins. Provenance answers who was actually in the chain. It needs a trustworthy record precisely because the surface can be forged. The next question is whether anyone will pay for the difference.
 
-## economic floor
+## premium
 
 Start with the narrow economic question. The alien beats you at all four capabilities. So what will anyone still pay a human to do?
 
@@ -380,12 +380,10 @@ As far as we can tell, we are the first people to build the whole thing directly
 
 The second part is what no one can build alone: a community and library where people running their own loops share the minds, methods and work they choose to make public. Each person keeps their private files and personal system. Each can take the useful parts of the collective back into both. The loop develops the person. The Library and marketplace let every person benefit from everyone. That is the company.
 
-We are not asking you to believe in Alexandria as the destination. Judge the structure. Then use whoever gets you there best. We built Alexandria because this is the destination, and because the fastest route we know is to start with the whole system already working, already yours.
+The size of the argument and the size of the first decision are not the same. The practice itself is not trivial. It asks for honesty, attention and judgement, and over time it can change you. But the first decision is only whether to put that practice in place. That decision is small and reversible.
+
+A free sample at a supermarket separates two decisions that are easy to confuse. The first is whether to accept something free. The second is whether, once you know it for yourself, you want more. Taking the sample is not buying the box. It is not endorsing the company or promising to come back. Unless an allergy gives you a reason to refuse, you accept what is offered and continue down the aisle. The larger decision remains untouched, waiting until you can make it from experience rather than from a description.
+
+Beginning an Alexandria loop separates the same two decisions. You are not deciding whether Alexandria is right, whether you want to join the Library, or whether you agree with this paper. You are deciding whether to let your AI begin keeping your thinking in files you own. That part is free, stays on your machine and leaves you owing us nothing. If it gives you nothing, remove it and carry on. If it gives you something, you will have something real on which to base whatever decision comes next. That decision can wait. The one in front of you is only whether to begin.
 
 *Benjamin a. Mowinckel*
-
-<!-- colophon -->
-
-*You don’t need to accept all of it to begin. A few words, five minutes — free, and yours.*
-
-[start your loop](/start) · [read the letter](/letter) · [browse the library](/library)
