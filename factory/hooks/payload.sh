@@ -717,7 +717,8 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
             },
             body: JSON.stringify(body),
           });
-          return { name, ok: res.ok, status: res.status };
+          const detail = res.ok ? "" : (await res.text().catch(() => "")).replace(/\s+/g, " ").slice(0, 300);
+          return { name, ok: res.ok, status: res.status, detail };
         }
 
         (async () => {
@@ -742,7 +743,7 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
             try {
               const r = await putOne(name, meta);
               if (r.ok) status.published.push({ name, scope: meta.scope });
-              else status.errors.push("put " + meta.scope + "/" + name + " status=" + r.status);
+              else status.errors.push("put " + meta.scope + "/" + name + " status=" + r.status + (r.detail ? ":" + r.detail : ""));
             } catch (e) { status.errors.push("put " + meta.scope + "/" + name + ":" + e.message); }
           }
 

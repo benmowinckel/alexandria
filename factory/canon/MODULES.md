@@ -48,7 +48,7 @@ Alexandria-built additions are labelled **official** in the marketplace. Everyon
 - **network reading** — only the exact approved Author list is fetched.
 - **cloud bridges and backups** — each service has its own consent and off switch.
 - **scheduled outbound messages and briefs** — require their own destination, schedule, and off switch.
-- **PLM / twin compilation** — `plm.md` + `twin.md`; a separate, deliberate build.
+- **PLM / twin** — `plm.md` + `twin.md`; simple context connection by default, optional weights compilation only on the Author's separate request.
 
 Their signed references may be installed so the Author's ai can explain a direct request without fetching instructions first. They do nothing merely because the files exist.
 

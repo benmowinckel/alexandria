@@ -16,6 +16,7 @@ const proxy = readFileSync(resolve(root, 'app/api/library/[author]/[control]/rou
 const page = readFileSync(resolve(root, 'app/library/[author]/client.tsx'), 'utf8');
 const config = readFileSync(resolve(root, 'app/lib/config.ts'), 'utf8');
 const library = readFileSync(resolve(process.cwd(), 'src/library.ts'), 'utf8');
+const limits = readFileSync(resolve(process.cwd(), 'src/library-limits.ts'), 'utf8');
 
 const controls = [...proxy.matchAll(/^\s+'([^']+)',$/gm)].map((match) => match[1]);
 assert.deepEqual(controls, [
@@ -41,6 +42,15 @@ assert.doesNotMatch(page, /copy this stand|start with Benjamin’s stand|FOUNDER
 assert.doesNotMatch(config, /FOUNDER_STAND/);
 assert.match(page, /DEFAULT_CATEGORIES/);
 assert.doesNotMatch(page, /const CATEGORIES =/);
+assert.match(limits, /LIBRARY_MAX_PROFILE_CATEGORIES = 50/);
+assert.match(limits, /LIBRARY_MAX_PROFILE_SOCIALS = 20/);
+assert.match(limits, /LIBRARY_MAX_METADATA_ENTRIES = LIBRARY_MAX_FILES_PER_ACCOUNT/);
+assert.match(library, /function librarySocialLinks/);
+assert.match(library, /settings\.socials as unknown\[\]\)\.slice\(0, LIBRARY_MAX_PROFILE_SOCIALS\)/);
+assert.match(library, /parsed\.protocol === 'http:' \|\| parsed\.protocol === 'https:'/);
+assert.match(library, /Object\.entries\(body\.categories \|\| \{\}\)\.slice\(0, LIBRARY_MAX_METADATA_ENTRIES\)/);
+assert.match(library, /Object\.entries\(body\.subtitles \|\| \{\}\)\.slice\(0, LIBRARY_MAX_METADATA_ENTRIES\)/);
+assert.match(library, /Object\.entries\(body\.questions \|\| \{\}\)\.slice\(0, LIBRARY_MAX_METADATA_ENTRIES\)/);
 
 const directoryAuthor = library.slice(
   library.indexOf('function directoryAuthor'),

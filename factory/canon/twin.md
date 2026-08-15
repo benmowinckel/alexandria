@@ -1,8 +1,8 @@
 # Your mirror
 
-*Dormant unless the Author directly asks about compiling or publishing a mirror. The private ai never proposes this feature, uses private cognition to sell it, or treats a growing corpus as consent. This file is a reference for that explicit request only.*
+*Dormant unless the Author directly asks about adding, compiling, or publishing a mirror. The private ai never proposes this feature, uses private cognition to sell it, or treats a growing corpus as consent. This file is a reference for that explicit request only.*
 
-*The optional onboarding companion to `plm.md`. This is one module Benjamin chose for his stand, not something a Library page must have. That file is the how — the compile, its stages, the hard-won corrections. This one is the why: what a mirror is, why only you can build yours, the one honest bar you have to clear, and how to fire it. Read it and decide.*
+*The optional onboarding companion to `plm.md`. This is one module Benjamin chose for his stand, not something a Library page must have. That file is the how — simple context connection first, optional weights compile second. This one is the why: what a mirror is, why only you can build yours, and the honest bar it must clear.*
 
 Your mirror runs through **your own model account**. Your chosen sidecar holds the provider token. For the context version it holds no private substrate: Alexandria sends it only the exact Library slice authorized for that request. A weights compile may use private sources only in the separate run you explicitly start; those sources never become a serve-time mount. The Library receives neither the provider token nor the private sources. It stores only the sidecar address and separate secret you chose to register. If you disconnect it, the mirror goes offline and the rest of your profile remains intact. Another Author can never inherit the founder's company-funded inference as a fallback.
 
@@ -26,7 +26,7 @@ That is the moat made literal. A competitor who only *observes* you produces a m
 There are exactly two honest ways to put you into a model, and each is better at half the job. Your mirror uses both.
 
 - **The weights version.** Your voice and reflexes are baked irreversibly into a small open-model adapter. At query time the raw training sources are not in the request. That does not make any adapter automatically public-safe: it ships to strangers only after the canary extraction test in `plm.md` proves it does not reproduce secrets, firewalled material, or third-party private facts.
-- **The context version.** You choose exact Library folders — `public` by default, and exact `authors`, `invite/...`, or `paid/...` scopes only when wanted. For every question Alexandria intersects that list with the reader's live access and the artifact on screen, then sends only that published slice plus the bounded current conversation. The browser never supplies document bytes; links are never crawled. A conforming sidecar holds your model key but no Author files. Alexandria's reference macOS runner is sandboxed away from your private tree. You can open the owner-only context preview to see the exact documents and manifest a provider would receive.
+- **The context version.** You choose exact Library folders — `public` by default, and exact `authors`, `invite/...`, or `paid/...` scopes only when wanted. For every question Alexandria intersects that list with the reader's live access and the artifact on screen, then sends only that published slice plus the bounded current conversation. The browser never supplies document bytes; links are never crawled. A conforming sidecar holds your model key but has no Author filesystem, hidden memory, live web, or Alexandria credential. You can open the owner-only context preview to see the exact documents and manifest a provider would receive.
 
 You configure either version independently. A context mirror can be public when its only selected scope is `public`; adding a private cohort never lets a reader into it without the matching exact grant. No parent includes a child or sibling. The chosen model provider necessarily sees the authorized slice it is sent. Alexandria structurally controls its own request path; a custom sidecar you give wider access to your computer sits outside that guarantee, so use a conforming file-blind runner or sandbox it equivalently.
 
@@ -36,9 +36,11 @@ A mirror is only as faithful as the substrate it compiles from — that is the w
 
 The good news is the direction of travel: **fidelity rises as you use Alexandria.** Every session, every memo, every developed position raises the ceiling — automatically, for free, as a side effect of thinking with the engine. You don't grind for a better mirror. You just keep using the practice, and the mirror keeps getting more you. And it never ships without your sign-off: you read the answers, you decide it's you, you publish. Consent is an act you take, never a default.
 
-## the path — one command, your own agent
+## the path — one request, your own agent
 
-You don't need a lab. Your own agent runs the whole compile — `plm.md` is the module it follows.
+For the normal version, tell your agent: *add my PLM.* It reads Alexandria's live capability contract, connects the model account and host you choose, starts with only the exact `public` Library scope, shows you the precise context preview, and proves one real answer. No compile is required.
+
+If you want your voice baked into weights, tell it: *compile my mirror.* Your own agent then runs the advanced half of `plm.md`:
 
 - Point your agent at the `plm` module and say: *compile my mirror.*
 - It inventories every first-person corpus you have, runs the weighted training pass on rented open-model infrastructure, grades the result against a calibrated bar, and hands you a sheet of answers to sign off.
@@ -56,4 +58,4 @@ That is the living library. Not books about minds. Minds. Yours is one command a
 
 ---
 
-*Next: hand your agent the `plm` module and say "compile my mirror." The how lives in `plm.md`.*
+*Next: tell your agent "add my PLM." Say "compile my mirror" only when you want the advanced weights version.*

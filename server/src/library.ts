@@ -64,6 +64,14 @@ import {
   type TwinEnv,
   type TwinWork,
 } from './twin.js';
+import {
+  LIBRARY_MAX_FILE_BYTES,
+  LIBRARY_MAX_FILES_PER_ACCOUNT,
+  LIBRARY_MAX_METADATA_ENTRIES,
+  LIBRARY_MAX_PROFILE_CATEGORIES,
+  LIBRARY_MAX_PROFILE_SOCIALS,
+  LIBRARY_MAX_STORAGE_BYTES_PER_ACCOUNT,
+} from './library-limits.js';
 
 const DEFAULT_FOUNDER_LOGIN = 'benmowinckel';
 
@@ -224,10 +232,12 @@ function normalizeProfile(settings: Record<string, unknown>): {
   order: string[]; hidden: string[]; labels: Record<string, { word?: string; whisper?: string }>;
 } {
   const p = (settings.profile && typeof settings.profile === 'object') ? settings.profile as Record<string, unknown> : {};
-  const cats = (v: unknown): string[] => Array.isArray(v) ? [...new Set(v.filter(isLibraryCategory))] : [];
+  const cats = (v: unknown): string[] => Array.isArray(v)
+    ? [...new Set(v.filter(isLibraryCategory))].slice(0, LIBRARY_MAX_PROFILE_CATEGORIES)
+    : [];
   const labels: Record<string, { word?: string; whisper?: string }> = {};
   if (p.labels && typeof p.labels === 'object') {
-    for (const [cat, val] of Object.entries(p.labels as Record<string, unknown>)) {
+    for (const [cat, val] of Object.entries(p.labels as Record<string, unknown>).slice(0, LIBRARY_MAX_PROFILE_CATEGORIES)) {
       if (!isLibraryCategory(cat) || !val || typeof val !== 'object') continue;
       const v = val as Record<string, unknown>;
       const entry: { word?: string; whisper?: string } = {};
@@ -414,6 +424,23 @@ function alexandriaId(account: Account, profile: CompanyAuthorRow | null, fallba
   return stringSlot(settings, 'library_id') || stringSlot(settings, 'alexandria_id') || `a.${fallbackIndex}`;
 }
 
+function librarySocialLinks(settings: Record<string, unknown>): Array<{ label: string; url: string }> {
+  if (!Array.isArray(settings.socials)) return [];
+  const links: Array<{ label: string; url: string }> = [];
+  for (const item of (settings.socials as unknown[]).slice(0, LIBRARY_MAX_PROFILE_SOCIALS)) {
+    if (!item || typeof item !== 'object') continue;
+    const record = item as Record<string, unknown>;
+    const label = typeof record.label === 'string' ? record.label.replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+    const raw = typeof record.url === 'string' ? record.url.trim() : '';
+    if (!label || !raw) continue;
+    try {
+      const parsed = new URL(raw);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') links.push({ label, url: parsed.toString().slice(0, 500) });
+    } catch { /* malformed legacy rows stay invisible */ }
+  }
+  return links;
+}
+
 function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fallbackIndex: number) {
   const settings = librarySettings(profile);
   const location = canonicalLibraryLocation(stringSlot(settings, 'location'));
@@ -433,12 +460,7 @@ function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fal
     contact: stringSlot(settings, 'contact'),
     website: stringSlot(settings, 'website'),
     // Linked accounts (X, LinkedIn, …) — [{label, url}], rendered as clean links.
-    socials: Array.isArray(settings.socials)
-      ? (settings.socials as unknown[])
-          .map((s) => (s && typeof s === 'object' ? s as Record<string, unknown> : {}))
-          .filter((s) => typeof s.label === 'string' && typeof s.url === 'string')
-          .map((s) => ({ label: (s.label as string).trim(), url: (s.url as string).trim() }))
-      : [],
+    socials: librarySocialLinks(settings),
     text: textSlot(settings, profile),
     files_url: `/library/${account.github_login}`,
   };
@@ -487,6 +509,16 @@ export function libraryCapabilityContract(input: {
       approval: 'Approval is bound to content hash plus exact scope. Editing the bytes or moving the file invalidates approval.',
       unpublish: 'Removing a local file does not delete the published copy. Deletion is a separate owner-approved outward action.',
     },
+    limits: {
+      purpose: 'Alexandria is a Library, not general-purpose website or media hosting.',
+      files_per_account: LIBRARY_MAX_FILES_PER_ACCOUNT,
+      bytes_per_file: LIBRARY_MAX_FILE_BYTES,
+      bytes_per_account: LIBRARY_MAX_STORAGE_BYTES_PER_ACCOUNT,
+      presentation_entries: LIBRARY_MAX_METADATA_ENTRIES,
+      profile_sections: LIBRARY_MAX_PROFILE_CATEGORIES,
+      profile_links: LIBRARY_MAX_PROFILE_SOCIALS,
+      large_media: 'Keep large media on the service you choose and publish a link. The shared renderer accepts documents and presentation metadata, never Author code.',
+    },
     stand: {
       module_id: 'github:benmowinckel/alexandria#factory/canon/stand',
       source: 'https://github.com/benmowinckel/alexandria/blob/main/factory/canon/stand.md',
@@ -533,6 +565,39 @@ export function libraryCapabilityContract(input: {
       context_formats: 'Markdown and plain text enter context directly. A PDF remains readable but needs a separately approved text companion before the PLM can reason over its body.',
       links: 'Profile links are routing references only and are never silently crawled for context.',
       audit: `${api}/library/${author}/twin/context-preview`,
+      setup: {
+        default: 'A context PLM over exact Library scopes. Weights compilation is an optional advanced path.',
+        module: 'https://github.com/benmowinckel/alexandria/blob/main/factory/canon/plm.md',
+        flow: ['read this live contract', 'create or select a conforming adapter in the Author environment', 'store provider key only there', 'register URL plus separate secret', 'select exact scopes', 'preview exact context', 'run one live query'],
+      },
+      sidecar_contract: {
+        transport: 'Public HTTPS. Register the base URL for a context-only adapter. A combined context-and-weights adapter may register its /infer URL. Alexandria derives /health and /agent from either shape.',
+        authentication: 'POST requests carry Authorization: Bearer <separate-sidecar-secret>. Compare it timing-safely. GET /health contains no Author material.',
+        health: { method: 'GET', path: '/health', response: { ok: true, model: '<current-model>', inference: 'unknown' } },
+        context: {
+          method: 'POST',
+          path: '/agent',
+          request: {
+            variant: 'context',
+            system: '<fixed public-profile identity line>',
+            question: '<visitor question>',
+            max_tokens: 512,
+            model: '<configured display model>',
+            tools: { works: true, web: false },
+            author: input.authorId,
+            tier: 'public',
+            context_hash: '<manifest hash>',
+            context_scopes: ['public'],
+            messages: [{ role: 'user', content: '<bounded prior turn>' }],
+            focus: { name: '<active artifact>', content: '<authorized text>' },
+            works: [{ scope: 'public', name: '<artifact>', visibility: 'public', content: '<authorized text>' }],
+            links: [{ label: '<declared public link>', url: 'https://example.com' }],
+          },
+          response: { answer: '<text>' },
+        },
+        weights: { method: 'POST', path: '/infer', optional: true, response: { answer: '<text>' } },
+        hard_boundary: 'A conforming context adapter has no Author filesystem, hidden memory, live web, or Alexandria credential. It accepts context only from this Worker request and never widens it.',
+      },
     },
     permissions: {
       reads: 'Public reads need no account. Authors reads require authoritative active membership. Invite and paid reads require exact-scope grants. No permission inherits into nested or sibling scopes.',
@@ -547,7 +612,7 @@ export function libraryCapabilityContract(input: {
       file_subtitles: { method: 'PUT', path: `/library/${author}/file-subtitles` },
       file_questions: { method: 'PUT', path: `/library/${author}/file-questions` },
       inference_context: { method: 'POST', path: `/library/${author}/twin`, body: { context: { scopes: ['public', 'invite/friends'] } } },
-      inference_sidecar: { method: 'PUT', path: `/library/${author}/twin/sidecar`, required_body_acknowledgement: { own_account: true } },
+      inference_sidecar: { method: 'PUT', path: `/library/${author}/twin/sidecar`, body: { url: 'https://author-sidecar.example', secret: '<separate-sidecar-secret>', own_account: true } },
       context_preview: { method: 'GET', path: `/library/${author}/twin/context-preview` },
       grants: { create: `/library/${author}/grant`, list: `/library/${author}/grants`, revoke: `/library/${author}/grant/{account_id}` },
     },
@@ -1630,12 +1695,7 @@ export function registerLibraryRoutes(app: Hono): void {
     let links: { label: string; url: string }[] | undefined;
     if (cfg.variant === 'context') {
       const website = stringSlot(p.settings, 'website');
-      const socials = Array.isArray(p.settings.socials)
-        ? (p.settings.socials as unknown[])
-            .map((s) => (s && typeof s === 'object' ? s as Record<string, unknown> : {}))
-            .filter((s) => typeof s.label === 'string' && typeof s.url === 'string')
-            .map((s) => ({ label: (s.label as string).trim(), url: (s.url as string).trim() }))
-        : [];
+      const socials = librarySocialLinks(p.settings);
       links = [
         ...(website ? [{ label: 'website', url: website }] : []),
         ...socials,
@@ -2788,8 +2848,8 @@ export function registerLibraryRoutes(app: Hono): void {
     if ('error' in owner) return owner.error;
     const body = await c.req.json<{ categories?: Record<string, unknown> }>().catch(() => ({} as { categories?: Record<string, unknown> }));
     const clean: Record<string, string> = {};
-    for (const [name, kind] of Object.entries(body.categories || {})) {
-      if (isLibraryCategory(kind)) clean[name] = kind;
+    for (const [name, kind] of Object.entries(body.categories || {}).slice(0, LIBRARY_MAX_METADATA_ENTRIES)) {
+      if (isValidFileName(name) && isLibraryCategory(kind)) clean[name] = kind;
     }
     await getKV().put(`file_categories:${authorId}`, JSON.stringify(clean));
     logEvent('file_categories_set', { author: authorId, count: String(Object.keys(clean).length) });
@@ -2809,7 +2869,7 @@ export function registerLibraryRoutes(app: Hono): void {
     if ('error' in owner) return owner.error;
     const body = await c.req.json<{ order?: unknown }>().catch(() => ({} as { order?: unknown }));
     const clean = Array.isArray(body.order)
-      ? body.order.filter((n): n is string => typeof n === 'string' && !!n.trim()).map((n) => n.trim().slice(0, 200)).slice(0, 500)
+      ? body.order.filter((n): n is string => typeof n === 'string' && isValidFileName(n.trim())).map((n) => n.trim()).slice(0, LIBRARY_MAX_METADATA_ENTRIES)
       : [];
     await getKV().put(`file_order:${authorId}`, JSON.stringify(clean));
     logEvent('file_order_set', { author: authorId, count: String(clean.length) });
@@ -2822,7 +2882,8 @@ export function registerLibraryRoutes(app: Hono): void {
     if ('error' in owner) return owner.error;
     const body = await c.req.json<{ subtitles?: Record<string, unknown> }>().catch(() => ({} as { subtitles?: Record<string, unknown> }));
     const clean: Record<string, string> = {};
-    for (const [name, value] of Object.entries(body.subtitles || {})) {
+    for (const [name, value] of Object.entries(body.subtitles || {}).slice(0, LIBRARY_MAX_METADATA_ENTRIES)) {
+      if (!isValidFileName(name)) continue;
       if (typeof value !== 'string') continue;
       const line = value.replace(/\s+/g, ' ').trim().slice(0, 200);
       if (line) clean[name] = line;
@@ -2843,7 +2904,8 @@ export function registerLibraryRoutes(app: Hono): void {
     if ('error' in owner) return owner.error;
     const body = await c.req.json<{ questions?: Record<string, unknown> }>().catch(() => ({} as { questions?: Record<string, unknown> }));
     const clean: Record<string, string[]> = {};
-    for (const [name, value] of Object.entries(body.questions || {})) {
+    for (const [name, value] of Object.entries(body.questions || {}).slice(0, LIBRARY_MAX_METADATA_ENTRIES)) {
+      if (!isValidFileName(name)) continue;
       if (!Array.isArray(value)) continue;
       const qs = value
         .filter((q): q is string => typeof q === 'string' && !!q.trim())
@@ -2880,7 +2942,9 @@ export function registerLibraryRoutes(app: Hono): void {
     const profile = (settings.profile && typeof settings.profile === 'object')
       ? settings.profile as Record<string, unknown> : {};
 
-    const cats = (v: unknown): string[] => Array.isArray(v) ? [...new Set(v.filter(isLibraryCategory))] : [];
+    const cats = (v: unknown): string[] => Array.isArray(v)
+      ? [...new Set(v.filter(isLibraryCategory))].slice(0, LIBRARY_MAX_PROFILE_CATEGORIES)
+      : [];
     const setString = (key: string, value: unknown, max: number) => {
       if (typeof value !== 'string') return;
       const clean = value.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -2909,7 +2973,7 @@ export function registerLibraryRoutes(app: Hono): void {
     }
     if (Array.isArray(body.socials)) {
       const socials: Array<{ label: string; url: string }> = [];
-      for (const item of body.socials.slice(0, 20)) {
+      for (const item of body.socials.slice(0, LIBRARY_MAX_PROFILE_SOCIALS)) {
         if (!item || typeof item !== 'object') continue;
         const record = item as Record<string, unknown>;
         const label = typeof record.label === 'string' ? record.label.replace(/\s+/g, ' ').trim().slice(0, 40) : '';
@@ -2926,16 +2990,19 @@ export function registerLibraryRoutes(app: Hono): void {
     if ('order' in body) profile.order = cats(body.order);
     if ('hidden' in body) profile.hidden = cats(body.hidden);
     if ('labels' in body && body.labels && typeof body.labels === 'object') {
-      const curLabels = (profile.labels && typeof profile.labels === 'object')
-        ? profile.labels as Record<string, { word?: string; whisper?: string }> : {};
-      for (const [cat, val] of Object.entries(body.labels as Record<string, unknown>)) {
+      const curLabels: Record<string, { word?: string; whisper?: string }> = {
+        ...normalizeProfile(settings).labels,
+      };
+      for (const [cat, val] of Object.entries(body.labels as Record<string, unknown>).slice(0, LIBRARY_MAX_PROFILE_CATEGORIES)) {
         if (!isLibraryCategory(cat)) continue;
         if (!val || typeof val !== 'object') { delete curLabels[cat]; continue; } // null/empty clears
         const v = val as Record<string, unknown>;
         const entry: { word?: string; whisper?: string } = {};
         if (typeof v.word === 'string' && v.word.trim()) entry.word = v.word.trim().slice(0, 40);
         if (typeof v.whisper === 'string' && v.whisper.trim()) entry.whisper = v.whisper.trim().slice(0, 80);
-        if (entry.word || entry.whisper) curLabels[cat] = entry; else delete curLabels[cat];
+        if (entry.word || entry.whisper) {
+          if (cat in curLabels || Object.keys(curLabels).length < LIBRARY_MAX_PROFILE_CATEGORIES) curLabels[cat] = entry;
+        } else delete curLabels[cat];
       }
       profile.labels = curLabels;
     }

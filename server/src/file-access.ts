@@ -298,6 +298,27 @@ export function protocolR2Key(accountId: string, scope: string, name: string, ex
   return `protocol/${accountId}/scopes/${scope}/${name}.${ext}`;
 }
 
+export interface ProtocolStorageObject {
+  key: string;
+  size: number;
+}
+
+/** Direct R2 ground truth for one Author's published-file footprint. The
+ * upload quota uses this rather than a separately maintained counter, so a
+ * failed write or an old legacy object cannot silently escape the limit. */
+export async function listProtocolStorage(accountId: string): Promise<ProtocolStorageObject[]> {
+  const r2 = getR2();
+  const prefix = `protocol/${accountId}/`;
+  const objects: ProtocolStorageObject[] = [];
+  let cursor: string | undefined;
+  do {
+    const listed = await r2.list({ prefix, cursor });
+    objects.push(...listed.objects.map((obj) => ({ key: obj.key, size: obj.size })));
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
+  return objects;
+}
+
 /**
  * Delete every protocol R2 object for an account (the `protocol/{github_id}/*`
  * prefix). Lives here because file-access.ts is the sanctioned owner of

@@ -1,5 +1,5 @@
 /**
- * Unit tests for the file visibility gate — pure function, no KV/D1/R2 deps.
+ * Unit tests for the file visibility gate and direct R2 usage listing.
  * Run: npx tsx server/test/file-access.ts
  *
  * This is the structural guard: protocol_files content cannot leave the
@@ -15,6 +15,7 @@ import {
   authorizeWorkRead,
   isInternalProtocolFileName,
   isPutWritableContentType,
+  listProtocolStorage,
   r2ExtensionForContentType,
 } from '../src/file-access.js';
 import type { Account } from '../src/auth.js';
@@ -275,6 +276,33 @@ test('PUT-writable: rejects non-strings and unknown strings', () => {
   assert.strictEqual(isPutWritableContentType('text/plain'), false);
   assert.strictEqual(isPutWritableContentType('TEXT/MARKDOWN'), false); // case-sensitive on purpose
 });
+
+// ---------------------------------------------------------------------------
+// Storage quota ground truth — paginated R2 listing, exact account prefix
+// ---------------------------------------------------------------------------
+
+const priorR2 = (globalThis as typeof globalThis & { __r2?: unknown }).__r2;
+const listCalls: Array<{ prefix?: string; cursor?: string }> = [];
+(globalThis as typeof globalThis & { __r2?: unknown }).__r2 = {
+  async list(opts: { prefix?: string; cursor?: string }) {
+    listCalls.push(opts);
+    return opts.cursor
+      ? { objects: [{ key: 'protocol/42/scopes/public/two.md', size: 7 }], truncated: false }
+      : { objects: [{ key: 'protocol/42/scopes/public/one.md', size: 5 }], truncated: true, cursor: 'next' };
+  },
+};
+const stored = await listProtocolStorage('42');
+assert.deepStrictEqual(stored, [
+  { key: 'protocol/42/scopes/public/one.md', size: 5 },
+  { key: 'protocol/42/scopes/public/two.md', size: 7 },
+]);
+assert.deepStrictEqual(listCalls, [
+  { prefix: 'protocol/42/', cursor: undefined },
+  { prefix: 'protocol/42/', cursor: 'next' },
+]);
+(globalThis as typeof globalThis & { __r2?: unknown }).__r2 = priorR2;
+console.log('  ✓ storage usage lists every R2 page under the exact account prefix');
+passed++;
 
 // ---------------------------------------------------------------------------
 // Shadow gate

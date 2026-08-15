@@ -24,7 +24,15 @@ import {
   r2ExtensionForContentType,
   readProtocolFile,
   protocolR2Key,
+  listProtocolStorage,
 } from './file-access.js';
+import {
+  LIBRARY_MAX_FILE_BYTES,
+  LIBRARY_MAX_FILES_PER_ACCOUNT,
+  LIBRARY_MAX_STORAGE_BYTES_PER_ACCOUNT,
+  libraryStorageWithinLimit,
+  projectedLibraryStorageBytes,
+} from './library-limits.js';
 import {
   canListLibraryArtifact,
   isLibraryVisibility,
@@ -158,12 +166,8 @@ export function registerProtocol(app: Hono) {
       bodyBytes.set(encoded);
     }
 
-    // Abuse floor, not a product limit: signup is free (GitHub OAuth only),
-    // so without a cap one scripted account could pump unbounded bytes into
-    // R2/D1. 25MB clears any real markdown or PDF by 10x+.
-    const MAX_FILE_BYTES = 25 * 1024 * 1024;
-    if (bodyBytes.byteLength > MAX_FILE_BYTES) {
-      return c.json({ error: `File exceeds ${MAX_FILE_BYTES / (1024 * 1024)}MB limit` }, 413);
+    if (bodyBytes.byteLength > LIBRARY_MAX_FILE_BYTES) {
+      return c.json({ error: `File exceeds ${LIBRARY_MAX_FILE_BYTES / (1024 * 1024)}MB limit` }, 413);
     }
 
     // The factory hook reconciles the full Library every session-start by
@@ -175,14 +179,11 @@ export function registerProtocol(app: Hono) {
     const hashBuf = await crypto.subtle.digest('SHA-256', bodyBytes);
     const contentHash = [...new Uint8Array(hashBuf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 
-    // Apply the category BEFORE the unchanged-content short-circuit below, so a
-    // category-only change (identical bytes, a newly-added `.category` sidecar)
-    // still lands. Read-modify-write touches ONLY this file's key in the map —
-    // it can never wipe another file's category (the footgun of the old "send
-    // the complete map" flow, which is why projects silently reverted to
-    // shadows when a step got forgotten). Non-fatal: a KV hiccup never blocks a
-    // publish — the file still ships, only its section grouping is deferred.
-    if (category && auth.account.github_login) {
+    // Category is a side effect of a successful publish (or a true content
+    // no-op), never of a quota rejection. Read-modify-write touches only this
+    // artifact key, so it cannot wipe another file's category.
+    const applyCategory = async () => {
+      if (!category || !auth.account.github_login) return;
       const catKey = `file_categories:${auth.account.github_login}`;
       try {
         const raw = await getKV().get(catKey);
@@ -192,7 +193,7 @@ export function registerProtocol(app: Hono) {
           await getKV().put(catKey, JSON.stringify(map));
         }
       } catch { /* non-fatal — see note above */ }
-    }
+    };
 
     await ensureFilePriceColumn();
     await ensureFileTitleColumn();
@@ -210,23 +211,45 @@ export function registerProtocol(app: Hono) {
       && (priceCents === null || priceCents === (existing.price_cents ?? null))
       && (await getR2().head(protocolR2Key(id, scope, name, ext))) !== null
     ) {
+      await applyCategory();
       return c.json({ ok: true, unchanged: true, ...(payoutsRequired ? { payouts_required: true } : {}) });
     }
 
-    // Same abuse floor for file count — only gates NEW names, so a full
-    // account can always update what it already has. 1000 names is ~20x the
-    // largest real library; one indexed COUNT per new-name PUT.
+    // Bound the number of independently rendered objects. Existing artifacts
+    // remain editable at the ceiling; only a new scope/name is blocked.
     if (!existing) {
-      const MAX_FILES_PER_ACCOUNT = 1000;
       const countRow = await getDB().prepare(
         'SELECT COUNT(*) AS n FROM protocol_files WHERE account_id = ?'
       ).bind(id).first<{ n: number }>();
-      if ((countRow?.n ?? 0) >= MAX_FILES_PER_ACCOUNT) {
-        return c.json({ error: `Account file limit reached (${MAX_FILES_PER_ACCOUNT})` }, 403);
+      if ((countRow?.n ?? 0) >= LIBRARY_MAX_FILES_PER_ACCOUNT) {
+        return c.json({ error: `Account file limit reached (${LIBRARY_MAX_FILES_PER_ACCOUNT})` }, 403);
       }
     }
 
-    await getR2().put(protocolR2Key(id, scope, name, ext), bodyBytes);
+    // Total storage is checked against R2 itself, not a counter that can drift.
+    // Only the exact object this PUT overwrites is subtracted. Legacy or stale
+    // objects keep counting until the Author explicitly deletes them.
+    let storedObjects: Awaited<ReturnType<typeof listProtocolStorage>>;
+    try {
+      storedObjects = await listProtocolStorage(id);
+    } catch {
+      return c.json({ error: 'Storage usage unavailable; upload safely refused. Try again.' }, 503);
+    }
+    const targetKey = protocolR2Key(id, scope, name, ext);
+    const currentBytes = storedObjects.reduce((sum, obj) => sum + obj.size, 0);
+    const replacedBytes = storedObjects.find((obj) => obj.key === targetKey)?.size ?? 0;
+    const projectedBytes = projectedLibraryStorageBytes(currentBytes, replacedBytes, bodyBytes.byteLength);
+    if (!libraryStorageWithinLimit(projectedBytes)) {
+      return c.json({
+        error: `Account storage limit reached (${LIBRARY_MAX_STORAGE_BYTES_PER_ACCOUNT / (1024 * 1024)}MB)`,
+        used_bytes: currentBytes,
+        projected_bytes: projectedBytes,
+        limit_bytes: LIBRARY_MAX_STORAGE_BYTES_PER_ACCOUNT,
+        large_media: 'Host large media elsewhere and publish a link.',
+      }, 413);
+    }
+
+    await getR2().put(targetKey, bodyBytes);
     await getDB().prepare(
       `INSERT INTO protocol_files (account_id, scope, name, text, title, visibility, updated_at, content_type, content_hash, price_cents)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -239,6 +262,7 @@ export function registerProtocol(app: Hono) {
          content_hash = excluded.content_hash,
          price_cents = COALESCE(excluded.price_cents, protocol_files.price_cents)`
     ).bind(id, scope, name, text, title, visibility, now, contentType, contentHash, priceCents).run();
+    await applyCategory();
 
     logEvent('protocol_file_published', {
       author: auth.account.github_login,

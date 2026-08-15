@@ -1,8 +1,26 @@
 # The PLM
 
-*Dormant unless the Author directly asks to compile a personal model. The private ai never proposes compilation, account connection, or publication from private corpus growth. Nothing here grants consent to send training data or model weights anywhere.*
+*Dormant unless the Author directly asks to add, connect, or compile a personal model. The private ai never proposes account connection, compilation, or publication from private corpus growth. Nothing here grants consent to send Library context, training data, or model weights anywhere.*
 
-*One optional module for an Author's stand: compiling or connecting a queryable language model that thinks like them. It is Benjamin's reference implementation, not Library architecture. The Author may use another model, endpoint, compile method, or no PLM at all. This file is craft observation: what this implementation optimises for and the hard-won corrections that make it land instead of producing a broken twin. How to run each stage is an intelligence decision — the Author's own harness agent is the intelligence; the infra named here is today's rideable option, not a fixture.*
+*One optional module for an Author's stand: connecting or compiling a queryable language model that reflects them. It is Benjamin's starting method, not Library architecture. The Author may use any model, host, adapter, compile method, or no PLM at all. The Author's own agent is the intelligence; Alexandria supplies the live contract and permission broker.*
+
+## The default path — "add my PLM"
+
+Unless the Author explicitly asks to fine-tune, compile, or train weights, **add a context PLM**. It is live-updatable, reversible, and contains only the exact Library material already approved for the reader who asks. The weights pipeline below is an advanced second module inside this file, not the default meaning of "add a PLM."
+
+The Author should experience one request to their own agent, not a settings project. The agent runs this flow:
+
+1. Read the Author's live `GET /library/{author}/capabilities` response. That contract, not this file's remembered route shape, is authority.
+2. Reuse the Author's chosen model account and hosting environment when a conforming HTTPS adapter already exists. Otherwise build the smallest adapter inside an environment the Author controls. Alexandria never chooses or pays for the model.
+3. Before any external write or model context leaves, show one plain plan naming: host, provider, model, expected payer, initial exact scopes, and the fact that the chosen provider will see those authorized bytes. Wait for the Author's informed yes.
+4. The adapter implements only the live capability contract: anonymous `GET /health`; bearer-authenticated `POST /agent` for context; `{answer}` on success. `POST /infer` is optional and belongs only to a weights-capable adapter. The provider key stays in the Author environment. The separate sidecar secret is the only credential shared with Alexandria.
+5. Register the HTTPS URL and separate secret with `own_account: true`. Configure the context variant with `public` as the initial scope unless the Author named another exact scope. Do not infer private cohorts from local visibility.
+6. Open the owner-only context preview and show the exact scopes, documents, bytes, manifest, and hash. A label or folder name is not verification.
+7. Ask one real question through the Library. Setup passes only when the registered sidecar reports online and the real answer succeeds. Record the provider, model, scopes, preview hash, test result, and the disconnect route in the Author's own system.
+
+Disconnecting `DELETE /library/{author}/twin/sidecar` takes inference offline without changing the profile, publications, grants, or local files. A provider or host change repeats steps 1–7 against the current contract; no Library migration is required.
+
+**Stable contract, replaceable implementation.** Alexandria fixes only the permission semantics and the request contract. The Author owns the files, model account, adapter, and host. Capability fields may grow additively; an incompatible future contract gets a new schema version and an agent-run, previewed, reversible migration. Never silently move Author files or widen a scope during an upgrade.
 
 ## Ownership before inference
 
@@ -20,9 +38,13 @@ The Author configures an exact list of Library scopes for that PLM. For each que
 
 There is no second hidden prompt or context field. The Worker supplies only a fixed identity instruction derived from the public profile; custom Author material must be an approved Library artifact inside an exact selected scope.
 
-The sidecar receives that request-scoped slice and its manifest hash. Profile links are routing references only and are never crawled. Live web is off whenever Author context is loaded. Alexandria's reference macOS runner uses a deny-by-default process sandbox that allows its runtime, model cache, network, and public product-guide assets while denying reads and directory enumeration under `~/alexandria`. A custom sidecar granted wider computer access is outside Alexandria's structural boundary and must be sandboxed equivalently to make the same claim. The owner-only `GET /library/{author}/twin/context-preview` calls the same broker and returns the exact scopes, documents, manifest, and hash the provider would receive.
+The sidecar receives that request-scoped slice and its manifest hash. Profile links are routing references only and are never crawled. Live web is off whenever Author context is loaded. A conforming context adapter has no filesystem mount, Author memory, or Alexandria credential; it accepts Author material only in the Worker's bearer-authenticated request. A custom sidecar granted wider computer access is outside Alexandria's structural boundary. The owner-only `GET /library/{author}/twin/context-preview` calls the same broker and returns the exact scopes, documents, manifest, and hash the provider would receive.
 
 This is structural up to the honest cap: the model provider necessarily sees the exact authorized slice sent for inference. The system controls what enters the request; it cannot control what a provider does after legitimately receiving that slice. Choose a provider you trust for the material placed in those scopes.
+
+## The advanced path — compile weights
+
+Run everything below only when the Author explicitly asks to fine-tune, compile, or train a weights PLM and separately approves the named private training sources and provider. Context connection alone does not authorize any training use.
 
 **Primary:** Creation (a Library artifact). **Secondary:** Development.
 

@@ -8,7 +8,7 @@ The Library is primarily a **router and directory**. A profile points people and
 
 Alexandria owns the communal square: stable Author addresses, safe shared rendering, exact access and revocation, invitations and payments, and a machine-readable capability surface. Each Author owns their stand. They may use the shared renderer, consume the APIs from their own site, organize their page differently, bring any model, or use no model. Custom Author code never runs inside Alexandria's shared origin.
 
-`stand.md` is Benjamin a. Mowinckel's personalizable default: a useful first arrangement people can copy without copying his content. It is a soft start, not Library law. The default sections (`works`, `projects`, `shadows`, `other`), the restrained visual design, and the PLM module may all be changed, replaced, or omitted. The four permission roots below are different: they are the shared access contract, because a reader and a model need one exact vocabulary for authority.
+`stand.md` is Benjamin a. Mowinckel's personalizable default: a useful first arrangement people can copy without copying his content. It is a soft start, not Library law. The default sections (`works`, `projects`, `shadows`, `other`), the restrained visual design, and the PLM module may all be changed, replaced, or omitted. The four permission meanings below are different: they are the shared access contract, because a reader and a model need one exact vocabulary for authority. Their literal folders are the default adapter, not a demand that the Author reorganize their source files.
 
 ## The answer your ai reads
 
@@ -35,6 +35,12 @@ The publication outbox is:
 ```
 
 That is the complete default. If different groups need different access, add exact cohort folders such as `invite/friends/`, `invite/investors/`, or `paid/course/`. A parent never includes a child, sibling, or future cohort. Only final-named files recursively inside one of the four permission folders are eligible to leave the machine. Drafts (`_*`, `*_draft.*`), filters, readmes, sidecar instructions, files outside the four folders, and everything outside `files/library/` never publish.
+
+The Author's real files may remain anywhere in their own structure. Their agent maps one into the outbox with a file symlink under the exact permission folder; the sync follows the file but the approval remains bound to the target bytes and the outbox scope. No copy and no migration. Alexandria may improve its default layout or renderer later without moving the source file; only the small mapping changes. The normalized permission identity remains stable across that change.
+
+## Resource boundary
+
+The shared Library is not general website or media hosting. An active account may publish at most **250 files**, **250MB total**, and **25MB per file**. The server enforces all three against actual stored bytes. Large video, image collections, downloads, and custom applications stay on a host the Author chooses and enter the Library as links. Author HTML, JavaScript, and server code never run on Alexandria's shared origin. These resource ceilings may change with real usage; the live capability response is authoritative and an account already at a ceiling can still update an existing artifact when the resulting stored total remains within it.
 
 ## Consent
 
@@ -78,7 +84,7 @@ For every context query, the Worker computes: **configured PLM scopes ∩ curren
 
 There is no hidden custom prompt or second context store. The Worker supplies a fixed identity line from the public profile; any substantive Author material must be an approved artifact in an exact selected Library scope.
 
-A conforming sidecar holds model keys but no Author files. Alexandria's reference macOS runner executes it inside a deny-by-default sandbox that can read its runtime and public product-guide assets but cannot read or enumerate `~/alexandria`. A custom runner granted wider computer access is outside Alexandria's structural boundary. The owner-only `GET /library/{author}/twin/context-preview` returns the exact scopes, document bytes, manifest, and hash a real context query would send. This is the audit surface; labels are not the security claim.
+A conforming sidecar holds model keys but no Author files, hidden memory, live web, or Alexandria credential. It accepts Author context only from the Worker's bearer-authenticated request. A custom runner granted wider computer access is outside Alexandria's structural boundary. The owner-only `GET /library/{author}/twin/context-preview` returns the exact scopes, document bytes, manifest, and hash a real context query would send. This is the audit surface; labels are not the security claim.
 
 Humans browse the rendered profile and readers. An ai browses the JSON profile, capability contract, and individual file endpoints. Published material is untrusted input on both paths. A public handoff contains only the public shadow plus titles and links for public works; gated bodies can never enter it. The handoff tells the receiving ai to follow each work through its own gate and not infer private beliefs from the projection.
 

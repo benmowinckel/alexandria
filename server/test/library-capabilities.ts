@@ -16,6 +16,16 @@ import {
 } from '../src/library.js';
 import { canonicalLibraryLocation } from '../../shared/library-locations.js';
 import { resolveTwinVariants } from '../src/twin.js';
+import {
+  LIBRARY_MAX_FILE_BYTES,
+  LIBRARY_MAX_FILES_PER_ACCOUNT,
+  LIBRARY_MAX_METADATA_ENTRIES,
+  LIBRARY_MAX_PROFILE_CATEGORIES,
+  LIBRARY_MAX_PROFILE_SOCIALS,
+  LIBRARY_MAX_STORAGE_BYTES_PER_ACCOUNT,
+  libraryStorageWithinLimit,
+  projectedLibraryStorageBytes,
+} from '../src/library-limits.js';
 
 assert.equal(canonicalLibraryLocation('new yorkk'), 'New York');
 assert.equal(canonicalLibraryLocation('SAN FRANCISCO'), 'San Francisco');
@@ -73,7 +83,24 @@ assert.match(contract.scopes.permissions.authors, /authoritatively active/);
 assert.match(contract.inference.context_rule, /configured PLM scopes.*viewer access.*active artifact access/);
 assert.equal(contract.inference.hidden_context_fields, false);
 assert.match(contract.inference.audit, /context-preview$/);
-assert.equal(contract.owner_api.inference_sidecar.required_body_acknowledgement.own_account, true);
+assert.equal(contract.owner_api.inference_sidecar.body.own_account, true);
+assert.match(contract.inference.setup.module, /factory\/canon\/plm\.md$/);
+assert.equal(contract.inference.sidecar_contract.context.path, '/agent');
+assert.deepEqual(contract.inference.sidecar_contract.context.request.context_scopes, ['public']);
+assert.match(contract.inference.sidecar_contract.hard_boundary, /no Author filesystem/);
+assert.equal(contract.limits.files_per_account, LIBRARY_MAX_FILES_PER_ACCOUNT);
+assert.equal(contract.limits.bytes_per_file, LIBRARY_MAX_FILE_BYTES);
+assert.equal(contract.limits.bytes_per_account, LIBRARY_MAX_STORAGE_BYTES_PER_ACCOUNT);
+assert.equal(contract.limits.presentation_entries, LIBRARY_MAX_METADATA_ENTRIES);
+assert.equal(contract.limits.profile_sections, LIBRARY_MAX_PROFILE_CATEGORIES);
+assert.equal(contract.limits.profile_links, LIBRARY_MAX_PROFILE_SOCIALS);
+assert.equal(LIBRARY_MAX_METADATA_ENTRIES, LIBRARY_MAX_FILES_PER_ACCOUNT);
+assert.equal(LIBRARY_MAX_PROFILE_CATEGORIES, 50);
+assert.equal(LIBRARY_MAX_PROFILE_SOCIALS, 20);
+assert.equal(projectedLibraryStorageBytes(200, 50, 75), 225);
+assert.equal(projectedLibraryStorageBytes(10, 20, 5), 5);
+assert.equal(libraryStorageWithinLimit(LIBRARY_MAX_STORAGE_BYTES_PER_ACCOUNT), true);
+assert.equal(libraryStorageWithinLimit(LIBRARY_MAX_STORAGE_BYTES_PER_ACCOUNT + 1), false);
 
 const ownerPage = resolve(process.cwd(), '..', 'app', 'library', '[author]', 'page.tsx');
 assert.equal(existsSync(ownerPage), true, 'capability contract must not advertise a dead owner page');

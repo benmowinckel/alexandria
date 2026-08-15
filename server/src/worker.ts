@@ -84,10 +84,14 @@ app.use('*', async (c, next) => {
   c.header('Content-Security-Policy', `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' ${serverUrl} ${websiteUrl}; img-src 'self' ${websiteUrl}; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`);
 });
 
-// Body size limit — reject requests > 10MB (Cloudflare enforces 100MB platform limit)
+// Body size limit. Library JSON PUTs may carry a 25MB PDF as base64 (~33.4MB
+// on the wire); every other route stays at 10MB. The decoded file and account
+// footprint are independently bounded in protocol.ts.
 app.use('*', async (c, next) => {
   const contentLength = c.req.header('content-length');
-  if (contentLength && parseInt(contentLength, 10) > 10 * 1024 * 1024) {
+  const libraryUpload = c.req.method === 'PUT' && /^\/file\/[^/]+$/.test(c.req.path);
+  const maxBodyBytes = libraryUpload ? 36 * 1024 * 1024 : 10 * 1024 * 1024;
+  if (contentLength && parseInt(contentLength, 10) > maxBodyBytes) {
     return c.text('Request body too large', 413);
   }
   await next();
