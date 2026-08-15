@@ -27,7 +27,7 @@ assert.equal(
   'github:someone/alexandria-systems#verify-edit',
 );
 
-for (const name of ['axioms', 'methodology', 'editor', 'mercury', 'publisher', 'stand']) {
+for (const name of ['axioms', 'methodology', 'editor', 'mercury', 'publisher']) {
   assert.equal(
     deriveMarketplaceTier(`github:benmowinckel/alexandria#factory/canon/${name}`),
     'default',
@@ -59,6 +59,7 @@ assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/f
 assert.equal(isMarketplaceModule('github:mowinckelb/alexandria#factory/canon/foundation'), false);
 assert.equal(isMarketplaceModule(currentDefault), true);
 assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/library'), false);
+assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/stand'), false);
 assert.equal(isMarketplaceModule('github:benmowinckel/alexandria-modules#optimise'), false);
 assert.equal(isMarketplaceModule('github:benmowinckel/alexandria#factory/canon/bookshelf'), true);
 assert.equal(isMarketplaceModule('github:someone/their-modules#focus'), true);
@@ -84,7 +85,7 @@ assert.deepEqual(
 assert.deepEqual(
   moduleSystem.groups.methods.items.map((module) => module.id).sort(),
   marketplaceInventory.modules
-    .filter((module) => module.role === 'default' && module.name !== 'stand')
+    .filter((module) => module.role === 'default')
     .map((module) => module.name)
     .sort(),
 );
@@ -113,7 +114,6 @@ assert.deepEqual(
     'factory/canon/mercury',
     'factory/canon/methodology',
     'factory/canon/publisher',
-    'factory/canon/stand',
   ].sort(),
 );
 assert.deepEqual(
@@ -126,7 +126,6 @@ assert.deepEqual(
     ['mercury', 'default'],
     ['methodology', 'default'],
     ['publisher', 'default'],
-    ['stand', 'default'],
     ['capture', 'official'],
     ['audit', 'official'],
     ['bookshelf', 'community'],

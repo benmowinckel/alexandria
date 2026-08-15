@@ -52,11 +52,11 @@ Alexandria-built additions are labelled **official** in the marketplace. Everyon
 
 Their signed references may be installed so the Author's ai can explain a direct request without fetching instructions first. They do nothing merely because the files exist.
 
-`stand.md` may appear in the marketplace as **default** even though the Library connection remains dormant. Here default means “the starting choice if you turn this feature on,” not “already active.” It copies structure, never Benjamin's content.
+`stand.md` is a signed local reference for the private ai, not a public Marketplace listing. When the Author chooses to set up a Library presence, it gives the ai a useful starting shape to offer without teaching visitors a new product term. It copies structure, never Benjamin's content.
 
 ## marketplace — the legible inventory
 
-The marketplace shows the two core recovery references, the five method defaults, the founder-stand default, curated official additions, and modules published by individual Authors. Alexandria's own inventory is explicit and remains visible even when no recent use has been reported; approved usage only discovers community additions. Internal architecture maps and dormant connection instructions are not marketplace listings and stay invisible there.
+The marketplace shows the two core recovery references, the five method defaults, curated official additions, and modules published by individual Authors. Alexandria's own inventory is explicit and remains visible even when no recent use has been reported; approved usage only discovers community additions. Internal architecture maps, dormant connection instructions, and the private ai's Library starting reference are not marketplace listings and stay invisible there.
 
 The signed `~/alexandria/system/modules.json` is the portable local map; the authenticated `/alexandria` handshake carries its current version so a joined Author's ai notices a real packaging change without the Author remembering to check. A version change permits one compact `system` action only. The ai explains new details from the integrity-verified local map after a signed refresh, not from network text. Browsing community modules or fetching their bodies still requires the Author to ask. The private ai never recommends from private material, turns browsing into a sales step, or reports usage without exact manifest approval.
 

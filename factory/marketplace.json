@@ -62,14 +62,6 @@
       "adaptation": "personalizable"
     },
     {
-      "path": "factory/canon/stand",
-      "name": "stand",
-      "description": "Benjamin's simple, forkable starting shape for a Library presence.",
-      "kind": "stand",
-      "role": "default",
-      "adaptation": "personalizable"
-    },
-    {
       "path": "factory/systems/capture-pipeline",
       "name": "capture",
       "description": "Turns saved links, screenshots, and notes into usable material.",

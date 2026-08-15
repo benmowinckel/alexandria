@@ -181,8 +181,9 @@ export function moduleIdAliases(id: string): string[] {
 /**
  * Product role, not a quality ranking. Core files make the local loop work;
  * replaceable starting modules ship as defaults; curated Alexandria additions
- * are official; everything else is shown under its author. A feature-specific
- * default such as `stand` remains dormant until that feature is chosen.
+ * are official; everything else is shown under its author. Feature-specific
+ * private-ai references such as `stand` are not Marketplace inventory at all;
+ * they stay in the signed local module map.
  */
 export function deriveMarketplaceTier(id: string): MarketplaceTier {
   const canonical = canonicalizeModuleId(id);
