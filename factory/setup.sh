@@ -1305,6 +1305,7 @@ if command -v git &>/dev/null; then
 # Server-managed (regenerated)
 system/canon/
 system/hooks/
+system/modules.json
 # Ephemeral state (all dotfiles + dotfolders in system/)
 system/.*
 system/permissions/
@@ -1385,9 +1386,12 @@ fi
 # Permission records are local consent state, never backup content. Keep this
 # true for existing repositories created by earlier releases as well as new ones.
 if [ -d "$ALEX_DIR/.git" ]; then
-  grep -qxF 'system/permissions/' "$ALEX_DIR/.gitignore" 2>/dev/null || \
-    printf '%s\n' 'system/permissions/' >> "$ALEX_DIR/.gitignore"
+  for generated_path in 'system/permissions/' 'system/modules.json'; do
+    grep -qxF "$generated_path" "$ALEX_DIR/.gitignore" 2>/dev/null || \
+      printf '%s\n' "$generated_path" >> "$ALEX_DIR/.gitignore"
+  done
   git -C "$ALEX_DIR" rm -r --cached --ignore-unmatch system/permissions >/dev/null 2>&1 || true
+  git -C "$ALEX_DIR" rm --cached --ignore-unmatch system/modules.json >/dev/null 2>&1 || true
 fi
 
 # ── 5. Cloud connections — NOT installed here ───────────────────

@@ -379,6 +379,7 @@ def remove_signed_runtime_files() -> None:
         (RUNTIME_DIR / "scripts/statusline.sh", "factory/scripts/statusline.sh"),
         (RUNTIME_DIR / "scripts/uninstall.py", "factory/scripts/uninstall.py"),
         (RUNTIME_DIR / "scripts/verify-fetch.sh", "factory/scripts/verify-fetch.sh"),
+        (ALEX_DIR / "system/modules.json", "factory/module-system.json"),
     ):
         if has_symlink_component(path) or not path.is_file():
             continue

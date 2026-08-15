@@ -313,6 +313,9 @@ require factory/ship.sh \
 require factory/setup.sh \
   'fetch_factory "module-system.json" "$ALEX_DIR/system/modules.json" "module-system.json" yes' \
   'setup no longer installs the signed portable module map'
+require factory/setup.sh \
+  "'system/permissions/' 'system/modules.json'" \
+  'setup no longer keeps its generated module map out of the Author git ledger'
 require server/src/routes.ts \
   'module_system: moduleSystem' \
   'the live handshake no longer carries the current module-map version'
@@ -953,6 +956,7 @@ printf '%s\n' \
   > "$uninstall_home/.config/git/allowed_signers"
 printf '%s\n' 'Alexandria runtime shim' > "$uninstall_home/.local/share/alexandria/hooks/shim.sh"
 printf '%s\n' 'Alexandria statusline' > "$uninstall_home/.local/share/alexandria/scripts/statusline.sh"
+printf '%s\n' '{"version":1}' > "$uninstall_home/alexandria/system/modules.json"
 printf '%s\n' 'foreign runtime addition' > "$uninstall_home/.local/share/alexandria/keep.txt"
 for marker in .owned_claude_config .owned_cursor_config .owned_codex_config .owned_factory_config; do
   printf '%s\n' 'alexandria-config-v1' > "$uninstall_home/.local/share/alexandria/$marker"
@@ -960,6 +964,7 @@ done
 {
   printf '%s  factory/hooks/shim.sh\n' "$(shasum -a 256 "$uninstall_home/.local/share/alexandria/hooks/shim.sh" | awk '{print $1}')"
   printf '%s  factory/scripts/statusline.sh\n' "$(shasum -a 256 "$uninstall_home/.local/share/alexandria/scripts/statusline.sh" | awk '{print $1}')"
+  printf '%s  factory/module-system.json\n' "$(shasum -a 256 "$uninstall_home/alexandria/system/modules.json" | awk '{print $1}')"
 } > "$uninstall_home/.local/share/alexandria/.canon_manifest"
 ownership_ledger="$uninstall_home/.local/share/alexandria/.owned_integrations"
 for owned_path in \
@@ -1008,6 +1013,8 @@ HOME="$uninstall_home" python3 factory/scripts/uninstall.py >/dev/null \
   || fail 'scoped uninstaller left its receipt-owned Cursor hook behind'
 [ ! -e "$uninstall_home/.factory/skills/a/SKILL.md" ] \
   || fail 'scoped uninstaller left its receipt-owned Factory skill behind'
+[ ! -e "$uninstall_home/alexandria/system/modules.json" ] \
+  || fail 'scoped uninstaller left its signed generated module map behind'
 grep -q 'foreign' "$uninstall_home/.factory/hooks.json" \
   || fail 'scoped uninstaller removed a foreign Factory hook'
 forbid "$uninstall_home/.factory/hooks.json" 'alexandria/hooks/shim' \
