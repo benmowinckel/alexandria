@@ -2,9 +2,8 @@
 # Alexandria's visible cue renderer.
 #
 # `statusline` is the persistent native-terminal ceiling. `footer` and
-# `footer-codex` are portable response footers using each host's real skill
-# invocation; agent instructions decide when they are earned (first reply, or
-# a later answer materially improved by the passive layer).
+# `footer-codex` are the one-time portable consent nudge; host instructions
+# decide when it is earned and how a yes invokes the real native skill.
 # This script only reads local state and prints one line: it never opens a tab,
 # starts a session, writes canon, or calls the network.
 
@@ -44,13 +43,11 @@ if [ "$MODE" = "statusline" ]; then
   fi
 fi
 
-if [ "$MODE" = "footer-codex" ]; then
-  CTA='start $a in a new chat'
-elif [ "$MODE" = "footer" ]; then
-  CTA='start /a in a new chat'
-else
-  CTA='start /a in a new tab'
+if [ "$MODE" = "footer-codex" ] || [ "$MODE" = "footer" ]; then
+  printf '%s\n' 'Want me to open your alexandria loop in the background for when you have a minute?'
+  exit 0
 fi
+CTA='start /a in a new tab'
 
 count_lines() {
   [ -f "$1" ] || { printf '0\n'; return; }

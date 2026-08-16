@@ -1,6 +1,6 @@
 /** Email primitives — Resend API (hybrid dependency, API-controllable, free 100/day). */
 
-import { installPrompt } from './install-prompt.js';
+import { accountConnectPrompt, installPrompt } from './install-prompt.js';
 import {
   chatInstallPrompt,
   chatSetupPrompt,
@@ -169,29 +169,31 @@ export async function sendFollowerWelcome(email: string, unsubscribeToken?: stri
     unsubscribeUrl ? { unsubscribeUrl } : undefined);
 }
 
-export async function sendWelcomeEmail(email: string, githubLogin: string, emailToken?: string, apiKey?: string): Promise<void> {
+export function welcomeEmailContent(githubLogin: string, emailToken?: string, connectionCode?: string): { subject: string; html: string } {
   void githubLogin;
-  // Connect message — carry it in the email body so a user who finishes GitHub
-  // OAuth but abandons Stripe is never stranded without their key. Same command
-  // the founding-member page shows; re-running setup.sh with the key is
-  // idempotent (installs + links, or just links if already installed). Only
-  // included when we actually minted a key for this sign-in (new / uninstalled).
-  // It is deliberately non-executable: an existing install uses its local
-  // verifier; a first install independently authenticates one exact commit.
-  const connectCmd = apiKey
-    ? installPrompt({ apiKey })
+  // Sent only after membership is authoritative. It carries the same calm,
+  // non-executable handoff as the welcome page and only a short-lived one-use
+  // connection code — never the persistent API key.
+  const connectCmd = connectionCode
+    ? accountConnectPrompt(connectionCode)
     : '';
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
   const body = connectCmd
     ? `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">you&rsquo;re in.</p>
-  <p style="margin: 0 0 0.7rem;">paste this into the agent on your computer.</p>
+  <p style="margin: 0 0 0.7rem;">paste this into the agent that already runs your alexandria loop.</p>
   ${emailCmd(connectCmd)}
-  <p style="margin: 0 0 0;">it will connect your account and tell you how to start.</p>
+  <p style="margin: 0 0 0;">your agent will inspect it first. nothing changes until you say <code>connect</code>.</p>
 `
     : `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">you&rsquo;re in.</p>
-  <p style="margin: 0 0 0;">open the ai you already use and start an alexandria session.</p>
+  <p style="margin: 0 0 0;">start an Alexandria session in a new chat.</p>
 `;
-  await sendEmail(email, 'welcome to alexandria.', emailShell(body, unsubscribeUrl),
+  return { subject: 'welcome to alexandria.', html: emailShell(body, unsubscribeUrl) };
+}
+
+export async function sendWelcomeEmail(email: string, githubLogin: string, emailToken?: string, connectionCode?: string): Promise<void> {
+  const content = welcomeEmailContent(githubLogin, emailToken, connectionCode);
+  const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
+  await sendEmail(email, content.subject, content.html,
     unsubscribeUrl ? { unsubscribeUrl } : undefined);
 }
 

@@ -113,6 +113,7 @@ jobs:
         working-directory: candidate
         run: |
           bash factory/scripts/check-private-boundary.sh
+          bash factory/test/connect-account.sh
           bash scripts/test-network-consent.sh
 
       - name: Enforce server access boundaries
@@ -131,7 +132,7 @@ jobs:
         run: |
           npm ci
           npx tsc --noEmit
-          for test in audit cron-scanner file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
+          for test in account-connect-contract account-connect-experience audit cron-scanner file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
             npx tsx "test/$test.ts"
           done
 

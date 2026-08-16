@@ -4,7 +4,7 @@
  */
 
 import { randomBytes } from 'crypto';
-import { installPrompt } from './install-prompt.js';
+import { accountConnectPrompt } from './install-prompt.js';
 
 function getWebsiteUrl() { return process.env.WEBSITE_URL || 'https://alexandria-library.com'; }
 
@@ -82,7 +82,7 @@ export function authErrorHtml(message: string): string {
 // Callback page — the first brand moment after signup
 // ---------------------------------------------------------------------------
 
-export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaToken = false, authorNumber = 0, _kinCompliant = 0, rotateUrl = ''): Promise<string> {
+export async function callbackPageHtml(connectionCode: string, githubLogin = '', _viaToken = false, authorNumber = 0, _kinCompliant = 0, reconnectUrl = ''): Promise<string> {
   void _viaToken;
   void _kinCompliant;
   const WEBSITE_URL = getWebsiteUrl();
@@ -92,16 +92,16 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaTok
   // hierarchy comes from sequence and language, never a harsh filled CTA.
   // A founding number is assigned server-side but is not the pitch.
   // `isReturning` is the bare re-login fallback — nothing minted, not a fresh join.
-  // `rotateUrl` (set only for returning INSTALLED members, minted per-OAuth by
-  // the callback) renders the low-key lost-key escape hatch below.
-  const isReturning = !apiKey;
+  // `reconnectUrl` is minted by a fresh OAuth callback and creates a separate,
+  // short-lived connection code. Merely signing in never invalidates the key
+  // already working on the user's machine.
+  const isReturning = !connectionCode;
   // The connect message is copy-paste, matching /start. (A claude-cli:// deep link was tried
   // and removed 2026-06-24: it auto-ran the script and felt like a terminal hijack — copy-paste
-  // is calmer and universal across Claude Code / Cursor / Codex / Factory.) Same message whether
-  // they installed keyless first (it links the account) or join from the web first (it installs +
-  // links). It is non-executable: existing installs use their local signature
-  // verifier; first installs authenticate one exact GitHub commit themselves.
-  const connectPrompt = apiKey ? installPrompt({ apiKey }) : '';
+  // is calmer and universal across Claude Code / Cursor / Codex / Factory.) It
+  // is non-executable and deliberately assumes setup already completed: the
+  // installed verifier authenticates the one narrow signed connector.
+  const connectPrompt = connectionCode ? accountConnectPrompt(connectionCode) : '';
   // The invite link now opens /invite — the self-contained referral landing
   // (founder 2026-07-17: a cold recipient dropped on /start had "no idea what
   // that is"). /invite pitches in one line and forwards the ref to /start,
@@ -214,7 +214,7 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaTok
     .wrap { padding: 4rem 24px 4rem; }
     .brand-corner { top: 22px; left: 22px; font-size: 19px; }
     .welcome { font-size: 34px; }
-    .cta-box { font-size: 1rem; }
+    .cta-box { font-size: 1rem; white-space: normal; }
   }
 </style>
 </head>
@@ -234,13 +234,13 @@ export async function callbackPageHtml(apiKey: string, githubLogin = '', _viaTok
 <a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
 <main class="wrap">
   <h1 class="welcome">${isReturning ? `welcome back.` : `welcome to alexandria.`}</h1>
+  ${!isReturning
+    ? `<button type="button" class="cta-box" onclick="copyCmd(this)"><span class="cta-copy"><span class="cta-label">connect your existing loop</span><span class="cta-sep"> &mdash; </span><span class="cta-why">paste this into your computer agent</span></span></button>`
+    : ''}
   ${inviteUrl
     ? `<button type="button" class="cta-box" onclick="shareInvite(this)"><span class="cta-copy"><span class="cta-label">invite people to alexandria</span><span class="cta-sep"> &mdash; </span><span class="cta-why">share it widely</span></span></button>`
     : ''}
-  ${!isReturning
-    ? `<button type="button" class="cta-box" onclick="copyCmd(this)"><span class="cta-copy"><span class="cta-label">connect your AI to alexandria</span></span></button>`
-    : ''}
-  ${rotateUrl ? `<div class="footer"><p class="fineprint-solo">lost your key? <a href="${escapeHtml(rotateUrl)}">generate a new one</a></p></div>` : ''}
+  ${reconnectUrl ? `<div class="footer"><p class="fineprint-solo">lost this connection? <a href="${escapeHtml(reconnectUrl)}">make a fresh connection code</a></p></div>` : ''}
 </main>
 <script>
 function flash(el, label, why) {
@@ -274,14 +274,14 @@ function manualCopy(text, el, label, why) {
     window.prompt('copy this:', text);
   }
 }
-function copyCmd(el) { copyText(${jsLiteral(connectPrompt)}, el, 'copied', 'paste into your computer agent'); }
+function copyCmd(el) { copyText(${jsLiteral(connectPrompt)}, el, 'copied', 'your agent will inspect it first'); }
 // Share, not copy (founder 2026-07-27): the native sheet puts the link one tap
 // from a real conversation — Messages, WhatsApp, wherever they'd actually send
 // it — instead of parking it on a clipboard they never paste. Desktop browsers
 // without navigator.share fall back to copying the same invitation and link.
 function shareInvite(el) {
   var url = ${jsLiteral(inviteUrl)};
-  var message = 'I joined Alexandria. Come in with me.';
+  var message = 'i’m using alexandria — join me.';
   if (navigator.share) {
     navigator.share({ title: 'alexandria.', text: message, url: url })
       .then(function() { flash(el, 'shared', 'invite someone else'); })
@@ -324,21 +324,21 @@ paintThemeDot();
 // thing to the website: this stores the rendered page + the session token under
 // a one-time code and returns a /welcome URL. The website peeks the page, serves
 // it first-party, and its script POSTs the code to /api/auth/session — the exact
-// same-origin cookie set that already works for library sign-in. Single-use,
-// short TTL; the api-key only ever sits in KV briefly, never in a browser URL.
+// same-origin cookie set that already works for library sign-in. The HTML can
+// contain only a short-lived, one-use connection code, never a persistent key.
 type WelcomeKV = { put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void> };
 
 export async function welcomeHandoffUrl(
   kv: WelcomeKV,
   sessionToken: string,
-  apiKey: string,
+  connectionCode: string,
   githubLogin: string,
   viaToken: boolean,
   authorNumber: number,
   kinCompliant = 0,
-  rotateUrl = '',
+  reconnectUrl = '',
 ): Promise<string> {
-  const html = await callbackPageHtml(apiKey, githubLogin, viaToken, authorNumber, kinCompliant, rotateUrl);
+  const html = await callbackPageHtml(connectionCode, githubLogin, viaToken, authorNumber, kinCompliant, reconnectUrl);
   const code = randomBytes(24).toString('hex');
   // handoff:<code> → session token, consumed by /api/auth/session (sets the cookie).
   // welcome:<code> → the rendered page, consumed by the website /welcome peek.

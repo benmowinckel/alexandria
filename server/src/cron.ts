@@ -351,7 +351,7 @@ export async function runHealthDigest(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Week-1 check-in — delayed welcome to installed members at signup_at + 7d.
+// Week-1 check-in — delayed welcome to connected members at signup_at + 7d.
 // One-shot per user (idempotent via week_one_email_sent_at). Asks what's
 // working. Does not mention join, pricing, or the slider.
 // ---------------------------------------------------------------------------
@@ -371,7 +371,7 @@ export async function runWeekOneCheckIns(
       if (acct.engagement_opt_out) continue;
       if (acct.week_one_email_sent_at) continue;
       if (acct.subscription_status !== 'active' && acct.subscription_status !== 'beta' && acct.subscription_status !== 'trialing' && acct.subscription_status !== 'free') continue;
-      if (!acct.installed_at) continue;
+      if (!acct.connected_at && !acct.installed_at) continue;
       if (!acct.created_at) continue;
       const age = now - new Date(acct.created_at).getTime();
       if (age < WEEK_MS) continue;

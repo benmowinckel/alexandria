@@ -71,6 +71,7 @@ export async function getBillingSummary(): Promise<Record<string, number>> {
     counts.total_accounts++;
     const status = acct.subscription_status || 'none';
     counts[`billing_${status}`] = (counts[`billing_${status}`] || 0) + 1;
+    if (acct.connected_at || acct.installed_at) counts.connected = (counts.connected || 0) + 1;
     if (acct.installed_at) counts.installed = (counts.installed || 0) + 1;
   }
   return counts;

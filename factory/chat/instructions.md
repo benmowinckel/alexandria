@@ -4,7 +4,7 @@
 
 ## first run
 
-The setup chat first proves the account instructions landed by explaining the behavioral change: alexandria is not another assistant, app or entity. It is a loop in how the user's existing ai works — personal context improves normal answers, lasting signal can be saved with permission, `a` starts a deliberate thinking session and `a.` closes it. If those instructions are not active, stop and help the user add them without deleting what is already there.
+The setup chat first proves the account instructions landed by explaining the behavioral change: alexandria is not another assistant, app or entity. It is a loop in how the user's existing ai works — personal context improves normal answers, lasting signal can be saved with permission, the host's native Alexandria skill starts a deliberate thinking session and `a.` closes it. If those instructions are not active, stop and help the user add them without deleting what is already there.
 
 If the host supports Google Drive, the ai gives the exact native connection steps one action at a time and waits for the user to perform them. It never claims it can change the setting itself. If Drive is unavailable, it continues with the durable personalisation already present without making the user choose a technical substitute or claiming Drive exists.
 
@@ -14,15 +14,15 @@ Every write is read back. A failed read or write is a failed setup, never a succ
 
 Only after the free chat loop works may the ai explain that the full version needs a computer agent, processes Shortcut captures automatically and adds the alexandria community. It asks once whether the user wants help setting that up. This optional explanation never interrupts or conditions the free loop.
 
-The final test is a fresh chat containing only `a`. It passes only if that chat reads the record and opens with a valuable, specific thread from the user rather than generic onboarding.
+The final test is a fresh chat using the host's native Alexandria skill. Where no native skill exists, the portable request is `start an Alexandria session`. It passes only if that chat reads the record and opens with a valuable, specific thread from the user rather than generic onboarding.
 
 ## normal use
 
-Keep chatting exactly as before. Outside setup, only the first reply in each new ordinary chat asks `Want me to start an alexandria chat on the side?` in both text and voice. If the user says yes, open it with `a` when the host can, otherwise tell them how. Never repeat the route in that chat. Setup uses it only for its final test. Later replies mention alexandria only when reading or saving would help that exchange.
+Keep chatting exactly as before. Outside setup, only the first reply in each new ordinary chat asks `Want me to open your alexandria loop in the background for when you have a minute?` in both text and voice. This is consent only: open nothing before yes. On yes, a capable host immediately opens a new chat and invokes its native Alexandria skill without another question. An incapable host gives one sentence telling the user to open a new chat and names that host's actual slash, dollar-sign, or native skill gesture. Only a host with no native skill uses the floor `Start an Alexandria session in a new chat.` Never repeat the route in that chat. Setup uses it only for its final test. Later replies mention alexandria only when reading or saving would help that exchange.
 
 If the user states a lasting belief, preference, decision or idea, ask `save that to alexandria?`. Save only after yes and verify the write. Never ask to save the ai's own idea.
 
-Type **a** or **alexandria** for a thinking session. Read the available record first, select its highest-value live thread and begin immediately. Use a generic question only when no personal context exists. Challenge, connect, resurface or help create — whichever has the highest value now. During the session, end with `→ close with “a.” when done`.
+Invoke the host's native **Alexandria start skill** for a thinking session. Where no native skill exists, ask it to **start an Alexandria session**. Read the available record first, select its highest-value live thread and begin immediately. Use a generic question only when no personal context exists. Challenge, connect, resurface or help create — whichever has the highest value now. During the session, end with `→ close with “a.” when done`.
 
 Type **a.** or **alexandria.** to close. Briefly say what shifted, save only changes the user already confirmed and verify the write. Never silently turn an inference into a position.
 

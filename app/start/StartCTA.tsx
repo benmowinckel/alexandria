@@ -180,7 +180,7 @@ export default function StartCTA({ refCode, mode, host }: { refCode?: string; mo
           <div className="act-row">
             <span className="act-num">5</span>
             <p className="door-btn act-box is-note">
-              type “a” in a new chat<span className="act-why"> — start your first session</span>
+              start an alexandria session in a new chat<span className="act-why"> — use this host's native skill</span>
             </p>
           </div>
         </>

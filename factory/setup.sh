@@ -495,11 +495,11 @@ fi
 cat > "$ALEX_DIR/system/.account-instructions.md" << 'ACCOUNTINSTR'
 alexandria is a loop in how you help me, not an assistant. Keep everything already there; replace nothing.
 
-Use hooks when available. Otherwise use one verified record: ~/alexandria; attached folder/project (eg Cowork/ChatGPT Work—open _start each task); writable Drive alexandria/_start; or memory, with its limit. Migrate only with permission; never fake a read/save.
+Use hooks when available. Otherwise use one verified record: ~/alexandria; attached folder/project (eg Cowork/ChatGPT Work—open _start each task); writable Drive alexandria/_start; or memory, with its limit.
 
-Answer normally from my record. Outside setup, only each new ordinary chat’s first reply asks “Want me to start an alexandria chat on the side?” Never repeat. On yes, open it with “a” if possible; else tell me how. Setup routes only at final test. Later mention it only for a useful read/save. For a lasting belief, preference, decision or idea, ask “save that to alexandria?”; save only after yes.
+Outside setup, only each new ordinary chat’s first reply asks “Want me to open your alexandria loop in the background for when you have a minute?” Never repeat. This is consent only: do not open anything before yes. On yes, if this host can, immediately open a new chat and invoke its native Alexandria skill—no second question. If it cannot, say: open a new chat, then invoke Alexandria with this host's actual slash, dollar-sign, or native skill gesture. For lasting signal, ask “save that to alexandria?”; save only after yes.
 
-On “a”, read alexandria and start its highest-value specific thread; be generic only without personal context. Challenge and develop my thinking. Active replies end: → close with “a.” when done. On “a.”, say what shifted; save only confirmed changes and verify them.
+When the alexandria start skill is invoked, read alexandria and start its highest-value specific thread; be generic only without personal context. Save only confirmed changes and verify them.
 ACCOUNTINSTR
 
 # ── 3. Platform configuration ─────────────────────────────────────
@@ -1540,13 +1540,13 @@ else
   rm -f "$CUE_PROBE_HOME/system/.active_a_sessions"
   rmdir "$CUE_PROBE_HOME/system" "$CUE_PROBE_HOME" 2>/dev/null || true
   CUE_OUTPUTS_OK=true
-  case "$CUE_RENDERED" in *'start /a in a new chat') ;; *) CUE_OUTPUTS_OK=false ;; esac
-  case "$CUE_CODEX_RENDERED" in *'start $a in a new chat') ;; *) CUE_OUTPUTS_OK=false ;; esac
+  case "$CUE_RENDERED" in 'Want me to open your alexandria loop in the background for when you have a minute?') ;; *) CUE_OUTPUTS_OK=false ;; esac
+  case "$CUE_CODEX_RENDERED" in 'Want me to open your alexandria loop in the background for when you have a minute?') ;; *) CUE_OUTPUTS_OK=false ;; esac
   case "$CUE_ACTIVE_RENDERED" in *'/a. when done'*'reflect on what moved') ;; *) CUE_OUTPUTS_OK=false ;; esac
   if [ "$CUE_OUTPUTS_OK" = "true" ]; then
     STATUS_CUE="ok"; DETAIL_CUE="$CUE_RENDERED"
   else
-    STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce the Claude/Cursor /a route, Codex \$a route, and per-session a. close route"
+    STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce the fixed consent nudge and per-session a. close route"
   fi
 fi
 

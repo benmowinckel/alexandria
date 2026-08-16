@@ -31,7 +31,7 @@ Embody the persona and react as they genuinely would; they are hard to please.
 - Does it honor the live moment without trying to resolve it?
 - Decision: finish the reflection / try the first `/a` session / neither — and why.
 - Account pitch, pricing, membership sell, referral, marketplace ask, or persuasive company copy is a failure here. The private onboarding must return local value and stop.
-- **Allowed exception (2026-08-10; host correction 2026-08-11):** exactly one fixed geography line `library — https://alexandria-library.com/join` and one accurate same-chat start CTA: `→ type /a` in Claude Code, Cursor, or Factory; `→ type $a` in Codex (`/alexandria` is its typed fallback); or `→ say “start an Alexandria session”` elsewhere. Score those as pass if present without pricing/persuasion. Extra join/unlock poetry or a sales paragraph is still a fail.
+- **Allowed exception (2026-08-10; host correction 2026-08-16):** exactly one fixed geography line `library — https://alexandria-library.com/join` and one accurate same-chat start CTA: `→ type /a` in Claude Code, Cursor, or Factory; `→ type $a` in Codex; the host's actual native skill gesture elsewhere; or `→ say “start an Alexandria session”` only when no native skill exists. A plain typed `alexandria` is not a skill invocation. Score those as pass if present without pricing/persuasion. Extra join/unlock poetry or a sales paragraph is still a fail.
 - **The `winced` list is the highest-value output** — it exposes trust, clarity, and tone problems. Read it even when the score is fine.
 
 ## 5. DIY + live-moment + honesty — **GATING on DIY & honesty, bar ≥8**

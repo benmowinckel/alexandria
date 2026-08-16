@@ -17,6 +17,7 @@ import { publishFeedback } from './marketplace.js';
 import { handleGithubPushWebhook } from './marketplace-catalog.js';
 import { listAuditArchive, mirrorPendingAuditBatch, readAuditArchive, verifyAuditArchiveHead } from './audit.js';
 import moduleSystem from '../../factory/module-system.json';
+import { consumeAccountConnectCode, createAccountConnectCode, isAccountConnectCode, peekAccountConnectCode } from './account-connect.js';
 
 /**
  * KV-backed rate limit for destructive/expensive admin endpoints.
@@ -73,7 +74,15 @@ async function purgeAuthorAccount(account: Account, storeKey: string | null, aut
       console.error('[account] Stripe subscription cancel failed:', e);
     }
   }
-  if (storeKey && authKeyHash) await deleteAccount(storeKey, authKeyHash);
+  const authKeyHashes = [...new Set([
+    authKeyHash,
+    account.api_key_hash,
+    ...(account.api_key_hashes || []),
+  ].filter((hash): hash is string => typeof hash === 'string' && hash.length > 0))];
+  if (storeKey && authKeyHashes[0]) {
+    await deleteAccount(storeKey, authKeyHashes[0]);
+    await Promise.all(authKeyHashes.slice(1).map((hash) => getKV().delete(`auth:${hash}`)));
+  }
   else if (storeKey) await getKV().delete(`account:${storeKey}`);
 
   try {
@@ -101,6 +110,11 @@ async function purgeAuthorAccount(account: Account, storeKey: string | null, aut
       db.prepare('DELETE FROM protocol_files WHERE account_id = ?').bind(String(account.github_id)),
       db.prepare('DELETE FROM protocol_calls WHERE account_id = ?').bind(String(account.github_id)),
     ]);
+    if (storeKey) {
+      try {
+        await db.prepare('DELETE FROM account_connect_codes WHERE account_key = ?').bind(storeKey).run();
+      } catch { /* schema may not exist on an older local database */ }
+    }
   } catch (e) {
     console.error('[account] D1 cleanup failed:', e);
   }
@@ -228,6 +242,18 @@ export function registerRoutes(app: Hono) {
       return c.json({ connected: false, error: 'Invalid API key' }, 401);
     }
 
+    // Legacy identity-only connections predate connected_at. A successful
+    // authenticated status read proves the key is in active use on a client,
+    // so backfill the connection marker without conflating it with /call's
+    // installed_at. This also makes the next GitHub sign-in non-destructive.
+    if (!account.connected_at) {
+      const storeKey = await getAuthIndex(hashApiKey(key));
+      if (storeKey) {
+        account.connected_at = new Date().toISOString();
+        await saveAccount(storeKey, account as unknown as Record<string, unknown>);
+      }
+    }
+
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
     const membership = await resolveMembership(account);
 
@@ -297,6 +323,7 @@ export function registerRoutes(app: Hono) {
         cancel_at_period_end: membership.cancel_at_period_end,
         cancel_at: membership.cancel_at,
         created: account.created_at,
+        connected: account.connected_at || null,
         installed: account.installed_at || null,
       },
       community,
@@ -499,16 +526,10 @@ export function registerRoutes(app: Hono) {
         waived = true;
       }
 
-      // Key is shown once on the callback page, then only the hash is stored.
-      // New accounts AND returning uninstalled users get a fresh key. Returning
-      // uninstalled users have a `previousHash` we need to rotate out — without
-      // it, the prior key (still in their inbox from the earlier OAuth callback)
-      // stays valid forever in parallel with the new one.
-      const isNewAccount = !existing?.api_key_hash;
-      const needsKey = isNewAccount || !existing?.installed_at;
-      const apiKey = needsKey ? generateApiKey() : '';
-      const apiKeyHash = needsKey ? hashApiKey(apiKey) : existing!.api_key_hash;
-      const previousHash = needsKey ? (existing?.api_key_hash || null) : null;
+      // OAuth proves identity; it never mints or rotates the machine credential.
+      // The persistent key is created only by the later explicit connection
+      // exchange, so a GitHub sign-in cannot break a working local loop.
+      const isNewAccount = !existing;
       const emailToken = existing?.email_token || generateToken();
 
       const updatedAccount = {
@@ -520,7 +541,7 @@ export function registerRoutes(app: Hono) {
         website: user.blog || user.html_url || `https://github.com/${user.login}`,
         location: user.location || null,
         email,
-        api_key_hash: apiKeyHash,
+        api_key_hash: existing?.api_key_hash || '',
         email_token: emailToken,
         created_at: existing?.created_at || new Date().toISOString(),
         last_session: new Date().toISOString(),
@@ -537,7 +558,6 @@ export function registerRoutes(app: Hono) {
       };
       delete updatedAccount.api_key;
       await saveAccount(key, updatedAccount as unknown as Record<string, unknown>);
-      if (needsKey) await setAuthIndex(apiKeyHash, key, previousHash);
       await setEmailTokenIndex(emailToken, key);
 
       // Browser Library session (for human navigation on /library/*).
@@ -661,15 +681,6 @@ export function registerRoutes(app: Hono) {
         logEvent('library_signup_referral_dropped_returning', { attempted_ref: ref, source: refSource || 'direct', referred: user.login });
       }
 
-      // Welcome email — the connect command for a new account, so a user who
-      // abandons Stripe after OAuth still has their key.
-      if (email && isNewAccount) {
-        // Pass the freshly-minted apiKey so the welcome email carries the
-        // connect command — a user who abandons Stripe after OAuth still has
-        // their key and can install from the email (GitHub-no-Stripe fix).
-        await sendWelcomeEmail(email, user.login, emailToken, apiKey);
-      }
-
       // Kin progress for the founding-member page — the compliant (member-status)
       // count the page shows as "N of 3 friends joined". Degrade to 0 if D1 is
       // unavailable (the page just shows 0-of-3, never errors). A returning
@@ -677,18 +688,15 @@ export function registerRoutes(app: Hono) {
       let kinCompliant = 0;
       try { kinCompliant = (await countActiveKin(user.login)).compliant; } catch { /* D1 down — show 0 */ }
 
-      // Lost-key self-serve rotation (single-use, 10-min TTL). A returning
-      // INSTALLED member gets no new key from re-OAuth — deliberate, so a
-      // casual re-login never kills the key on their working machine. But a
-      // member on a wiped machine needs a path back, so bind an explicit
-      // "generate a new one" action to THIS fresh OAuth: a code the welcome
-      // page renders as a low-key link to GET /account/rotate-key. Clicking
-      // it is the deliberate act that rotates (the old key dies there).
-      let rotateUrl = '';
-      if (!needsKey) {
+      // Connected members get an OAuth-bound route for another/lost machine.
+      // It only creates a short-lived connection code; the current key remains
+      // valid until an agent later receives the exact word `connect`.
+      const needsConnection = !updatedAccount.connected_at && !updatedAccount.installed_at;
+      let reconnectUrl = '';
+      if (!needsConnection) {
         const rotateCode = randomBytes(24).toString('hex');
         await kv.put(`rotate:${rotateCode}`, key, { expirationTtl: 600 });
-        rotateUrl = `${getServerUrl()}/account/rotate-key?code=${rotateCode}`;
+        reconnectUrl = `${getServerUrl()}/account/rotate-key?code=${rotateCode}`;
       }
 
       // Skip checkout only when the SAME authoritative membership resolver
@@ -704,15 +712,15 @@ export function registerRoutes(app: Hono) {
           return c.redirect(handoffUrl(stateData.next));
         }
         const number = await assignAuthorNumber(user.login);
-        return c.redirect(await welcomeHandoffUrl(kv, librarySessionToken, apiKey, user.login, false, number ?? 0, kinCompliant, rotateUrl));
+        const connectionCode = needsConnection ? await createAccountConnectCode(key) : '';
+        if (email && connectionCode) {
+          await sendWelcomeEmail(email, user.login, emailToken, connectionCode);
+        }
+        return c.redirect(await welcomeHandoffUrl(kv, librarySessionToken, connectionCode, user.login, false, number ?? 0, kinCompliant, reconnectUrl));
       }
 
-      // New join → Stripe Checkout ($30/mo via 30-day trial,
-      // free with 3 active kin via coupon). The founding-member page (with #N +
-      // the connect command) renders at /billing/success after checkout, so
-      // stash the freshly-minted key for that round-trip — billing/success can't
-      // regenerate it (key is shown once, hash-only at rest). Short TTL, deleted
-      // on read. For pure Library login intent we skip the billing redirect.
+      // New join → Stripe Checkout. Connection material is minted only after
+      // checkout proves membership, never for an abandoned GitHub sign-in.
       if (stateData.intent !== 'library' && process.env.STRIPE_SECRET_KEY && email) {
         try {
           const checkoutUrl = await createCheckoutSession({
@@ -720,12 +728,7 @@ export function registerRoutes(app: Hono) {
             githubLogin: user.login,
             stripeCustomerId: updatedAccount.stripe_customer_id,
           });
-          if (checkoutUrl) {
-            if (apiKey) {
-              await kv.put(`joinkey:${user.login.toLowerCase()}`, apiKey, { expirationTtl: 3600 });
-            }
-            return c.redirect(checkoutUrl);
-          }
+          if (checkoutUrl) return c.redirect(checkoutUrl);
         } catch (err) {
           console.error('Stripe checkout redirect failed, falling back:', err);
         }
@@ -734,8 +737,7 @@ export function registerRoutes(app: Hono) {
       if (stateData.intent === 'library' && stateData.next) {
         return c.redirect(handoffUrl(stateData.next));
       }
-      const number = await assignAuthorNumber(user.login);
-      return c.redirect(await welcomeHandoffUrl(kv, librarySessionToken, apiKey, user.login, false, number ?? 0, kinCompliant, rotateUrl));
+      return c.redirect(`${getWebsiteUrl()}/join`);
     } catch (err: any) {
       console.error('GitHub callback error:', err);
       return c.html(authErrorHtml('something broke signing you in. please try again.'), 500);
@@ -776,7 +778,8 @@ export function registerRoutes(app: Hono) {
   // page under a one-time code (welcomeHandoffUrl) and redirect to the website
   // /welcome, which calls this SERVER-SIDE to fetch the HTML, serve it first-party,
   // and set the session cookie via /api/auth/session — so the post-signup cookie
-  // sticks in Safari too. Deleted on first read (the api key lives in this HTML).
+  // sticks in Safari too. Deleted on first read. The HTML may carry only the
+  // short-lived connection code; persistent keys never enter this path.
   app.get('/auth/welcome/peek', async (c) => {
     const code = c.req.query('code') || '';
     if (!code) return c.json({ error: 'missing code' }, 400);
@@ -785,6 +788,95 @@ export function registerRoutes(app: Hono) {
     if (!html) return c.json({ error: 'invalid or expired code' }, 400);
     await kv.delete(`welcome:${code}`);
     return c.json({ html });
+  });
+
+  // Narrow account connection. The code is short-lived and D1 consumes it
+  // atomically; the persistent bearer key is generated only here, after the
+  // user's agent has independently audited the public route and received the
+  // exact word `connect`. No local setup or optional capability is implied.
+  app.post('/account/connect/exchange', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    const client = c.req.header('x-alexandria-client') || '';
+    if (!/^[A-Za-z0-9._-]{1,128}$/.test(client)) {
+      return c.json({ error: 'A verified Alexandria client is required.' }, 400);
+    }
+
+    const body = await c.req.json<{ code?: unknown; expected_current_login?: unknown }>().catch(() => null);
+    const code = typeof body?.code === 'string' ? body.code : '';
+    const expectedLogin = typeof body?.expected_current_login === 'string'
+      ? body.expected_current_login.toLowerCase().trim()
+      : '';
+    if (!isAccountConnectCode(code) || (expectedLogin && !/^[a-z0-9](?:[a-z0-9-]{0,38})$/.test(expectedLogin))) {
+      return c.json({ error: 'Invalid or expired connection code.' }, 400);
+    }
+
+    const accountKey = await peekAccountConnectCode(code);
+    const account = accountKey ? await loadAccount(accountKey) as Account | null : null;
+    if (!accountKey || !account) {
+      return c.json({ error: 'Invalid or expired connection code.' }, 400);
+    }
+    if (expectedLogin && account.github_login.toLowerCase() !== expectedLogin) {
+      return c.json({ error: 'This computer is connected to a different Alexandria account.' }, 409);
+    }
+    const suppliedKey = extractApiKey(c);
+    const currentAccount = suppliedKey ? await findByApiKey(suppliedKey) : null;
+    if (currentAccount && currentAccount.github_id !== account.github_id) {
+      return c.json({ error: 'This computer is connected to a different Alexandria account.' }, 409);
+    }
+
+    const membership = await resolveMembership(account);
+    if (!membership.available) {
+      return c.json({ error: 'Membership verification is temporarily unavailable. Try again later.' }, 503);
+    }
+    if (!membership.active) {
+      return c.json({ error: 'An active Alexandria membership is required.' }, 403);
+    }
+
+    const consumedAccountKey = await consumeAccountConnectCode(code);
+    if (!consumedAccountKey || consumedAccountKey !== accountKey) {
+      return c.json({ error: 'Invalid or already-used connection code.' }, 409);
+    }
+
+    const connectedAt = new Date().toISOString();
+    if (currentAccount && suppliedKey) {
+      const updated = { ...account, connected_at: connectedAt } as Record<string, unknown>;
+      delete updated.api_key;
+      await saveAccount(accountKey, updated);
+      logEvent('account_connected', { github_login: account.github_login, client, reused_key: 'true' });
+      return c.json({
+        connected: true,
+        use_existing_key: true,
+        github_login: account.github_login,
+        connected_at: connectedAt,
+      });
+    }
+
+    const apiKey = generateApiKey();
+    const apiKeyHash = hashApiKey(apiKey);
+    const apiKeyHashes = [...new Set([
+      account.api_key_hash,
+      ...(account.api_key_hashes || []),
+      apiKeyHash,
+    ].filter(Boolean))];
+    // A separate machine gets a separate key. Do not invalidate a healthy
+    // connection merely because the same person connected somewhere else.
+    const updated = {
+      ...account,
+      api_key_hash: account.api_key_hash || apiKeyHash,
+      api_key_hashes: apiKeyHashes,
+      connected_at: connectedAt,
+    } as Record<string, unknown>;
+    delete updated.api_key;
+    await saveAccount(accountKey, updated);
+    await setAuthIndex(apiKeyHash, accountKey);
+    logEvent('account_connected', { github_login: account.github_login, client });
+
+    return c.json({
+      connected: true,
+      api_key: apiKey,
+      github_login: account.github_login,
+      connected_at: connectedAt,
+    });
   });
 
   // --- Account management (redirects to Stripe portal) ---
@@ -848,18 +940,12 @@ export function registerRoutes(app: Hono) {
     return c.json({ ok: true, deleted: account.github_login });
   });
 
-  // --- Lost-key self-serve rotation ---
+  // --- Another/lost machine connection ---
   //
-  // The only path to a new key once installed_at is stamped (re-OAuth
-  // deliberately mints none — see the needsKey comment in the callback). The
-  // action is explicit and OAuth-bound: the welcome page's "lost your key?"
-  // link carries a single-use code (rotate:<code> → account key, 10-min TTL)
-  // minted by a fresh OAuth callback — so rotation can never happen as a side
-  // effect of casual re-login, only from a deliberate click made minutes after
-  // proving GitHub ownership. setAuthIndex(new, key, previous) kills the old
-  // key in the same operation (the setAuthIndex contract) — a lost machine's
-  // stranded key stops resolving the moment the new one exists. Rate-limited
-  // 5/min/IP in worker.ts (PUBLIC_RATE_LIMITED_ROUTES).
+  // Fresh OAuth proves account ownership and binds this single-use link. The
+  // click creates a connection code but does not rotate the working machine's
+  // key. The later audited `connect` exchange gives another machine its own
+  // key while every healthy connection remains valid.
   app.get('/account/rotate-key', async (c) => {
     const code = c.req.query('code') || '';
     // randomBytes(24).hex = 48 chars; reject anything else before touching KV.
@@ -878,21 +964,18 @@ export function registerRoutes(app: Hono) {
       return c.html(authErrorHtml('account not found — please sign in again.'), 400);
     }
 
-    // Same save-then-index order as the OAuth callback: the account blob holds
-    // the new hash before the auth index flips, so no window where the index
-    // resolves to a blob still carrying the old hash.
-    const newKey = generateApiKey();
-    const newHash = hashApiKey(newKey);
-    const previousHash = account.api_key_hash || null;
-    const updated = { ...account, api_key_hash: newHash } as Record<string, unknown>;
-    delete updated.api_key;
-    await saveAccount(storeKey, updated);
-    await setAuthIndex(newHash, storeKey, previousHash);
-    logEvent('api_key_rotated', { github_login: account.github_login });
+    const membership = await resolveMembership(account);
+    if (!membership.available) {
+      return c.html(authErrorHtml('membership verification is temporarily unavailable — please try again.'), 503);
+    }
+    if (!membership.active) {
+      return c.redirect(`${getWebsiteUrl()}/join`);
+    }
+    const connectionCode = await createAccountConnectCode(storeKey);
+    logEvent('account_reconnect_code_created', { github_login: account.github_login });
 
-    // Show the standard connect command with the fresh key — same welcome
-    // handoff the magic-link install uses (routes the page + session cookie
-    // first-party so it sticks in Safari too).
+    // Show the standard connect handoff with the fresh one-use code through the
+    // same first-party page + session-cookie path, so it sticks in Safari too.
     const number = await assignAuthorNumber(account.github_login);
     let kinCompliant = 0;
     try { kinCompliant = (await countActiveKin(account.github_login)).compliant; } catch { /* D1 down — show 0 */ }
@@ -901,7 +984,7 @@ export function registerRoutes(app: Hono) {
       account_key: storeKey,
       github_login: account.github_login,
     }), { expirationTtl: 30 * 24 * 60 * 60 });
-    return c.redirect(await welcomeHandoffUrl(kv, sessionToken, newKey, account.github_login, false, number ?? 0, kinCompliant));
+    return c.redirect(await welcomeHandoffUrl(kv, sessionToken, connectionCode, account.github_login, false, number ?? 0, kinCompliant));
   });
 
   // --- Subscription cancel / reactivate (save-screen) ---
@@ -1278,7 +1361,7 @@ export function registerRoutes(app: Hono) {
 
     const accounts = await loadAccounts<AccountStore>();
     const recipients = Object.values(accounts).filter(acct =>
-      !acct.installed_at && acct.email && !acct.engagement_opt_out && acct.github_login !== auth.account.github_login
+      !acct.connected_at && !acct.installed_at && acct.email && !acct.engagement_opt_out && acct.github_login !== auth.account.github_login
     );
 
     const { sent, failed } = await sendEmailsBatched(recipients, acct => {
@@ -1370,8 +1453,8 @@ export function registerRoutes(app: Hono) {
   // /join (clean OAuth flow). Redemption is logged so we know whether the
   // email actually drove a click (mirror loop between "nudge sent" and
   // "installed_after_nudge"). Single-use: the rendered page carries the live
-  // api key, so the token is deleted on first redemption (same pattern as
-  // the welcome/handoff codes) instead of staying replayable for its TTL.
+  // legacy payload may contain an API key, but redemption never renders it.
+  // A fresh one-use connection code is created from the account identity.
   app.get('/install/:token', async (c) => {
     const token = c.req.param('token');
     if (!token) return c.text('missing token', 400);
@@ -1382,16 +1465,22 @@ export function registerRoutes(app: Hono) {
       return c.redirect(`${getWebsiteUrl()}/join`, 302);
     }
     await kv.delete(`install:${token}`);
-    const { api_key, github_login } = JSON.parse(stored) as { api_key: string; github_login: string };
+    const { github_login } = JSON.parse(stored) as { api_key?: string; github_login: string };
     logEvent('install_token_redeemed', { author: github_login });
+    const accountResult = await getAccountByLogin(github_login);
+    if (!accountResult) return c.redirect(`${getWebsiteUrl()}/join`, 302);
+    const membership = await resolveMembership(accountResult.account);
+    if (!membership.available) return c.text('Membership verification is temporarily unavailable. Please try again.', 503);
+    if (!membership.active) return c.redirect(`${getWebsiteUrl()}/join`, 302);
+    const connectionCode = await createAccountConnectCode(accountResult.storeKey);
     const number = await assignAuthorNumber(github_login);
     let kinCompliant = 0;
     try { kinCompliant = (await countActiveKin(github_login)).compliant; } catch { /* D1 down — show 0 */ }
     // Mint a browser session so the founding-member page lands them signed-in,
     // and route it through the welcome handoff so the cookie sticks (Safari).
     const sessionToken = randomBytes(24).toString('hex');
-    await kv.put(`library:session:${sessionToken}`, JSON.stringify({ github_login }), { expirationTtl: 30 * 24 * 60 * 60 });
-    return c.redirect(await welcomeHandoffUrl(kv, sessionToken, api_key, github_login, true, number ?? 0, kinCompliant));
+    await kv.put(`library:session:${sessionToken}`, JSON.stringify({ account_key: accountResult.storeKey, github_login }), { expirationTtl: 30 * 24 * 60 * 60 });
+    return c.redirect(await welcomeHandoffUrl(kv, sessionToken, connectionCode, github_login, true, number ?? 0, kinCompliant));
   });
 
   // Public preview — renders the WELCOME page HTML (the post-signup/post-Stripe
@@ -1404,9 +1493,9 @@ export function registerRoutes(app: Hono) {
     const returning = c.req.query('returning') === 'true';
     // Dummy must not be credential-shaped (`sk_test_` reads as a Stripe key
     // to scanners and to anyone who copies the rendered curl command).
-    const apiKey = returning ? '' : 'PREVIEW-NOT-A-REAL-KEY';
+    const connectionCode = returning ? '' : 'alex_connect_000000000000000000000000000000000000000000000000';
     // Dummy number + kin count for the founding-member preview; no side effects.
-    const html = await callbackPageHtml(apiKey, 'benmowinckel', false, returning ? 0 : 142, 1);
+    const html = await callbackPageHtml(connectionCode, 'benmowinckel', false, returning ? 0 : 142, 1);
     return c.html(html);
   };
   app.get('/preview/welcome', previewWelcome);
@@ -1480,13 +1569,15 @@ export function registerRoutes(app: Hono) {
         referral_active: 'A referral whose member_active value is true. Recent use does not affect referral credit.',
         product_active_30d: 'At least one module call in the last 30 days. Operational signal only; never a membership gate.',
         publisher: 'At least one Library protocol file exists for the account.',
-        installed: 'At least one authenticated /call completed, proving the local setup reached the community server.',
+        connected: 'The existing local loop completed the narrow account exchange, or a legacy key proved itself through an authenticated status read.',
+        installed: 'At least one separately approved marketplace /call completed. This is optional activity, not account connection.',
       },
       accounts: {
         total: accounts.length,
         members_active: membershipRows.filter((row) => row.active).length,
         reader_only_or_inactive: membershipRows.filter((row) => row.available && !row.active).length,
         membership_unavailable: unavailable.length,
+        connected: accounts.filter((account) => !!account.connected_at || !!account.installed_at).length,
         installed: accounts.filter((account) => !!account.installed_at).length,
         publishers: publishers?.n || 0,
         product_active_30d: moduleCallers?.n || 0,

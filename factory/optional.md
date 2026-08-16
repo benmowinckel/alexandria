@@ -8,14 +8,12 @@
 
 ## account — connect identity only
 
-- **Does:** validates and stores the Author's Alexandria account key locally, then refreshes live account state and the static module-map version at session start. This alone enables no publishing, marketplace reporting, network reading, telemetry, or feedback send.
+- **Does:** connects an already-complete local loop to the Author's Alexandria account, then refreshes live account state and the static module-map version at session start. This alone enables no publishing, marketplace reporting, network reading, telemetry, or feedback send.
 - **Touches:** `~/alexandria/system/.api_key` (0600), `~/alexandria/system/.protocol_status.json`, and the account-status endpoint.
-- **Leaves the machine:** the account key plus a client-version hash in each status request; no personal files or private content.
-- **Enable:** after the Author directly asks to connect the account, explain the lines above and wait for the exact word `connect`. Then run the installed verifier with the key and the consent flag:
-  ```bash
-  ALEXANDRIA_ACCOUNT_CONNECT_APPROVED=1 bash ~/.local/share/alexandria/scripts/verify-fetch.sh --run setup.sh "$ALEXANDRIA_ACCOUNT_KEY"
-  ```
-- **Off:** `rm ~/alexandria/system/.api_key ~/alexandria/system/permissions/library ~/alexandria/system/permissions/marketplace ~/alexandria/system/permissions/network 2>/dev/null`.
+- **Leaves the machine:** the short-lived connection code, the installed public client version, an existing connected GitHub login when present, and authenticated status requests; no personal files or private content.
+- **Needs:** the two healthy-loop markers named in `factory/connect.md`, an active membership, and a fresh connection code from the joined welcome page or email.
+- **Enable:** independently audit and follow `factory/connect.md`. Wait for the exact word `connect`, then pass the code on standard input to the installed verifier's `--run scripts/connect-account.sh` route. Never rerun setup merely to connect an account.
+- **Off:** `rm ~/alexandria/system/.api_key ~/alexandria/system/.protocol_status.json`.
 
 ## library-sync — publish exact approved files
 

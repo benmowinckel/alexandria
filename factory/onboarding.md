@@ -10,12 +10,7 @@ Use the first mode whose requirements are true. Tell the user which mode you ver
 
 Requirement: this AI can inspect the public repository, run commands on the user's computer, and write user-approved local files.
 
-Inspect `TRUST.md`, the signed manifest chain, and `factory/setup.sh`. If you independently judge it safe, explain the changes and wait for `start`; then run the verified local setup and follow `factory/block.md`. Supported native starts are:
-
-- Claude Code and Cursor: `/a`
-- Codex: `$a`; `/alexandria` is the typed fallback; `/a` is not supported
-- Factory: `/a`
-- any other local agent: `start an Alexandria session`
+Inspect `TRUST.md`, the signed manifest chain, and `factory/setup.sh`. If you independently judge it safe, explain the changes and wait for `start`; then run the verified local setup and follow `factory/block.md`. Invoke the host's installed Alexandria skill: slash form in slash-command hosts, dollar-sign form in Codex, or the host's native skill action. If no native skill exists, use the portable request `start an Alexandria session`. Never claim a plain typed word reliably invokes a skill.
 
 ### 2. Existing remote-to-local route
 
@@ -35,7 +30,7 @@ Folder-only tools such as Cowork or ChatGPT Work are examples of this mode, not 
 
 Full local setup installs and verifies native hooks first, reads only the personal sources the Author approves, and shows the first personalized result. Only then does the agent ask which other AI app the Author uses most and guide the rest one at a time. Each app without working alexandria hooks gets the same compact instructions beside its existing account or project instructions; existing instructions, memory, connections, projects, and workflows remain untouched. Never claim an account setting changed until the Author made and verified the edit.
 
-The instructions say exactly what alexandria is: a loop in how the user's existing ai works, not another assistant or entity. They use hooks when they work, then route by verified capability: full local `~/alexandria`; an attached writable folder or project; writable Google Drive; honest native memory. Cowork and ChatGPT Work are examples of the attached-folder case: without hooks, the instructions tell the ai to open `_start` at each new task. Native slash commands stay in the installed host integration; plain `a` and `a.` are the portable account-instruction gestures. `a` must read personal context and start from its highest-value specific thread; `a.` saves only confirmed changes and verifies the write.
+The instructions say exactly what alexandria is: a loop in how the user's existing ai works, not another assistant or entity. They use hooks when they work, then route by verified capability: full local `~/alexandria`; an attached writable folder or project; writable Google Drive; honest native memory. Cowork and ChatGPT Work are examples of the attached-folder case: without hooks, the instructions tell the ai to open `_start` at each new task. Start the active loop through the host's native Alexandria skill — slash in slash-command hosts, dollar-sign in Codex, or the native skill action elsewhere — with `start an Alexandria session` as the portable floor. Never claim the plain word `alexandria` reliably invokes it. `a.` remains the close gesture.
 
 ## Chat branch
 
@@ -43,15 +38,15 @@ The website first offers the Shortcut so capture is useful immediately, then giv
 
 The setup chat first proves the account instructions landed by explaining how the existing ai will now behave; if they did not, it stops and helps the user add them without replacing anything. It then guides the user's own native Drive connection when available and uses one explicit permission to build the fullest accurate first record it can from account memory and accessible past-chat context. It never searches the rest of Drive, dumps raw chats, invents knowledge or claims an unverified write. It reads every write back, runs a miniature personal loop and saves only confirmed changes. If Drive is unavailable, it continues with the durable personalisation already present without presenting a technical menu or pretending Drive works.
 
-Only after that free chat loop proves personal value may the ai briefly explain that the full version needs a computer agent, processes Shortcut captures automatically and adds the alexandria community. It asks once whether the user wants help setting it up. The final action remains a fresh chat containing only `a`: setup passes only when that chat reads the record and opens with a valuable, specific personal thread.
+Only after that free chat loop proves personal value may the ai briefly explain that the full version needs a computer agent, processes Shortcut captures automatically and adds the alexandria community. It asks once whether the user wants help setting it up. The final action invokes the host's native Alexandria skill in a fresh chat, or uses `start an Alexandria session` only when no native skill exists. Setup passes only when that chat reads the record and opens with a valuable, specific personal thread.
 
-Outside setup, only the first reply in each new ordinary chat asks `Want me to start an alexandria chat on the side?` in both text and voice. If the user says yes, open that chat with `a` when the host can, otherwise tell them how. Never repeat the route in that chat. Setup uses it only for the final test, and later replies mention alexandria only when saving to it or reading from it would help that exact exchange. Never claim this chat changed an account setting itself.
+Outside setup, only the first reply in each new ordinary chat asks `Want me to open your alexandria loop in the background for when you have a minute?` in both text and voice. This is consent only: open nothing before yes. On yes, a capable host immediately opens a new chat and invokes its native Alexandria skill without another question. An incapable host gives one clear sentence naming its actual slash, dollar-sign, or native skill gesture after telling the user to open a new chat. Only a host with no native skill uses the floor `start an Alexandria session`. Never repeat the route in that chat. Setup uses it only for the final test, and later replies mention alexandria only when saving to it or reading from it would help that exact exchange. Never claim this chat changed an account setting itself.
 
 ## Phone capture
 
 Make capture real now, using the strongest available route:
 
-- Before a later computer setup, ask which AI they use most. The page copies the Alexandria instructions in step 3 and gives that app's exact mobile settings path so the Author can paste them below their current instructions. Step 4 copies the normal-chat setup, which explains the Shortcut and sets a computer reminder only when a real reminder tool exists. Then start with `a` in a new chat. Google Drive is not part of this phone-agent path; it remains in chat-only onboarding.
+- Before a later computer setup, ask which AI they use most. The page copies the Alexandria instructions in step 3 and gives that app's exact mobile settings path so the Author can paste them below their current instructions. Step 4 copies the normal-chat setup, which explains the Shortcut and sets a computer reminder only when a real reminder tool exists. Then invoke that host's native Alexandria skill in a new chat, or use `start an Alexandria session` only if it has no native skill. Google Drive is not part of this phone-agent path; it remains in chat-only onboarding.
 
 - Existing remote computer connection: save into the local loop.
 - iPhone: explain the Alexandria Shortcut and let the user add it. It may save into their own iCloud before the local loop is connected; `factory/optional.md` defines the later one-consent connection.
@@ -62,8 +57,8 @@ Make capture real now, using the strongest available route:
 
 The private loop is complete without joining. The fixed collective destination is `https://alexandria-library.com/join`.
 
-- Local first, join later: the account connect prompt reruns setup idempotently with the account key and preserves the existing files.
-- Join first, local later: keep the account key private and use the connect handoff from the welcome page when a local agent is available.
+- Local first, join later: use the focused `factory/connect.md` route. It requires the healthy existing loop and changes only its account key and cached account status.
+- Join first, local later: do not connect yet. Complete the normal keyless `/start` setup first, including its own independent audit and exact `start` consent; then return to a fresh joined handoff and use the separate exact `connect` consent. Joining is not permission to set up the computer.
 - Chat or folder mode: joining must not imply that local hooks exist. Continue using the verified mode; link it to local files later through the documented Drive/chat bridge only when the user asks.
 
 Never connect an account, publish, enable network reading, or turn on backup merely because the user started the private loop.

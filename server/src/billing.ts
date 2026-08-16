@@ -15,9 +15,10 @@ import { requireAuth, ACTIVE_AUTHOR_STATUSES, type Account } from './auth.js';
 import { loadAccounts, getKV } from './kv.js';
 import { assignAuthorNumber, getAccountByLogin, updateAccountBilling } from './accounts.js';
 import { getDB } from './db.js';
-import { sendPatronWelcome, sendKinFreeUnlocked, sendKinLapseWarning, sendPreBillWarning } from './email.js';
+import { sendPatronWelcome, sendKinFreeUnlocked, sendKinLapseWarning, sendPreBillWarning, sendWelcomeEmail } from './email.js';
 import { generateToken } from './crypto.js';
 import { safeEqual, hashApiKey } from './crypto.js';
+import { createAccountConnectCode } from './account-connect.js';
 
 // ---------------------------------------------------------------------------
 // Membership price — source of truth for NEW Stripe prices (ensurePrice).
@@ -1267,14 +1268,21 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       await onAccountUpdate(login, billingUpdate);
       logEvent('billing_checkout_completed', { mode: session.mode || 'unknown' });
 
-      // Founding-member page. The API key was minted at the OAuth callback and
-      // stashed for this round-trip (it's shown once, hash-only at rest, so it
-      // can't be regenerated here). Read it once and clear it. Claim the
-      // sequential #N now that they've joined.
+      // Founding-member page. Membership is now authoritative, so mint a
+      // short-lived, one-use connection code. The persistent API key does not
+      // exist until the later explicit exchange.
       const kv = getKV();
-      const stashKey = `joinkey:${login.toLowerCase()}`;
-      const apiKey = (await kv.get(stashKey)) || '';
-      if (apiKey) await kv.delete(stashKey);
+      const accountResult = await getAccountByLogin(login);
+      if (!accountResult) return c.redirect(`${WEBSITE_URL}/join`);
+      const connectionCode = await createAccountConnectCode(accountResult.storeKey);
+      if (accountResult.account.email) {
+        await sendWelcomeEmail(
+          accountResult.account.email,
+          login,
+          accountResult.account.email_token,
+          connectionCode,
+        );
+      }
       const number = await assignAuthorNumber(login);
       let kinCompliant = 0;
       try { kinCompliant = (await countActiveKin(login)).compliant; } catch { /* D1 down — show 0 */ }
@@ -1282,8 +1290,8 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       // welcome handoff so the post-payment cookie is set first-party (Safari
       // drops one set on the api subdomain mid-redirect — WebKit #196375).
       const sessionToken = randomBytes(24).toString('hex');
-      await kv.put(`library:session:${sessionToken}`, JSON.stringify({ github_login: login }), { expirationTtl: 30 * 24 * 60 * 60 });
-      return c.redirect(await welcomeHandoffUrl(kv, sessionToken, apiKey, login, false, number ?? 0, kinCompliant));
+      await kv.put(`library:session:${sessionToken}`, JSON.stringify({ account_key: accountResult.storeKey, github_login: login }), { expirationTtl: 30 * 24 * 60 * 60 });
+      return c.redirect(await welcomeHandoffUrl(kv, sessionToken, connectionCode, login, false, number ?? 0, kinCompliant));
     } catch (err) {
       console.error('Billing success page error:', err);
       return c.redirect(`${WEBSITE_URL}/join`);

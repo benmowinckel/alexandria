@@ -15,7 +15,7 @@ chatgpt — settings → personalization → custom instructions
 claude — settings → general → instructions for claude
 gemini — settings → personal context → your instructions for gemini
 
-The Shortcut comes first so capture is useful immediately. The page does not ask a chat-only user to connect Drive itself. The normal-chat setup prompt carries the rest one action at a time: explain the changed behavior, guide the user's own native Drive connection when available, populate and read back the first record, run a miniature personal loop, explain the optional full computer-agent version at the end, then send the user to a fresh chat containing only `a` as the real cross-chat proof.
+The Shortcut comes first so capture is useful immediately. The page does not ask a chat-only user to connect Drive itself. The normal-chat setup prompt carries the rest one action at a time: explain the changed behavior, guide the user's own native Drive connection when available, populate and read back the first record, run a miniature personal loop, explain the optional full computer-agent version at the end, then invoke the host's native Alexandria skill in a fresh chat as the real cross-chat proof. Where no native skill exists, the floor is `start an Alexandria session`.
 
 The account instructions are additive. Nothing is sent to Alexandria, and every instruction, memory, file, connector, project and workflow already present stays.
 

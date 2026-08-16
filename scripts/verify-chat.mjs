@@ -279,10 +279,12 @@ const result = {
   clipboardIsFirstPerson: clipboard.startsWith('alexandria is a loop in how you help me'),
   clipboardHasAdditiveGuard: clipboard.includes('Keep everything already there; replace nothing'),
   clipboardHasVisibleRoute:
-    clipboard.includes('only each new ordinary chat’s first reply asks “Want me to start an alexandria chat on the side?”') &&
+    clipboard.includes('only each new ordinary chat’s first reply asks “Want me to open your alexandria loop in the background for when you have a minute?”') &&
     clipboard.includes('Never repeat') &&
-    clipboard.includes('On yes, open it with “a” if possible; else tell me how') &&
-    clipboard.includes('Later mention it only for a useful read/save') &&
+    clipboard.includes('do not open anything before yes') &&
+    clipboard.includes('immediately open a new chat and invoke its native Alexandria skill—no second question') &&
+    clipboard.includes('actual slash, dollar-sign, or native skill gesture') &&
+    clipboard.includes('For lasting signal, ask “save that to alexandria?”') &&
     clipboard.includes('save that to alexandria?'),
   clipboardRoutesEverySurface:
     clipboard.includes('Use hooks when available') &&
@@ -295,11 +297,12 @@ const result = {
     clipboard.includes('start its highest-value specific thread') &&
     clipboard.includes('be generic only without personal context'),
   clipboardClosesLoop:
-    clipboard.includes('save only confirmed changes') &&
-    clipboard.includes('verify them') &&
-    !clipboard.includes('never save'),
+    clipboard.toLowerCase().includes('save only confirmed changes') &&
+    clipboard.includes('verify them'),
   clipboardFitsSmallestChatgptLimit: clipboard.length <= 1100 && clipboard.length < 1500,
-  clipboardAdmitsNoPersistence: clipboard.includes('never fake a read/save') && clipboard.includes('memory, with its limit'),
+  clipboardAdmitsNoPersistence:
+    clipboard.includes('one verified record') &&
+    clipboard.includes('memory, with its limit'),
   setupGuidesUserNotAiDrive:
     setupClipboard.includes('prove the instructions are active') &&
     setupClipboard.includes('If the instructions are not active, stop') &&
@@ -323,7 +326,8 @@ const result = {
     setupClipboard.includes('adds the alexandria community'),
   setupEndsWithRealTest:
     setupClipboard.includes('At the very end') &&
-    setupClipboard.includes('open a new chat and type “a”') &&
+    setupClipboard.includes("use this host's native alexandria skill in a new chat") &&
+    setupClipboard.includes("one clear step naming this host's actual skill gesture") &&
     setupClipboard.includes('rather than a generic question'),
   clipboardHasNoJailbreak: jailbreakPhrases.every((phrase) => !clipboard.toLowerCase().includes(phrase)),
   emailFieldMatchesStart: JSON.stringify(chatEmailShape) === JSON.stringify(startEmailShape),
@@ -342,16 +346,16 @@ const result = {
     phoneBody.includes('copy the setup') &&
     phoneBody.includes('paste in a normal chat') &&
     !phoneBody.includes('connect google drive') &&
-    phoneBody.includes('type “a” in a new chat'),
+    phoneBody.includes('start an alexandria session in a new chat'),
   phoneCopiedWithoutEmail: phoneClipboard === mobileHandoffPrompt(),
   phoneHasExactFallback: phoneClipboard.includes('At your computer, open alexandria-library.com/start and choose agents.'),
   phonePromptExplainsShortcutAndReminder:
-    phoneClipboard.includes('Explain in one sentence that the alexandria Shortcut') &&
-    phoneClipboard.includes('If you can actually set reminders') &&
+    phoneClipboard.includes('Explain that the alexandria Shortcut') &&
+    phoneClipboard.includes('If reminders work') &&
     phoneClipboard.includes('Never claim you changed my phone or computer'),
   phonePromptLeavesDirectSetupOnPage:
     phoneClipboard.includes('send me to step 1 at alexandria-library.com/start') &&
-    phoneClipboard.includes('completed step 3 without replacing my existing instructions') &&
+    phoneClipboard.includes('Confirm step 3 kept my existing instructions') &&
     !phoneClipboard.includes('--- ALEXANDRIA BLOCK ---') &&
     !phoneClipboard.includes(CHAT_INSTRUCTION),
   phoneInstructionClipboardExact: phoneInstructionClipboard === CHAT_INSTRUCTION,

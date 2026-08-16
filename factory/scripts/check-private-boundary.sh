@@ -35,7 +35,7 @@ require shared/onboarding-prompts.ts \
   'I am at my computer. Help me set up the full private, local version of alexandria here' \
   'the computer paste no longer states the human intent'
 require shared/onboarding-prompts.ts \
-  'I’m setting up alexandria on this phone. Guide me one step at a time.' \
+  'I’m setting up alexandria on this phone.' \
   'the phone paste no longer states the human context'
 require shared/onboarding-prompts.ts \
   'Never claim you changed my phone or computer.' \
@@ -50,7 +50,7 @@ require shared/onboarding-prompts.ts \
   'send me to step 1 at alexandria-library.com/start' \
   'the phone paste no longer routes an absent Shortcut back to its direct setup'
 require shared/onboarding-prompts.ts \
-  'If you can actually set reminders' \
+  'If reminders work' \
   'the phone paste can pretend a reminder exists'
 require shared/onboarding-prompts.ts \
   'what you will ask me before reading any personal files' \
@@ -62,8 +62,17 @@ require shared/onboarding-prompts.ts \
   'If a local change needs my consent, tell me clearly whether I should continue, then wait for me to say \`start\`' \
   'the live paste no longer requires a simple verdict before informed human consent'
 require shared/onboarding-prompts.ts \
-  'if (!options.apiKey) return base;' \
-  'the keyless first paste contains more than the safe inspect-explain-consent request'
+  'export function accountConnectPrompt(connectionCode: string)' \
+  'the joined account handoff is not separated from first install'
+require shared/onboarding-prompts.ts \
+  'I already have a private local Alexandria loop.' \
+  'the joined handoff no longer states its healthy-loop prerequisite'
+require shared/onboarding-prompts.ts \
+  'Start at github.com/benmowinckel/alexandria/blob/main/factory/connect.md.' \
+  'the joined handoff no longer points to one focused public audit location'
+require shared/onboarding-prompts.ts \
+  'Do nothing until I say \`connect\`.' \
+  'the joined handoff no longer waits for exact connection consent'
 forbid shared/onboarding-prompts.ts \
   'accountInstructionRequest|Only after you decide the setup is safe|Install and verify alexandria' \
   'the first paste carries post-install behavior that belongs inside reviewed local onboarding'
@@ -116,13 +125,16 @@ require shared/onboarding-prompts.ts \
   'Use hooks when available.' \
   'the account instruction no longer prefers working hooks'
 require shared/onboarding-prompts.ts \
-  'only each new ordinary chat’s first reply asks “Want me to start an alexandria chat on the side?”' \
+  'only each new ordinary chat’s first reply asks “Want me to open your alexandria loop in the background for when you have a minute?”' \
   'the account instruction no longer carries the visible route'
 require shared/onboarding-prompts.ts \
   'Setup routes only at final test.' \
   'the account instruction can send a user away before setup is complete'
 require shared/onboarding-prompts.ts \
-  'Never repeat. On yes, open it with “a” if possible; else tell me how.' \
+  'do not open anything before yes' \
+  'immediately open a new chat and invoke its native Alexandria skill—no second question' \
+  "actual slash, dollar-sign, or native skill gesture" \
+  'Start an Alexandria session in a new chat.' \
   'the account instruction no longer gives every chat one natural route'
 require shared/onboarding-prompts.ts \
   'attached folder/project (eg Cowork/ChatGPT Work—open _start each task)' \
@@ -145,12 +157,9 @@ require shared/onboarding-prompts.ts \
 require shared/onboarding-prompts.ts \
   'If there is too little real context, say so and ask one high-signal question instead of inventing.' \
   'the one-time chat setup can invent personal context when none exists'
-require shared/onboarding-prompts.ts \
-  'Do not browse, install, publish, enable, or send anything merely to explain it.' \
-  'the joined handoff can turn orientation into activation'
-require shared/onboarding-prompts.ts \
-  'Record the module-map version in ~/alexandria/system/.module_guide_seen only after I have actually seen that orientation' \
-  'the joined handoff can mark module orientation complete before the user sees it'
+forbid shared/onboarding-prompts.ts \
+  'accountConnectPrompt[\s\S]*(setup\.sh|curl|bash|ALEXANDRIA_ACCOUNT_CONNECT_APPROVED)' \
+  'the short joined paste contains executable connection choreography'
 require shared/onboarding-prompts.ts \
   'Only after that works' \
   'the full-version explanation can precede free personal value'
@@ -218,7 +227,7 @@ require factory/block.md \
   'Five included method files — axioms, methodology, editor, mercury, and publisher — shape how the loop starts, but the Author can replace or turn off any of them without breaking it.' \
   'onboarding no longer distinguishes removable defaults from the core'
 require factory/block.md \
-  'The core is one closed local loop: ordinary sessions use the approved mirror and preserve clear signal; one small visible cue gives the Author a route into `/a`; the active session develops what accumulated' \
+  "The core is one closed local loop: ordinary sessions use the approved mirror and preserve clear signal; one small visible cue gives the Author the host's real Alexandria skill route; the active session develops what accumulated" \
   'onboarding no longer explains the passive-to-active loop'
 forbid factory/block.md \
   'Find all of them|open every file on their computer|whole digital footprint|search for unexpected (ones|sources)|psychological file' \
@@ -228,8 +237,8 @@ require factory/block.md \
   'library — https://alexandria-library.com/join' \
   'onboarding Phase 5 has no fixed library geography line'
 require factory/block.md \
-  '→ type $a' \
-  'onboarding Phase 5 does not provide Codex its real skill invocation'
+  'Use `→ type /a` in Claude Code, Cursor, or Factory; `→ type $a` in Codex; otherwise `→ say “start an Alexandria session”`.' \
+  'onboarding Phase 5 does not provide the host-native start gesture'
 forbid factory/block.md \
   'first month free|free for good|dollar a day|refer-three|conversion moment|commercial beat|join — unlock everything' \
   'onboarding contains a commercial or referral pitch'
@@ -384,7 +393,9 @@ require factory/canon/foundation.md \
   'never repeat a generic footer on every task' \
   'Foundation no longer states the disclosed visible cue clearly'
 require factory/canon/foundation.md \
-  'the first reply asks `Want me to start an alexandria chat on the side?` in both text and voice' \
+  'the first reply asks `Want me to open your alexandria loop in the background for when you have a minute?` in both text and voice' \
+  'a capable host immediately opens a new chat and invokes its native Alexandria skill without another question' \
+  'An incapable host gives one clear sentence naming the exact host-native gesture' \
   'the Foundation no longer gives text and voice the same natural route'
 require factory/canon/foundation.md \
   '**passive session → visible route into an Alexandria session → active session → a better mirror → and back.**' \
@@ -661,7 +672,7 @@ require factory/setup.sh \
   'ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer' \
   'setup does not verify the visible cue before activation'
 require factory/setup.sh \
-  'STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce the Claude/Cursor /a route, Codex \$a route, and per-session a. close route"' \
+  'STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce the fixed consent nudge and per-session a. close route"' \
   'setup still mistakes a broken cue for an Author opt-out'
 require factory/setup.sh \
   'DETAIL_LOOP="passive → cue → active"' \
@@ -688,9 +699,24 @@ forbid factory/skills/install.md \
 
 # An account key is identity only. Every optional network action is separately
 # consented to exact bytes; old automatic telemetry and feedback stay absent.
-require factory/setup.sh \
-  'ALEXANDRIA_ACCOUNT_CONNECT_APPROVED' \
+require factory/connect.md \
+  'Wait for the exact word `connect`. Nothing similar counts.' \
   'account connection is not separately approved'
+require factory/connect.md \
+  'Do not read the person' \
+  'account connection can read the private loop'
+require factory/scripts/connect-account.sh \
+  '[ -f "$RUNTIME_DIR/.setup_complete" ]' \
+  'the account connector can run before local setup completes'
+require factory/scripts/connect-account.sh \
+  '[ -f "$ALEX_DIR/system/.block_complete" ]' \
+  'the account connector can run before onboarding completes'
+forbid factory/scripts/connect-account.sh \
+  'ALEXANDRIA_SERVER' \
+  'an inherited environment variable can redirect account credentials'
+forbid factory/scripts/connect-account.sh \
+  'permissions/|setup\.sh|files/|vault|constitution|marketplace|/call|/file/' \
+  'the narrow account connector touches private files or optional capabilities'
 forbid factory/setup.sh \
   'curl.*\/feedback|REF_LOGIN|--ref' \
   'setup still sends feedback or accepts referral tracking'
@@ -854,11 +880,11 @@ cue_root="$test_root/cue-home/alexandria"
 mkdir -p "$cue_root/system/hooks" "$test_root/cue-home/.local/share/alexandria"
 touch "$test_root/cue-home/.local/share/alexandria/.setup_complete"
 HOME="$test_root/cue-home" bash factory/scripts/statusline.sh footer > "$test_root/cue-on"
-grep -qF 'start /a in a new chat' "$test_root/cue-on" \
+grep -qxF 'Want me to open your alexandria loop in the background for when you have a minute?' "$test_root/cue-on" \
   || fail 'visible cue did not render by default'
 HOME="$test_root/cue-home" bash factory/scripts/statusline.sh footer-codex > "$test_root/cue-codex"
-grep -qF 'start $a in a new chat' "$test_root/cue-codex" \
-  || fail 'Codex visible cue did not use the native $a invocation'
+grep -qxF 'Want me to open your alexandria loop in the background for when you have a minute?' "$test_root/cue-codex" \
+  || fail 'Codex visible cue did not use the fixed consent nudge'
 touch "$cue_root/system/hooks/visible-cue.off"
 HOME="$test_root/cue-home" bash factory/scripts/statusline.sh footer > "$test_root/cue-off-again"
 [ ! -s "$test_root/cue-off-again" ] || fail 'visible cue did not turn off immediately'
@@ -906,15 +932,11 @@ cue_active=$(printf '%s\n' '{"session_id":"cue-session"}' | \
 [ "$cue_active" = '→ /a. when done · reflect on what moved' ] \
   || fail 'native cue does not flip to the close gesture for the active tab'
 cue_footer=$(HOME="$cue_home" ALEXANDRIA_SETUP_PROBE=1 bash factory/scripts/statusline.sh footer)
-case "$cue_footer" in
-  "→ "*" · start /a in a new chat") ;;
-  *) fail 'portable cue no longer provides the /a start route' ;;
-esac
+[ "$cue_footer" = 'Want me to open your alexandria loop in the background for when you have a minute?' ] \
+  || fail 'portable cue no longer provides the fixed consent nudge'
 cue_codex=$(HOME="$cue_home" ALEXANDRIA_SETUP_PROBE=1 bash factory/scripts/statusline.sh footer-codex)
-case "$cue_codex" in
-  "→ "*" · start "'$a'" in a new chat") ;;
-  *) fail 'Codex cue no longer provides the native $a start route' ;;
-esac
+[ "$cue_codex" = 'Want me to open your alexandria loop in the background for when you have a minute?' ] \
+  || fail 'Codex cue no longer provides the fixed consent nudge'
 touch "$cue_home/alexandria/system/hooks/visible-cue.off" 2>/dev/null || {
   mkdir -p "$cue_home/alexandria/system/hooks"
   touch "$cue_home/alexandria/system/hooks/visible-cue.off"

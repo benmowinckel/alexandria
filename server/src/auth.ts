@@ -12,10 +12,15 @@ export interface Account {
   location?: string | null;
   email: string;
   api_key_hash: string;
+  /** Every live machine connection. Legacy accounts have only api_key_hash. */
+  api_key_hashes?: string[];
   email_token: string;
   api_key?: string;
   created_at: string;
   last_session: string;
+  /** The existing local loop has completed the narrow account exchange. */
+  connected_at?: string;
+  /** First successful optional module call; separate from account connection. */
   installed_at?: string;
   engagement_opt_out?: boolean;
   stripe_customer_id?: string;

@@ -150,6 +150,7 @@ const PUBLIC_RATE_LIMITED_ROUTES = [
   { path: '/auth/github/callback', scope: 'auth-callback', limit: 10 },
   { path: '/check-kin', scope: 'check-kin', limit: 10 },
   { path: '/account/rotate-key', scope: 'rotate-key', limit: 5 },
+  { path: '/account/connect/exchange', scope: 'account-connect', limit: 5 },
 ] as const;
 
 for (const { path, scope, limit } of PUBLIC_RATE_LIMITED_ROUTES) {
@@ -355,7 +356,8 @@ type PublicRateLimitScope =
   | 'waitlist' | 'follow' | 'onboard'          // POST bodies (5/min default)
   | 'auth' | 'auth-callback'                   // OAuth pair (10/min — see middleware above)
   | 'check-kin'                                // unauthenticated membership oracle
-  | 'rotate-key';                              // lost-key rotation (single click)
+  | 'rotate-key'                               // OAuth-bound reconnect link
+  | 'account-connect';                         // one-use connection exchange
 
 async function enforcePublicRateLimit(scope: PublicRateLimitScope, ip: string, limit = PUBLIC_RATE_LIMIT_MAX): Promise<boolean> {
   const windowSeconds = PUBLIC_RATE_LIMIT_WINDOW_SECONDS;

@@ -7,12 +7,22 @@ function main(html: string): string {
   return match[1];
 }
 
-const firstJoin = main(await callbackPageHtml('TEST-KEY', 'new-author'));
-assert.match(firstJoin, /connect your AI to alexandria/);
+const connectionCode = 'alex_connect_000000000000000000000000000000000000000000000000';
+const firstJoin = main(await callbackPageHtml(connectionCode, 'new-author'));
+assert.match(firstJoin, /<span class="cta-label">connect your existing loop<\/span>/);
+assert.match(firstJoin, /<span class="cta-why">paste this into your computer agent<\/span>/);
 assert.match(firstJoin, /invite people to alexandria/);
+assert.ok(firstJoin.indexOf('connect your existing loop') < firstJoin.indexOf('invite people'), 'connection must be the first joined action');
+
+const fullFirstJoin = await callbackPageHtml(connectionCode, 'new-author');
+assert.match(fullFirstJoin, /factory\/connect\.md/);
+assert.match(fullFirstJoin, /Do nothing until I say `connect`/);
+assert.match(fullFirstJoin, /your agent will inspect it first/);
+assert.doesNotMatch(fullFirstJoin, /alex_[a-f0-9]{32}/);
+assert.doesNotMatch(fullFirstJoin, /Help me set up the full private, local version/);
 
 const returning = main(await callbackPageHtml('', 'returning-author'));
 assert.match(returning, /invite people to alexandria/);
-assert.doesNotMatch(returning, /connect your AI to alexandria/);
+assert.doesNotMatch(returning, /<span class="cta-label">connect your existing loop<\/span>/);
 
 console.log('welcome contract: new Authors can connect and invite; returning Authors can invite');
