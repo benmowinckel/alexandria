@@ -56,6 +56,8 @@
   max-width: 620px;
 }
 
+.join-move + .join-move { margin-top: 28px; }
+
 .join-argument p {
   margin: 0;
   color: var(--text-secondary);
@@ -64,17 +66,24 @@
   text-wrap: pretty;
 }
 
-.join-argument p + p { margin-top: 18px; }
-
-.join-argument em {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.join-argument .join-lead {
+.join-claim {
+  margin: 0 0 10px;
   color: var(--text-primary);
   font-size: 18px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.35;
 }
+
+.join-argument a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--text-primary) 28%, transparent);
+}
+
+.join-argument a:hover { opacity: .65; }
 
 .door-btn {
   display: block;
@@ -126,119 +135,75 @@
   margin-top: 12px;
 }
 
-.join-referral-trigger,
-.join-referral-form {
+.act-email {
   display: flex;
   align-items: center;
-  width: 100%;
-  min-height: 48px;
-  padding: 11px 14px;
-  border: 1px solid color-mix(in srgb, var(--text-primary) 8%, transparent);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--bg-secondary) 45%, transparent);
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 15px;
-  line-height: 1.4;
-  text-align: left;
-  transition: border-color 180ms ease, background 180ms ease;
+  gap: 0;
+  cursor: text;
+  white-space: nowrap;
 }
 
-.join-referral-trigger {
-  justify-content: space-between;
-  cursor: pointer;
-}
-
-.join-referral-trigger:hover {
-  border-color: color-mix(in srgb, var(--text-primary) 20%, transparent);
-  background: color-mix(in srgb, var(--bg-secondary) 75%, var(--text-primary) 2%);
-}
-
-.join-referral-trigger:focus-visible,
-.join-referral-form:focus-within {
-  outline: 1px solid currentColor;
-  outline-offset: 5px;
-}
-
-.join-referral-arrow {
-  color: var(--text-muted);
-  transition: transform 180ms ease;
-}
-
-.join-referral-trigger:hover .join-referral-arrow { transform: translateX(2px); }
-
-.join-referral-form {
-  gap: 7px;
-  background: var(--bg-secondary);
-}
-
-.join-referral-label,
-.join-referral-at {
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.join-referral input {
-  flex: 1 1 auto;
-  min-width: 0;
-  width: auto;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--text-primary);
-  font: inherit;
-}
-
-.join-referral input::placeholder { color: var(--text-muted); opacity: 1; }
-
-.join-referral-error {
-  margin-left: auto;
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.join-referral-valid {
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.join-referral-confirm,
-.join-referral-cancel {
-  display: inline-flex;
-  flex: 0 0 28px;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.join-referral-confirm:disabled {
-  color: var(--text-muted);
-  opacity: .35;
+.act-email.is-saved {
   cursor: default;
+  justify-content: space-between;
 }
 
-.join-referral-confirm:not(:disabled):hover,
-.join-referral-cancel:hover {
-  background: color-mix(in srgb, var(--text-primary) 7%, transparent);
+.act-email input {
+  flex: none;
+  width: 8.2em;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
   color: var(--text-primary);
+  padding: 0;
 }
 
-.join-referral-confirm:focus-visible,
-.join-referral-cancel:focus-visible {
-  outline: 1px solid currentColor;
-  outline-offset: 3px;
+.act-email input.has-val { flex: 1; width: auto; }
+.act-email .join-door-go { margin-left: auto; }
+.act-email-error { margin-left: 8px; color: var(--text-muted); }
+.act-email input::placeholder { color: var(--text-muted); opacity: 1; }
+.act-email input[data-shake="on"] { animation: joinShake 320ms ease-in-out; }
+.act-email-why {
+  flex: none;
+  margin-left: 0.3em;
+  max-width: 28em;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 180ms ease, max-width 220ms ease;
+}
+.act-email.is-focused .act-email-why {
+  opacity: 0;
+  max-width: 0;
+  pointer-events: none;
+}
+
+.join-door-go {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  animation: joinGoAppear 260ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.join-door-go:hover { color: var(--text-primary); }
+.join-door-go.is-done { color: var(--text-primary); cursor: default; }
+.join-door-go .door-glyph { display: block; }
+
+@keyframes joinShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+@keyframes joinGoAppear {
+  from { opacity: 0; transform: translateX(-5px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @media (max-width: 640px) {

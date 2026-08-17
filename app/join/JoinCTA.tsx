@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { SERVER_URL } from '../lib/config';
-import { checkReferral } from '../lib/referral';
+import Link from 'next/link';
+import { SERVER_URL, FOUNDER_PROFILE_PATH } from '../lib/config';
+import { checkReferral, parseReferralInput } from '../lib/referral';
+import { ArrowIcon, TickIcon } from './DoorIcons';
 
-// The private loop is complete on its own. Membership makes each use better by
-// connecting it to proven systems, published minds, and consented relationships.
-// Referral attribution affects kin pricing; it is not the value.
+// The private loop is complete on its own. Membership is the connector.
+// Referral credit only lands after a member handle is confirmed here and
+// validated again on the OAuth callback. Self-referrals and returning
+// accounts never count.
 function githubUrl(ref: string, refSource: string): string {
   const q = new URLSearchParams();
   if (ref) q.set('ref', ref);
@@ -25,20 +28,19 @@ export default function JoinCTA({
   const [savedRef, setSavedRef] = useState('');
   const candidateUrlRef = urlRef || savedRef;
   const validUrlRef = candidateUrlRef && urlCheck?.input === candidateUrlRef ? urlCheck.valid : null;
-  const urlRefChecked = !!candidateUrlRef && urlCheck?.input === candidateUrlRef;
-  const pendingUrlRef = candidateUrlRef && !urlRefChecked ? candidateUrlRef : '';
-  const [referralEditing, setReferralEditing] = useState(false);
   const [confirmedManualRef, setConfirmedManualRef] = useState('');
   const [manualRef, setManualRef] = useState('');
   const [manualCheck, setManualCheck] = useState<{ input: string; valid: string | null } | null>(null);
+  const [referralFocused, setReferralFocused] = useState(false);
+  const [shakeKey, setShakeKey] = useState(0);
   const referralRef = useRef<HTMLInputElement>(null);
-  const cleanManualRef = manualRef.replace(/[^A-Za-z0-9-]/g, '').slice(0, 39);
+  const cleanManualRef = parseReferralInput(manualRef);
   const manualValid = cleanManualRef && manualCheck?.input === cleanManualRef ? manualCheck.valid : null;
-  const manualInvalid = cleanManualRef && manualCheck?.input === cleanManualRef && !manualCheck.valid;
+  const manualInvalid = !!(cleanManualRef && manualCheck?.input === cleanManualRef && !manualCheck.valid);
 
   useEffect(() => {
     if (urlRef) return;
-    try { setSavedRef(window.localStorage.getItem('alexandria-referrer') || ''); } catch { /* storage is optional */ }
+    try { setSavedRef(parseReferralInput(window.localStorage.getItem('alexandria-referrer') || '')); } catch { /* storage is optional */ }
   }, [urlRef]);
 
   useEffect(() => {
@@ -52,7 +54,10 @@ export default function JoinCTA({
   }, [candidateUrlRef]);
 
   useEffect(() => {
-    if (!cleanManualRef) return;
+    if (!cleanManualRef) {
+      setManualCheck(null);
+      return;
+    }
     let live = true;
     const timer = setTimeout(async () => {
       const ok = await checkReferral(cleanManualRef);
@@ -61,29 +66,18 @@ export default function JoinCTA({
     return () => { live = false; clearTimeout(timer); };
   }, [cleanManualRef]);
 
-  useEffect(() => {
-    if (referralEditing) referralRef.current?.focus();
-  }, [referralEditing]);
-
   const confirmManualReferral = () => {
-    if (!manualValid) return;
+    if (!manualValid) {
+      setShakeKey((key) => key + 1);
+      return;
+    }
     setConfirmedManualRef(manualValid);
-    setReferralEditing(false);
+    setReferralFocused(false);
     try { window.localStorage.setItem('alexandria-referrer', manualValid); } catch { /* storage is optional */ }
   };
 
-  const cancelReferral = () => {
-    setReferralEditing(false);
-    setManualRef('');
-    setManualCheck(null);
-  };
-
-  // The OAuth callback validates the ref again before awarding credit. Carry a
-  // URL/saved candidate immediately so a fast click cannot outrun the UI check;
-  // remove it here only if the visible check rejects it.
   const confirmedRef = confirmedManualRef || validUrlRef || '';
-  const effectiveRef = confirmedRef || pendingUrlRef || '';
-  const joinUrl = githubUrl(effectiveRef, refSource);
+  const joinUrl = githubUrl(confirmedRef, refSource);
 
   return (
     <>
@@ -91,35 +85,54 @@ export default function JoinCTA({
         <h1 className="join-hero">Your mind gets better with other minds.</h1>
 
         <div className="join-argument">
-          <p className="join-lead">
-            <em>Your private loop is the individual side of your personal context.</em> It lives in files you own and grows as your AI learns how you think. It is deep, sovereign, and unified on the private side.
-          </p>
-          <p>
-            <em>Joining adds the public side of that same context.</em> The Library gives you a place for the public parts of your work, ideas, projects, and networks: a deeper, sovereign, unified page, not a shallow profile of links. That is only possible inside a collective hub, because the hub gives your page a place to live and lets it sit beside other people&rsquo;s public contexts.
-          </p>
-          <p>
-            <em>It works both ways.</em> Your page is yours to shape and share. You can learn from other people&rsquo;s public contexts, and they can learn from what you choose to make public. The Marketplace works both ways too: use methods other people built, and eventually make your own useful methods available. Your private files stay private, and nothing is connected by default.
-          </p>
+          <div className="join-move">
+            <p className="join-claim">You became yourself through other people.</p>
+            <p>
+              Nearly every thought you think is yours actually came from someone else. Something you read that another person wrote, a friend you talked to, a teacher who taught you. A loop that only ever talks to itself is insular. So we built the town square that gathers people, and lets you take the extra the collective can give that no one can make alone.
+            </p>
+          </div>
+          <div className="join-move">
+            <p className="join-claim">What you join is the public version of yourself.</p>
+            <p>
+              Your private map stays private. A public derivative of it is how you walk into that square and work with the others who made the same choice. The deep, sovereign, unified private map is what lets you build a deep, sovereign, unified map of your public self. The <Link href={FOUNDER_PROFILE_PATH}>founder&apos;s page</Link> is exactly that, one alexandria profile hung on the scattered networks you already live in, pointing at the ground truth of your public image. It pulls what is already out there into one profile you own, makes a home for the work that never had one, and gives the whole thing a depth it could not have any other way, because the public version of the private map is what ties it together.
+            </p>
+          </div>
+          <div className="join-move">
+            <p className="join-claim">That is when other minds enter the work.</p>
+            <p>
+              The vertical gathering meets the horizontal one. You connect with the others in the community, who have put their ideas outside their own heads, and the methods they use to build their loops. In the Library you sit beside them. In the marketplace you can take a method that already works, and one day put one of yours in someone else&apos;s hands. You keep refining yourself, not alone, but through other people, and with them.
+            </p>
+          </div>
         </div>
 
         <p className="join-close">
           Bring three friends in your first month, and membership stays free. Otherwise, it is $1 a day. If cost is what stops you, message me and I will waive it. Your loop stays yours if you leave. I just want you to try it for a month, see what it actually does for you, and then decide whether it is worth keeping.
         </p>
         <a className="door-btn act-box act-primary" href={joinUrl}>
-          join the collective<span className="act-why act-why-inverse"> &mdash; start with github</span>
+          join the collective<span className="act-why">{'\u00a0'}— start with github</span>
         </a>
 
-        {!effectiveRef && <div className="join-referral">
-          {referralEditing ? (
+        <div className="join-referral">
+          {confirmedRef ? (
+            <p className="door-btn act-box act-email is-saved">
+              <span className="act-sent">
+                @{confirmedRef} invited you
+                <span className="act-why">{'\u00a0'}— referral saved</span>
+              </span>
+              <span className="join-door-go is-done" aria-hidden="true">
+                <TickIcon />
+              </span>
+            </p>
+          ) : (
             <form
-              className="join-referral-form"
+              className={`door-btn act-box act-email${referralFocused ? ' is-focused' : ''}`}
               onSubmit={(event) => {
                 event.preventDefault();
                 confirmManualReferral();
               }}
+              noValidate
+              onClick={() => referralRef.current?.focus()}
             >
-              <span className="join-referral-label">github</span>
-              <span className="join-referral-at" aria-hidden="true">@</span>
               <input
                 ref={referralRef}
                 type="text"
@@ -127,42 +140,41 @@ export default function JoinCTA({
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
-                placeholder="handle"
-                aria-label="referral github handle"
+                placeholder="add a referral"
+                aria-label="referral github handle or invite link"
                 aria-invalid={manualInvalid || undefined}
+                data-shake={shakeKey > 0 ? 'on' : 'off'}
+                className={cleanManualRef || referralFocused ? 'has-val' : ''}
                 value={manualRef}
+                onFocus={() => setReferralFocused(true)}
+                onBlur={() => setReferralFocused(false)}
                 onChange={(event) => setManualRef(event.target.value)}
+                onPaste={(event) => {
+                  const pasted = event.clipboardData.getData('text');
+                  const parsed = parseReferralInput(pasted);
+                  if (parsed && parsed !== pasted.trim()) {
+                    event.preventDefault();
+                    setManualRef(parsed);
+                  }
+                }}
               />
-              {manualInvalid && <span className="join-referral-error" role="status">not found</span>}
-              {manualValid && <span className="join-referral-valid" aria-hidden="true">✓</span>}
-              <button
-                className="join-referral-confirm"
-                type="submit"
-                disabled={!manualValid}
-                aria-label="confirm referral"
-              >
-                →
-              </button>
-              <button
-                className="join-referral-cancel"
-                type="button"
-                onClick={cancelReferral}
-                aria-label="cancel referral"
-              >
-                ×
-              </button>
+              {!cleanManualRef && !manualInvalid && (
+                <span className="act-why act-email-why">{'\u00a0'}— paste a handle or invite</span>
+              )}
+              {manualInvalid && <span className="act-why act-email-error" role="status">that is not a member</span>}
+              {referralFocused && (
+                <button
+                  type="submit"
+                  className="join-door-go"
+                  aria-label="confirm referral"
+                  onMouseDown={(event) => event.preventDefault()}
+                >
+                  <ArrowIcon />
+                </button>
+              )}
             </form>
-          ) : (
-            <button
-              className="join-referral-trigger"
-              type="button"
-              onClick={() => setReferralEditing(true)}
-            >
-              <span>add a referral</span>
-              <span className="join-referral-arrow" aria-hidden="true">→</span>
-            </button>
           )}
-        </div>}
+        </div>
       </section>
     </>
   );

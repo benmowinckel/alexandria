@@ -1100,11 +1100,9 @@ export default function LandingPage() {
                     stops feeling like talking to a stranger{'\u00a0'}— your ai
                     helps you far better, and develops your thinking instead of
                     only answering. Sovereign, so it lives in private files you
-                    own. Unified, so every ai reads the same you. The individual
-                    loop is the private side of your context. The collective is
-                    optional: the public side, where your own page can bring the
-                    public parts of your life together and sit beside other
-                    people&apos;s.
+                    own: take it with you, or delete it{'\u00a0'}— no company
+                    locks you in. Unified, so every ai reads the same you, not a
+                    different you in each app.
                   </p>
                   <p className="pitch-simple-prose">
                     We call that an alexandria loop{'\u00a0'}— an idea, not

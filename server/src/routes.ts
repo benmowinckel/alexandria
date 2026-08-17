@@ -9,7 +9,7 @@ import { getDB, getR2 } from './db.js';
 import { deleteAllProtocolR2 } from './file-access.js';
 import { loadAccounts, loadAccount, saveAccount, setAuthIndex, deleteAccount, getKV, setEmailTokenIndex, getEmailTokenIndex, getAuthIndex, getLoginIndex } from './kv.js';
 import { hashApiKey, generateToken } from './crypto.js';
-import { Account, AccountStore, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
+import { Account, AccountStore, ACTIVE_AUTHOR_STATUSES, extractApiKey, extractLibrarySessionToken, findByApiKey, findByLibrarySessionToken, requireAuth } from './auth.js';
 import { assignAuthorNumber, generateApiKey, getAccounts, getAccountByLogin, requireAdmin, updateAccountBilling } from './accounts.js';
 import { sendEmail, sendEmailsBatched, sendWelcomeEmail, FOUNDER_EMAIL, setupFixNudgeContent } from './email.js';
 import { runHealthDigest, runWeekOneCheckIns } from './cron.js';
@@ -358,9 +358,10 @@ export function registerRoutes(app: Hono) {
   // --- Kin code validation (public, called by /join before OAuth) ---
 
   app.get('/check-kin', async (c) => {
-    const code = (c.req.query('code') || '').trim();
+    const code = (c.req.query('code') || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 39);
     if (!code) return c.json({ valid: false }, 400);
-    const valid = (await getAccountByLogin(code)) !== null;
+    const found = await getAccountByLogin(code);
+    const valid = !!found && ACTIVE_AUTHOR_STATUSES.has(found.account.subscription_status || '');
     c.header('Cache-Control', 'public, max-age=60');
     return c.json({ valid });
   });
@@ -376,7 +377,7 @@ export function registerRoutes(app: Hono) {
     const state = randomBytes(16).toString('hex');
     const kv = getKV();
     // Preserve referral params (and optional post-login redirect) through OAuth round-trip
-    const ref = c.req.query('ref') || '';
+    const ref = (c.req.query('ref') || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 39);
     const refSource = c.req.query('ref_source') || '';
     const refId = c.req.query('ref_id') || '';
     const next = sanitizeNextPath(c.req.query('next'));
@@ -649,7 +650,7 @@ export function registerRoutes(app: Hono) {
         // Validate ref maps to an existing github_login before inserting — drop dangling rows.
         // Self-referral (ref === own login) is rejected above so users can't credit themselves.
         const refResult = await getAccountByLogin(ref);
-        if (!refResult) {
+        if (!refResult || !ACTIVE_AUTHOR_STATUSES.has(refResult.account.subscription_status || '')) {
           logEvent('library_signup_referral_invalid', { attempted_ref: ref, source: refSource || 'direct', referred: user.login });
         } else {
           try {
