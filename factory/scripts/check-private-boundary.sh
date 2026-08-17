@@ -35,6 +35,12 @@ require shared/onboarding-prompts.ts \
   'I am at my computer. Help me set up the full private, local version of alexandria here' \
   'the computer paste no longer states the human intent'
 require shared/onboarding-prompts.ts \
+  'Answer me first in a few lines.' \
+  'the computer paste no longer requires a quick first answer'
+require shared/onboarding-prompts.ts \
+  'If this machine actually supports the Apple Shortcut' \
+  'the computer paste still assumes Shortcut compatibility'
+require shared/onboarding-prompts.ts \
   'I’m setting up alexandria on this phone.' \
   'the phone paste no longer states the human context'
 require shared/onboarding-prompts.ts \
@@ -190,6 +196,54 @@ NODE
 
 # The private onboarding report can explain the local loop but cannot carry a
 # company ask or tune one from the Author's psychological file.
+require factory/block.md \
+  'First move: classify, then answer, then inspect.' \
+  'onboarding no longer classifies an existing install before reading personal files'
+require factory/block.md \
+  'Do not go silent for a 15–25 minute audit.' \
+  'onboarding no longer forbids a long silent audit'
+require factory/block.md \
+  'The Apple Shortcut bridge is macOS/iOS only' \
+  'onboarding can still claim iCloud or Shortcut support without inspecting the machine'
+require factory/onboarding.md \
+  'factory/scripts/classify_install.sh' \
+  'the onboarding router no longer classifies an existing install'
+require factory/onboarding.md \
+  'A fingerprint learned from this repo is continuity evidence, not an independent trust root.' \
+  'the onboarding router no longer preserves the trust-root bootstrap limit'
+require factory/scripts/classify_install.sh \
+  'Never opens' \
+  'the classifier no longer states that it skips personal content'
+require factory/scripts/classify_install.sh \
+  'class: $class' \
+  'the classifier no longer emits a machine-readable class'
+require factory/setup.sh \
+  'Healthy existing install — nothing was overwritten.' \
+  'setup no longer short-circuits a healthy existing install'
+require factory/setup.sh \
+  'Refusing to install over a ${INSTALL_CLASS} existing path' \
+  'setup no longer fails closed on a partial or foreign path'
+forbid factory/setup.sh \
+  'ls "\$ALEX_DIR/files/constitution"' \
+  'setup still lists constitution files to detect an existing Author'
+require factory/scripts/capture_resolver.py \
+  'def is_blocked_ip(' \
+  'the capture resolver has no private-address block'
+require factory/scripts/capture_resolver.py \
+  'def safe_urlopen(' \
+  'the capture resolver has no bounded fetch helper'
+require factory/scripts/transcript_path.sh \
+  'safe_transcript_path()' \
+  'transcript archiving has no host-root helper'
+require factory/systems/shortcut.md \
+  'Nothing is sent to Alexandria.' \
+  'the Shortcut spec no longer states that Alexandria receives nothing'
+require factory/systems/shortcut.md \
+  '3efb4b6dfedc4d283c0b40cc0dfc9037923f49e4ab444889810e0978d0caed26' \
+  'the Shortcut spec no longer carries the public URL hash'
+require factory/scripts/uninstall.py \
+  'User data was not deleted.' \
+  'the scoped uninstaller no longer states that user data stays'
 require factory/block.md \
   'The commercial boundary is absolute.' \
   'onboarding has no explicit commercial boundary'
@@ -705,6 +759,9 @@ require factory/connect.md \
 require factory/connect.md \
   'Do not read the person' \
   'account connection can read the private loop'
+require factory/connect.md \
+  'Only `healthy` may continue' \
+  'account connection no longer requires metadata-only healthy classification'
 require factory/scripts/connect-account.sh \
   '[ -f "$RUNTIME_DIR/.setup_complete" ]' \
   'the account connector can run before local setup completes'
@@ -1076,5 +1133,10 @@ fi
 after_hash=$(shasum -a 256 "$uninstall_home/.claude/settings.json" | awk '{print $1}')
 [ "$before_hash" = "$after_hash" ] \
   || fail 'scoped uninstaller rewrote malformed existing config'
+
+bash factory/scripts/test_classify_install.sh \
+  || fail 'classify_install regressions failed'
+python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_transcript_path.py \
+  || fail 'capture or transcript regressions failed'
 
 echo "private-boundary check passed"

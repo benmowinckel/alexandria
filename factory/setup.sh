@@ -192,15 +192,47 @@ if [ -z "$API_KEY" ] && [ -f "$ALEX_DIR/system/.api_key" ]; then
   [ -n "$API_KEY" ] && echo "Reusing existing API key from $ALEX_DIR/system/.api_key"
 fi
 
-# Existing-Author detection: a non-empty constitution means onboarding already
-# ran and this re-run is a sync, not a fresh install. Setup itself never writes
-# constitution files, so this is pre-run state even when read later. Drives the
-# closing message — "synced" for an existing Author, the onboarding block for a
-# fresh install. (Works keyless too, unlike keying off API-key reuse.)
-# Plain ls (not -A): dotfiles don't count — a Finder-browsed empty folder grows
-# a .DS_Store, which must not fake an existing Author.
+# Existing-install classification is metadata-only: receipts, hashes, the
+# setup report, and symlink checks. Never list or read constitution, vault,
+# or other personal content to decide whether this is a sync.
+CLASSIFY_SH="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)/scripts/classify_install.sh"
+INSTALL_CLASS=""
+INSTALL_BLOCK_COMPLETE=""
+CLASSIFY_OUT=""
+if [ -f "$CLASSIFY_SH" ]; then
+  CLASSIFY_OUT=$(ALEXANDRIA_DIR="$ALEX_DIR" ALEXANDRIA_RUNTIME_DIR="$RUNTIME_DIR" bash "$CLASSIFY_SH" 2>/dev/null || true)
+  INSTALL_CLASS=$(printf '%s\n' "$CLASSIFY_OUT" | awk -F': ' '$1=="class"{print $2; exit}')
+  INSTALL_BLOCK_COMPLETE=$(printf '%s\n' "$CLASSIFY_OUT" | awk -F': ' '$1=="block_complete"{print $2; exit}')
+fi
+if [ "${ALEXANDRIA_VERIFIED_UPDATE:-}" != "1" ]; then
+  case "$INSTALL_CLASS" in
+    healthy)
+      printf '%s\n' "$CLASSIFY_OUT"
+      echo ""
+      echo "Healthy existing install — nothing was overwritten."
+      echo "AGENT: healthy existing install — do NOT overwrite files, read the block, or start onboarding."
+      echo "Disclose the optional connected state above. Do not disable any of it."
+      echo "Answer in a few lines now; do not start a silent audit."
+      exit 0
+      ;;
+    partial|foreign)
+      printf '%s\n' "$CLASSIFY_OUT" >&2
+      echo "Refusing to install over a ${INSTALL_CLASS} existing path. Inspect it and move it aside, or update through the installed verifier." >&2
+      exit 1
+      ;;
+  esac
+elif [ "$INSTALL_CLASS" = "foreign" ]; then
+  printf '%s\n' "$CLASSIFY_OUT" >&2
+  echo "Refusing to update a foreign path without exact prior-install proof." >&2
+  exit 1
+fi
+# A completed prior install is a sync, not a fresh mind. Use the activation
+# marker or onboarding-complete receipt — never personal files.
 EXISTING_AUTHOR=""
-[ -n "$(ls "$ALEX_DIR/files/constitution" 2>/dev/null)" ] && EXISTING_AUTHOR=1
+if [ "$INSTALL_CLASS" = "healthy" ] || [ "$INSTALL_BLOCK_COMPLETE" = "yes" ] \
+   || [ -f "$RUNTIME_DIR/.setup_complete" ] || [ -f "$ALEX_DIR/system/.block_complete" ]; then
+  EXISTING_AUTHOR=1
+fi
 
 # Keyless = the private local loop, no account. A key connects identity only;
 # hosted features remain off until their own permission marker exists.
@@ -222,11 +254,13 @@ fi
 #   REQUIRED — the bare minimum to deliver the first session: curl and a
 #     coding agent that can read/write the machine.
 #     Missing → one clear line, stop. No wall of errors later.
-#   OPTIONAL — git, node/python3, gh sign-in, ssh signing, iCloud. Each adds a
-#     layer (backup, session hooks, signing, capture) but NONE gates the first
+#   OPTIONAL — git, node/python3, gh sign-in, ssh signing. Each adds a
+#     layer (backup, session hooks, signing) but NONE gates the first
 #     reflection. Present now → wired silently below. Missing now → collected in
 #     $DEFERRED as local diagnostic context. It is surfaced only when the
 #     Author asks why a capability is unavailable; never as an upsell or nudge.
+#     iCloud and the Apple Shortcut are not inferred from this repo: inspect
+#     uname and the iCloud Drive path on this machine before claiming them.
 
 # REQUIRED #1 — curl. Used unconditionally throughout (fetch_factory, the key
 # probe, the session hooks); wget alone can't run this installer, so passing
@@ -252,7 +286,16 @@ if ! command -v gh &>/dev/null; then
   DEFERRED="${DEFERRED}gh CLI — unlocks the optional backup add-on to your own GitHub (https://cli.github.com)\n"
 fi
 
+PLATFORM="$(uname -s 2>/dev/null || echo unknown)"
+ICLOUD_DOCS="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
+if [ "$PLATFORM" = "Darwin" ] && [ -d "$ICLOUD_DOCS" ]; then
+  PLATFORM_CAPTURE="macos-icloud-available"
+else
+  PLATFORM_CAPTURE="no-apple-shortcut-bridge"
+fi
+
 echo "Setting up Alexandria..."
+echo "  platform: $PLATFORM ($PLATFORM_CAPTURE)"
 
 # ── 1. Directory structure ────────────────────────────────────────
 
@@ -407,6 +450,11 @@ fetch_factory "skills/codex-ambient.md" "$RUNTIME_DIR/codex-ambient.md" "skills/
 # they never bootstrap a replacement from the network.
 fetch_factory "scripts/verify-fetch.sh" "$RUNTIME_DIR/scripts/verify-fetch.sh" "scripts/verify-fetch.sh" yes
 chmod +x "$RUNTIME_DIR/scripts/verify-fetch.sh" 2>/dev/null
+fetch_factory "scripts/classify_install.sh" "$RUNTIME_DIR/scripts/classify_install.sh" "scripts/classify_install.sh" yes
+chmod +x "$RUNTIME_DIR/scripts/classify_install.sh" 2>/dev/null
+fetch_factory "scripts/transcript_path.sh" "$RUNTIME_DIR/scripts/transcript_path.sh" "scripts/transcript_path.sh" yes
+chmod +x "$RUNTIME_DIR/scripts/transcript_path.sh" 2>/dev/null
+fetch_factory "scripts/transcript_path.py" "$RUNTIME_DIR/scripts/transcript_path.py" "scripts/transcript_path.py" yes
 # Root habit-pause checker — Author files, overwrite the tool, never the ledger.
 fetch_factory "scripts/root_integrity.py" "$ALEX_DIR/system/scripts/root_integrity.py" "scripts/root_integrity.py" yes
 fetch_factory "scripts/install-root-hook.sh" "$ALEX_DIR/system/scripts/install-root-hook.sh" "scripts/install-root-hook.sh" yes
@@ -1871,6 +1919,8 @@ SETUP_STATUS="ok"
   [ "$CODEX_DETECTED" = "yes" ] && echo "  codex_skill: $STATUS_CODEX"
   [ "$FACTORY_DETECTED" = "yes" ] && echo "  factory_skill: $STATUS_FACTORY"
   echo "  private_repo: $STATUS_REPO"
+  echo "platform: $PLATFORM"
+  echo "platform_capture: $PLATFORM_CAPTURE"
 } > "$ALEX_DIR/system/.setup_report"
 
 # ── Status matrix (terminal output) ──────────────────────────────
@@ -2030,13 +2080,15 @@ elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
       echo "AGENT: read ~/alexandria/system/.block now and follow it end-to-end. Open by"
       echo "proposing the plan in your own words — what you'll read, what you'll write,"
       echo "that nothing leaves this machine — and get their ok before opening their files."
-      echo "Once they say yes, they can step away."
+      echo "Answer first in a few lines, then inspect in short stages with progress beats."
+      echo "Do not go silent for a long audit or tell them to step away."
     else
       echo "AGENT: read ~/alexandria/system/.block now and follow it end-to-end. Open by"
       echo "proposing the plan in your own words — what you'll read, what you'll write,"
       echo "that the connected account enabled no data-carrying feature, and get their ok before"
       echo "opening their files."
-      echo "Once they say yes, they can step away."
+      echo "Answer first in a few lines, then inspect in short stages with progress beats."
+      echo "Do not go silent for a long audit or tell them to step away."
     fi
   fi
   # Radical UX rule (founder, 2026-07-30): the installer prints nothing the

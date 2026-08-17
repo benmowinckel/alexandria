@@ -19,7 +19,7 @@ End with `Say connect to continue.` Then stop. Do not show the person an audit t
 
 ## What to verify privately
 
-Verify the protected runtime setup marker and completed local onboarding marker. If either is absent, stop and send the person to `https://alexandria-library.com/start`; do not install, repair, or approximate Alexandria through this route. Do not read the person's `files/`, transcripts, captures, constitution, other agent instructions, or unrelated configuration. None is needed.
+Run the metadata-only classifier (`factory/scripts/classify_install.sh` or the installed `~/.local/share/alexandria/scripts/classify_install.sh`). Only `healthy` may continue; `partial` and `foreign` fail closed. Verify the protected runtime setup marker and completed local onboarding marker. If either is absent, stop and send the person to `https://alexandria-library.com/start`; do not install, repair, or approximate Alexandria through this route. Do not read the person's `files/`, transcripts, captures, constitution, other agent instructions, or unrelated configuration. None is needed. Disclose optional connected state; do not disable it.
 
 At one public revision, inspect `TRUST.md`, `factory/manifest.txt`, `factory/scripts/verify-fetch.sh`, and `factory/scripts/connect-account.sh`. Every required runtime file, including `scripts/connect-account.sh`, must appear in the signed manifest at that same revision; if one is absent, refuse. Confirm that the installed verifier authenticates the signed connector and rollback version before running it; the connector writes only `~/alexandria/system/.api_key` and `~/alexandria/system/.protocol_status.json` with restrictive permissions; and it contacts only `https://api.alexandria-library.com`.
 
