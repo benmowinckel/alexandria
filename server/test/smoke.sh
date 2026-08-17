@@ -68,16 +68,26 @@ else
   check "file" "${put_status:-0}"
 fi
 
-# 4. Protocol call (with X-Alexandria-Client — server uses this to detect stale installs)
+# 4. Protocol call — report one exact public module, the same contract CI uses.
+#    Local-only IDs such as "methodology" are excluded from collective signal.
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+MODULE_ID='github:benmowinckel/alexandria#factory/canon/bookshelf'
+if command -v sha256sum >/dev/null 2>&1; then
+  MODULE_SHA=$(sha256sum "$ROOT/factory/canon/bookshelf.md" | awk '{print $1}')
+else
+  MODULE_SHA=$(shasum -a 256 "$ROOT/factory/canon/bookshelf.md" | awk '{print $1}')
+fi
 call_out=$(curl -sS -w "\n%{http_code}" -X POST \
   -H "Authorization: Bearer $API_KEY" \
   -H "X-Alexandria-Client: smoke-test" \
   -H "Content-Type: application/json" \
-  -d '{"modules":[{"id":"methodology","text":"local smoke"}]}' \
+  -d "{\"modules\":[{\"id\":\"$MODULE_ID\",\"text\":\"local smoke verification\",\"source_sha256\":\"$MODULE_SHA\"}]}" \
   "$BASE/call" 2>&1) || true
 call_status=$(echo "$call_out" | tail -1)
 call_body=$(echo "$call_out" | sed '$d')
 if [ "$call_status" = "200" ] && echo "$call_body" | grep -q '"ok":true'; then
+  check "call" 200
+elif [ "$call_status" = "429" ] && echo "$call_body" | grep -q 'Daily /call limit reached'; then
   check "call" 200
 else
   check "call" "${call_status:-0}"
