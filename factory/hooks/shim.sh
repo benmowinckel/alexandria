@@ -29,6 +29,15 @@ SIGN_NAMESPACE="alexandria"
 umask 077
 SIGN_IDENTITY="alexandria-payload-signing"
 
+# Host-supplied transcript_path must be a regular user-owned file under a
+# supported host root. Missing helper = fail closed (do not copy).
+if [ -f "$RUNTIME_DIR/scripts/transcript_path.sh" ]; then
+  # shellcheck source=/dev/null
+  . "$RUNTIME_DIR/scripts/transcript_path.sh"
+else
+  safe_transcript_path() { return 1; }
+fi
+
 # Setup activates every harness atomically only after its complete core passes
 # functional probes. A failed install/update may leave files for recovery, but
 # must not leave a mixed set of hooks running.
@@ -256,7 +265,7 @@ elif [ "$MODE" = "codex-session-end" ]; then
   [ -n "$sid" ] || sid="session"
   timestamp=$(date +%Y-%m-%d_%H-%M-%S)
 
-  if [ -n "$tp" ] && [ -f "$tp" ]; then
+  if [ -n "$tp" ] && safe_transcript_path "$tp"; then
     mkdir -p "$ALEX_DIR/files/vault" 2>/dev/null
     cp "$tp" "$ALEX_DIR/files/vault/${timestamp}_codex_${sid}.jsonl" 2>/dev/null || true
   fi
@@ -286,7 +295,7 @@ elif [ "$MODE" = "session-end" ]; then
     ALEXANDRIA_RUNTIME_DIR="$RUNTIME_DIR" ALEX_WAS_ACTIVE=$was_active bash "$PAYLOAD_FILE" session-end "$ALEX_DIR" "$API_KEY" "$tp"
   else
     # Bare fallback — just save transcript to vault
-    [ -n "$tp" ] && [ -f "$tp" ] && mkdir -p "$ALEX_DIR/files/vault" && cp "$tp" "$ALEX_DIR/files/vault/$(date +%Y-%m-%d_%H-%M-%S).jsonl"
+    [ -n "$tp" ] && safe_transcript_path "$tp" && mkdir -p "$ALEX_DIR/files/vault" && cp "$tp" "$ALEX_DIR/files/vault/$(date +%Y-%m-%d_%H-%M-%S).jsonl"
   fi
 
 elif [ "$MODE" = "subagent" ]; then

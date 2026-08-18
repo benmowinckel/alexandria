@@ -17,6 +17,13 @@ RUNTIME_DIR="${ALEXANDRIA_RUNTIME_DIR:-$HOME/.local/share/alexandria}"
 # to the current user unless a later exact-purpose action publishes them.
 umask 077
 
+if [ -f "$RUNTIME_DIR/scripts/transcript_path.sh" ]; then
+  # shellcheck source=/dev/null
+  . "$RUNTIME_DIR/scripts/transcript_path.sh"
+else
+  safe_transcript_path() { return 1; }
+fi
+
 # Direct payload calls fail closed too. The activation marker lives beside the
 # executable runtime, outside the AI-writable Author folder.
 if [ ! -f "$RUNTIME_DIR/.setup_complete" ]; then
@@ -483,6 +490,11 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
     else
       check_drift "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md" "  cursor /alexandria skill (~/.cursor/skills/alexandria/SKILL.md)" "rename-alexandria"
     fi
+    if [ -f "$HOME/.grok/skills/a/SKILL.md" ] && grep -qi alexandria "$HOME/.grok/skills/a/SKILL.md" 2>/dev/null; then
+      check_drift "$HOME/.grok/skills/a/SKILL.md" "skills/claudecode.md" "  grok /a skill (~/.grok/skills/a/SKILL.md)"
+    else
+      check_drift "$HOME/.grok/skills/alexandria/SKILL.md" "skills/claudecode.md" "  grok /alexandria skill (~/.grok/skills/alexandria/SKILL.md)" "rename-alexandria"
+    fi
     check_drift "$RUNTIME_DIR/hooks/shim.sh" "hooks/shim.sh" "  hook shim (~/.local/share/alexandria/hooks/shim.sh)"
     check_drift "$ALEX_DIR/system/modules.json" "module-system.json" "  module map (~/alexandria/system/modules.json)"
 
@@ -901,7 +913,7 @@ if [ "$MODE" = "session-end" ]; then
 
   # Transcript → vault
   transcript_path="$EXTRA"
-  if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
+  if [ -n "$transcript_path" ] && safe_transcript_path "$transcript_path"; then
     timestamp=$(date +%Y-%m-%d_%H-%M-%S)
     vault_file="$ALEX_DIR/files/vault/${timestamp}.jsonl"
     mkdir -p "$ALEX_DIR/files/vault" 2>/dev/null

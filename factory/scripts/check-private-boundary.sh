@@ -35,6 +35,12 @@ require shared/onboarding-prompts.ts \
   'I am at my computer. Help me set up the full private, local version of alexandria here' \
   'the computer paste no longer states the human intent'
 require shared/onboarding-prompts.ts \
+  'Answer me first in a few lines.' \
+  'the computer paste no longer requires a quick first answer'
+require shared/onboarding-prompts.ts \
+  'If this machine actually supports the Apple Shortcut' \
+  'the computer paste still assumes Shortcut compatibility'
+require shared/onboarding-prompts.ts \
   'I’m setting up alexandria on this phone.' \
   'the phone paste no longer states the human context'
 require shared/onboarding-prompts.ts \
@@ -191,6 +197,93 @@ NODE
 # The private onboarding report can explain the local loop but cannot carry a
 # company ask or tune one from the Author's psychological file.
 require factory/block.md \
+  'First move: classify, then answer, then inspect.' \
+  'onboarding no longer classifies an existing install before reading personal files'
+require factory/block.md \
+  'Do not go silent for a 15–25 minute audit.' \
+  'onboarding no longer forbids a long silent audit'
+require factory/block.md \
+  'The Apple Shortcut bridge is macOS/iOS only' \
+  'onboarding can still claim iCloud or Shortcut support without inspecting the machine'
+require factory/onboarding.md \
+  'factory/scripts/classify_install.sh' \
+  'the onboarding router no longer classifies an existing install'
+require factory/onboarding.md \
+  'A fingerprint learned from this repo is continuity evidence, not an independent trust root.' \
+  'the onboarding router no longer preserves the trust-root bootstrap limit'
+require factory/scripts/classify_install.sh \
+  'Never opens' \
+  'the classifier no longer states that it skips personal content'
+require factory/scripts/classify_install.sh \
+  'class: $class' \
+  'the classifier no longer emits a machine-readable class'
+require factory/setup.sh \
+  'Healthy existing install — nothing was overwritten.' \
+  'setup no longer short-circuits a healthy existing install'
+require factory/setup.sh \
+  'Refusing to install over a ${INSTALL_CLASS} existing path' \
+  'setup no longer fails closed on a partial or foreign path'
+require factory/setup.sh \
+  'classify_install.sh is missing next to setup.sh; refusing to install.' \
+  'setup no longer fails closed when the classifier is absent'
+require factory/setup.sh \
+  'Install classifier failed; refusing to continue.' \
+  'setup swallows classifier failure and continues'
+require factory/setup.sh \
+  'Install classifier returned an unusable class; refusing to continue.' \
+  'setup accepts an unknown install class'
+forbid factory/setup.sh \
+  'CLASSIFY_SH" 2>/dev/null' \
+  'setup still hides classifier failure'
+forbid factory/setup.sh \
+  'ls "\$ALEX_DIR/files/constitution"' \
+  'setup still lists constitution files to detect an existing Author'
+require factory/scripts/capture_resolver.py \
+  'def is_blocked_ip(' \
+  'the capture resolver has no private-address block'
+require factory/scripts/capture_resolver.py \
+  'def safe_urlopen(' \
+  'the capture resolver has no bounded fetch helper'
+require factory/scripts/capture_resolver.py \
+  '168.63.129.16/32' \
+  'Azure IMDS is not in the blocked-address set'
+require factory/scripts/capture_resolver.py \
+  '2002::/16' \
+  '6to4 is not in the blocked-address set'
+require factory/scripts/capture_resolver.py \
+  '2001::/32' \
+  'Teredo is not in the blocked-address set'
+require factory/scripts/transcript_path.sh \
+  'safe_transcript_path()' \
+  'transcript archiving has no host-root helper'
+require factory/scripts/transcript_path.sh \
+  '.grok/*' \
+  'Grok CLI transcripts are not in the host-root allowlist'
+require factory/scripts/transcript_path.py \
+  '".grok"' \
+  'Grok CLI transcripts are not in the Python host-root allowlist'
+require factory/systems/shortcut.md \
+  'Nothing is sent to Alexandria.' \
+  'the Shortcut spec no longer states that Alexandria receives nothing'
+require factory/systems/shortcut.md \
+  '3efb4b6dfedc4d283c0b40cc0dfc9037923f49e4ab444889810e0978d0caed26' \
+  'the Shortcut spec no longer carries the public URL hash'
+shortcut_url='https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337'
+if command -v shasum >/dev/null 2>&1; then
+  shortcut_hash=$(printf '%s' "$shortcut_url" | shasum -a 256 | awk '{print $1}')
+else
+  shortcut_hash=$(printf '%s' "$shortcut_url" | sha256sum | awk '{print $1}')
+fi
+[ "$shortcut_hash" = "3efb4b6dfedc4d283c0b40cc0dfc9037923f49e4ab444889810e0978d0caed26" ] \
+  || fail 'Shortcut URL hash in the checker does not match the published URL'
+grep -qF "$shortcut_url" app/lib/config.ts \
+  || fail 'website SHORTCUT_URL drifted from the Shortcut spec'
+grep -qF "$shortcut_hash" factory/systems/shortcut.sha256 \
+  || fail 'shortcut.sha256 drifted from the published URL hash'
+require factory/scripts/uninstall.py \
+  'User data was not deleted.' \
+  'the scoped uninstaller no longer states that user data stays'
+require factory/block.md \
   'The commercial boundary is absolute.' \
   'onboarding has no explicit commercial boundary'
 require factory/block.md \
@@ -237,7 +330,7 @@ require factory/block.md \
   'library — https://alexandria-library.com/join' \
   'onboarding Phase 5 has no fixed library geography line'
 require factory/block.md \
-  'Use `→ type /a` in Claude Code, Cursor, or Factory; `→ type $a` in Codex; otherwise `→ say “start an Alexandria session”`.' \
+  'Use `→ type /a` in Claude Code, Cursor, Factory, or Grok CLI; `→ type $a` in Codex; in Grok Bot `→ type /a` (and `/alexandria` if the picker is name-based); otherwise `→ say “start an Alexandria session”`.' \
   'onboarding Phase 5 does not provide the host-native start gesture'
 forbid factory/block.md \
   'first month free|free for good|dollar a day|refer-three|conversion moment|commercial beat|join — unlock everything' \
@@ -275,7 +368,7 @@ require factory/canon/methodology.md \
 require factory/canon/methodology.md \
   'Host-generated favicon or preview chrome is automatic and accepted.' \
   'methodology still promises control over host-generated link chrome'
-for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md; do
+for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/grok-bot.md; do
   require "$opener_skill" \
     'JOINED OPENER CHECK — every Author, every surface.' \
     "$opener_skill does not check the joined opener at the final output gate"
@@ -392,6 +485,9 @@ require factory/canon/foundation.md \
   'An account-level route appears once per ordinary chat' \
   'never repeat a generic footer on every task' \
   'Foundation no longer states the disclosed visible cue clearly'
+require factory/canon/foundation.md \
+  '`/a` in Claude Code, Cursor, Factory, or Grok CLI; `$a` in Codex' \
+  'Foundation no longer names Grok CLI as a native /a host'
 require factory/canon/foundation.md \
   'the first reply asks `Want me to open your alexandria loop in the background for when you have a minute?` in both text and voice' \
   'a capable host immediately opens a new chat and invokes its native Alexandria skill without another question' \
@@ -591,7 +687,7 @@ require factory/skills/droid.md \
 require factory/skills/codex-ambient.md \
   'Do not reinterpret a name owned by a pre-existing foreign skill' \
   'Codex ambient instructions can still hijack a preserved foreign skill name'
-for skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md; do
+for skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/grok-bot.md; do
   require "$skill" \
     'foundation.md — the irreducible local loop and its boundaries. Always follow it.' \
     "$skill does not load the core independently of removable defaults"
@@ -602,6 +698,30 @@ done
 require factory/skills/aclose.md \
   'its absence is a valid Author choice, not a failure.' \
   'session close still requires the removable methodology default'
+require factory/skills/grok-bot.md \
+  'HOST — Cursor Grok Bot, not Grok CLI.' \
+  'Grok Bot skill does not declare it is not Grok CLI'
+require factory/skills/grok-bot.md \
+  'If it is down, missing, or cannot actually read `~/alexandria`, say that in one sentence and stop.' \
+  'Grok Bot skill can invent the record when the computer connection is down'
+require factory/skills/grok-bot.md \
+  'Never claim Claude Code, Cursor IDE, or Grok CLI hooks exist in this box.' \
+  'Grok Bot skill can claim another host already wired this chat'
+require factory/skills/grok-bot-close.md \
+  'If that connection is down, missing, or cannot actually write `~/alexandria`, say so in one sentence and stop.' \
+  'Grok Bot close can claim files were saved without a computer connection'
+require factory/setup.sh \
+  '[ -d "$HOME/.grok" ] || command -v grok' \
+  'setup does not detect Grok CLI the same way as other hosts'
+require factory/setup.sh \
+  'factory/skills/grok-bot.md is the agent-created workflow' \
+  'setup still pretends it can write the Grok Bot skill box'
+require factory/scripts/configure_grok.py \
+  'does not toggle Claude or Cursor' \
+  'Grok install silently disables Claude-compat hooks'
+forbid factory/setup.sh \
+  'compat.claude.*hooks = false' \
+  'setup globally disables Grok Claude-compat hooks'
 require server/test/stranger.sh \
   'disabled default not restored' \
   'the clean-machine product test does not prove default opt-out survives setup'
@@ -685,7 +805,7 @@ forbid factory/setup.sh \
   'untrusted setup code still addresses or instructs the reviewing ai'
 
 # Harness-specific skills are part of the same private surface.
-for file in factory/skills/claudecode.md factory/skills/codex.md factory/skills/codex-ambient.md factory/skills/droid.md factory/skills/cursor.mdc factory/skills/machine.md factory/skills/scheduled.md; do
+for file in factory/skills/claudecode.md factory/skills/codex.md factory/skills/codex-ambient.md factory/skills/droid.md factory/skills/cursor.mdc factory/skills/grok-bot.md factory/skills/grok-bot-close.md factory/skills/machine.md factory/skills/scheduled.md; do
   forbid "$file" \
     'alexandria-library\.com/join|first month free|dollar a day|share the referral|join if not yet joined|\.session_feedback|keep the marketplace loop current|file obligation|prompt for contribution|report to the protocol' \
     "$file contains a proactive company instruction"
@@ -705,6 +825,9 @@ require factory/connect.md \
 require factory/connect.md \
   'Do not read the person' \
   'account connection can read the private loop'
+require factory/connect.md \
+  'Only `healthy` may continue' \
+  'account connection no longer requires metadata-only healthy classification'
 require factory/scripts/connect-account.sh \
   '[ -f "$RUNTIME_DIR/.setup_complete" ]' \
   'the account connector can run before local setup completes'
@@ -793,7 +916,7 @@ require public/docs/Mechanics.md \
   'python3 ~/.local/share/alexandria/scripts/uninstall.py --delete-files' \
   'uninstall is not routed through the scoped remover'
 forbid public/docs/Mechanics.md \
-  'rm -rf ~/.claude/skills/a|rm -rf ~/.cursor/skills/a|rm -rf ~/.agents/skills/a|edit by hand to remove' \
+  'rm -rf ~/.claude/skills/a|rm -rf ~/.cursor/skills/a|rm -rf ~/.agents/skills/a|rm -rf ~/.grok/skills/a|edit by hand to remove' \
   'uninstall can still delete a foreign skill or leaves hook cleanup manual'
 forbid public/docs/Mechanics.md \
   'draft.*proactively|canon-health status ping|one install status report|session_feedback' \
@@ -955,6 +1078,7 @@ mkdir -p \
   "$uninstall_home/.cursor/hooks" "$uninstall_home/.codex" \
   "$uninstall_home/.agents/skills/alexandria" \
   "$uninstall_home/.factory/droids" \
+  "$uninstall_home/.grok/hooks" "$uninstall_home/.grok/skills/a" \
   "$uninstall_home/.alexandria/transcripts" \
   "$uninstall_home/.config/git" \
   "$uninstall_home/.local/share/alexandria/hooks" \
@@ -965,6 +1089,11 @@ printf '%s\n' '**This closes the ACTIVE (/a) session.**' > "$uninstall_home/.cla
 printf '%s\n' 'foreign alexandria skill' > "$uninstall_home/.claude/skills/alexandria/SKILL.md"
 printf '%s\n' "You are the Author's own agent, running their **Alexandria loop**" > "$uninstall_home/.agents/skills/alexandria/SKILL.md"
 printf '%s\n' 'foreign droid' > "$uninstall_home/.factory/droids/a.md"
+printf '%s\n' 'foreign grok skill — keep this exact line' > "$uninstall_home/.grok/skills/a/SKILL.md"
+printf '%s\n' '{"keep":true}' > "$uninstall_home/.grok/hooks/safety.json"
+mkdir -p "$uninstall_home/.grok/skills/a."
+printf '%s\n' 'owned grok close' > "$uninstall_home/.grok/skills/a./SKILL.md"
+printf '%s\n' '{"hooks":{"SessionStart":[]}}' > "$uninstall_home/.grok/hooks/alexandria.json"
 mkdir -p "$uninstall_home/.factory/skills/a"
 printf '%s\n' 'owned factory skill' > "$uninstall_home/.factory/skills/a/SKILL.md"
 printf '%s\n' 'Cursor hook: inject Alexandria context at session start.' \
@@ -980,7 +1109,7 @@ printf '%s\n' 'Alexandria runtime shim' > "$uninstall_home/.local/share/alexandr
 printf '%s\n' 'Alexandria statusline' > "$uninstall_home/.local/share/alexandria/scripts/statusline.sh"
 printf '%s\n' '{"version":1}' > "$uninstall_home/alexandria/system/modules.json"
 printf '%s\n' 'foreign runtime addition' > "$uninstall_home/.local/share/alexandria/keep.txt"
-for marker in .owned_claude_config .owned_cursor_config .owned_codex_config .owned_factory_config; do
+for marker in .owned_claude_config .owned_cursor_config .owned_codex_config .owned_factory_config .owned_grok_config; do
   printf '%s\n' 'alexandria-config-v1' > "$uninstall_home/.local/share/alexandria/$marker"
 done
 {
@@ -992,7 +1121,9 @@ ownership_ledger="$uninstall_home/.local/share/alexandria/.owned_integrations"
 for owned_path in \
   "$uninstall_home/.claude/skills/a./SKILL.md" \
   "$uninstall_home/.cursor/hooks/alexandria-session-start.py" \
-  "$uninstall_home/.factory/skills/a/SKILL.md"; do
+  "$uninstall_home/.factory/skills/a/SKILL.md" \
+  "$uninstall_home/.grok/skills/a./SKILL.md" \
+  "$uninstall_home/.grok/hooks/alexandria.json"; do
   printf '%s\t%s\n' "$owned_path" "$(shasum -a 256 "$owned_path" | awk '{print $1}')" \
     >> "$ownership_ledger"
 done
@@ -1035,6 +1166,16 @@ HOME="$uninstall_home" python3 factory/scripts/uninstall.py >/dev/null \
   || fail 'scoped uninstaller left its receipt-owned Cursor hook behind'
 [ ! -e "$uninstall_home/.factory/skills/a/SKILL.md" ] \
   || fail 'scoped uninstaller left its receipt-owned Factory skill behind'
+[ -f "$uninstall_home/.grok/skills/a/SKILL.md" ] \
+  || fail 'scoped uninstaller deleted a foreign Grok /a skill'
+grep -qxF 'foreign grok skill — keep this exact line' "$uninstall_home/.grok/skills/a/SKILL.md" \
+  || fail 'scoped uninstaller rewrote a foreign Grok /a skill'
+[ -f "$uninstall_home/.grok/hooks/safety.json" ] \
+  || fail 'scoped uninstaller deleted a foreign Grok hook'
+[ ! -e "$uninstall_home/.grok/hooks/alexandria.json" ] \
+  || fail 'scoped uninstaller left its receipt-owned Grok hook behind'
+[ ! -e "$uninstall_home/.grok/skills/a./SKILL.md" ] \
+  || fail 'scoped uninstaller left its receipt-owned Grok close skill behind'
 [ ! -e "$uninstall_home/alexandria/system/modules.json" ] \
   || fail 'scoped uninstaller left its signed generated module map behind'
 grep -q 'foreign' "$uninstall_home/.factory/hooks.json" \
@@ -1076,5 +1217,12 @@ fi
 after_hash=$(shasum -a 256 "$uninstall_home/.claude/settings.json" | awk '{print $1}')
 [ "$before_hash" = "$after_hash" ] \
   || fail 'scoped uninstaller rewrote malformed existing config'
+
+bash factory/scripts/test_classify_install.sh \
+  || fail 'classify_install regressions failed'
+python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py \
+  || fail 'capture, transcript, or grok-hook regressions failed'
+bash scripts/test-grok-integration.sh \
+  || fail 'grok integration regressions failed'
 
 echo "private-boundary check passed"

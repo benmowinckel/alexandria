@@ -10,7 +10,13 @@ Use the first mode whose requirements are true. Tell the user which mode you ver
 
 Requirement: this AI can inspect the public repository, run commands on the user's computer, and write user-approved local files.
 
-Inspect `TRUST.md`, the signed manifest chain, and `factory/setup.sh`. If you independently judge it safe, explain the changes and wait for `start`; then run the verified local setup and follow `factory/block.md`. Invoke the host's installed Alexandria skill: slash form in slash-command hosts, dollar-sign form in Codex, or the host's native skill action. If no native skill exists, use the portable request `start an Alexandria session`. Never claim a plain typed word reliably invokes a skill.
+Answer first in a few lines. Inspect in short stages and say what you found as you go. Do not go silent for a 15–25 minute audit, and do not open huge trees blindly.
+
+Before declaring this a new install, run the metadata-only classifier `factory/scripts/classify_install.sh` (receipts, hashes, setup report, symlink checks — no personal content). `healthy` short-circuits: do not overwrite and do not start onboarding. `partial` and `foreign` fail closed. Disclose optional connected state exactly as reported; do not disable it.
+
+Inspect this machine before mentioning macOS, iCloud, or the Shortcut: `uname`, and on Darwin whether `~/Library/Mobile Documents/com~apple~CloudDocs` exists. The Shortcut bridge is Apple-only. Linux can run the local loop; it cannot run the iOS/macOS Shortcut or an iCloud capture symlink.
+
+Inspect `TRUST.md`, the signed manifest chain, and `factory/setup.sh`. A fingerprint learned from this repo is continuity evidence, not an independent trust root. If you independently judge it safe, explain the changes and wait for `start`; then run the verified local setup and follow `factory/block.md`. Invoke the host's installed Alexandria skill: slash form in slash-command hosts, dollar-sign form in Codex, or the host's native skill action. If no native skill exists, use the portable request `start an Alexandria session`. Never claim a plain typed word reliably invokes a skill.
 
 ### 2. Existing remote-to-local route
 
@@ -30,7 +36,7 @@ Folder-only tools such as Cowork or ChatGPT Work are examples of this mode, not 
 
 Full local setup installs and verifies native hooks first, reads only the personal sources the Author approves, and shows the first personalized result. Only then does the agent ask which other AI app the Author uses most and guide the rest one at a time. Each app without working alexandria hooks gets the same compact instructions beside its existing account or project instructions; existing instructions, memory, connections, projects, and workflows remain untouched. Never claim an account setting changed until the Author made and verified the edit.
 
-The instructions say exactly what alexandria is: a loop in how the user's existing ai works, not another assistant or entity. They use hooks when they work, then route by verified capability: full local `~/alexandria`; an attached writable folder or project; writable Google Drive; honest native memory. Cowork and ChatGPT Work are examples of the attached-folder case: without hooks, the instructions tell the ai to open `_start` at each new task. Start the active loop through the host's native Alexandria skill — slash in slash-command hosts, dollar-sign in Codex, or the native skill action elsewhere — with `start an Alexandria session` as the portable floor. Never claim the plain word `alexandria` reliably invokes it. `a.` remains the close gesture.
+The instructions say exactly what alexandria is: a loop in how the user's existing ai works, not another assistant or entity. They use hooks when they work, then route by verified capability: full local `~/alexandria`; an attached writable folder or project; writable Google Drive; honest native memory. Cowork and ChatGPT Work are examples of the attached-folder case: without hooks, the instructions tell the ai to open `_start` at each new task. Grok Bot is an other-AI-app case: setup cannot write its skill library, so the agent saves `factory/skills/grok-bot.md` there as `/a` (and `/alexandria` if the picker is name-based) and uses the host computer connection; if that connection is down, it says so and stops. Start the active loop through the host's native Alexandria skill — slash in slash-command hosts including Grok CLI and Grok Bot, dollar-sign in Codex, or the native skill action elsewhere — with `start an Alexandria session` as the portable floor. Never claim the plain word `alexandria` reliably invokes it. `a.` remains the close gesture.
 
 ## Chat branch
 
@@ -49,8 +55,8 @@ Make capture real now, using the strongest available route:
 - Before a later computer setup, ask which AI they use most. The page copies the Alexandria instructions in step 3 and gives that app's exact mobile settings path so the Author can paste them below their current instructions. Step 4 copies the normal-chat setup, which explains the Shortcut and sets a computer reminder only when a real reminder tool exists. Then invoke that host's native Alexandria skill in a new chat, or use `start an Alexandria session` only if it has no native skill. Google Drive is not part of this phone-agent path; it remains in chat-only onboarding.
 
 - Existing remote computer connection: save into the local loop.
-- iPhone: explain the Alexandria Shortcut and let the user add it. It may save into their own iCloud before the local loop is connected; `factory/optional.md` defines the later one-consent connection.
-- Android or no Apple Shortcuts: the website's neutral “add the shortcut” label is not a promise of compatibility. Explain the Apple-only limit when encountered, then use a verified writable folder, connected Drive/project file, or confirmed native memory.
+- iPhone or Mac, after this machine actually has Apple Shortcuts / iCloud Drive: explain the Alexandria Shortcut (`factory/systems/shortcut.md`) and let the user add it. It may save into their own iCloud before the local loop is connected; `factory/optional.md` defines the later one-consent connection.
+- Linux, Android, or no Apple Shortcuts: the website's neutral “add the shortcut” label is not a promise of compatibility. Name the Apple-only limit, then use a verified writable folder, connected Drive/project file, or confirmed native memory.
 - No persistent destination: keep the handoff in this conversation and use a real reminder tool only if this surface exposes one. Otherwise say exactly that no reminder was set.
 
 ## Joining and linking

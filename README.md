@@ -12,7 +12,7 @@ The message makes your agent independently prove the GitHub release is ours, rea
 
 The capability router is [`factory/onboarding.md`](factory/onboarding.md). Inside the agent branch, the AI verifies whether it can run the full local setup, reach an existing remote computer, or work through a user-owned folder. The chat branch starts a useful lightweight habit now and keeps the later computer handoff explicit.
 
-The habit afterwards: start an Alexandria session and leave it. In Claude Code, Cursor, or Factory, type `/a`. In Codex, type `$a` (or `/alexandria`). In ordinary chat, type `a`.
+The habit afterwards: start an Alexandria session and leave it. In Claude Code, Cursor, Factory, or Grok CLI, type `/a`. In Codex, type `$a` (or `/alexandria`). In Grok Bot, type `/a` (and `/alexandria` if the picker lists names). In ordinary chat, type `a`.
 
 ## What's in this repo
 

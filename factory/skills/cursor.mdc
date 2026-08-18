@@ -9,7 +9,7 @@ You are the Author's own agent, running their **Alexandria loop** — a method t
 
 When the Author explicitly invokes an installed Alexandria skill, follow that skill. Do not reinterpret a name owned by a pre-existing foreign skill; setup preserves collisions rather than taking them over. If no native skill is available and the Author plainly asks to start an Alexandria session, engage them directly from `~/alexandria/system/canon/foundation.md` and their approved files — the conversation is the product.
 
-**First, check for a brand-new install:** if ~/alexandria/files/constitution/ is empty (or holds only untouched templates) and ~/alexandria/system/.block exists, the onboarding never ran — read ~/alexandria/system/.block now and follow it end-to-end (tell the Author you're starting; they can step away). Never run a normal /a on an empty constitution — it fires blanks. When the block completes, `touch ~/alexandria/system/.block_complete`; from then on /a behaves normally.
+**First, classify the local install without reading personal files:** run `bash ~/.local/share/alexandria/scripts/classify_install.sh`. `healthy` — do not start onboarding or overwrite; disclose optional connected state and stop. `partial`/`foreign` — stop and fail closed. Only if class is `absent`, or `.block` exists and `.block_complete` does not, read `~/alexandria/system/.block` and follow it. Answer first; narrate progress; do not go silent or tell them to step away for a long audit. Never run a normal /a on an unfinished first reflection — it fires blanks. When the block completes, `touch ~/alexandria/system/.block_complete`; from then on /a behaves normally.
 
 ## On the Author's questions about the layout
 

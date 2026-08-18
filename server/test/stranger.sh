@@ -225,6 +225,8 @@ check "api_key correct"            [ "$(cat "$HOME/alexandria/system/.api_key")"
 check "founder stand installed"    [ -s "$HOME/alexandria/system/canon/stand.md" ]
 check "setup_complete marker"      [ -f "$HOME/.local/share/alexandria/.setup_complete" ]
 check "Claude config validates after merge" grep -q '^  claude_checks: hooks=ok config=ok' "$HOME/alexandria/system/.setup_report"
+check "Grok absent is reported"            grep -q '^  grok: absent$' "$HOME/alexandria/system/.setup_report"
+check "Grok directory not invented"        bash -c '[ ! -d "$HOME/.grok" ]'
 check "passive-active loop healthy" grep -q '^  loop: ok$' "$HOME/alexandria/system/.setup_report"
 check "visible cue healthy"       grep -q '^  visible_cue: ok$' "$HOME/alexandria/system/.setup_report"
 check "Claude root uses native home path" node -e "const fs=require('fs'),os=require('os'),path=require('path');const s=JSON.parse(fs.readFileSync(path.join(process.env.HOME,'.claude','settings.json'),'utf8'));process.exit(s.permissions.additionalDirectories.includes(path.join(os.homedir(),'alexandria'))?0:1)"
