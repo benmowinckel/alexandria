@@ -110,8 +110,30 @@ def _flush_via_shim(root: Path, transcript: Path | None) -> str:
     return "ok"
 
 
+def _safe_transcript(path: Path | None) -> Path | None:
+    """Archive only a regular user-owned file under a supported host root."""
+    if path is None:
+        return None
+    helper = Path.home() / ".local/share/alexandria/scripts/transcript_path.py"
+    if helper.is_file():
+        try:
+            proc = subprocess.run(
+                ["python3", str(helper), "--check", str(path)],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+        return path if proc.returncode == 0 else None
+    # Fail closed when the signed helper is missing.
+    return None
+
+
 def _flush_bare(root: Path, transcript: Path) -> str:
     """No shim — copy the transcript straight into the vault (bare fallback)."""
+    if _safe_transcript(transcript) is None:
+        return "bare-error:unsafe-transcript-path"
     try:
         vault = root / "files" / "vault"
         vault.mkdir(parents=True, exist_ok=True)
@@ -148,7 +170,7 @@ def _run() -> None:
         _emit({})
         return
 
-    transcript = _staging_file(payload)
+    transcript = _safe_transcript(_staging_file(payload))
     transcript_lines = 0
     if transcript is not None:
         try:

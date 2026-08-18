@@ -90,19 +90,28 @@ test "$BAD_BEFORE" = "$(sha256 "$TEST_ROOT/bad/.codex/hooks.json")"
 
 cp "$ROOT/factory/hooks/shim.sh" "$RUNTIME/hooks/shim.sh"
 cp "$ROOT/factory/hooks/payload.sh" "$RUNTIME/.hooks_payload"
+mkdir -p "$RUNTIME/scripts" "$TEST_ROOT/.codex/sessions"
+cp "$ROOT/factory/scripts/transcript_path.sh" "$RUNTIME/scripts/transcript_path.sh"
 touch "$RUNTIME/.setup_complete"
 sha256 "$RUNTIME/.hooks_payload" > "$RUNTIME/.payload_verified_sha"
-printf '%s\n' '{"event":"test transcript"}' > "$TEST_ROOT/source.jsonl"
-printf '{"session_id":"test-123","transcript_path":"%s"}\n' "$TEST_ROOT/source.jsonl" | \
-  ALEXANDRIA_DIR="$TEST_ROOT/alex" \
+printf '%s\n' '{"event":"test transcript"}' > "$TEST_ROOT/.codex/sessions/source.jsonl"
+printf '{"session_id":"test-123","transcript_path":"%s"}\n' "$TEST_ROOT/.codex/sessions/source.jsonl" | \
+  HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
   bash "$RUNTIME/hooks/shim.sh" codex-session-end
 
 test -f "$TEST_ROOT/alex/system/.codex_session_end_ok"
 test "$(find "$TEST_ROOT/alex/files/vault" -type f -name '*_codex_test-123.jsonl' | wc -l | tr -d ' ')" = "1"
 test "$(find "$TEST_ROOT/alex/system/.codex_session_end_queue" -type f -name '*.json' | wc -l | tr -d ' ')" = "1"
 
+# A path outside supported host roots must not be archived.
+printf '%s\n' '{"event":"outside"}' > "$TEST_ROOT/outside.jsonl"
+printf '{"session_id":"bad-1","transcript_path":"%s"}\n' "$TEST_ROOT/outside.jsonl" | \
+  HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
+  bash "$RUNTIME/hooks/shim.sh" codex-session-end
+test "$(find "$TEST_ROOT/alex/files/vault" -type f -name '*_codex_bad-1.jsonl' | wc -l | tr -d ' ')" = "0"
+
 # The next start drains the bounded end receipt through the normal end path.
-ALEXANDRIA_DIR="$TEST_ROOT/alex" \
+HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
   bash "$RUNTIME/hooks/shim.sh" session-start </dev/null >/dev/null
 test "$(find "$TEST_ROOT/alex/system/.codex_session_end_queue" -type f -name '*.json' 2>/dev/null | wc -l | tr -d ' ')" = "0"
 

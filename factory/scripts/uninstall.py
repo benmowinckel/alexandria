@@ -379,6 +379,9 @@ def remove_signed_runtime_files() -> None:
         (RUNTIME_DIR / "scripts/statusline.sh", "factory/scripts/statusline.sh"),
         (RUNTIME_DIR / "scripts/uninstall.py", "factory/scripts/uninstall.py"),
         (RUNTIME_DIR / "scripts/verify-fetch.sh", "factory/scripts/verify-fetch.sh"),
+        (RUNTIME_DIR / "scripts/classify_install.sh", "factory/scripts/classify_install.sh"),
+        (RUNTIME_DIR / "scripts/transcript_path.sh", "factory/scripts/transcript_path.sh"),
+        (RUNTIME_DIR / "scripts/transcript_path.py", "factory/scripts/transcript_path.py"),
         (ALEX_DIR / "system/modules.json", "factory/module-system.json"),
     ):
         if has_symlink_component(path) or not path.is_file():
@@ -492,9 +495,15 @@ def main() -> int:
             return 1
         if ALEX_DIR.exists():
             shutil.rmtree(ALEX_DIR)
-        print("Alexandria integrations and local files removed. Remote backups were left untouched.")
+        print("Alexandria integrations and local files removed. Remote backups, iCloud captures, Drive copies, and the Cursor sidecar were left untouched.")
     else:
-        print("Alexandria disconnected. Your files remain in ~/alexandria.")
+        print("Alexandria disconnected. Left in place on purpose:")
+        print("  ~/alexandria/ — Author files, permission markers, local git")
+        print("  ~/.alexandria/ — Cursor sidecar; a directory name is not ownership proof")
+        print("  iCloud Drive/alexandria/vault/input — if you used the Shortcut")
+        print("  any private Git remote, Drive folder, or launchd add-on you enabled")
+        print("  foreign skills, rules, and hook entries")
+        print("User data was not deleted. Remote backups and the Alexandria account were not touched.")
     return 0
 
 

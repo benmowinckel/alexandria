@@ -49,7 +49,7 @@
 - **Does:** connects `~/alexandria/files/vault/input` to `alexandria/vault/input` in the Author's own iCloud Drive so Apple Shortcuts and Files drops can reach the local loop.
 - **Touches:** one nested folder in the Author's iCloud Drive and one local symlink. No job, daemon, account, or Alexandria server.
 - **Leaves the machine:** only files the Author puts in that capture folder, through their own iCloud account. Nothing goes to Alexandria. Saved links stay as local raw files unless the separate `capture-link-resolution` add-on below is also enabled.
-- **Needs:** macOS with iCloud Drive enabled.
+- **Needs:** a Darwin machine whose iCloud Drive path actually exists. Inspect `uname` and `~/Library/Mobile Documents/com~apple~CloudDocs` before claiming compatibility. Linux and other hosts have no Apple Shortcut bridge; keep captures in the local `vault/input` folder. The Shortcut's auditable spec is `factory/systems/shortcut.md`.
 - **Save-before-connect (product ladder, 2026-08-10):** the Apple Shortcut may be installed and used first — saves pile in the Author's own iCloud `alexandria/vault/input` with no loop connection. The `/a` opener's rung-2 `recommended` is the connect ask: wire this add-on so either new saves enter the loop, or the pile already waiting lands in `vault/input` and drains. Connected proof is the symlink below; decline is `~/alexandria/system/.shortcut_decision` = `no`.
 - **Enable:** only after the Author says yes to this add-on. If the local input folder already contains files, stop and ask whether they want those moved; never move them silently. If the iCloud capture folder already has files from prior shortcut use, connecting is enough — they appear in `vault/input` immediately.
   ```bash
@@ -69,7 +69,7 @@
 
 - **Does:** turns X/Twitter, YouTube, and ordinary links already placed in `~/alexandria/files/vault/input/` into locally readable text, titles, and media at session start.
 - **Touches:** one local permission file and local derivatives under `~/alexandria/files/vault/_input/`.
-- **Leaves the machine:** the exact saved URL or tweet ID goes to that site; X/Twitter captures use `api.fxtwitter.com`, YouTube captures use YouTube's oEmbed endpoint, and ordinary links contact the saved site. Those services also see the Author's IP. Nothing is sent to Alexandria.
+- **Leaves the machine:** the exact saved URL or tweet ID goes to that site; X/Twitter captures use `api.fxtwitter.com`, YouTube captures use YouTube's oEmbed endpoint, and ordinary links contact the saved site. Those services also see the Author's IP. Nothing is sent to Alexandria. The resolver refuses private, loopback, link-local, reserved, multicast, and metadata addresses, follows redirects only after re-checking, pins DNS to a public address, allows only `https`, and caps response and media size. FXTwitter photos must be twimg hosts.
 - **Enable:** only after showing this exact disclosure and receiving a separate yes: `touch ~/alexandria/system/permissions/capture-network && chmod 600 ~/alexandria/system/permissions/capture-network`.
 - **Off:** `rm ~/alexandria/system/permissions/capture-network` — future saved links remain raw and local.
 

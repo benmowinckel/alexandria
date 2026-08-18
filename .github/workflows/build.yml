@@ -62,6 +62,12 @@ jobs:
       - name: Chat bootstrap contract
         run: python3 -m unittest factory/chat/test_bootstrap.py
 
+      - name: Factory install, capture, and transcript tests
+        run: |
+          bash factory/scripts/check-private-boundary.sh
+          bash factory/scripts/test_classify_install.sh
+          python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_transcript_path.py
+
       - name: Codex integration test
         run: bash scripts/test-codex-integration.sh
 

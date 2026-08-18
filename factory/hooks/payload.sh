@@ -17,6 +17,13 @@ RUNTIME_DIR="${ALEXANDRIA_RUNTIME_DIR:-$HOME/.local/share/alexandria}"
 # to the current user unless a later exact-purpose action publishes them.
 umask 077
 
+if [ -f "$RUNTIME_DIR/scripts/transcript_path.sh" ]; then
+  # shellcheck source=/dev/null
+  . "$RUNTIME_DIR/scripts/transcript_path.sh"
+else
+  safe_transcript_path() { return 1; }
+fi
+
 # Direct payload calls fail closed too. The activation marker lives beside the
 # executable runtime, outside the AI-writable Author folder.
 if [ ! -f "$RUNTIME_DIR/.setup_complete" ]; then
@@ -901,7 +908,7 @@ if [ "$MODE" = "session-end" ]; then
 
   # Transcript → vault
   transcript_path="$EXTRA"
-  if [ -n "$transcript_path" ] && [ -f "$transcript_path" ]; then
+  if [ -n "$transcript_path" ] && safe_transcript_path "$transcript_path"; then
     timestamp=$(date +%Y-%m-%d_%H-%M-%S)
     vault_file="$ALEX_DIR/files/vault/${timestamp}.jsonl"
     mkdir -p "$ALEX_DIR/files/vault" 2>/dev/null
