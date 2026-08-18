@@ -68,7 +68,7 @@ The deeper risk is decay. *AI removes the demand on cognition; cognition only de
 
 **2. Network.** *Your circle being on Alexandria means your AI can read their frames when planning with or about them; their AI reads yours.* The friend's-mind primitive makes recruitment a self-interested act — *invite your circle for your own benefit.* A clone can host identical files but starts with no population.
 
-**3. Integration.** *Every AI tool, agent, and app that reads from the user's local Alexandria directory is another terminal point the coordination terminates on.* Today: Claude Code, Cursor, Codex hooks. Tomorrow: every personalised app and agent. **The user can always leave; the ecosystem points back because the coordination is here.**
+**3. Integration.** *Every AI tool, agent, and app that reads from the user's local Alexandria directory is another terminal point the coordination terminates on.* Today: Claude Code, Cursor, Codex, Grok CLI hooks. Tomorrow: every personalised app and agent. **The user can always leave; the ecosystem points back because the coordination is here.**
 
 ---
 

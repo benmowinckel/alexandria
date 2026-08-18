@@ -2,7 +2,7 @@
 """Validate a host-supplied transcript_path before archiving it.
 
 Supported host roots, relative to the current user's home:
-  ~/.claude/  ~/.codex/  ~/.cursor/  ~/.alexandria/transcripts/  ~/.factory/
+  ~/.claude/  ~/.codex/  ~/.cursor/  ~/.alexandria/transcripts/  ~/.factory/  ~/.grok/
 
 The path must be an absolute regular file owned by the current user, with no
 symlink component and no path traversal. Home itself may be a symlink; only
@@ -26,6 +26,7 @@ HOST_ROOTS = (
     ".cursor",
     ".alexandria/transcripts",
     ".factory",
+    ".grok",
 )
 
 

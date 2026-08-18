@@ -30,7 +30,7 @@ A structured record of who each user is — whatever they choose to put in it: w
 
 **2. Network.** *Your circle on Alexandria means your AI can read their frames when planning with or about them.* The friend's-mind primitive turns recruitment into self-interest. *A clone starts with no population.*
 
-**3. Integration.** *Every AI tool reading from the user's local Alexandria directory is another terminal point.* Claude Code, Cursor, Codex today; every personalised app tomorrow. **The user can leave; the ecosystem points back.**
+**3. Integration.** *Every AI tool reading from the user's local Alexandria directory is another terminal point.* Claude Code, Cursor, Codex, Grok CLI today; every personalised app tomorrow. **The user can leave; the ecosystem points back.**
 
 ---
 

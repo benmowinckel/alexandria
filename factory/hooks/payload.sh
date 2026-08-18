@@ -490,6 +490,11 @@ To apply, tell me to pull $module (verified). To keep your version, do nothing."
     else
       check_drift "$HOME/.cursor/skills/alexandria/SKILL.md" "skills/claudecode.md" "  cursor /alexandria skill (~/.cursor/skills/alexandria/SKILL.md)" "rename-alexandria"
     fi
+    if [ -f "$HOME/.grok/skills/a/SKILL.md" ] && grep -qi alexandria "$HOME/.grok/skills/a/SKILL.md" 2>/dev/null; then
+      check_drift "$HOME/.grok/skills/a/SKILL.md" "skills/claudecode.md" "  grok /a skill (~/.grok/skills/a/SKILL.md)"
+    else
+      check_drift "$HOME/.grok/skills/alexandria/SKILL.md" "skills/claudecode.md" "  grok /alexandria skill (~/.grok/skills/alexandria/SKILL.md)" "rename-alexandria"
+    fi
     check_drift "$RUNTIME_DIR/hooks/shim.sh" "hooks/shim.sh" "  hook shim (~/.local/share/alexandria/hooks/shim.sh)"
     check_drift "$ALEX_DIR/system/modules.json" "module-system.json" "  module map (~/alexandria/system/modules.json)"
 

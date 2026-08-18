@@ -29,15 +29,15 @@ fi
 # first session on the biggest surface. Copy-syncing is wrong here (the files
 # legitimately differ per harness), so gate the invariant instead: every skill
 # must carry the new-install check.
-SKILL_FILES="factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/cursor.mdc"
+SKILL_FILES="factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/cursor.mdc factory/skills/grok-bot.md"
 if git diff --cached --name-only | grep -qE '^factory/skills/'; then
   missing=""
   for f in $SKILL_FILES; do
     [ -f "$f" ] || continue
-    grep -q "brand-new install" "$f" || missing="$missing $f"
+    grep -q "it fires blanks" "$f" || missing="$missing $f"
   done
   if [ -n "$missing" ]; then
-    echo "BLOCKED: harness skill(s) missing the brand-new-install check:$missing"
+    echo "BLOCKED: harness skill(s) missing the unfinished-first-reflection check:$missing"
     echo ""
     echo "Every /a skill must tell the agent to run ~/alexandria/system/.block when"
     echo "the constitution is empty. Without it that harness fires blanks on a fresh"

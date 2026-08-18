@@ -96,7 +96,7 @@ factory/
   hooks/
     shim.sh                 # Immutable local shim
     payload.sh              # GitHub-delivered hook logic (signed)
-  skills/                   # claudecode · codex · cursor · droid · scheduled(-bootstrap) · install · publish · brief-setup · nudge · factory
+  skills/                   # claudecode · grok-bot · grok-bot-close · codex · cursor · droid · scheduled(-bootstrap) · install · publish · brief-setup · nudge · factory
   systems/                  # Additional modules (e.g. state-based-sync)
   scripts/                  # brief.py · install.sh · publish.sh · verify-fetch.sh
   templates/                # agent · machine · notepad · feedback · module · constitution/ · marginalia/ · vault/ · library/

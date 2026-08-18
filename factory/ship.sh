@@ -126,6 +126,14 @@ validate_skill_frontmatter() {
 validate_skill_frontmatter factory/skills/claudecode.md a
 validate_skill_frontmatter factory/skills/codex.md a yes
 validate_skill_frontmatter factory/skills/aclose.md a. yes
+validate_skill_frontmatter factory/skills/grok-bot.md a
+validate_skill_frontmatter factory/skills/grok-bot-close.md a.
+for grok_skill in factory/skills/claudecode.md factory/skills/aclose.md factory/skills/grok-bot.md factory/skills/grok-bot-close.md; do
+  grep -q '^user-invocable: true$' "$grok_skill" || {
+    echo "error: $grok_skill is missing literal user-invocable: true for Grok slash commands" >&2
+    exit 1
+  }
+done
 grep -q 'display_name: "a — Alexandria"' factory/skills/codex-openai.yaml || {
   echo "error: factory/skills/codex-openai.yaml has no Alexandria display name" >&2
   exit 1

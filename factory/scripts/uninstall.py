@@ -376,6 +376,7 @@ def remove_signed_runtime_files() -> None:
         (RUNTIME_DIR / "codex-ambient.md", "factory/skills/codex-ambient.md"),
         (RUNTIME_DIR / "scripts/capture_resolver.py", "factory/scripts/capture_resolver.py"),
         (RUNTIME_DIR / "scripts/configure_codex.py", "factory/scripts/configure_codex.py"),
+        (RUNTIME_DIR / "scripts/configure_grok.py", "factory/scripts/configure_grok.py"),
         (RUNTIME_DIR / "scripts/statusline.sh", "factory/scripts/statusline.sh"),
         (RUNTIME_DIR / "scripts/uninstall.py", "factory/scripts/uninstall.py"),
         (RUNTIME_DIR / "scripts/verify-fetch.sh", "factory/scripts/verify-fetch.sh"),
@@ -443,7 +444,13 @@ def main() -> int:
         ok = remove_codex_writable_root(HOME / ".codex/config.toml") and ok
     ok = remove_owned_allowed_signer() and ok
 
-    for base in (HOME / ".claude/skills", HOME / ".cursor/skills", HOME / ".agents/skills", HOME / ".factory/skills"):
+    for base in (
+        HOME / ".claude/skills",
+        HOME / ".cursor/skills",
+        HOME / ".agents/skills",
+        HOME / ".factory/skills",
+        HOME / ".grok/skills",
+    ):
         for name in ("a", "a.", "alexandria", "alexandria-close", "close-alexandria"):
             remove_owned_tree(base / name)
     remove_owned_tree(HOME / ".claude/scheduled-tasks/alexandria", marker="SKILL.md")
@@ -454,6 +461,7 @@ def main() -> int:
         *(HOME / ".cursor/hooks" / name for name in CURSOR_HOOKS),
         HOME / ".factory/droids/a.md",
         HOME / ".factory/droids/alexandria.md",
+        HOME / ".grok/hooks/alexandria.json",
     ):
         remove_owned_file(path)
 
@@ -478,6 +486,7 @@ def main() -> int:
         ALEX_DIR / "system/.setup_complete",
         ALEX_DIR / "system/scripts/capture_resolver.py",
         ALEX_DIR / "system/scripts/configure_codex.py",
+        ALEX_DIR / "system/scripts/configure_grok.py",
         ALEX_DIR / "system/scripts/uninstall.py",
         ALEX_DIR / "system/scripts/statusline.sh",
         ALEX_DIR / "system/scripts/verify-fetch.sh",
@@ -503,6 +512,7 @@ def main() -> int:
         print("  iCloud Drive/alexandria/vault/input — if you used the Shortcut")
         print("  any private Git remote, Drive folder, or launchd add-on you enabled")
         print("  foreign skills, rules, and hook entries")
+        print("  ~/.grok/config.toml and any foreign ~/.grok files")
         print("User data was not deleted. Remote backups and the Alexandria account were not touched.")
     return 0
 

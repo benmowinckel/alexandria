@@ -98,7 +98,7 @@ export async function callbackPageHtml(connectionCode: string, githubLogin = '',
   const isReturning = !connectionCode;
   // The connect message is copy-paste, matching /start. (A claude-cli:// deep link was tried
   // and removed 2026-06-24: it auto-ran the script and felt like a terminal hijack — copy-paste
-  // is calmer and universal across Claude Code / Cursor / Codex / Factory.) It
+  // is calmer and universal across Claude Code / Cursor / Codex / Factory / Grok CLI.) It
   // is non-executable and deliberately assumes setup already completed: the
   // installed verifier authenticates the one narrow signed connector.
   const connectPrompt = connectionCode ? accountConnectPrompt(connectionCode) : '';

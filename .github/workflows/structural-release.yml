@@ -140,6 +140,10 @@ jobs:
         working-directory: candidate
         run: bash scripts/test-codex-integration.sh
 
+      - name: Grok integration test
+        working-directory: candidate
+        run: bash scripts/test-grok-integration.sh
+
       - name: App dependency audit and build
         working-directory: candidate
         run: |

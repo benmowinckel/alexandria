@@ -57,7 +57,7 @@ safe_transcript_path() {
   owner=$(stat -c '%u' "$raw" 2>/dev/null || stat -f '%u' "$raw" 2>/dev/null) || return 1
   [ "$owner" = "$(id -u)" ] || return 1
   case "$rel" in
-    .claude/*|.codex/*|.cursor/*|.alexandria/transcripts/*|.factory/*)
+    .claude/*|.codex/*|.cursor/*|.alexandria/transcripts/*|.factory/*|.grok/*)
       return 0
       ;;
     *)
