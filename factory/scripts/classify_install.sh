@@ -14,6 +14,12 @@
 
 set -u
 
+if ! command -v find >/dev/null 2>&1; then
+  echo "classify_install: find is required for metadata-only classification" >&2
+  printf '%s\n' "class: error" "reason: find is required for metadata-only classification"
+  exit 1
+fi
+
 ALEX_DIR="${ALEXANDRIA_DIR:-$HOME/alexandria}"
 RUNTIME_DIR="${ALEXANDRIA_RUNTIME_DIR:-$HOME/.local/share/alexandria}"
 ICLOUD_INPUT="$HOME/Library/Mobile Documents/com~apple~CloudDocs/alexandria/vault/input"
@@ -176,12 +182,17 @@ class=absent
 if [ "$alex_exists" -eq 0 ] && [ "$runtime_exists" -eq 0 ]; then
   class=absent
   reason="no Author folder and no runtime"
+elif [ -L "$ALEX_DIR" ] || [ -L "$RUNTIME_DIR" ] \
+   || path_has_symlink_component "$ALEX_DIR" \
+   || path_has_symlink_component "$RUNTIME_DIR"; then
+  # Must run before the empty-path short-circuit. GNU find does not descend
+  # into a starting-point symlink, so a linked populated tree looks empty
+  # and would otherwise classify as absent (setup would install through it).
+  class=foreign
+  reason="reserved path is reached through a symlink"
 elif [ "$alex_populated" -eq 0 ] && [ "$runtime_populated" -eq 0 ]; then
   class=absent
   reason="reserved paths exist but are empty"
-elif path_has_symlink_component "$ALEX_DIR" || path_has_symlink_component "$RUNTIME_DIR"; then
-  class=foreign
-  reason="reserved path is reached through a symlink"
 elif [ "$core_hashes" = "ok" ] && [ "$setup_complete" = "yes" ] && [ "$report_core_ok" = "yes" ]; then
   class=healthy
   reason="receipts, hashes, and setup-report core rows match"

@@ -39,7 +39,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
-from http.client import HTTPConnection, HTTPSConnection
+from http.client import HTTPSConnection
 from pathlib import Path
 from typing import Callable
 
@@ -119,12 +119,16 @@ def _blocked_networks() -> list[ipaddress._BaseNetwork]:
         ipaddress.ip_network("224.0.0.0/4"),
         ipaddress.ip_network("240.0.0.0/4"),
         ipaddress.ip_network("255.255.255.255/32"),
+        ipaddress.ip_network("168.63.129.16/32"),  # Azure IMDS (public-looking)
         ipaddress.ip_network("::/128"),
         ipaddress.ip_network("::1/128"),
         ipaddress.ip_network("::ffff:0:0/96"),
         ipaddress.ip_network("64:ff9b::/96"),
+        ipaddress.ip_network("64:ff9b:1::/48"),
         ipaddress.ip_network("100::/64"),
+        ipaddress.ip_network("2001::/32"),  # Teredo
         ipaddress.ip_network("2001:db8::/32"),
+        ipaddress.ip_network("2002::/16"),  # 6to4
         ipaddress.ip_network("fc00::/7"),
         ipaddress.ip_network("fe80::/10"),
         ipaddress.ip_network("ff00::/8"),
@@ -139,8 +143,14 @@ def is_blocked_ip(value: str) -> bool:
         addr = ipaddress.ip_address(value)
     except ValueError:
         return True
-    if addr.version == 6 and addr.ipv4_mapped is not None:
-        return is_blocked_ip(str(addr.ipv4_mapped))
+    if addr.version == 6:
+        if addr.ipv4_mapped is not None:
+            return is_blocked_ip(str(addr.ipv4_mapped))
+        if addr.sixtofour is not None and is_blocked_ip(str(addr.sixtofour)):
+            return True
+        teredo = getattr(addr, "teredo", None)
+        if teredo is not None and any(is_blocked_ip(str(part)) for part in teredo):
+            return True
     if addr.is_unspecified or addr.is_loopback or addr.is_link_local:
         return True
     if addr.is_private or addr.is_reserved or addr.is_multicast:
@@ -157,7 +167,27 @@ def _hostname_blocked(host: str) -> bool:
     return False
 
 
+def _has_unsafe_url_chars(value: str) -> bool:
+    return any(ch in value for ch in ("\r", "\n", "\x00", "\t"))
+
+
+def _normalized_host(host: str) -> str:
+    return host.rstrip(".").lower()
+
+
+def _encoded_ipv4(host: str) -> str | None:
+    """Expand decimal/octal/hex/short IPv4 forms that ipaddress rejects."""
+    if not host or ":" in host:
+        return None
+    try:
+        return socket.inet_ntoa(socket.inet_aton(host))
+    except OSError:
+        return None
+
+
 def _parse_http_url(url: str) -> urllib.parse.ParseResult:
+    if _has_unsafe_url_chars(url):
+        raise UnsafeURL("blocked control character")
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme not in {"https"}:
         raise UnsafeURL(f"blocked scheme: {parsed.scheme or 'none'}")
@@ -166,12 +196,15 @@ def _parse_http_url(url: str) -> urllib.parse.ParseResult:
     host = parsed.hostname
     if not host:
         raise UnsafeURL("missing host")
+    host = _normalized_host(host)
     if _hostname_blocked(host):
         raise UnsafeURL(f"blocked host: {host}")
     try:
         ipaddress.ip_address(host)
     except ValueError:
-        pass
+        encoded = _encoded_ipv4(host)
+        if encoded is not None and is_blocked_ip(encoded):
+            raise UnsafeURL(f"blocked encoded address: {host}")
     else:
         if is_blocked_ip(host):
             raise UnsafeURL(f"blocked literal address: {host}")
@@ -202,9 +235,11 @@ def validate_url(
     resolver: Callable[[str], list[str]] = resolve_public_ips,
 ) -> tuple[urllib.parse.ParseResult, list[str]]:
     parsed = _parse_http_url(url)
-    host = parsed.hostname or ""
-    if allowed_hosts is not None and host.lower() not in allowed_hosts:
-        raise UnsafeURL(f"host not allowed: {host}")
+    host = _normalized_host(parsed.hostname or "")
+    if allowed_hosts is not None:
+        allowed = {_normalized_host(item) for item in allowed_hosts}
+        if host not in allowed:
+            raise UnsafeURL(f"host not allowed: {host}")
     ips = resolver(host)
     if not ips:
         raise UnsafeURL("no public addresses")
@@ -222,22 +257,10 @@ class _PinnedHTTPSConnection(HTTPSConnection):
     def connect(self) -> None:
         sock = socket.create_connection(
             (self._pinned_ip, self.port),
-            self.timeout,
+            CONNECT_TIMEOUT_SECONDS,
         )
         context = self._context or ssl.create_default_context()
         self.sock = context.wrap_socket(sock, server_hostname=self.host)
-
-
-class _PinnedHTTPConnection(HTTPConnection):
-    def __init__(self, host: str, pinned_ip: str, **kwargs):
-        self._pinned_ip = pinned_ip
-        super().__init__(host, **kwargs)
-
-    def connect(self) -> None:
-        self.sock = socket.create_connection(
-            (self._pinned_ip, self.port),
-            self.timeout,
-        )
 
 
 def _read_limited(response, max_bytes: int) -> bytes:
@@ -265,14 +288,20 @@ def safe_urlopen(
 ) -> bytes:
     current = url
     for _ in range(MAX_REDIRECTS + 1):
+        if _has_unsafe_url_chars(current):
+            raise UnsafeURL("blocked control character")
         parsed, ips = validate_url(
             current, allowed_hosts=allowed_hosts, resolver=resolver
         )
-        host = parsed.hostname or ""
-        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        if parsed.scheme != "https":
+            raise UnsafeURL(f"blocked scheme: {parsed.scheme or 'none'}")
+        host = _normalized_host(parsed.hostname or "")
+        port = parsed.port or 443
         path = parsed.path or "/"
         if parsed.query:
             path = f"{path}?{parsed.query}"
+        if _has_unsafe_url_chars(path):
+            raise UnsafeURL("blocked control character")
         req_headers = {
             "User-Agent": "alexandria-capture-resolver",
             "Host": host if not parsed.port else f"{host}:{parsed.port}",
@@ -281,12 +310,7 @@ def safe_urlopen(
         if headers:
             req_headers.update(headers)
         pinned = ips[0]
-        if parsed.scheme == "https":
-            conn: HTTPConnection = _PinnedHTTPSConnection(
-                host, pinned, port=port, timeout=timeout
-            )
-        else:
-            conn = _PinnedHTTPConnection(host, pinned, port=port, timeout=timeout)
+        conn = _PinnedHTTPSConnection(host, pinned, port=port, timeout=timeout)
         try:
             conn.connect()
             conn.sock.settimeout(timeout)
@@ -297,6 +321,8 @@ def safe_urlopen(
                 conn.close()
                 if not location:
                     raise UnsafeURL("redirect without location")
+                if _has_unsafe_url_chars(location):
+                    raise UnsafeURL("blocked control character")
                 current = urllib.parse.urljoin(current, location)
                 continue
             if response.status != 200:
@@ -319,7 +345,7 @@ def media_url_allowed(url: str) -> bool:
         parsed = _parse_http_url(url)
     except UnsafeURL:
         return False
-    return (parsed.hostname or "").lower() in FXTWITTER_MEDIA_HOSTS
+    return _normalized_host(parsed.hostname or "") in FXTWITTER_MEDIA_HOSTS
 
 
 def focal_tweet_id(html: str) -> str | None:

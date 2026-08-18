@@ -30,7 +30,13 @@ class TranscriptPathTests(unittest.TestCase):
     def setUp(self):
         self.home = Path(tempfile.mkdtemp(prefix="alexandria-transcript-"))
         self.addCleanup(self._cleanup)
-        for name in (".claude/projects/demo", ".codex/sessions", ".alexandria/transcripts"):
+        for name in (
+            ".claude/projects/demo",
+            ".codex/sessions",
+            ".cursor/projects/demo",
+            ".alexandria/transcripts",
+            ".factory/sessions",
+        ):
             (self.home / name).mkdir(parents=True)
 
     def _cleanup(self):
@@ -43,14 +49,24 @@ class TranscriptPathTests(unittest.TestCase):
         path.write_text(body, encoding="utf-8")
         return path
 
+    def _bash(self, path: Path, home: Path | None = None) -> int:
+        return subprocess.run(
+            ["bash", str(SH), str(path), str(home or self.home)],
+            check=False,
+        ).returncode
+
     def test_supported_host_roots(self):
         for rel in (
             ".claude/projects/demo/session.jsonl",
             ".codex/sessions/abc.jsonl",
+            ".cursor/projects/demo/chat.jsonl",
             ".alexandria/transcripts/cursor-1.jsonl",
+            ".factory/sessions/run.jsonl",
+            ".claude/projects/demo/file..jsonl",
         ):
             path = self._write(rel)
             self.assertTrue(M.is_safe_transcript_path(str(path), self.home), rel)
+            self.assertEqual(self._bash(path), 0, rel)
 
     def test_rejects_relative_and_traversal(self):
         inside = self._write(".claude/projects/demo/ok.jsonl")
@@ -58,6 +74,7 @@ class TranscriptPathTests(unittest.TestCase):
         self.assertFalse(
             M.is_safe_transcript_path(str(self.home / ".claude/../.ssh/id_rsa"), self.home)
         )
+        self.assertNotEqual(self._bash(self.home / ".claude/../.ssh/id_rsa"), 0)
         self.assertTrue(M.is_safe_transcript_path(str(inside), self.home))
 
     def test_rejects_outside_host_roots(self):
@@ -65,23 +82,48 @@ class TranscriptPathTests(unittest.TestCase):
         tmp = self._write("tmp/source.jsonl")
         self.assertFalse(M.is_safe_transcript_path(str(secret), self.home))
         self.assertFalse(M.is_safe_transcript_path(str(tmp), self.home))
+        self.assertEqual(self._bash(secret), 1)
+        self.assertEqual(self._bash(tmp), 1)
 
-    def test_rejects_symlink(self):
+    def test_rejects_file_symlink(self):
         real = self._write(".claude/projects/demo/real.jsonl")
         link = self.home / ".claude/projects/demo/link.jsonl"
         link.symlink_to(real)
         self.assertFalse(M.is_safe_transcript_path(str(link), self.home))
+        self.assertEqual(self._bash(link), 1)
+
+    def test_rejects_directory_symlink(self):
+        real_dir = self.home / "outside-dir"
+        real_dir.mkdir()
+        target = real_dir / "session.jsonl"
+        target.write_text("row\n", encoding="utf-8")
+        link_dir = self.home / ".claude" / "projects" / "linked"
+        link_dir.symlink_to(real_dir)
+        path = link_dir / "session.jsonl"
+        self.assertFalse(M.is_safe_transcript_path(str(path), self.home))
+        self.assertEqual(self._bash(path), 1)
+
+    def test_home_symlink_is_portable(self):
+        physical = Path(tempfile.mkdtemp(prefix="alexandria-phys-home-"))
+        self.addCleanup(lambda: __import__("shutil").rmtree(physical, ignore_errors=True))
+        logical = Path(tempfile.mkdtemp(prefix="alexandria-link-home-"))
+        self.addCleanup(lambda: __import__("shutil").rmtree(logical, ignore_errors=True))
+        logical.rmdir()
+        logical.symlink_to(physical)
+        path = physical / ".codex" / "sessions" / "ok.jsonl"
+        path.parent.mkdir(parents=True)
+        path.write_text("row\n", encoding="utf-8")
+        logical_path = logical / ".codex" / "sessions" / "ok.jsonl"
+        self.assertTrue(M.is_safe_transcript_path(str(logical_path), logical))
+        self.assertTrue(M.is_safe_transcript_path(str(path), logical))
+        self.assertEqual(self._bash(logical_path, logical), 0)
+        self.assertEqual(self._bash(path, logical), 0)
 
     def test_bash_twin_matches(self):
         good = self._write(".codex/sessions/ok.jsonl")
         bad = self._write("outside.jsonl")
-        env = os.environ.copy()
         for path, expect in ((good, 0), (bad, 1)):
-            proc = subprocess.run(
-                ["bash", str(SH), str(path), str(self.home)],
-                env=env,
-            )
-            self.assertEqual(proc.returncode, expect, path)
+            self.assertEqual(self._bash(path), expect, path)
 
 
 if __name__ == "__main__":

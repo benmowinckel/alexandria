@@ -199,11 +199,23 @@ CLASSIFY_SH="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" 2>/dev/null
 INSTALL_CLASS=""
 INSTALL_BLOCK_COMPLETE=""
 CLASSIFY_OUT=""
-if [ -f "$CLASSIFY_SH" ]; then
-  CLASSIFY_OUT=$(ALEXANDRIA_DIR="$ALEX_DIR" ALEXANDRIA_RUNTIME_DIR="$RUNTIME_DIR" bash "$CLASSIFY_SH" 2>/dev/null || true)
-  INSTALL_CLASS=$(printf '%s\n' "$CLASSIFY_OUT" | awk -F': ' '$1=="class"{print $2; exit}')
-  INSTALL_BLOCK_COMPLETE=$(printf '%s\n' "$CLASSIFY_OUT" | awk -F': ' '$1=="block_complete"{print $2; exit}')
+if [ ! -f "$CLASSIFY_SH" ]; then
+  echo "classify_install.sh is missing next to setup.sh; refusing to install." >&2
+  exit 1
 fi
+if ! CLASSIFY_OUT=$(ALEXANDRIA_DIR="$ALEX_DIR" ALEXANDRIA_RUNTIME_DIR="$RUNTIME_DIR" bash "$CLASSIFY_SH"); then
+  echo "Install classifier failed; refusing to continue." >&2
+  exit 1
+fi
+INSTALL_CLASS=$(printf '%s\n' "$CLASSIFY_OUT" | awk -F': ' '$1=="class"{print $2; exit}')
+INSTALL_BLOCK_COMPLETE=$(printf '%s\n' "$CLASSIFY_OUT" | awk -F': ' '$1=="block_complete"{print $2; exit}')
+case "$INSTALL_CLASS" in
+  absent|healthy|partial|foreign) ;;
+  *)
+    echo "Install classifier returned an unusable class; refusing to continue." >&2
+    exit 1
+    ;;
+esac
 if [ "${ALEXANDRIA_VERIFIED_UPDATE:-}" != "1" ]; then
   case "$INSTALL_CLASS" in
     healthy)

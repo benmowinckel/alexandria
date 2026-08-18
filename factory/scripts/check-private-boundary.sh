@@ -223,6 +223,18 @@ require factory/setup.sh \
 require factory/setup.sh \
   'Refusing to install over a ${INSTALL_CLASS} existing path' \
   'setup no longer fails closed on a partial or foreign path'
+require factory/setup.sh \
+  'classify_install.sh is missing next to setup.sh; refusing to install.' \
+  'setup no longer fails closed when the classifier is absent'
+require factory/setup.sh \
+  'Install classifier failed; refusing to continue.' \
+  'setup swallows classifier failure and continues'
+require factory/setup.sh \
+  'Install classifier returned an unusable class; refusing to continue.' \
+  'setup accepts an unknown install class'
+forbid factory/setup.sh \
+  'CLASSIFY_SH" 2>/dev/null' \
+  'setup still hides classifier failure'
 forbid factory/setup.sh \
   'ls "\$ALEX_DIR/files/constitution"' \
   'setup still lists constitution files to detect an existing Author'
@@ -232,6 +244,15 @@ require factory/scripts/capture_resolver.py \
 require factory/scripts/capture_resolver.py \
   'def safe_urlopen(' \
   'the capture resolver has no bounded fetch helper'
+require factory/scripts/capture_resolver.py \
+  '168.63.129.16/32' \
+  'Azure IMDS is not in the blocked-address set'
+require factory/scripts/capture_resolver.py \
+  '2002::/16' \
+  '6to4 is not in the blocked-address set'
+require factory/scripts/capture_resolver.py \
+  '2001::/32' \
+  'Teredo is not in the blocked-address set'
 require factory/scripts/transcript_path.sh \
   'safe_transcript_path()' \
   'transcript archiving has no host-root helper'
@@ -241,6 +262,18 @@ require factory/systems/shortcut.md \
 require factory/systems/shortcut.md \
   '3efb4b6dfedc4d283c0b40cc0dfc9037923f49e4ab444889810e0978d0caed26' \
   'the Shortcut spec no longer carries the public URL hash'
+shortcut_url='https://www.icloud.com/shortcuts/0ea1bb7333fd43a9881e9c7b9938a337'
+if command -v shasum >/dev/null 2>&1; then
+  shortcut_hash=$(printf '%s' "$shortcut_url" | shasum -a 256 | awk '{print $1}')
+else
+  shortcut_hash=$(printf '%s' "$shortcut_url" | sha256sum | awk '{print $1}')
+fi
+[ "$shortcut_hash" = "3efb4b6dfedc4d283c0b40cc0dfc9037923f49e4ab444889810e0978d0caed26" ] \
+  || fail 'Shortcut URL hash in the checker does not match the published URL'
+grep -qF "$shortcut_url" app/lib/config.ts \
+  || fail 'website SHORTCUT_URL drifted from the Shortcut spec'
+grep -qF "$shortcut_hash" factory/systems/shortcut.sha256 \
+  || fail 'shortcut.sha256 drifted from the published URL hash'
 require factory/scripts/uninstall.py \
   'User data was not deleted.' \
   'the scoped uninstaller no longer states that user data stays'

@@ -5,8 +5,12 @@ Supported host roots, relative to the current user's home:
   ~/.claude/  ~/.codex/  ~/.cursor/  ~/.alexandria/transcripts/  ~/.factory/
 
 The path must be an absolute regular file owned by the current user, with no
-symlink component and no path traversal. This module is the Python check used
-by tests and Cursor hooks; the bash twin is transcript_path.sh.
+symlink component and no path traversal. Home itself may be a symlink; only
+components below the home prefix are rejected. Logical $HOME and its physical
+target are both accepted so hosts that realpath the file still match.
+
+This module is the Python check used by tests and Cursor hooks; the bash twin
+is transcript_path.sh.
 """
 
 from __future__ import annotations
@@ -25,12 +29,23 @@ HOST_ROOTS = (
 )
 
 
-def has_symlink_component(path: Path, home: Path) -> bool:
+def _home_prefixes(home: Path) -> list[Path]:
+    prefixes = [home]
     try:
-        relative = path.relative_to(home)
+        resolved = home.resolve()
+    except OSError:
+        return prefixes
+    if resolved != home:
+        prefixes.append(resolved)
+    return prefixes
+
+
+def has_symlink_component(path: Path, root: Path) -> bool:
+    try:
+        relative = path.relative_to(root)
     except ValueError:
         return True
-    current = home
+    current = root
     for part in relative.parts:
         current = current / part
         if current.is_symlink():
@@ -39,15 +54,27 @@ def has_symlink_component(path: Path, home: Path) -> bool:
 
 
 def is_safe_transcript_path(raw: str, home: Path | None = None) -> bool:
-    if not raw or "\x00" in raw:
-        return False
-    if ".." in raw.split("/"):
+    if not raw or any(ch in raw for ch in ("\x00", "\r", "\n")):
         return False
     path = Path(raw)
     if not path.is_absolute():
         return False
-    home = (home or Path.home()).resolve()
-    if has_symlink_component(path, home):
+    if ".." in path.parts:
+        return False
+    home = Path(home or Path.home())
+    if not home.is_absolute():
+        return False
+    prefix = None
+    for candidate in _home_prefixes(home):
+        try:
+            path.relative_to(candidate)
+        except ValueError:
+            continue
+        if has_symlink_component(path, candidate):
+            return False
+        prefix = candidate
+        break
+    if prefix is None:
         return False
     try:
         info = path.lstat()
@@ -57,12 +84,8 @@ def is_safe_transcript_path(raw: str, home: Path | None = None) -> bool:
         return False
     if info.st_uid != os.getuid():
         return False
-    try:
-        relative = path.relative_to(home)
-    except ValueError:
-        return False
-    rel = relative.as_posix()
-    return any(rel == root or rel.startswith(root + "/") for root in HOST_ROOTS)
+    rel = path.relative_to(prefix).as_posix()
+    return any(rel.startswith(root + "/") for root in HOST_ROOTS)
 
 
 def main(argv: list[str] | None = None) -> int:

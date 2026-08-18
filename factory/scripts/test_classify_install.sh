@@ -28,6 +28,21 @@ mkdir -p "$empty"
 out=$(classify "$empty")
 [ "$(printf '%s\n' "$out" | field class)" = "absent" ] \
   || fail "empty home was not absent"
+if [ "$(uname -s)" = "Darwin" ]; then
+  [ "$(printf '%s\n' "$out" | field shortcut_bridge)" = "macos-ios-only" ] \
+    || fail "Darwin empty home did not report the Apple Shortcut bridge"
+else
+  [ "$(printf '%s\n' "$out" | field shortcut_bridge)" = "linux-or-other-no-apple-shortcut" ] \
+    || fail "non-Darwin empty home did not report the Apple-only Shortcut limit"
+fi
+
+linked_home="$WORKDIR/linked-home"
+real_home="$WORKDIR/real-home"
+mkdir -p "$real_home"
+ln -s "$real_home" "$linked_home"
+out=$(classify "$linked_home")
+[ "$(printf '%s\n' "$out" | field class)" = "absent" ] \
+  || fail "home-is-symlink empty tree was not absent"
 
 dotfiles="$WORKDIR/dotfiles"
 mkdir -p "$dotfiles/alexandria/files" "$dotfiles/.local/share/alexandria"
@@ -43,6 +58,22 @@ printf '%s\n' 'random' > "$foreign/.local/share/alexandria/keep.txt"
 out=$(classify "$foreign")
 [ "$(printf '%s\n' "$out" | field class)" = "foreign" ] \
   || fail "unreceipted content was not foreign"
+
+symlink_tree="$WORKDIR/symlink-tree"
+mkdir -p "$symlink_tree/target" "$symlink_tree/.local/share/alexandria"
+printf '%s\n' 'payload' > "$symlink_tree/target/notes.md"
+ln -s "$symlink_tree/target" "$symlink_tree/alexandria"
+out=$(classify "$symlink_tree")
+[ "$(printf '%s\n' "$out" | field class)" = "foreign" ] \
+  || fail "symlinked Author folder was not foreign: $out"
+
+runtime_link="$WORKDIR/runtime-link"
+mkdir -p "$runtime_link/alexandria" "$runtime_link/runtime-target" "$runtime_link/.local/share"
+printf '%s\n' 'keep' > "$runtime_link/runtime-target/notes.md"
+ln -s "$runtime_link/runtime-target" "$runtime_link/.local/share/alexandria"
+out=$(classify "$runtime_link")
+[ "$(printf '%s\n' "$out" | field class)" = "foreign" ] \
+  || fail "symlinked runtime folder was not foreign: $out"
 
 partial="$WORKDIR/partial"
 mkdir -p "$partial/alexandria/system" "$partial/.local/share/alexandria/hooks"
