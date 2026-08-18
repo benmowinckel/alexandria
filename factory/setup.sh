@@ -26,7 +26,7 @@
 #      local git repo), one small read-only-to-the-agent runtime at
 #      ~/.local/share/alexandria/, session hooks where the host supports them,
 #      and active-session skills in detected configs (~/.claude, ~/.cursor,
-#      ~/.codex, ~/.factory, and Codex's shared ~/.agents/skills convention).
+#      ~/.codex, ~/.factory, ~/.grok, and Codex's shared ~/.agents/skills convention).
 #      Factory receives its user-invokable /a skill plus lifecycle hooks, preserving foreign
 #      hook groups for the user to review. To make the one folder reachable from any
 #      local project, the merge adds ONLY ~/alexandria to each detected
@@ -82,7 +82,7 @@ path_has_symlink_component() {
 }
 for protected_root in \
   "$ALEX_DIR" "$RUNTIME_DIR" "$HOME/.claude" "$HOME/.cursor" \
-  "$HOME/.codex" "$HOME/.agents" "$HOME/.factory" \
+  "$HOME/.codex" "$HOME/.agents" "$HOME/.factory" "$HOME/.grok" \
   "$HOME/.config/git" "$HOME/Library/LaunchAgents"; do
   if path_has_symlink_component "$protected_root"; then
     echo "Refusing setup through symlinked path: $protected_root" >&2
@@ -452,6 +452,7 @@ chmod +x "$RUNTIME_DIR/hooks/shim.sh" 2>/dev/null
 fetch_factory "hooks/payload.sh" "$RUNTIME_DIR/.hooks_payload" "hooks/payload.sh" yes
 fetch_factory "scripts/capture_resolver.py" "$RUNTIME_DIR/scripts/capture_resolver.py" "scripts/capture_resolver.py" yes
 fetch_factory "scripts/configure_codex.py" "$RUNTIME_DIR/scripts/configure_codex.py" "scripts/configure_codex.py" yes
+fetch_factory "scripts/configure_grok.py" "$RUNTIME_DIR/scripts/configure_grok.py" "scripts/configure_grok.py" yes
 fetch_factory "scripts/uninstall.py" "$RUNTIME_DIR/scripts/uninstall.py" "scripts/uninstall.py" yes
 fetch_factory "scripts/statusline.sh" "$RUNTIME_DIR/scripts/statusline.sh" "scripts/statusline.sh" yes
 chmod +x "$RUNTIME_DIR/scripts/statusline.sh" 2>/dev/null
@@ -1266,6 +1267,81 @@ PY
   fi
 fi
 
+# Grok CLI / Grok Build — native ~/.grok skills and hooks even if Claude
+# compatibility would theoretically pick up ~/.claude. Grok-native hooks live
+# in ~/.grok/hooks/alexandria.json and always run the signed shim. Grok also
+# scans Claude/Cursor hooks by default; this install does not toggle
+# [compat.claude] hooks or [compat.cursor] hooks globally (that would drop
+# the Author's foreign hooks from those hosts). If Claude or Cursor
+# Alexandria hooks are also present, one Grok CLI session may fire the same
+# shim twice. Documented double-fire; do not "fix" it by disabling compat.
+# Grok Bot (Cursor chat assistants) is not this path — setup cannot write
+# that box; factory/skills/grok-bot.md is the agent-created workflow.
+if [ -d "$HOME/.grok" ] || command -v grok &>/dev/null; then
+  if [ -e "$HOME/.grok" ] && [ ! -d "$HOME/.grok" ]; then
+    echo "  Grok CLI: ~/.grok exists and is not a directory; left unchanged"
+  else
+  mkdir -p "$HOME/.grok/skills" "$HOME/.grok/hooks" 2>/dev/null
+  GROK_A_SKILL=""
+  if alex_skill_slot_available "$HOME/.grok/skills/a" "skills/claudecode.md" "a" "a"; then
+    install_start_skill "skills/claudecode.md" "$HOME/.grok/skills/a" "a" "skills/claudecode.md (Grok /a skill)" && GROK_A_SKILL="a"
+  else
+    echo "  Grok CLI: kept foreign /a skill"
+  fi
+  GROK_ALEXANDRIA_SKILL=""
+  if alex_skill_slot_available "$HOME/.grok/skills/alexandria" "skills/claudecode.md" "alexandria" "a"; then
+    install_start_skill "skills/claudecode.md" "$HOME/.grok/skills/alexandria" "alexandria" "skills/claudecode.md (Grok /alexandria skill)" && GROK_ALEXANDRIA_SKILL="alexandria"
+  else
+    echo "  Grok CLI: kept foreign /alexandria skill"
+  fi
+  GROK_START_SKILL="$GROK_A_SKILL"
+
+  GROK_CLOSE_SKILL=""
+  GROK_CLOSE_DIR=""
+  GROK_CLOSE_SLOTS="$(close_skill_slots)"
+  while IFS='|' read -r candidate_dir candidate_name; do
+    if alex_skill_slot_available "$HOME/.grok/skills/$candidate_dir" "skills/aclose.md" "$candidate_name" "a."; then
+      if install_close_skill "$HOME/.grok/skills/$candidate_dir" "$candidate_name" "skills/aclose.md (Grok session close)"; then
+        GROK_CLOSE_SKILL="$candidate_name"
+        GROK_CLOSE_DIR="$candidate_dir"
+      fi
+      [ -n "$GROK_CLOSE_SKILL" ] && break
+    else
+      echo "  Grok CLI: kept foreign /$candidate_name skill"
+    fi
+  done <<< "$GROK_CLOSE_SLOTS"
+
+  # Dedicated owned hook file — not a merge into a shared hooks.json, and not
+  # a rewrite of ~/.grok/config.toml. Grok default sandbox is off
+  # (unrestricted); this install does not create sandbox.toml or add
+  # [skills] paths, because native ~/.grok/skills is the documented skill
+  # root.
+  GROK_HOOKS_OK=""
+  if command -v python3 &>/dev/null && \
+     [ -s "$RUNTIME_DIR/scripts/configure_grok.py" ]; then
+    if alex_file_slot_available "$HOME/.grok/hooks/alexandria.json" && \
+       python3 "$RUNTIME_DIR/scripts/configure_grok.py" \
+         --grok-home "$HOME/.grok" >/dev/null 2>&1 && \
+       record_owned_file "$HOME/.grok/hooks/alexandria.json"; then
+      GROK_HOOKS_OK=1
+    elif python3 "$RUNTIME_DIR/scripts/configure_grok.py" \
+           --grok-home "$HOME/.grok" --check >/dev/null 2>&1 && \
+         record_owned_file "$HOME/.grok/hooks/alexandria.json"; then
+      GROK_HOOKS_OK=1
+    else
+      echo "  Grok CLI: kept foreign ~/.grok/hooks/alexandria.json"
+    fi
+  fi
+  if [ -n "$GROK_HOOKS_OK" ]; then
+    printf '%s\n' 'alexandria-config-v1' > "$RUNTIME_DIR/.owned_grok_config"
+    chmod 600 "$RUNTIME_DIR/.owned_grok_config" 2>/dev/null
+    echo "  Grok CLI: configured (native hooks + /a skill)"
+  else
+    echo "  Grok CLI: existing hooks could not be merged safely; left unchanged"
+  fi
+  fi
+fi
+
 # Codex
 if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then
   mkdir -p "$HOME/.codex" 2>/dev/null
@@ -1719,6 +1795,12 @@ for event, expected in required.items():
 PY
 }
 
+validate_grok_config() {
+  command -v python3 >/dev/null 2>&1 || return 1
+  [ -s "$RUNTIME_DIR/scripts/configure_grok.py" ] || return 1
+  python3 "$RUNTIME_DIR/scripts/configure_grok.py" --grok-home "$HOME/.grok" --check >/dev/null 2>&1
+}
+
 CLAUDE_DETECTED="no"
 if [ -d "$HOME/.claude" ] || command -v claude &>/dev/null; then
   CLAUDE_DETECTED="yes"
@@ -1813,6 +1895,33 @@ if [ -d "$HOME/.factory" ] || command -v droid &>/dev/null; then
   fi
 fi
 
+GROK_DETECTED="no"
+if [ -d "$HOME/.grok" ] || command -v grok &>/dev/null; then
+  GROK_DETECTED="yes"
+  GROK_START_FILE_OK=""
+  GROK_CLOSE_FILE_OK=""
+  GROK_CLOSE_DECLARED_OK=""
+  GROK_CONFIG_OK=""
+  [ "${GROK_A_SKILL:-}" = "a" ] && [ -f "$HOME/.grok/skills/a/SKILL.md" ] && \
+    grep -q '^name: a$' "$HOME/.grok/skills/a/SKILL.md" 2>/dev/null && \
+    grep -q '^user-invocable: true$' "$HOME/.grok/skills/a/SKILL.md" 2>/dev/null && \
+    GROK_START_FILE_OK=1
+  [ -n "${GROK_CLOSE_DIR:-}" ] && \
+    [ -f "$HOME/.grok/skills/$GROK_CLOSE_DIR/SKILL.md" ] && GROK_CLOSE_FILE_OK=1
+  [ -n "${GROK_CLOSE_SKILL:-}" ] && [ -n "${GROK_CLOSE_DIR:-}" ] && \
+    grep -q "^name: $GROK_CLOSE_SKILL$" "$HOME/.grok/skills/$GROK_CLOSE_DIR/SKILL.md" 2>/dev/null && \
+    GROK_CLOSE_DECLARED_OK=1
+  validate_grok_config && GROK_CONFIG_OK=1
+  if [ -n "${GROK_HOOKS_OK:-}" ] && [ -n "$GROK_CONFIG_OK" ] && \
+     [ -n "$GROK_START_FILE_OK" ] && \
+     [ -n "${GROK_CLOSE_SKILL:-}" ] && \
+     [ -n "$GROK_CLOSE_FILE_OK" ] && [ -n "$GROK_CLOSE_DECLARED_OK" ]; then
+    STATUS_GROK="ok"; DETAIL_GROK="/a + /$GROK_CLOSE_SKILL ready; native hooks wired; foreign names preserved"
+  else
+    STATUS_GROK="fail"; DETAIL_GROK="Grok CLI cannot safely own the visible /a and /a. route or write its native hooks — resolve the reported collision/error, then re-run setup"
+  fi
+fi
+
 # A complete product needs one verified path into an active session. Codex's
 # pending trust state is the deliberate first-run exception: the skills are
 # present and onboarding continues, while the Author still has to approve the
@@ -1822,11 +1931,12 @@ STATUS_ACTIVE="fail"
 DETAIL_ACTIVE="no supported ai integration is ready"
 if { [ "$CLAUDE_DETECTED" = "yes" ] && [ "$STATUS_CLAUDE" = "ok" ]; } || \
    { [ "$CURSOR_DETECTED" = "yes" ] && [ "$STATUS_CURSOR" = "ok" ]; } || \
-   { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "ok" ]; }; then
-  STATUS_ACTIVE="ok"; DETAIL_ACTIVE="active session skill ready"
+   { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "ok" ]; } || \
+   { [ "$GROK_DETECTED" = "yes" ] && [ "$STATUS_GROK" = "ok" ]; }; then
+    STATUS_ACTIVE="ok"; DETAIL_ACTIVE="active session skill ready"
 elif { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "skip" ]; } || \
      { [ "$FACTORY_DETECTED" = "yes" ] && [ "$STATUS_FACTORY" = "skip" ]; }; then
-  STATUS_ACTIVE="skip"; DETAIL_ACTIVE="active skill ready; host hooks await one-time review"
+    STATUS_ACTIVE="skip"; DETAIL_ACTIVE="active skill ready; host hooks await one-time review"
 fi
 
 # Passive mode needs a host that can run session hooks and carry the visible
@@ -1835,8 +1945,9 @@ STATUS_PASSIVE="fail"
 DETAIL_PASSIVE="no supported passive session path is ready"
 if { [ "$CLAUDE_DETECTED" = "yes" ] && [ "$STATUS_CLAUDE" = "ok" ]; } || \
    { [ "$CURSOR_DETECTED" = "yes" ] && [ "$STATUS_CURSOR" = "ok" ]; } || \
-   { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "ok" ]; }; then
-  STATUS_PASSIVE="ok"; DETAIL_PASSIVE="ordinary-session hooks and cue route ready"
+   { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "ok" ]; } || \
+   { [ "$GROK_DETECTED" = "yes" ] && [ "$STATUS_GROK" = "ok" ]; }; then
+    STATUS_PASSIVE="ok"; DETAIL_PASSIVE="ordinary-session hooks and cue route ready"
 elif { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "skip" ]; } || \
      { [ "$FACTORY_DETECTED" = "yes" ] && [ "$STATUS_FACTORY" = "skip" ]; }; then
   STATUS_PASSIVE="skip"; DETAIL_PASSIVE="configured; host hooks await one-time review"
@@ -1850,6 +1961,7 @@ STATUS_HOSTS="ok"
 { [ "$CURSOR_DETECTED" = "yes" ] && [ "$STATUS_CURSOR" = "fail" ]; } && STATUS_HOSTS="fail"
 { [ "$CODEX_DETECTED" = "yes" ] && [ "$STATUS_CODEX" = "fail" ]; } && STATUS_HOSTS="fail"
 { [ "$FACTORY_DETECTED" = "yes" ] && [ "$STATUS_FACTORY" = "fail" ]; } && STATUS_HOSTS="fail"
+{ [ "$GROK_DETECTED" = "yes" ] && [ "$STATUS_GROK" = "fail" ]; } && STATUS_HOSTS="fail"
 
 # One user-facing loop status: passive hooks → visible cue → active session.
 # A cue the Author explicitly turned off is a valid intentional degradation;
@@ -1915,6 +2027,7 @@ SETUP_STATUS="ok"
   if [ -d "$HOME/.cursor" ] || command -v cursor &>/dev/null; then echo "  cursor: present"; else echo "  cursor: absent"; fi
   if [ -d "$HOME/.factory" ] || command -v droid &>/dev/null; then echo "  factory: present"; else echo "  factory: absent"; fi
   if [ -d "$HOME/.codex" ] || command -v codex &>/dev/null; then echo "  codex: present"; else echo "  codex: absent"; fi
+  if [ -d "$HOME/.grok" ] || command -v grok &>/dev/null; then echo "  grok: present"; else echo "  grok: absent"; fi
   echo "subsystems:"
   echo "  files: $STATUS_FILES"
   echo "  canon: $STATUS_CANON"
@@ -1930,6 +2043,8 @@ SETUP_STATUS="ok"
   [ "$CURSOR_DETECTED" = "yes" ] && echo "  cursor_skill: $STATUS_CURSOR"
   [ "$CODEX_DETECTED" = "yes" ] && echo "  codex_skill: $STATUS_CODEX"
   [ "$FACTORY_DETECTED" = "yes" ] && echo "  factory_skill: $STATUS_FACTORY"
+  [ "$GROK_DETECTED" = "yes" ] && echo "  grok_skill: $STATUS_GROK"
+  [ "$GROK_DETECTED" = "yes" ] && echo "  grok_checks: hooks=${GROK_HOOKS_OK:+ok} config=${GROK_CONFIG_OK:+ok} start_name=${GROK_A_SKILL:-missing} start_file=${GROK_START_FILE_OK:+ok} close_name=${GROK_CLOSE_SKILL:-missing} close_dir=${GROK_CLOSE_DIR:-missing} close_file=${GROK_CLOSE_FILE_OK:+ok} close_declared=${GROK_CLOSE_DECLARED_OK:+ok} alexandria_alias=${GROK_ALEXANDRIA_SKILL:-missing}"
   echo "  private_repo: $STATUS_REPO"
   echo "platform: $PLATFORM"
   echo "platform_capture: $PLATFORM_CAPTURE"
@@ -1978,6 +2093,7 @@ count_status "$STATUS_KEY"
 [ "$CURSOR_DETECTED" = "yes" ] && count_status "$STATUS_CURSOR"
 [ "$CODEX_DETECTED" = "yes" ] && count_status "$STATUS_CODEX"
 [ "$FACTORY_DETECTED" = "yes" ] && count_status "$STATUS_FACTORY"
+[ "$GROK_DETECTED" = "yes" ] && count_status "$STATUS_GROK"
 count_status "$STATUS_REPO"
 
 echo ""
@@ -2001,6 +2117,7 @@ emit_row "$STATUS_KEY" "account" "$DETAIL_KEY"
 [ "$CURSOR_DETECTED" = "yes" ] && emit_row "$STATUS_CURSOR" "Cursor" "$DETAIL_CURSOR"
 [ "$CODEX_DETECTED" = "yes" ] && emit_row "$STATUS_CODEX" "Codex" "$DETAIL_CODEX"
 [ "$FACTORY_DETECTED" = "yes" ] && emit_row "$STATUS_FACTORY" "Factory" "$DETAIL_FACTORY"
+[ "$GROK_DETECTED" = "yes" ] && emit_row "$STATUS_GROK" "Grok CLI" "$DETAIL_GROK"
 emit_row "$STATUS_REPO" "git ledger" "$DETAIL_REPO"
 
 echo ""
@@ -2060,6 +2177,7 @@ $ALEX_DIR/system/hooks/shim.sh|hooks/shim.sh
 $ALEX_DIR/system/.hooks_payload|hooks/payload.sh
 $ALEX_DIR/system/scripts/capture_resolver.py|scripts/capture_resolver.py
 $ALEX_DIR/system/scripts/configure_codex.py|scripts/configure_codex.py
+$ALEX_DIR/system/scripts/configure_grok.py|scripts/configure_grok.py
 $ALEX_DIR/system/scripts/uninstall.py|scripts/uninstall.py
 $ALEX_DIR/system/scripts/statusline.sh|scripts/statusline.sh
 $ALEX_DIR/system/scripts/verify-fetch.sh|scripts/verify-fetch.sh

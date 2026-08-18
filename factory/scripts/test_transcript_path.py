@@ -36,6 +36,7 @@ class TranscriptPathTests(unittest.TestCase):
             ".cursor/projects/demo",
             ".alexandria/transcripts",
             ".factory/sessions",
+            ".grok/sessions",
         ):
             (self.home / name).mkdir(parents=True)
 
@@ -62,6 +63,7 @@ class TranscriptPathTests(unittest.TestCase):
             ".cursor/projects/demo/chat.jsonl",
             ".alexandria/transcripts/cursor-1.jsonl",
             ".factory/sessions/run.jsonl",
+            ".grok/sessions/run.jsonl",
             ".claude/projects/demo/file..jsonl",
         ):
             path = self._write(rel)

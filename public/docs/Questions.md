@@ -60,7 +60,7 @@ No. Your AI runs the loop. You talk in plain words and it handles the files. If 
 
 ## what do i need to run it.
 
-For the full local version, any compatible AI that can reach files on your computer — Claude Code, Cursor, Codex, or Claude Desktop’s code tab. If you use regular ChatGPT, Claude or Gemini, the [chat version](/chat) adds the same habit to that ai and keeps its record in your own Google Drive when the app can write there.
+For the full local version, any compatible AI that can reach files on your computer — Claude Code, Cursor, Codex, Grok CLI, or Claude Desktop’s code tab. Grok Bot can run the same `/a` loop when its computer connection can reach those files. If you use regular ChatGPT, Claude or Gemini, the [chat version](/chat) adds the same habit to that ai and keeps its record in your own Google Drive when the app can write there.
 
 ## how do i start.
 
