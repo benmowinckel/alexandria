@@ -711,38 +711,74 @@ require factory/skills/grok-bot-close.md \
   'If that connection is down, missing, or cannot actually write `~/alexandria`, say so in one sentence and stop.' \
   'Grok Bot close can claim files were saved without a computer connection'
 require factory/skills/grok-bot.md \
-  'Do not tell them to open the Grok Bot app if this chat is already live.' \
-  'Grok Bot skill still tells them to open the app while chat is already live'
+  'do not tell them to open the app' \
+  'Grok Bot skill can tell a live chat to open the app'
 require factory/skills/grok-bot.md \
-  'the local-exec daemon can die while this chat is still open' \
-  'Grok Bot skill no longer names the chat vs local-exec split'
+  'Cmd+Q' \
+  'Grok Bot skill no longer tells a live chat to fully quit with Cmd+Q'
 require factory/skills/grok-bot.md \
-  'fully quit (Cmd+Q), kill leftover `local-exec-daemon`, relaunch, then retry' \
-  'Grok Bot skill has no live-chat local-exec recovery'
+  'closing the window is not enough' \
+  'Grok Bot skill can treat window-close as a Grok Bot quit'
 require factory/skills/grok-bot.md \
-  'Execution on Local Computer must be allowed' \
-  'Grok Bot skill no longer states the local-computer permission floor'
+  'local-exec-daemon' \
+  'Grok Bot skill no longer names the local-exec daemon'
+require factory/skills/grok-bot.md \
+  'pkill -f local-exec-daemon' \
+  'Grok Bot skill no longer names the local-exec-daemon recovery command'
+require factory/skills/grok-bot.md \
+  'Execution on Local Computer' \
+  'Grok Bot skill no longer states the Execution on Local Computer floor'
+require factory/skills/grok-bot.md \
+  'must not be "never allowed."' \
+  'Grok Bot skill no longer forbids Execution on Local Computer as never allowed'
+require factory/skills/grok-bot.md \
+  'Settings → General is only the account card' \
+  'Grok Bot skill can invent a Grok Bot click-path'
 require factory/skills/grok-bot-close.md \
-  'Do not tell them to open the Grok Bot app if this chat is already live.' \
-  'Grok Bot close still tells them to open the app while chat is already live'
+  'do not tell them to open the app' \
+  'Grok Bot close can tell a live chat to open the app'
 require factory/skills/grok-bot-close.md \
-  'the local-exec daemon can die while this chat is still open' \
-  'Grok Bot close no longer names the chat vs local-exec split'
+  'Cmd+Q' \
+  'Grok Bot close no longer tells a live chat to fully quit with Cmd+Q'
 require factory/skills/grok-bot-close.md \
-  'fully quit (Cmd+Q), kill leftover `local-exec-daemon`, relaunch, then retry' \
-  'Grok Bot close has no live-chat local-exec recovery'
+  'closing the window is not enough' \
+  'Grok Bot close can treat window-close as a Grok Bot quit'
+require factory/skills/grok-bot-close.md \
+  'local-exec-daemon' \
+  'Grok Bot close no longer names the local-exec daemon'
+require factory/skills/grok-bot-close.md \
+  'pkill -f local-exec-daemon' \
+  'Grok Bot close no longer names the local-exec-daemon recovery command'
+require factory/skills/grok-bot-close.md \
+  'Execution on Local Computer' \
+  'Grok Bot close no longer states the Execution on Local Computer floor'
+require factory/skills/grok-bot-close.md \
+  'must not be "never allowed."' \
+  'Grok Bot close no longer forbids Execution on Local Computer as never allowed'
 require factory/onboarding.md \
-  'Do not tell them to open the Grok Bot app if this chat is already live.' \
-  'onboarding still tells them to open Grok Bot while chat is already live'
+  'do not tell them to open the app' \
+  'onboarding can tell a live Grok Bot chat to open the app'
 require factory/onboarding.md \
-  'fully quit (Cmd+Q), kill leftover `local-exec-daemon`, relaunch, then retry' \
-  'onboarding has no live-chat local-exec recovery'
+  'Cmd+Q' \
+  'onboarding no longer names Cmd+Q for Grok Bot local-exec recovery'
+require factory/onboarding.md \
+  'local-exec-daemon' \
+  'onboarding no longer names the Grok Bot local-exec daemon'
+require factory/onboarding.md \
+  'Execution on Local Computer' \
+  'onboarding no longer states the Grok Bot Execution on Local Computer floor'
 require factory/block.md \
-  'Do not tell them to open the Grok Bot app if this chat is already live.' \
-  'Phase 6 still tells them to open Grok Bot while chat is already live'
+  'do not tell them to open the app' \
+  'Phase 6 can tell a live Grok Bot chat to open the app'
 require factory/block.md \
-  'fully quit (Cmd+Q), kill leftover `local-exec-daemon`, relaunch, then retry' \
-  'Phase 6 has no live-chat local-exec recovery'
+  'Cmd+Q' \
+  'Phase 6 no longer names Cmd+Q for Grok Bot local-exec recovery'
+require factory/block.md \
+  'local-exec-daemon' \
+  'Phase 6 no longer names the Grok Bot local-exec daemon'
+require factory/block.md \
+  'Execution on Local Computer' \
+  'Phase 6 no longer states the Grok Bot Execution on Local Computer floor'
 require factory/setup.sh \
   '[ -d "$HOME/.grok" ] || command -v grok' \
   'setup does not detect Grok CLI the same way as other hosts'
