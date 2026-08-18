@@ -743,6 +743,36 @@ require factory/block.md \
 require factory/block.md \
   'fully quit (Cmd+Q), kill leftover `local-exec-daemon`, relaunch, then retry' \
   'Phase 6 has no live-chat local-exec recovery'
+require factory/skills/grok-bot.md \
+  'This chat has no statusline, footer, or session-nudge surface' \
+  'Grok Bot skill invents a footer or nudge surface'
+require factory/skills/grok-bot.md \
+  'There is no SessionStart/SessionEnd shim' \
+  'Grok Bot skill does not state it has no session hooks'
+require factory/skills/grok-bot.md \
+  'This session is not auto-archived into `~/alexandria/files/vault/sessions`' \
+  'Grok Bot skill can claim vault transcript archive'
+require factory/skills/grok-bot.md \
+  'stamp `~/alexandria/system/.last_a` and append this chat' \
+  'Grok Bot skill no longer requires .last_a / .active_a_sessions'
+require factory/skills/grok-bot.md \
+  'module-orientation drip (`.module_guide_seen`)' \
+  'Grok Bot skill skips the joined module-orientation drip'
+require factory/skills/grok-bot.md \
+  'Closing the window is not enough' \
+  'Grok Bot skill treats closing the window as a full quit'
+require factory/skills/grok-bot-close.md \
+  'There is no SessionEnd hook; this close is the archive' \
+  'Grok Bot close claims a SessionEnd hook archived the chat'
+require factory/skills/grok-bot-close.md \
+  'not auto-archived into `~/alexandria/files/vault/sessions`' \
+  'Grok Bot close can pretend the vault got this chat'
+require factory/onboarding.md \
+  'Grok Bot has no statusline or SessionStart/SessionEnd shim' \
+  'onboarding still implies Grok Bot has session hooks'
+require factory/block.md \
+  'No statusline and no SessionEnd hook' \
+  'Phase 6 still implies Grok Bot has a footer or SessionEnd hook'
 require factory/setup.sh \
   '[ -d "$HOME/.grok" ] || command -v grok' \
   'setup does not detect Grok CLI the same way as other hosts'
