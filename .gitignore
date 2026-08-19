@@ -57,3 +57,7 @@ CLAUDE.md
 
 # PDF preview artifacts (build output from generate_pdf.py)
 public/docs/*.preview_p*.png
+
+# Python bytecode from factory tests
+__pycache__/
+*.pyc

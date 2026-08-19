@@ -743,6 +743,30 @@ require factory/skills/grok-bot.md \
 require factory/skills/grok-bot.md \
   'Settings → General is only the account card' \
   'Grok Bot skill can invent a Grok Bot click-path'
+require factory/skills/grok-bot.md \
+  'one continuous stream' \
+  'Grok Bot skill still treats ordinary chats as new sessions'
+require factory/skills/grok-bot.md \
+  'first reply of a new local day' \
+  'Grok Bot skill still uses a first-message-of-a-new-chat cue'
+require factory/skills/grok-bot.md \
+  'Want me to start /a?' \
+  'Grok Bot ordinary-chat cue is not Want me to start /a?'
+require factory/skills/grok-bot.md \
+  'this agent'\''s own description' \
+  'Grok Bot skill does not persist the loop into this agent description'
+require factory/skills/grok-bot.md \
+  'save that to alexandria?' \
+  'Grok Bot skill dropped the lasting-signal save ask'
+require factory/skills/grok-bot.md \
+  'no account-instructions field' \
+  'Grok Bot skill still pretends there is an account-instructions paste'
+forbid factory/skills/grok-bot.md \
+  'alexandria chat on the side' \
+  'Grok Bot skill still says alexandria chat on the side'
+forbid factory/skills/grok-bot.md \
+  'new ordinary Grok Bot text chat' \
+  'Grok Bot skill still keys the cue off a new chat'
 require factory/skills/grok-bot-close.md \
   'do not tell them to open the app' \
   'Grok Bot close can tell a live chat to open the app'

@@ -17,6 +17,9 @@ set -euo pipefail
 
 echo "reminder: install or sovereignty-surface change? run the relevant red-team pass first (factory/redteam.md)"
 
+# Python tests under factory/scripts must not leave bytecode as unsigned factory files.
+export PYTHONDONTWRITEBYTECODE=1
+
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
@@ -89,7 +92,7 @@ done < <(git ls-files factory | LC_ALL=C sort)
 
 # Build manifest: one line per file, "sha256  relative/path". Refuse dirty
 # untracked factory files: they cannot be part of a reproducible signed release.
-untracked_factory="$(git ls-files --others --exclude-standard factory)"
+untracked_factory="$(git ls-files --others --exclude-standard factory | grep -Ev '(^|/)__pycache__/|\.pyc$' || true)"
 if [ -n "$untracked_factory" ]; then
   echo "error: untracked factory files would ship unsigned:" >&2
   printf '%s\n' "$untracked_factory" | sed 's/^/  /' >&2
