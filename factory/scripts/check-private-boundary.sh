@@ -702,14 +702,23 @@ require factory/skills/grok-bot.md \
   'HOST — Cursor Grok Bot, not Grok CLI.' \
   'Grok Bot skill does not declare it is not Grok CLI'
 require factory/skills/grok-bot.md \
-  'If it is down, missing, or cannot actually read `~/alexandria`, say that in one sentence and stop.' \
-  'Grok Bot skill can invent the record when the computer connection is down'
+  'a connected GitHub private repo that actually reads as the loop' \
+  'Grok Bot skill hardcodes a GitHub repo instead of discovering a loop that actually reads'
+require factory/skills/grok-bot.md \
+  'cold Grok Bot start, not an error' \
+  'Grok Bot skill still treats a missing computer connection as a fatal error'
+require factory/skills/grok-bot.md \
+  'Never invent constitution, vault, transcripts, or a save.' \
+  'Grok Bot skill can invent the record when no verified source is available'
 require factory/skills/grok-bot.md \
   'Never claim Claude Code, Cursor IDE, or Grok CLI hooks exist in this box.' \
   'Grok Bot skill can claim another host already wired this chat'
 require factory/skills/grok-bot-close.md \
-  'If that connection is down, missing, or cannot actually write `~/alexandria`, say so in one sentence and stop.' \
-  'Grok Bot close can claim files were saved without a computer connection'
+  'close against the next verified copy this session actually used' \
+  'Grok Bot close fail-closes instead of closing against the source this session used'
+require factory/skills/grok-bot-close.md \
+  'Never claim a Mac save.' \
+  'Grok Bot close can claim a Mac save while writing another source'
 require factory/skills/grok-bot.md \
   'do not tell them to open the app' \
   'Grok Bot skill can tell a live chat to open the app'
@@ -756,29 +765,17 @@ require factory/skills/grok-bot-close.md \
   'must not be "never allowed."' \
   'Grok Bot close no longer forbids Execution on Local Computer as never allowed'
 require factory/onboarding.md \
-  'do not tell them to open the app' \
-  'onboarding can tell a live Grok Bot chat to open the app'
+  'Daemon recovery lives in the grok-bot skill HOST block, not here.' \
+  'onboarding still encodes Grok Bot daemon recovery as a product step'
 require factory/onboarding.md \
-  'Cmd+Q' \
-  'onboarding no longer names Cmd+Q for Grok Bot local-exec recovery'
-require factory/onboarding.md \
-  'local-exec-daemon' \
-  'onboarding no longer names the Grok Bot local-exec daemon'
-require factory/onboarding.md \
-  'Execution on Local Computer' \
-  'onboarding no longer states the Grok Bot Execution on Local Computer floor'
+  'A cold Grok Bot start is not an error' \
+  'onboarding still treats a missing Grok Bot computer connection as fatal'
 require factory/block.md \
-  'do not tell them to open the app' \
-  'Phase 6 can tell a live Grok Bot chat to open the app'
+  'Daemon recovery lives in the grok-bot skill HOST block, not here.' \
+  'Phase 6 still encodes Grok Bot daemon recovery as a product step'
 require factory/block.md \
-  'Cmd+Q' \
-  'Phase 6 no longer names Cmd+Q for Grok Bot local-exec recovery'
-require factory/block.md \
-  'local-exec-daemon' \
-  'Phase 6 no longer names the Grok Bot local-exec daemon'
-require factory/block.md \
-  'Execution on Local Computer' \
-  'Phase 6 no longer states the Grok Bot Execution on Local Computer floor'
+  'A cold Grok Bot start is not an error' \
+  'Phase 6 still treats a missing Grok Bot computer connection as fatal'
 require factory/setup.sh \
   '[ -d "$HOME/.grok" ] || command -v grok' \
   'setup does not detect Grok CLI the same way as other hosts'
