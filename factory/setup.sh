@@ -316,14 +316,19 @@ if [ -d "$RUNTIME_DIR" ] && [ -n "$(find "$RUNTIME_DIR" -mindepth 1 -print -quit
   RUNTIME_HAD_CONTENT=1
 fi
 mkdir -p "$ALEX_DIR/files/vault" "$ALEX_DIR/system/hooks" "$ALEX_DIR/system/scripts" "$ALEX_DIR/system/git-hooks" "$ALEX_DIR/files/constitution" "$ALEX_DIR/files/marginalia" "$ALEX_DIR/files/library/public" "$ALEX_DIR/files/library/paid" "$ALEX_DIR/files/library/invite" "$ALEX_DIR/files/library/authors" "$ALEX_DIR/files/works" "$ALEX_DIR/files/works/root-packets" "$ALEX_DIR/files/core" "$ALEX_DIR/files/vault/input" "$ALEX_DIR/files/vault/_input" "$ALEX_DIR/system/.autoloop" "$ALEX_DIR/system/permissions" "$RUNTIME_DIR/hooks" "$RUNTIME_DIR/scripts"
-# Keep the previously accepted signed manifest long enough to recognise exact
-# legacy Alexandria bytes during the ownership-ledger migration below. A loose
-# sentence inside a foreign file is never ownership proof.
+# Keep the manifest from the last completed install long enough to recognise
+# exact Alexandria bytes during the ownership-ledger migration below. The live
+# canon manifest may advance during a notify-only update check, so it is not an
+# installation receipt. A loose sentence inside a foreign file is never proof.
 PREVIOUS_VERIFIED_MANIFEST=""
 _previous_manifest_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
-if [ -n "$_previous_manifest_tmp" ] && [ ! -L "$RUNTIME_DIR/.canon_manifest" ] && \
-   [ -f "$RUNTIME_DIR/.canon_manifest" ] && [ -s "$RUNTIME_DIR/.canon_manifest" ] && \
-   cp "$RUNTIME_DIR/.canon_manifest" "$_previous_manifest_tmp" 2>/dev/null; then
+_installed_manifest="$RUNTIME_DIR/.installed_manifest"
+if [ ! -f "$_installed_manifest" ]; then
+  _installed_manifest="$RUNTIME_DIR/.canon_manifest"
+fi
+if [ -n "$_previous_manifest_tmp" ] && [ ! -L "$_installed_manifest" ] && \
+   [ -f "$_installed_manifest" ] && [ -s "$_installed_manifest" ] && \
+   cp "$_installed_manifest" "$_previous_manifest_tmp" 2>/dev/null; then
   PREVIOUS_VERIFIED_MANIFEST="$_previous_manifest_tmp"
 else
   rm -f "${_previous_manifest_tmp:-}"
@@ -2182,6 +2187,14 @@ $ALEX_DIR/system/scripts/uninstall.py|scripts/uninstall.py
 $ALEX_DIR/system/scripts/statusline.sh|scripts/statusline.sh
 $ALEX_DIR/system/scripts/verify-fetch.sh|scripts/verify-fetch.sh
 EOF
+  _installed_manifest_tmp="$RUNTIME_DIR/.installed_manifest.tmp.$$"
+  if ! cp "$VERIFIED_MANIFEST" "$_installed_manifest_tmp" 2>/dev/null \
+     || ! chmod 600 "$_installed_manifest_tmp" 2>/dev/null \
+     || ! mv "$_installed_manifest_tmp" "$RUNTIME_DIR/.installed_manifest"; then
+    rm -f "$_installed_manifest_tmp" "$RUNTIME_DIR/.setup_complete"
+    echo "Install incomplete — could not record the exact signed factory bytes that were installed." >&2
+    exit 1
+  fi
   touch "$RUNTIME_DIR/.setup_complete"
 fi
 

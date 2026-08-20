@@ -646,8 +646,14 @@ require factory/setup.sh \
   'for rel in hooks/shim.sh scripts/verify-fetch.sh' \
   'runtime ownership is inferred from a marker instead of exact prior signed bytes'
 require factory/setup.sh \
-  '[ ! -L "$RUNTIME_DIR/.canon_manifest" ]' \
+  '[ ! -L "$_installed_manifest" ]' \
   'setup can follow a redirected prior manifest'
+require factory/setup.sh \
+  '_installed_manifest="$RUNTIME_DIR/.installed_manifest"' \
+  'setup still confuses the latest update-check manifest with the last completed install'
+require factory/setup.sh \
+  'cp "$VERIFIED_MANIFEST" "$_installed_manifest_tmp"' \
+  'setup no longer records the exact signed manifest after a completed install'
 require factory/scripts/verify-fetch.sh \
   'if [ "$MODE:$REL" != "run:setup.sh" ]; then' \
   'verified updates replace the prior manifest before setup can prove the existing runtime'
