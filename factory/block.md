@@ -127,11 +127,11 @@ Verify on disk first: constitution has cite-able entries, notepad has real first
 
 **Register.** Their words, their plainness. Never use the private map to persuade. Never tell them they were blind to a pattern their files already named — credit them, go deeper. Never over-pattern.
 
-**Commercial boundary (absolute, with one geography line).** Do not sell, price, pitch membership, referrals, marketplace, feedback, or “unlock.” You may print **exactly one** fixed destination line so they know the collective surface exists; the page does the selling when they choose to open it. Never personalise that line from their files. Exact form:
+**Commercial boundary (absolute).** Do not sell, price, pitch membership, referrals, marketplace, feedback, or “unlock.” After the personal result, print **exactly one** fixed destination line so they know the collective surface exists; the page does the selling when they choose to open it. This is the only next action. Never personalise that line from their files. Exact form:
 
 `library — https://alexandria-library.com/join`
 
-Nothing beside it except the mirror/develop/accrete body and the one plain other-app question. No “you should,” no dollar amounts, no free-month language.
+Nothing beside it except the mirror/develop/accrete body. No other setup question, “you should,” dollar amount, or free-month language.
 
 **The close — write every line yourself; shape holds:**
 
@@ -147,8 +147,6 @@ done.
 wrote it under ~/alexandria/ — only from what you approved; yours to edit or delete.
 
 library — https://alexandria-library.com/join
-
-which other AI app do you use most?
 ```
 
 **Fill bar (lazy fill = product failure):**
@@ -159,30 +157,10 @@ which other AI app do you use most?
 - Accretion must be specific (person/work/year or clear mechanism) and new to *them*. Prefer examples that actually appear in the cited work (no confident wrong examples — if unsure, omit the example).
 - On deliver: `touch ~/alexandria/system/.block_complete`.
 
-## Phase 6 — Add Alexandria to their other AI apps
+## Phase 6 — Stop cleanly
 
-This begins only after Phase 5 has shown the first personalized result. The Author has already been asked `which other AI app do you use most?` Do not ask for a list. Take the one app they name, then:
+Initial setup ends after the Phase 5 result and the one Library destination. Do not dilute that moment with Shortcut setup, another-ai instructions, backup, or any other optional capability.
 
-1. Open `~/alexandria/system/.account-instructions.md` and show the exact Alexandria instructions.
-2. Give one direct path to that app's durable account or project instructions.
-3. Tell them to keep their current instructions and paste the Alexandria instructions below them.
-4. Wait for them to say it is saved; never claim you changed a cloud setting yourself.
+If the Author joins, the welcome handoff in `factory/connect.md` owns the remaining full-product setup one action at a time. If they do not join, the private local loop is still complete; later active sessions may recommend one optional capability only when it would help that exact moment.
 
-Current paths:
-
-- ChatGPT: `settings → personalization → custom instructions`
-- Claude: `settings → general → instructions for claude`
-- Gemini: `settings → personal context → your instructions for gemini`
-- Grok Bot: save `factory/skills/grok-bot.md` into this chat's own skill library as `/a` (and `/alexandria` if the picker lists names). Setup cannot write the Grok Bot box from the Mac. `/a` is an agent-saved Grok Bot workflow with no verified Mac skill dir. If this host can see the computer, use `~/alexandria`. If not, name the source and keep going: a connected GitHub private repo that actually reads as `files/` + `system/` (discovered, not a named repo), then a writable folder, then authorized Drive, then this chat; never invent the record, never claim a Mac save. A cold Grok Bot start is not an error. Daemon recovery lives in the grok-bot skill HOST block, not here. The host's "Execution on Local Computer" control must not be "never allowed"; do not invent a click-path. Do not claim Cursor IDE or Grok CLI hooks exist here. Ordinary Grok Bot chats persist the loop in this agent's own description (no account-instructions field): first reply of a new local day, text only, once that day: `Want me to start /a?`; for lasting signal, `save that to alexandria?`
-
-For another app, name its real durable instructions field if one exists. If it has no such setting, say so instead of inventing one. Skip these manual instructions wherever working Alexandria hooks already provide the behavior. In no-hooks folder tools such as Cowork or ChatGPT Work, the Alexandria instructions tell the AI to open `_start` at every new task. Do not invent a universal literal command: use the installed host's native Alexandria skill, with `start an Alexandria session` as the portable floor.
-
-After one app is confirmed, ask only `any other AI app you use?` and repeat one at a time. If they say no, finish with the host detected in Phase 0:
-
-```
-→ type /a
-```
-
-Use `→ type /a` in Claude Code, Cursor, Factory, or Grok CLI; `→ type $a` in Codex; in Grok Bot `→ type /a` (and `/alexandria` if the picker is name-based); otherwise `→ say “start an Alexandria session”`. Prefer the gesture in **this** chat. Only add `(if that does nothing in this chat, open a new one and use the same gesture)` when needed. Never claim the plain word `alexandria` reliably invokes the skill. Never open a tab for them. Then stop.
-
-Test: *"it already knows me, showed me something I didn't have, every AI app I use knows how to reach it, and I know exactly what to type next."* Lucky-guess mirror, generic tension, re-gifted bookshelf, a settings checklist before value, or a buried CTA = fail.
+Test: *"it already knows me, showed me something I didn't have, and gave me one clear next action."* Lucky-guess mirror, generic tension, re-gifted bookshelf, a settings checklist after value, or more than one CTA = fail.

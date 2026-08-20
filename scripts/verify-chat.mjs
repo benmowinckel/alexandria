@@ -176,21 +176,8 @@ const startBackToChoice = (await page.locator('body').innerText()).includes('wha
 await page.getByRole('button', { name: /^an agent/i }).click();
 await page.getByRole('button', { name: /^yes/i }).click();
 await page.waitForFunction(() => location.hash === '#computer');
-await page.waitForSelector('.act-email');
-await page.mouse.move(0, 0);
-const computerShortcutHref = await page.locator('a.act-box').first().getAttribute('href');
-const computerShortcutWhy = (await page.locator('body').innerText()).includes('capture thoughts wherever you are')
-  && !(await page.locator('body').innerText()).includes('iPhone');
-const startEmailShape = await page.locator('.act-email').evaluate((element) => {
-  const style = getComputedStyle(element);
-  return {
-    children: Array.from(element.children).map((child) => [child.tagName, child.className]),
-    display: style.display,
-    padding: style.padding,
-    borderRadius: style.borderRadius,
-    minHeight: style.minHeight,
-  };
-});
+const computerBody = (await page.locator('body').innerText()).trim();
+const computerSteps = (await page.locator('.act-num').allInnerTexts()).map((value) => value.trim());
 const computerButton = page.getByRole('button', { name: 'copy the setup' });
 await computerButton.click();
 const computerClipboard = await page.evaluate(() => navigator.clipboard.readText());
@@ -210,15 +197,12 @@ const phoneHasHostPicker =
 await page.getByRole('button', { name: /^chatgpt$/i }).click();
 await page.waitForFunction(() => location.hash === '#phone-chatgpt');
 const phoneBody = (await page.locator('body').innerText()).trim();
-const phoneShortcutHref = await page.locator('a.act-box').first().getAttribute('href');
+const phoneSteps = (await page.locator('.act-num').allInnerTexts()).map((value) => value.trim());
 const phoneScreenshot = mobile
   ? path.join(os.tmpdir(), 'alexandria-start-phone-mobile-verification.png')
   : path.join(os.tmpdir(), 'alexandria-start-phone-verification.png');
 await page.screenshot({ path: phoneScreenshot, fullPage: true });
-const phoneInstructionButton = page.getByRole('button', { name: 'copy the alexandria instructions' });
-await phoneInstructionButton.click();
-const phoneInstructionClipboard = await page.evaluate(() => navigator.clipboard.readText());
-const phoneButton = page.getByRole('button', { name: 'copy the setup' });
+const phoneButton = page.getByRole('button', { name: 'anchor the setup' });
 await phoneButton.click();
 const phoneClipboard = await page.evaluate(() => navigator.clipboard.readText());
 await page.goBack();
@@ -247,10 +231,12 @@ const result = {
   chatShortcutMatchesDevice: mobile
     ? Boolean(chatShortcutHref?.includes('icloud.com/shortcuts/'))
     : chatShortcutHref === '/shortcut',
-  computerShortcutHref,
-  phoneShortcutHref,
-  computerShortcutRoutesToPage: computerShortcutHref === '/shortcut',
-  phoneShortcutOpensIcloud: Boolean(phoneShortcutHref?.includes('icloud.com/shortcuts/')),
+  computerHasOneAction:
+    JSON.stringify(computerSteps) === JSON.stringify(['1']) &&
+    computerBody.includes('copy the setup') &&
+    computerBody.includes('paste into your agent') &&
+    !computerBody.includes('add the shortcut') &&
+    !computerBody.includes('your email'),
   hasEmailStep: setupHtml.includes('act-email') && setupHtml.includes('your email') && body.includes('we’ll send your setup, then occasional useful notes'),
   hasCopyStep: body.includes('copy the alexandria instructions') && body.includes(`paste in ${chatgptPath}`),
   hasSetupStep: body.includes('copy the setup') && body.includes('paste in a normal chat'),
@@ -310,7 +296,8 @@ const result = {
     setupClipboard.includes('give me the exact native steps') &&
     setupClipboard.includes('without presenting alternatives or claiming file access'),
   setupPopulatesAndVerifies:
-    setupClipboard.includes('everything you already know about me') &&
+    setupClipboard.includes('Name the exact account memory and past-chat sources you can actually reach') &&
+    setupClipboard.includes('Ask me directly whether you may use those named sources') &&
     setupClipboard.includes('fullest accurate first record') &&
     setupClipboard.includes('Read every saved item back') &&
     setupClipboard.includes('ask one high-signal question instead of inventing') &&
@@ -330,7 +317,6 @@ const result = {
     setupClipboard.includes("one clear step naming this host's actual skill gesture") &&
     setupClipboard.includes('rather than a generic question'),
   clipboardHasNoJailbreak: jailbreakPhrases.every((phrase) => !clipboard.toLowerCase().includes(phrase)),
-  emailFieldMatchesStart: JSON.stringify(chatEmailShape) === JSON.stringify(startEmailShape),
   computerCopiedWithoutEmail: computerClipboard === computerInstallPrompt(),
   computerAsksForInspection: computerClipboard.includes('decide for yourself whether it is safe') && computerClipboard.includes('wait for me to say `start`'),
   computerFirstPasteIsSafetyOnly:
@@ -338,27 +324,23 @@ const result = {
     !computerClipboard.includes('which other ai app') &&
     !computerClipboard.includes('account or project instructions') &&
     computerClipboard.trim().endsWith('wait for me to say `start`.'),
-  computerShortcutWhyMatchesPhone: computerShortcutWhy,
   phoneHasHostPicker,
   phoneRouteVisible:
-    phoneBody.includes('copy the alexandria instructions') &&
-    phoneBody.includes(`paste in ${phoneChatgptPath}`) &&
-    phoneBody.includes('copy the setup') &&
-    phoneBody.includes('paste in a normal chat') &&
-    !phoneBody.includes('connect google drive') &&
-    phoneBody.includes('start an alexandria session in a new chat'),
-  phoneCopiedWithoutEmail: phoneClipboard === mobileHandoffPrompt(),
-  phoneHasExactFallback: phoneClipboard.includes('At your computer, open alexandria-library.com/start and choose agents.'),
-  phonePromptExplainsShortcutAndReminder:
-    phoneClipboard.includes('Explain that the alexandria Shortcut') &&
-    phoneClipboard.includes('If reminders work') &&
-    phoneClipboard.includes('Never claim you changed my phone or computer'),
-  phonePromptLeavesDirectSetupOnPage:
-    phoneClipboard.includes('send me to step 1 at alexandria-library.com/start') &&
-    phoneClipboard.includes('Confirm step 3 kept my existing instructions') &&
-    !phoneClipboard.includes('--- ALEXANDRIA BLOCK ---') &&
-    !phoneClipboard.includes(CHAT_INSTRUCTION),
-  phoneInstructionClipboardExact: phoneInstructionClipboard === CHAT_INSTRUCTION,
+    JSON.stringify(phoneSteps) === JSON.stringify(['1']) &&
+    phoneBody.includes('anchor the setup') &&
+    phoneBody.includes('paste in chatgpt') &&
+    !phoneBody.includes('add the shortcut') &&
+    !phoneBody.includes('your email') &&
+    !phoneBody.includes('copy the alexandria instructions'),
+  phoneClipboardExact: phoneClipboard === mobileHandoffPrompt('chatgpt'),
+  phoneCreatesVerifiedAnchor:
+    phoneClipboard.includes('real reminder that works outside this chat') &&
+    phoneClipboard.includes('then create and verify:') &&
+    phoneClipboard.includes(phoneChatgptPath) &&
+    phoneClipboard.includes('temporary line below my existing instructions') &&
+    phoneClipboard.includes('ask once at the start of each new chat') &&
+    phoneClipboard.includes('Stop only after the reminder or instruction is verified') &&
+    phoneClipboard.includes('Never claim the full product is set up on this phone'),
   phoneBackGoesOneSlide: phoneBackToPicker,
   startCopyIsLowercase:
     startBody.includes('start your loop') &&
@@ -384,8 +366,7 @@ if (
   !result.hasExactlyFourChatSteps ||
   !result.hasChatShortcutStep ||
   !result.chatShortcutMatchesDevice ||
-  !result.computerShortcutRoutesToPage ||
-  !result.phoneShortcutOpensIcloud ||
+  !result.computerHasOneAction ||
   !result.hasEmailStep ||
   !result.hasCopyStep ||
   !result.hasSetupStep ||
@@ -423,18 +404,13 @@ if (
   !result.setupDefersFullVersion ||
   !result.setupEndsWithRealTest ||
   !result.clipboardHasNoJailbreak ||
-  !result.emailFieldMatchesStart ||
   !result.computerCopiedWithoutEmail ||
   !result.computerAsksForInspection ||
   !result.computerFirstPasteIsSafetyOnly ||
-  !result.computerShortcutWhyMatchesPhone ||
   !result.phoneHasHostPicker ||
   !result.phoneRouteVisible ||
-  !result.phoneCopiedWithoutEmail ||
-  !result.phoneHasExactFallback ||
-  !result.phonePromptExplainsShortcutAndReminder ||
-  !result.phonePromptLeavesDirectSetupOnPage ||
-  !result.phoneInstructionClipboardExact ||
+  !result.phoneClipboardExact ||
+  !result.phoneCreatesVerifiedAnchor ||
   !result.phoneBackGoesOneSlide ||
   !result.startCopyIsLowercase ||
   !result.visibleOnboardingCopyIsLowercase ||

@@ -64,7 +64,7 @@ For the full local version, any compatible AI that can reach files on your compu
 
 ## how do i start.
 
-Choose agent or chat. Both routes offer the [iPhone Shortcut](/shortcut) first so you can capture thoughts immediately. An agent inspects the public setup, explains it and waits for your approval before changing anything. Chat takes two pastes: one adds the loop to your existing ai instructions; the second has that ai guide Drive, build and read back the fullest accurate first record it can from what it already knows, and prove the result in a fresh chat. The full agent version can later process those captures automatically and add the community.
+Choose agent or chat. At a computer, an agent inspects the public setup, explains it and waits for your approval before changing anything. Away from the computer, one phone paste creates and verifies a real reminder or a temporary instruction so setup returns without relying on memory. Chat takes two pastes: one adds the loop to your existing ai instructions; the second has that ai name the personal sources it can reach, ask directly before using them, guide Drive, build and read back the first record, and prove the result in a fresh chat. After joining, the computer agent completes phone capture and one other-ai connection one action at a time.
 
 ## is my data mine.
 

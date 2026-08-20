@@ -13,10 +13,9 @@ assert.match(paste, /Inspect the public source independently/);
 assert.match(paste, /few plain lines/);
 assert.match(paste, /what connection changes, what stays private, and what it will not do/);
 assert.match(paste, /Do nothing until I say `connect`/);
-assert.match(paste, /After connection succeeds, do a one-time, read-only orientation/);
-assert.match(paste, /building my Library page is valuable/);
-assert.match(paste, /one real idea from another person's public Library context/);
-assert.match(paste, /one Marketplace method that could help my loop/);
+assert.match(paste, /follow the rest of factory\/connect\.md one action at a time/);
+assert.match(paste, /Finish the remaining product setup/);
+assert.match(paste, /Never show me a setup checklist/);
 assert.doesNotMatch(paste, /setup\.sh|curl|bash|hash|fingerprint|api_key|--run|rm ~\//i);
 
 const connectDoc = readFileSync(new URL('../../factory/connect.md', import.meta.url), 'utf8');
@@ -26,7 +25,12 @@ assert.match(connectDoc, /including `scripts\/connect-account\.sh`, must appear 
 assert.match(connectDoc, /lets the existing loop recognize the person's account and live membership/);
 assert.match(connectDoc, /does not read or send their private files/);
 assert.match(connectDoc, /does not rerun setup, replace configuration, enable any optional capability/);
-assert.match(connectDoc, /one bounded, read-only orientation from public Library and Marketplace material, starting with the person's own public Library page/);
+assert.match(connectDoc, /guides the remaining setup one action at a time, with a separate yes for anything optional, then makes one bounded, read-only orientation/);
+assert.match(connectDoc, /Finish the full product/);
+assert.match(connectDoc, /Phone capture/);
+assert.match(connectDoc, /which other ai app do you use most\?/);
+assert.match(connectDoc, /temporary phone-anchor line/);
+assert.match(connectDoc, /Never display the whole sequence as a checklist/);
 assert.match(connectDoc, /Use context already present in the current session, but do not read new private files/);
 assert.match(connectDoc, /Your public side/);
 assert.match(connectDoc, /Other people's public context/);
