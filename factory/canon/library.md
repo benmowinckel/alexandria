@@ -76,7 +76,7 @@ All profile and metadata writes are owner-only. Ownership resolves through the i
 
 ## Scopes, PLM context, and handoff
 
-Any approved text artifact may be PLM context; a shadow is only one useful artifact type. Markdown and plain text enter context directly. A PDF remains a readable artifact but needs a separately approved text companion before the PLM can reason over its body. `public` is open; `authors` requires authoritative active membership; `paid` and `invite` require an exact live grant for that scope. A signed-in reader account is not an Author and receives no authors-tier access. Every read uses the same server authority and exact scope identity.
+Any approved text artifact may be PLM context. Files the Author classifies as `shadows` are the always-loaded unified context for that exact reader view; every other approved file remains available through exact Library search. The category is an Author-owned presentation role, not a required filename or hidden context store. Markdown and plain text enter context directly. A PDF remains a readable artifact but needs a separately approved text companion before the PLM can reason over its body. `public` is open; `authors` requires authoritative active membership; `paid` and `invite` require an exact live grant for that scope. A signed-in reader account is not an Author and receives no authors-tier access. Every read uses the same server authority and exact scope identity.
 
 The directory obeys the same boundary. Invite cohort paths, filenames, subtitles, and suggested questions are invisible until the viewer holds that exact grant; authors-only metadata is invisible without active membership. Paid offers remain discoverable so they can be bought, but their bodies stay locked.
 

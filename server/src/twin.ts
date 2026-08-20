@@ -333,6 +333,9 @@ export interface TwinWork {
   scope: string;
   name: string;
   visibility: string;
+  /** Author-owned presentation role. `shadows` is the mirror's always-loaded
+   *  unified context; other categories remain available through retrieval. */
+  category: string;
   content: string;
 }
 

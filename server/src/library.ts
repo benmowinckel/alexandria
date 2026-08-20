@@ -561,7 +561,7 @@ export function libraryCapabilityContract(input: {
         : 'The founder may use the founder compatibility sidecar. No other Author can inherit it.',
       privacy: 'The Worker receives only deliberately published Library bytes selected by the exact scope intersection. It never receives the Author model-provider token or reads local Author files.',
       hidden_context_fields: false,
-      context_rule: 'model context = configured PLM scopes ∩ viewer access ∩ active artifact access, plus the bounded current visitor conversation.',
+      context_rule: 'model context = configured PLM scopes ∩ viewer access ∩ active artifact access, plus the bounded current visitor conversation. Within that exact slice, Author-classified shadows are always-loaded unified context and other files remain searchable.',
       context_formats: 'Markdown and plain text enter context directly. A PDF remains readable but needs a separately approved text companion before the PLM can reason over its body.',
       links: 'Profile links are routing references only and are never silently crawled for context.',
       audit: `${api}/library/${author}/twin/context-preview`,
@@ -590,7 +590,7 @@ export function libraryCapabilityContract(input: {
             context_scopes: ['public'],
             messages: [{ role: 'user', content: '<bounded prior turn>' }],
             focus: { name: '<active artifact>', content: '<authorized text>' },
-            works: [{ scope: 'public', name: '<artifact>', visibility: 'public', content: '<authorized text>' }],
+            works: [{ scope: 'public', name: '<artifact>', visibility: 'public', category: 'shadows', content: '<authorized text>' }],
             links: [{ label: '<declared public link>', url: 'https://example.com' }],
           },
           response: { answer: '<text>' },
@@ -659,6 +659,7 @@ async function fetchTwinWorks(
   activeArtifact?: { name: string; scope: string },
 ): Promise<TwinContextBundle> {
   const db = getDB();
+  const fileCategories = await getFileCategories(authorId);
   const out: TwinWork[] = [];
   const manifest: TwinContextManifestEntry[] = [];
   let focus: { name: string; content: string } | undefined;
@@ -711,7 +712,15 @@ async function fetchTwinWorks(
     const remaining = Math.max(0, TOTAL_CHAR_CAP - totalChars);
     const sent = content.slice(0, Math.min(FILE_CHAR_CAP, remaining));
     totalChars += sent.length;
-    out.push({ scope: f.scope, name: label, visibility: f.visibility, content: sent });
+    out.push({
+      scope: f.scope,
+      name: label,
+      visibility: f.visibility,
+      category: fileCategories[libraryArtifactKey(f.scope, f.name)]
+        || (f.scope === f.visibility ? fileCategories[f.name] : null)
+        || categoryFallback(f.name),
+      content: sent,
+    });
     manifest.push({
       scope: f.scope,
       name: f.name,

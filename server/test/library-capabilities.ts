@@ -81,6 +81,8 @@ assert.match(contract.scopes.metadata, /invisible without the exact grant/);
 assert.match(contract.scopes.permissions.invite, /exact live invite-scope grant/);
 assert.match(contract.scopes.permissions.authors, /authoritatively active/);
 assert.match(contract.inference.context_rule, /configured PLM scopes.*viewer access.*active artifact access/);
+assert.match(contract.inference.context_rule, /shadows are always-loaded unified context/);
+assert.equal(contract.inference.sidecar_contract.context.request.works[0].category, 'shadows');
 assert.equal(contract.inference.hidden_context_fields, false);
 assert.match(contract.inference.audit, /context-preview$/);
 assert.equal(contract.owner_api.inference_sidecar.body.own_account, true);
