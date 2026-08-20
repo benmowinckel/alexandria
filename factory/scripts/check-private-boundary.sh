@@ -654,6 +654,9 @@ require factory/setup.sh \
 require factory/setup.sh \
   'cp "$VERIFIED_MANIFEST" "$_installed_manifest_tmp"' \
   'setup no longer records the exact signed manifest after a completed install'
+require factory/setup.sh \
+  'fetch_identity_source "$source" "$factory_file"' \
+  'verified updates still misclassify Alexandria integrations when setup runs from a temporary bundle'
 require factory/scripts/verify-fetch.sh \
   'if [ "$MODE:$REL" != "run:setup.sh" ]; then' \
   'verified updates replace the prior manifest before setup can prove the existing runtime'

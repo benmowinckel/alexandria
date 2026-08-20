@@ -585,6 +585,15 @@ sha256_file() {
   fi
 }
 
+fetch_identity_source() {
+  local source="$1" destination="$2" expected actual
+  curl -fsS --max-time 10 "$FACTORY_RAW/$source" -o "$destination" 2>/dev/null || return 1
+  [ -s "$destination" ] || return 1
+  expected=$(awk -v p="factory/$source" '$2==p{print $1}' "$VERIFIED_MANIFEST")
+  actual=$(sha256_file "$destination")
+  [ -n "$expected" ] && [ "$expected" = "$actual" ]
+}
+
 owned_file_matches() {
   local file="$1" path recorded_path recorded_sha current_sha tab
   [ -f "$file" ] && [ -f "$OWNERSHIP_LEDGER" ] || return 1
@@ -663,24 +672,29 @@ legacy_file_matches_signed_source() {
 # kept a different description stays foreign.
 preferred_skill_identity_matches() {
   local file="$1" source="$2" actual_name="$3" canonical_name="$4"
-  local factory_dir factory_file live_name live_desc factory_name factory_desc
+  local factory_file live_name live_desc factory_name factory_desc result
   [ -f "$file" ] || return 1
   case "$canonical_name" in
     a|a.) ;;
     *) return 1 ;;
   esac
-  factory_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)" || return 1
-  factory_file="$factory_dir/$source"
-  [ -f "$factory_file" ] || return 1
+  factory_file=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null) || return 1
+  if ! fetch_identity_source "$source" "$factory_file"; then
+    rm -f "$factory_file"
+    return 1
+  fi
   live_name=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^name:/{sub(/^name:[[:space:]]*/,""); print; exit}' "$file")
   live_desc=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^description:/{sub(/^description:[[:space:]]*/,""); print; exit}' "$file")
   factory_name=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^name:/{sub(/^name:[[:space:]]*/,""); print; exit}' "$factory_file")
   factory_desc=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^description:/{sub(/^description:[[:space:]]*/,""); print; exit}' "$factory_file")
-  [ -n "$live_name" ] && [ -n "$live_desc" ] && [ -n "$factory_name" ] && [ -n "$factory_desc" ] || return 1
-  [ "$live_name" = "$actual_name" ] || return 1
-  [ "$factory_name" = "$canonical_name" ] || return 1
-  [ "$live_desc" = "$factory_desc" ] || return 1
-  return 0
+  result=1
+  if [ -n "$live_name" ] && [ -n "$live_desc" ] && [ -n "$factory_name" ] && [ -n "$factory_desc" ] \
+     && [ "$live_name" = "$actual_name" ] && [ "$factory_name" = "$canonical_name" ] \
+     && [ "$live_desc" = "$factory_desc" ]; then
+    result=0
+  fi
+  rm -f "$factory_file"
+  return "$result"
 }
 
 # Cursor hooks installed by older Alexandria releases keep the same docstring
@@ -691,18 +705,24 @@ preferred_skill_identity_matches() {
 # own hooks as foreign on Author machines with body drift.
 cursor_hook_identity_matches() {
   local file="$1" source="$2"
-  local factory_dir factory_file
+  local factory_file result
   [ -f "$file" ] || return 1
   case "$(basename "$file")" in
     alexandria-session-start.py|alexandria-session-end.py|alexandria-stop.py|alexandria-transcript.py) ;;
     *) return 1 ;;
   esac
-  factory_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)" || return 1
-  factory_file="$factory_dir/$source"
-  [ -f "$factory_file" ] || return 1
-  head -5 "$file" | grep -q 'Cursor hook:' || return 1
-  head -5 "$factory_file" | grep -q 'Cursor hook:' || return 1
-  return 0
+  factory_file=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null) || return 1
+  if ! fetch_identity_source "$source" "$factory_file"; then
+    rm -f "$factory_file"
+    return 1
+  fi
+  result=1
+  if head -5 "$file" | grep -q 'Cursor hook:' \
+     && head -5 "$factory_file" | grep -q 'Cursor hook:'; then
+    result=0
+  fi
+  rm -f "$factory_file"
+  return "$result"
 }
 
 # Cursor alwaysApply rules can drift while keeping the factory description.
@@ -710,17 +730,22 @@ cursor_hook_identity_matches() {
 # skills/cursor.mdc only — a foreign rule with a different description stays foreign.
 cursor_rule_identity_matches() {
   local file="$1" source="$2"
-  local factory_dir factory_file live_desc factory_desc
+  local factory_file live_desc factory_desc result
   [ -f "$file" ] || return 1
   [ "$source" = "skills/cursor.mdc" ] || return 1
-  factory_dir="$(cd "$(dirname "$0")" 2>/dev/null && pwd)" || return 1
-  factory_file="$factory_dir/$source"
-  [ -f "$factory_file" ] || return 1
+  factory_file=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null) || return 1
+  if ! fetch_identity_source "$source" "$factory_file"; then
+    rm -f "$factory_file"
+    return 1
+  fi
   live_desc=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/^"/,""); gsub(/"$/,""); print; exit}' "$file")
   factory_desc=$(awk 'BEGIN{f=0} /^---$/{f++; next} f==1 && /^description:/{sub(/^description:[[:space:]]*/,""); gsub(/^"/,""); gsub(/"$/,""); print; exit}' "$factory_file")
-  [ -n "$live_desc" ] && [ -n "$factory_desc" ] || return 1
-  [ "$live_desc" = "$factory_desc" ] || return 1
-  return 0
+  result=1
+  if [ -n "$live_desc" ] && [ -n "$factory_desc" ] && [ "$live_desc" = "$factory_desc" ]; then
+    result=0
+  fi
+  rm -f "$factory_file"
+  return "$result"
 }
 
 claim_existing_file() {
