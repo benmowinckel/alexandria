@@ -321,6 +321,7 @@ mkdir -p "$ALEX_DIR/files/vault" "$ALEX_DIR/system/hooks" "$ALEX_DIR/system/scri
 # canon manifest may advance during a notify-only update check, so it is not an
 # installation receipt. A loose sentence inside a foreign file is never proof.
 PREVIOUS_VERIFIED_MANIFEST=""
+RECOVERY_VERIFIED_MANIFEST=""
 _previous_manifest_tmp=$(mktemp "${TMPDIR:-/tmp}/alexandria.XXXXXX" 2>/dev/null)
 _installed_manifest="$RUNTIME_DIR/.installed_manifest"
 if [ ! -f "$_installed_manifest" ]; then
@@ -332,6 +333,16 @@ if [ -n "$_previous_manifest_tmp" ] && [ ! -L "$_installed_manifest" ] && \
   PREVIOUS_VERIFIED_MANIFEST="$_previous_manifest_tmp"
 else
   rm -f "${_previous_manifest_tmp:-}"
+fi
+_recovery_manifest="$RUNTIME_DIR/.canon_manifest"
+_recovery_signature="$RUNTIME_DIR/.canon_manifest.sig"
+if [ ! -L "$_recovery_manifest" ] && [ ! -L "$_recovery_signature" ] \
+   && [ -s "$_recovery_manifest" ] && [ -s "$_recovery_signature" ] \
+   && [ -f "$RUNTIME_DIR/allowed_signers" ] \
+   && ssh-keygen -Y verify -f "$RUNTIME_DIR/allowed_signers" \
+        -I alexandria-payload-signing -n alexandria \
+        -s "$_recovery_signature" < "$_recovery_manifest" >/dev/null 2>&1; then
+  RECOVERY_VERIFIED_MANIFEST="$_recovery_manifest"
 fi
 
 # The runtime path is reserved only after exact prior-install proof. A copied
@@ -347,7 +358,7 @@ runtime_sha256() {
   fi
 }
 prior_runtime_matches() {
-  local rel installed expected actual
+  local rel installed expected recovery_expected actual
   # Matching signed shim + verifier bytes prove this runtime is ours. Prefer a
   # finished install marker when present, but do not block resume of an
   # incomplete run that already pinned those exact core files.
@@ -357,7 +368,13 @@ prior_runtime_matches() {
     [ -f "$installed" ] || return 1
     expected=$(awk -v p="factory/$rel" '$2==p{print $1}' "$PREVIOUS_VERIFIED_MANIFEST")
     actual=$(runtime_sha256 "$installed")
-    [ -n "$expected" ] && [ "$actual" = "$expected" ] || return 1
+    recovery_expected=""
+    if [ -n "$RECOVERY_VERIFIED_MANIFEST" ]; then
+      recovery_expected=$(awk -v p="factory/$rel" '$2==p{print $1}' "$RECOVERY_VERIFIED_MANIFEST")
+    fi
+    { [ -n "$expected" ] && [ "$actual" = "$expected" ]; } \
+      || { [ -n "$recovery_expected" ] && [ "$actual" = "$recovery_expected" ]; } \
+      || return 1
   done
 }
 if [ -n "$RUNTIME_HAD_CONTENT" ] && ! prior_runtime_matches; then
@@ -421,13 +438,16 @@ if ! [[ "$_factory_version" =~ ^[0-9]+$ ]] \
   exit 1
 fi
 _manifest_cache="$RUNTIME_DIR/.canon_manifest.tmp.$$"
+_signature_cache="$RUNTIME_DIR/.canon_manifest.sig.tmp.$$"
 _version_cache="$RUNTIME_DIR/.factory_version.tmp.$$"
 if ! cp "$_mf" "$_manifest_cache" 2>/dev/null \
+   || ! cp "$_sg" "$_signature_cache" 2>/dev/null \
    || ! printf '%s\n' "$_factory_version" > "$_version_cache" \
    || ! mv "$_manifest_cache" "$RUNTIME_DIR/.canon_manifest" \
+   || ! mv "$_signature_cache" "$RUNTIME_DIR/.canon_manifest.sig" \
    || ! mv "$_version_cache" "$RUNTIME_DIR/.factory_version"; then
   rm -f "$_mf" "$_sg"
-  rm -f "$_manifest_cache" "$_version_cache"
+  rm -f "$_manifest_cache" "$_signature_cache" "$_version_cache"
   echo "Could not pin the verified Alexandria factory locally; refusing to continue." >&2
   exit 1
 fi

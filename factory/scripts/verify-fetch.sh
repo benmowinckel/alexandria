@@ -43,9 +43,10 @@ command -v ssh-keygen >/dev/null 2>&1 || fail no-ssh-keygen
 f=$(mktemp) || fail mktemp; mf=$(mktemp) || fail mktemp; sg=$(mktemp) || fail mktemp
 bundle=""
 manifest_cache="$RUNTIME_DIR/.canon_manifest.tmp.$$"
+signature_cache="$RUNTIME_DIR/.canon_manifest.sig.tmp.$$"
 version_cache="$RUNTIME_DIR/.factory_version.tmp.$$"
 cleanup(){
-  rm -f "$f" "$mf" "$sg" "$manifest_cache" "$version_cache"
+  rm -f "$f" "$mf" "$sg" "$manifest_cache" "$signature_cache" "$version_cache"
   if [ -n "$bundle" ]; then
     rm -f "$bundle/setup.sh" "$bundle/scripts/classify_install.sh"
     rmdir "$bundle/scripts" "$bundle" 2>/dev/null || true
@@ -98,16 +99,15 @@ if [ "$MODE:$REL" = "run:setup.sh" ]; then
   [ "$classifier_want" = "$classifier_got" ] || fail classifier-hash-mismatch
 fi
 
-# Pin the highest authenticated release before emitting or executing anything,
-# except setup itself. Setup first needs the still-installed manifest to prove
-# ownership of the existing runtime; it then independently verifies and pins
-# this new manifest before replacing any protected byte.
-if [ "$MODE:$REL" != "run:setup.sh" ]; then
-  cp "$mf" "$manifest_cache" || fail pin-manifest
-  printf '%s\n' "$version" > "$version_cache" || fail pin-version
-  mv "$manifest_cache" "$RUNTIME_DIR/.canon_manifest" || fail pin-manifest
-  mv "$version_cache" "$RUNTIME_DIR/.factory_version" || fail pin-version
-fi
+# Pin the highest authenticated release before emitting or executing anything.
+# Keep its signature beside it: setup can then prove ownership across an
+# interrupted refresh where one protected core file is old and the other new.
+cp "$mf" "$manifest_cache" || fail pin-manifest
+cp "$sg" "$signature_cache" || fail pin-signature
+printf '%s\n' "$version" > "$version_cache" || fail pin-version
+mv "$manifest_cache" "$RUNTIME_DIR/.canon_manifest" || fail pin-manifest
+mv "$signature_cache" "$RUNTIME_DIR/.canon_manifest.sig" || fail pin-signature
+mv "$version_cache" "$RUNTIME_DIR/.factory_version" || fail pin-version
 
 # Authentic. The update path runs the verified temporary file directly and
 # marks that fact for setup.sh; the ordinary path emits bytes for callers that

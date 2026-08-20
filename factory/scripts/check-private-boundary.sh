@@ -658,8 +658,11 @@ require factory/setup.sh \
   'fetch_identity_source "$source" "$factory_file"' \
   'verified updates still misclassify Alexandria integrations when setup runs from a temporary bundle'
 require factory/scripts/verify-fetch.sh \
-  'if [ "$MODE:$REL" != "run:setup.sh" ]; then' \
-  'verified updates replace the prior manifest before setup can prove the existing runtime'
+  '.canon_manifest.sig' \
+  'verified updater no longer retains signed recovery proof'
+require factory/setup.sh \
+  'RECOVERY_VERIFIED_MANIFEST' \
+  'setup no longer recovers safely across interrupted protected-file refreshes'
 require factory/scripts/verify-fetch.sh \
   'classifier-hash-mismatch' \
   'verified setup updates no longer authenticate their required classifier sibling'
