@@ -651,6 +651,12 @@ require factory/setup.sh \
 require factory/scripts/verify-fetch.sh \
   'if [ "$MODE:$REL" != "run:setup.sh" ]; then' \
   'verified updates replace the prior manifest before setup can prove the existing runtime'
+require factory/scripts/verify-fetch.sh \
+  'classifier-hash-mismatch' \
+  'verified setup updates no longer authenticate their required classifier sibling'
+require factory/scripts/verify-fetch.sh \
+  'bundle/scripts/classify_install.sh' \
+  'verified setup updates no longer assemble the required two-file bundle'
 forbid factory/setup.sh \
   'date \+%s > "\$ALEX_DIR/system/\.last_maintenance"' \
   'setup still overwrites an unreceipted hidden file in the Author namespace'

@@ -110,10 +110,16 @@ verify=""
 test_job=""
 while [ "$SECONDS" -lt "$deadline" ]; do
   if [ -z "$run_id" ]; then
-    runs="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://api.github.com/repos/benmowinckel/alexandria/actions/workflows/structural-release.yml/runs?head_sha=$signed&event=create&per_page=5")"
+    if ! runs="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://api.github.com/repos/benmowinckel/alexandria/actions/workflows/structural-release.yml/runs?head_sha=$signed&event=create&per_page=5")"; then
+      sleep 20
+      continue
+    fi
     run_id="$(printf '%s' "$runs" | jq -r '.workflow_runs[0].id // empty')"
   else
-    jobs="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://api.github.com/repos/benmowinckel/alexandria/actions/runs/$run_id/jobs?per_page=20")"
+    if ! jobs="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://api.github.com/repos/benmowinckel/alexandria/actions/runs/$run_id/jobs?per_page=20")"; then
+      sleep 20
+      continue
+    fi
     verify="$(printf '%s' "$jobs" | jq -r '.jobs[] | select(.name == "verify") | .conclusion // .status')"
     test_job="$(printf '%s' "$jobs" | jq -r '.jobs[] | select(.name == "test") | .conclusion // .status')"
     if [ "$verify" = success ] && [ "$test_job" = success ]; then

@@ -41,9 +41,17 @@ command -v ssh-keygen >/dev/null 2>&1 || fail no-ssh-keygen
 [ -f "$SIGNERS" ] || fail no-allowed-signers
 
 f=$(mktemp) || fail mktemp; mf=$(mktemp) || fail mktemp; sg=$(mktemp) || fail mktemp
+bundle=""
 manifest_cache="$RUNTIME_DIR/.canon_manifest.tmp.$$"
 version_cache="$RUNTIME_DIR/.factory_version.tmp.$$"
-trap 'rm -f "$f" "$mf" "$sg" "$manifest_cache" "$version_cache"' EXIT
+cleanup(){
+  rm -f "$f" "$mf" "$sg" "$manifest_cache" "$version_cache"
+  if [ -n "$bundle" ]; then
+    rm -f "$bundle/setup.sh" "$bundle/scripts/classify_install.sh"
+    rmdir "$bundle/scripts" "$bundle" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT
 
 curl -sf --max-time 10 "$RAW/factory/$REL"             -o "$f"  || fail fetch
 curl -sf --max-time 10 "$RAW/factory/manifest.txt"     -o "$mf" || fail manifest-fetch
@@ -70,6 +78,25 @@ if command -v shasum >/dev/null 2>&1; then got=$(shasum -a 256 "$f" | cut -d' ' 
 elif command -v sha256sum >/dev/null 2>&1; then got=$(sha256sum "$f" | cut -d' ' -f1)
 else fail no-sha-tool; fi
 [ "$want" = "$got" ] || fail hash-mismatch
+
+# setup.sh has one signed sibling dependency used before setup can fetch the
+# rest of the factory. Build the verified two-file bundle before execution so
+# the normal update command remains complete as setup evolves.
+if [ "$MODE:$REL" = "run:setup.sh" ]; then
+  bundle=$(mktemp -d) || fail bundle-mktemp
+  mkdir "$bundle/scripts" || fail bundle-mkdir
+  mv "$f" "$bundle/setup.sh" || fail bundle-setup
+  f="$bundle/setup.sh"
+  classifier="$bundle/scripts/classify_install.sh"
+  curl -sf --max-time 10 "$RAW/factory/scripts/classify_install.sh" -o "$classifier" || fail classifier-fetch
+  [ -s "$classifier" ] || fail classifier-empty
+  classifier_want=$(awk '$2=="factory/scripts/classify_install.sh"{print $1}' "$mf")
+  [ -n "$classifier_want" ] || fail classifier-not-in-manifest
+  if command -v shasum >/dev/null 2>&1; then classifier_got=$(shasum -a 256 "$classifier" | cut -d' ' -f1)
+  elif command -v sha256sum >/dev/null 2>&1; then classifier_got=$(sha256sum "$classifier" | cut -d' ' -f1)
+  else fail no-sha-tool; fi
+  [ "$classifier_want" = "$classifier_got" ] || fail classifier-hash-mismatch
+fi
 
 # Pin the highest authenticated release before emitting or executing anything,
 # except setup itself. Setup first needs the still-installed manifest to prove
