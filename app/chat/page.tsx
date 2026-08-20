@@ -16,7 +16,7 @@ function cleanRef(raw: string | undefined): string {
 }
 
 // Door 2 of the two-door onboarding (agents → /start; chat → here).
-// Which ai → Shortcut → optional email → account instructions → normal-chat setup.
+// One paste; the receiving chat owns host and capability routing.
 export default async function ChatPage({
   searchParams,
 }: {

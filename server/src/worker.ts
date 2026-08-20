@@ -18,7 +18,6 @@ import { getAnalytics, getEventLog, getDashboard, getUserEvents, logEvent, flush
 import { setKV, getKV } from './kv.js';
 import { getDB } from './db.js';
 import { sendFollowerWelcome, sendOnboardCommand, type OnboardingMode } from './email.js';
-import { isChatHost } from './chat-prompt.js';
 import { generateToken } from './crypto.js';
 import { getAllowedOrigins } from './cors.js';
 import { formatPT } from './time.js';
@@ -682,8 +681,7 @@ app.post('/onboard', async (c) => {
       : body?.mode === 'agent-phone'
         ? 'agent-phone'
         : 'agent-computer';
-    const host = mode === 'chat' && isChatHost(body?.host) ? body.host : undefined;
-    const source = `start:${mode}${host ? `:${host}` : ''}${ref ? `:ref:${ref}` : ''}`;
+    const source = `start:${mode}${ref ? `:ref:${ref}` : ''}`;
     const saved = await db.prepare(
       `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)
        VALUES (?, 'onboard', ?, ?, ?)
@@ -700,8 +698,8 @@ app.post('/onboard', async (c) => {
     ).bind(normalizedEmail, source, new Date().toISOString(), newToken)
       .first<{ unsubscribe_token: string | null }>();
     const unsubscribeToken = saved?.unsubscribe_token || newToken;
-    const result = await sendOnboardCommand(normalizedEmail, unsubscribeToken, mode, host);
-    logEvent('onboard_email_saved', { sent: result.ok ? 'true' : 'false', mode, host: host || '', ref: ref ? 'yes' : 'no' });
+    const result = await sendOnboardCommand(normalizedEmail, unsubscribeToken, mode);
+    logEvent('onboard_email_saved', { sent: result.ok ? 'true' : 'false', mode, ref: ref ? 'yes' : 'no' });
     return c.json({ ok: true, delivered: result.ok });
   } catch (err: any) {
     console.error('Onboard capture error:', err?.message || err);

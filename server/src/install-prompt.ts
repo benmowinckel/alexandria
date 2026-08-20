@@ -1,6 +1,5 @@
 export {
   accountConnectPrompt,
-  computerInstallPrompt,
+  agentSetupPrompt,
   installPrompt,
-  mobileHandoffPrompt,
 } from '../../shared/onboarding-prompts.js';

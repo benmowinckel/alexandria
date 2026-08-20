@@ -3,15 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { checkReferral } from '../lib/referral';
-import {
-  computerInstallPrompt,
-  mobileHandoffPrompt,
-  type ChatHost,
-} from '../../shared/onboarding-prompts';
+import { agentSetupPrompt } from '../../shared/onboarding-prompts';
 
 type CopyState = 'idle' | 'copied' | 'error';
 
-export default function StartCTA({ refCode, mode, host }: { refCode?: string; mode: 'computer' | 'phone'; host?: ChatHost }) {
+export default function StartCTA({ refCode }: { refCode?: string }) {
   const [setupCopyState, setSetupCopyState] = useState<CopyState>('idle');
   const [refCheck, setRefCheck] = useState<{ input: string; valid: string | null } | null>(null);
   const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
@@ -28,8 +24,6 @@ export default function StartCTA({ refCode, mode, host }: { refCode?: string; mo
       .then((valid) => { if (live) setRefCheck({ input: refCode, valid: valid ? refCode : null }); });
     return () => { live = false; };
   }, [refCode]);
-
-  const phoneHost = mode === 'phone' ? host : undefined;
 
   const copy = async (text: string, setState: (state: CopyState) => void) => {
     let success = false;
@@ -50,9 +44,7 @@ export default function StartCTA({ refCode, mode, host }: { refCode?: string; mo
     setTimeout(() => setState('idle'), 4000);
   };
 
-  const prompt = phoneHost ? mobileHandoffPrompt(phoneHost) : computerInstallPrompt();
-  const copyLabel = phoneHost ? 'anchor the setup' : 'copy the setup';
-  const copyWhy = phoneHost ? ` — paste in ${phoneHost}` : ' — paste into your agent';
+  const prompt = agentSetupPrompt();
 
   return (
     <section className="cta-section">
@@ -64,13 +56,13 @@ export default function StartCTA({ refCode, mode, host }: { refCode?: string; mo
           type="button"
           className={`door-btn act-box cta-btn setup-copy${setupCopyState === 'copied' ? ' is-copied' : ''}`}
           onClick={() => copy(prompt, setSetupCopyState)}
-          aria-label={copyLabel}
+          aria-label="copy the setup"
         >
           {setupCopyState === 'copied'
-            ? <>copied<span className="act-why">{copyWhy}</span></>
+            ? <>copied<span className="act-why"> — paste into your agent</span></>
             : setupCopyState === 'error'
               ? 'couldn’t copy — try again'
-              : <>{copyLabel}<span className="act-why">{copyWhy}</span></>}
+              : <>copy the setup<span className="act-why"> — paste into your agent</span></>}
         </button>
       </div>
       {validRef && <p className="install-new"><Link href="/">new here? see what this is &rarr;</Link></p>}

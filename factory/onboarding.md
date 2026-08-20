@@ -40,7 +40,7 @@ The instructions say exactly what alexandria is: a loop in how the user's existi
 
 ## Chat branch
 
-The website first offers the Shortcut so capture is useful immediately, then gives two separate texts. First it copies `factory/chat/bootstrap.md`; the person pastes those additive instructions into the host's official account-instructions setting without deleting anything. Then it copies the one-time normal-chat setup prompt from `shared/onboarding-prompts.ts` into an ordinary chat. The website itself carries no Drive instructions or premature `a` step; the user's ai carries each later action at the moment of need.
+The website gives one universal paste from `shared/onboarding-prompts.ts`. It does not ask for a device or app and does not show the Shortcut, email, Drive, or a settings path. The receiving chat identifies only capabilities and controls it can verify, guides the additive account instruction from `factory/chat/bootstrap.md`, then carries each later action at the moment of need. If it cannot verify a durable setting, it asks what the person sees instead of inventing a path.
 
 The setup chat first proves the account instructions landed by explaining how the existing ai will now behave; if they did not, it stops and helps the user add them without replacing anything. It then guides the user's own native Drive connection when available and uses one explicit permission to build the fullest accurate first record it can from account memory and accessible past-chat context. It never searches the rest of Drive, dumps raw chats, invents knowledge or claims an unverified write. It reads every write back, runs a miniature personal loop and saves only confirmed changes. If Drive is unavailable, it continues with the durable personalisation already present without presenting a technical menu or pretending Drive works.
 
@@ -48,14 +48,14 @@ Only after that free chat loop proves personal value may the ai briefly explain 
 
 Outside setup, only the first reply in each new ordinary chat asks `Want me to open your alexandria loop in the background for when you have a minute?` in both text and voice. On Grok Bot there is no account-instructions field and the chat is one continuous stream. The setup agent saves `factory/skills/grok-bot.md` as `/a` and persists the Author's alexandria instructions into this agent's own description, mapped: first reply of a new local day, once that day, `Want me to start /a?`; on yes, invoke `/a` in this same chat; for lasting signal, ask `save that to alexandria?` and save only after yes. Other hosts: this is consent only: open nothing before yes. On yes, a capable host immediately opens a new chat and invokes its native Alexandria skill without another question. An incapable host gives one clear sentence naming its actual slash, dollar-sign, or native skill gesture after telling the user to open a new chat. Only a host with no native skill uses the floor `start an Alexandria session`. Never repeat the route in that chat. Setup uses it only for the final test, and later replies mention alexandria only when saving to it or reading from it would help that exact exchange. Never claim this chat changed an account setting itself.
 
-## Phone anchor before the computer is reachable
+## Agent branch when the computer is not reachable
 
-Someone who chose agents but cannot reach their coding agent does not receive a pretend phone version. The website gives them one non-executable anchor paste for the ordinary ai already open on their phone.
+The website uses the same agent paste everywhere. The receiving AI checks whether it can run commands and read and write the person's computer files. If it cannot, it does not receive or claim a pretend local version; it creates one verified anchor for later.
 
 - If that ai can create a real reminder that will notify after the chat closes, ask when the person will next be at their computer, create the reminder with the `/start` address, and verify it exists.
 - Otherwise guide one temporary line below the person's existing account instructions: until installation is confirmed, ask once at the start of each new chat: `At your computer? Finish setup at alexandria-library.com/start.` Preserve every existing instruction and verify the temporary line actually landed. If the person later confirms installation, tell them to delete the temporary line; joined completion replaces it with the full instruction instead.
 - Stop when one anchor is verified. No Shortcut, email, personal read, local-install claim, active session, or community pitch happens on this branch.
-- If this phone or browser can demonstrably reach a coding agent and its computer files, use the full-local route instead; capability, not device label, decides.
+- If the current session can demonstrably reach a coding agent and its computer files, use the full-local route instead; capability, not device label, decides. Never ask whether the person is on a phone or computer.
 
 ## Joining and linking
 

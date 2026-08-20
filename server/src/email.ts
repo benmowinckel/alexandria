@@ -1,13 +1,7 @@
 /** Email primitives — Resend API (hybrid dependency, API-controllable, free 100/day). */
 
 import { accountConnectPrompt, installPrompt } from './install-prompt.js';
-import {
-  chatInstallPrompt,
-  chatSetupPrompt,
-  CHAT_INSTRUCTION_PATHS,
-  CHAT_HOSTS,
-  type ChatHost,
-} from './chat-prompt.js';
+import { chatSetupPrompt } from './chat-prompt.js';
 
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'benmowinckel@gmail.com';
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
@@ -262,31 +256,15 @@ export async function sendWeekOneCheckIn(
 
 export type OnboardingMode = 'agent-computer' | 'agent-phone' | 'chat';
 
-function chatEmailLead(host?: ChatHost): { lead: string; paths: string } {
-  if (host) {
-    const row = CHAT_HOSTS[host];
-    return {
-      lead: `1. paste these alexandria instructions into ${host} at ${escapeHtml(row.pastePath)} without deleting your current instructions.`,
-      paths: '',
-    };
-  }
-  return {
-    lead: '1. paste these alexandria instructions into your chat’s custom instructions without deleting your current instructions.',
-    paths: `<p style="margin: 0.8rem 0 0; color: #8a8078; font-size: 0.95rem;">${CHAT_INSTRUCTION_PATHS.map((row) => `${row.host} — ${escapeHtml(row.path)}`).join('<br />')}</p>`,
-  };
-}
-
 export function onboardEmailContent(
   mode: OnboardingMode,
   emailToken: string,
-  host?: ChatHost,
 ): { subject: string; html: string } {
   const unsubscribeUrl = `${SERVER_URL}/email/stop?t=${emailToken}`;
-  const chat = mode === 'chat' ? chatEmailLead(host) : { lead: '', paths: '' };
   const copy = mode === 'chat'
     ? {
         subject: 'alexandria. — your chat setup',
-        lead: chat.lead,
+        lead: 'paste this into the chat you already use. it will guide the rest one action at a time.',
       }
     : mode === 'agent-phone'
       ? {
@@ -298,10 +276,7 @@ export function onboardEmailContent(
           lead: 'here is the setup for the agent on your computer. if you already pasted it, keep this as your backup.',
         };
   const commands = mode === 'chat'
-    ? `${emailCmd(chatInstallPrompt())}
-  ${chat.paths}
-  <p style="margin: 1.6rem 0 1.2rem;">2. paste this into a normal chat. your ai will take it from there.</p>
-  ${emailCmd(chatSetupPrompt())}`
+    ? emailCmd(chatSetupPrompt())
     : emailCmd(installPrompt());
   const html = emailShell(`<p style="margin: 0 0 1.2rem;">${copy.lead}</p>
   ${commands}
@@ -313,9 +288,8 @@ export async function sendOnboardCommand(
   email: string,
   emailToken: string,
   mode: OnboardingMode = 'agent-computer',
-  host?: ChatHost,
 ): Promise<{ ok: boolean; error?: string }> {
-  const content = onboardEmailContent(mode, emailToken, host);
+  const content = onboardEmailContent(mode, emailToken);
   return await sendEmail(email, content.subject, content.html, { unsubscribeUrl: `${SERVER_URL}/email/stop?t=${emailToken}` });
 }
 

@@ -159,8 +159,8 @@ jobs:
             curl -sf http://127.0.0.1:3000 >/dev/null && break
             sleep 1
           done
-          node scripts/verify-chat.mjs http://127.0.0.1:3000
-          node scripts/verify-chat.mjs http://127.0.0.1:3000 mobile
+          node scripts/verify-onboarding.mjs http://localhost:3000
+          node scripts/verify-onboarding.mjs http://localhost:3000 mobile
 
   # Promotion is deliberately absent: GitHub has no Touch ID. scripts/push.sh
   # waits for both jobs above, then the Mac releases those exact bytes.

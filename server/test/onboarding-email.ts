@@ -1,18 +1,22 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { onboardEmailContent, preBillWarningContent, setupFixNudgeContent, welcomeEmailContent } from '../src/email.js';
-import { accountConnectPrompt, computerInstallPrompt, mobileHandoffPrompt } from '../src/install-prompt.js';
+import { accountConnectPrompt, agentSetupPrompt } from '../src/install-prompt.js';
 import { CHAT_INSTRUCTION, CHAT_SETUP_PROMPT } from '../../shared/onboarding-prompts.js';
 
 const computer = onboardEmailContent('agent-computer', 'TOKEN');
 assert.equal(computer.subject, 'alexandria. — your computer setup');
 assert.match(computer.html, /if you already pasted it, keep this as your backup/);
-assert.match(computer.html, /I am at my computer/);
-const computerPrompt = computerInstallPrompt();
-assert.doesNotMatch(computerPrompt, /Install and verify alexandria's normal hooks first/);
-assert.doesNotMatch(computerPrompt, /which other ai app/);
-assert.doesNotMatch(computerPrompt, /account or project instructions/);
-assert.ok(computerPrompt.trim().endsWith('wait for me to say `start`.'));
+assert.match(computer.html, /Do not ask me which/);
+const agentPrompt = agentSetupPrompt();
+assert.match(agentPrompt, /run commands and read and write files on my computer/);
+assert.match(agentPrompt, /COMPUTER ROUTE/);
+assert.match(agentPrompt, /LATER ROUTE/);
+assert.match(agentPrompt, /wait for me to say `start`/);
+assert.match(agentPrompt, /real reminder that works outside this chat/);
+assert.match(agentPrompt, /temporary line below the instructions already in this app/);
+assert.match(agentPrompt, /ask what I see instead of inventing a path/);
+assert.doesNotMatch(agentPrompt, /which ai|chatgpt|claude|gemini|Shortcut|your email/i);
 
 const connectionCode = 'alex_connect_000000000000000000000000000000000000000000000000';
 const joinedComputerPrompt = accountConnectPrompt(connectionCode);
@@ -36,31 +40,14 @@ assert.doesNotMatch(joinedEmail.html, /alex_[a-f0-9]{32}/);
 const phone = onboardEmailContent('agent-phone', 'TOKEN');
 assert.equal(phone.subject, 'alexandria. — continue at your computer');
 assert.match(phone.html, /when you are at your computer, open the agent you use there/);
-assert.match(phone.html, /I am at my computer/);
+assert.match(phone.html, /Do not ask me which/);
 
 const chat = onboardEmailContent('chat', 'TOKEN');
 assert.equal(chat.subject, 'alexandria. — your chat setup');
-assert.match(chat.html, /1\. paste these alexandria instructions into your chat’s custom instructions without deleting your current instructions\./);
-assert.match(chat.html, /2\. paste this into a normal chat\. your ai will take it from there\./);
-assert.match(chat.html, /settings → personalization → custom instructions/);
-assert.match(chat.html, /settings → personal context → your instructions for gemini/);
-assert.match(chat.html, /settings → general → instructions for claude/);
-assert.doesNotMatch(chat.html, /those settings make it last across chats\./);
-assert.doesNotMatch(chat.html, /add it here/);
-assert.doesNotMatch(chat.html, /paste this into a chat, then type a/);
+assert.match(chat.html, /paste this into the chat you already use/);
 assert.match(chat.html, /alexandria is a loop in how you help me/);
-assert.match(chat.html, /Finish the setup with me one action at a time/);
-
-const chatgpt = onboardEmailContent('chat', 'TOKEN', 'chatgpt');
-assert.match(chatgpt.html, /1\. paste these alexandria instructions into chatgpt at settings → personalization → custom instructions without deleting your current instructions\./);
-assert.doesNotMatch(chatgpt.html, /connect google drive/);
-
-const claude = onboardEmailContent('chat', 'TOKEN', 'claude');
-assert.match(claude.html, /1\. paste these alexandria instructions into claude at settings → general → instructions for claude without deleting your current instructions\./);
-
-const gemini = onboardEmailContent('chat', 'TOKEN', 'gemini');
-assert.match(gemini.html, /1\. paste these alexandria instructions into gemini at settings → personal context → your instructions for gemini without deleting your current instructions\./);
-assert.doesNotMatch(gemini.html, /Gem called Alexandria/);
+assert.match(chat.html, /Do not ask which app I use/);
+assert.doesNotMatch(chat.html, /which ai do you use|settings →|your email/i);
 
 assert.ok(CHAT_INSTRUCTION.length <= 1500, `chat instruction lost its headroom: ${CHAT_INSTRUCTION.length}`);
 assert.match(CHAT_INSTRUCTION, /Keep everything already there; replace nothing/);
@@ -78,9 +65,15 @@ assert.match(CHAT_INSTRUCTION, /On yes, if this host can, immediately open a new
 assert.match(CHAT_INSTRUCTION, /If it cannot, say: open a new chat/);
 assert.match(CHAT_INSTRUCTION, /actual slash, dollar-sign, or native skill gesture/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /type alexandria|On “alexandria”/);
+assert.ok(CHAT_SETUP_PROMPT.includes(CHAT_INSTRUCTION));
+assert.match(CHAT_SETUP_PROMPT, /Do not ask which app I use/);
+assert.match(CHAT_SETUP_PROMPT, /use only controls and capabilities you can verify/);
+assert.match(CHAT_SETUP_PROMPT, /ask what I see instead of inventing a path/);
+assert.match(CHAT_SETUP_PROMPT, /Keep every instruction already there/);
+assert.match(CHAT_SETUP_PROMPT, /You cannot change the setting yourself/);
 assert.match(CHAT_SETUP_PROMPT, /You cannot connect it yourself/);
-assert.match(CHAT_SETUP_PROMPT, /prove the instructions are active/);
-assert.match(CHAT_SETUP_PROMPT, /If the instructions are not active, stop and help me add them without deleting anything already there/);
+assert.match(CHAT_SETUP_PROMPT, /prove it is active/);
+assert.match(CHAT_SETUP_PROMPT, /If it is not active, stop and fix that one step without deleting anything already there/);
 assert.match(CHAT_SETUP_PROMPT, /Name the exact account memory and past-chat sources you can actually reach/);
 assert.match(CHAT_SETUP_PROMPT, /Ask me directly whether you may use those named sources for this setup, then wait for my answer/);
 assert.doesNotMatch(CHAT_SETUP_PROMPT, /you have my permission/i);
@@ -107,21 +100,6 @@ const localOnboarding = readFileSync(new URL('../../factory/block.md', import.me
 assert.match(localOnboarding, /Phase 6 — Stop cleanly/);
 assert.match(localOnboarding, /the one Library destination/);
 assert.doesNotMatch(localOnboarding, /which other AI app do you use most\?/);
-
-const mobile = mobileHandoffPrompt('chatgpt');
-assert.ok(mobile.trim().split(/\s+/).length <= 140, `phone handoff became too long: ${mobile.trim().split(/\s+/).length} words`);
-assert.match(mobile, /away from my computer/);
-assert.match(mobile, /real reminder that works outside this chat/);
-assert.match(mobile, /then create and verify:/);
-assert.match(mobile, /temporary line below my existing instructions/);
-assert.match(mobile, /ask once at the start of each new chat/);
-assert.match(mobile, /settings → personalization → custom instructions/);
-assert.match(mobile, /Stop only after the reminder or instruction is verified/);
-assert.match(mobile, /Never claim the full product is set up on this phone/);
-assert.doesNotMatch(mobile, /connect Google Drive/);
-assert.doesNotMatch(mobile, /Shortcut|start an alexandria session|your email/i);
-assert.doesNotMatch(mobile, /--- ALEXANDRIA BLOCK ---/);
-assert.doesNotMatch(mobile, /Use working alexandria hooks/);
 
 for (const content of [computer, phone, chat]) {
   assert.match(content.html, /stop these emails/);
@@ -171,4 +149,4 @@ assert.match(nudge.html, /alexandria-library\.com\/join/);
 assert.match(nudge.html, /Benjamin a\. Mowinckel/);
 assert.doesNotMatch(nudge.html, /we fixed a setup issue/);
 
-console.log('onboarding email and mobile handoff: ok');
+console.log('universal onboarding email: ok');
