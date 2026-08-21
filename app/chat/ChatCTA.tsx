@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { checkReferral } from '../lib/referral';
+import { copyText, type CopyState } from '../lib/copy-text';
 import { chatSetupPrompt } from '../../shared/onboarding-prompts';
-
-type CopyState = 'idle' | 'copied' | 'error';
 
 export default function ChatCTA({
   refCode,
+  initialCopyState = 'idle',
 }: {
   refCode?: string;
+  initialCopyState?: CopyState;
 }) {
-  const [setupCopyState, setSetupCopyState] = useState<CopyState>('idle');
+  const [setupCopyState, setSetupCopyState] = useState<CopyState>(initialCopyState);
   const [refCheck, setRefCheck] = useState<{ input: string; valid: string | null } | null>(null);
   const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
 
@@ -28,23 +29,9 @@ export default function ChatCTA({
     try { window.localStorage.setItem('alexandria-referrer', validRef); } catch { /* storage is optional */ }
   }, [validRef]);
 
-  async function copy(text: string, setState: (state: CopyState) => void) {
-    let copied = false;
-    try {
-      await navigator.clipboard.writeText(text);
-      copied = true;
-    } catch {
-      const area = document.createElement('textarea');
-      area.value = text;
-      area.style.position = 'fixed';
-      area.style.opacity = '0';
-      document.body.appendChild(area);
-      area.select();
-      try { copied = document.execCommand('copy'); } catch { /* noop */ }
-      document.body.removeChild(area);
-    }
-    setState(copied ? 'copied' : 'error');
-    setTimeout(() => setState('idle'), 4000);
+  async function copy() {
+    setSetupCopyState(await copyText(chatSetupPrompt()));
+    setTimeout(() => setSetupCopyState('idle'), 4000);
   }
 
   return (
@@ -54,7 +41,7 @@ export default function ChatCTA({
         <button
           type="button"
           className={`door-btn act-box cta-btn setup-copy${setupCopyState === 'copied' ? ' is-copied' : ''}`}
-          onClick={() => copy(chatSetupPrompt(), setSetupCopyState)}
+          onClick={copy}
           aria-label="copy the setup"
         >
           {setupCopyState === 'copied'

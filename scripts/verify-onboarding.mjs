@@ -50,10 +50,9 @@ await page.locator('.setup-copy').waitFor();
 assert.match(page.url(), /#agent$/);
 const agentBody = await page.locator('body').innerText();
 assert.equal(await page.locator('.act-num').count(), 1);
-assert.match(agentBody, /copy the setup — paste into your agent/);
+assert.match(agentBody, /copied — paste into your agent/);
 assert.doesNotMatch(agentBody, /phone|computer|which ai|chatgpt|claude|gemini|shortcut|email/i);
 await assertFits('.setup-copy');
-await page.getByRole('button', { name: 'copy the setup' }).click();
 assert.equal(await clipboard(), agentSetupPrompt());
 
 const agentPrompt = agentSetupPrompt();
@@ -71,6 +70,22 @@ await page.goBack();
 await page.getByRole('button', { name: /an agent/ }).waitFor();
 assert.doesNotMatch(page.url(), /#agent$/);
 assert.match(await page.locator('body').innerText(), /what do you have access to\?/);
+
+await page.getByRole('button', { name: /just chat/ }).click();
+await page.locator('.setup-copy').waitFor();
+assert.match(page.url(), /#chat$/);
+const chosenChatBody = await page.locator('body').innerText();
+assert.match(chosenChatBody, /copied — paste into your chat/);
+assert.equal(await clipboard(), chatSetupPrompt());
+
+await page.goBack();
+await page.getByRole('button', { name: /just chat/ }).waitFor();
+assert.doesNotMatch(page.url(), /#chat$/);
+
+await page.goto(`${base}/start#agent`, { waitUntil: 'networkidle' });
+assert.match(await page.locator('body').innerText(), /copy the setup — paste into your agent/);
+await page.getByRole('button', { name: 'copy the setup' }).click();
+assert.equal(await clipboard(), agentSetupPrompt());
 
 await page.goto(`${base}/chat`, { waitUntil: 'networkidle' });
 const chatBody = await page.locator('body').innerText();
@@ -93,7 +108,7 @@ assert.match(CHAT_SETUP_PROMPT, /full version needs an ai agent on a computer/);
 assert.match(CHAT_SETUP_PROMPT, /final test/);
 assert.doesNotMatch(CHAT_SETUP_PROMPT, /you have my permission/i);
 
-const visibleText = `${initial}\n${agentBody}\n${chatBody}`;
+const visibleText = `${initial}\n${agentBody}\n${chosenChatBody}\n${chatBody}`;
 assert.equal(visibleText, visibleText.toLowerCase(), 'visible onboarding copy must stay lowercase');
 assert.deepEqual(failures, []);
 

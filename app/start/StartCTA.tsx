@@ -3,12 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { checkReferral } from '../lib/referral';
+import { copyText, type CopyState } from '../lib/copy-text';
 import { agentSetupPrompt } from '../../shared/onboarding-prompts';
 
-type CopyState = 'idle' | 'copied' | 'error';
-
-export default function StartCTA({ refCode }: { refCode?: string }) {
-  const [setupCopyState, setSetupCopyState] = useState<CopyState>('idle');
+export default function StartCTA({ refCode, initialCopyState = 'idle' }: { refCode?: string; initialCopyState?: CopyState }) {
+  const [setupCopyState, setSetupCopyState] = useState<CopyState>(initialCopyState);
   const [refCheck, setRefCheck] = useState<{ input: string; valid: string | null } | null>(null);
   const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
 
@@ -25,26 +24,10 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
     return () => { live = false; };
   }, [refCode]);
 
-  const copy = async (text: string, setState: (state: CopyState) => void) => {
-    let success = false;
-    try {
-      await navigator.clipboard.writeText(text);
-      success = true;
-    } catch {
-      const area = document.createElement('textarea');
-      area.value = text;
-      area.style.position = 'fixed';
-      area.style.opacity = '0';
-      document.body.appendChild(area);
-      area.select();
-      try { success = document.execCommand('copy'); } catch { /* noop */ }
-      document.body.removeChild(area);
-    }
-    setState(success ? 'copied' : 'error');
-    setTimeout(() => setState('idle'), 4000);
+  const copy = async () => {
+    setSetupCopyState(await copyText(agentSetupPrompt()));
+    setTimeout(() => setSetupCopyState('idle'), 4000);
   };
-
-  const prompt = agentSetupPrompt();
 
   return (
     <section className="cta-section">
@@ -55,7 +38,7 @@ export default function StartCTA({ refCode }: { refCode?: string }) {
         <button
           type="button"
           className={`door-btn act-box cta-btn setup-copy${setupCopyState === 'copied' ? ' is-copied' : ''}`}
-          onClick={() => copy(prompt, setSetupCopyState)}
+          onClick={copy}
           aria-label="copy the setup"
         >
           {setupCopyState === 'copied'

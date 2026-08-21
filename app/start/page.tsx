@@ -12,8 +12,8 @@ export const metadata = pageMetadata({
     'start your alexandria loop from the ai you already use — local, remote, folder-based, or chat.',
 });
 
-// One front door, then one plain split: agent or chat. Each side gets one
-// universal paste; the receiving AI owns device, host and capability routing.
+// One front door, then one plain split: agent or chat. Choosing a side copies
+// its universal paste immediately; the receiving AI owns all later routing.
 //
 // Composition: a single flush-left editorial column (not a centred stack). The
 // eyebrow ("the free tool") is the one accent on the skeleton and names which
