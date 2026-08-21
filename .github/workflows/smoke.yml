@@ -247,6 +247,13 @@ jobs:
             ([.files[] | select(.scope == "authors" and .name == "shadow") | .title] == ["For Authors"])
           ' >/dev/null || { echo "::error::Founder member/invite mirror layers or Authors title are unavailable"; exit 1; }
 
+          CONTEXT_PREVIEW=$(curl -sf --max-time 20 "$SERVER/library/benmowinckel/twin/context-preview" -H "Authorization: Bearer $API_KEY")
+          printf '%s' "$CONTEXT_PREVIEW" | jq -e '
+            (.scopes | sort == ["authors", "invite", "public"]) and
+            ([.manifest[] | select(.scope == "authors" and .name == "shadow")] | length == 1) and
+            ([.manifest[] | select(.scope == "invite" and .name == "friends")] | length == 1)
+          ' >/dev/null || { echo "::error::Founder exact-context preview does not include every configured mirror audience"; exit 1; }
+
           DIRECTORY=$(curl -sf --max-time 20 "$SERVER/library" -H "Authorization: Bearer $API_KEY")
           printf '%s' "$DIRECTORY" | jq -e '
             .signed_in == true and

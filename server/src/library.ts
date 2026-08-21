@@ -2713,6 +2713,8 @@ export function registerLibraryRoutes(app: Hono): void {
       .bind(authorId).first<{ settings: string | null }>().catch(() => null);
     const cfg = resolveTwinVariants(parseJson<Record<string, unknown>>(row?.settings, {}), twinEnv(authorId)).context;
     const simulate = (c.req.query('scopes') || '').split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
       .map((value) => normalizeLibraryScope(value, 'public'))
       .filter((value): value is string => !!value);
     const scopes = simulate.length
