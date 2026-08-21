@@ -77,7 +77,7 @@ PLIST
 
   launchctl bootout "gui/$(id -u)/$LABEL" >/dev/null 2>&1 || true
   launchctl bootstrap "gui/$(id -u)" "$PLIST" || die "the first sync worked, but the daily schedule did not install"
-  echo "Drive ready: your local files are ground truth; Google Drive/alexandria is the chat pocket copy."
+  echo "Drive ready: Git history is ground truth, your local folder is its primary checkout, and Google Drive/alexandria is the chat pocket copy."
 }
 
 off() {

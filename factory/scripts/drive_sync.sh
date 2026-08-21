@@ -127,7 +127,7 @@ ingest_shadow() {
         file=out "/" safe ".md"
         print "# " title > file
         print "" >> file
-        print "*Pocket copy synced " today " from the Author’s local ground truth. Lasting edits are captured through a session.*" >> file
+        print "*Pocket copy synced " today " from the Author’s primary Git checkout. Lasting edits are captured through a session.*" >> file
         next
       }
       file != "" { print >> file }

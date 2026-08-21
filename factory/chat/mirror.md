@@ -1,6 +1,6 @@
 # mirror — Door 1's phone/chat satellite (the shipped design)
 
-*Shipped for full local Authors through `factory/scripts/drive_ctl.sh` + `drive_sync.sh`. THE LADDER (anti-distortion rule, all surfaces): local is ground truth, the Drive folder is its pocket copy — a session that can reach local ignores Drive canon entirely; never load both homes in one session.*
+*Shipped for full local Authors through `factory/scripts/drive_ctl.sh` + `drive_sync.sh`. THE LADDER (anti-distortion rule, all surfaces): Git history is ground truth, the local folder is its primary checkout, and Drive is the pocket copy — a session that can reach the local checkout ignores Drive canon entirely; never load both in one session.*
 
 ## the projection (up — nightly, in place)
 
@@ -8,7 +8,7 @@ Not a file mirror — a projection. The position-layer derivative (`_constitutio
 
 ## the drain (down — runs FIRST; order matters)
 
-Before projecting up, copy new or changed chat writings home: `vault/`, `marginalia/`, and any "— vN" constitution proposals → `~/alexandria/files/vault/input/chat/` for the next `/a` to drain. A local content-hash ledger prevents repeats without deleting the Author's Drive documents. Down-first captures every change before local ground truth is projected back up.
+Before projecting up, copy new or changed chat writings home: `vault/`, `marginalia/`, and any "— vN" constitution proposals → `~/alexandria/files/vault/input/chat/` for the next `/a` to drain. A local content-hash ledger prevents repeats without deleting the Author's Drive documents. Down-first captures every change before the primary checkout is projected back up.
 
 ## setup (per Author — one unavoidable Google approval)
 
