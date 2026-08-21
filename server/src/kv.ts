@@ -9,10 +9,11 @@
  *   "events:YYYY-MM-DD:HH-mm-ss-SSS-{rand}" → JSONL batch from one request
  *   "cron:*"                → cron liveness markers (health digest reads these)
  *   "library-signal"        → daily library-signal snapshot (single key)
+ *   "feedback-pending:{id}" → encrypted delivery outbox; deleted after GitHub relay
  *
- * (Feedback used to live here under `feedback:` prefix; moved 2026-05-16 to
- * benmowinckel/alexandria-feedback github repo so the factory autoloop can
- * reach it. Existing `feedback:*` keys remain as orphans, harmless.)
+ * Existing legacy `feedback:*` keys remain as orphans, harmless. Current
+ * feedback uses `feedback-pending:*` only while delivery is outstanding; the
+ * private GitHub repository remains the agent-facing processing queue.
  *
  * Each account is its own KV key — no concurrent write corruption,
  * no O(N) iteration for auth checks.

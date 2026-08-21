@@ -393,5 +393,5 @@ export async function getUserEvents(login: string): Promise<Record<string, unkno
   };
 }
 
-// Author-explicit feedback lives in the DATA KV namespace under `feedback:`
-// key prefix. See marketplace.ts.
+// Author-explicit feedback is saved under `feedback-pending:` until the private
+// GitHub processing queue accepts it. See marketplace.ts.

@@ -2,11 +2,11 @@
  * Live twin matrix — exercises the PLM ask gate + serving paths that
  * gate-matrix.ts (file reads) does not reach:
  *
- *   1. weights (quick) twin actually SERVES — owner-authenticated ask hits the
- *      sidecar's Tinker checkpoint path, not just the visibility gate.
+ *   1. context PLM actually SERVES from public-safe published context.
  *   2. grant lifecycle — owner grants an account, the grant lists, and the
  *      granted querier's deep ask runs at the INVITE tier (deeper substrate).
- *   3. anonymous weights ask stays gated (401 — the invite floor holds).
+ *
+ * This matrix deliberately never invokes the experimental weights PLM.
  *
  * Like gate-matrix, runs against PRODUCTION by default with the owner key.
  * The stranger-with-code cell still needs a second account (ALEXANDRIA_TEST_KEY)
@@ -46,14 +46,14 @@ function check(label: string, ok: boolean, detail = ''): void {
   else { failed++; console.log(`  ✗ ${label}${detail ? ` · ${detail}` : ''}`); }
 }
 
-async function ask(question: string, variant: 'weights' | 'context', auth: boolean): Promise<{ status: number; body: Record<string, unknown> }> {
+async function ask(question: string, auth: boolean): Promise<{ status: number; body: Record<string, unknown> }> {
   const res = await fetch(`${BASE}/library/${AUTHOR}/ask`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(auth && OWNER_KEY ? { Authorization: `Bearer ${OWNER_KEY}` } : {}),
     },
-    body: JSON.stringify({ question, variant }),
+    body: JSON.stringify({ question, variant: 'context' }),
   });
   const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   return { status: res.status, body };
@@ -69,16 +69,12 @@ async function main(): Promise<void> {
     .catch(() => null);
   check('owner key authenticates', session?.signed_in === true, String(session?.github_login || ''));
 
-  // 1) Anonymous weights ask stays gated (the invite floor).
-  const anon = await ask('hello', 'weights', false);
-  check('weights · anonymous → 401', anon.status === 401, `got ${anon.status}`);
-
-  // 2) Weights twin SERVES for the owner (the Tinker checkpoint path).
-  const w = await ask('what is the one thing you want people to take from alexandria?', 'weights', true);
-  const wAnswer = typeof w.body.answer === 'string' ? (w.body.answer as string) : '';
-  check('weights · owner → 200 + answer', w.status === 200 && wAnswer.length > 0,
-    w.status === 200 ? `${wAnswer.length} chars` : `got ${w.status} ${JSON.stringify(w.body).slice(0, 120)}`);
-  if (wAnswer) console.log(`    ↳ ${wAnswer.slice(0, 180).replace(/\n+/g, ' ')}…`);
+  // 1) Public context serves without account access.
+  const publicAsk = await ask('what is Benjamin building and why?', false);
+  const publicAnswer = typeof publicAsk.body.answer === 'string' ? (publicAsk.body.answer as string) : '';
+  check('context · anonymous → 200 + public-safe answer', publicAsk.status === 200 && publicAnswer.length > 0,
+    publicAsk.status === 200 ? `${publicAnswer.length} chars` : `got ${publicAsk.status} ${JSON.stringify(publicAsk.body).slice(0, 120)}`);
+  if (publicAnswer) console.log(`    ↳ ${publicAnswer.slice(0, 180).replace(/\n+/g, ' ')}…`);
 
   // 3) Grant lifecycle → invite-tier deep ask.
   const grantLogin = process.env.GRANT_LOGIN || AUTHOR;
@@ -99,7 +95,7 @@ async function main(): Promise<void> {
   // invite-gated piece (content in reach) rather than answer with the locked
   // teaser. Heuristic: a locked answer says so explicitly.
   await new Promise((r) => setTimeout(r, 8000)); // stay under the 8/min ask limiter
-  const deep = await ask('you have access to my full substrate at this tier. what does In Full actually cover — be concrete.', 'context', true);
+  const deep = await ask('what does the invite context add beyond the public page? be concrete.', true);
   const dAnswer = typeof deep.body.answer === 'string' ? (deep.body.answer as string) : '';
   const lockedTell = /locked|invite-only|isn't loaded|not loaded|can't quote|need an invite/i.test(dAnswer);
   check('context · granted → invite tier engages gated piece', deep.status === 200 && dAnswer.length > 0 && !lockedTell,

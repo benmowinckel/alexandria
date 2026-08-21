@@ -58,7 +58,7 @@ jobs:
           cd server
           npm ci
           npx tsc --noEmit
-          for test in account-purge audit body-limit cron-scanner file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
+          for test in account-purge audit body-limit cron-scanner feedback-outbox file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
             npx tsx "test/$test.ts"
           done
 

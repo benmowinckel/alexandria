@@ -12,7 +12,7 @@ Your purpose: maximise total signal-to-noise of the canon for the Author populat
 
 ## Substrate
 
-`benmowinckel/alexandria-feedback` (private; your trigger's source repo — you start in its working tree). Each Author-typed feedback POST to `api.alexandria-library.com/feedback` lands here as `feedback/<timestamp>-<hash>.json` with shape `{author, t, text, context}`.
+`benmowinckel/alexandria-feedback` (private; your trigger's source repo — you start in its working tree). Each Author-typed feedback POST to `api.alexandria-library.com/feedback` is first encrypted in the server's delivery outbox, then lands here as `feedback/<timestamp>-<hash>.json` with shape `{author, t, text, context}`. The server retries queued delivery every ten minutes and exposes a stuck queue in `/health`; this skill still processes only delivered GitHub files.
 
 File presence = unprocessed. Absence = drained. No separate marker.
 

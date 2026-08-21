@@ -350,36 +350,28 @@ async function main() {
     };
   });
 
-  await test('Machine signal accepted', async () => {
-    const res = await fetch(`${BASE}/marketplace/signal`, {
-      method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        signal: `Lifecycle test signal ${stamp}: protocol obligations and marketplace flow are healthy.`,
-      }),
-    });
-    const body = await safeJson(res);
+  await test('Removed machine-signal route stays closed', async () => {
+    const res = await fetch(`${BASE}/marketplace/signal`, { method: 'POST', headers });
     return {
-      test: 'Machine signal',
-      passed: res.ok && body?.ok === true,
-      details: `HTTP ${res.status}, ok=${String(body?.ok)}`,
+      test: 'Removed machine-signal route',
+      passed: res.status === 404,
+      details: `HTTP ${res.status}`,
     };
   });
 
-  await test('Feedback endpoint accepts session feedback', async () => {
+  // Validate the route without creating an outward feedback item. Exact user
+  // text needs its own approval; a lifecycle test never manufactures it.
+  await test('Feedback endpoint rejects empty text', async () => {
     const res = await fetch(`${BASE}/feedback`, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: `Lifecycle feedback ${stamp}: end-to-end flow verified.`,
-        context: 'lifecycle-test',
-      }),
+      body: JSON.stringify({ text: '', context: 'lifecycle-test' }),
     });
     const body = await safeJson(res);
     return {
-      test: 'Feedback endpoint',
-      passed: res.ok && body?.ok === true,
-      details: `HTTP ${res.status}, ok=${String(body?.ok)}`,
+      test: 'Feedback validation',
+      passed: res.status === 400,
+      details: `HTTP ${res.status}, error=${String(body?.error || '')}`,
     };
   });
 

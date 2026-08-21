@@ -23,6 +23,7 @@ import { getAllowedOrigins } from './cors.js';
 import { formatPT } from './time.js';
 import { miniPageHtml } from './templates.js';
 import { requestBodyLimit } from './body-limit.js';
+import { flushPendingFeedback } from './marketplace.js';
 
 // ---------------------------------------------------------------------------
 // Hono app
@@ -193,6 +194,8 @@ app.get('/health', async (c) => {
     // Read-only list probe — verifies binding works without burning writes or reading a specific key.
     await kv.list({ prefix: 'account:', limit: 1 });
     components.kv = 'ok';
+    const feedbackPending = await kv.list({ prefix: 'feedback-pending:', limit: 1 });
+    components.feedback_delivery = feedbackPending.keys.length === 0 ? 'ok' : 'queued';
   } catch { components.kv = 'error'; }
 
   try {
@@ -850,24 +853,26 @@ export default {
     // once cron behaviour is well-understood.
     logEvent('scheduled_invoked', { cron: String(event.cron || 'undefined') });
 
-    // Audit mirror — every 10 minutes. Tight window to keep the tampering
-    // surface small. Runs alone (other crons skipped) to keep latency low
-    // and avoid burning GitHub API rate limit on no-op scans.
+    // Audit mirror + feedback outbox — every 10 minutes. They are independent:
+    // a failed audit mirror never prevents saved feedback from retrying.
     if (event.cron === '*/10 * * * *') {
-      let auditErr: unknown;
-      try {
-        await mirrorPendingAuditBatch();
-      } catch (err) {
-        // Log the failure for the analytics endpoint, but flush BEFORE
-        // re-throwing — otherwise the diagnostic event lives in `pendingLines`
-        // and never reaches KV, hiding the very failure we wanted to surface.
-        logEvent('audit_mirror_failed', { error: String(err).slice(0, 200) });
-        auditErr = err;
+      const [auditResult, feedbackResult] = await Promise.allSettled([
+        mirrorPendingAuditBatch(),
+        flushPendingFeedback(),
+      ]);
+      const errors: unknown[] = [];
+      if (auditResult.status === 'rejected') {
+        logEvent('audit_mirror_failed', { error: String(auditResult.reason).slice(0, 200) });
+        errors.push(auditResult.reason);
+      }
+      if (feedbackResult.status === 'rejected') {
+        logEvent('feedback_retry_failed', { error: String(feedbackResult.reason).slice(0, 200) });
+        errors.push(feedbackResult.reason);
       }
       // Run the flush regardless of success/failure. ctx.waitUntil keeps the
       // isolate alive long enough for the KV write to complete.
       ctx.waitUntil(flushEvents());
-      if (auditErr) throw auditErr;
+      if (errors.length) throw errors[0];
       return;
     }
 

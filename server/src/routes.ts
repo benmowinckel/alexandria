@@ -1167,8 +1167,9 @@ export function registerRoutes(app: Hono) {
   //
   // The /cancel save-screen has a free-text field for "what's missing /
   // what would make you stay." All human feedback shares one durable,
-  // agent-owned queue: the private alexandria-feedback repo. File presence
-  // means unprocessed; no per-item founder email sits beside that source.
+  // agent-owned queue: a durable KV delivery outbox feeding the private
+  // alexandria-feedback repo. GitHub file presence means unprocessed; no
+  // per-item founder email sits beside that source.
   app.post('/account/feedback', async (c) => {
     const account = await authorFromRequest(c);
     if (!account) return c.json({ error: 'Unauthorized' }, 401);
@@ -1191,9 +1192,9 @@ export function registerRoutes(app: Hono) {
       logEvent('cancel_feedback', { github_login: account.github_login, id });
       return c.json({ ok: true, id });
     } catch (err) {
-      console.error('[account/feedback] relay failed:', err);
-      logEvent('cancel_feedback', { github_login: account.github_login, error: 'relay_failed' });
-      return c.json({ error: 'relay_failed' }, 502);
+      console.error('[account/feedback] durable save failed:', err);
+      logEvent('cancel_feedback', { github_login: account.github_login, error: 'save_failed' });
+      return c.json({ error: 'save_failed' }, 502);
     }
   });
 
@@ -1352,9 +1353,9 @@ export function registerRoutes(app: Hono) {
       });
       return c.json({ ok: true, id });
     } catch (err) {
-      console.error('Feedback relay failed:', err);
-      logEvent('user_feedback', { error: 'relay_failed' });
-      return c.json({ error: 'relay_failed' }, 502);
+      console.error('Feedback durable save failed:', err);
+      logEvent('user_feedback', { error: 'save_failed' });
+      return c.json({ error: 'save_failed' }, 502);
     }
   });
 
@@ -1408,9 +1409,9 @@ export function registerRoutes(app: Hono) {
     return c.json({ ok: true, sent, failed, total: recipients.length });
   });
 
-  // (Marketplace read/drain endpoints removed — signals + feedback live in
-  // the DATA KV namespace under `signal:` and `feedback:` prefixes. Inspect
-  // via `wrangler kv:key list --binding=DATA --prefix=signal:`.)
+  // (Marketplace read/drain endpoints removed. Current explicit feedback is
+  // visible in the private GitHub processing queue; undelivered items wait
+  // under the DATA KV `feedback-pending:` prefix.)
 
   // Manual digest trigger. The scheduled job writes the same result to KV for
   // /health; this endpoint shortens the verification loop after a logic change.
@@ -1716,6 +1717,7 @@ ${body.split('\n').map((line: string) => line.trim() ? `<p style="font-size: 1re
 
   // (Factory autoloop substrate removed 2026-05-15. Was part of the deleted
   //  machine-signal flow. Canon evolution is now founder-as-user: read
-  //  feedback via `wrangler kv key list --binding=DATA --remote --prefix=feedback:`,
+  //  feedback via the private GitHub queue; retry backlog via the DATA KV
+  //  `feedback-pending:` prefix,
   //  analyze, edit factory/canon/*.md directly.)
 }

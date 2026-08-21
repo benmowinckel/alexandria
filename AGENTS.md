@@ -44,7 +44,7 @@ The code maps to four layers:
 Founder email is not an operating queue. User-0 did not read the health or feedback alerts, so the emails created notification noise without producing action. The rented agent owns both loops whenever this repo is active:
 
 - **Health:** before discretionary server work, `curl https://api.alexandria-library.com/health`. A degraded response carries the remaining `awareness.issues`; diagnose, fix, deploy, and verify production before starting lower-priority work. The daily cron still detects and self-heals, but never emails the founder.
-- **Human feedback:** before discretionary product work, inspect every file in the private `benmowinckel/alexandria-feedback` repo. File presence means unprocessed. Implement or route what the agent can; batch only genuine founder taste or outward-facing calls; delete a file only after its signal has a durable home or shipped resolution. Cancel-screen and session feedback share this one substrate; machine setup reports stay in the event log and never enter it. `factory/skills/factory.md` is a dormant loop spec, not a running routine — never assume it drains the queue.
+- **Human feedback:** before discretionary product work, inspect every file in the private `benmowinckel/alexandria-feedback` repo. File presence means unprocessed. The server encrypts each submission in a KV delivery outbox before trying GitHub, deletes the pending copy after delivery, and retries queued items every ten minutes; `/health` reports a stuck queue. Implement or route what the agent can; batch only genuine founder taste or outward-facing calls; delete a GitHub file only after its signal has a durable home or shipped resolution. Cancel-screen and session feedback share this one processing substrate; machine setup reports stay in the event log and never enter it. `factory/skills/factory.md` is a dormant loop spec, not a running routine — never assume it drains the queue.
 
 ### Protocol Endpoints
 
@@ -74,7 +74,7 @@ Operational overhead — OAuth, billing, email, admin:
 | GET | `/account` | Billing portal redirect |
 | DELETE | `/account` | Account deletion (GDPR-ready) |
 | GET | `/account/rotate-key` | Lost-key self-serve rotation (single-use code minted on returning-member OAuth; old key dies atomically) |
-| POST | `/feedback` | Author-explicit feedback sent only in the foreground after a direct request; never drafted or posted by session hooks. Stored in private `benmowinckel/alexandria-feedback`; returns an addressable id. |
+| POST | `/feedback` | Author-explicit feedback sent only in the foreground after a direct request; never drafted or posted by session hooks. Durably accepted into an encrypted delivery outbox, relayed to private `benmowinckel/alexandria-feedback`, and returned with an addressable id. |
 | GET/POST | `/email/stop` | Email unsubscribe |
 | POST | `/admin/nudge` | Nudge uninstalled users (admin) |
 | POST | `/admin/email` | Send email (admin) |
