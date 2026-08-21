@@ -9,7 +9,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "media-src 'self'",
   "worker-src 'self' blob:",
-  `connect-src 'self' https://api.alexandria-library.com https://vitals.vercel-insights.com${development ? ' ws: wss:' : ''}`,
+  `connect-src 'self' blob: https://api.alexandria-library.com https://vitals.vercel-insights.com${development ? ' ws: wss:' : ''}`,
   "frame-src https://www.youtube-nocookie.com https://checkout.stripe.com",
   "form-action 'self' https://github.com https://checkout.stripe.com",
   "frame-ancestors 'none'",

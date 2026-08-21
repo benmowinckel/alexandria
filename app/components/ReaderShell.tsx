@@ -107,7 +107,7 @@ export function PdfView({ url, paper }: { url: string; paper?: boolean }) {
         if (!cancelled && ref.current) ref.current.appendChild(canvas);
       }
     };
-    (async () => { try { widthRef.current = el.clientWidth; await renderAll(el.clientWidth || 800); } catch { if (!cancelled) setErr(true); } })();
+    (async () => { try { widthRef.current = el.clientWidth; await renderAll(el.clientWidth || 800); } catch (error) { console.error('PDF render failed', error); if (!cancelled) setErr(true); } })();
     let t: ReturnType<typeof setTimeout>;
     const ro = new ResizeObserver(() => {
       const w = el.clientWidth;
