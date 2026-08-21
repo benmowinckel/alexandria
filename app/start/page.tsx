@@ -306,7 +306,7 @@ export default async function StartPage({
           margin: 0 0 16px; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 19px; letter-spacing: 0.01em; color: var(--text-primary);
         }
-        .door-answers { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; }
+        .door-answers { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 460px; transition: gap 260ms cubic-bezier(0.2, 0.7, 0.2, 1); }
         .door-btn {
           display: block; width: 100%; text-align: left;
           background: var(--bg-secondary);
@@ -319,6 +319,35 @@ export default async function StartPage({
         }
         .door-btn:hover { border-color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
         .door-btn:active { transform: scale(0.992); }
+        .door-choice {
+          max-height: 58px; overflow: hidden;
+          transition:
+            opacity 180ms ease,
+            transform 260ms cubic-bezier(0.2, 0.7, 0.2, 1),
+            max-height 260ms cubic-bezier(0.2, 0.7, 0.2, 1),
+            padding 260ms cubic-bezier(0.2, 0.7, 0.2, 1),
+            border-width 260ms cubic-bezier(0.2, 0.7, 0.2, 1),
+            border-color 200ms,
+            background 220ms ease;
+        }
+        .door-block.is-decided .door-answers { gap: 0; }
+        .door-choice.is-selected {
+          border-color: var(--accent);
+          background: var(--bg-primary);
+        }
+        .door-choice.is-dismissed {
+          opacity: 0; transform: translateY(-4px); max-height: 0;
+          padding-top: 0; padding-bottom: 0; border-width: 0;
+          pointer-events: none;
+        }
+        .door-confirmation {
+          display: inline-block;
+          animation: doorConfirmationIn 240ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        }
+        @keyframes doorConfirmationIn {
+          from { opacity: 0; transform: translateY(3px); }
+          to { opacity: 1; transform: none; }
+        }
         .act-row {
           position: relative; width: 100%; max-width: 460px; margin: 0 0 10px;
         }

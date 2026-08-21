@@ -46,13 +46,22 @@ assert.doesNotMatch(initial, /phone|computer|which ai/i);
 assert.equal(await page.locator('.door-answers .door-btn').count(), 2);
 
 await page.getByRole('button', { name: /an agent/ }).click();
-await page.locator('.setup-copy').waitFor();
+await page.locator('.door-choice.is-selected').waitFor();
+await page.waitForTimeout(320);
 assert.match(page.url(), /#agent$/);
-const agentBody = await page.locator('body').innerText();
-assert.equal(await page.locator('.act-num').count(), 1);
-assert.match(agentBody, /copied — paste into your agent/);
-assert.doesNotMatch(agentBody, /phone|computer|which ai|chatgpt|claude|gemini|shortcut|email/i);
-await assertFits('.setup-copy');
+const agentChoice = await page.locator('.door-choice.is-selected').innerText();
+assert.equal(await page.locator('.act-num').count(), 0);
+assert.match(agentChoice, /copied — paste into your agent/);
+assert.doesNotMatch(agentChoice, /phone|computer|which ai|chatgpt|claude|gemini|shortcut|email/i);
+assert.equal(await page.locator('.door-choice.is-dismissed').count(), 1);
+assert.deepEqual(
+  await page.locator('.door-choice.is-dismissed').evaluate((node) => {
+    const style = getComputedStyle(node);
+    return { opacity: style.opacity, maxHeight: style.maxHeight };
+  }),
+  { opacity: '0', maxHeight: '0px' },
+);
+await assertFits('.door-choice.is-selected');
 assert.equal(await clipboard(), agentSetupPrompt());
 
 const agentPrompt = agentSetupPrompt();
@@ -72,10 +81,12 @@ assert.doesNotMatch(page.url(), /#agent$/);
 assert.match(await page.locator('body').innerText(), /what do you have access to\?/);
 
 await page.getByRole('button', { name: /just chat/ }).click();
-await page.locator('.setup-copy').waitFor();
+await page.locator('.door-choice.is-selected').waitFor();
+await page.waitForTimeout(320);
 assert.match(page.url(), /#chat$/);
-const chosenChatBody = await page.locator('body').innerText();
-assert.match(chosenChatBody, /copied — paste into your chat/);
+const chosenChatChoice = await page.locator('.door-choice.is-selected').innerText();
+assert.match(chosenChatChoice, /copied — paste into your chat/);
+assert.equal(await page.locator('.door-choice.is-dismissed').count(), 1);
 assert.equal(await clipboard(), chatSetupPrompt());
 
 await page.goBack();
@@ -108,7 +119,7 @@ assert.match(CHAT_SETUP_PROMPT, /full version needs an ai agent on a computer/);
 assert.match(CHAT_SETUP_PROMPT, /final test/);
 assert.doesNotMatch(CHAT_SETUP_PROMPT, /you have my permission/i);
 
-const visibleText = `${initial}\n${agentBody}\n${chosenChatBody}\n${chatBody}`;
+const visibleText = `${initial}\n${agentChoice}\n${chosenChatChoice}\n${chatBody}`;
 assert.equal(visibleText, visibleText.toLowerCase(), 'visible onboarding copy must stay lowercase');
 assert.deepEqual(failures, []);
 
