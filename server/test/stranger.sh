@@ -291,8 +291,11 @@ check "existing permissions kept"  grep -q '"defaultMode"' "$HOME/.claude/settin
 mkdir -p "$HOME/alexandria/system/canon/disabled"
 mv "$HOME/alexandria/system/canon/methodology.md" \
   "$HOME/alexandria/system/canon/disabled/methodology.md"
-ALEXANDRIA_SOURCE_COMMIT="$SOURCE_COMMIT" \
-  bash "$SOURCE_DIR/factory/setup.sh" >/dev/null 2>&1
+# A healthy install deliberately short-circuits a second direct setup run.
+# Exercise the real authenticated refresh path instead; it sets the verified
+# update marker only after checking the current manifest and setup bytes.
+bash "$HOME/.local/share/alexandria/scripts/verify-fetch.sh" \
+  --run setup.sh >/dev/null 2>&1
 check "disabled default preserved" [ -s "$HOME/alexandria/system/canon/disabled/methodology.md" ]
 check "disabled default not restored" [ ! -e "$HOME/alexandria/system/canon/methodology.md" ]
 check "core healthy without default" grep -q '^  canon: ok$' "$HOME/alexandria/system/.setup_report"
