@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { callbackPageHtml } from '../src/templates.js';
 
 function main(html: string): string {
@@ -25,4 +26,12 @@ const returning = main(await callbackPageHtml('', 'returning-author'));
 assert.match(returning, /invite people to alexandria/);
 assert.doesNotMatch(returning, /<span class="cta-label">connect your existing loop<\/span>/);
 
-console.log('welcome contract: new Authors can connect and invite; returning Authors can invite');
+const websiteWelcomeRoute = readFileSync('../app/welcome/route.ts', 'utf8');
+const authRoutes = readFileSync('src/routes.ts', 'utf8');
+assert.match(websiteWelcomeRoute, /\/auth\/github\?intent=connect/);
+assert.match(websiteWelcomeRoute, /history\.replaceState\(\{\},'', '\/welcome'\)/);
+assert.match(authRoutes, /requestedIntent === 'library' \|\| requestedIntent === 'connect'/);
+assert.match(authRoutes, /needsConnection \|\| wantsFreshConnection/);
+assert.match(authRoutes, /await kv\.delete\(`welcome:\$\{code\}`\)/, 'welcome handoff must remain single-use');
+
+console.log('welcome contract: connect, invite, and reload recovery are preserved');

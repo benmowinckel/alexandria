@@ -4,9 +4,7 @@ on:
     branches: [main]
     paths:
       - 'server/src/**'
-      - 'server/test/onboarding-email.ts'
-      - 'server/test/profile-boundary.ts'
-      - 'server/test/welcome-contract.ts'
+      - 'server/test/**'
       - 'shared/**'
       - 'app/**'
       - 'factory/**'
@@ -16,7 +14,11 @@ on:
       - 'scripts/verify-onboarding.mjs'
       - 'scripts/check-metadata.mjs'
       - 'package.json'
+      - 'package-lock.json'
+      - 'next.config.ts'
+      - 'eslint.config.mjs'
       - 'server/package.json'
+      - 'server/package-lock.json'
   pull_request:
     branches: [main]
 
@@ -56,7 +58,7 @@ jobs:
           cd server
           npm ci
           npx tsc --noEmit
-          for test in audit cron-scanner file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
+          for test in account-purge audit body-limit cron-scanner file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
             npx tsx "test/$test.ts"
           done
 
@@ -76,7 +78,7 @@ jobs:
         run: bash scripts/test-grok-integration.sh
 
       - name: App build
-        run: npm ci && npm run build && npx playwright install --with-deps chromium
+        run: npm ci && npm run lint && npm run build && npx playwright install --with-deps chromium
 
       - name: Rendered metadata contract
         run: |
@@ -87,6 +89,8 @@ jobs:
             curl -sf http://127.0.0.1:3000 >/dev/null && break
             sleep 1
           done
+          curl -sSI http://127.0.0.1:3000/start | grep -qi "^Content-Security-Policy:.*frame-ancestors 'none'" \
+            || { echo "::error::Enforced site-wide CSP missing"; exit 1; }
           npm run audit:metadata
           bash scripts/test-network-consent.sh
           node scripts/verify-onboarding.mjs http://localhost:3000

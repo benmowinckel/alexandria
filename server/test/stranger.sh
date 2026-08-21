@@ -296,7 +296,7 @@ ALEXANDRIA_SOURCE_COMMIT="$SOURCE_COMMIT" \
 check "disabled default preserved" [ -s "$HOME/alexandria/system/canon/disabled/methodology.md" ]
 check "disabled default not restored" [ ! -e "$HOME/alexandria/system/canon/methodology.md" ]
 check "core healthy without default" grep -q '^  canon: ok$' "$HOME/alexandria/system/.setup_report"
-check "method reported off" grep -q '^  methods: skip$' "$HOME/alexandria/system/.setup_report"
+check "method reported off" grep -Eq '^  methods:[[:space:]]+skip[[:space:]]*$' "$HOME/alexandria/system/.setup_report"
 PULL_DISABLED_OUTPUT=$(bash "$HOME/.local/share/alexandria/.hooks_payload" \
   pull methodology "$HOME/alexandria" 2>&1)
 check_output "disabled update remains off" "updated in disabled/ and remains off" "$PULL_DISABLED_OUTPUT"
@@ -356,7 +356,8 @@ echo ""
 echo "═══ Phase 5: Session-end hook ═══"
 
 # Create a fake transcript
-FAKE_TRANSCRIPT="$TEMP_HOME/test_transcript.jsonl"
+mkdir -p "$HOME/.claude/projects/stranger"
+FAKE_TRANSCRIPT="$HOME/.claude/projects/stranger/test_transcript.jsonl"
 echo '{"role":"user","content":"stranger test transcript"}' > "$FAKE_TRANSCRIPT"
 
 # Pipe the transcript path as JSON (how Claude Code sends it)

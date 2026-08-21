@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { SHORTCUT_URL } from '../lib/config';
 
@@ -42,11 +43,12 @@ export default function ShortcutPage() {
           <div className="flex flex-col items-center gap-7 px-10 sm:px-24" style={{ color: 'var(--text-primary)' }}>
             <span className="text-[1.05rem] sm:text-[1.2rem] tracking-wide font-medium">iPhone</span>
             <div style={{ background: '#fff', padding: '14px', borderRadius: '14px', lineHeight: 0 }}>
-              <img
+              <Image
                 src="/shortcut-qr.svg"
                 alt="Scan with your iPhone camera to add the shortcut"
                 width={130}
                 height={130}
+                unoptimized
                 style={{ display: 'block' }}
               />
             </div>

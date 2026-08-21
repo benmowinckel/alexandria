@@ -82,6 +82,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [askQuestions, setAskQuestions] = useState<string[]>([]);
   const [variants, setVariants] = useState<TwinVariantSummary[]>([]);
   const [activeVariant, setActiveVariant] = useState<'weights' | 'context'>('context');
+  const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(null);
 
   const [leftOpen, setLeftOpen] = useState(false);
   const [midOpen, setMidOpen] = useState(true);
@@ -117,12 +118,15 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const [pendingQ, setPendingQ] = useState('');
   const [beliCopied, setBeliCopied] = useState(false);  // pane links: Beli click-to-reveal
   useEffect(() => {
-    try {
-      const q = new URLSearchParams(window.location.search);
-      const v = q.get('variant'); if (v === 'weights' || v === 'context') setActiveVariant(v);
-      const inv = q.get('invite')?.trim(); if (inv) { setInvite(inv); setInviteDraft(inv); }
-      const asked = q.get('q')?.trim(); if (asked) setPendingQ(asked);
-    } catch { /* */ }
+    const frame = requestAnimationFrame(() => {
+      try {
+        const q = new URLSearchParams(window.location.search);
+        const v = q.get('variant'); if (v === 'weights' || v === 'context') setActiveVariant(v);
+        const inv = q.get('invite')?.trim(); if (inv) { setInvite(inv); setInviteDraft(inv); }
+        const asked = q.get('q')?.trim(); if (asked) setPendingQ(asked);
+      } catch { /* */ }
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const who = authorName || author;
@@ -190,22 +194,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     else box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
   }, [active?.messages, asking]);
 
-  // The profile door's question (?q=) fires once the mind is loaded, then the
-  // param is stripped so refresh/back doesn't re-ask. The chat opens already
-  // answering — the door and the room feel like one motion.
   const firedRef = useRef(false);
-  useEffect(() => {
-    if (!pendingQ || !author || variants.length === 0 || firedRef.current) return;
-    firedRef.current = true;
-    setPendingQ('');
-    try {
-      const u = new URL(window.location.href);
-      u.searchParams.delete('q');
-      window.history.replaceState({}, '', u.pathname + u.search + u.hash);
-    } catch { /* */ }
-    void ask(pendingQ);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingQ, author, variants]);
 
   // Desktop is typing-first. Mobile is reading-first: changing panes must not
   // summon the keyboard over the question the reader just came to see.
@@ -231,7 +220,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   };
   // Drop out of the immersive layer when the piece closes, or on ESC / leaving
   // native fullscreen (F11 / OS chrome).
-  useEffect(() => { if (!open) setExpanded(false); }, [open]);
+  useEffect(() => {
+    if (open) return;
+    const frame = requestAnimationFrame(() => setExpanded(false));
+    return () => cancelAnimationFrame(frame);
+  }, [open]);
   useEffect(() => {
     if (!expanded) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setExpanded(false); };
@@ -312,7 +305,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       return next.length ? next : [{ id: String(idRef.current++), messages: [] }];
     });
   useEffect(() => {
-    if (!convos.some((c) => c.id === activeId)) setActiveId(convos[0]?.id ?? '1');
+    if (convos.some((c) => c.id === activeId)) return;
+    const frame = requestAnimationFrame(() => setActiveId(convos[0]?.id ?? '1'));
+    return () => cancelAnimationFrame(frame);
   }, [convos, activeId]);
 
   // Ghost text rotates through example questions: piece-specific when a work is
@@ -337,7 +332,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   // The visitor's allowance and the way out of it. Same contract as the reader:
   // the numbers ride back with the answers, and running out opens the handoff
   // rather than closing the chat (founder 2026-07-29).
-  const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(null);
   const [handoffCtx, setHandoffCtx] = useState<HandoffAuthor | null>(null);
   const spent = budget !== null && budget.remaining <= 0;
 
@@ -463,6 +457,25 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
       }
     }
   };
+
+  // The profile door's question (?q=) fires once the mind is loaded, then the
+  // param is stripped so refresh/back doesn't re-ask. The chat opens already
+  // answering — the door and the room feel like one motion.
+  useEffect(() => {
+    if (!pendingQ || !author || variants.length === 0 || firedRef.current) return;
+    const frame = requestAnimationFrame(() => {
+      firedRef.current = true;
+      setPendingQ('');
+      try {
+        const u = new URL(window.location.href);
+        u.searchParams.delete('q');
+        window.history.replaceState({}, '', u.pathname + u.search + u.hash);
+      } catch { /* */ }
+      void ask(pendingQ);
+    });
+    return () => cancelAnimationFrame(frame);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingQ, author, variants]);
 
   const label = { color: 'var(--text-ghost)', fontSize: '0.78rem', letterSpacing: '0.08em' } as const;
   const chromeLabel = { ...label, paddingLeft: '0.35rem' } as const;

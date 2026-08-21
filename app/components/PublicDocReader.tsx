@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import ReaderShell from './ReaderShell';
 import { FOUNDER_LIBRARY_ID, FOUNDER_PROFILE_PATH } from '../lib/config';
@@ -38,7 +38,7 @@ export default function PublicDocReader({
   const [markdown, setMarkdown] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
   const [text, setText] = useState('');
-  const dlBlobRef = useRef<Blob | null>(null);
+  const [downloadBlob, setDownloadBlob] = useState<Blob | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -48,7 +48,7 @@ export default function PublicDocReader({
           const [pres, tres] = await Promise.all([fetch(pdfSrc), txtSrc ? fetch(txtSrc) : Promise.resolve(null)]);
           const blob = await pres.blob();
           if (!live) return;
-          dlBlobRef.current = blob;
+          setDownloadBlob(blob);
           setPdfUrl(URL.createObjectURL(new Blob([await blob.arrayBuffer()], { type: 'application/pdf' })));
           if (tres && tres.ok) setText((await tres.text()).trim());
           setStatus('ok');
@@ -56,7 +56,7 @@ export default function PublicDocReader({
           const r = await fetch(mdSrc);
           const t = r.ok ? await r.text() : '';
           if (!live) return;
-          dlBlobRef.current = new Blob([t], { type: 'text/markdown' });
+          setDownloadBlob(new Blob([t], { type: 'text/markdown' }));
           setMarkdown(t); setText(t); setStatus('ok');
         } else {
           setStatus('error');
@@ -144,7 +144,7 @@ export default function PublicDocReader({
       numbered={numbered}
       plain={plain}
       artifactText={text}
-      downloadBlob={dlBlobRef.current}
+      downloadBlob={downloadBlob}
       downloadName={title.replace(/\s+/g, '-')}
       downloadExt={pdfSrc ? 'pdf' : 'md'}
       who="Benjamin"

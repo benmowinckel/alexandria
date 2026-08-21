@@ -78,7 +78,7 @@ The setup changes files on your machine, so inspect it before you run it. The [s
 
 The complete loop is free. It lives in files you own and keeps working without an account.
 
-The optional connector is the paid part. Membership is $30 a month after the first month, free for good once three active friends join through you, and waived if the price would keep you out. You are paying for the shared context that helps your AI understand your community, plus the Library and Marketplace — never to keep using your own files.
+The optional connector is the paid part. Membership is $30 a month after a 30-day trial, free while three friends who joined through you remain active, and waived when we agree to cover it. You are paying for the shared context that helps your AI understand your community, plus the Library and Marketplace — never to keep using your own files.
 
 ## what’s a founding member.
 

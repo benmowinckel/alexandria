@@ -5,7 +5,10 @@ on:
     types: [completed]
   push:
     branches: [main]
-    paths: ['server/test/**']
+    paths:
+      - 'server/test/stranger.sh'
+      - 'factory/**'
+      - 'shared/**'
   workflow_dispatch: {}
 
 permissions:
@@ -13,7 +16,7 @@ permissions:
 
 jobs:
   stranger:
-    # Run after Deploy succeeds, on test file changes, or manual trigger
+    # Run after Deploy succeeds, on installer/test changes, or manual trigger
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 5
     strategy:

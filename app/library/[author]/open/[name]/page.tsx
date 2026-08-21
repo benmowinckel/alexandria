@@ -232,8 +232,11 @@ export default function OpenProtocolFileGatePage({
     if (visibility !== 'invite') return;
     const urlInvite = (searchParams.get('invite') || '').trim();
     if (!urlInvite) return;
-    setAutoAttempted(true);
-    void openNow();
+    const frame = requestAnimationFrame(() => {
+      setAutoAttempted(true);
+      void openNow();
+    });
+    return () => cancelAnimationFrame(frame);
     // openNow uses inviteCode state, which was initialised from the URL.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, autoAttempted, visibility, searchParams]);
@@ -258,7 +261,8 @@ export default function OpenProtocolFileGatePage({
   // invite-visibility file. Re-runs after mint/revoke via codesLoaded reset.
   useEffect(() => {
     if (!ready || !canOwnerOpen || visibility !== 'invite' || codesLoaded) return;
-    void fetchCodes();
+    const frame = requestAnimationFrame(() => { void fetchCodes(); });
+    return () => cancelAnimationFrame(frame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, canOwnerOpen, visibility, codesLoaded]);
 

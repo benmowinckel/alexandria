@@ -49,9 +49,8 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const [inviteDraft, setInviteDraft] = useState(readUrlInvite);
   const [inviting, setInviting] = useState(false);
   const [inviteErr, setInviteErr] = useState('');
-  const pdfTextRef = useRef('');
-  const dlBlobRef = useRef<Blob | null>(null);
-  const dlExtRef = useRef('md');
+  const [downloadBlob, setDownloadBlob] = useState<Blob | null>(null);
+  const [downloadExt, setDownloadExt] = useState('md');
   const attemptRef = useRef(0);       // guards against a stale fetch clobbering a newer unlock
 
   const nice = useMemo(() => displayName(name), [name]);
@@ -106,22 +105,22 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
       if (fileRes.ok) {
         const blob = await fileRes.blob();
         if (!fresh()) return;
-        dlBlobRef.current = blob;
+        setDownloadBlob(blob);
         const head = await blob.slice(0, 5).text();
         if (head.startsWith('%PDF')) {
-          dlExtRef.current = 'pdf';
+          setDownloadExt('pdf');
           const buf = await blob.arrayBuffer();
           setPdfUrl(URL.createObjectURL(new Blob([buf], { type: 'application/pdf' })));
           setStatus('ok');
           void (async () => {
             try {
               const tr = await fetch(fileUrl({ format: 'text' }), { credentials: 'include' });
-              if (tr.ok) { const t = (await tr.text()).trim(); if (t) { pdfTextRef.current = t; if (fresh()) setContent(t); } }
+              if (tr.ok) { const t = (await tr.text()).trim(); if (t && fresh()) setContent(t); }
             } catch { /* title-scoped focus fallback */ }
           })();
           return;
         }
-        dlExtRef.current = 'md';
+        setDownloadExt('md');
         setContent(await blob.text());
         setStatus('ok');
         return;
@@ -152,7 +151,9 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   // off `attempt`/`invite` deps so a session resolving (or the error copy
   // changing) doesn't silently refetch — unlocks go through submitInvite.
   useEffect(() => {
-    if (author && name) void attempt(invite);
+    if (!author || !name) return;
+    const frame = requestAnimationFrame(() => { void attempt(invite); });
+    return () => cancelAnimationFrame(frame);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [author, name]);
 
@@ -232,10 +233,10 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
       status={status}
       pdfUrl={pdfUrl || undefined}
       markdown={pdfUrl ? undefined : content}
-      artifactText={content || pdfTextRef.current}
-      downloadBlob={dlBlobRef.current}
+      artifactText={content}
+      downloadBlob={downloadBlob}
       downloadName={name}
-      downloadExt={dlExtRef.current}
+      downloadExt={downloadExt}
       signInUrl={signInUrl}
       checkoutUrl={checkoutUrl}
       who={who}

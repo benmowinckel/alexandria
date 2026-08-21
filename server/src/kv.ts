@@ -129,14 +129,17 @@ export async function deleteLoginIndex(login: string): Promise<void> {
   await kv.delete(LOGIN_INDEX_PREFIX + login.toLowerCase());
 }
 
-/** Delete an account and its lookup indexes (auth, login). */
-export async function deleteAccount(githubKey: string, apiKeyHash: string): Promise<void> {
+/** Delete an account and every known lookup index. The account row goes last,
+ *  so a partial KV failure still leaves an OAuth-recoverable record. */
+export async function deleteAccount(githubKey: string, apiKeyHashes: string[], emailToken?: string): Promise<void> {
   const kv = getKV();
-  // Load before delete to recover login for index cleanup
+  // Load before any delete to recover login for index cleanup.
   const existing = await loadAccount(githubKey);
   const login = existing?.github_login as string | undefined;
-  await kv.delete(`account:${githubKey}`);
-  await kv.delete(`auth:${apiKeyHash}`);
+  for (const apiKeyHash of [...new Set(apiKeyHashes.filter(Boolean))]) {
+    await kv.delete(`auth:${apiKeyHash}`);
+  }
+  if (emailToken) await kv.delete(`emailtoken:${emailToken}`);
   // Release the login binding ONLY if it currently points at THIS account — the
   // sticky index means `login:x` may belong to a different id (e.g. this is a
   // recycled-handle account that never owned the binding); deleting it then
@@ -145,6 +148,7 @@ export async function deleteAccount(githubKey: string, apiKeyHash: string): Prom
     const idx = await getLoginIndex(login);
     if (idx === githubKey) await deleteLoginIndex(login);
   }
+  await kv.delete(`account:${githubKey}`);
 }
 
 /** List all accounts (for admin/cron — iterates KV keys). Batches reads per page. */

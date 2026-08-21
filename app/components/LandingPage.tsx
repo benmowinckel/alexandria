@@ -459,7 +459,10 @@ export default function LandingPage() {
   // slide's copy painted at once as a black jumble. After mount, the rest
   // join for the dissolve.
   const [framesReady, setFramesReady] = useState(false);
-  useEffect(() => { setFramesReady(true); }, []);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setFramesReady(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
   // Mobile (<900px) gets the SQUARE scene assets (see the mobile
   // .top-slide CSS): its own poster + breeze video, matching the CSS
   // background swap. Also freezes front-slide feature rotation so the
@@ -487,8 +490,6 @@ export default function LandingPage() {
     // cream above the arch. Feature frames are taller than that gap and
     // cover the archway (founder, 2026-08-11); desktop keeps the tour.
     if (mobileScene) {
-      setFrameIdx(0);
-      setNumeralsIn(false);
       return;
     }
     // Reduced motion: no auto-rotation — the page rests on the brand
@@ -498,8 +499,8 @@ export default function LandingPage() {
     // tick even for motion users, so keying off it would kill the
     // rotation for everyone.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setNumeralsIn(true);
-      return;
+      const frame = requestAnimationFrame(() => setNumeralsIn(true));
+      return () => cancelAnimationFrame(frame);
     }
     if (frameHold) return;
     // 8000ms per frame, hero included (founder, 2026-07-24: 6000 was "a
@@ -512,7 +513,9 @@ export default function LandingPage() {
   }, [frameIdx, frameHold, mobileScene]);
   // First turn — auto, swipe, or keyboard — reveals the hand for good.
   useEffect(() => {
-    if (frameIdx !== 0) setNumeralsIn(true);
+    if (frameIdx === 0) return;
+    const frame = requestAnimationFrame(() => setNumeralsIn(true));
+    return () => cancelAnimationFrame(frame);
   }, [frameIdx]);
   // Keyboard ← → steps the rotation (vertical arrows keep scrolling the
   // page; horizontal are unclaimed on this layout).
@@ -538,7 +541,6 @@ export default function LandingPage() {
   // nothing else. Tracks live changes to the OS preference.
   const [showBreeze, setShowBreeze] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
-  const middleRef = useRef<HTMLElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -548,7 +550,13 @@ export default function LandingPage() {
     sync();
     rm.addEventListener('change', sync);
     const mq = window.matchMedia('(max-width: 899px)');
-    const syncScene = () => setMobileScene(mq.matches);
+    const syncScene = () => {
+      setMobileScene(mq.matches);
+      if (mq.matches) {
+        setFrameIdx(0);
+        setNumeralsIn(false);
+      }
+    };
     syncScene();
     mq.addEventListener('change', syncScene);
     return () => {
@@ -560,7 +568,9 @@ export default function LandingPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const v = params.get('v');
-    if (v === 'arch' || v === 'frame') setCenterpieceVariant(v);
+    if (v !== 'arch' && v !== 'frame') return;
+    const frame = requestAnimationFrame(() => setCenterpieceVariant(v));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   // Breeze video — only mounted when motion is allowed (see showBreeze
@@ -1031,8 +1041,7 @@ export default function LandingPage() {
 
       {/* MIDDLE SLIDE removed — the four argument beats moved to /about
           so the main site is just hero + colophon. Two slides, true
-          minimalism. The middleRef stays in case the peel logic still
-          references it (gracefully no-ops). */}
+          minimalism. */}
 
       {/* ═════ BOTTOM SLIDE — Fleet colophon, theme rotates ═════ */}
       <section

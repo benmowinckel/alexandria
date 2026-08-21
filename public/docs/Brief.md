@@ -26,7 +26,7 @@ A structured, machine-readable record of who each user is — whatever they choo
 
 *The record cannot be back-filled.* Inbox-scraping reaches what the user does, never what they mean. Five years of capture cannot be compressed into a six-month rush. **The compounding is the years.**
 
-Engineering is done. *One curl command, local files on the user's own machine, two integration points fire whenever the user talks to an AI — capture and inject. The tool is free; a dollar a day ($30/month) joins the community as a founding member, free with three active friends.* The only open question is whether enough people want it.
+Engineering is done. *One paste, local files on the user's own machine, two integration points fire whenever the user talks to an AI — capture and inject. The tool is free; membership is $30/month after a 30-day trial, or free while three referred friends remain active.* The only open question is whether enough people want it.
 
 ---
 
@@ -84,7 +84,7 @@ The deeper risk is decay. *AI removes the demand on cognition; cognition only de
 
 *Two revenue streams compound on the same users.*
 
-**Membership.** *The tool and methodology are free; $30/month (a dollar a day) joins the community as a founding member — and members choose what they pay above that, no cap.* Prosumer comparables (Cursor, ChatGPT Pro, Notion AI) show that people willingly pay $20–$60/month for tools they actually value. Stands alone. **Break-even at 4 paying members.**
+**Membership.** *The tool and methodology are free; membership is $30/month after a 30-day trial, or free while three referred friends remain active.* Prosumer comparables (Cursor, ChatGPT Pro, Notion AI) show that people willingly pay $20–$60/month for tools they actually value. Stands alone. **Break-even at 4 paying members.**
 
 **Platform.** *Users grant other services permissioned access to their Alexandria record — opt-in, revocable per service.* AI labs pay for alignment and personalisation research data. Consumer apps pay to know users who knowingly want to be known (meditation, therapy, dating, productivity, healthcare). **The user monetises their own frame; Alexandria captures a clearing fee on every transaction.** *Independent of membership count.*
 

@@ -315,7 +315,9 @@ export default function ReaderShell({
   // Keep the active id valid after a delete (the render already falls back to
   // convos[0], this just realigns the highlight).
   useEffect(() => {
-    if (!convos.some((c) => c.id === activeId)) setActiveId(convos[0]?.id ?? '1');
+    if (convos.some((c) => c.id === activeId)) return;
+    const frame = requestAnimationFrame(() => setActiveId(convos[0]?.id ?? '1'));
+    return () => cancelAnimationFrame(frame);
   }, [convos, activeId]);
 
   // The composer's ghost text rotates through example questions about the piece
@@ -341,7 +343,11 @@ export default function ReaderShell({
   // come back with the answers themselves — no extra request, and no number the
   // client could be wrong about.
   const [budget, setBudget] = useState<{ remaining: number; limit: number; signedIn: boolean } | null>(initialBudget);
-  useEffect(() => { if (initialBudget) setBudget((b) => b ?? initialBudget); }, [initialBudget]);
+  useEffect(() => {
+    if (!initialBudget) return;
+    const frame = requestAnimationFrame(() => setBudget((b) => b ?? initialBudget));
+    return () => cancelAnimationFrame(frame);
+  }, [initialBudget]);
   const [handoffCtx, setHandoffCtx] = useState<HandoffAuthor | null>(null);
   const spent = budget !== null && budget.remaining <= 0;
 

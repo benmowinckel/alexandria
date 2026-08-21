@@ -139,7 +139,7 @@ async function run() {
     const recomputed = await _internal.computeEntryHash(rest);
 
     // The recomputed hash differs from what was originally stored
-    assert.notStrictEqual(recomputed, entries[0].hash);
+    assert.notStrictEqual(recomputed, hash);
     // And the next entry's prev_hash no longer matches the new tampered hash
     assert.notStrictEqual(entries[1].prev_hash, recomputed);
   });

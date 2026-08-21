@@ -22,6 +22,7 @@ import { generateToken } from './crypto.js';
 import { getAllowedOrigins } from './cors.js';
 import { formatPT } from './time.js';
 import { miniPageHtml } from './templates.js';
+import { requestBodyLimit } from './body-limit.js';
 
 // ---------------------------------------------------------------------------
 // Hono app
@@ -86,15 +87,7 @@ app.use('*', async (c, next) => {
 // Body size limit. Library JSON PUTs may carry a 25MB PDF as base64 (~33.4MB
 // on the wire); every other route stays at 10MB. The decoded file and account
 // footprint are independently bounded in protocol.ts.
-app.use('*', async (c, next) => {
-  const contentLength = c.req.header('content-length');
-  const libraryUpload = c.req.method === 'PUT' && /^\/file\/[^/]+$/.test(c.req.path);
-  const maxBodyBytes = libraryUpload ? 36 * 1024 * 1024 : 10 * 1024 * 1024;
-  if (contentLength && parseInt(contentLength, 10) > maxBodyBytes) {
-    return c.text('Request body too large', 413);
-  }
-  await next();
-});
+app.use('*', requestBodyLimit);
 
 // Allowed CORS origins — imported from cors.ts (single source of truth)
 

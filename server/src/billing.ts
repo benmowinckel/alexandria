@@ -1,7 +1,7 @@
 /**
  * Billing — Stripe subscription management + Library payment
  *
- * Subscription: a dollar a day — $30/mo (first month free), or free with 3+ active kin. Binary. Slider open above floor.
+ * Subscription: $30/mo after a 30-day trial, or free while 3+ referred kin stay active.
  * Library: monthly tab billing (micro-transactions settled monthly via Stripe Billing Meters).
  * Non-Author: instant payment via Stripe Checkout.
  */
@@ -26,7 +26,7 @@ import { createAccountConnectCode } from './account-connect.js';
 // this constant, so a grandfathered $10 member is not told $30.
 // ---------------------------------------------------------------------------
 
-const MEMBERSHIP_PRICE_CENTS = 3000; // $30/mo — 'a dollar a day' (founder experiment 2026-07-25, reversing PRICING CLOSED with eyes open; was 1000. Existing subs keep their old price object — grandfathered by Stripe's own mechanics).
+const MEMBERSHIP_PRICE_CENTS = 3000; // $30/mo after a 30-day trial. Existing subs keep their old Stripe price object.
 
 function subscriptionListDollars(sub: Stripe.Subscription): number {
   const unit = sub.items?.data?.[0]?.price?.unit_amount;
@@ -143,7 +143,7 @@ function extractSubscriptionId(invoice: Stripe.Invoice): string | null {
 }
 
 // ---------------------------------------------------------------------------
-// Price ID — one price, $30/month ('a dollar a day'). Free with 3+ active kin (coupon).
+// Price ID — one price, $30/month after the trial. Free while 3+ referred kin stay active (coupon).
 // ---------------------------------------------------------------------------
 
 const KIN_THRESHOLD = parseInt(process.env.KIN_THRESHOLD || '3', 10);
@@ -226,7 +226,7 @@ async function ensurePrice(): Promise<string> {
   const stripe = getStripe();
   const productCopy = {
     name: 'The Examined Life',
-    description: 'a tribe of humans who put their minds into writing, so ai thinks with them, not for them. free with three friends who join through you and stay active. otherwise a dollar a day, first month free.',
+    description: 'a tribe of humans who put their minds into writing, so ai thinks with them, not for them. free while three friends who joined through you remain active. otherwise $30 a month after a 30-day trial.',
   };
 
   const products = await stripe.products.list({ limit: 10 });
@@ -383,7 +383,7 @@ export async function recalculateKinPricing(githubLogin: string): Promise<KinPri
     await stripe.subscriptions.update(user.subscription_id, { discounts: [] });
     nowHasDiscount = false;
     logEvent('kin_pricing_paid', { github_login: user.github_login, compliant_kin: String(kinData.compliant) });
-    // Dropped below three — discount removed, a dollar a day resumes at period
+    // Dropped below three — discount removed, $30/month resumes at period
     // end. Warn so the re-charge is never silent (same once-per-transition
     // guarantee). The 7-day pre-bill warning is a second net if this one is missed.
     if (user.email) {
@@ -657,7 +657,7 @@ export async function createCheckoutSession(opts: {
       },
       metadata: { kind: 'author', github_login: opts.githubLogin },
       custom_text: {
-        submit: { message: 'free if three friends join through you and stay active. otherwise a dollar a day after your first month free.' },
+        submit: { message: 'free while three friends who joined through you remain active. otherwise $30 a month after the 30-day trial.' },
       },
       success_url: `${SERVER_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${WEBSITE_URL}/join?billing=cancel`,

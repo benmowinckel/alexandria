@@ -45,9 +45,9 @@ export function miniPageHtml(bodyHtml: string): string {
 <link rel="icon" href="${WEBSITE_URL}/favicon.png" type="image/png">
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
 <style>
-  :root { --paper: #f5f0e8; --ink: #3d3630; --ink-muted: #8a8078; }
+  :root { --paper: #f5f0e8; --ink: #3d3630; --ink-muted: #6d655e; }
   @media (prefers-color-scheme: dark) {
-    :root { --paper: #2b2a27; --ink: #ece8e1; --ink-muted: #9b9690; }
+    :root { --paper: #2b2a27; --ink: #ece8e1; --ink-muted: #a09b95; }
   }
   body {
     font-family: 'EB Garamond', Georgia, serif; background: var(--paper);
@@ -84,6 +84,7 @@ export function authErrorHtml(message: string): string {
 
 export async function callbackPageHtml(connectionCode: string, githubLogin = '', _viaToken = false, authorNumber = 0, _kinCompliant = 0, reconnectUrl = ''): Promise<string> {
   void _viaToken;
+  void authorNumber;
   void _kinCompliant;
   const WEBSITE_URL = getWebsiteUrl();
   // The founding-member page has one first job: connect the membership to the
@@ -106,7 +107,7 @@ export async function callbackPageHtml(connectionCode: string, githubLogin = '',
   // (founder 2026-07-17: a cold recipient dropped on /start had "no idea what
   // that is"). /invite pitches in one line and forwards the ref to /start,
   // where install → eventual join credits kin (validates ref → existing
-  // login, rejects self-referral). Three who join and stay = free for good.
+  // login, rejects self-referral). Three who join and stay = free while they stay.
   const inviteUrl = githubLogin ? `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}` : '';
   // The Web Share sheet puts the invite one tap from a real conversation.
   // Desktop browsers without it fall back to copying the link.
@@ -128,16 +129,16 @@ export async function callbackPageHtml(connectionCode: string, githubLogin = '',
      localStorage key the site uses so the choice follows them across. */
   :root {
     --paper: #f5f0e8; --surface: #ede8df; --surface-edge: #e6e0d6;
-    --ink: #3d3630; --ink-muted: #8a8078; --ink-faint: #bbb4aa;
+    --ink: #3d3630; --ink-muted: #6d655e; --ink-faint: #bbb4aa;
   }
   :root[data-theme="dark"] {
     --paper: #2b2a27; --surface: #333230; --surface-edge: #3b3a37;
-    --ink: #ece8e1; --ink-muted: #9b9690; --ink-faint: #6b6660;
+    --ink: #ece8e1; --ink-muted: #a09b95; --ink-faint: #6b6660;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --paper: #2b2a27; --surface: #333230; --surface-edge: #3b3a37;
-      --ink: #ece8e1; --ink-muted: #9b9690; --ink-faint: #6b6660;
+      --ink: #ece8e1; --ink-muted: #a09b95; --ink-faint: #6b6660;
     }
   }
   .theme-toggle {

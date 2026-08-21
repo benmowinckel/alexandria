@@ -398,17 +398,6 @@ function stringSlot(settings: Record<string, unknown>, name: string): string | n
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
-function slugSlot(value: string | null): string | null {
-  if (!value) return null;
-  const slug = value
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return slug || null;
-}
-
 export function libraryLocationOptions(): string[] {
   return [...LIBRARY_LOCATIONS];
 }

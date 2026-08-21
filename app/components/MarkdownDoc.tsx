@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, isValidElement } from 'react';
+import { useState, useEffect, useMemo, useRef, useId, isValidElement } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -349,7 +349,6 @@ function ReadingProgress() {
 // the page reads as a typeset book (different ornaments at different
 // rhythms) rather than a wall of identical horizontal rules.
 const FLEURONS = ['❦', '❧', '※', '§', '⁂'];
-let fleuronIdx = 0;
 
 export const MD_COMPONENTS = {
   h1: ({ children }: { children?: React.ReactNode }) => (
@@ -358,9 +357,10 @@ export const MD_COMPONENTS = {
   h2: ({ children }: { children?: React.ReactNode }) => <h2 id={slugify(children)} className="pdoc-h2">{children}</h2>,
   h3: ({ children }: { children?: React.ReactNode }) => <h3 id={slugify(children)} className="pdoc-h3">{children}</h3>,
   h4: ({ children }: { children?: React.ReactNode }) => <h4 id={slugify(children)} className="pdoc-h4">{children}</h4>,
-  hr: () => {
-    const glyph = FLEURONS[fleuronIdx % FLEURONS.length];
-    fleuronIdx++;
+  hr: function MarkdownRule() {
+    const stableId = useId();
+    const glyphIndex = [...stableId].reduce((sum, char) => sum + char.charCodeAt(0), 0) % FLEURONS.length;
+    const glyph = FLEURONS[glyphIndex];
     return (
       <div className="pdoc-hr" aria-hidden>
         <span className="pdoc-fleuron">{glyph}</span>
@@ -533,10 +533,6 @@ export default function MarkdownDoc({ src, header, homeHref = '/', cta = false, 
     if (content === null) return null;
     return numbered ? processNumbered(content) : null;
   }, [content, numbered]);
-
-  // Reset the fleuron index each render so the cycle starts fresh and
-  // is deterministic from the top of the document.
-  fleuronIdx = 0;
 
   return (
     <>

@@ -20,11 +20,14 @@ function cleanRef(raw: string | undefined): string {
 export default async function JoinPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ref?: string; ref_source?: string }>;
+  searchParams: Promise<{ ref?: string; ref_source?: string; billing?: string }>;
 }) {
   const params = await searchParams;
   const ref = cleanRef(params.ref) || undefined;
   const refSource = (params.ref_source || 'invite').replace(/[^a-z_]/g, '').slice(0, 24) || 'invite';
+  const billingStatus = params.billing === 'cancel' || params.billing === 'refresh'
+    ? params.billing
+    : undefined;
 
   return (
     <div className="join-page">
@@ -33,7 +36,7 @@ export default async function JoinPage({
         <Link href="/" className="join-brand">alexandria<span>.</span></Link>
       </header>
       <main className="join-main">
-        <JoinCTA urlRef={ref} refSource={refSource} />
+        <JoinCTA urlRef={ref} refSource={refSource} billingStatus={billingStatus} />
       </main>
     </div>
   );

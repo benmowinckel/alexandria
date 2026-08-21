@@ -47,7 +47,6 @@ export default async function CancelPage() {
   }
   return (
     <CancelClient
-      githubLogin={session.github_login || null}
       initialCancelAt={session.cancel_at || null}
       initialStatus={session.subscription_status || null}
     />

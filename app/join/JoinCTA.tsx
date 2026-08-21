@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { SERVER_URL, FOUNDER_PROFILE_PATH } from '../lib/config';
+import { SERVER_URL, FOUNDER_EMAIL, FOUNDER_PROFILE_PATH } from '../lib/config';
 import { checkReferral, parseReferralInput } from '../lib/referral';
 import { ArrowIcon, TickIcon } from './DoorIcons';
 
@@ -20,12 +20,18 @@ function githubUrl(ref: string, refSource: string): string {
 export default function JoinCTA({
   urlRef,
   refSource,
+  billingStatus,
 }: {
   urlRef?: string;
   refSource: string;
+  billingStatus?: 'cancel' | 'refresh';
 }) {
   const [urlCheck, setUrlCheck] = useState<{ input: string; valid: string | null } | null>(null);
-  const [savedRef, setSavedRef] = useState('');
+  const [savedRef] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    try { return parseReferralInput(window.localStorage.getItem('alexandria-referrer') || ''); }
+    catch { return ''; }
+  });
   const candidateUrlRef = urlRef || savedRef;
   const validUrlRef = candidateUrlRef && urlCheck?.input === candidateUrlRef ? urlCheck.valid : null;
   const [confirmedManualRef, setConfirmedManualRef] = useState('');
@@ -39,11 +45,6 @@ export default function JoinCTA({
   const manualInvalid = !!(cleanManualRef && manualCheck?.input === cleanManualRef && !manualCheck.valid);
 
   useEffect(() => {
-    if (urlRef) return;
-    try { setSavedRef(parseReferralInput(window.localStorage.getItem('alexandria-referrer') || '')); } catch { /* storage is optional */ }
-  }, [urlRef]);
-
-  useEffect(() => {
     if (!candidateUrlRef) return;
     let live = true;
     (async () => {
@@ -54,10 +55,7 @@ export default function JoinCTA({
   }, [candidateUrlRef]);
 
   useEffect(() => {
-    if (!cleanManualRef) {
-      setManualCheck(null);
-      return;
-    }
+    if (!cleanManualRef) return;
     let live = true;
     const timer = setTimeout(async () => {
       const ok = await checkReferral(cleanManualRef);
@@ -106,8 +104,15 @@ export default function JoinCTA({
         </div>
 
         <p className="join-close">
-          Bring three friends in your first month, and membership stays free. Otherwise, it is $1 a day. If cost is what stops you, message me and I will waive it. Your loop stays yours if you leave. I just want you to try it for a month, see what it actually does for you, and then decide whether it is worth keeping.
+          Bring three friends, and membership is free while they remain active. Otherwise, the first 30 days are free, then it is $30 a month until you cancel. Your loop stays yours if you leave. Try it for a month, see what it actually does for you, and then decide whether it is worth keeping.
         </p>
+        {billingStatus && (
+          <p className="join-billing-note" role="status">
+            {billingStatus === 'cancel'
+              ? 'checkout closed — nothing was charged.'
+              : 'your old checkout expired — start again when you are ready.'}
+          </p>
+        )}
         <a className="door-btn act-box act-primary" href={joinUrl}>
           join the collective<span className="act-why">{'\u00a0'}— start with github</span>
         </a>
@@ -175,6 +180,14 @@ export default function JoinCTA({
             </form>
           )}
         </div>
+
+        <footer className="join-fineprint">
+          <Link href="/terms">terms</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/privacy">privacy</Link>
+          <span aria-hidden="true">·</span>
+          <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>cost genuinely stopping you? email me</a>
+        </footer>
       </section>
     </>
   );

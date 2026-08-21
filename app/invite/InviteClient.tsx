@@ -14,7 +14,7 @@ export default function InviteClient({ refCode }: { refCode?: string }) {
   const [validRef, setValidRef] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!refCode) { setValidRef(null); return; }
+    if (!refCode) return;
     let live = true;
     (async () => {
       const valid = await checkReferral(refCode);

@@ -18,6 +18,7 @@ import { handleGithubPushWebhook } from './marketplace-catalog.js';
 import { listAuditArchive, mirrorPendingAuditBatch, readAuditArchive, verifyAuditArchiveHead } from './audit.js';
 import moduleSystem from '../../factory/module-system.json';
 import { consumeAccountConnectCode, createAccountConnectCode, isAccountConnectCode, peekAccountConnectCode } from './account-connect.js';
+import { AccountPurgeError, runAccountPurge } from './account-purge.js';
 
 /**
  * KV-backed rate limit for destructive/expensive admin endpoints.
@@ -63,33 +64,33 @@ async function checkAccountRateLimit(endpoint: string, login: string, limit = 5,
   }
 }
 
-/** Stripe cancel + KV + D1 + R2 — shared by DELETE /account and admin removal.
- *  Marketplace repo signals/feedback are unchanged (same as self-delete). */
-async function purgeAuthorAccount(account: Account, storeKey: string | null, authKeyHash: string | null) {
-  if (account.subscription_id) {
-    try {
-      const stripe = getStripe();
-      await stripe.subscriptions.cancel(account.subscription_id);
-    } catch (e) {
-      console.error('[account] Stripe subscription cancel failed:', e);
-    }
-  }
+/** Stripe + D1 + R2 + KV — shared by DELETE /account and admin removal.
+ *  Marketplace repo signals/feedback are unchanged (same as self-delete).
+ *  Access is revoked last so any external cleanup failure remains retryable. */
+async function purgeAuthorAccount(account: Account, storeKey: string, authKeyHash: string | null) {
   const authKeyHashes = [...new Set([
     authKeyHash,
     account.api_key_hash,
     ...(account.api_key_hashes || []),
   ].filter((hash): hash is string => typeof hash === 'string' && hash.length > 0))];
-  if (storeKey && authKeyHashes[0]) {
-    await deleteAccount(storeKey, authKeyHashes[0]);
-    await Promise.all(authKeyHashes.slice(1).map((hash) => getKV().delete(`auth:${hash}`)));
-  }
-  else if (storeKey) await getKV().delete(`account:${storeKey}`);
+  const cancelBilling = async () => {
+    if (!account.subscription_id) return;
+    try {
+      await getStripe().subscriptions.cancel(account.subscription_id);
+    } catch (error) {
+      const stripeError = error as { code?: string };
+      // A prior attempt may have canceled the subscription before a later
+      // cleanup step failed. Missing on retry means the billing relationship is
+      // already gone; every other Stripe error must preserve account access.
+      if (stripeError.code !== 'resource_missing') throw error;
+    }
+  };
 
-  try {
+  const deleteDatabaseData = async () => {
     const db = getDB();
     const login = account.github_login;
     const email = account.email;
-    await db.batch([
+    const statements = [
       db.prepare('DELETE FROM waitlist WHERE email = ?').bind(email),
       db.prepare('DELETE FROM referrals WHERE author_id = ? OR referred_github_login = ?').bind(login, login),
       db.prepare('DELETE FROM access_log WHERE accessor_id = ? OR author_id = ?').bind(login, login),
@@ -109,17 +110,12 @@ async function purgeAuthorAccount(account: Account, storeKey: string | null, aut
       // same github_id re-inherited them. (security-audit-2026-06-23 H1)
       db.prepare('DELETE FROM protocol_files WHERE account_id = ?').bind(String(account.github_id)),
       db.prepare('DELETE FROM protocol_calls WHERE account_id = ?').bind(String(account.github_id)),
-    ]);
-    if (storeKey) {
-      try {
-        await db.prepare('DELETE FROM account_connect_codes WHERE account_key = ?').bind(storeKey).run();
-      } catch { /* schema may not exist on an older local database */ }
-    }
-  } catch (e) {
-    console.error('[account] D1 cleanup failed:', e);
-  }
+      db.prepare('DELETE FROM account_connect_codes WHERE account_key = ?').bind(storeKey),
+    ];
+    await db.batch(statements);
+  };
 
-  try {
+  const deleteStoredFiles = async () => {
     const r2 = getR2();
     const login = account.github_login;
     // protocol/* R2 is keyed by github_id and routed through file-access.ts (the
@@ -133,9 +129,14 @@ async function purgeAuthorAccount(account: Account, storeKey: string | null, aut
         cursor = listed.truncated ? listed.cursor : undefined;
       } while (cursor);
     }
-  } catch (e) {
-    console.error('[account] R2 cleanup failed:', e);
-  }
+  };
+
+  await runAccountPurge({
+    cancelBilling,
+    deleteDatabaseData,
+    deleteStoredFiles,
+    revokeAccess: () => deleteAccount(storeKey, authKeyHashes, account.email_token),
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -381,7 +382,8 @@ export function registerRoutes(app: Hono) {
     const refSource = c.req.query('ref_source') || '';
     const refId = c.req.query('ref_id') || '';
     const next = sanitizeNextPath(c.req.query('next'));
-    const intent = c.req.query('intent') === 'library' ? 'library' : '';
+    const requestedIntent = c.req.query('intent');
+    const intent = requestedIntent === 'library' || requestedIntent === 'connect' ? requestedIntent : '';
     const waive = (c.req.query('waive') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 128);
     await kv.put(
       `oauth:${state}`,
@@ -549,8 +551,8 @@ export function registerRoutes(app: Hono) {
         // FOUNDING-MEMBER JOIN (Strava-for-thought, ground truth e1cd27f): the
         // local tool is free and keyless (no account); JOINING the community is
         // the one paid thing. So a NEW account carries NO active status — it falls
-        // through to the Stripe-trial checkout below ($30/mo — a dollar a day, first month free,
-        // free with 3 active kin, or email-to-waive as a manual comp). The webhook
+        // through to the Stripe-trial checkout below ($30/mo after 30 days,
+        // free while 3 referred kin stay active, or email-to-waive as a manual comp). The webhook
         // sets `trialing` on checkout completion. Existing statuses ride the
         // `...existing` spread: the grandfathered seeding-stage `free` cohort
         // (joined 2026-06-05 → 06-11) and returning members keep their status and
@@ -693,6 +695,7 @@ export function registerRoutes(app: Hono) {
       // It only creates a short-lived connection code; the current key remains
       // valid until an agent later receives the exact word `connect`.
       const needsConnection = !updatedAccount.connected_at && !updatedAccount.installed_at;
+      const wantsFreshConnection = stateData.intent === 'connect';
       let reconnectUrl = '';
       if (!needsConnection) {
         const rotateCode = randomBytes(24).toString('hex');
@@ -713,7 +716,7 @@ export function registerRoutes(app: Hono) {
           return c.redirect(handoffUrl(stateData.next));
         }
         const number = await assignAuthorNumber(user.login);
-        const connectionCode = needsConnection ? await createAccountConnectCode(key) : '';
+        const connectionCode = needsConnection || wantsFreshConnection ? await createAccountConnectCode(key) : '';
         if (email && connectionCode) {
           await sendWelcomeEmail(email, user.login, emailToken, connectionCode);
         }
@@ -935,7 +938,26 @@ export function registerRoutes(app: Hono) {
       storeKey = Object.keys(accounts).find(k => accounts[k].api_key_hash === keyHash) || null;
     }
 
-    await purgeAuthorAccount(account, storeKey, storeKey ? keyHash : null);
+    if (!storeKey) {
+      console.error('[account] deletion could not resolve the account storage key');
+      return c.json({ error: 'Account deletion could not start. Sign in again and retry.' }, 500);
+    }
+
+    try {
+      await purgeAuthorAccount(account, storeKey, keyHash);
+    } catch (error) {
+      const stage = error instanceof AccountPurgeError ? error.stage : 'unknown';
+      console.error(JSON.stringify({
+        message: 'account deletion failed',
+        github_login: account.github_login,
+        stage,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+      const message = stage === 'access'
+        ? 'Account deletion did not finish. Sign in with GitHub and retry.'
+        : 'Account deletion did not finish. Your login was kept so you can retry.';
+      return c.json({ error: message }, 502);
+    }
 
     logEvent('account_deleted', { github_login: account.github_login });
     return c.json({ ok: true, deleted: account.github_login });
@@ -1195,7 +1217,21 @@ export function registerRoutes(app: Hono) {
 
     const victim = result.account;
     const apiKeyHash = typeof victim.api_key_hash === 'string' ? victim.api_key_hash : null;
-    await purgeAuthorAccount(victim, result.storeKey, apiKeyHash);
+    try {
+      await purgeAuthorAccount(victim, result.storeKey, apiKeyHash);
+    } catch (error) {
+      const stage = error instanceof AccountPurgeError ? error.stage : 'unknown';
+      console.error(JSON.stringify({
+        message: 'admin account removal failed',
+        github_login: login,
+        stage,
+        error: error instanceof Error ? error.message : String(error),
+      }));
+      const message = stage === 'access'
+        ? 'Account removal did not finish; sign in again and retry.'
+        : 'Account removal did not finish; access was preserved for retry.';
+      return c.json({ error: message }, 502);
+    }
 
     logEvent('admin_account_removed', { github_login: login });
     return c.json({ ok: true, removed: login });

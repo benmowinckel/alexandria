@@ -33,11 +33,9 @@ type Mode = 'save' | 'cancelling' | 'cancelled' | 'reactivating' | 'reactivated'
 type FeedbackState = 'idle' | 'sending' | 'sent';
 
 export default function CancelClient({
-  githubLogin: _githubLogin,
   initialCancelAt,
   initialStatus,
 }: {
-  githubLogin: string | null;
   initialCancelAt: string | null;
   initialStatus: string | null;
 }) {
