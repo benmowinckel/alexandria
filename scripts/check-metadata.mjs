@@ -47,7 +47,8 @@ for (const route of publicRoutes) {
   const canonical = link(html, 'canonical');
   const ogImage = meta(html, 'property', 'og:image');
   const twitterImage = meta(html, 'name', 'twitter:image');
-  const expectedCanonical = route === '/' ? 'https://alexandria-library.com' : `https://alexandria-library.com${route}`;
+  const resolvedPath = new URL(response.url).pathname;
+  const expectedCanonical = resolvedPath === '/' ? 'https://alexandria-library.com' : `https://alexandria-library.com${resolvedPath}`;
 
   assert(title, `${route}: missing title`);
   assert(description, `${route}: missing description`);
