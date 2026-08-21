@@ -2,7 +2,14 @@ name: Smoke
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/smoke.yml']
+    paths:
+      - '.github/workflows/smoke.yml'
+      - 'scripts/check-founder-library-artifacts.mjs'
+      - 'package.json'
+      - 'public/docs/Plainly.md'
+      - 'public/docs/Features.md'
+      - 'public/docs/Whitepaper.md'
+      - 'public/docs/letter.txt'
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch: {}
@@ -218,6 +225,9 @@ jobs:
           www=$(curl -sL -o /dev/null -w '%{http_code}' https://www.mowinckel.ai)
           [ "$www" -ge 200 ] && [ "$www" -lt 400 ] || { echo "::error::www HTTP $www"; exit 1; }
           echo "✓ website ($status, www=$www)"
+
+      - name: Website reader documents match the public Library
+        run: npm run audit:library-docs
 
       - name: Stripe webhook reachable
         run: |
