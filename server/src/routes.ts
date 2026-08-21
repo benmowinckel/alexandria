@@ -19,6 +19,7 @@ import { listAuditArchive, mirrorPendingAuditBatch, readAuditArchive, verifyAudi
 import moduleSystem from '../../factory/module-system.json';
 import { consumeAccountConnectCode, createAccountConnectCode, isAccountConnectCode, peekAccountConnectCode } from './account-connect.js';
 import { AccountPurgeError, runAccountPurge } from './account-purge.js';
+import { accountConnectPrompt } from '../../shared/onboarding-prompts.js';
 
 /**
  * KV-backed rate limit for destructive/expensive admin endpoints.
@@ -383,7 +384,7 @@ export function registerRoutes(app: Hono) {
     const refId = c.req.query('ref_id') || '';
     const next = sanitizeNextPath(c.req.query('next'));
     const requestedIntent = c.req.query('intent');
-    const intent = requestedIntent === 'library' || requestedIntent === 'connect' ? requestedIntent : '';
+    const intent = requestedIntent === 'library' ? requestedIntent : '';
     const waive = (c.req.query('waive') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 128);
     await kv.put(
       `oauth:${state}`,
@@ -691,17 +692,7 @@ export function registerRoutes(app: Hono) {
       let kinCompliant = 0;
       try { kinCompliant = (await countActiveKin(user.login)).compliant; } catch { /* D1 down — show 0 */ }
 
-      // Connected members get an OAuth-bound route for another/lost machine.
-      // It only creates a short-lived connection code; the current key remains
-      // valid until an agent later receives the exact word `connect`.
       const needsConnection = !updatedAccount.connected_at && !updatedAccount.installed_at;
-      const wantsFreshConnection = stateData.intent === 'connect';
-      let reconnectUrl = '';
-      if (!needsConnection) {
-        const rotateCode = randomBytes(24).toString('hex');
-        await kv.put(`rotate:${rotateCode}`, key, { expirationTtl: 600 });
-        reconnectUrl = `${getServerUrl()}/account/rotate-key?code=${rotateCode}`;
-      }
 
       // Skip checkout only when the SAME authoritative membership resolver
       // used by publishing says this account is active. A Stripe customer id
@@ -716,11 +707,11 @@ export function registerRoutes(app: Hono) {
           return c.redirect(handoffUrl(stateData.next));
         }
         const number = await assignAuthorNumber(user.login);
-        const connectionCode = needsConnection || wantsFreshConnection ? await createAccountConnectCode(key) : '';
+        const connectionCode = needsConnection ? await createAccountConnectCode(key) : '';
         if (email && connectionCode) {
           await sendWelcomeEmail(email, user.login, emailToken, connectionCode);
         }
-        return c.redirect(await welcomeHandoffUrl(kv, librarySessionToken, connectionCode, user.login, false, number ?? 0, kinCompliant, reconnectUrl));
+        return c.redirect(await welcomeHandoffUrl(kv, librarySessionToken, connectionCode, user.login, false, number ?? 0, kinCompliant));
       }
 
       // New join → Stripe Checkout. Connection material is minted only after
@@ -792,6 +783,30 @@ export function registerRoutes(app: Hono) {
     if (!html) return c.json({ error: 'invalid or expired code' }, 400);
     await kv.delete(`welcome:${code}`);
     return c.json({ html });
+  });
+
+  // A connected ai creates a second-computer handoff only after the Author asks.
+  // The response is the exact non-executable text to paste into the ai on the
+  // other computer. No private files or cognitive content enter the request.
+  app.post('/account/connect/handoff', async (c) => {
+    c.header('Cache-Control', 'no-store');
+    const auth = await requireAuth(c);
+    if (!auth) return c.text('Unauthorized', 401);
+
+    const membership = await resolveMembership(auth.account);
+    if (!membership.available) {
+      return c.text('Membership verification is temporarily unavailable. Try again later.', 503);
+    }
+    if (!membership.active) {
+      return c.text('An active Alexandria membership is required.', 403);
+    }
+
+    const accountKey = await getAuthIndex(hashApiKey(auth.key));
+    if (!accountKey) return c.text('Account not found.', 404);
+
+    const connectionCode = await createAccountConnectCode(accountKey);
+    logEvent('account_handoff_created', { github_login: auth.account.github_login });
+    return c.text(accountConnectPrompt(connectionCode));
   });
 
   // Narrow account connection. The code is short-lived and D1 consumes it
@@ -961,53 +976,6 @@ export function registerRoutes(app: Hono) {
 
     logEvent('account_deleted', { github_login: account.github_login });
     return c.json({ ok: true, deleted: account.github_login });
-  });
-
-  // --- Another/lost machine connection ---
-  //
-  // Fresh OAuth proves account ownership and binds this single-use link. The
-  // click creates a connection code but does not rotate the working machine's
-  // key. The later audited `connect` exchange gives another machine its own
-  // key while every healthy connection remains valid.
-  app.get('/account/rotate-key', async (c) => {
-    const code = c.req.query('code') || '';
-    // randomBytes(24).hex = 48 chars; reject anything else before touching KV.
-    if (!/^[a-f0-9]{48}$/.test(code)) {
-      return c.html(authErrorHtml('this link isn’t valid — sign in again and use “lost your key?” on the welcome page.'), 400);
-    }
-    const kv = getKV();
-    const storeKey = await kv.get(`rotate:${code}`);
-    if (!storeKey) {
-      return c.html(authErrorHtml('this link has expired — sign in again and use “lost your key?” on the welcome page.'), 400);
-    }
-    await kv.delete(`rotate:${code}`); // single-use, burned even if the rest fails
-
-    const account = await loadAccount(storeKey) as Account | null;
-    if (!account) {
-      return c.html(authErrorHtml('account not found — please sign in again.'), 400);
-    }
-
-    const membership = await resolveMembership(account);
-    if (!membership.available) {
-      return c.html(authErrorHtml('membership verification is temporarily unavailable — please try again.'), 503);
-    }
-    if (!membership.active) {
-      return c.redirect(`${getWebsiteUrl()}/join`);
-    }
-    const connectionCode = await createAccountConnectCode(storeKey);
-    logEvent('account_reconnect_code_created', { github_login: account.github_login });
-
-    // Show the standard connect handoff with the fresh one-use code through the
-    // same first-party page + session-cookie path, so it sticks in Safari too.
-    const number = await assignAuthorNumber(account.github_login);
-    let kinCompliant = 0;
-    try { kinCompliant = (await countActiveKin(account.github_login)).compliant; } catch { /* D1 down — show 0 */ }
-    const sessionToken = randomBytes(24).toString('hex');
-    await kv.put(`library:session:${sessionToken}`, JSON.stringify({
-      account_key: storeKey,
-      github_login: account.github_login,
-    }), { expirationTtl: 30 * 24 * 60 * 60 });
-    return c.redirect(await welcomeHandoffUrl(kv, sessionToken, connectionCode, account.github_login, false, number ?? 0, kinCompliant));
   });
 
   // --- Subscription cancel / reactivate (save-screen) ---

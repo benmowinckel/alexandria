@@ -135,6 +135,15 @@ async function main() {
     };
   });
 
+  await test('Another-computer handoff requires the current account', async () => {
+    const res = await fetch(`${BASE}/account/connect/handoff`, { method: 'POST' });
+    return {
+      test: 'Another-computer handoff requires auth',
+      passed: res.status === 401,
+      details: `HTTP ${res.status}`,
+    };
+  });
+
   await test('Logout is idempotent without a session', async () => {
     const res = await fetch(`${BASE}/auth/logout`, { method: 'POST' });
     const body = await safeJson(res);

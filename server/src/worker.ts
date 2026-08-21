@@ -133,7 +133,7 @@ app.use('/library/*', async (c, next) => {
 // and /check-kin is an unauthenticated membership oracle; both were unlimited.
 // Limits sized to never bite a human: a normal OAuth is 1 init + 1 callback,
 // so 10/min/IP absorbs retries and a shared office NAT; check-kin fires once
-// per /join page view; rotate-key is a single click behind a single-use code.
+// per /join page view.
 // Same limiter + 429 shape as /waitlist below. Function declarations hoist,
 // so referencing enforcePublicRateLimit (defined lower) at request time is fine.
 // ---------------------------------------------------------------------------
@@ -142,7 +142,7 @@ const PUBLIC_RATE_LIMITED_ROUTES = [
   { path: '/auth/github', scope: 'auth', limit: 10 },
   { path: '/auth/github/callback', scope: 'auth-callback', limit: 10 },
   { path: '/check-kin', scope: 'check-kin', limit: 10 },
-  { path: '/account/rotate-key', scope: 'rotate-key', limit: 5 },
+  { path: '/account/connect/handoff', scope: 'account-connect', limit: 5 },
   { path: '/account/connect/exchange', scope: 'account-connect', limit: 5 },
 ] as const;
 
@@ -351,7 +351,6 @@ type PublicRateLimitScope =
   | 'waitlist' | 'follow' | 'onboard'          // POST bodies (5/min default)
   | 'auth' | 'auth-callback'                   // OAuth pair (10/min — see middleware above)
   | 'check-kin'                                // unauthenticated membership oracle
-  | 'rotate-key'                               // OAuth-bound reconnect link
   | 'account-connect';                         // one-use connection exchange
 
 async function enforcePublicRateLimit(scope: PublicRateLimitScope, ip: string, limit = PUBLIC_RATE_LIMIT_MAX): Promise<boolean> {

@@ -82,7 +82,7 @@ export function authErrorHtml(message: string): string {
 // Callback page — the first brand moment after signup
 // ---------------------------------------------------------------------------
 
-export async function callbackPageHtml(connectionCode: string, githubLogin = '', _viaToken = false, authorNumber = 0, _kinCompliant = 0, reconnectUrl = ''): Promise<string> {
+export async function callbackPageHtml(connectionCode: string, githubLogin = '', _viaToken = false, authorNumber = 0, _kinCompliant = 0): Promise<string> {
   void _viaToken;
   void authorNumber;
   void _kinCompliant;
@@ -93,9 +93,6 @@ export async function callbackPageHtml(connectionCode: string, githubLogin = '',
   // hierarchy comes from sequence and language, never a harsh filled CTA.
   // A founding number is assigned server-side but is not the pitch.
   // `isReturning` is the bare re-login fallback — nothing minted, not a fresh join.
-  // `reconnectUrl` is minted by a fresh OAuth callback and creates a separate,
-  // short-lived connection code. Merely signing in never invalidates the key
-  // already working on the user's machine.
   const isReturning = !connectionCode;
   // The connect message is copy-paste, matching /start. (A claude-cli:// deep link was tried
   // and removed 2026-06-24: it auto-ran the script and felt like a terminal hijack — copy-paste
@@ -176,10 +173,6 @@ export async function callbackPageHtml(connectionCode: string, githubLogin = '',
     font-size: clamp(34px, 2rem + 1.2vw, 46px); line-height: 1.08;
     letter-spacing: -0.015em; color: var(--ink); text-wrap: balance;
   }
-  .footer { margin-top: 40px; }
-  .fineprint-solo { font-size: 0.8rem; line-height: 1.7; color: var(--ink-faint); margin: 0 0 6px; }
-  .fineprint-solo a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--ink-faint); transition: color 0.15s, border-color 0.15s; }
-  .fineprint-solo a:hover { color: var(--ink-muted); border-bottom-color: var(--ink-muted); }
   .cta-box {
     display: flex; align-items: center; gap: 16px;
     width: 100%; max-width: 486px; text-align: left;
@@ -187,7 +180,7 @@ export async function callbackPageHtml(connectionCode: string, githubLogin = '',
     background: var(--surface); color: var(--ink);
     border: 1px solid var(--surface-edge); font-family: inherit;
     font-size: 1.02rem; line-height: 1.35; letter-spacing: 0.005em;
-    text-decoration: none; white-space: nowrap;
+    text-decoration: none; white-space: normal; overflow-wrap: anywhere;
     transition: border-color 0.18s ease, background 0.18s ease, transform 0.12s ease;
   }
   .cta-box:hover { border-color: color-mix(in srgb, var(--ink) 28%, transparent); background: color-mix(in srgb, var(--surface) 75%, var(--ink) 3%); }
@@ -215,7 +208,7 @@ export async function callbackPageHtml(connectionCode: string, githubLogin = '',
     .wrap { padding: 4rem 24px 4rem; }
     .brand-corner { top: 22px; left: 22px; font-size: 19px; }
     .welcome { font-size: 34px; }
-    .cta-box { font-size: 1rem; white-space: normal; }
+    .cta-box { font-size: 1rem; }
   }
 </style>
 </head>
@@ -241,7 +234,6 @@ export async function callbackPageHtml(connectionCode: string, githubLogin = '',
   ${inviteUrl
     ? `<button type="button" class="cta-box" onclick="shareInvite(this)"><span class="cta-copy"><span class="cta-label">invite people to alexandria</span><span class="cta-sep"> &mdash; </span><span class="cta-why">share it widely</span></span></button>`
     : ''}
-  ${reconnectUrl ? `<div class="footer"><p class="fineprint-solo">lost this connection? <a href="${escapeHtml(reconnectUrl)}">make a fresh connection code</a></p></div>` : ''}
 </main>
 <script>
 function flash(el, label, why) {
@@ -337,9 +329,8 @@ export async function welcomeHandoffUrl(
   viaToken: boolean,
   authorNumber: number,
   kinCompliant = 0,
-  reconnectUrl = '',
 ): Promise<string> {
-  const html = await callbackPageHtml(connectionCode, githubLogin, viaToken, authorNumber, kinCompliant, reconnectUrl);
+  const html = await callbackPageHtml(connectionCode, githubLogin, viaToken, authorNumber, kinCompliant);
   const code = randomBytes(24).toString('hex');
   // handoff:<code> → session token, consumed by /api/auth/session (sets the cookie).
   // welcome:<code> → the rendered page, consumed by the website /welcome peek.

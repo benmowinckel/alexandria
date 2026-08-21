@@ -44,6 +44,11 @@ assert.match(connectDoc, /Open a new task and invoke \$a\./);
 assert.match(connectDoc, /Only when no native start skill exists, use the portable floor: `Start an Alexandria session\.`/);
 assert.match(connectDoc, /never claim that typing the plain word `alexandria` invokes a skill/i);
 
+const optional = readFileSync(new URL('../../factory/optional.md', import.meta.url), 'utf8');
+assert.match(optional, /only when the Author asks to connect one/);
+assert.match(optional, /scripts\/create-account-handoff\.sh/);
+assert.match(optional, /Do not show or explain the one-use code separately/);
+
 const connector = readFileSync(new URL('../../factory/scripts/connect-account.sh', import.meta.url), 'utf8');
 assert.match(connector, /connected to alexandria as \$github_login; active membership verified\./);
 assert.match(connector, /existing local loop can now verify your account and membership at session start/);
@@ -77,4 +82,4 @@ assert.match(email, /nothing changes until you say/);
 assert.match(email, new RegExp(code));
 assert.doesNotMatch(page + email + paste, /alex_[a-f0-9]{32}/);
 
-console.log('account connect experience: minimal handoff, exact consent, truthful proof, native active route');
+console.log('account connect experience: on-demand handoff, exact consent, truthful proof, native active route');

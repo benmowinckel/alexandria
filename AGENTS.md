@@ -73,7 +73,8 @@ Operational overhead — OAuth, billing, email, admin:
 | POST | `/auth/logout` | End the browser Library session (cookie only; does not revoke the API key) |
 | GET | `/account` | Billing portal redirect |
 | DELETE | `/account` | Account deletion (GDPR-ready) |
-| GET | `/account/rotate-key` | Lost-key self-serve rotation (single-use code minted on returning-member OAuth; old key dies atomically) |
+| POST | `/account/connect/handoff` | Authenticated current-ai request for the one-use text to paste into another computer's ai |
+| POST | `/account/connect/exchange` | Consume that one-use handoff and connect the target computer without invalidating healthy machines |
 | POST | `/feedback` | Author-explicit feedback sent only in the foreground after a direct request; never drafted or posted by session hooks. Durably accepted into an encrypted delivery outbox, relayed to private `benmowinckel/alexandria-feedback`, and returned with an addressable id. |
 | GET/POST | `/email/stop` | Email unsubscribe |
 | POST | `/admin/nudge` | Nudge uninstalled users (admin) |

@@ -26,12 +26,16 @@ const returning = main(await callbackPageHtml('', 'returning-author'));
 assert.match(returning, /invite people to alexandria/);
 assert.doesNotMatch(returning, /<span class="cta-label">connect your existing loop<\/span>/);
 
+assert.doesNotMatch(returning, /connection code|connect it to this account/);
+
 const websiteWelcomeRoute = readFileSync('../app/welcome/route.ts', 'utf8');
 const authRoutes = readFileSync('src/routes.ts', 'utf8');
-assert.match(websiteWelcomeRoute, /\/auth\/github\?intent=connect/);
+assert.match(websiteWelcomeRoute, /Location: '\/library'/);
+assert.doesNotMatch(websiteWelcomeRoute, /intent=connect/);
 assert.match(websiteWelcomeRoute, /history\.replaceState\(\{\},'', '\/welcome'\)/);
-assert.match(authRoutes, /requestedIntent === 'library' \|\| requestedIntent === 'connect'/);
-assert.match(authRoutes, /needsConnection \|\| wantsFreshConnection/);
+assert.match(authRoutes, /requestedIntent === 'library'/);
+assert.doesNotMatch(authRoutes, /requestedIntent === 'connect'|wantsFreshConnection|account\/rotate-key/);
+assert.match(authRoutes, /const connectionCode = needsConnection \? await createAccountConnectCode\(key\) : ''/);
 assert.match(authRoutes, /await kv\.delete\(`welcome:\$\{code\}`\)/, 'welcome handoff must remain single-use');
 
-console.log('welcome contract: connect, invite, and reload recovery are preserved');
+console.log('welcome contract: first connection, invite, and quiet Library reload are preserved');

@@ -29,12 +29,13 @@ export async function GET(req: NextRequest): Promise<Response> {
     }
   }
 
-  // A replayed or expired one-time page never relies on email: fresh GitHub
-  // proof creates a new short-lived connection code without rotating any key.
+  // The welcome handoff is deliberately one-use. Once it has been consumed,
+  // refreshing continues into the signed-in Library instead of starting a
+  // new account-connection decision the person did not ask for.
   if (!html) {
     return new Response(null, {
       status: 302,
-      headers: { Location: `${SERVER_URL}/auth/github?intent=connect` },
+      headers: { Location: '/library' },
     });
   }
 

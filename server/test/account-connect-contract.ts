@@ -13,6 +13,14 @@ assert.match(tokenStore, /hashApiKey\(code\)/);
 assert.doesNotMatch(tokenStore, /api_key TEXT|apiKey/);
 
 const routes = readFileSync(new URL('../src/routes.ts', import.meta.url), 'utf8');
+const handoffStart = routes.indexOf("app.post('/account/connect/handoff'");
+const handoffEnd = routes.indexOf("app.post('/account/connect/exchange'", handoffStart);
+const handoff = routes.slice(handoffStart, handoffEnd);
+assert.ok(handoffStart > 0 && handoffEnd > handoffStart);
+assert.ok(handoff.indexOf('requireAuth') < handoff.indexOf('createAccountConnectCode'));
+assert.ok(handoff.indexOf('resolveMembership') < handoff.indexOf('createAccountConnectCode'));
+assert.match(handoff, /accountConnectPrompt\(connectionCode\)/);
+
 const oauthStart = routes.indexOf("app.get('/auth/github/callback'");
 const oauthEnd = routes.indexOf("app.post('/auth/logout'", oauthStart);
 const oauth = routes.slice(oauthStart, oauthEnd);
@@ -36,5 +44,10 @@ assert.ok(
   connector.indexOf('mv "$new_key" "$KEY_FILE"') < connector.indexOf('status_http=$(curl'),
   'the only returned key must be persisted before a later network check can fail',
 );
+
+const handoffScript = readFileSync(new URL('../../factory/scripts/create-account-handoff.sh', import.meta.url), 'utf8');
+assert.match(handoffScript, /\/account\/connect\/handoff/);
+assert.match(handoffScript, /Authorization: Bearer \$API_KEY/);
+assert.doesNotMatch(handoffScript, /ALEXANDRIA_SERVER|SERVER_URL/, 'a hostile environment must not redirect the account key');
 
 console.log('account connect server contract: ok');
