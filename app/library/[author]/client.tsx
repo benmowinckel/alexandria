@@ -119,6 +119,16 @@ function visibilityLabel(value: string): string {
   return 'authors';
 }
 
+function contextScopeCopy(scope: string): { label: string; note: string } {
+  if (scope === 'public') return { label: 'everyone', note: 'public context' };
+  if (scope === 'authors') return { label: 'alexandria members', note: 'member context' };
+  if (scope === 'invite') return { label: 'people you invite', note: 'invite context' };
+  if (scope.startsWith('invite/')) return { label: `people invited to ${scope.slice('invite/'.length)}`, note: 'exact invite group' };
+  if (scope === 'paid') return { label: 'buyers', note: 'paid context' };
+  if (scope.startsWith('paid/')) return { label: `buyers of ${scope.slice('paid/'.length)}`, note: 'exact paid group' };
+  return { label: scope, note: 'exact Library context' };
+}
+
 function contactHref(contact: string): string {
   return contact.includes('@') && !contact.startsWith('mailto:') ? `mailto:${contact}` : safeUrl(contact);
 }
@@ -695,19 +705,22 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           {editing && data.twin?.context_enabled && (
             <div className="profile-edit-mirror" style={{ margin: '0 0 3.2rem', padding: '1.25rem 0', borderTop: '1px solid var(--border-light)', borderBottom: '1px solid var(--border-light)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', flexWrap: 'wrap' }}>
-                <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>mirror can use</span>
+                <span style={{ color: 'var(--text-primary)', fontSize: '1rem' }}>mirror audiences</span>
                 <a href={`/api/library/${encodeURIComponent(authorId)}/context-preview`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)', fontSize: '0.88rem', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
                   see the exact context
                 </a>
               </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '0.3rem 0 0.9rem' }}>choose exact Library folders. each folder stands alone.</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.55rem 1rem' }}>
-                {availableContextScopes.map((scope) => (
-                  <label key={scope} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.92rem', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={contextScopes.includes(scope)} onChange={() => toggleContextScope(scope)} />
-                    <span>{scope}</span>
-                  </label>
-                ))}
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: '0.3rem 0 0.9rem' }}>one mirror. each reader gets only the layers they are allowed to see.</p>
+              <div style={{ display: 'grid', gap: '0.62rem' }}>
+                {availableContextScopes.map((scope) => {
+                  const copy = contextScopeCopy(scope);
+                  return (
+                    <label key={scope} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', alignItems: 'baseline', columnGap: '0.55rem', color: 'var(--text-secondary)', fontSize: '0.92rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={contextScopes.includes(scope)} onChange={() => toggleContextScope(scope)} />
+                      <span>{copy.label} <span style={{ color: 'var(--text-muted)', fontSize: '0.86rem' }}>· {copy.note}</span></span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           )}

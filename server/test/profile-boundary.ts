@@ -31,7 +31,9 @@ for (const forbidden of ['file-visibility', 'access-code', '/grant', 'file-categ
 }
 assert.match(page, /context: \{ scopes: contextScopes \}/);
 assert.match(page, /see the exact context/);
-assert.match(page, /each folder stands alone/);
+assert.match(page, /one mirror\. each reader gets only the layers they are allowed to see\./);
+assert.match(page, /alexandria members/);
+assert.match(page, /people you invite/);
 
 assert.match(page, /data\.viewer\?\.is_owner/);
 assert.match(page, />edit profile<\/HeaderAction>/);

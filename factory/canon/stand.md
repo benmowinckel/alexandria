@@ -33,6 +33,8 @@ Put a file directly in a root for the simple case. Add an exact cohort only when
 
 Sections are soft presentation. The shared renderer begins with Benjamin's four, but the Author's ai may create safe lowercase section slugs, order or hide them, and give them plain labels through the owner API. An Author who wants a wholly different surface may consume the public profile, capability, and file APIs from their own site. Custom code never runs inside Alexandria's shared origin.
 
+Never infer `works` from visibility or file type. A work is something the Author explicitly classifies as their work. A public context document, site explainer, or mirror-support file can remain queryable without appearing on the profile by placing it in a hidden presentation section; that supporting role must not overwrite the Author's curation.
+
 ## When the Author says "copy the stand"
 
 1. Read the live capability document at `https://api.alexandria-library.com/library/{author}/capabilities`. It is current authority for routes and controls.

@@ -70,6 +70,8 @@ The Author can stop all future reconciliation by deleting `~/alexandria/system/p
 
 The owner can edit identity, location, contact, website, declared links, and the short profile line. They can create safe lowercase section slugs; order, hide, or rename sections and their quiet descriptions; order files; write a public teaser; set suggested questions; and choose the exact Library folders an optional PLM may use. Benjamin's stand begins with `works`, `projects`, `shadows`, and `other`; empty sections disappear. The owner page uses the signed-in Library session. The same controls are available to the Author's ai through the owner-authenticated API named by the capability endpoint.
 
+`works` is an Author-declared curation, not the fallback for every public file. Public visibility, use as PLM context, or presence on an Alexandria-owned website never makes an artifact one of the Author's works. Site-support documents that must remain queryable may stay in a hidden presentation section; they never silently re-enter `works`. The Author's last explicit classification wins and recurring production checks preserve it.
+
 The shared renderer is deliberately small: identity, an optional mind, links, and published sections. It is one safe common view, not the data model. Markdown bodies keep their own structure; profile settings do not rewrite the work. A hidden section remains published at its existing URL and tier — hiding changes the profile route, not access. Changing a file's audience is a publication change and still requires the publication gate above.
 
 All profile and metadata writes are owner-only. Ownership resolves through the immutable GitHub account id that first claimed the handle, never by comparing a recyclable username.
