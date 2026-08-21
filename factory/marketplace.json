@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "author": {
     "name": "Benjamin a. Mowinckel",
     "github_login": "benmowinckel"
@@ -73,6 +73,14 @@
       "path": "factory/systems/state-based-sync",
       "name": "audit",
       "description": "Checks the whole system against what should be true now.",
+      "kind": "system",
+      "role": "official",
+      "adaptation": "universal"
+    },
+    {
+      "path": "factory/systems/agent-workspace",
+      "name": "agent workspace",
+      "description": "Safely lets an AI you are testing read selected files and send work back.",
       "kind": "system",
       "role": "official",
       "adaptation": "universal"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create and operate a structurally isolated Git workspace for one guest AI."""
+"""Create and operate a structurally isolated Git workspace for one external AI."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,47}$")
 
 
 def die(message: str) -> "NoReturn":
-    raise SystemExit(f"guest-workspace: {message}")
+    raise SystemExit(f"agent-workspace: {message}")
 
 
 def run(*args: str, cwd: Path | None = None, capture: bool = False) -> str:
@@ -61,11 +61,11 @@ def alex_dir() -> Path:
 
 
 def state_dir(root: Path) -> Path:
-    return root / "system" / "guest-workspaces"
+    return root / "system" / "agent-workspaces"
 
 
 def permission_path(root: Path, name: str) -> Path:
-    return root / "system" / "permissions" / f"guest-{name}"
+    return root / "system" / "permissions" / f"agent-workspace-{name}"
 
 
 def state_path(root: Path, name: str) -> Path:
@@ -218,15 +218,15 @@ def require_approval(root: Path, name: str, digest: str) -> None:
 
 def assert_clean_repo(repo: Path) -> None:
     if not (repo / ".git").exists():
-        die(f"not an Alexandria guest repository: {repo}")
+        die(f"not an Alexandria agent workspace: {repo}")
     if run("git", "status", "--porcelain", cwd=repo, capture=True):
-        die("guest repository has uncommitted files; commit or discard them before continuing")
+        die("agent workspace has uncommitted files; commit or discard them before continuing")
 
 
 def plan(name: str, allowlist: Path) -> None:
     root = alex_dir()
     allowlist_digest, rows = parse_allowlist(root, allowlist)
-    print(f"guest: {name}")
+    print(f"workspace: {name}")
     print(f"allowlist sha256: {allowlist_digest}")
     print(f"selection sha256: {selection_digest(rows)}")
     for row in rows:
@@ -241,7 +241,7 @@ def enable(name: str, allowlist: Path, repo: Path) -> None:
     require_approval(root, name, selected_digest)
     repo = repo.expanduser().resolve()
     if repo.exists():
-        die(f"destination already exists; a guest workspace must start fresh: {repo}")
+        die(f"destination already exists; an agent workspace must start fresh: {repo}")
     if state_path(root, name).exists():
         die(f"workspace state already exists for {name}; use status or off")
 
@@ -253,7 +253,7 @@ def enable(name: str, allowlist: Path, repo: Path) -> None:
         (temporary / "inbox").mkdir()
         (temporary / "inbox" / ".gitkeep").write_text("", encoding="utf-8")
         (temporary / "README.md").write_text(
-            f"# Alexandria guest workspace: {name}\n\n"
+            f"# Alexandria agent workspace: {name}\n\n"
             "`context/` is selected read-only context. Write proposed work only under `inbox/`.\n\n"
             "Nothing here is canonical. The owner reviews every inbox file before it can enter Alexandria.\n",
             encoding="utf-8",
@@ -271,7 +271,7 @@ def enable(name: str, allowlist: Path, repo: Path) -> None:
             "user.email=local@alexandria",
             "commit",
             "-m",
-            "Create isolated guest workspace",
+            "Create isolated agent workspace",
             cwd=temporary,
         )
         os.replace(temporary, repo)
@@ -350,7 +350,7 @@ def verify_exported_context(repo: Path, approved_selection: str) -> None:
     manifest_path = repo / "CONTEXT.manifest"
     manifest = read_text_file(manifest_path, "context manifest")
     if sha256_bytes(manifest.encode("utf-8")) != approved_selection:
-        die("guest changed CONTEXT.manifest")
+        die("external agent changed CONTEXT.manifest")
     rows: list[dict[str, str]] = []
     for number, line in enumerate(manifest.splitlines(), start=1):
         fields = line.split("\t")
@@ -364,16 +364,16 @@ def verify_exported_context(repo: Path, approved_selection: str) -> None:
     actual_paths: set[str] = set()
     for path in (repo / "context").rglob("*"):
         if path.is_symlink():
-            die(f"guest context contains a symlink: {path.relative_to(repo)}")
+            die(f"agent workspace context contains a symlink: {path.relative_to(repo)}")
         if path.is_file():
             actual_paths.add(path.relative_to(repo).as_posix())
     if actual_paths != expected_paths:
-        die("guest context path set differs from the approved projection")
+        die("agent workspace context path set differs from the approved projection")
     for row in rows:
         destination = repo / Path(*PurePosixPath(row["destination"]).parts)
         read_text_file(destination, "exported context")
         if row["sha256"] != sha256_file(destination):
-            die(f"guest changed selected context: {row['destination']}")
+                die(f"external agent changed selected context: {row['destination']}")
 
 
 def import_inbox(name: str) -> None:
@@ -384,14 +384,14 @@ def import_inbox(name: str) -> None:
         ("git", "merge-base", "--is-ancestor", export_commit, head), cwd=repo, check=False
     )
     if result.returncode:
-        die("guest history no longer descends from the last trusted context export")
+        die("agent workspace history no longer descends from the last trusted context export")
     changed = run("git", "diff", "--name-only", f"{export_commit}..{head}", cwd=repo, capture=True)
     for path in changed.splitlines():
         if path and not path.startswith("inbox/"):
-            die(f"guest commit changed a protected path: {path}")
+            die(f"external agent commit changed a protected path: {path}")
     verify_exported_context(repo, state["selection_sha256"])
 
-    destination_root = root / "files" / "vault" / "input" / "guest" / name
+    destination_root = root / "files" / "vault" / "input" / "agent" / name
     imported = state.setdefault("imports", {})
     count = 0
     inbox = repo / "inbox"
@@ -400,7 +400,7 @@ def import_inbox(name: str) -> None:
             continue
         if path.is_symlink() or not path.is_file():
             die(f"inbox contains a non-regular file: {path.relative_to(repo)}")
-        content = read_text_file(path, "guest inbox file")
+        content = read_text_file(path, "agent workspace inbox file")
         relative = path.relative_to(repo).as_posix()
         digest = sha256_bytes(content.encode("utf-8"))
         key = f"{relative}\t{digest}"
@@ -416,8 +416,8 @@ def import_inbox(name: str) -> None:
         ).returncode == 0 else str(repo)
         payload = (
             "---\n"
-            "source: guest-workspace\n"
-            f"guest: {name}\n"
+            "source: agent-workspace\n"
+            f"workspace: {name}\n"
             f"repository: {json.dumps(remote)}\n"
             f"commit: {head}\n"
             f"path: {json.dumps(relative)}\n"
@@ -436,7 +436,7 @@ def import_inbox(name: str) -> None:
 def status(name: str) -> None:
     root = alex_dir()
     state = load_state(root, name)
-    print(f"guest: {name}")
+    print(f"workspace: {name}")
     print(f"active: {'yes' if state.get('active') else 'no'}")
     print(f"repo: {state.get('repo')}")
     print(f"allowlist sha256: {state.get('allowlist_sha256')}")
@@ -451,12 +451,12 @@ def off(name: str) -> None:
     write_json_atomic(state_path(root, name), state)
     permission_path(root, name).unlink(missing_ok=True)
     print("off: local import and context refresh are disabled")
-    print("the guest repo remains; revoke its remote credential or archive it separately")
+    print("the workspace repo remains; revoke its remote credential or archive it separately")
 
 
 def usage() -> "NoReturn":
     die(
-        "use: guest_workspace.py plan NAME ALLOWLIST | enable NAME ALLOWLIST REPO | "
+        "use: agent_workspace.py plan NAME ALLOWLIST | enable NAME ALLOWLIST REPO | "
         "refresh NAME | import NAME | status NAME | off NAME"
     )
 

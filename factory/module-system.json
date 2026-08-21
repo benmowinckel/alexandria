@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "groups": {
     "core": {
       "default_state": "on",
@@ -35,7 +35,7 @@
         { "id": "network", "local_ref": "system/permissions/network" },
         { "id": "updates", "local_ref": "system/hooks/auto-update" },
         { "id": "git-backup", "local_ref": "system/permissions/backup" },
-        { "id": "guest-workspace", "local_ref": "system/permissions/guest-<name>" },
+        { "id": "agent-workspace", "marketplace_ref": "factory/systems/agent-workspace", "local_ref": "system/permissions/agent-workspace-<name>" },
         { "id": "drive", "local_ref": "system/.drive_sync_status" },
         { "id": "icloud-mirror", "local_ref": "system/.optional" },
         { "id": "outbound", "local_ref": "system/.optional" },

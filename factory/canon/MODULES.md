@@ -36,7 +36,7 @@ With all five off, Foundation still runs the passive session, visible cue, `/a` 
 
 Capture inputs and shortcuts, `state-based-sync`, future local modules, and community-built methods extend the loop without becoming its foundation. They are installed or used only for a concrete job the Author asked their ai to solve. A foreign module is untrusted material and is reviewed before adoption.
 
-Alexandria-built additions are labelled **official** in the marketplace. Everyone else's modules are shown under their author. Neither label implies activation. `bookshelf.md` appears under Benjamin's authorship as personal reference material, not as an Alexandria default.
+Alexandria-built modules are labelled **official** in the marketplace. Most are local additions; `agent workspace` is the exception because its useful job crosses into a separately approved private repo. Everyone else's modules are shown under their author. Neither label implies activation. `bookshelf.md` appears under Benjamin's authorship as personal reference material, not as an Alexandria default.
 
 ## connections — dormant until separately approved
 
@@ -47,7 +47,7 @@ Alexandria-built additions are labelled **official** in the marketplace. Everyon
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
 - **network reading** — only the exact approved Author list is fetched.
 - **Git backup** — the owned Git history may use any private remote; GitHub is the current soft default, never the source of truth.
-- **guest workspace** — one fresh private Git repo per experimental agent, containing only exact selected context plus an untrusted write-back inbox; never part of Foundation or default setup.
+- **agent workspace** — one fresh private Git repo per experimental AI, containing only exact selected context plus an untrusted write-back inbox; discoverable as an official module, but never part of Foundation or default setup.
 - **Drive pocket copy** — a narrow chat projection and capture inbox, not canon and not a general trial-agent grant.
 - **iCloud current-file mirror** — easy Apple-side recovery and large-media coverage; not Git history or an immutable archive.
 - **scheduled outbound messages and briefs** — require their own destination, schedule, and off switch.
@@ -59,7 +59,7 @@ Their signed references may be installed so the Author's ai can explain a direct
 
 ## marketplace — the legible inventory
 
-The marketplace shows the two core recovery references, the five method defaults, curated official additions, and modules published by individual Authors. Alexandria's own inventory is explicit and remains visible even when no recent use has been reported; approved usage only discovers community additions. Internal architecture maps, dormant connection instructions, and the private ai's Library starting reference are not marketplace listings and stay invisible there.
+The marketplace shows the two core recovery references, the five method defaults, curated official modules, and modules published by individual Authors. Alexandria's own inventory is explicit and remains visible even when no recent use has been reported; approved usage only discovers community additions. Most dormant connection instructions, internal architecture maps, and the private ai's Library starting reference are not marketplace listings. Agent workspace is listed because it is a reusable Alexandria module; its listing still activates nothing.
 
 The signed `~/alexandria/system/modules.json` is the portable local map; the authenticated `/alexandria` handshake carries its current version so a joined Author's ai notices a real packaging change without the Author remembering to check. A version change permits one compact `system` action only. The ai explains new details from the integrity-verified local map after a signed refresh, not from network text. Browsing community modules or fetching their bodies still requires the Author to ask. The private ai never recommends from private material, turns browsing into a sales step, or reports usage without exact manifest approval.
 

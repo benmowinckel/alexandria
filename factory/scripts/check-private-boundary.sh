@@ -412,7 +412,7 @@ require factory/module-system.json \
   '"id": "plm"' \
   'the PLM connection is absent from the machine-readable module map'
 require factory/module-system.json \
-  '"id": "guest-workspace"' \
+  '"id": "agent-workspace"' \
   'the isolated experimental-agent connection is absent from the machine-readable module map'
 require factory/module-system.json \
   '"private_data": "never_needed_for_module_discovery"' \
@@ -576,14 +576,14 @@ require factory/optional.md \
   'touch ~/alexandria/system/hooks/auto-update' \
   'the update-check opt-in has no exact enable action'
 require factory/optional.md \
-  '## guest-workspace — an isolated read/write door for one experimental AI' \
+  '## agent-workspace — selected context and a safe return path for one experimental AI' \
   'experimental agents have no separately consented, structurally isolated connection'
 require factory/optional.md \
   'Nothing merges into canon automatically.' \
   'guest output can become canon without review'
 require factory/optional.md \
-  'never give an experimental agent the Author'"'"'s general GitHub login or sovereign-repo key' \
-  'guest instructions can expose an account-wide or sovereign credential'
+  'never give an experimental AI the Author'"'"'s general GitHub login or sovereign-repo key' \
+  'agent-workspace instructions can expose an account-wide or sovereign credential'
 require factory/canon/MODULES.md \
   'move its file into `~/alexandria/system/canon/disabled/`' \
   'default methods have no durable, reversible opt-out'
@@ -607,9 +607,9 @@ forbid factory/canon/MODULES.md \
   'the product map still carries the removed Optimise feature or old taxonomy'
 require factory/canon/MODULES.md \
   'never part of Foundation or default setup' \
-  'the guest workspace has leaked into the incompressible core'
-bash factory/scripts/test_guest_workspace.sh \
-  || fail 'guest-workspace isolation regressions failed'
+  'the agent workspace has leaked into the incompressible core'
+bash factory/scripts/test_agent_workspace.sh \
+  || fail 'agent-workspace isolation regressions failed'
 require factory/setup.sh \
   '[ -f "$ALEX_DIR/system/canon/disabled/$module.md" ] && continue' \
   'setup does not honor disabled default modules'
@@ -751,8 +751,11 @@ require factory/skills/grok-bot.md \
   'HOST — Cursor Grok Bot, not Grok CLI.' \
   'Grok Bot skill does not declare it is not Grok CLI'
 require factory/skills/grok-bot.md \
-  'a connected GitHub private repo that actually reads as the loop' \
-  'Grok Bot skill hardcodes a GitHub repo instead of discovering a loop that actually reads'
+  'a connected agent workspace, recognized by `CONTEXT.manifest` plus `context/` and `inbox/`' \
+  'Grok Bot skill does not prefer the structurally isolated workspace'
+require factory/skills/grok-bot.md \
+  'Never ask for or use the Author'"'"'s general GitHub login, full sovereign repo, or Apple login as a fallback.' \
+  'Grok Bot skill can still ask for broad credentials when the computer is unavailable'
 require factory/skills/grok-bot.md \
   'cold Grok Bot start, not an error' \
   'Grok Bot skill still treats a missing computer connection as a fatal error'

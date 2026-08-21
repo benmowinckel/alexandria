@@ -96,31 +96,31 @@
   ```
 - **Off:** `rm ~/alexandria/system/permissions/backup` — stops all automatic pushes and pulls while leaving the remote and the repo on their GitHub untouched.
 
-## guest-workspace — an isolated read/write door for one experimental AI
+## agent-workspace — selected context and a safe return path for one experimental AI
 
-- **Does:** creates one fresh Git repo for one less-trusted agent or vendor. `context/` contains only exact UTF-8 files selected in an allowlist; `inbox/` is the agent's only accepted write-back surface. Inbox files return to `~/alexandria/files/vault/input/guest/<name>/` with repository, commit, path, hash, and `trust: untrusted` provenance. Nothing merges into canon automatically.
-- **Why one repo per agent:** the credential, history, revocation, and provenance stay separate. A shared guest repo would let one agent read or poison another's work.
-- **Touches:** the fresh guest repo; `~/alexandria/system/guest-workspaces/<name>.json`; one exact selected-bytes permission at `~/alexandria/system/permissions/guest-<name>`; and the guest capture inbox after an import.
-- **Leaves the machine:** only the selected context and the empty write-back structure, after the Author separately creates/connects a private remote. No secret, unselected file, sovereign history, or Alexandria account key enters the guest repo.
-- **Needs:** Python 3 and Git. The remote is optional and provider-neutral. If one is added, use a repository-scoped credential that can reach only this guest repo; never give an experimental agent the Author's general GitHub login or sovereign-repo key.
+- **Does:** creates one fresh private Git repo for one AI the Author is testing. `context/` contains only exact UTF-8 files selected in an allowlist; `inbox/` is the AI's only accepted write-back surface. Inbox files return to `~/alexandria/files/vault/input/agent/<name>/` with repository, commit, path, hash, and `trust: untrusted` provenance. Nothing merges into canon automatically.
+- **Why one repo per AI:** the credential, history, revocation, and provenance stay separate. A shared workspace would let one AI read or poison another's work.
+- **Touches:** the fresh workspace repo; `~/alexandria/system/agent-workspaces/<name>.json`; one exact selected-bytes permission at `~/alexandria/system/permissions/agent-workspace-<name>`; and the agent capture inbox after an import.
+- **Leaves the machine:** only the selected context and the empty write-back structure, after the Author separately creates or connects a private remote. No secret, unselected file, sovereign history, or Alexandria account key enters the workspace repo.
+- **Needs:** Python 3 and Git. The remote is optional and provider-neutral. If one is added, use a repository-scoped credential that can reach only this workspace repo; never give an experimental AI the Author's general GitHub login or sovereign-repo key.
 - **Enable:** first write an explicit TSV allowlist with one `source<TAB>context/destination` per line. Start with already-public Library bytes. Fetch the signed controller, run `plan`, show every source, destination, and hash, and wait for exact approval. Then bind the printed selection hash — which covers those paths, destinations, and current bytes — and enable:
   ```bash
   VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"
-  GW="$HOME/.local/share/alexandria/scripts/guest_workspace.py"
-  tmp=$(mktemp); bash "$VF" scripts/guest_workspace.py > "$tmp" && mv "$tmp" "$GW" && chmod 700 "$GW"
-  python3 "$GW" plan <name> <allowlist.tsv>
+  AW="$HOME/.local/share/alexandria/scripts/agent_workspace.py"
+  tmp=$(mktemp); bash "$VF" scripts/agent_workspace.py > "$tmp" && mv "$tmp" "$AW" && chmod 700 "$AW"
+  python3 "$AW" plan <name> <allowlist.tsv>
   # only after the Author approves the displayed files:
   mkdir -p "$HOME/alexandria/system/permissions"
   # copy the `selection sha256` printed by plan — it binds paths, destinations, and current bytes:
-  printf '%s\n' '<selection-sha256>' > "$HOME/alexandria/system/permissions/guest-<name>"
-  python3 "$GW" enable <name> <allowlist.tsv> "$HOME/alexandria-guests/<name>"
+  printf '%s\n' '<selection-sha256>' > "$HOME/alexandria/system/permissions/agent-workspace-<name>"
+  python3 "$AW" enable <name> <allowlist.tsv> "$HOME/alexandria-agent-workspaces/<name>"
   ```
-- **Use:** connect that fresh repo to one private remote, grant the experimental agent only that repo, and let it write under `inbox/`. On the Mac, pull the guest repo, then run `python3 "$GW" import <name>`. The importer rejects force-rewritten ancestry, changes outside `inbox/`, symlinks, binary or oversized files, and any changed context. Run `refresh <name>` only after the approved source files change; it commits the regenerated context but never pushes automatically.
-- **Off:** `python3 "$GW" off <name>`, then revoke that repo's credential or archive the remote. The guest repo is kept for recovery; the sovereign source is untouched.
+- **Use:** connect that fresh repo to one private remote, grant the experimental AI only that repo, and let it write under `inbox/`. On the Mac, pull the workspace repo, then run `python3 "$AW" import <name>`. The importer rejects force-rewritten ancestry, changes outside `inbox/`, symlinks, binary or oversized files, and any changed context. Run `refresh <name>` only after the approved source files change; it commits the regenerated context but never pushes automatically.
+- **Off:** `python3 "$AW" off <name>`, then revoke that repo's credential or archive the remote. The workspace repo is kept for recovery; the sovereign source is untouched.
 
 ## drive — the chat pocket copy in your own Google Drive
 
-- **Does:** keeps the sovereign Git history as ground truth, with the local checkout primary, while projecting `_start` and the compact constitution into `Google Drive/alexandria` as native Google Docs. New or changed chat writings in `vault/`, `marginalia/`, and versioned constitution proposals are copied home to `~/alexandria/files/vault/input/chat/` for `/a` to drain. Drive is not the trial-agent boundary: connector grants may be broader than one folder, while a guest Git credential can be scoped to one fresh repo.
+- **Does:** keeps the sovereign Git history as ground truth, with the local checkout primary, while projecting `_start` and the compact constitution into `Google Drive/alexandria` as native Google Docs. New or changed chat writings in `vault/`, `marginalia/`, and versioned constitution proposals are copied home to `~/alexandria/files/vault/input/chat/` for `/a` to drain. Drive is not the trial-agent boundary: connector grants may be broader than one folder, while an agent-workspace credential can be scoped to one fresh repo.
 - **Touches:** the Author's own Google Drive `alexandria` folder; local rclone config and OAuth token; two signed scripts; one daily macOS job `io.alexandria.drive-sync`.
 - **Leaves the machine:** the compact position layer and whatever the Author deliberately writes through chat → the Author's own Google Drive. Credentials and private data never go to Alexandria.
 - **Enable:** after the Author says yes, fetch the controller through the installed verifier and run it. Google opens once for the unavoidable approval; do not turn that approval into a checklist.

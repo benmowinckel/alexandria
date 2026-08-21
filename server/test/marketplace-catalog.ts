@@ -77,7 +77,7 @@ assert.deepEqual(
   ['factory/canon/foundation', 'factory/canon/change-closure'],
 );
 
-assert.equal(moduleSystem.version, 2);
+assert.equal(moduleSystem.version, 3);
 assert.deepEqual(
   moduleSystem.groups.core.items.map((module) => module.id),
   ['foundation', 'upkeep'],
@@ -90,10 +90,12 @@ assert.deepEqual(
     .sort(),
 );
 assert.deepEqual(
-  moduleSystem.groups.additions.items.map((module) => module.id).sort(),
+  [...moduleSystem.groups.additions.items, ...moduleSystem.groups.connections.items]
+    .flatMap((module) => 'marketplace_ref' in module ? [module.marketplace_ref] : [])
+    .sort(),
   marketplaceInventory.modules
     .filter((module) => module.role === 'official')
-    .map((module) => module.name)
+    .map((module) => module.path)
     .sort(),
 );
 assert.equal(moduleSystem.groups.additions.default_state, 'off_until_useful');
@@ -128,6 +130,7 @@ assert.deepEqual(
     ['publisher', 'default'],
     ['capture', 'official'],
     ['audit', 'official'],
+    ['agent workspace', 'official'],
     ['bookshelf', 'community'],
   ],
 );
