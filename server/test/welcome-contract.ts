@@ -26,6 +26,8 @@ assert.doesNotMatch(websiteWelcomeRoute, /intent=connect/);
 assert.match(websiteWelcomeRoute, /history\.replaceState\(\{\},'', '\/welcome'\)/);
 assert.match(authRoutes, /requestedIntent === 'library'/);
 assert.doesNotMatch(authRoutes, /requestedIntent === 'connect'|wantsFreshConnection|account\/rotate-key/);
+assert.match(authRoutes, /createOAuthState\(clientSecret/);
+assert.doesNotMatch(authRoutes, /await kv\.put\(\s*`oauth:\$\{state\}`/);
 assert.doesNotMatch(authRoutes, /needsConnection \? await createAccountConnectCode|welcomeHandoffUrl\([^\n]*connectionCode/);
 assert.match(authRoutes, /await kv\.delete\(`welcome:\$\{code\}`\)/, 'welcome handoff must remain single-use');
 

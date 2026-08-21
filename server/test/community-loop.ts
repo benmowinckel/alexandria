@@ -39,8 +39,11 @@ async function main() {
 
   const oauth = await fetch(`${API}/auth/github`, { redirect: 'manual' });
   assert.equal(oauth.status, 302, 'GitHub join did not start with a redirect');
-  assert.match(oauth.headers.get('location') || '', /^https:\/\/github\.com\/login\/oauth\/authorize\?/);
-  assert.match(oauth.headers.get('set-cookie') || '', /alex_oauth_state=/);
+  const oauthLocation = oauth.headers.get('location') || '';
+  assert.match(oauthLocation, /^https:\/\/github\.com\/login\/oauth\/authorize\?/);
+  const oauthState = new URL(oauthLocation).searchParams.get('state') || '';
+  assert.match(oauthState, /^[a-f0-9]{32}$/);
+  assert.match(oauth.headers.get('set-cookie') || '', new RegExp(`alex_oauth_state=${oauthState}\\.`));
   checks.push('OAuth start + CSRF cookie');
 
   const spec = await json<any>('/alexandria');

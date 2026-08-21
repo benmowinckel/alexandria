@@ -20,6 +20,7 @@ import moduleSystem from '../../factory/module-system.json';
 import { consumeAccountConnectCode, createAccountConnectCode, isAccountConnectCode, peekAccountConnectCode } from './account-connect.js';
 import { AccountPurgeError, runAccountPurge } from './account-purge.js';
 import { accountConnectPrompt } from '../../shared/onboarding-prompts.js';
+import { createOAuthState, readOAuthState, type OAuthStateData } from './oauth-state.js';
 
 /**
  * KV-backed rate limit for destructive/expensive admin endpoints.
@@ -372,25 +373,27 @@ export function registerRoutes(app: Hono) {
 
   app.get('/auth/github', async (c) => {
     const clientId = process.env.GITHUB_CLIENT_ID;
-    if (!clientId) {
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
       return c.text('GitHub OAuth not configured', 500);
     }
 
-    const state = randomBytes(16).toString('hex');
-    const kv = getKV();
     // Preserve referral params (and optional post-login redirect) through OAuth round-trip
     const ref = (c.req.query('ref') || '').replace(/[^A-Za-z0-9-]/g, '').slice(0, 39);
-    const refSource = c.req.query('ref_source') || '';
-    const refId = c.req.query('ref_id') || '';
+    const refSource = (c.req.query('ref_source') || '').slice(0, 64);
+    const refId = (c.req.query('ref_id') || '').slice(0, 128);
     const next = sanitizeNextPath(c.req.query('next'));
     const requestedIntent = c.req.query('intent');
     const intent = requestedIntent === 'library' ? requestedIntent : '';
     const waive = (c.req.query('waive') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 128);
-    await kv.put(
-      `oauth:${state}`,
-      JSON.stringify({ valid: true, ref, ref_source: refSource, ref_id: refId, next, intent, waive }),
-      { expirationTtl: 600 },
-    );
+    const { state, cookieValue } = createOAuthState(clientSecret, {
+      ref,
+      ref_source: refSource,
+      ref_id: refId,
+      next,
+      intent,
+      waive,
+    });
 
     const params = new URLSearchParams({
       client_id: clientId,
@@ -404,14 +407,14 @@ export function registerRoutes(app: Hono) {
       state,
     });
 
-    // CSRF: bind this OAuth flow to THIS browser. The callback requires a cookie
-    // matching `state` (double-submit). Without it, an attacker can complete the
+    // CSRF: bind this OAuth flow and its context to THIS browser with a signed,
+    // HttpOnly cookie. Without it, an attacker can complete the
     // GitHub half themselves, harvest a valid state+code, and lure a victim to the
     // callback URL — the victim's browser would then be logged into the ATTACKER's
     // account (login CSRF → anything the victim publishes lands in the attacker's
     // library). SameSite=Lax still sends the cookie on GitHub's top-level GET
     // redirect back. Host-scoped (no Domain) to the API origin where the flow lives.
-    c.header('Set-Cookie', `alex_oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`);
+    c.header('Set-Cookie', `alex_oauth_state=${cookieValue}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`);
     return c.redirect(`https://github.com/login/oauth/authorize?${params}`);
   });
 
@@ -420,25 +423,28 @@ export function registerRoutes(app: Hono) {
     const state = c.req.query('state');
 
     const kv = getKV();
-    const stateRaw = state ? await kv.get(`oauth:${state}`) : null;
-    if (!stateRaw) {
-      return c.html(authErrorHtml('this sign-in link has expired or is no longer valid.'), 400);
+    const cookieValue = (c.req.header('Cookie') || '').match(/(?:^|;\s*)alex_oauth_state=([^;]+)/)?.[1] || '';
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET || '';
+    let stateData: OAuthStateData | null = state && clientSecret
+      ? readOAuthState(clientSecret, state, cookieValue)
+      : null;
+
+    // Brief compatibility window for OAuth journeys started before this release.
+    // Legacy state used a bare nonce in the cookie plus KV context. New journeys
+    // never depend on this eventually-consistent store.
+    if (!stateData && state && /^[a-f0-9]{32}$/.test(state) && cookieValue === state) {
+      const legacyStateRaw = await kv.get(`oauth:${state}`);
+      if (legacyStateRaw) {
+        try { stateData = JSON.parse(legacyStateRaw) as OAuthStateData; } catch { /* invalid legacy state */ }
+        await kv.delete(`oauth:${state}`);
+      }
     }
-    // CSRF double-submit: the state in the URL must match the cookie set when THIS
-    // browser started the flow. A cross-browser replay (attacker-harvested
-    // state+code opened in the victim's browser) has no matching cookie → reject.
-    const cookieState = (c.req.header('Cookie') || '').match(/(?:^|;\s*)alex_oauth_state=([a-f0-9]+)/)?.[1];
-    if (!cookieState || cookieState !== state) {
-      await kv.delete(`oauth:${state}`);
+
+    // A cross-browser replay has no matching signed cookie. Refuse it without
+    // deleting shared state, so an attacker cannot invalidate a real login.
+    if (!stateData) {
       return c.html(authErrorHtml('this sign-in could not be verified — please start again from the same browser.'), 400);
     }
-    // (No explicit cookie clear: the state cookie is single-use — the KV state is
-    // deleted just below — and self-expires in 600s. Avoiding a second Set-Cookie
-    // here keeps the login session cookie set later in this handler unambiguous.)
-    // Parse state — supports both legacy '1' and new JSON format
-    let stateData: { ref?: string; ref_source?: string; ref_id?: string; next?: string; intent?: string; waive?: string } = {};
-    try { stateData = JSON.parse(stateRaw); } catch { /* legacy format */ }
-    await kv.delete(`oauth:${state}`);
 
     try {
       // Exchange code for GitHub access token
