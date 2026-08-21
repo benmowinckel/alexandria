@@ -2,7 +2,15 @@ name: Deploy
 on:
   push:
     branches: [main]
-    paths: ['server/src/**', 'server/wrangler.toml', 'server/package.json']
+    paths:
+      - 'server/src/**'
+      - 'server/wrangler.toml'
+      - 'server/package.json'
+      # Both files are compiled into the Worker. Without these paths, a signed
+      # module release can reach main while the live API keeps serving the old
+      # inventory until an unrelated server change happens.
+      - 'factory/marketplace.json'
+      - 'factory/module-system.json'
   workflow_dispatch: {}
 
 jobs:
