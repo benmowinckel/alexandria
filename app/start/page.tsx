@@ -322,7 +322,6 @@ export default async function StartPage({
         .door-choice {
           transition:
             opacity 180ms ease,
-            visibility 0s linear 180ms,
             border-color 200ms,
             background 220ms ease;
         }
@@ -331,7 +330,7 @@ export default async function StartPage({
           background: var(--bg-primary);
         }
         .door-choice.is-dismissed {
-          opacity: 0; visibility: hidden; pointer-events: none;
+          opacity: 0.28; pointer-events: none;
         }
         .door-confirmation {
           display: inline-block;

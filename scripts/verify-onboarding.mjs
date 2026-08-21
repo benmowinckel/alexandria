@@ -74,7 +74,7 @@ assert.deepEqual(
     const style = getComputedStyle(node);
     return { opacity: style.opacity, visibility: style.visibility };
   }),
-  { opacity: '0', visibility: 'hidden' },
+  { opacity: '0.28', visibility: 'visible' },
 );
 assertSameBox(initialHeadingBox, await box('.primer-h1'), 'heading');
 assertSameBox(initialQuestionBox, await box('.door-q'), 'question');

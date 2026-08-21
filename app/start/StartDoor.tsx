@@ -57,8 +57,9 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
   }
 
   // A choice made on this page transforms in place: the selected line becomes
-  // the instruction and the alternative quietly leaves. Direct hash entry has
-  // no initiating click, so it keeps the honest standalone copy control below.
+  // the instruction and the alternative remains faint in its original place.
+  // Direct hash entry has no initiating click, so it keeps the honest
+  // standalone copy control below.
   if (!screen || decided) {
     return (
       <div className={`door-block${decided ? ' is-decided' : ''}`}>
@@ -76,9 +77,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
                 className={`door-btn door-choice${selected ? ' is-selected' : ''}${dismissed ? ' is-dismissed' : ''}`}
                 onClick={() => choose(step)}
                 disabled={dismissed}
-                aria-hidden={dismissed || undefined}
                 aria-label={selected ? `copied — paste this into your ${step}; click to copy again` : undefined}
-                tabIndex={dismissed ? -1 : undefined}
               >
                 {choiceLabel(step)}
               </button>
