@@ -37,6 +37,18 @@ async function assertFits(selector) {
   assert.ok(box.x >= 0 && box.x + box.width <= (mobile ? 375 : 1280), `${selector} must fit the viewport`);
 }
 
+async function box(selector) {
+  const value = await page.locator(selector).boundingBox();
+  assert.ok(value, `${selector} must have a box`);
+  return value;
+}
+
+function assertSameBox(before, after, label) {
+  for (const key of ['x', 'y', 'width', 'height']) {
+    assert.ok(Math.abs(before[key] - after[key]) < 0.1, `${label} ${key} must not move`);
+  }
+}
+
 await page.goto(`${base}/start`, { waitUntil: 'networkidle' });
 const initial = await page.locator('body').innerText();
 assert.match(initial, /what do you have access to\?/);
@@ -44,17 +56,29 @@ assert.match(initial, /an agent/);
 assert.match(initial, /just chat/);
 assert.doesNotMatch(initial, /phone|computer|which ai/i);
 assert.equal(await page.locator('.door-answers .door-btn').count(), 2);
+const initialHeadingBox = await box('.primer-h1');
+const initialQuestionBox = await box('.door-q');
+const initialAgentBox = await box('.door-choice:first-child');
 
 await page.getByRole('button', { name: /an agent/ }).click();
 await page.locator('.door-choice.is-selected').waitFor();
 assert.match(page.url(), /#agent$/);
 const agentChoice = await page.locator('.door-choice.is-selected').innerText();
 assert.equal(await page.locator('.act-num').count(), 0);
-assert.match(agentChoice, /copied — paste into your agent/);
+assert.match(agentChoice, /copied — paste this into your agent/);
 assert.doesNotMatch(agentChoice, /phone|computer|which ai|chatgpt|claude|gemini|shortcut|email/i);
 assert.equal(await page.locator('.door-choice.is-dismissed').count(), 1);
-await page.waitForTimeout(320);
-assert.equal(await page.locator('.door-choice.is-dismissed').count(), 0);
+await page.waitForTimeout(220);
+assert.deepEqual(
+  await page.locator('.door-choice.is-dismissed').evaluate((node) => {
+    const style = getComputedStyle(node);
+    return { opacity: style.opacity, visibility: style.visibility };
+  }),
+  { opacity: '0', visibility: 'hidden' },
+);
+assertSameBox(initialHeadingBox, await box('.primer-h1'), 'heading');
+assertSameBox(initialQuestionBox, await box('.door-q'), 'question');
+assertSameBox(initialAgentBox, await box('.door-choice.is-selected'), 'agent choice');
 await assertFits('.door-choice.is-selected');
 assert.equal(await clipboard(), agentSetupPrompt());
 
@@ -73,16 +97,25 @@ await page.goBack();
 await page.getByRole('button', { name: /an agent/ }).waitFor();
 assert.doesNotMatch(page.url(), /#agent$/);
 assert.match(await page.locator('body').innerText(), /what do you have access to\?/);
+const resetHeadingBox = await box('.primer-h1');
+const resetQuestionBox = await box('.door-q');
+const initialChatBox = await box('.door-choice:last-child');
 
 await page.getByRole('button', { name: /just chat/ }).click();
 await page.locator('.door-choice.is-selected').waitFor();
 assert.match(page.url(), /#chat$/);
 const chosenChatChoice = await page.locator('.door-choice.is-selected').innerText();
-assert.match(chosenChatChoice, /copied — paste into your chat/);
+assert.match(chosenChatChoice, /copied — paste this into your chat/);
 assert.equal(await page.locator('.door-choice.is-dismissed').count(), 1);
-await page.waitForTimeout(320);
-assert.equal(await page.locator('.door-choice.is-dismissed').count(), 0);
+await page.waitForTimeout(220);
+assertSameBox(resetHeadingBox, await box('.primer-h1'), 'heading after chat');
+assertSameBox(resetQuestionBox, await box('.door-q'), 'question after chat');
+assertSameBox(initialChatBox, await box('.door-choice.is-selected'), 'chat choice');
 assert.equal(await clipboard(), chatSetupPrompt());
+await page.screenshot({
+  path: `alexandria-onboarding-${mobile ? 'mobile' : 'desktop'}-verification.png`,
+  fullPage: true,
+});
 
 await page.goBack();
 await page.getByRole('button', { name: /just chat/ }).waitFor();
@@ -117,10 +150,5 @@ assert.doesNotMatch(CHAT_SETUP_PROMPT, /you have my permission/i);
 const visibleText = `${initial}\n${agentChoice}\n${chosenChatChoice}\n${chatBody}`;
 assert.equal(visibleText, visibleText.toLowerCase(), 'visible onboarding copy must stay lowercase');
 assert.deepEqual(failures, []);
-
-await page.screenshot({
-  path: `alexandria-onboarding-${mobile ? 'mobile' : 'desktop'}-verification.png`,
-  fullPage: true,
-});
 await browser.close();
 console.log(`universal onboarding ${mobile ? 'mobile' : 'desktop'}: ok`);
