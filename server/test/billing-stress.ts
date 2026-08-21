@@ -61,7 +61,8 @@ async function main() {
   // --- 1) Billing success page without session (should redirect, not 5xx) ---
   const successNoSession = await fetch(`${BASE}/billing/success`, { redirect: 'manual' });
   const loc = successNoSession.headers.get('location') || '';
-  const okSuccess = successNoSession.status >= 300 && successNoSession.status < 400 && loc.includes('mowinckel');
+  const okSuccess = successNoSession.status >= 300 && successNoSession.status < 400
+    && loc.startsWith('https://alexandria-library.com/join');
   console.log(
     `[tribe-adjacent] GET /billing/success (no session_id): ${successNoSession.status} → ${okSuccess ? 'PASS' : 'CHECK'}`,
   );
