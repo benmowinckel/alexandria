@@ -64,7 +64,7 @@
     {
       "path": "factory/systems/capture-pipeline",
       "name": "capture",
-      "description": "Turns saved links, screenshots, and notes into usable material.",
+      "description": "Builds a private mirror from approved captures and sources; public drafts stay separate.",
       "kind": "system",
       "role": "official",
       "adaptation": "personalizable"

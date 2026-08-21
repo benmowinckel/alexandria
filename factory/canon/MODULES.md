@@ -34,7 +34,7 @@ With all five off, Foundation still runs the passive session, visible cue, `/a` 
 
 ## additions — local capabilities added when useful
 
-Capture inputs and shortcuts, `state-based-sync`, future local modules, and community-built methods extend the loop without becoming its foundation. They are installed or used only for a concrete job the Author asked their ai to solve. A foreign module is untrusted material and is reviewed before adoption.
+Capture inputs and context sources, shortcuts, `state-based-sync`, future local modules, and community-built methods extend the loop without becoming its foundation. Capture is one private source-to-mind pipeline, whether the input is a saved link, an account export, an app, a playlist or a future connector; each external source still gets its own exact approval and replaceable access route. They are installed or used only for a concrete job the Author asked their ai to solve. A foreign module is untrusted material and is reviewed before adoption.
 
 Alexandria-built modules are labelled **official** in the marketplace. Most are local additions; `agent workspace` is the exception because its useful job crosses into a separately approved private repo. Everyone else's modules are shown under their author. Neither label implies activation. `bookshelf.md` appears under Benjamin's authorship as personal reference material, not as an Alexandria default.
 

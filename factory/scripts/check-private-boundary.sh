@@ -570,6 +570,30 @@ require factory/optional.md \
   '## capture-link-resolution — fetch links the Author deliberately saved' \
   'saved-link network resolution has no separate opt-in block'
 require factory/optional.md \
+  '## context-sources — keep the places your context already lives in the loop' \
+  'personal context sources have no explicit source-by-source contract'
+require factory/optional.md \
+  'there is deliberately no global switch' \
+  'personal context sources can still be enabled as one bundled permission'
+require factory/optional.md \
+  'source access is never publication consent' \
+  'source collection can still silently expand into Library publication'
+require factory/canon/methodology.md \
+  'connect the places your context already lives' \
+  'the active loop no longer carries the one-time source-map action'
+require factory/canon/methodology.md \
+  'A mention is not permission.' \
+  'the source map can be mistaken for collection consent'
+require factory/canon/methodology.md \
+  'never fail silently or call a rendered sample complete' \
+  'partial source collection can still disappear without a visible gap'
+require factory/canon/methodology.md \
+  'The PLM sees only the exact Library bytes approved for its reader' \
+  'the PLM boundary no longer excludes private source material'
+require factory/redteam.md \
+  '**Personal context sources**' \
+  'the cold-agent audit no longer checks personal-source collection'
+require factory/optional.md \
   '## update checks — optional' \
   'signed update checks are not a separate opt-in'
 require factory/optional.md \

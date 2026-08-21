@@ -44,6 +44,18 @@
 
 ---
 
+## context-sources — keep the places your context already lives in the loop
+
+- **Does:** records the apps, accounts, devices, clouds and old exports the Author names in `machine.md`'s Source map, then collects each approved source through the best route the current environment actually supports. `/a` preserves the original material privately, records exact coverage and freshness, updates the private mirror first, logs unanswered questions, and prepares audience-specific Library drafts second.
+- **Touches:** only the exact source the Author approves and private files under `~/alexandria/files/`. The durable intent and current limits live in the Source map; original bytes and provenance stay in the vault. Credentials stay in the Author's chosen account or password system, never in Alexandria canon.
+- **Leaves the machine:** whatever the chosen access route inherently requires for that source. A native local app or downloaded export may require no new disclosure; a connector, authenticated browser, cloud agent or source API contacts that service. Explain the real route before the first read. Nothing goes to Alexandria merely because a source is connected.
+- **Approval:** there is deliberately no global switch. Handle one source at a time. Before reading it, say what will be read, what will be written locally, whether any service receives a request, whether the approval is one-time or standing, how freshness will work, and how to stop it. The Author chooses. A materially wider scope requires a new approval.
+- **Automation:** use the Author's stated policy, not a hard-coded collector or schedule. A capable `/a` session refreshes due sources directly. A connector, export watcher, browser session, local job or cloud agent is valid when it is the simplest proven route. If access expires, an export is partial, media cannot be understood, or a surface exposes only a sample, record the exact gap and surface the one useful question; never fail silently or call the source complete.
+- **Public boundary:** source access is never publication consent. Private understanding is primary. Public, Authors and invite files are filtered derivatives and remain drafts until the existing exact-file Library approval permits their current bytes and scope. The PLM reads only those approved Library bytes, never the source map, credentials, raw archives or private mirror.
+- **Off:** tell the ai to stop or narrow a named source; it updates the Source map and stops future collection. Previously collected private files remain the Author's unless they separately ask to remove them.
+
+---
+
 ## icloud-capture — phone and share-sheet captures in your own iCloud
 
 - **Does:** connects `~/alexandria/files/vault/input` to `alexandria/vault/input` in the Author's own iCloud Drive so Apple Shortcuts and Files drops can reach the local loop.
