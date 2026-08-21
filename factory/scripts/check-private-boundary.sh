@@ -37,6 +37,9 @@ require shared/onboarding-prompts.ts \
   'Do not ask me which; first check what you can actually do' \
   'the universal agent paste asks the person to classify their device'
 require shared/onboarding-prompts.ts \
+  'For this first step, use only public information and capabilities already available here. Do not request new access or inspect any personal content.' \
+  'the universal agent paste can probe new access or personal content before consent'
+require shared/onboarding-prompts.ts \
   'If you can run commands and read and write files on my computer' \
   'the universal agent paste no longer routes by verified capability'
 require shared/onboarding-prompts.ts \
@@ -58,7 +61,10 @@ require shared/onboarding-prompts.ts \
   'temporary line below the instructions already in this app' \
   'the anchor route no longer provides a durable fallback'
 require shared/onboarding-prompts.ts \
-  'then create and verify:' \
+  'create it only after I confirm the time' \
+  'the phone paste can create a reminder before exact consent'
+require shared/onboarding-prompts.ts \
+  'Then verify it exists.' \
   'the phone paste can claim an unverified reminder'
 require shared/onboarding-prompts.ts \
   'Stop once one anchor is verified' \
@@ -156,6 +162,12 @@ require shared/onboarding-prompts.ts \
 require shared/onboarding-prompts.ts \
   'You cannot connect it yourself' \
   'the one-time chat setup can imply that the ai connects Drive itself'
+require shared/onboarding-prompts.ts \
+  'Until the named-source consent step below, use only this conversation. Do not open any personal source or request new access.' \
+  'the one-time chat setup can touch personal sources before exact consent'
+require shared/onboarding-prompts.ts \
+  'My answer applies only to the sources and destination you named.' \
+  'the one-time chat setup can silently expand a personal-data consent'
 require shared/onboarding-prompts.ts \
   'fullest accurate first record' \
   'the one-time chat setup no longer builds the first personal record'
