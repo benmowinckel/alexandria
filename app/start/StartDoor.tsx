@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { checkReferral } from '../lib/referral';
 import { useDoorStep } from '../lib/door-step';
 import { copyText, type CopyState } from '../lib/copy-text';
@@ -17,6 +17,8 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
   const [screen, go] = useDoorStep(STEPS);
   const [copiedChoice, setCopiedChoice] = useState<{ step: Step; state: CopyState } | null>(null);
   const [validRef, setValidRef] = useState<string | null>(null);
+  const [dismissedChoiceGone, setDismissedChoiceGone] = useState(false);
+  const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // The first screen must own referral continuity. Waiting until someone picks
   // a branch means a fast invitation click reaches /start with the ref intact,
@@ -32,10 +34,17 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
     return () => { live = false; };
   }, [refCode]);
 
+  useEffect(() => () => {
+    if (dismissTimer.current) clearTimeout(dismissTimer.current);
+  }, []);
+
   async function choose(step: Step) {
     const state = await copyText(step === 'agent' ? agentSetupPrompt() : chatSetupPrompt());
+    if (dismissTimer.current) clearTimeout(dismissTimer.current);
+    setDismissedChoiceGone(false);
     setCopiedChoice({ step, state });
     go(step);
+    dismissTimer.current = setTimeout(() => setDismissedChoiceGone(true), 280);
   }
 
   const decided = copiedChoice?.step === screen ? copiedChoice : null;
@@ -65,7 +74,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
         {validRef && <p className="install-invite">@{validRef} invited you to alexandria.</p>}
         <p className="door-q">what do you have access to?</p>
         <div className="door-answers">
-          {STEPS.map((step) => {
+          {STEPS.filter((step) => !decided || !dismissedChoiceGone || decided.step === step).map((step) => {
             const dismissed = Boolean(decided && decided.step !== step);
             const selected = decided?.step === step;
 

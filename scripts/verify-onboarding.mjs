@@ -47,20 +47,14 @@ assert.equal(await page.locator('.door-answers .door-btn').count(), 2);
 
 await page.getByRole('button', { name: /an agent/ }).click();
 await page.locator('.door-choice.is-selected').waitFor();
-await page.waitForTimeout(320);
 assert.match(page.url(), /#agent$/);
 const agentChoice = await page.locator('.door-choice.is-selected').innerText();
 assert.equal(await page.locator('.act-num').count(), 0);
 assert.match(agentChoice, /copied — paste into your agent/);
 assert.doesNotMatch(agentChoice, /phone|computer|which ai|chatgpt|claude|gemini|shortcut|email/i);
 assert.equal(await page.locator('.door-choice.is-dismissed').count(), 1);
-assert.deepEqual(
-  await page.locator('.door-choice.is-dismissed').evaluate((node) => {
-    const style = getComputedStyle(node);
-    return { opacity: style.opacity, maxHeight: style.maxHeight };
-  }),
-  { opacity: '0', maxHeight: '0px' },
-);
+await page.waitForTimeout(320);
+assert.equal(await page.locator('.door-choice.is-dismissed').count(), 0);
 await assertFits('.door-choice.is-selected');
 assert.equal(await clipboard(), agentSetupPrompt());
 
@@ -82,11 +76,12 @@ assert.match(await page.locator('body').innerText(), /what do you have access to
 
 await page.getByRole('button', { name: /just chat/ }).click();
 await page.locator('.door-choice.is-selected').waitFor();
-await page.waitForTimeout(320);
 assert.match(page.url(), /#chat$/);
 const chosenChatChoice = await page.locator('.door-choice.is-selected').innerText();
 assert.match(chosenChatChoice, /copied — paste into your chat/);
 assert.equal(await page.locator('.door-choice.is-dismissed').count(), 1);
+await page.waitForTimeout(320);
+assert.equal(await page.locator('.door-choice.is-dismissed').count(), 0);
 assert.equal(await clipboard(), chatSetupPrompt());
 
 await page.goBack();
