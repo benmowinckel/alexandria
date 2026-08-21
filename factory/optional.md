@@ -108,15 +108,15 @@
   VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"
   AW="$HOME/.local/share/alexandria/scripts/agent_workspace.py"
   tmp=$(mktemp); bash "$VF" scripts/agent_workspace.py > "$tmp" && mv "$tmp" "$AW" && chmod 700 "$AW"
-  python3 "$AW" plan <name> <allowlist.tsv>
+  python3 "$AW" plan <one-word-name> <allowlist.tsv>
   # only after the Author approves the displayed files:
   mkdir -p "$HOME/alexandria/system/permissions"
   # copy the `selection sha256` printed by plan — it binds paths, destinations, and current bytes:
-  printf '%s\n' '<selection-sha256>' > "$HOME/alexandria/system/permissions/agent-workspace-<name>"
-  python3 "$AW" enable <name> <allowlist.tsv> "$HOME/alexandria-agent-workspaces/<name>"
+  printf '%s\n' '<selection-sha256>' > "$HOME/alexandria/system/permissions/agent-workspace-<one-word-name>"
+  python3 "$AW" enable <one-word-name> <allowlist.tsv> "$HOME/alexandria-<one-word-name>"
   ```
-- **Use:** connect that fresh repo to one private remote, grant the experimental AI only that repo, and let it write under `inbox/`. On the Mac, pull the workspace repo, then run `python3 "$AW" import <name>`. The importer rejects force-rewritten ancestry, changes outside `inbox/`, symlinks, binary or oversized files, and any changed context. Run `refresh <name>` only after the approved source files change; it commits the regenerated context but never pushes automatically.
-- **Off:** `python3 "$AW" off <name>`, then revoke that repo's credential or archive the remote. The workspace repo is kept for recovery; the sovereign source is untouched.
+- **Use:** connect that fresh repo to one private remote, grant the experimental AI only that repo, and let it write under `inbox/`. On the Mac, pull the workspace repo, then run `python3 "$AW" import <one-word-name>`. The importer rejects force-rewritten ancestry, changes outside `inbox/`, symlinks, binary or oversized files, and any changed context. Run `refresh <one-word-name>` only after the approved source files change; it commits the regenerated context but never pushes automatically.
+- **Off:** `python3 "$AW" off <one-word-name>`, then revoke that repo's credential or archive the remote. The workspace repo is kept for recovery; the sovereign source is untouched.
 
 ## drive — the chat pocket copy in your own Google Drive
 
