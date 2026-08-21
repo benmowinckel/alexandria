@@ -4,7 +4,6 @@
  */
 
 import { randomBytes } from 'crypto';
-import { accountConnectPrompt } from './install-prompt.js';
 
 function getWebsiteUrl() { return process.env.WEBSITE_URL || 'https://alexandria-library.com'; }
 
@@ -82,24 +81,15 @@ export function authErrorHtml(message: string): string {
 // Callback page — the first brand moment after signup
 // ---------------------------------------------------------------------------
 
-export async function callbackPageHtml(connectionCode: string, githubLogin = '', _viaToken = false, authorNumber = 0, _kinCompliant = 0): Promise<string> {
-  void _viaToken;
+export async function callbackPageHtml(isReturning: boolean, githubLogin = '', authorNumber = 0, _kinCompliant = 0): Promise<string> {
   void authorNumber;
   void _kinCompliant;
   const WEBSITE_URL = getWebsiteUrl();
-  // The founding-member page has one first job: connect the membership to the
-  // person's loop. Sharing matters, but it comes after activation. The two
-  // cards use the same soft paper treatment as /start, /join, and /invite;
-  // hierarchy comes from sequence and language, never a harsh filled CTA.
+  // Membership is already complete here. Do not make the person decide how or
+  // where to connect another machine; a connected AI can create that handoff
+  // later, only when asked. The remaining invite uses the same soft paper
+  // treatment as /start, /join, and /invite.
   // A founding number is assigned server-side but is not the pitch.
-  // `isReturning` is the bare re-login fallback — nothing minted, not a fresh join.
-  const isReturning = !connectionCode;
-  // The connect message is copy-paste, matching /start. (A claude-cli:// deep link was tried
-  // and removed 2026-06-24: it auto-ran the script and felt like a terminal hijack — copy-paste
-  // is calmer and universal across Claude Code / Cursor / Codex / Factory / Grok CLI.) It
-  // is non-executable and deliberately assumes setup already completed: the
-  // installed verifier authenticates the one narrow signed connector.
-  const connectPrompt = connectionCode ? accountConnectPrompt(connectionCode) : '';
   // The invite link now opens /invite — the self-contained referral landing
   // (founder 2026-07-17: a cold recipient dropped on /start had "no idea what
   // that is"). /invite pitches in one line and forwards the ref to /start,
@@ -228,9 +218,6 @@ export async function callbackPageHtml(connectionCode: string, githubLogin = '',
 <a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
 <main class="wrap">
   <h1 class="welcome">${isReturning ? `welcome back.` : `welcome to alexandria.`}</h1>
-  ${!isReturning
-    ? `<button type="button" class="cta-box" onclick="copyCmd(this)"><span class="cta-copy"><span class="cta-label">connect your existing loop</span><span class="cta-sep"> &mdash; </span><span class="cta-why">paste this into your computer agent</span></span></button>`
-    : ''}
   ${inviteUrl
     ? `<button type="button" class="cta-box" onclick="shareInvite(this)"><span class="cta-copy"><span class="cta-label">invite people to alexandria</span><span class="cta-sep"> &mdash; </span><span class="cta-why">share it widely</span></span></button>`
     : ''}
@@ -267,7 +254,6 @@ function manualCopy(text, el, label, why) {
     window.prompt('copy this:', text);
   }
 }
-function copyCmd(el) { copyText(${jsLiteral(connectPrompt)}, el, 'copied', 'your agent will inspect it first'); }
 // Share, not copy (founder 2026-07-27): the native sheet puts the link one tap
 // from a real conversation — Messages, WhatsApp, wherever they'd actually send
 // it — instead of parking it on a clipboard they never paste. Desktop browsers
@@ -317,20 +303,19 @@ paintThemeDot();
 // thing to the website: this stores the rendered page + the session token under
 // a one-time code and returns a /welcome URL. The website peeks the page, serves
 // it first-party, and its script POSTs the code to /api/auth/session — the exact
-// same-origin cookie set that already works for library sign-in. The HTML can
-// contain only a short-lived, one-use connection code, never a persistent key.
+// same-origin cookie set that already works for library sign-in. The HTML
+// contains no account credentials or connection material.
 type WelcomeKV = { put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void> };
 
 export async function welcomeHandoffUrl(
   kv: WelcomeKV,
   sessionToken: string,
-  connectionCode: string,
   githubLogin: string,
-  viaToken: boolean,
+  isReturning: boolean,
   authorNumber: number,
   kinCompliant = 0,
 ): Promise<string> {
-  const html = await callbackPageHtml(connectionCode, githubLogin, viaToken, authorNumber, kinCompliant);
+  const html = await callbackPageHtml(isReturning, githubLogin, authorNumber, kinCompliant);
   const code = randomBytes(24).toString('hex');
   // handoff:<code> → session token, consumed by /api/auth/session (sets the cookie).
   // welcome:<code> → the rendered page, consumed by the website /welcome peek.

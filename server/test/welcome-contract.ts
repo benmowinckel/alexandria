@@ -8,25 +8,16 @@ function main(html: string): string {
   return match[1];
 }
 
-const connectionCode = 'alex_connect_000000000000000000000000000000000000000000000000';
-const firstJoin = main(await callbackPageHtml(connectionCode, 'new-author'));
-assert.match(firstJoin, /<span class="cta-label">connect your existing loop<\/span>/);
-assert.match(firstJoin, /<span class="cta-why">paste this into your computer agent<\/span>/);
+const firstJoin = main(await callbackPageHtml(false, 'new-author'));
 assert.match(firstJoin, /invite people to alexandria/);
-assert.ok(firstJoin.indexOf('connect your existing loop') < firstJoin.indexOf('invite people'), 'connection must be the first joined action');
+assert.doesNotMatch(firstJoin, /connect|connection code|computer agent/i);
 
-const fullFirstJoin = await callbackPageHtml(connectionCode, 'new-author');
-assert.match(fullFirstJoin, /factory\/connect\.md/);
-assert.match(fullFirstJoin, /Do nothing until I say `connect`/);
-assert.match(fullFirstJoin, /your agent will inspect it first/);
-assert.doesNotMatch(fullFirstJoin, /alex_[a-f0-9]{32}/);
-assert.doesNotMatch(fullFirstJoin, /Help me set up the full private, local version/);
+const fullFirstJoin = await callbackPageHtml(false, 'new-author');
+assert.doesNotMatch(fullFirstJoin, /factory\/connect\.md|Do nothing until I say `connect`|your agent will inspect it first|alex_connect_/);
 
-const returning = main(await callbackPageHtml('', 'returning-author'));
+const returning = main(await callbackPageHtml(true, 'returning-author'));
 assert.match(returning, /invite people to alexandria/);
-assert.doesNotMatch(returning, /<span class="cta-label">connect your existing loop<\/span>/);
-
-assert.doesNotMatch(returning, /connection code|connect it to this account/);
+assert.doesNotMatch(returning, /connect|connection code|computer agent/i);
 
 const websiteWelcomeRoute = readFileSync('../app/welcome/route.ts', 'utf8');
 const authRoutes = readFileSync('src/routes.ts', 'utf8');
@@ -35,7 +26,7 @@ assert.doesNotMatch(websiteWelcomeRoute, /intent=connect/);
 assert.match(websiteWelcomeRoute, /history\.replaceState\(\{\},'', '\/welcome'\)/);
 assert.match(authRoutes, /requestedIntent === 'library'/);
 assert.doesNotMatch(authRoutes, /requestedIntent === 'connect'|wantsFreshConnection|account\/rotate-key/);
-assert.match(authRoutes, /const connectionCode = needsConnection \? await createAccountConnectCode\(key\) : ''/);
+assert.doesNotMatch(authRoutes, /needsConnection \? await createAccountConnectCode|welcomeHandoffUrl\([^\n]*connectionCode/);
 assert.match(authRoutes, /await kv\.delete\(`welcome:\$\{code\}`\)/, 'welcome handoff must remain single-use');
 
-console.log('welcome contract: first connection, invite, and quiet Library reload are preserved');
+console.log('welcome contract: no connection decision, invite, and quiet Library reload are preserved');

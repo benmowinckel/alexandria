@@ -22,10 +22,10 @@ assert.ok(handoff.indexOf('resolveMembership') < handoff.indexOf('createAccountC
 assert.match(handoff, /accountConnectPrompt\(connectionCode\)/);
 
 const oauthStart = routes.indexOf("app.get('/auth/github/callback'");
-const oauthEnd = routes.indexOf("app.post('/auth/logout'", oauthStart);
+const oauthEnd = routes.indexOf("app.get('/auth/session/exchange'", oauthStart);
 const oauth = routes.slice(oauthStart, oauthEnd);
 assert.doesNotMatch(oauth, /generateApiKey\(/, 'GitHub sign-in must not rotate the working key');
-assert.match(oauth, /createAccountConnectCode/);
+assert.doesNotMatch(oauth, /createAccountConnectCode/, 'GitHub sign-in must not create connection material');
 
 const exchangeStart = routes.indexOf("app.post('/account/connect/exchange'");
 const exchangeEnd = routes.indexOf('// --- Account management', exchangeStart);

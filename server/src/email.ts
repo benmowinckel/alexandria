@@ -1,6 +1,6 @@
 /** Email primitives — Resend API (hybrid dependency, API-controllable, free 100/day). */
 
-import { accountConnectPrompt, installPrompt } from './install-prompt.js';
+import { installPrompt } from './install-prompt.js';
 import { chatSetupPrompt } from './chat-prompt.js';
 
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'benmowinckel@gmail.com';
@@ -163,29 +163,17 @@ export async function sendFollowerWelcome(email: string, unsubscribeToken?: stri
     unsubscribeUrl ? { unsubscribeUrl } : undefined);
 }
 
-export function welcomeEmailContent(githubLogin: string, emailToken?: string, connectionCode?: string): { subject: string; html: string } {
+export function welcomeEmailContent(githubLogin: string, emailToken?: string): { subject: string; html: string } {
   void githubLogin;
-  // Sent only after membership is authoritative. It carries the same calm,
-  // non-executable handoff as the welcome page and only a short-lived one-use
-  // connection code — never the persistent API key.
-  const connectCmd = connectionCode
-    ? accountConnectPrompt(connectionCode)
-    : '';
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
-  const body = connectCmd
-    ? `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">you&rsquo;re in.</p>
-  <p style="margin: 0 0 0.7rem;">paste this into the agent that already runs your alexandria loop.</p>
-  ${emailCmd(connectCmd)}
-  <p style="margin: 0 0 0;">your agent will inspect it first. nothing changes until you say <code>connect</code>.</p>
-`
-    : `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">you&rsquo;re in.</p>
+  const body = `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">you&rsquo;re in.</p>
   <p style="margin: 0 0 0;">start an Alexandria session in a new chat.</p>
 `;
   return { subject: 'welcome to alexandria.', html: emailShell(body, unsubscribeUrl) };
 }
 
-export async function sendWelcomeEmail(email: string, githubLogin: string, emailToken?: string, connectionCode?: string): Promise<void> {
-  const content = welcomeEmailContent(githubLogin, emailToken, connectionCode);
+export async function sendWelcomeEmail(email: string, githubLogin: string, emailToken?: string): Promise<void> {
+  const content = welcomeEmailContent(githubLogin, emailToken);
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
   await sendEmail(email, content.subject, content.html,
     unsubscribeUrl ? { unsubscribeUrl } : undefined);

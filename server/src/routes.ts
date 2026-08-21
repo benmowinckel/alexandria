@@ -707,11 +707,10 @@ export function registerRoutes(app: Hono) {
           return c.redirect(handoffUrl(stateData.next));
         }
         const number = await assignAuthorNumber(user.login);
-        const connectionCode = needsConnection ? await createAccountConnectCode(key) : '';
-        if (email && connectionCode) {
-          await sendWelcomeEmail(email, user.login, emailToken, connectionCode);
+        if (email && needsConnection) {
+          await sendWelcomeEmail(email, user.login, emailToken);
         }
-        return c.redirect(await welcomeHandoffUrl(kv, librarySessionToken, connectionCode, user.login, false, number ?? 0, kinCompliant));
+        return c.redirect(await welcomeHandoffUrl(kv, librarySessionToken, user.login, !needsConnection, number ?? 0, kinCompliant));
       }
 
       // New join → Stripe Checkout. Connection material is minted only after
@@ -773,8 +772,8 @@ export function registerRoutes(app: Hono) {
   // page under a one-time code (welcomeHandoffUrl) and redirect to the website
   // /welcome, which calls this SERVER-SIDE to fetch the HTML, serve it first-party,
   // and set the session cookie via /api/auth/session — so the post-signup cookie
-  // sticks in Safari too. Deleted on first read. The HTML may carry only the
-  // short-lived connection code; persistent keys never enter this path.
+  // sticks in Safari too. Deleted on first read. The HTML carries no account
+  // credentials or connection material.
   app.get('/auth/welcome/peek', async (c) => {
     const code = c.req.query('code') || '';
     if (!code) return c.json({ error: 'missing code' }, 400);
@@ -1460,7 +1459,6 @@ export function registerRoutes(app: Hono) {
   // email actually drove a click (mirror loop between "nudge sent" and
   // "installed_after_nudge"). Single-use: the rendered page carries the live
   // legacy payload may contain an API key, but redemption never renders it.
-  // A fresh one-use connection code is created from the account identity.
   app.get('/install/:token', async (c) => {
     const token = c.req.param('token');
     if (!token) return c.text('missing token', 400);
@@ -1478,7 +1476,6 @@ export function registerRoutes(app: Hono) {
     const membership = await resolveMembership(accountResult.account);
     if (!membership.available) return c.text('Membership verification is temporarily unavailable. Please try again.', 503);
     if (!membership.active) return c.redirect(`${getWebsiteUrl()}/join`, 302);
-    const connectionCode = await createAccountConnectCode(accountResult.storeKey);
     const number = await assignAuthorNumber(github_login);
     let kinCompliant = 0;
     try { kinCompliant = (await countActiveKin(github_login)).compliant; } catch { /* D1 down — show 0 */ }
@@ -1486,7 +1483,7 @@ export function registerRoutes(app: Hono) {
     // and route it through the welcome handoff so the cookie sticks (Safari).
     const sessionToken = randomBytes(24).toString('hex');
     await kv.put(`library:session:${sessionToken}`, JSON.stringify({ account_key: accountResult.storeKey, github_login }), { expirationTtl: 30 * 24 * 60 * 60 });
-    return c.redirect(await welcomeHandoffUrl(kv, sessionToken, connectionCode, github_login, true, number ?? 0, kinCompliant));
+    return c.redirect(await welcomeHandoffUrl(kv, sessionToken, github_login, false, number ?? 0, kinCompliant));
   });
 
   // Public preview — renders the WELCOME page HTML (the post-signup/post-Stripe
@@ -1497,11 +1494,8 @@ export function registerRoutes(app: Hono) {
   // /preview/onboarding kept as an alias for anything that cached the old path.
   const previewWelcome = async (c: Context) => {
     const returning = c.req.query('returning') === 'true';
-    // Dummy must not be credential-shaped (`sk_test_` reads as a Stripe key
-    // to scanners and to anyone who copies the rendered curl command).
-    const connectionCode = returning ? '' : 'alex_connect_000000000000000000000000000000000000000000000000';
     // Dummy number + kin count for the founding-member preview; no side effects.
-    const html = await callbackPageHtml(connectionCode, 'benmowinckel', false, returning ? 0 : 142, 1);
+    const html = await callbackPageHtml(returning, 'benmowinckel', returning ? 0 : 142, 1);
     return c.html(html);
   };
   app.get('/preview/welcome', previewWelcome);

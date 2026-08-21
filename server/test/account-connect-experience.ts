@@ -72,14 +72,11 @@ const cursor = readFileSync(new URL('../../factory/skills/cursor.mdc', import.me
 assert.match(cursor, /On yes, immediately open a new chat and invoke `\/a`/);
 assert.match(cursor, /If it cannot open a chat, say exactly: `Open a new chat and invoke \/a\.`/);
 
-const page = await callbackPageHtml(code, 'new-author');
-assert.match(page, /connect your existing loop/);
-assert.match(page, /paste this into your computer agent/);
-assert.match(page, /your agent will inspect it first/);
-const email = welcomeEmailContent('new-author', 'TOKEN', code).html;
-assert.match(email, /agent that already runs your alexandria loop/);
-assert.match(email, /nothing changes until you say/);
-assert.match(email, new RegExp(code));
+const page = await callbackPageHtml(false, 'new-author');
+assert.doesNotMatch(page, /connect your existing loop|paste this into your computer agent|connection code/i);
+const email = welcomeEmailContent('new-author', 'TOKEN').html;
+assert.doesNotMatch(email, /agent that already runs your alexandria loop|nothing changes until you say|connection code/i);
+assert.match(email, /start an Alexandria session in a new chat/);
 assert.doesNotMatch(page + email + paste, /alex_[a-f0-9]{32}/);
 
 console.log('account connect experience: on-demand handoff, exact consent, truthful proof, native active route');

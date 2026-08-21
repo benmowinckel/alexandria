@@ -18,7 +18,6 @@ import { getDB } from './db.js';
 import { sendPatronWelcome, sendKinFreeUnlocked, sendKinLapseWarning, sendPreBillWarning, sendWelcomeEmail } from './email.js';
 import { generateToken } from './crypto.js';
 import { safeEqual, hashApiKey } from './crypto.js';
-import { createAccountConnectCode } from './account-connect.js';
 
 // ---------------------------------------------------------------------------
 // Membership price — source of truth for NEW Stripe prices (ensurePrice).
@@ -1268,19 +1267,16 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       await onAccountUpdate(login, billingUpdate);
       logEvent('billing_checkout_completed', { mode: session.mode || 'unknown' });
 
-      // Founding-member page. Membership is now authoritative, so mint a
-      // short-lived, one-use connection code. The persistent API key does not
-      // exist until the later explicit exchange.
+      // Founding-member page. Membership is now authoritative. Connection to
+      // another machine is handled later by the person's current AI, only when asked.
       const kv = getKV();
       const accountResult = await getAccountByLogin(login);
       if (!accountResult) return c.redirect(`${WEBSITE_URL}/join`);
-      const connectionCode = await createAccountConnectCode(accountResult.storeKey);
       if (accountResult.account.email) {
         await sendWelcomeEmail(
           accountResult.account.email,
           login,
           accountResult.account.email_token,
-          connectionCode,
         );
       }
       const number = await assignAuthorNumber(login);
@@ -1291,7 +1287,7 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       // drops one set on the api subdomain mid-redirect — WebKit #196375).
       const sessionToken = randomBytes(24).toString('hex');
       await kv.put(`library:session:${sessionToken}`, JSON.stringify({ account_key: accountResult.storeKey, github_login: login }), { expirationTtl: 30 * 24 * 60 * 60 });
-      return c.redirect(await welcomeHandoffUrl(kv, sessionToken, connectionCode, login, false, number ?? 0, kinCompliant));
+      return c.redirect(await welcomeHandoffUrl(kv, sessionToken, login, false, number ?? 0, kinCompliant));
     } catch (err) {
       console.error('Billing success page error:', err);
       return c.redirect(`${WEBSITE_URL}/join`);

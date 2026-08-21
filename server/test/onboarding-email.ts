@@ -32,14 +32,10 @@ assert.match(joinedComputerPrompt, /Do nothing until I say `connect`/);
 assert.match(joinedComputerPrompt, new RegExp(connectionCode));
 assert.doesNotMatch(joinedComputerPrompt, /setup\.sh|curl|bash|api_key|publish|enable/);
 
-const joinedEmail = welcomeEmailContent('new-author', 'TOKEN', connectionCode);
+const joinedEmail = welcomeEmailContent('new-author', 'TOKEN');
 assert.equal(joinedEmail.subject, 'welcome to alexandria.');
-assert.match(joinedEmail.html, /factory\/connect\.md/);
-assert.match(joinedEmail.html, /Do nothing until I say `connect`/);
-assert.match(joinedEmail.html, new RegExp(connectionCode));
-assert.match(joinedEmail.html, /agent that already runs your alexandria loop/);
-assert.match(joinedEmail.html, /nothing changes until you say/);
-assert.doesNotMatch(joinedEmail.html, /alex_[a-f0-9]{32}/);
+assert.match(joinedEmail.html, /start an Alexandria session in a new chat/);
+assert.doesNotMatch(joinedEmail.html, /factory\/connect\.md|Do nothing until I say `connect`|agent that already runs your alexandria loop|alex_connect_/);
 
 const phone = onboardEmailContent('agent-phone', 'TOKEN');
 assert.equal(phone.subject, 'alexandria. — continue at your computer');
