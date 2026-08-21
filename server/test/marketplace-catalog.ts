@@ -77,7 +77,7 @@ assert.deepEqual(
   ['factory/canon/foundation', 'factory/canon/change-closure'],
 );
 
-assert.equal(moduleSystem.version, 1);
+assert.equal(moduleSystem.version, 2);
 assert.deepEqual(
   moduleSystem.groups.core.items.map((module) => module.id),
   ['foundation', 'upkeep'],

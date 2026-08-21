@@ -46,7 +46,10 @@ Alexandria-built additions are labelled **official** in the marketplace. Everyon
 - **Library stand** — `stand.md`; Benjamin's personalizable starting shape for that connection, installed as a reference, inert until the Author asks, and free to fork or replace.
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
 - **network reading** — only the exact approved Author list is fetched.
-- **cloud bridges and backups** — each service has its own consent and off switch.
+- **Git backup** — the owned Git history may use any private remote; GitHub is the current soft default, never the source of truth.
+- **guest workspace** — one fresh private Git repo per experimental agent, containing only exact selected context plus an untrusted write-back inbox; never part of Foundation or default setup.
+- **Drive pocket copy** — a narrow chat projection and capture inbox, not canon and not a general trial-agent grant.
+- **iCloud current-file mirror** — easy Apple-side recovery and large-media coverage; not Git history or an immutable archive.
 - **scheduled outbound messages and briefs** — require their own destination, schedule, and off switch.
 - **PLM / twin** — `plm.md` + `twin.md`; simple context connection by default, optional weights compilation only on the Author's separate request.
 

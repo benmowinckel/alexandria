@@ -412,6 +412,9 @@ require factory/module-system.json \
   '"id": "plm"' \
   'the PLM connection is absent from the machine-readable module map'
 require factory/module-system.json \
+  '"id": "guest-workspace"' \
+  'the isolated experimental-agent connection is absent from the machine-readable module map'
+require factory/module-system.json \
   '"private_data": "never_needed_for_module_discovery"' \
   'module discovery can depend on private user material'
 require factory/redteam.md \
@@ -572,6 +575,15 @@ require factory/optional.md \
 require factory/optional.md \
   'touch ~/alexandria/system/hooks/auto-update' \
   'the update-check opt-in has no exact enable action'
+require factory/optional.md \
+  '## guest-workspace — an isolated read/write door for one experimental AI' \
+  'experimental agents have no separately consented, structurally isolated connection'
+require factory/optional.md \
+  'Nothing merges into canon automatically.' \
+  'guest output can become canon without review'
+require factory/optional.md \
+  'never give an experimental agent the Author'"'"'s general GitHub login or sovereign-repo key' \
+  'guest instructions can expose an account-wide or sovereign credential'
 require factory/canon/MODULES.md \
   'move its file into `~/alexandria/system/canon/disabled/`' \
   'default methods have no durable, reversible opt-out'
@@ -593,6 +605,11 @@ require factory/canon/MODULES.md \
 forbid factory/canon/MODULES.md \
   'optimise|additional extras|core/defaults/opt-ins/extras' \
   'the product map still carries the removed Optimise feature or old taxonomy'
+require factory/canon/MODULES.md \
+  'never part of Foundation or default setup' \
+  'the guest workspace has leaked into the incompressible core'
+bash factory/scripts/test_guest_workspace.sh \
+  || fail 'guest-workspace isolation regressions failed'
 require factory/setup.sh \
   '[ -f "$ALEX_DIR/system/canon/disabled/$module.md" ] && continue' \
   'setup does not honor disabled default modules'

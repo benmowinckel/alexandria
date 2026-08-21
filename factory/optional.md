@@ -75,9 +75,9 @@
 
 ---
 
-## backup — your files on your own GitHub
+## backup — your Git history on your own remote
 
-- **Does:** pushes `~/alexandria/` to a private repo on the *Author's own* GitHub account, and registers their SSH key with GitHub as a signing key so commits show "Verified". From then on the session hooks keep it synced (pull at start, push at end).
+- **Does:** pushes the sovereign Git history in `~/alexandria/` to a private repo on the *Author's own* GitHub account, and registers their SSH key with GitHub as a signing key so commits show "Verified". Git is the owned history; GitHub is the current replaceable host. From then on the session hooks keep it synced (pull at start, push at end).
 - **Touches:** `~/alexandria/.git` remote config; one local permission file tied to that exact remote URL; the Author's GitHub account (one private repo `alexandria-private`; one public-key upload).
 - **Leaves the machine:** the tracked contents of `~/alexandria/` → the Author's own private repo. Nothing to Alexandria — we have no access to that repo.
 - **Needs:** `git` + `gh auth login`.
@@ -96,9 +96,31 @@
   ```
 - **Off:** `rm ~/alexandria/system/permissions/backup` — stops all automatic pushes and pulls while leaving the remote and the repo on their GitHub untouched.
 
+## guest-workspace — an isolated read/write door for one experimental AI
+
+- **Does:** creates one fresh Git repo for one less-trusted agent or vendor. `context/` contains only exact UTF-8 files selected in an allowlist; `inbox/` is the agent's only accepted write-back surface. Inbox files return to `~/alexandria/files/vault/input/guest/<name>/` with repository, commit, path, hash, and `trust: untrusted` provenance. Nothing merges into canon automatically.
+- **Why one repo per agent:** the credential, history, revocation, and provenance stay separate. A shared guest repo would let one agent read or poison another's work.
+- **Touches:** the fresh guest repo; `~/alexandria/system/guest-workspaces/<name>.json`; one exact selected-bytes permission at `~/alexandria/system/permissions/guest-<name>`; and the guest capture inbox after an import.
+- **Leaves the machine:** only the selected context and the empty write-back structure, after the Author separately creates/connects a private remote. No secret, unselected file, sovereign history, or Alexandria account key enters the guest repo.
+- **Needs:** Python 3 and Git. The remote is optional and provider-neutral. If one is added, use a repository-scoped credential that can reach only this guest repo; never give an experimental agent the Author's general GitHub login or sovereign-repo key.
+- **Enable:** first write an explicit TSV allowlist with one `source<TAB>context/destination` per line. Start with already-public Library bytes. Fetch the signed controller, run `plan`, show every source, destination, and hash, and wait for exact approval. Then bind the printed selection hash — which covers those paths, destinations, and current bytes — and enable:
+  ```bash
+  VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"
+  GW="$HOME/.local/share/alexandria/scripts/guest_workspace.py"
+  tmp=$(mktemp); bash "$VF" scripts/guest_workspace.py > "$tmp" && mv "$tmp" "$GW" && chmod 700 "$GW"
+  python3 "$GW" plan <name> <allowlist.tsv>
+  # only after the Author approves the displayed files:
+  mkdir -p "$HOME/alexandria/system/permissions"
+  # copy the `selection sha256` printed by plan — it binds paths, destinations, and current bytes:
+  printf '%s\n' '<selection-sha256>' > "$HOME/alexandria/system/permissions/guest-<name>"
+  python3 "$GW" enable <name> <allowlist.tsv> "$HOME/alexandria-guests/<name>"
+  ```
+- **Use:** connect that fresh repo to one private remote, grant the experimental agent only that repo, and let it write under `inbox/`. On the Mac, pull the guest repo, then run `python3 "$GW" import <name>`. The importer rejects force-rewritten ancestry, changes outside `inbox/`, symlinks, binary or oversized files, and any changed context. Run `refresh <name>` only after the approved source files change; it commits the regenerated context but never pushes automatically.
+- **Off:** `python3 "$GW" off <name>`, then revoke that repo's credential or archive the remote. The guest repo is kept for recovery; the sovereign source is untouched.
+
 ## drive — the chat pocket copy in your own Google Drive
 
-- **Does:** keeps the local folder as ground truth while projecting `_start` and the compact constitution into `Google Drive/alexandria` as native Google Docs. New or changed chat writings in `vault/`, `marginalia/`, and versioned constitution proposals are copied home to `~/alexandria/files/vault/input/chat/` for `/a` to drain.
+- **Does:** keeps the sovereign Git history as ground truth, with the local checkout primary, while projecting `_start` and the compact constitution into `Google Drive/alexandria` as native Google Docs. New or changed chat writings in `vault/`, `marginalia/`, and versioned constitution proposals are copied home to `~/alexandria/files/vault/input/chat/` for `/a` to drain. Drive is not the trial-agent boundary: connector grants may be broader than one folder, while a guest Git credential can be scoped to one fresh repo.
 - **Touches:** the Author's own Google Drive `alexandria` folder; local rclone config and OAuth token; two signed scripts; one daily macOS job `io.alexandria.drive-sync`.
 - **Leaves the machine:** the compact position layer and whatever the Author deliberately writes through chat → the Author's own Google Drive. Credentials and private data never go to Alexandria.
 - **Enable:** after the Author says yes, fetch the controller through the installed verifier and run it. Google opens once for the unavoidable approval; do not turn that approval into a checklist.
@@ -110,9 +132,9 @@
 - **Credentials:** Google's OAuth token stays only in the Author's local rclone config (normally `~/.config/rclone/rclone.conf`, mode 0600). Alexandria's server holds nothing.
 - **Off:** `bash ~/.local/share/alexandria/scripts/drive_ctl.sh off`. This stops the bridge and keeps both user-owned copies. Removing the `alexandria` rclone remote separately revokes the local token.
 
-## icloud-mirror — a second, Apple-side backup (macOS)
+## icloud-mirror — an Apple-side current-file recovery copy (macOS)
 
-- **Does:** a daily rsync of `~/alexandria/files/` to iCloud Drive — secret-free (secrets live in `system/`, which is excluded), `.git`-free. The backup for the no-GitHub Author, or a second copy for the belt-and-braces one.
+- **Does:** a daily rsync of the current `~/alexandria/files/` tree to iCloud Drive — secret-free (secrets live in `system/`, which is excluded), `.git`-free. It is an easy-to-read recovery copy and the home for large capture media that a Git host may reject. It is not Git history and `--delete` means it is not immutable; Git remains the undo layer.
 - **Touches:** `~/Library/Mobile Documents/…/alexandria-backup/files/`; one launchd job `io.alexandria.icloud-backup`.
 - **Leaves the machine:** `files/` → the Author's own iCloud. Nothing to Alexandria.
 - **Enable:**
