@@ -114,7 +114,14 @@ mv "$version_cache" "$RUNTIME_DIR/.factory_version" || fail pin-version
 # need to inspect or route a signed factory artifact themselves.
 if [ "$MODE" = "run" ]; then
   if [ "$REL" = "setup.sh" ]; then
-    ALEXANDRIA_VERIFIED_UPDATE=1 bash "$f" "$@"
+    verified_source_ref=main
+    raw_tail="${RAW%/}"; raw_tail="${raw_tail##*/}"
+    if [[ "$raw_tail" =~ ^[0-9a-f]{40}$ ]]; then
+      verified_source_ref="$raw_tail"
+    fi
+    ALEXANDRIA_VERIFIED_UPDATE=1 \
+      ALEXANDRIA_VERIFIED_SOURCE_REF="$verified_source_ref" \
+      bash "$f" "$@"
   else
     bash "$f" "$@"
   fi

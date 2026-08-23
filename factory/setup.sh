@@ -96,7 +96,7 @@ SOURCE_REF="${ALEXANDRIA_SOURCE_COMMIT:-main}"
 # First-install agents that verified a specific hash set the pin without
 # ALEXANDRIA_VERIFIED_UPDATE=1.
 if [ "${ALEXANDRIA_VERIFIED_UPDATE:-}" = "1" ]; then
-  SOURCE_REF=main
+  SOURCE_REF="${ALEXANDRIA_VERIFIED_SOURCE_REF:-main}"
 fi
 if [ "$SOURCE_REF" != main ] && ! [[ "$SOURCE_REF" =~ ^[0-9a-f]{40}$ ]]; then
   echo "Invalid Alexandria source commit; refusing to install." >&2

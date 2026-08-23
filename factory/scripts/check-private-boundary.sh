@@ -282,6 +282,12 @@ require factory/setup.sh \
 require factory/setup.sh \
   'CLASSIFY_SH="$RUNTIME_DIR/scripts/classify_install.sh"' \
   'verified temporary-file updates no longer use the installed signed classifier'
+require factory/setup.sh \
+  'ALEXANDRIA_VERIFIED_SOURCE_REF:-main' \
+  'verified updates no longer preserve an exact source pin through child fetches'
+require factory/scripts/verify-fetch.sh \
+  'ALEXANDRIA_VERIFIED_SOURCE_REF="$verified_source_ref"' \
+  'the verifier no longer passes its exact commit pin into setup'
 require factory/scripts/transcript_path.sh \
   'safe_transcript_path()' \
   'transcript archiving has no host-root helper'
