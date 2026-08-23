@@ -279,6 +279,9 @@ require factory/scripts/statusline.sh \
 require factory/setup.sh \
   'renderer or capture-state reader missing' \
   'setup no longer fails its functional check when capture state is absent'
+require factory/setup.sh \
+  'CLASSIFY_SH="$RUNTIME_DIR/scripts/classify_install.sh"' \
+  'verified temporary-file updates no longer use the installed signed classifier'
 require factory/scripts/transcript_path.sh \
   'safe_transcript_path()' \
   'transcript archiving has no host-root helper'

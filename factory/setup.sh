@@ -195,7 +195,15 @@ fi
 # Existing-install classification is metadata-only: receipts, hashes, the
 # setup report, and symlink checks. Never list or read constitution, vault,
 # or other personal content to decide whether this is a sync.
-CLASSIFY_SH="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)/scripts/classify_install.sh"
+if [ "${ALEXANDRIA_VERIFIED_UPDATE:-}" = "1" ]; then
+  # verify-fetch runs setup from an authenticated temporary file, so there is
+  # deliberately no sibling scripts/ directory. The installed classifier is
+  # itself signed prior-release runtime and is the ownership proof that makes
+  # this an update rather than a moving-main install.
+  CLASSIFY_SH="$RUNTIME_DIR/scripts/classify_install.sh"
+else
+  CLASSIFY_SH="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)/scripts/classify_install.sh"
+fi
 INSTALL_CLASS=""
 INSTALL_BLOCK_COMPLETE=""
 CLASSIFY_OUT=""
