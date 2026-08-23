@@ -69,7 +69,7 @@ jobs:
         run: |
           bash factory/scripts/check-private-boundary.sh
           bash factory/scripts/test_classify_install.sh
-          python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py
+          python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_capture_state.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py
 
       - name: Codex integration test
         run: bash scripts/test-codex-integration.sh

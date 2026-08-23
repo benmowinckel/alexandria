@@ -476,6 +476,7 @@ fetch_factory "hooks/shim.sh" "$RUNTIME_DIR/hooks/shim.sh" "hooks/shim.sh" yes
 chmod +x "$RUNTIME_DIR/hooks/shim.sh" 2>/dev/null
 fetch_factory "hooks/payload.sh" "$RUNTIME_DIR/.hooks_payload" "hooks/payload.sh" yes
 fetch_factory "scripts/capture_resolver.py" "$RUNTIME_DIR/scripts/capture_resolver.py" "scripts/capture_resolver.py" yes
+fetch_factory "scripts/capture_state.py" "$RUNTIME_DIR/scripts/capture_state.py" "scripts/capture_state.py" yes
 fetch_factory "scripts/configure_codex.py" "$RUNTIME_DIR/scripts/configure_codex.py" "scripts/configure_codex.py" yes
 fetch_factory "scripts/configure_grok.py" "$RUNTIME_DIR/scripts/configure_grok.py" "scripts/configure_grok.py" yes
 fetch_factory "scripts/uninstall.py" "$RUNTIME_DIR/scripts/uninstall.py" "scripts/uninstall.py" yes
@@ -1712,8 +1713,8 @@ CUE_CODEX_RENDERED=""
 CUE_ACTIVE_RENDERED=""
 if [ -f "$ALEX_DIR/system/hooks/visible-cue.off" ]; then
   STATUS_CUE="skip"; DETAIL_CUE="off by Author choice"
-elif [ ! -f "$RUNTIME_DIR/scripts/statusline.sh" ]; then
-  STATUS_CUE="fail"; DETAIL_CUE="renderer missing — re-run setup"
+elif [ ! -f "$RUNTIME_DIR/scripts/statusline.sh" ] || [ ! -f "$RUNTIME_DIR/scripts/capture_state.py" ]; then
+  STATUS_CUE="fail"; DETAIL_CUE="renderer or capture-state reader missing — re-run setup"
 else
   CUE_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer 2>/dev/null | tr -d '\r')
   CUE_CODEX_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer-codex 2>/dev/null | tr -d '\r')
@@ -2226,6 +2227,7 @@ else
 $ALEX_DIR/system/hooks/shim.sh|hooks/shim.sh
 $ALEX_DIR/system/.hooks_payload|hooks/payload.sh
 $ALEX_DIR/system/scripts/capture_resolver.py|scripts/capture_resolver.py
+$ALEX_DIR/system/scripts/capture_state.py|scripts/capture_state.py
 $ALEX_DIR/system/scripts/configure_codex.py|scripts/configure_codex.py
 $ALEX_DIR/system/scripts/configure_grok.py|scripts/configure_grok.py
 $ALEX_DIR/system/scripts/uninstall.py|scripts/uninstall.py

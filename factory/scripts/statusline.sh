@@ -55,25 +55,16 @@ count_lines() {
 }
 
 n_captures=0
-IN="$A/files/vault/_input"
-SV="$A/files/vault/saved"
-if [ -d "$IN" ]; then
-  for f in "$IN"/*.md; do
-    [ -e "$f" ] || continue
-    b="${f##*/}"; b="${b%.md}"
-    [ -f "$SV/$b.analysis.md" ] || n_captures=$((n_captures+1))
-  done
-fi
-
 n_raw=0
-RAW="$A/files/vault/input"
-if [ -d "$RAW" ]; then
-  for f in "$RAW"/*; do
-    [ -f "$f" ] || continue
-    case "${f##*/}" in .*) continue ;; esac
-    n_raw=$((n_raw+1))
-  done
+runtime_dir="${ALEXANDRIA_RUNTIME:-$HOME/.local/share/alexandria}"
+capture_state="$runtime_dir/scripts/capture_state.py"
+if [ -f "$capture_state" ]; then
+  IFS=$'\t' read -r n_captures n_raw < <(
+    ALEXANDRIA_HOME="$A" python3 "$capture_state" --counts 2>/dev/null
+  )
 fi
+case "$n_captures" in ''|*[!0-9]*) n_captures=0 ;; esac
+case "$n_raw" in ''|*[!0-9]*) n_raw=0 ;; esac
 
 n_calls=$(count_lines "$A/system/.calls.md")
 n_armed=$(count_lines "$A/system/.armed.md")

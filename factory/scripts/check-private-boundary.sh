@@ -267,6 +267,18 @@ require factory/scripts/capture_resolver.py \
 require factory/scripts/capture_resolver.py \
   '2001::/32' \
   'Teredo is not in the blocked-address set'
+require factory/scripts/capture_state.py \
+  'saved / ".drained"' \
+  'capture state no longer recognizes ledger-only completion proof'
+require factory/scripts/capture_state.py \
+  'legacy_ledger' \
+  'capture state no longer recognizes exact legacy ledger evidence'
+require factory/scripts/statusline.sh \
+  'capture_state.py' \
+  'the visible capture count no longer uses the active-session gate state'
+require factory/setup.sh \
+  'renderer or capture-state reader missing' \
+  'setup no longer fails its functional check when capture state is absent'
 require factory/scripts/transcript_path.sh \
   'safe_transcript_path()' \
   'transcript archiving has no host-root helper'
@@ -1380,7 +1392,7 @@ after_hash=$(shasum -a 256 "$uninstall_home/.claude/settings.json" | awk '{print
 
 bash factory/scripts/test_classify_install.sh \
   || fail 'classify_install regressions failed'
-python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py \
+python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_capture_state.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py \
   || fail 'capture, transcript, or grok-hook regressions failed'
 bash scripts/test-grok-integration.sh \
   || fail 'grok integration regressions failed'
