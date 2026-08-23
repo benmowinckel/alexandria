@@ -39,6 +39,18 @@ class CaptureStateTests(unittest.TestCase):
         self.capture("new")
         state = STATE.inspect(self.root)
         self.assertEqual(state.pending, ["new"])
+        self.assertEqual(state.pending_paths, ["files/vault/_input/new.md"])
+
+    def test_moving_source_to_saved_does_not_bypass_gate(self):
+        (self.root / "files/vault/saved/moved.md").write_text("not processed", encoding="utf-8")
+        state = STATE.inspect(self.root)
+        self.assertEqual(state.pending, ["moved"])
+        self.assertEqual(state.pending_paths, ["files/vault/saved/moved.md"])
+
+    def test_derivative_markdown_is_not_a_capture_source(self):
+        (self.root / "files/vault/saved/orphan.analysis.md").write_text("analysis", encoding="utf-8")
+        (self.root / "files/vault/saved/ledger.md").write_text("ledger", encoding="utf-8")
+        self.assertEqual(STATE.inspect(self.root).pending_count, 0)
 
     def test_analysis_is_completion_proof(self):
         self.capture("rich")

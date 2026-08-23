@@ -25,6 +25,7 @@ class CaptureState:
     pending_count: int
     raw_count: int
     pending: list[str]
+    pending_paths: list[str]
     raw: list[str]
     processed_by_analysis: int
     processed_by_drained: int
@@ -56,6 +57,20 @@ def _legacy_ledger_match(capture: Path, ledger: str) -> bool:
     return any(url in ledger for url in URL_RE.findall(body))
 
 
+def _capture_sources(resolved: Path, saved: Path) -> list[Path]:
+    """Return every source markdown, including sources already moved to saved."""
+    sources: dict[str, Path] = {}
+    for directory in (resolved, saved):
+        if not directory.exists():
+            continue
+        for path in sorted(directory.glob("*.md")):
+            name = path.name
+            if name.startswith(".") or name == "ledger.md" or name.endswith(".analysis.md"):
+                continue
+            sources.setdefault(path.stem, path)
+    return [sources[stem] for stem in sorted(sources)]
+
+
 def inspect(root: Path | None = None) -> CaptureState:
     alexandria = root or _alexandria_home()
     resolved = alexandria / "files/vault/_input"
@@ -66,20 +81,21 @@ def inspect(root: Path | None = None) -> CaptureState:
     drained = _drained_stems(saved / ".drained")
 
     pending: list[str] = []
+    pending_paths: list[str] = []
     by_analysis = 0
     by_drained = 0
     by_legacy = 0
-    if resolved.exists():
-        for capture in sorted(resolved.glob("*.md")):
-            stem = capture.stem
-            if (saved / f"{stem}.analysis.md").exists():
-                by_analysis += 1
-            elif stem in drained:
-                by_drained += 1
-            elif _legacy_ledger_match(capture, ledger):
-                by_legacy += 1
-            else:
-                pending.append(stem)
+    for capture in _capture_sources(resolved, saved):
+        stem = capture.stem
+        if (saved / f"{stem}.analysis.md").exists():
+            by_analysis += 1
+        elif stem in drained:
+            by_drained += 1
+        elif _legacy_ledger_match(capture, ledger):
+            by_legacy += 1
+        else:
+            pending.append(stem)
+            pending_paths.append(str(capture.relative_to(alexandria)))
 
     raw = []
     if raw_dir.exists():
@@ -93,6 +109,7 @@ def inspect(root: Path | None = None) -> CaptureState:
         pending_count=len(pending),
         raw_count=len(raw),
         pending=pending,
+        pending_paths=pending_paths,
         raw=raw,
         processed_by_analysis=by_analysis,
         processed_by_drained=by_drained,
