@@ -405,6 +405,18 @@ require factory/canon/methodology.md \
   'methodology still promises control over host-generated link chrome'
 for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/grok-bot.md; do
   require "$opener_skill" \
+    'CAPTURE BACKGROUND — extraction never holds the session hostage.' \
+    "$opener_skill no longer makes capture extraction non-blocking"
+  require "$opener_skill" \
+    'proves background completion but never gates the opener' \
+    "$opener_skill can block the opener on capture completion"
+  require "$opener_skill" \
+    'Author-facing review is always one capture at a time' \
+    "$opener_skill can aggregate away individual capture review"
+  forbid "$opener_skill" \
+    'The opener is forbidden until' \
+    "$opener_skill still forbids the opener while capture work remains"
+  require "$opener_skill" \
     'JOINED OPENER CHECK — every Author, every surface.' \
     "$opener_skill does not check the joined opener at the final output gate"
   require "$opener_skill" \
