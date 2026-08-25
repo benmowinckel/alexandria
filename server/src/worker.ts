@@ -142,6 +142,7 @@ const PUBLIC_RATE_LIMITED_ROUTES = [
   { path: '/auth/github', scope: 'auth', limit: 10 },
   { path: '/auth/github/callback', scope: 'auth-callback', limit: 10 },
   { path: '/check-kin', scope: 'check-kin', limit: 10 },
+  { path: '/account/connect/browser', scope: 'account-connect', limit: 5 },
   { path: '/account/connect/handoff', scope: 'account-connect', limit: 5 },
   { path: '/account/connect/exchange', scope: 'account-connect', limit: 5 },
 ] as const;

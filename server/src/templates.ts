@@ -85,10 +85,10 @@ export async function callbackPageHtml(isReturning: boolean, githubLogin = '', a
   void authorNumber;
   void _kinCompliant;
   const WEBSITE_URL = getWebsiteUrl();
-  // Membership is already complete here. Do not make the person decide how or
-  // where to connect another machine; a connected AI can create that handoff
-  // later, only when asked. The remaining invite uses the same soft paper
-  // treatment as /start, /join, and /invite.
+  // Membership is already complete here. The first action closes the account
+  // loop: it opens a first-party page where this signed-in browser can mint a
+  // one-use paste for the person's own AI. No connection material is embedded
+  // in this HTML. The invite remains the second action.
   // A founding number is assigned server-side but is not the pitch.
   // The invite link now opens /invite — the self-contained referral landing
   // (founder 2026-07-17: a cold recipient dropped on /start had "no idea what
@@ -218,6 +218,7 @@ export async function callbackPageHtml(isReturning: boolean, githubLogin = '', a
 <a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
 <main class="wrap">
   <h1 class="welcome">${isReturning ? `welcome back.` : `welcome to alexandria.`}</h1>
+  <a class="cta-box" href="${WEBSITE_URL}/connect"><span class="cta-copy"><span class="cta-label">connect your ai</span><span class="cta-sep"> &mdash; </span><span class="cta-why">copy the handoff</span></span></a>
   ${inviteUrl
     ? `<button type="button" class="cta-box" onclick="shareInvite(this)"><span class="cta-copy"><span class="cta-label">invite people to alexandria</span><span class="cta-sep"> &mdash; </span><span class="cta-why">share it widely</span></span></button>`
     : ''}

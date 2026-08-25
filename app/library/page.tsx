@@ -125,7 +125,12 @@ export default async function LibraryPage({
             <Link href="/" className="lib-brand">
               alexandria<span className="lib-brand-dot">.</span>
             </Link>
-            {signed_in ? (
+            {signed_in && membership_active ? (
+              <HeaderActions
+                left={<HeaderAction href="/connect">connect ai</HeaderAction>}
+                right={<SignOutLink />}
+              />
+            ) : signed_in ? (
               <SignOutLink />
             ) : (
               <HeaderActions

@@ -774,6 +774,40 @@ export function registerRoutes(app: Hono) {
     return c.json({ token });
   });
 
+  // First-computer handoff. A paid member's signed-in browser is already a
+  // verified account session, so it may mint the same short-lived, one-use
+  // connection paste that an existing connected computer can mint below.
+  // The persistent machine key is still created only after the person's AI
+  // audits factory/connect.md and the person says the exact word `connect`.
+  app.post('/account/connect/browser', async (c) => {
+    c.header('Cache-Control', 'no-store');
+
+    const sessionToken = extractLibrarySessionToken(c);
+    const account = sessionToken ? await findByLibrarySessionToken(sessionToken) : null;
+    if (!account) return c.text('Sign in to Alexandria first.', 401);
+
+    const membership = await resolveMembership(account);
+    if (!membership.available) {
+      return c.text('Membership verification is temporarily unavailable. Try again later.', 503);
+    }
+    if (!membership.active) {
+      return c.text('An active Alexandria membership is required.', 403);
+    }
+    if (await checkAccountRateLimit('browser-connect', account.github_login, 5, 600)) {
+      return c.text('Too many connection requests. Try again in a few minutes.', 429);
+    }
+
+    const accountResult = await getAccountByLogin(account.github_login);
+    if (!accountResult) return c.text('Account not found.', 404);
+
+    const connectionCode = await createAccountConnectCode(accountResult.storeKey);
+    logEvent('account_handoff_created', {
+      github_login: account.github_login,
+      source: 'browser',
+    });
+    return c.text(accountConnectPrompt(connectionCode));
+  });
+
   // Welcome page peek. The signup/billing flows stash the rendered founding-member
   // page under a one-time code (welcomeHandoffUrl) and redirect to the website
   // /welcome, which calls this SERVER-SIDE to fetch the HTML, serve it first-party,

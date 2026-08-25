@@ -45,6 +45,7 @@ assert.match(connectDoc, /Only when no native start skill exists, use the portab
 assert.match(connectDoc, /never claim that typing the plain word `alexandria` invokes a skill/i);
 
 const optional = readFileSync(new URL('../../factory/optional.md', import.meta.url), 'utf8');
+assert.match(optional, /one-use handoff created from the signed-in member page/);
 assert.match(optional, /only when the Author asks to connect one/);
 assert.match(optional, /scripts\/create-account-handoff\.sh/);
 assert.match(optional, /Do not show or explain the one-use code separately/);
@@ -73,10 +74,13 @@ assert.match(cursor, /On yes, immediately open a new chat and invoke `\/a`/);
 assert.match(cursor, /If it cannot open a chat, say exactly: `Open a new chat and invoke \/a\.`/);
 
 const page = await callbackPageHtml(false, 'new-author');
-assert.doesNotMatch(page, /connect your existing loop|paste this into your computer agent|connection code/i);
+assert.match(page, /href="https:\/\/alexandria-library\.com\/connect"/);
+assert.match(page, /connect your ai/);
+assert.doesNotMatch(page, /factory\/connect\.md|Do nothing until I say `connect`|alex_connect_/i);
 const email = welcomeEmailContent('new-author', 'TOKEN').html;
 assert.doesNotMatch(email, /agent that already runs your alexandria loop|nothing changes until you say|connection code/i);
-assert.match(email, /start an Alexandria session in a new chat/);
+assert.match(email, /href="https:\/\/alexandria-library\.com\/connect"/);
+assert.match(email, /connect your ai/);
 assert.doesNotMatch(page + email + paste, /alex_[a-f0-9]{32}/);
 
 console.log('account connect experience: on-demand handoff, exact consent, truthful proof, native active route');

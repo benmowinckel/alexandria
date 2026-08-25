@@ -13,6 +13,15 @@ assert.match(tokenStore, /hashApiKey\(code\)/);
 assert.doesNotMatch(tokenStore, /api_key TEXT|apiKey/);
 
 const routes = readFileSync(new URL('../src/routes.ts', import.meta.url), 'utf8');
+const browserStart = routes.indexOf("app.post('/account/connect/browser'");
+const browserEnd = routes.indexOf('// Welcome page peek', browserStart);
+const browserHandoff = routes.slice(browserStart, browserEnd);
+assert.ok(browserStart > 0 && browserEnd > browserStart);
+assert.ok(browserHandoff.indexOf('findByLibrarySessionToken') < browserHandoff.indexOf('createAccountConnectCode'));
+assert.ok(browserHandoff.indexOf('resolveMembership') < browserHandoff.indexOf('createAccountConnectCode'));
+assert.match(browserHandoff, /accountConnectPrompt\(connectionCode\)/);
+assert.doesNotMatch(browserHandoff, /generateApiKey|api_key/);
+
 const handoffStart = routes.indexOf("app.post('/account/connect/handoff'");
 const handoffEnd = routes.indexOf("app.post('/account/connect/exchange'", handoffStart);
 const handoff = routes.slice(handoffStart, handoffEnd);

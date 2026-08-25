@@ -167,7 +167,7 @@ export function welcomeEmailContent(githubLogin: string, emailToken?: string): {
   void githubLogin;
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
   const body = `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">you&rsquo;re in.</p>
-  <p style="margin: 0 0 0;">start an Alexandria session in a new chat.</p>
+  <p style="margin: 0 0 0;"><a href="${WEBSITE_URL}/connect" style="color: #3d3630; text-decoration: underline; text-underline-offset: 3px;">connect your ai</a>.</p>
 `;
   return { subject: 'welcome to alexandria.', html: emailShell(body, unsubscribeUrl) };
 }

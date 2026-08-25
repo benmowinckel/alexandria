@@ -144,6 +144,15 @@ async function main() {
     };
   });
 
+  await test('First-computer handoff requires a signed-in browser', async () => {
+    const res = await fetch(`${BASE}/account/connect/browser`, { method: 'POST' });
+    return {
+      test: 'First-computer handoff requires a signed-in browser',
+      passed: res.status === 401,
+      details: `HTTP ${res.status}`,
+    };
+  });
+
   await test('Logout is idempotent without a session', async () => {
     const res = await fetch(`${BASE}/auth/logout`, { method: 'POST' });
     const body = await safeJson(res);

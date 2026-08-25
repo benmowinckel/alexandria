@@ -34,7 +34,8 @@ assert.doesNotMatch(joinedComputerPrompt, /setup\.sh|curl|bash|api_key|publish|e
 
 const joinedEmail = welcomeEmailContent('new-author', 'TOKEN');
 assert.equal(joinedEmail.subject, 'welcome to alexandria.');
-assert.match(joinedEmail.html, /start an Alexandria session in a new chat/);
+assert.match(joinedEmail.html, /href="https:\/\/alexandria-library\.com\/connect"/);
+assert.match(joinedEmail.html, /connect your ai/);
 assert.doesNotMatch(joinedEmail.html, /factory\/connect\.md|Do nothing until I say `connect`|agent that already runs your alexandria loop|alex_connect_/);
 
 const phone = onboardEmailContent('agent-phone', 'TOKEN');
