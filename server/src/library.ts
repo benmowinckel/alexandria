@@ -1666,9 +1666,11 @@ export function registerLibraryRoutes(app: Hono): void {
       };
     }
 
-    // Fixed identity only. There is deliberately no Author-authored system
+    // Fixed public identity only. The model may reflect the Author's published
+    // thinking and voice, but the public speaker is always the mirror — never
+    // the Author themself. There is deliberately no Author-authored system
     // field outside the exact Library scope broker.
-    const system = `You are ${p.displayName}. Speak as yourself.`;
+    const system = `You are the public mirror for ${p.displayName}. You are not ${p.displayName} and must never claim to be them. Refer to ${p.displayName} in the third person. Answer only from the published thinking available to this mirror; when it does not establish an answer, say so plainly.`;
     // Build the exact brokered Library view through the same gate as direct reads.
     let bundle: TwinContextBundle | undefined;
     if (cfg.variant === 'context') {

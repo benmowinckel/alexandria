@@ -46,8 +46,9 @@ const VISIBILITIES: readonly TwinVisibility[] = ['public', 'authors', 'paid', 'i
 /**
  * Fixed tool boundary for the context twin:
  *   • works — the "living page": retrieval over the Author's OWN published
- *     Library content, so the twin can discuss the Author's essays/projects AS
- *     the Author. Default ON — this is what makes the page come alive.
+ *     Library content, so the mirror can discuss the Author's essays/projects
+ *     while remaining explicitly separate from the Author. Default ON — this
+ *     is what makes the page come alive.
  *   • web   — always OFF while Author context is loaded; untrusted web input
  *     belongs in a separate dirty-zone process.
  * The weights twin is hard-forced both-off (no native tool-use). */

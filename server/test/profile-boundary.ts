@@ -54,6 +54,16 @@ assert.match(library, /Object\.entries\(body\.categories \|\| \{\}\)\.slice\(0, 
 assert.match(library, /Object\.entries\(body\.subtitles \|\| \{\}\)\.slice\(0, LIBRARY_MAX_METADATA_ENTRIES\)/);
 assert.match(library, /Object\.entries\(body\.questions \|\| \{\}\)\.slice\(0, LIBRARY_MAX_METADATA_ENTRIES\)/);
 
+const twinQuery = library.slice(
+  library.indexOf('async function runTwinQuery'),
+  library.indexOf("app.post('/library/:author/ask'"),
+);
+assert.match(twinQuery, /You are the public mirror for \$\{p\.displayName\}/);
+assert.match(twinQuery, /must never claim to be them/);
+assert.match(twinQuery, /Refer to \$\{p\.displayName\} in the third person/);
+assert.match(twinQuery, /when it does not establish an answer, say so plainly/);
+assert.doesNotMatch(twinQuery, /You are \$\{p\.displayName\}\. Speak as yourself\./);
+
 const directoryAuthor = library.slice(
   library.indexOf('function directoryAuthor'),
   library.indexOf('function fileAccessUrl'),
