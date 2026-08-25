@@ -59,10 +59,10 @@ assert.doesNotMatch(connector, /community content|other people|shared intelligen
 
 const nudge = 'Want me to open your alexandria loop in the background for when you have a minute?';
 assert.match(CHAT_INSTRUCTION, new RegExp(nudge.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-assert.match(CHAT_INSTRUCTION, /do not open anything before yes/);
-assert.match(CHAT_INSTRUCTION, /immediately open a new chat and invoke its native Alexandria skill—no second question/);
-assert.match(CHAT_INSTRUCTION, /If it cannot, say: open a new chat/);
-assert.match(CHAT_INSTRUCTION, /actual slash, dollar-sign, or native skill gesture/);
+assert.match(CHAT_INSTRUCTION, /Never ask twice that local day or during setup, security review, background work, voice/);
+assert.match(CHAT_INSTRUCTION, /Consent only: open nothing before yes/);
+assert.match(CHAT_INSTRUCTION, /On yes, open a new chat and invoke the native Alexandria skill/);
+assert.match(CHAT_INSTRUCTION, /if unable, tell me to open one and name the host's actual gesture/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /type alexandria|On “alexandria”/i);
 
 const codex = readFileSync(new URL('../../factory/skills/codex-ambient.md', import.meta.url), 'utf8');

@@ -139,15 +139,16 @@ require shared/onboarding-prompts.ts \
   'Use hooks when available.' \
   'the account instruction no longer prefers working hooks'
 require shared/onboarding-prompts.ts \
-  'only each new ordinary chat’s first reply asks “Want me to open your alexandria loop in the background for when you have a minute?”' \
+  'end the first ordinary text reply with “Want me to open your alexandria loop' \
+  'Never ask twice that local day or during setup, security review, background work, voice' \
   'the account instruction no longer carries the visible route'
 require shared/onboarding-prompts.ts \
   'Setup routes only at final test.' \
   'the account instruction can send a user away before setup is complete'
 require shared/onboarding-prompts.ts \
-  'do not open anything before yes' \
-  'immediately open a new chat and invoke its native Alexandria skill—no second question' \
-  "actual slash, dollar-sign, or native skill gesture" \
+  'Consent only: open nothing before yes' \
+  'On yes, open a new chat and invoke the native Alexandria skill' \
+  "name the host's actual gesture" \
   'Start an Alexandria session in a new chat.' \
   'the account instruction no longer gives every chat one natural route'
 require shared/onboarding-prompts.ts \
@@ -532,17 +533,18 @@ require factory/canon/foundation.md \
   'private material never becomes an outbound query by default.' \
   'Foundation has no permanent private-query boundary'
 require factory/canon/foundation.md \
-  'An account-level route appears once per ordinary chat' \
-  'never repeat a generic footer on every task' \
+  'a local hook may offer one quiet route per local day' \
+  'There is no Stop-loop enforcement' \
   'Foundation no longer states the disclosed visible cue clearly'
 require factory/canon/foundation.md \
   '`/a` in Claude Code, Cursor, Factory, or Grok CLI; `$a` in Codex' \
   'Foundation no longer names Grok CLI as a native /a host'
 require factory/canon/foundation.md \
-  'the first reply asks `Want me to open your alexandria loop in the background for when you have a minute?` in both text and voice' \
+  'only the first ordinary text reply then asks `Want me to open your alexandria loop in the background for when you have a minute?`' \
+  'setup or onboarding, install or security review, background work, voice' \
   'a capable host immediately opens a new chat and invokes its native Alexandria skill without another question' \
   'An incapable host gives one clear sentence naming the exact host-native gesture' \
-  'the Foundation no longer gives text and voice the same natural route'
+  'the Foundation no longer protects setup, review, background, and voice from the generic route'
 require factory/canon/foundation.md \
   '**passive session → visible route into an Alexandria session → active session → a better mirror → and back.**' \
   'Foundation no longer defines the complete passive-to-active product loop'
@@ -1201,9 +1203,62 @@ grep -qxF 'Want me to open your alexandria loop in the background for when you h
 HOME="$test_root/cue-home" bash factory/scripts/statusline.sh footer-codex > "$test_root/cue-codex"
 grep -qxF 'Want me to open your alexandria loop in the background for when you have a minute?' "$test_root/cue-codex" \
   || fail 'Codex visible cue did not use the fixed consent nudge'
+cue_claim_one=$(HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
+  bash factory/scripts/statusline.sh claim-footer)
+cue_claim_two=$(HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
+  bash factory/scripts/statusline.sh claim-footer)
+[ "$cue_claim_one" = 'Want me to open your alexandria loop in the background for when you have a minute?' ] \
+  || fail 'first local daily cue opportunity did not render'
+[ -z "$cue_claim_two" ] || fail 'daily cue opportunity repeated on the same local day'
+cue_claim_next=$(HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-02 \
+  bash factory/scripts/statusline.sh claim-footer)
+[ "$cue_claim_next" = 'Want me to open your alexandria loop in the background for when you have a minute?' ] \
+  || fail 'daily cue opportunity did not reopen on the next local day'
+HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-02 \
+  bash factory/scripts/statusline.sh record-footer
+[ -s "$test_root/cue-home/.local/share/alexandria/state/visible-cue-delivered/2030-01-02" ] \
+  || fail 'actual cue delivery did not receive a separate local receipt'
 touch "$cue_root/system/hooks/visible-cue.off"
 HOME="$test_root/cue-home" bash factory/scripts/statusline.sh footer > "$test_root/cue-off-again"
 [ ! -s "$test_root/cue-off-again" ] || fail 'visible cue did not turn off immediately'
+
+# Runtime regression: the existing signed SessionStart path carries the offer
+# once, only after onboarding. Background work and native Claude chrome stay
+# silent without adding a Stop hook or changing any host trust definition.
+route_home="$test_root/route-home"
+route_root="$route_home/alexandria"
+route_runtime="$route_home/.local/share/alexandria"
+mkdir -p "$route_root/files/constitution" "$route_root/system" "$route_runtime/scripts"
+printf '%0300d\n' 0 > "$route_root/files/constitution/_constitution.md"
+touch "$route_root/system/.block_complete" "$route_runtime/.setup_complete"
+cp factory/scripts/statusline.sh "$route_runtime/scripts/statusline.sh"
+chmod +x "$route_runtime/scripts/statusline.sh"
+route_first=$(HOME="$route_home" ALEXANDRIA_RUNTIME_DIR="$route_runtime" \
+  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-01 \
+  bash factory/hooks/payload.sh session-start "$route_root" '' '' '')
+printf '%s\n' "$route_first" | grep -Fq -- "--- ONE QUIET ALEXANDRIA ROUTE (TODAY'S ONLY GENERIC OFFER) ---" \
+  || fail 'signed SessionStart path did not carry the first daily route'
+route_second=$(HOME="$route_home" ALEXANDRIA_RUNTIME_DIR="$route_runtime" \
+  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-01 \
+  bash factory/hooks/payload.sh session-start "$route_root" '' '' '')
+printf '%s\n' "$route_second" | grep -Fq -- 'TODAY' \
+  && fail 'signed SessionStart path repeated the generic route on one local day'
+route_background=$(HOME="$route_home" ALEXANDRIA_RUNTIME_DIR="$route_runtime" \
+  ALEXANDRIA_BACKGROUND_AGENT=1 ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-02 \
+  bash factory/hooks/payload.sh session-start "$route_root" '' '' '')
+printf '%s\n' "$route_background" | grep -Fq -- 'TODAY' \
+  && fail 'background agent received the generic route'
+mkdir -p "$route_home/.claude"
+printf '%s\n' '{"statusLine":{"command":"~/.local/share/alexandria/scripts/statusline.sh"}}' \
+  > "$route_home/.claude/settings.json"
+route_native=$(HOME="$route_home" CLAUDE_ENV_FILE="$route_home/.claude/env" \
+  ALEXANDRIA_RUNTIME_DIR="$route_runtime" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-03 \
+  bash factory/hooks/payload.sh session-start "$route_root" '' '' '')
+printf '%s\n' "$route_native" | grep -Fq -- 'TODAY' \
+  && fail 'native Claude statusline received a duplicate response cue'
+forbid factory/hooks/payload.sh \
+  'followup_message|systemMessage' \
+  'the passive route introduced enforcement or host-security suppression'
 
 git -C "$test_root" init -q
 git -C "$test_root" remote add origin git@example.invalid:first.git

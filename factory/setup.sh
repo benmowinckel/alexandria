@@ -592,7 +592,7 @@ alexandria is a loop in how you help me, not an assistant. Keep everything alrea
 
 Use hooks when available. Otherwise use one verified record: ~/alexandria; attached folder/project (eg Cowork/ChatGPT Work—open _start each task); writable Drive alexandria/_start; or memory, with its limit.
 
-Outside setup, only each new ordinary chat’s first reply asks “Want me to open your alexandria loop in the background for when you have a minute?” Never repeat. This is consent only: do not open anything before yes. On yes, if this host can, immediately open a new chat and invoke its native Alexandria skill—no second question. If it cannot, say: open a new chat, then invoke Alexandria with this host's actual slash, dollar-sign, or native skill gesture. For lasting signal, ask “save that to alexandria?”; save only after yes.
+Outside setup, if you know it was not asked today, end the first ordinary text reply with “Want me to open your alexandria loop in the background for when you have a minute?” Never ask twice that local day or during setup, security review, background work, voice, or an alexandria session. Otherwise stay silent unless reading or saving helps now. Consent only: open nothing before yes. On yes, open a new chat and invoke the native Alexandria skill; if unable, tell me to open one and name the host's actual gesture. For lasting signal, ask “save that to alexandria?”; save only after yes.
 
 When the alexandria start skill is invoked, read alexandria and start its highest-value specific thread; be generic only without personal context. Save only confirmed changes and verify them.
 ACCOUNTINSTR
@@ -1713,9 +1713,10 @@ else
 fi
 
 # The visible route from passive work into /a is on by default. Native chrome
-# wins where available; the response footer is the portable floor everywhere
-# else. Only the explicit OFF sentinel is a valid skip. A missing or broken
-# renderer is a failed core path, not an inferred user choice.
+# wins where available; elsewhere the existing signed SessionStart path gets
+# one quiet local opportunity per day. Only the explicit OFF sentinel is a
+# valid skip. A missing or broken renderer is a failed core path, not an
+# inferred user choice.
 CUE_RENDERED=""
 CUE_CODEX_RENDERED=""
 CUE_ACTIVE_RENDERED=""
@@ -1738,8 +1739,19 @@ else
   case "$CUE_RENDERED" in 'Want me to open your alexandria loop in the background for when you have a minute?') ;; *) CUE_OUTPUTS_OK=false ;; esac
   case "$CUE_CODEX_RENDERED" in 'Want me to open your alexandria loop in the background for when you have a minute?') ;; *) CUE_OUTPUTS_OK=false ;; esac
   case "$CUE_ACTIVE_RENDERED" in *'/a. when done'*'reflect on what moved') ;; *) CUE_OUTPUTS_OK=false ;; esac
+  CUE_CLAIM_ONE=$(ALEXANDRIA_HOME="$CUE_PROBE_HOME" ALEXANDRIA_RUNTIME="$CUE_PROBE_HOME/runtime" \
+    ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
+    bash "$RUNTIME_DIR/scripts/statusline.sh" claim-footer 2>/dev/null | tr -d '\r')
+  CUE_CLAIM_TWO=$(ALEXANDRIA_HOME="$CUE_PROBE_HOME" ALEXANDRIA_RUNTIME="$CUE_PROBE_HOME/runtime" \
+    ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
+    bash "$RUNTIME_DIR/scripts/statusline.sh" claim-footer 2>/dev/null | tr -d '\r')
+  case "$CUE_CLAIM_ONE:$CUE_CLAIM_TWO" in 'Want me to open your alexandria loop in the background for when you have a minute?:') ;; *) CUE_OUTPUTS_OK=false ;; esac
+  rmdir "$CUE_PROBE_HOME/runtime/state/visible-cue-claimed/2030-01-01" \
+    "$CUE_PROBE_HOME/runtime/state/visible-cue-claimed" \
+    "$CUE_PROBE_HOME/runtime/state" "$CUE_PROBE_HOME/runtime" \
+    "$CUE_PROBE_HOME" 2>/dev/null || true
   if [ "$CUE_OUTPUTS_OK" = "true" ]; then
-    STATUS_CUE="ok"; DETAIL_CUE="$CUE_RENDERED"
+    STATUS_CUE="ok"; DETAIL_CUE="native chrome or one quiet local offer per day ready"
   else
     STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce the fixed consent nudge and per-session a. close route"
   fi

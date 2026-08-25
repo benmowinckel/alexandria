@@ -266,6 +266,15 @@ elif [ "$MODE" = "codex-session-end" ]; then
   timestamp=$(date +%Y-%m-%d_%H-%M-%S)
 
   if [ -n "$tp" ] && safe_transcript_path "$tp"; then
+    cue_renderer="$RUNTIME_DIR/scripts/statusline.sh"
+    if [ -x "$cue_renderer" ]; then
+      cue=$(ALEXANDRIA_HOME="$ALEX_DIR" ALEXANDRIA_RUNTIME="$RUNTIME_DIR" \
+        bash "$cue_renderer" footer 2>/dev/null | tr -d '\r')
+      if [ -n "$cue" ] && grep -Fq "$cue" "$tp" 2>/dev/null; then
+        ALEXANDRIA_HOME="$ALEX_DIR" ALEXANDRIA_RUNTIME="$RUNTIME_DIR" \
+          bash "$cue_renderer" record-footer >/dev/null 2>&1 || true
+      fi
+    fi
     mkdir -p "$ALEX_DIR/files/vault" 2>/dev/null
     cp "$tp" "$ALEX_DIR/files/vault/${timestamp}_codex_${sid}.jsonl" 2>/dev/null || true
   fi

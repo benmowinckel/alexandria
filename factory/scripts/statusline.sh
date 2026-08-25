@@ -1,14 +1,18 @@
 #!/bin/bash
 # Alexandria's visible cue renderer.
 #
-# `statusline` is the persistent native-terminal ceiling. `footer` and
-# `footer-codex` are the one-time portable consent nudge; host instructions
-# decide when it is earned and how a yes invokes the real native skill.
-# This script only reads local state and prints one line: it never opens a tab,
-# starts a session, writes canon, or calls the network.
+# `statusline` is the persistent native-terminal ceiling. `footer` is the pure
+# portable consent line. `claim-footer` atomically gives one local harness the
+# day's single opportunity to use it; `record-footer` records that the user
+# actually saw it. The only writes are tiny date-named receipts under this
+# product-owned runtime. The footer/claim/record modes never open a tab, start
+# a session, read private source, or call the network; native statusline mode
+# reads only its already-approved local state.
 
 A="${ALEXANDRIA_HOME:-$HOME/alexandria}"
 MODE="${1:-statusline}"
+RUNTIME_DIR="${ALEXANDRIA_RUNTIME:-$HOME/.local/share/alexandria}"
+CUE='Want me to open your alexandria loop in the background for when you have a minute?'
 
 # Automatic renderers stay inert unless the protected runtime completed setup.
 # Setup may probe this read-only renderer before it creates the final activation
@@ -19,6 +23,37 @@ fi
 
 # The cue is visible by default. One local sentinel is the immediate OFF.
 [ -f "$A/system/hooks/visible-cue.off" ] && exit 0
+
+local_day=$(date +%Y-%m-%d)
+if [ "${ALEXANDRIA_SETUP_PROBE:-}" = "1" ] && [ -n "${ALEXANDRIA_LOCAL_DATE:-}" ]; then
+  case "$ALEXANDRIA_LOCAL_DATE" in
+    ????-??-??) local_day="$ALEXANDRIA_LOCAL_DATE" ;;
+  esac
+fi
+
+if [ "$MODE" = "claim-footer" ]; then
+  # mkdir is the cross-process lock: ten tabs opened together still produce
+  # one opportunity. Keep only today's empty receipt; rmdir cannot remove
+  # anything containing user data even if the path were unexpectedly reused.
+  umask 077
+  claim_root="$RUNTIME_DIR/state/visible-cue-claimed"
+  mkdir -p "$claim_root" 2>/dev/null || exit 0
+  mkdir "$claim_root/$local_day" 2>/dev/null || exit 0
+  for old_claim in "$claim_root"/*; do
+    [ -d "$old_claim" ] || continue
+    [ "$old_claim" = "$claim_root/$local_day" ] || rmdir "$old_claim" 2>/dev/null || true
+  done
+  printf '%s\n' "$CUE"
+  exit 0
+fi
+
+if [ "$MODE" = "record-footer" ]; then
+  umask 077
+  delivered_root="$RUNTIME_DIR/state/visible-cue-delivered"
+  mkdir -p "$delivered_root" 2>/dev/null || exit 0
+  printf '%s\n' "$(date +%s)" > "$delivered_root/$local_day" 2>/dev/null || true
+  exit 0
+fi
 
 if [ "$MODE" = "active" ]; then
   printf '%s\n' '→ close with a. when done'
@@ -44,7 +79,7 @@ if [ "$MODE" = "statusline" ]; then
 fi
 
 if [ "$MODE" = "footer-codex" ] || [ "$MODE" = "footer" ]; then
-  printf '%s\n' 'Want me to open your alexandria loop in the background for when you have a minute?'
+  printf '%s\n' "$CUE"
   exit 0
 fi
 CTA='start /a in a new tab'
@@ -56,8 +91,7 @@ count_lines() {
 
 n_captures=0
 n_raw=0
-runtime_dir="${ALEXANDRIA_RUNTIME:-$HOME/.local/share/alexandria}"
-capture_state="$runtime_dir/scripts/capture_state.py"
+capture_state="$RUNTIME_DIR/scripts/capture_state.py"
 if [ -f "$capture_state" ]; then
   IFS=$'\t' read -r n_captures n_raw < <(
     ALEXANDRIA_HOME="$A" python3 "$capture_state" --counts 2>/dev/null

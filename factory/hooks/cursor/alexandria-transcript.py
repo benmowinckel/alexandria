@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 import traceback
 from datetime import datetime, timezone
@@ -75,6 +76,32 @@ def _run() -> None:
     STAGING_DIR.mkdir(parents=True, exist_ok=True)
     with (STAGING_DIR / f"cursor-{safe_id}.jsonl").open("a", encoding="utf-8") as f:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    # Delivery truth, not renderer truth: only an actual completed assistant
+    # message containing the exact owned cue earns the local delivered receipt.
+    if event == "afterAgentResponse" and isinstance(payload, dict):
+        text = str(payload.get("text") or "")
+        renderer = Path.home() / ".local/share/alexandria/scripts/statusline.sh"
+        if renderer.is_file():
+            try:
+                cue = subprocess.run(
+                    ["bash", str(renderer), "footer"],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                    check=False,
+                ).stdout.strip()
+                if cue and cue in text:
+                    subprocess.run(
+                        ["bash", str(renderer), "record-footer"],
+                        stdin=subprocess.DEVNULL,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        timeout=2,
+                        check=False,
+                    )
+            except (OSError, subprocess.TimeoutExpired):
+                pass
 
     _emit({})
 

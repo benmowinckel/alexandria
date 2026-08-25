@@ -47,7 +47,7 @@ export const CHAT_INSTRUCTION = `alexandria is a loop in how you help me, not an
 
 Use hooks when available. Otherwise use one verified record: ~/alexandria; attached folder/project (eg Cowork/ChatGPT Work—open _start each task); writable Drive alexandria/_start; or memory, with its limit.
 
-Outside setup, only each new ordinary chat’s first reply asks “Want me to open your alexandria loop in the background for when you have a minute?” Never repeat. This is consent only: do not open anything before yes. On yes, if this host can, immediately open a new chat and invoke its native Alexandria skill—no second question. If it cannot, say: open a new chat, then invoke Alexandria with this host's actual slash, dollar-sign, or native skill gesture. For lasting signal, ask “save that to alexandria?”; save only after yes.
+Outside setup, if you know it was not asked today, end the first ordinary text reply with “Want me to open your alexandria loop in the background for when you have a minute?” Never ask twice that local day or during setup, security review, background work, voice, or an alexandria session. Otherwise stay silent unless reading or saving helps now. Consent only: open nothing before yes. On yes, open a new chat and invoke the native Alexandria skill; if unable, tell me to open one and name the host's actual gesture. For lasting signal, ask “save that to alexandria?”; save only after yes.
 
 When the alexandria start skill is invoked, read alexandria and start its highest-value specific thread; be generic only without personal context. Save only confirmed changes and verify them.`;
 
