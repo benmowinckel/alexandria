@@ -14,9 +14,9 @@
 2. *Companies that survive are the ones where every model release amplifies the asset rather than absorbing it.*
 3. *Alexandria's asset is a private, accumulating, machine-readable record of how a specific person thinks — sovereign to the user, unsynthesizable from outside, compounding across years that cannot be back-filled.*
 4. *The strategic prize is the canonical write path and permission layer for those records — the convention slot, shape of WordPress, GitHub, Hugging Face. Winner-takes-most.*
-5. *Technical risk is zero. Survival risk is zero. The only existential question is demand. That is the only thing capital is for.*
+5. *Coding throughput is not the constraint. Benjamin has personal runway through the end of 2026; distribution is the current constraint, and capital is needed before runway ends.*
 
-**Capital does not keep this company alive.** It runs on ~$100/month and the founder builds regardless. *Capital accelerates the demand experiment, network density, and the first public referee for the category.* The best investor is not the largest cheque — *it is the one whose conviction creates the most leverage.*
+**Company infrastructure is cheap, and Benjamin has personal runway through the end of 2026.** Investor routes are prepared now while he is still in San Francisco; conversations fire after two outside users complete setup and a first session without founder repair. *That proof lets the eventual round be set from evidence rather than pressure. Capital can fund the chosen 2027 runway, accelerate a distribution motion that works, and add the first public referee for the category. More model usage comes before bounded specialist engineering.*
 
 ---
 
@@ -26,7 +26,7 @@ A structured, machine-readable record of who each user is — whatever they choo
 
 *The record cannot be back-filled.* Inbox-scraping reaches what the user does, never what they mean. Five years of capture cannot be compressed into a six-month rush. **The compounding is the years.**
 
-Engineering is done. *One paste, local files on the user's own machine, two integration points fire whenever the user talks to an AI — capture and inject. The tool is free; membership is $30/month after a 30-day trial, or free while three referred friends remain active.* The only open question is whether enough people want it.
+The product reached v3; real-user hardening begins now. *One paste, local files on the user's own machine, two integration points fire whenever the user talks to an AI — capture and inject. The tool is free; membership is $30/month after a 30-day trial, or free while three referred friends remain active.* The live questions are who starts, returns and pays, and what breaks when they do.
 
 ---
 
@@ -104,9 +104,9 @@ At pre-seed, the moat is the founder. **The cheque is on the person.**
 
 **Benjamin a. Mowinckel.** Norwegian-American, 26. Eton, Princeton, Norwegian military, brief stint at Verdane. Currently in San Francisco.
 
-*No technical credentials. No previous ventures.* The pitch rests on those credentials being irrelevant — *and on the company being the proof.* **Solo, running the entire stack on AI agents at $100/month opex, full-time since March 2026.** Two months from zero to engineering-done.
+*No conventional technical credentials. No previous ventures.* The company is the proof: **he directed the entire stack with coding agents, reached v3, and began external manual onboarding on 24 August 2026.**
 
-The hard part is not technical. *A capable team with AI could rebuild the stack in a week.* **Most AI founders solve engineering problems. Benjamin solves the framing problem.**
+**Benjamin's irreducible edge is the framing and philosophy.** Coding is cheap, and he expects to remain the technical owner through coding agents. If faster scale exposes a specific reliability, security, or hardening problem, he can spend more on model usage or hire a paid one-off or part-time specialist.
 
 | | $/m |
 |---|---:|
@@ -114,7 +114,7 @@ The hard part is not technical. *A capable team with AI could rebuild the stack 
 | Founder bare minimum | $500 |
 | Founder safe monthly | $5,000 |
 
-**He cannot be price-pressured. He cannot be runway-rushed.** *The floor of this investment is structural — he will be working on this in five years, regardless.*
+**The company costs little to operate, and Benjamin has personal runway through the end of 2026.** *Investor conversations start after two clean outside-user transfers; the eventual amount is set from the desired 2027 runway, first-user evidence, and any distribution motion that earns funding.*
 
 Princeton cohort, all under 27, frontier of their fields: *the founder of the RL company Anthropic uses for computer-use agents; one of the youngest macro pod leaders at Millennium; a Bain Capital associate; an Oxford PhD with the Larry Ellison Institute; the head of the Norway branch of a US defence company; a US Army Ranger candidate.* **The thinking happens inside this conversation.**
 
@@ -124,11 +124,11 @@ In his own words: *"I could be wrong. I doubt it. The company costs $100 a month
 
 ## what could go wrong.
 
-**Demand untested at scale.** Acknowledged. *The only open question. The only thing capital is for. Rung 1 directly answers it.*
+**Demand untested at scale.** Acknowledged. *The first users answer it while also exposing the real reliability work. The bridge buys enough founder time to run that experiment properly; larger capital scales only what the experiment proves.*
 
 **Convention slot taken first.** Real risk. *A better-funded entrant could land "host your mind on X" before us.* Mitigated by move-as-if-12, public artifacts shipping continuously, and founding-cohort velocity. **Not eliminated — that's why the 12-month window is a strategic constraint, not a stylistic one.**
 
-**Pain not acutely felt.** *Frame imposition required before conversion.* Once the record compounds, leaving feels like loss. **The acquisition problem is not "convince someone this matters." It is "make not-trying feel irrational."**
+**TAM does not answer adoption.** *Depending on the category boundary, the theoretical market can be everyone:* the individual tool combines personal context, memory and cognitive development, and the collective can in principle appeal broadly too. But universality does not prove that people will start, stay, pay or join. The costs are small but real — five minutes, attention and the articulation the mental gym requires. The company has to measure those choices directly. Once the record compounds, leaving feels like loss. **The acquisition problem is making the bet legible and testing behaviour, not arguing from a TAM slide.**
 
 **Capture bottleneck.** *Most users have no digital interior.* The daily session is itself the capture mechanism. *Capture infrastructure shipped — desktop + iOS one-tap.*
 
@@ -140,15 +140,7 @@ In his own words: *"I could be wrong. I doubt it. The company costs $100 a month
 
 ## the ask.
 
-Three rungs. *Investor chooses where to enter. No fixed round size.*
-
-**Rung 1 — ~$100K.** *Buffers the founder in SF for ~20 months while the demand experiment runs.* If it works, the existential questions are answered. **If it fails, the loss is less than a bad pre-seed bet on an AI wrapper whose terminal value evaporates with the next model.**
-
-**Rung 2 — ~$200–500K.** *Scales what works. First 1,000 users. SF presence at scale.*
-
-**Rung 3 — ~$1M+.** *Platform pilot for AI labs. First public referee on the cap table.*
-
-**The company does not need the money.** *The founder builds regardless.* Capital accelerates the only experiment that matters.
+**A small round before the end of 2026.** *Set the exact amount from the desired 2027 runway and first-user evidence.* Capital funds runway and proven distribution. Engineering stays founder-led; model spend comes before bounded specialist help.
 
 ---
 

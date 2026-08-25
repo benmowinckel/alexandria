@@ -8,7 +8,7 @@
 
 ## the investment.
 
-Most AI products are transition assets — value decays into the model with each release. Alexandria's asset is a **private, accumulating, machine-readable record of how a specific person thinks** — sovereign to the user, unsynthesizable from outside, *worth more from every better model.* The strategic prize is the canonical write path for those records: same shape as WordPress, GitHub, Hugging Face. Winner-takes-most. Technical and survival risks are zero. **The only existential question is demand. That is the only thing capital is for.**
+Most AI products are transition assets — value decays into the model with each release. Alexandria's asset is a **private, accumulating, machine-readable record of how a specific person thinks** — sovereign to the user, unsynthesizable from outside, *worth more from every better model.* The strategic prize is the canonical write path for those records: same shape as WordPress, GitHub, Hugging Face. Winner-takes-most. Coding throughput is not the constraint. **Benjamin has personal runway through the end of 2026; distribution is the current constraint, and capital is needed before runway ends.** Engineering remains founder-led through coding agents, with more model usage or a bounded specialist engagement only if scale earns it.
 
 *In April 2026 Andrej Karpathy publicly described this architecture — raw data compiled into structured markdown, incrementally enhanced, queries that compound back into the knowledge base — and said "there is room here for an incredible new product."* **Alexandria had already shipped it.**
 
@@ -18,7 +18,7 @@ Most AI products are transition assets — value decays into the model with each
 
 A structured record of who each user is — whatever they choose to put in it: worldview, values, mental models, taste, personal thoughts, decisions, blind spots, anything. **The product is the framework; the practice is theirs** (daily Socratic sessions, journals, decision logs, any system works). Local files the user owns. Portable across every AI provider. *The record cannot be back-filled: inbox-scraping reaches what the user does, never what they mean.* **The compounding is the years.**
 
-*Engineering is done. One paste. The tool is free and yours; membership is $30/month after a 30-day trial, or free while three referred friends remain active.* The only open question is whether enough people want it.
+*The product reached v3; real-user hardening begins now. One paste. The tool is free and yours; membership is $30/month after a 30-day trial, or free while three referred friends remain active.* The live questions are who starts, stays and pays, and what breaks when they do.
 
 ---
 
@@ -50,7 +50,7 @@ A structured record of who each user is — whatever they choose to put in it: w
 
 ## the founder.
 
-**Benjamin a. Mowinckel.** 26, Norwegian-American. Eton, Princeton, Norwegian military, brief stint at Verdane. Currently in San Francisco. **Solo, running the entire stack on AI agents at $100/month opex, full-time since March 2026.** Two months from zero to engineering-done.
+**Benjamin a. Mowinckel.** 26, Norwegian-American. Eton, Princeton, Norwegian military, brief stint at Verdane. Currently in San Francisco. **Solo, running the entire stack on AI agents at $100/month opex, full-time since March 2026.** He reached v3 and began external manual onboarding on 24 August 2026.
 
 | | $/m |
 |---|---:|
@@ -58,17 +58,16 @@ A structured record of who each user is — whatever they choose to put in it: w
 | Founder bare minimum | $500 |
 | Founder safe monthly | $5,000 |
 
-**He cannot be price-pressured. He cannot be runway-rushed.** *Most AI founders solve engineering problems. Benjamin solves the framing problem.*
+**Benjamin has personal runway through the end of 2026.** *Investor routes fire after two clean outside-user transfers; the round then funds the chosen 2027 runway and proven distribution.*
 
 *"I could be wrong. I doubt it. The company costs $100 a month. If I am wrong, the world loses nothing. If I am right and nobody builds this, the world loses something it did not know it needed. Either way, I am building it."*
 
 ## the ask.
 
-- **Rung 1 — ~$100K.** Buffers SF for ~20 months while the demand experiment runs.
-- **Rung 2 — ~$200–500K.** Scales what works. First 1,000 users.
-- **Rung 3 — ~$1M+.** Platform pilot for AI labs. First public referee on the cap table.
+- **A small round before the end of 2026.** Set the exact amount from the desired 2027 runway, first-user evidence, and any distribution motion that earns funding.
+- **Engineering remains founder-led.** More model usage comes first; use a paid one-off or part-time specialist only for a bounded problem that survives it.
 
-**Capital accelerates the demand experiment — the company does not need the money. The founder builds regardless.**
+**The company needs relatively little money, and the founder is starting before runway pressure.**
 
 *The firm whose name attaches goes on the page about how humans preserved thinking through the AI transition.* **America protects the right to think. Alexandria protects the ability.** *Set the angels free.*
 
