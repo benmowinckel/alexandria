@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { SERVER_URL, FOUNDER_EMAIL, FOUNDER_PROFILE_PATH } from '../lib/config';
+import { SERVER_URL, FOUNDER_EMAIL } from '../lib/config';
 import { checkReferral, parseReferralInput } from '../lib/referral';
 import { ArrowIcon, TickIcon } from './DoorIcons';
 
@@ -80,31 +79,31 @@ export default function JoinCTA({
   return (
     <>
       <section className="join-section">
-        <h1 className="join-hero">Your mind gets better with other minds.</h1>
+        <h1 className="join-title">join the community.</h1>
 
         <div className="join-argument">
-          <div className="join-move">
-            <p className="join-claim">You became yourself through other people.</p>
+          <section className="join-move">
+            <h2 className="join-claim">other minds.</h2>
             <p>
-              Nearly every thought you think is yours actually came from someone else. Something you read that another person wrote, a friend you talked to, a teacher who taught you. A loop that only ever talks to itself is insular. So we built the town square that gathers people, and lets you take the extra the collective can give that no one can make alone.
+              Your ai can understand you deeply, but you did not become yourself alone. The friends you trust, the work you read, and the ideas you follow are part of who you are. The community gives them all a place your ai can understand too, beyond what it could learn from your private files alone.
             </p>
-          </div>
-          <div className="join-move">
-            <p className="join-claim">What you join is the public version of yourself.</p>
+          </section>
+          <section className="join-move">
+            <h2 className="join-claim">the community.</h2>
             <p>
-              Your private map stays private. A public derivative of it is how you walk into that square and work with the others who made the same choice. The deep, sovereign, unified private map is what lets you build a deep, sovereign, unified map of your public self. The <Link href={FOUNDER_PROFILE_PATH}>founder&apos;s page</Link> is exactly that, one alexandria profile hung on the scattered networks you already live in, pointing at the ground truth of your public image. It pulls what is already out there into one profile you own, makes a home for the work that never had one, and gives the whole thing a depth it could not have any other way, because the public version of the private map is what ties it together.
+              Members can share a public version of themselves containing only what they choose. Your ai can then understand your friends, discover other people&apos;s work and methods, and bring context from the people around you into your own life, while everyone&apos;s private files remain completely theirs.
             </p>
-          </div>
-          <div className="join-move">
-            <p className="join-claim">That is when other minds enter the work.</p>
+          </section>
+          <section className="join-move">
+            <h2 className="join-claim">build together.</h2>
             <p>
-              The vertical gathering meets the horizontal one. You connect with the others in the community, who have put their ideas outside their own heads, and the methods they use to build their loops. In the Library you sit beside them. In the marketplace you can take a method that already works, and one day put one of yours in someone else&apos;s hands. You keep refining yourself, not alone, but through other people, and with them.
+              Alexandria is new, so this is the smallest the network will ever be. Its value starts with the friends you already think, learn, and live with. Each person makes every connected loop more useful, and together the first members build something no one could build alone, for everyone who joins after us.
             </p>
-          </div>
+          </section>
         </div>
 
         <p className="join-close">
-          Bring three friends, and membership is free while they remain active. Otherwise, the first 30 days are free, then it is $30 a month until you cancel. Your loop stays yours if you leave. Try it for a month, see what it actually does for you, and then decide whether it is worth keeping.
+          Try it free for a month. Bring three active friends and it stays free. Otherwise, it is a dollar a day. If that is too much and you have not found three friends, <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>message me</a> and I will waive it. I just want you to try it.
         </p>
         {billingStatus && (
           <p className="join-billing-note" role="status">
@@ -114,7 +113,7 @@ export default function JoinCTA({
           </p>
         )}
         <a className="door-btn act-box act-primary" href={joinUrl}>
-          join the collective<span className="act-why">{'\u00a0'}— start with github</span>
+          join the community<span className="act-why">{'\u00a0'}— start with github</span>
         </a>
 
         <div className="join-referral">
@@ -181,13 +180,6 @@ export default function JoinCTA({
           )}
         </div>
 
-        <footer className="join-fineprint">
-          <Link href="/terms">terms</Link>
-          <span aria-hidden="true">·</span>
-          <Link href="/privacy">privacy</Link>
-          <span aria-hidden="true">·</span>
-          <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>cost genuinely stopping you? email me</a>
-        </footer>
       </section>
     </>
   );
