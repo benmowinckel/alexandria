@@ -161,14 +161,8 @@ const THEMES: Theme[] = [
 // action page: open-in-claude-code + copy-command on desktop, shortcut +
 // email on mobile). One scalable door — new agents, deep links, and flows
 // land on /start without ever touching this button again.
-// Label history: "join the tribe" → "try it free" (07-09) → "join the
-// tribe" (07-13) → "take it — it's free" (2026-07-15) → "free sample"
-// (2026-07-16) → "close your loop" (07-27) → "try it free" (07-28:
-// loop labels were opaque on the skim path) → "start your loop"
-// (2026-08-02, founder killed "try it free"): the objection is gone —
-// the first section lead now defines the loop one inch above the
-// button, and the close line directly over it says free + five
-// minutes, so the label can name the concept and the beginning.
+// The homepage action names the start of the practice; /start handles the
+// literal agent-or-chat choice and copies the matching prompt.
 function HomeInstall() {
   return (
     <div className="cta-block">
@@ -1082,53 +1076,52 @@ export default function LandingPage() {
 
           <div className="right-col">
               <div className="right-lower">
-                {/* THE LETTER (2026-07-12 restructure, founder-directed):
-                    the hook — "to the reader" + the calculator opening —
-                    moved to the FRONT slide (.front-epigraph). Here the
-                    whole argument (i–v) scrolls elegantly in one box; the
-                    two closing sections (how to start + the door) stay
-                    pinned below with the CTAs. Copy consolidated this
-                    pass — same ideas and richness, fewer words. Section
-                    plates (roman numerals) carry the manuscript register. */}
-                {/* The pitch — three sections: problem → triad → loop
-                    gift + merge, with the community line as a soft
-                    second breath inside section three (keeps the count
-                    at three; nowrap holds the em-dash parenthetical). */}
+                {/* The loop is a simple idea; the founder blueprint
+                    helps the person's own ai build it; the included skill
+                    is used on demand to draw out thoughts. */}
                 <div className="pitch pitch-simple">
-                  <p className="pitch-simple-prose">
-                    The better your ai knows you, the better it helps you. Every
-                    native ai memory is a partial version of that{'\u00a0'}—
-                    shallow, locked inside one product, and scattered across
-                    the tools you use, so no single ai sees the
-                    whole. The optimal structure is your ai continually reading
-                    and writing a living map of what you think and how you
-                    think, built from passive signal and active reflection.
-                  </p>
-                  <p className="pitch-simple-prose">
-                    The map is deeper, sovereign, and unified. Deeper, so talking
-                    stops feeling like talking to a stranger{'\u00a0'}— your ai
-                    helps you far better, and develops your thinking instead of
-                    only answering. Sovereign, so it lives in private files you
-                    own: take it with you, or delete it{'\u00a0'}— no company
-                    locks you in. Unified, so every ai reads the same you, not a
-                    different you in each app.
-                  </p>
-                  <p className="pitch-simple-prose">
-                    We call that an alexandria loop{'\u00a0'}— an idea, not
-                    software: a free, open method for working with your own ai.
-                    The button gives your ai the instructions, with the
-                    founder&apos;s complete loop as a reference. It keeps what
-                    already works, adds what is missing, and builds yours. You
-                    get a complete starting point without starting over. Your
-                    ai runs the loop itself; nothing new sits between you and
-                    your ai.
-                  </p>
+                  <section className="pitch-simple-section">
+                    <h3 className="pitch-simple-title">the idea.</h3>
+                    <div className="pitch-simple-copy">
+                      <p className="pitch-simple-prose">
+                        An alexandria loop is a simple idea for making your ai personal. Your
+                        ais read and improve the same personal data files—files you own—so
+                        every ai knows you deeply, instead of each knowing a shallow part of
+                        you inside an app you do not control and losing it when you switch tools or ais.
+                      </p>
+                    </div>
+                  </section>
+                  <section className="pitch-simple-section">
+                    <h3 className="pitch-simple-title">the blueprint.</h3>
+                    <div className="pitch-simple-copy">
+                      <p className="pitch-simple-prose">
+                        Our founder used his alexandria loop to build his personal data files,
+                        then shared the blueprint for free so anyone can create a loop of their
+                        own. Show it to your ai and shape yours together around the memories,
+                        tools, and systems you already use; your ai will keep those files
+                        current as you use them.
+                      </p>
+                    </div>
+                  </section>
+                  <section className="pitch-simple-section">
+                    <h3 className="pitch-simple-title">the practice.</h3>
+                    <div className="pitch-simple-copy">
+                      <p className="pitch-simple-prose">
+                        The blueprint includes the alexandria skill for what no tool can
+                        know without you—your thoughts. They stay inside your head until you
+                        choose to say them. Start the skill whenever you want your own ai to
+                        ask questions, think with you, and turn them into a deeper
+                        understanding of you.
+                      </p>
+                    </div>
+                  </section>
                 </div>
 
                 <div className="pitch-rule" aria-hidden />
+
                 <p className="pitch-close">
-                  Press the button{'\u00a0'}— show your ai the instructions and
-                  decide together.
+                  Press “start your loop” to get the blueprint, then show it to your
+                  ai and decide together what to include.
                 </p>
 
                 <div className="cta-pair">
@@ -1141,7 +1134,7 @@ export default function LandingPage() {
                         founder: the old label hid the interactive ask —
                         you can literally ask anything there; the
                         pronoun seam was accepted 07-29, "leave it").
-                        Pairs 3-and-3 with "start your loop". */}
+                        Pairs with "start your loop". */}
                     <Link href="/plainly" className="lr-cta lr-cta-ghost">
                       ask us anything
                     </Link>

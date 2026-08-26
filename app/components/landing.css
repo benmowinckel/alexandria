@@ -1654,20 +1654,44 @@
           margin: 0;
         }
         .pitch-simple {
-          gap: 1.15em;
+          display: flex;
+          flex-direction: column;
           justify-content: center;
+          gap: 34px;
+        }
+        .pitch-simple-section {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+        }
+        .pitch-simple-title {
+          margin: 0;
+          font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
+          font-style: italic;
+          font-size: 28px;
+          font-weight: 400;
+          line-height: 1.08;
+          letter-spacing: -0.012em;
+          color: var(--theme-fg);
+          text-wrap: balance;
+        }
+        .pitch-simple-copy {
+          display: flex;
+          flex-direction: column;
+          gap: 13px;
         }
         .pitch-simple-prose {
           margin: 0;
-          max-width: 620px;
           font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
-          font-style: italic;
-          font-size: 20.5px;
-          line-height: 1.55;
-          letter-spacing: 0.002em;
+          font-size: 17.5px;
+          line-height: 1.48;
+          letter-spacing: 0.004em;
           font-feature-settings: 'liga', 'dlig';
           color: var(--theme-fg);
           text-wrap: pretty;
+          text-align: justify;
+          text-align-last: left;
         }
         .pitch-nowrap {
           white-space: nowrap;
@@ -1802,7 +1826,7 @@
           line-height: 1.55;
           letter-spacing: 0.002em;
           color: var(--theme-fg-muted);
-          max-width: 560px;
+          max-width: 640px;
           text-wrap: pretty;
         }
         /* Air between the close and the buttons. */
@@ -3013,11 +3037,23 @@
             gap: 28px;
           }
           .pitch-simple {
-            gap: 1.1em;
+            display: flex;
+            gap: 42px;
+          }
+          .pitch-simple-title {
+            font-size: clamp(26px, 7vw, 30px);
+          }
+          .pitch-simple-section {
+            gap: 14px;
+          }
+          .pitch-simple-copy {
+            gap: 12px;
           }
           .pitch-simple-prose {
-            font-size: clamp(18px, 4.6vw, 20px);
-            line-height: 1.5;
+            font-size: clamp(17.5px, 4.45vw, 19px);
+            line-height: 1.48;
+            text-align: left;
+            text-align-last: auto;
           }
           .pitch-item {
             padding: 0;
