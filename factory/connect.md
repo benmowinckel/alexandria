@@ -43,18 +43,21 @@ Inspect the actual operating system and whether Apple Shortcuts and iCloud Drive
 - On an unsupported setup, say plainly that Apple phone capture is unavailable here and continue. Do not offer a technical workaround or make it a blocker.
 - If they decline, record the decline as `no` in `~/alexandria/system/.shortcut_decision` and continue. Do not ask again during this handoff.
 
-### 2. Their main other ai
+### 2. Their other AIs — legacy completion only
 
-Ask exactly `which other ai app do you use most?` Do not ask for a list. If they do not use another one, continue.
+If `~/alexandria/system/.other_ai_instructions` exists, the initial private setup already completed this step. Read only that marker, say which apps were confirmed, and continue without asking again.
 
-For the one app they name:
+For an older healthy install without the marker, complete the missing step now. Ask exactly `which other ai do you use most?` Do not ask for a list. If they use none, write `none` to the marker and continue.
 
-1. Open `~/alexandria/system/.account-instructions.md` and show the exact additive instructions.
-2. Give one direct path to that app's durable account or project instructions. Known paths: ChatGPT `settings → personalization → custom instructions`; Claude `settings → general → instructions for claude`; Gemini `settings → personal context → your instructions for gemini`.
-3. Tell them to keep everything already there. If the temporary phone-anchor line is present, replace only that line with the full Alexandria instructions; otherwise paste the full instructions below the existing ones.
-4. Wait for them to say it is saved, then verify the app follows the new instruction. Never claim the cloud setting changed until the person made and verified the edit.
+For each app they name, one at a time:
 
-If the app has working Alexandria hooks, skip the manual instructions. If it has no durable instruction field, say so rather than inventing one. Do not ask about a second app during this handoff; later active sessions can add one when relevant.
+1. If the app has working Alexandria hooks, skip the duplicate instruction and record the app as confirmed.
+2. Otherwise open `~/alexandria/system/.account-instructions.md` and show the exact additive instructions.
+3. Give one direct path to that app's durable account or project instructions. Known paths: ChatGPT `settings → personalization → custom instructions`; Claude `settings → profile preferences`; Gemini `settings & help → personal intelligence → instructions for gemini`.
+4. Tell them to keep everything already there and paste the full instructions below it. The operating rules belong in instructions, never account memory.
+5. Wait for them to say it is saved, then verify the app follows the new instruction. Never claim the cloud setting changed until the person made and verified the edit. Record the confirmed app in `~/alexandria/system/.other_ai_instructions`, then ask `another ai?` and repeat only if they say yes.
+
+If an app has no durable instruction field, say so rather than inventing one. Record only apps whose hooks or account instruction were actually verified.
 
 ## Public orientation
 

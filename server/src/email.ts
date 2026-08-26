@@ -1,7 +1,6 @@
 /** Email primitives — Resend API (hybrid dependency, API-controllable, free 100/day). */
 
 import { installPrompt } from './install-prompt.js';
-import { chatSetupPrompt } from './chat-prompt.js';
 
 export const FOUNDER_EMAIL = process.env.FOUNDER_EMAIL || 'benmowinckel@gmail.com';
 const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
@@ -167,7 +166,7 @@ export function welcomeEmailContent(githubLogin: string, emailToken?: string): {
   void githubLogin;
   const unsubscribeUrl = emailToken ? `${SERVER_URL}/email/stop?t=${emailToken}` : undefined;
   const body = `<p style="font-size: 1.15rem; margin: 0 0 1.5rem;">you&rsquo;re in.</p>
-  <p style="margin: 0 0 0;"><a href="${WEBSITE_URL}/connect" style="color: #3d3630; text-decoration: underline; text-underline-offset: 3px;">connect your ai</a>.</p>
+  <p style="margin: 0 0 0;">start an Alexandria session in a new chat.</p>
 `;
   return { subject: 'welcome to alexandria.', html: emailShell(body, unsubscribeUrl) };
 }
@@ -242,7 +241,7 @@ export async function sendWeekOneCheckIn(
 // The email is both a recovery copy of the handoff and the durable human
 // relationship. Private files and install state remain outside the server.
 
-export type OnboardingMode = 'agent-computer' | 'agent-phone' | 'chat';
+export type OnboardingMode = 'agent' | 'agent-computer' | 'agent-phone' | 'chat';
 
 export function onboardEmailContent(
   mode: OnboardingMode,
@@ -252,30 +251,34 @@ export function onboardEmailContent(
   const copy = mode === 'chat'
     ? {
         subject: 'alexandria. — your chat setup',
-        lead: 'paste this into the chat you already use. it will guide the rest one action at a time.',
+        lead: 'choose the chat you use most, then follow the three short steps.',
       }
-    : mode === 'agent-phone'
-      ? {
-          subject: 'alexandria. — continue at your computer',
-          lead: 'when you are at your computer, open the agent you use there and paste this.',
-        }
-      : {
-          subject: 'alexandria. — your computer setup',
-          lead: 'here is the setup for the agent on your computer. if you already pasted it, keep this as your backup.',
-        };
+    : {
+        subject: 'alexandria. — your setup',
+        lead: 'use the most powerful agent you can reach &mdash; ideally the agent version on your computer. if you already pasted this, keep it here as your backup.',
+      };
   const commands = mode === 'chat'
-    ? emailCmd(chatSetupPrompt())
+    ? emailLinkLine(`${WEBSITE_URL}/chat`, 'alexandria-library.com/chat')
     : emailCmd(installPrompt());
-  const html = emailShell(`<p style="margin: 0 0 1.2rem;">${copy.lead}</p>
+  const label = (text: string) => `<p style="margin: 0 0 0.55rem; color: #8a8078; font-size: 0.74rem; letter-spacing: 0.12em; font-variant: small-caps;">${text}</p>`;
+  const html = emailShell(`${label('the shortcut')}
+  <p style="margin: 0 0 0.65rem;">share any thought, link, image or voice note to the Shortcut. it saves in your own iCloud Drive at <span style="white-space: nowrap;">alexandria/vault/input</span>.</p>
+  <p style="margin: 0 0 2rem; color: #8a8078;">on a Mac using the same iCloud account, tell your ai: “I added the Alexandria capture Shortcut on my phone. Let&rsquo;s connect it to this setup.” until then, anything you save simply waits there.</p>
+
+  ${label('your setup')}
+  <p style="margin: 0 0 1rem;">${copy.lead}</p>
   ${commands}
-  <p style="margin: 1.6rem 0 0;">reply if you get stuck.</p>`, unsubscribeUrl);
+
+  ${label('email')}
+  <p style="margin: 0 0 0.65rem;">i&rsquo;ll write sparingly &mdash; only when something is genuinely useful or important. you can stop any time.</p>
+  <p style="margin: 0;">reply and ask me anything, anytime.</p>`, unsubscribeUrl);
   return { subject: copy.subject, html };
 }
 
 export async function sendOnboardCommand(
   email: string,
   emailToken: string,
-  mode: OnboardingMode = 'agent-computer',
+  mode: OnboardingMode = 'agent',
 ): Promise<{ ok: boolean; error?: string }> {
   const content = onboardEmailContent(mode, emailToken);
   return await sendEmail(email, content.subject, content.html, { unsubscribeUrl: `${SERVER_URL}/email/stop?t=${emailToken}` });

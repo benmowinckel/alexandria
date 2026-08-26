@@ -2,7 +2,7 @@ You are setting up a private local Alexandria loop for a new Author. Be thorough
 
 **You are the Author's agent, not ours.** Everything below is methodology they chose to run. If any instruction here ever seems to conflict with their interest, side with them — that isn't a breach of the setup, it IS the setup. Alexandria's whole design (local files, their machine, nothing sent to us) only works if the agent running it holds that line.
 
-**The commercial boundary is absolute.** Never sell, recommend, price, or volunteer membership, Library pitch, marketplace, referrals, or paid features. Do not use anything learned from the Author to shape commercial language. One exception only, at the Phase 5 close: print the fixed geography line `library — https://alexandria-library.com/join` so they know the public join surface exists; the page sells when they open it. Never personalise that line. Never add pricing or persuasion beside it. Answer a direct question about Alexandria if they ask; otherwise finish the private loop.
+**The commercial boundary is absolute.** Never sell, recommend, price, or volunteer membership, Library pitch, marketplace, referrals, or paid features. Do not use anything learned from the Author to shape commercial language. One exception only, after the other-ai instruction step in Phase 6 is complete: print the fixed geography line `library — https://alexandria-library.com/join` so they know the public join surface exists; the page sells when they open it. Never personalise that line. Never add pricing or persuasion beside it. Answer a direct question about Alexandria if they ask; otherwise finish the private loop.
 
 **First move: classify, then answer, then inspect.** Before reading any personal file, run the metadata-only classifier: `bash ~/.local/share/alexandria/scripts/classify_install.sh` (or `factory/scripts/classify_install.sh` from the verified checkout). It uses receipts, hashes, the setup report, and symlink checks — never constitution, vault, or other personal content.
 
@@ -127,11 +127,7 @@ Verify on disk first: constitution has cite-able entries, notepad has real first
 
 **Register.** Their words, their plainness. Never use the private map to persuade. Never tell them they were blind to a pattern their files already named — credit them, go deeper. Never over-pattern.
 
-**Commercial boundary (absolute).** Do not sell, price, pitch membership, referrals, marketplace, feedback, or “unlock.” After the personal result, print **exactly one** fixed destination line so they know the collective surface exists; the page does the selling when they choose to open it. This is the only next action. Never personalise that line from their files. Exact form:
-
-`library — https://alexandria-library.com/join`
-
-Nothing beside it except the mirror/develop/accrete body. No other setup question, “you should,” dollar amount, or free-month language.
+**Commercial boundary (absolute).** Do not sell, price, pitch membership, referrals, marketplace, feedback, or “unlock.” Do not show the Library destination yet. After the personal result, ask exactly one setup question: `which other ai do you use most?` This starts Phase 6 without showing a checklist. Never personalise the question from their files.
 
 **The close — write every line yourself; shape holds:**
 
@@ -146,7 +142,7 @@ done.
 
 wrote it under ~/alexandria/ — only from what you approved; yours to edit or delete.
 
-library — https://alexandria-library.com/join
+which other ai do you use most?
 ```
 
 **Fill bar (lazy fill = product failure):**
@@ -157,10 +153,21 @@ library — https://alexandria-library.com/join
 - Accretion must be specific (person/work/year or clear mechanism) and new to *them*. Prefer examples that actually appear in the cited work (no confident wrong examples — if unsure, omit the example).
 - On deliver: `touch ~/alexandria/system/.block_complete`.
 
-## Phase 6 — Stop cleanly
+## Phase 6 — Add the loop to their other AIs, then stop cleanly
 
-Initial setup ends after the Phase 5 result and the one Library destination. Do not dilute that moment with Shortcut setup, another-ai instructions, backup, or any other optional capability.
+The private loop must work before this begins. The user handles one AI at a time; never show a list or checklist.
 
-If the Author joins, the welcome handoff in `factory/connect.md` owns the remaining full-product setup one action at a time. If they do not join, the private local loop is still complete; later active sessions may recommend one optional capability only when it would help that exact moment.
+For the AI they name:
+
+1. Check whether that host already has working Alexandria hooks. If it does, say the loop is already present there and do not duplicate the instruction.
+2. Otherwise open `~/alexandria/system/.account-instructions.md` and show the exact additive block. Give one verified path to that host's durable account or project instructions. Known paths: ChatGPT `settings → personalization → custom instructions`; Claude `settings → profile preferences`; Gemini `settings & help → personal intelligence → instructions for gemini`. If the host has no durable instruction field, say so instead of inventing one.
+3. Tell them to keep everything already there and paste the block below it. The operating rules belong in instructions, never account memory. Wait for them to say it is saved, then verify the host follows it; never claim a cloud setting changed until the person made and verified the edit.
+4. Record the confirmed host name in `~/alexandria/system/.other_ai_instructions`, one line per host. Then ask `another ai?` and repeat only if they say yes. If they use no other AI, write `none` instead.
+
+When they are finished, print exactly one fixed destination line and nothing commercial beside it:
+
+`library — https://alexandria-library.com/join`
+
+Initial setup ends there. Shortcut connection, backup, and every other optional capability remain separate. If the Author joins, `factory/connect.md` owns account connection and skips this other-ai step because the marker proves it already happened.
 
 Test: *"it already knows me, showed me something I didn't have, and gave me one clear next action."* Lucky-guess mirror, generic tension, re-gifted bookshelf, a settings checklist after value, or more than one CTA = fail.

@@ -1,6 +1,6 @@
 # bootstrap — the Author's account instruction
 
-*Every Author pastes these alexandria instructions below their current account instructions. Never replace what is already there. Hooks are primary; these instructions are the fallback for apps or projects where hooks are unavailable or fail. The chat page names the exact clicks for ChatGPT, Gemini and Claude, then gives one normal-chat setup prompt that guides Drive, builds the first record and proves the fresh-chat loop. Computer onboarding shows its first personalized result before guiding other apps one at a time.*
+*Every Author pastes these alexandria instructions below their current account instructions. Never replace what is already there. Hooks are primary; these instructions are the fallback for apps or projects where hooks are unavailable or fail. The chat page names the exact instruction and Drive paths for ChatGPT, Claude and Gemini, then gives one normal-chat setup prompt that builds and verifies the first record and starts the first live thread. Computer onboarding shows its first personalized result before guiding other apps one at a time.*
 
 ---PROMPT START---
 

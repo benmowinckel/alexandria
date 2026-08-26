@@ -1,18 +1,16 @@
 # after setup — nothing to remember
 
-*Every Author keeps their existing ai and adds one compact account instruction. The chat page then gives one separate normal-chat setup prompt. Hooks remain primary on surfaces that have them; the account instruction is the portable fallback and cross-app bridge.*
+*Every Author keeps their existing ai and adds one compact account instruction. The chat page then connects Drive and gives one separate normal-chat setup prompt. Hooks remain primary on surfaces that have them; the account instruction is the portable fallback and cross-app bridge.*
 
 ## first run
 
-The setup chat first proves the account instructions landed by explaining the behavioral change: alexandria is not another assistant, app or entity. It is a loop in how the user's existing ai works — personal context improves normal answers, lasting signal can be saved with permission, the host's native Alexandria skill starts a deliberate thinking session and `a.` closes it. If those instructions are not active, stop and help the user add them without deleting what is already there.
-
-If the host supports Google Drive, the ai gives the exact native connection steps one action at a time and waits for the user to perform them. It never claims it can change the setting itself. If Drive is unavailable, it continues with the durable personalisation already present without making the user choose a technical substitute or claiming Drive exists.
+The setup chat assumes the page's instruction and Drive actions were attempted. It first proves the account instructions landed by explaining the behavioral change: alexandria is not another assistant, app or entity. It is a loop in how the user's existing ai works — personal context improves normal answers, lasting signal can be saved with permission, the host's native Alexandria skill starts a deliberate thinking session and `a.` closes it. If those instructions are not active, stop and fix only that.
 
 The first population is a small version of full agentic onboarding. The ai names the exact account memory and past-chat sources it can reach, names the record destination, and asks the person directly before using them — the copied setup text never grants that permission for them. After the explicit yes, the ai builds the fullest accurate initial record it can from those named sources, not the rest of Drive. It preserves useful evidence, separates facts from inference, marks uncertainty, avoids raw transcript dumps and creates whatever plain documents best fit. `_start` is the concise map future chats read first.
 
-Every write is read back. A failed read or write is a failed setup, never a success with a caveat. The ai then proves value now: one specific mirror, one real tension, one new connection and one sharp question. It develops the answer and saves only what the user confirms.
+Every write is read back. A failed read or write is a failed file-backed setup, never a success with a caveat; genuinely durable account memory is an honest fallback only when the host names its limit. The ai then proves value now by starting from the highest-value specific thread in the record, asking one sharp question, developing the answer and saving only what the user confirms. Only after that private loop works does it briefly orient the user: other AIs can receive the same additive instructions later, one at a time; an agent can extend the loop to local files; and the optional community can be discussed later. None is begun or sold during chat setup.
 
-Only after the free chat loop works may the ai explain that the full version needs a computer agent, processes Shortcut captures automatically and adds the alexandria community. It asks once whether the user wants help setting that up. This optional explanation never interrupts or conditions the free loop.
+Before finishing, the ai explains in a few short lines that the user keeps chatting normally, how this host actually starts Alexandria, that `a.` closes it, that saving always needs confirmation, and that the instruction and record can be changed or removed. Only after the private loop works may it mention the optional community once as something to discuss later; it neither connects nor sells it.
 
 The final test is a fresh chat using the host's native Alexandria skill. Where no native skill exists, the portable request is `start an Alexandria session`. It passes only if that chat reads the record and opens with a valuable, specific thread from the user rather than generic onboarding.
 

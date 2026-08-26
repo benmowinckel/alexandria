@@ -28,8 +28,9 @@ assert.match(connectDoc, /does not rerun setup, replace configuration, enable an
 assert.match(connectDoc, /guides the remaining setup one action at a time, with a separate yes for anything optional, then makes one bounded, read-only orientation/);
 assert.match(connectDoc, /Finish the full product/);
 assert.match(connectDoc, /Phone capture/);
-assert.match(connectDoc, /which other ai app do you use most\?/);
-assert.match(connectDoc, /temporary phone-anchor line/);
+assert.match(connectDoc, /which other ai do you use most\?/);
+assert.match(connectDoc, /\.other_ai_instructions/);
+assert.match(connectDoc, /The operating rules belong in instructions, never account memory/);
 assert.match(connectDoc, /Never display the whole sequence as a checklist/);
 assert.match(connectDoc, /Use context already present in the current session, but do not read new private files/);
 assert.match(connectDoc, /Your public side/);
@@ -45,7 +46,6 @@ assert.match(connectDoc, /Only when no native start skill exists, use the portab
 assert.match(connectDoc, /never claim that typing the plain word `alexandria` invokes a skill/i);
 
 const optional = readFileSync(new URL('../../factory/optional.md', import.meta.url), 'utf8');
-assert.match(optional, /one-use handoff created from the signed-in member page/);
 assert.match(optional, /only when the Author asks to connect one/);
 assert.match(optional, /scripts\/create-account-handoff\.sh/);
 assert.match(optional, /Do not show or explain the one-use code separately/);
@@ -74,13 +74,10 @@ assert.match(cursor, /On yes, immediately open a new chat and invoke `\/a`/);
 assert.match(cursor, /If it cannot open a chat, say exactly: `Open a new chat and invoke \/a\.`/);
 
 const page = await callbackPageHtml(false, 'new-author');
-assert.match(page, /href="https:\/\/alexandria-library\.com\/connect"/);
-assert.match(page, /connect your ai/);
-assert.doesNotMatch(page, /factory\/connect\.md|Do nothing until I say `connect`|alex_connect_/i);
+assert.doesNotMatch(page, /connect your existing loop|paste this into your computer agent|connection code/i);
 const email = welcomeEmailContent('new-author', 'TOKEN').html;
 assert.doesNotMatch(email, /agent that already runs your alexandria loop|nothing changes until you say|connection code/i);
-assert.match(email, /href="https:\/\/alexandria-library\.com\/connect"/);
-assert.match(email, /connect your ai/);
+assert.match(email, /start an Alexandria session in a new chat/);
 assert.doesNotMatch(page + email + paste, /alex_[a-f0-9]{32}/);
 
 console.log('account connect experience: on-demand handoff, exact consent, truthful proof, native active route');

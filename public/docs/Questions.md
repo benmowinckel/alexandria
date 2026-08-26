@@ -64,7 +64,7 @@ For the full local version, any compatible AI that can reach files on your compu
 
 ## how do i start.
 
-Choose agent or chat. At a computer, an agent inspects the public setup, explains it and waits for your approval before changing anything. Away from the computer, one phone paste creates and verifies a real reminder or a temporary instruction so setup returns without relying on memory. Chat takes two pastes: one adds the loop to your existing ai instructions; the second has that ai name the personal sources it can reach, ask directly before using them, guide Drive, build and read back the first record, and prove the result in a fresh chat. After joining, the computer agent completes phone capture and one other-ai connection one action at a time.
+Choose agent or chat. The agent path asks whether your computer is in reach. If it is, add the Shortcut, optionally email yourself the setup text and open a direct help channel with Benjamin, then paste one request into an agent that can reach the computer. That agent reads the public project, decides how it should fit your existing setup, recommends whether to proceed, and changes nothing until you approve. If the computer is not in reach, paste the page's reminder request into the AI you have now; it must create a lasting reminder it can verify will reach you across devices or say plainly that it cannot. The chat path has three steps: add the instructions, connect Drive, then paste one setup request that creates and verifies the first record and starts from one useful thread.
 
 ## is my data mine.
 

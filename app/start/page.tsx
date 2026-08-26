@@ -12,8 +12,10 @@ export const metadata = pageMetadata({
     'start your alexandria loop from the ai you already use — local, remote, folder-based, or chat.',
 });
 
-// One front door, then one plain split: agent or chat. Choosing a side copies
-// its universal paste immediately; the receiving AI owns all later routing.
+// One front door, then agent or chat. The agent branch asks whether the
+// computer is in reach because the action changes: setup now or leave a
+// verified cross-device reminder. Chat restores its approved host-specific
+// instructions → Drive → first-setup path.
 //
 // Composition: a single flush-left editorial column (not a centred stack). The
 // eyebrow ("the free tool") is the one accent on the skeleton and names which
@@ -50,8 +52,8 @@ export default async function StartPage({
             page; the lede's privacy line lives in the fine print below. */}
         <h1 className="primer-h1">start your loop</h1>
 
-        {/* The person chooses the category they already understand. Inside the
-            agent branch, the agent inspects its actual reach and capability. */}
+        {/* The person chooses the category they already understand. Agents
+            then split only on whether the computer can actually be reached. */}
         <StartDoor refCode={ref} />
 
       </main>
@@ -365,6 +367,9 @@ export default async function StartPage({
         .setup-copy {
           white-space: nowrap; text-wrap: nowrap; overflow-wrap: normal; letter-spacing: 0;
         }
+        .shortcut-add {
+          white-space: nowrap; text-wrap: nowrap; overflow-wrap: normal; letter-spacing: 0;
+        }
         .act-sub {
           margin: -2px 0 14px 46px; max-width: 420px;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
@@ -487,10 +492,11 @@ export default async function StartPage({
           .install-cmd { font-size: 12.5px; }
           .primer-coda { font-size: 18px; margin-top: 52px; }
           .act-box { font-size: 14px; padding-left: 12px; padding-right: 12px; }
-          .act-email { flex-wrap: nowrap; white-space: nowrap; overflow: hidden; }
+          .shortcut-add { font-size: clamp(10.5px, 3.25vw, 14px); }
+          .act-email { flex-wrap: wrap; white-space: normal; overflow: visible; }
           .act-email-why {
-            flex: 1 1 auto; min-width: 0; max-width: none; margin-top: 0;
-            white-space: nowrap; overflow: hidden;
+            flex: none; flex-basis: 100%; max-width: 100%; margin-top: 3px;
+            white-space: normal; overflow: visible;
           }
           .act-email.is-focused { flex-wrap: nowrap; }
           .act-email.is-focused .act-email-why { flex-basis: 0; margin-top: 0; }

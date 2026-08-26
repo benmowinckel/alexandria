@@ -1,9 +1,9 @@
 # onboarding page — /chat
 
-**alexandria — one click, then paste into the chat already open**
+**alexandria — instructions, Drive, then one setup paste**
 
-On `/start`, choosing `just chat` copies the setup immediately, changes that same fixed line to `copied — paste this into your chat`, and fades the agent choice without moving anything else. A direct `/chat` visit keeps the equivalent `copy the setup — paste into your chat` button.
+On `/start`, choosing `just chat` opens the same path as a direct `/chat` visit. The person chooses the chat they use most — ChatGPT, Claude or Gemini — because the real settings differ. It does not show the agent-only Shortcut or email steps.
 
-The page does not ask which app or which device. The pasted request makes the receiving chat identify its own verified capabilities and carry one action at a time. It guides the person's own durable instruction setting without inventing a settings path, preserves everything already there, connects Drive only where the app truly supports it, asks direct permission for named personal sources, builds and reads back the first record, and runs a miniature personal loop. Only after value is proven does it explain the optional full computer-agent version. A fresh chat using that host's native Alexandria skill is the final cross-chat proof; where no native skill exists, the floor is `start an Alexandria session`.
+The page has three actions: copy the approved additive instruction into that host's current instruction field; connect Google Drive through that host's current native settings path; then copy one short setup request into a normal chat. The setup request does not repeat those first two jobs. It verifies the instruction, asks direct permission for the exact personal sources it can use, creates and reads back `alexandria/_start`, begins the first specific thinking thread, and explains normal use and removal in a few short lines. If Drive cannot both write and read, the chat says exactly what failed and does not claim the file-backed setup worked.
 
 The account instructions are additive. Nothing is sent to Alexandria, and every instruction, memory, file, connector, project and workflow already present stays.

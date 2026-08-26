@@ -16,7 +16,7 @@ function cleanRef(raw: string | undefined): string {
 }
 
 // Door 2 of the two-door onboarding (agents → /start; chat → here).
-// One paste; the receiving chat owns host and capability routing.
+// Host choice restores the exact instruction and Drive paths, then one setup paste.
 export default async function ChatPage({
   searchParams,
 }: {

@@ -253,6 +253,10 @@
   text-wrap: pretty;
 }
 
+.door-btn.is-note { cursor: default; }
+.door-btn.is-note:hover { border-color: var(--bg-tertiary, rgba(26, 19, 24, 0.14)); }
+.door-btn.is-note:active { transform: none; }
+
 .setup-copy {
   white-space: nowrap;
   text-wrap: nowrap;

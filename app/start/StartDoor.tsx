@@ -1,100 +1,80 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { checkReferral } from '../lib/referral';
 import { useDoorStep } from '../lib/door-step';
-import { copyText, type CopyState } from '../lib/copy-text';
-import { agentSetupPrompt, chatSetupPrompt } from '../../shared/onboarding-prompts';
 import ChatCTA from '../chat/ChatCTA';
 import StartCTA from './StartCTA';
+import { CHAT_HOSTS, isChatHost, type ChatHost } from '../../shared/onboarding-prompts';
 
-const STEPS = ['agent', 'chat'] as const;
-type Step = (typeof STEPS)[number];
+const CHAT_HOST_IDS = Object.keys(CHAT_HOSTS) as ChatHost[];
+const STEPS = ['agent', 'computer', 'phone', 'chat', ...CHAT_HOST_IDS] as const;
 
-// The person chooses only the contract they understand. The receiving AI owns
-// device, host and capability routing from there.
+// Agent/chat chooses the product. Computer reach then changes the action:
+// setup now, or leave a verified cross-device reminder and durable email copy.
 export default function StartDoor({ refCode }: { refCode?: string }) {
   const [screen, go] = useDoorStep(STEPS);
-  const [copiedChoice, setCopiedChoice] = useState<{ step: Step; state: CopyState } | null>(null);
-  const [validRef, setValidRef] = useState<string | null>(null);
 
-  // The first screen must own referral continuity. Waiting until someone picks
-  // a branch means a fast invitation click reaches /start with the ref intact,
-  // but never saves it for the later /join visit.
   useEffect(() => {
     if (!refCode) return;
     let live = true;
     checkReferral(refCode).then((valid) => {
       if (!live || !valid) return;
-      setValidRef(refCode);
       try { window.localStorage.setItem('alexandria-referrer', refCode); } catch { /* storage is optional */ }
     });
     return () => { live = false; };
   }, [refCode]);
 
-  async function choose(step: Step) {
-    const state = await copyText(step === 'agent' ? agentSetupPrompt() : chatSetupPrompt());
-    setCopiedChoice({ step, state });
-    go(step);
+  if (isChatHost(screen)) {
+    return <ChatCTA refCode={refCode} host={screen} />;
   }
 
-  const decided = copiedChoice?.step === screen ? copiedChoice : null;
-
-  function choiceLabel(step: Step) {
-    if (decided?.step !== step) {
-      return step === 'agent'
-        ? <>an agent<span className="act-why"> — eg codex, cursor, cowork</span></>
-        : <>just chat<span className="act-why"> — eg claude, chatgpt, gemini</span></>;
-    }
-
-    if (decided.state === 'error') return 'couldn’t copy — try again';
-
+  if (screen === 'chat') {
     return (
-      <span className="door-confirmation">
-        copied<span className="act-why"> — paste this into your {step}</span>
-      </span>
-    );
-  }
-
-  // A choice made on this page transforms in place: the selected line becomes
-  // the instruction and the alternative remains faint in its original place.
-  // Direct hash entry has no initiating click, so it keeps the honest
-  // standalone copy control below.
-  if (!screen || decided) {
-    return (
-      <div className={`door-block${decided ? ' is-decided' : ''}`}>
-        {validRef && <p className="install-invite">@{validRef} invited you to alexandria.</p>}
-        <p className="door-q">what do you have access to?</p>
+      <div className="door-block">
+        <p className="door-q">which chat do you use most?</p>
         <div className="door-answers">
-          {STEPS.map((step) => {
-            const dismissed = Boolean(decided && decided.step !== step);
-            const selected = decided?.step === step;
-
-            return (
-              <button
-                key={step}
-                type="button"
-                className={`door-btn door-choice${selected ? ' is-selected' : ''}${dismissed ? ' is-dismissed' : ''}`}
-                onClick={() => choose(step)}
-                disabled={dismissed}
-                aria-label={selected ? `copied — paste this into your ${step}; click to copy again` : undefined}
-              >
-                {choiceLabel(step)}
-              </button>
-            );
-          })}
+          {CHAT_HOST_IDS.map((host) => (
+            <button key={host} type="button" className="door-btn" onClick={() => go(host)}>
+              {CHAT_HOSTS[host].label}
+            </button>
+          ))}
         </div>
       </div>
     );
   }
 
   if (screen === 'agent') {
-    return <StartCTA refCode={refCode} initialCopyState={copiedChoice?.step === 'agent' ? copiedChoice.state : 'idle'} />;
+    return (
+      <div className="door-block">
+        <p className="door-q">is your computer in reach?</p>
+        <div className="door-answers">
+          <button className="door-btn" onClick={() => go('computer')}>yes — i’ll grab it now</button>
+          <button className="door-btn" onClick={() => go('phone')}>no — not right now</button>
+        </div>
+      </div>
+    );
   }
 
-  if (screen === 'chat') {
-    return <ChatCTA refCode={refCode} initialCopyState={copiedChoice?.step === 'chat' ? copiedChoice.state : 'idle'} />;
+  if (screen === 'computer') {
+    return <StartCTA key="computer" refCode={refCode} mode="computer" />;
   }
 
-  return null;
+  if (screen === 'phone') {
+    return <StartCTA key="later" refCode={refCode} mode="later" />;
+  }
+
+  return (
+    <div className="door-block">
+      <p className="door-q">what do you have access to?</p>
+      <div className="door-answers">
+        <button className="door-btn" onClick={() => go('agent')}>
+          an agent<span className="act-why"> — eg codex, claude code, cursor</span>
+        </button>
+        <button className="door-btn" onClick={() => go('chat')}>
+          just chat<span className="act-why"> — eg chatgpt, claude, gemini</span>
+        </button>
+      </div>
+    </div>
+  );
 }

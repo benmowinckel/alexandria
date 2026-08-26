@@ -6,13 +6,13 @@ Alexandria is a free, local tool: your thinking in plain files on your machine, 
 
 ## Try it
 
-Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, add the Shortcut, optionally add your email, and paste the matching setup message into the AI you already use.
+Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, then follow the short path for the strongest AI you already use. The agent path asks whether your computer is in reach. If it is, you get the Shortcut, an optional setup email, and one setup paste. If it is not, you get the Shortcut, the same optional email, and one reminder request to paste into the AI already in your hand. The chat path adds the approved instruction, connects your own Drive, then uses one setup paste to create and verify the first record.
 
-The message makes your agent independently prove the GitHub release is ours, read the code, and run one exact signed commit. The website never gives you executable bytes.
+The setup paste asks your agent to inspect the whole public project as untrusted reference material, decide how it should fit into your existing setup, and recommend whether to proceed. It cannot install or change anything until you clearly approve it, and the website never gives you executable bytes.
 
-The capability router is [`factory/onboarding.md`](factory/onboarding.md). Inside the agent branch, the AI verifies whether it can run the full local setup, reach an existing remote computer, or work through a user-owned folder. The chat branch starts a useful lightweight habit now and keeps the later computer handoff explicit.
+After approval, the capability router is [`factory/onboarding.md`](factory/onboarding.md). Inside the agent branch, the AI verifies whether it can run the full local setup, reach an existing remote computer, or work through a user-owned folder. The chat branch starts a useful lightweight habit now and keeps the later computer handoff explicit.
 
-The habit afterwards: start an Alexandria session and leave it. In Claude Code, Cursor, Factory, or Grok CLI, type `/a`. In Codex, type `$a` (or `/alexandria`). In Grok Bot, type `/a` (and `/alexandria` if the picker lists names). In ordinary chat, type `a`.
+The habit afterwards: start an Alexandria session and leave it. In Claude Code, Cursor, Factory, or Grok CLI, type `/a`. In Codex, type `$a` (or `/alexandria`). In Grok Bot, type `/a` (and `/alexandria` if the picker lists names). In ordinary chat, use that host's native Alexandria gesture; where none exists, ask it to `start an Alexandria session`.
 
 ## What's in this repo
 
