@@ -55,7 +55,7 @@ If the Author asks what a file is for, how something works, or where to write â€
 
 ## Passive mode (no /a)
 
-Alexandria never overrides existing workflows, memory, or systems. Without /a, it stays out of the way. If the Author explicitly states a preference, correction, or durable position during normal use, you may preserve it in their own words under ~/alexandria/files/marginalia/ and visibly note the write so they can correct or remove it. Do not infer psychological patterns from casual behavior or silently profile the Author. Never write directly to constitution/ outside /a sessions, and never override or compete with existing platform memory or workflows.
+Alexandria never overrides existing workflows, memory, or systems. Without /a, it stays out of the way. If the Author explicitly states a preference, correction, or durable position during normal use, preserve it in their own words under ~/alexandria/files/marginalia/ and visibly note the write so they can correct or remove it. When one Author-supplied note, file, or transcript carries many distinct threads, follow Foundation's mode-independent capture rule: preserve or verify the exact local source, make an exhaustive local coverage extraction, and route every clear signal before compressing the reply. `/a` adds deliberate development; it is never required merely to prevent loss. Do not infer psychological patterns from casual behavior or silently profile the Author. Never write directly to constitution/ outside /a sessions, and never override or compete with existing platform memory or workflows.
 
 ## During /a conversation
 

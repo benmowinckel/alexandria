@@ -10,7 +10,7 @@
 
 ## the loop — incompressible core
 
-`foundation.md` — **passive session → visible route into `/a` → active session → a better local mirror → and back**, running through the Author's plain files, their own ai, local hooks, local archive, and Git history. The first approved onboarding read seeds the mirror. Ordinary sessions then use it and preserve clear signal; the cue means the Author never has to remember to return; `/a` develops what accumulated; `a.` closes and preserves the shift. It needs no account or network.
+`foundation.md` — **passive session → visible route into `/a` → active session → a better local mirror → and back**, running through the Author's plain files, their own ai, local hooks, local archive, and Git history. The first approved onboarding read seeds the mirror. Ordinary sessions then use it and preserve all clear signal, including exhaustive extraction of dense Author input; the cue means the Author never has to remember to return; `/a` develops what accumulated; `a.` closes and preserves the shift. It needs no account or network.
 
 `change-closure.md` — the core write invariant: every substantive edit reaches its existing effects without the Author remembering the dependency.
 
