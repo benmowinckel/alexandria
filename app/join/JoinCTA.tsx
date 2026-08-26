@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { SERVER_URL, FOUNDER_EMAIL } from '../lib/config';
+import { SERVER_URL, FOUNDER_EMAIL, FOUNDER_PROFILE_PATH } from '../lib/config';
 import { checkReferral, parseReferralInput } from '../lib/referral';
 import { ArrowIcon, TickIcon } from './DoorIcons';
 
@@ -83,27 +83,28 @@ export default function JoinCTA({
 
         <div className="join-argument">
           <section className="join-move">
-            <h2 className="join-claim">other minds.</h2>
+            <h2 className="join-claim">the problem.</h2>
             <p>
-              Your ai can understand you deeply, but you did not become yourself alone. The friends you trust, the work you read, and the ideas you follow are part of who you are. The community gives them all a place your ai can understand too, beyond what it could learn from your private files alone.
+              Your private loop gives every ai a deep understanding of you, but your life happens with other people. Those conversations and relationships sit outside the loop, so without a connection, each person has to carry the missing context back to their own ai by hand, again and again.
             </p>
           </section>
           <section className="join-move">
-            <h2 className="join-claim">the community.</h2>
+            <h2 className="join-claim">the connector.</h2>
             <p>
-              Members can share a public version of themselves containing only what they choose. Your ai can then understand your friends, discover other people&apos;s work and methods, and bring context from the people around you into your own life, while everyone&apos;s private files remain completely theirs.
+              Joining adds a connector that brings the private parts you choose to share together with the public parts already spread across your other networks. You decide what friends, groups, or anyone can see, creating one public home you control, like <a href={FOUNDER_PROFILE_PATH}>the founder&apos;s</a>, while everything else stays private.
             </p>
           </section>
           <section className="join-move">
-            <h2 className="join-claim">build together.</h2>
+            <h2 className="join-claim">the library.</h2>
             <p>
-              Alexandria is new, so this is the smallest the network will ever be. Its value starts with the friends you already think, learn, and live with. Each person makes every connected loop more useful, and together the first members build something no one could build alone, for everyone who joins after us.
+              Each loop stays entirely its own, while the shared connector lets the library link them without replacing anyone&apos;s existing networks. Your ai can understand friends and new people from what they share, their ai can understand you, and every connection makes both loops more useful.
             </p>
           </section>
         </div>
 
         <p className="join-close">
-          Try it free for a month. Bring three active friends and it stays free. Otherwise, it is a dollar a day. If that is too much and you have not found three friends, <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>message me</a> and I will waive it. I just want you to try it.
+          Join and use it free for a month. Invite three friends as you go and it stays free while they stay. Otherwise, after the month, it is a dollar a day; if that is too much, <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>message me</a> and I will waive it.
+          <span className="join-close-nudge">Use it first, then bring in the people already in your life and make each other&apos;s loops more useful.</span>
         </p>
         {billingStatus && (
           <p className="join-billing-note" role="status">

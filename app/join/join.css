@@ -151,6 +151,11 @@
 
 .join-close a:hover { opacity: .65; }
 
+.join-close-nudge {
+  display: block;
+  margin-top: 10px;
+}
+
 .join-billing-note {
   margin: 10px 0 -4px;
   color: var(--text-secondary);
@@ -179,7 +184,7 @@
 
 .act-email input {
   flex: none;
-  width: 8.2em;
+  width: 5.9em;
   min-width: 0;
   background: transparent;
   border: none;
@@ -197,7 +202,7 @@
 .act-email input[data-shake="on"] { animation: joinShake 320ms ease-in-out; }
 .act-email-why {
   flex: none;
-  margin-left: 0.3em;
+  margin-left: 0;
   max-width: 28em;
   overflow: hidden;
   opacity: 1;
