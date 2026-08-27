@@ -23,6 +23,7 @@ assert.deepEqual(controls, [
   'profile',
   'file-order',
   'file-subtitles',
+  'file-listings',
   'twin',
 ]);
 
@@ -52,6 +53,7 @@ assert.match(library, /settings\.socials as unknown\[\]\)\.slice\(0, LIBRARY_MAX
 assert.match(library, /parsed\.protocol === 'http:' \|\| parsed\.protocol === 'https:'/);
 assert.match(library, /Object\.entries\(body\.categories \|\| \{\}\)\.slice\(0, LIBRARY_MAX_METADATA_ENTRIES\)/);
 assert.match(library, /Object\.entries\(body\.subtitles \|\| \{\}\)\.slice\(0, LIBRARY_MAX_METADATA_ENTRIES\)/);
+assert.match(library, /file_listings:\$\{authorId\}/);
 assert.match(library, /Object\.entries\(body\.questions \|\| \{\}\)\.slice\(0, LIBRARY_MAX_METADATA_ENTRIES\)/);
 
 const twinQuery = library.slice(
@@ -84,6 +86,11 @@ assert.match(profileRoute, /getAccountByLogin\(requestedAuthorId\)/);
 assert.match(profileRoute, /const authorId = account!\.github_login/);
 const canonicalProfileReads = profileRoute.slice(profileRoute.indexOf('const authorId = account!.github_login'));
 assert.doesNotMatch(canonicalProfileReads, /\brequestedAuthorId\b/);
+assert.match(profileRoute, /scope: coverOnly \? file\.visibility : file\.scope/);
+assert.match(profileRoute, /name: coverOnly \? `cover-\$\{coverIndex \+ 1\}` : file\.name/);
+assert.match(profileRoute, /questions: coverOnly \? null/);
+assert.match(profileRoute, /text: \(file\.visibility === 'public' \|\| file\.visibility === 'paid'\) \? file\.text : null/);
+assert.match(profileRoute, /url: coverOnly \? null/);
 
 const ownerGate = library.slice(
   library.indexOf('async function isHandleOwner'),

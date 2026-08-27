@@ -24,8 +24,11 @@ interface ProtocolFile {
   subtitle?: string | null;
   visibility: string;
   category?: string;
-  updated_at: string;
-  url: string;
+  updated_at: string | null;
+  price_cents?: number | null;
+  listed?: boolean;
+  cover_only?: boolean;
+  url?: string | null;
 }
 
 interface AuthorData {
@@ -112,11 +115,11 @@ function fileDisplayName(name: string): string {
     .join(' ');
 }
 
-function visibilityLabel(value: string): string {
+function visibilityLabel(value: string, priceCents?: number | null): string {
   if (value === 'public') return 'public';
-  if (value === 'paid') return 'paid';
+  if (value === 'paid') return typeof priceCents === 'number' ? `$${(priceCents / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}` : 'paid';
   if (value === 'invite') return 'invite';
-  return 'authors';
+  return 'members';
 }
 
 function contextScopeCopy(scope: string): { label: string; note: string } {
@@ -329,6 +332,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       ['profile', { ...identity, socials, order: profile.order || [], hidden: profile.hidden || [], labels: profile.labels || {} }],
       ['file-order', { order: editFiles.map(protocolFileKey) }],
       ['file-subtitles', { subtitles: editSubtitles }],
+      ['file-listings', { listings: editFiles.filter((file) => file.listed && (file.visibility === 'authors' || file.visibility === 'invite')).map(protocolFileKey) }],
       ['twin', { context: { scopes: contextScopes } }],
     ];
     try {
@@ -500,7 +504,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1.25rem' }}
           >
             <span style={{ color: 'var(--text-primary)', fontSize: '1.06rem' }}>{file.title || fileDisplayName(file.name)}</span>
-            <span className="profile-edit-background" style={{ color: 'var(--text-muted)', fontSize: '0.88rem', letterSpacing: '0.04em', flex: 'none' }}>{visibilityLabel(file.visibility)}</span>
+            <span className="profile-edit-background" style={{ color: 'var(--text-muted)', fontSize: '0.88rem', letterSpacing: '0.04em', flex: 'none' }}>{visibilityLabel(file.visibility, file.price_cents)}</span>
           </div>
           <textarea
             aria-label={`${file.title || fileDisplayName(file.name)} description`}
@@ -508,10 +512,29 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             style={editFieldStyle}
             rows={1}
             value={file.subtitle || ''}
-            placeholder="add a description"
+            placeholder={file.visibility === 'authors' || file.visibility === 'invite' ? 'public description (optional)' : 'add a description'}
             onChange={(event) => setEditFiles((current) => current.map((candidate) => protocolFileKey(candidate) === fileKey ? { ...candidate, subtitle: event.target.value } : candidate))}
             onPointerDown={(event) => event.stopPropagation()}
           />
+          {(file.visibility === 'authors' || file.visibility === 'invite') && (
+            <button
+              type="button"
+              disabled={!file.title?.trim()}
+              onClick={() => setEditFiles((current) => current.map((candidate) => protocolFileKey(candidate) === fileKey ? { ...candidate, listed: !candidate.listed } : candidate))}
+              style={{
+                border: 0, background: 'none', padding: '0.15rem 0 0',
+                color: file.title?.trim() ? 'var(--text-muted)' : 'var(--text-ghost)',
+                cursor: file.title?.trim() ? 'pointer' : 'default',
+                fontFamily: 'inherit', fontSize: '0.84rem', textAlign: 'left',
+                textDecoration: file.title?.trim() ? 'underline' : 'none', textUnderlineOffset: '3px',
+              }}
+              className="hover:opacity-60"
+            >
+              {!file.title?.trim()
+                ? 'add a title when publishing to create a public cover'
+                : file.listed ? 'public cover shown' : 'hidden from visitors without access'}
+            </button>
+          )}
         </article>
       );
     }
@@ -549,15 +572,22 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           )}
         </span>
         <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem', letterSpacing: '0.04em', flex: 'none', whiteSpace: 'nowrap' }}>
-          {visibilityLabel(file.visibility)}
+          {visibilityLabel(file.visibility, file.price_cents)}
         </span>
       </>
     );
 
-    // Every entry opens the 3-panel reader (piece + twin + notes); it handles the
-    // gate itself (public reads free, invite/paid prompt sign-in).
+    // A public cover routes to the one useful next action. Accessible pieces
+    // keep using the shared reader, which owns the actual permission gate.
+    const href = file.cover_only
+      ? file.visibility === 'authors'
+        ? '/join'
+        : author.contact?.includes('@')
+          ? `mailto:${author.contact.replace(/^mailto:/, '')}?subject=${encodeURIComponent(`Request invite: ${file.title || 'Library piece'}`)}`
+          : author.contact ? contactHref(author.contact) : '/join'
+      : `/library/${encodeURIComponent(authorId)}/read/${encodeURIComponent(file.name)}?scope=${encodeURIComponent(file.scope)}`;
     return (
-      <Link key={`${file.scope}/${file.name}`} href={`/library/${encodeURIComponent(authorId)}/read/${encodeURIComponent(file.name)}?scope=${encodeURIComponent(file.scope)}`}
+      <Link key={`${file.scope}/${file.name}`} href={href}
         className="hover:opacity-60" style={rowStyle}>
         {inner}
       </Link>
@@ -658,12 +688,12 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           ) : (author.location && author.location_key) || author.contact ? (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.35rem 0 0', textTransform: 'lowercase' }}>
               {author.location && author.location_key && (
-                <Link href={`/library?locations=${encodeURIComponent(author.location_key)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link>
+                <Link href={`/library?q=${encodeURIComponent(author.location)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link>
               )}
               {author.contact && (
                 <>
                   {author.location && author.location_key && <span aria-hidden style={headerActionDotStyle}>·</span>}
-                  <a href={contactHref(author.contact)}
+                  <a id="profile-contact" href={contactHref(author.contact)}
                     target={author.contact.startsWith('http') ? '_blank' : undefined}
                     rel={author.contact.startsWith('http') ? 'noopener noreferrer' : undefined}
                     style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{contactForm(author.contact)}</a>

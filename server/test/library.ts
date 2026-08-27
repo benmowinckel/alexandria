@@ -62,11 +62,12 @@ async function main() {
   // roster (only Authors who set both location and contact).
   await test('Member directory gates signed-out callers', async () => {
     const res = await fetch(`${BASE}/library`);
-    const body = await res.json() as { signed_in?: boolean; authors?: unknown[] };
+    const body = await res.json() as { signed_in?: boolean; authors?: unknown[]; other_author_count?: number };
     return {
       test: 'Directory gate (no auth)',
-      passed: res.ok && body.signed_in === false && Array.isArray(body.authors) && body.authors.length === 0,
-      details: `HTTP ${res.status}, signed_in: ${body.signed_in}, authors: ${body.authors?.length}`,
+      passed: res.ok && body.signed_in === false && Array.isArray(body.authors) && body.authors.length === 0
+        && Number.isInteger(body.other_author_count) && (body.other_author_count || 0) >= 0,
+      details: `HTTP ${res.status}, signed_in: ${body.signed_in}, authors: ${body.authors?.length}, others: ${body.other_author_count}`,
     };
   });
 

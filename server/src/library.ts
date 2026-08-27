@@ -41,6 +41,7 @@ import {
   revokeGrant,
 } from './grants.js';
 import {
+  canDiscoverLibraryArtifact,
   canListLibraryArtifact,
   libraryArtifactKey,
   effectiveLibraryScopes,
@@ -251,16 +252,29 @@ function normalizeProfile(settings: Record<string, unknown>): {
 
 // Owner-authored teaser line per file — the browse-list subtitle. Kept
 // separate from the file's `text` blurb ON PURPOSE: `text` is suppressed for
-// authors/invite files (audit M1). The directory gate now hides the entire
-// authors/invite artifact row, including this map value, until the viewer has
-// exact access. Paid offers remain deliberately discoverable. Keyed by author
-// slug, mirroring file_categories.
+// authors/invite files. This subtitle may cross the gate only when the owner
+// separately approves that exact artifact's public cover. Paid offers remain
+// deliberately discoverable. Keyed by author slug, mirroring file_categories.
 async function getFileSubtitles(authorId: string): Promise<Record<string, string>> {
   try {
     const raw = await getKV().get(`file_subtitles:${authorId}`);
     if (raw) return JSON.parse(raw) as Record<string, string>;
   } catch { /* ignore */ }
   return {};
+}
+
+// Exact artifacts whose title + owner-authored subtitle may appear as a public
+// cover even while the body remains gated. Empty by default: older protected
+// files do not become discoverable merely because they already have metadata.
+async function getFileListings(authorId: string): Promise<string[]> {
+  try {
+    const raw = await getKV().get(`file_listings:${authorId}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed.filter((key): key is string => typeof key === 'string' && isValidArtifactMetadataKey(key));
+    }
+  } catch { /* ignore */ }
+  return [];
 }
 
 // Per-file suggested questions — the artifact's own `.questions` sidecar (the
@@ -354,6 +368,14 @@ function isValidFileName(name: string): boolean {
   return /^[a-z0-9][a-z0-9-]*$/.test(name) && name.length <= 64;
 }
 
+function isValidArtifactMetadataKey(key: string): boolean {
+  const cut = key.lastIndexOf('/');
+  if (cut <= 0) return false;
+  const scope = key.slice(0, cut);
+  const name = key.slice(cut + 1);
+  return normalizeLibraryScope(scope, 'public') === scope && isValidFileName(name);
+}
+
 type LibraryAccessGrant = {
   author_id?: string;
   artifact_type?: string;
@@ -381,6 +403,7 @@ interface ProtocolFileRow {
   text: string | null;
   title: string | null;
   visibility: string;
+  price_cents: number | null;
   updated_at: string;
 }
 
@@ -455,6 +478,46 @@ function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fal
   };
 }
 
+function alexandriaNumber(value: string): number {
+  const match = /^a\.(\d+)$/i.exec(value.trim());
+  return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+}
+
+function compareDirectoryAuthors(
+  a: ReturnType<typeof directoryAuthor>,
+  b: ReturnType<typeof directoryAuthor>,
+): number {
+  const byNumber = alexandriaNumber(a.alexandria_id) - alexandriaNumber(b.alexandria_id);
+  if (byNumber) return byNumber;
+  return (a.display_name || a.id).localeCompare(b.display_name || b.id, undefined, { sensitivity: 'base' });
+}
+
+async function loadDirectoryRoster() {
+  const db = getDB();
+  const accounts = await loadAccounts<AccountStore>();
+  const authorRows = await db.prepare('SELECT id, display_name, settings, bio FROM authors')
+    .all<CompanyAuthorRow>()
+    .catch(() => ({ results: [] as CompanyAuthorRow[] }));
+  const profilesById = new Map<string, CompanyAuthorRow>();
+  for (const profile of authorRows.results || []) profilesById.set(profile.id, profile);
+
+  const accountList = Object.values(accounts)
+    .filter((account) => !!account?.github_id && !!account.github_login)
+    .sort((a, b) => {
+      const ta = a.created_at || '';
+      const tb = b.created_at || '';
+      if (ta !== tb) return ta.localeCompare(tb);
+      return String(a.github_id).localeCompare(String(b.github_id));
+    });
+  const candidates = accountList
+    .map((account, index) => ({
+      account,
+      author: directoryAuthor(account, profilesById.get(account.github_login) || null, index),
+    }))
+    .filter(({ author }) => !!author.location && !!author.contact);
+  return { accountList, candidates };
+}
+
 function fileAccessUrl(authorId: string, name: string, scope: string, visibility: string): string {
   return `/library/${authorId}/file/${name}${scopeQuery(scope, visibility)}`;
 }
@@ -518,7 +581,7 @@ export function libraryCapabilityContract(input: {
       shared_renderer: ['identity', 'optional mind', 'links', 'published sections'],
       owner_controls: {
         identity: ['display_name', 'location', 'contact', 'website', 'socials'],
-        files: ['section', 'order_within_section', 'subtitle'],
+        files: ['section', 'order_within_section', 'subtitle', 'public_cover'],
         mirror: ['exact_context_scopes', 'exact_context_preview'],
         excluded: ['body', 'visibility', 'permissions'],
       },
@@ -530,7 +593,7 @@ export function libraryCapabilityContract(input: {
     },
     scopes: {
       meaning: 'The first folder is the permission type; every nested folder is an exact cohort. Any approved Library artifact may be context, not only a shadow.',
-      metadata: 'Invite cohort paths, filenames, subtitles, and questions are invisible without the exact grant. Authors metadata requires active membership. Paid offers are discoverable but their bodies remain locked.',
+      metadata: 'A protected title and owner-written public teaser appear only after the Author explicitly lists that exact artifact. The exact cohort, filename, questions, and body stay invisible without access. Paid offers are discoverable but their bodies remain locked.',
       permissions: {
         public: 'Anyone may read the exact public scope.',
         authors: 'Only an account with authoritatively active Alexandria membership may read an exact authors scope.',
@@ -600,6 +663,7 @@ export function libraryCapabilityContract(input: {
       file_categories: { method: 'PUT', path: `/library/${author}/file-categories` },
       file_order: { method: 'PUT', path: `/library/${author}/file-order` },
       file_subtitles: { method: 'PUT', path: `/library/${author}/file-subtitles` },
+      file_listings: { method: 'PUT', path: `/library/${author}/file-listings` },
       file_questions: { method: 'PUT', path: `/library/${author}/file-questions` },
       inference_context: { method: 'POST', path: `/library/${author}/twin`, body: { context: { scopes: ['public', 'invite/friends'] } } },
       inference_sidecar: { method: 'PUT', path: `/library/${author}/twin/sidecar`, body: { url: 'https://author-sidecar.example', secret: '<separate-sidecar-secret>', own_account: true } },
@@ -832,7 +896,15 @@ export function registerLibraryRoutes(app: Hono): void {
     const token = extractLibrarySessionToken(c);
     const bySession = token ? await findByLibrarySessionToken(token) : null;
     const viewer = byKey || bySession;
-    if (!viewer) return c.json({ signed_in: false, membership_active: false, authors: [], you_listed: false });
+    const { candidates: directoryCandidates } = await loadDirectoryRoster().catch(() => ({ candidates: [] }));
+    const otherAuthorCount = directoryCandidates.filter(({ author }) => author.id !== founderLogin()).length;
+    if (!viewer) return c.json({
+      signed_in: false,
+      membership_active: false,
+      authors: [],
+      you_listed: false,
+      other_author_count: otherAuthorCount,
+    });
 
     const viewerMembership = await resolveMembership(viewer);
     const membershipFields = {
@@ -845,35 +917,18 @@ export function registerLibraryRoutes(app: Hono): void {
       cancel_at: viewerMembership.cancel_at,
     };
     if (!membershipFields.membership_active) {
-      return c.json({ signed_in: true, ...membershipFields, authors: [], you_listed: false });
+      return c.json({
+        signed_in: true,
+        ...membershipFields,
+        authors: [],
+        you_listed: false,
+        other_author_count: otherAuthorCount,
+      });
     }
 
-    const db = getDB();
-    const accounts = await loadAccounts<AccountStore>();
-    const authorRows = await db.prepare('SELECT id, display_name, settings, bio FROM authors')
-      .all<CompanyAuthorRow>()
-      .catch(() => ({ results: [] as CompanyAuthorRow[] }));
-    const profilesById = new Map<string, CompanyAuthorRow>();
-    for (const profile of authorRows.results || []) profilesById.set(profile.id, profile);
-
-    const accountList = Object.values(accounts)
-      .filter((account) => !!account?.github_id && !!account.github_login)
-      .sort((a, b) => {
-        const ta = a.created_at || '';
-        const tb = b.created_at || '';
-        if (ta !== tb) return ta.localeCompare(tb);
-        return String(a.github_id).localeCompare(String(b.github_id));
-      });
-
-    // Fill-to-appear before live membership checks: accounts without the two
-    // public directory fields cannot appear, so do not spend a Stripe lookup
-    // on them. Reuse the viewer's result when they are one of the candidates.
-    const directoryCandidates = accountList
-      .map((account, index) => ({
-        account,
-        author: directoryAuthor(account, profilesById.get(account.github_login) || null, index),
-      }))
-      .filter(({ author }) => !!author.location && !!author.contact);
+    // Fill-to-appear happened before live membership checks: accounts without
+    // the two public directory fields cannot appear, so do not spend a Stripe
+    // lookup on them. Reuse the viewer's result when they are one candidate.
     const resolvedAccounts = await Promise.all(directoryCandidates.map(async ({ account, author }) => ({
       account,
       author,
@@ -885,12 +940,12 @@ export function registerLibraryRoutes(app: Hono): void {
         return author;
       })
       .filter((author): author is NonNullable<typeof author> => !!author?.id)
-      .sort((a, b) => b.id.localeCompare(a.id, undefined, { sensitivity: 'base' }));
+      .sort(compareDirectoryAuthors);
 
     const youListed = authors.some((a) => a.id === viewer.github_login);
 
     logEvent('library_directory_view', { authors: String(authors.length) });
-    return c.json({ signed_in: true, ...membershipFields, authors, you_listed: youListed });
+    return c.json({ signed_in: true, ...membershipFields, authors, you_listed: youListed, other_author_count: otherAuthorCount });
   });
 
   app.get('/library/:author', async (c) => {
@@ -911,9 +966,9 @@ export function registerLibraryRoutes(app: Hono): void {
     // render stale defaults even though it belonged to the same account.
     const authorId = account!.github_login;
 
-    await ensureFileTitleColumn();
+    await Promise.all([ensureFileTitleColumn(), ensureFilePriceColumn()]);
     const files = await db.prepare(
-      `SELECT account_id, scope, name, text, title, visibility, updated_at
+      `SELECT account_id, scope, name, text, title, visibility, price_cents, updated_at
        FROM protocol_files
        WHERE account_id = ?
        ORDER BY CASE name WHEN 'shadow' THEN 0 ELSE 1 END, updated_at DESC`
@@ -1012,22 +1067,38 @@ export function registerLibraryRoutes(app: Hono): void {
     const fileSubs = await getFileSubtitles(authorId);
     const fileQs = await getFileQuestions(authorId);
     const fileOrder = await getFileOrder(authorId);
+    const fileListings = new Set(await getFileListings(authorId));
     const orderedFiles = applyFileOrder(protocolFiles, fileOrder);
-    // The directory itself is part of the privacy boundary. Do not reveal an
-    // invite cohort's path, filenames, subtitles, or derived questions until
-    // the viewer holds that exact grant. Authors-only metadata likewise needs
-    // a live membership. Paid offers remain intentionally discoverable.
-    const visibleFiles = orderedFiles.filter((file) => canListLibraryArtifact({
+    // A protected file may expose a public COVER only after the owner opts that
+    // exact artifact in. The cover contains a deliberate title/subtitle and the
+    // base tier; it never carries the exact cohort, filename, questions, or body.
+    // Old gated files therefore stay invisible until the Author approves one.
+    const visibleFiles = orderedFiles.filter((file) => {
+      const listed = fileListings.has(libraryArtifactKey(file.scope, file.name));
+      return canDiscoverLibraryArtifact({
+        scope: file.scope,
+        grantedScopes: viewerGrantScopes,
+        subscriberValid: viewerSubscriber,
+        owner: viewerIsOwner,
+        listed,
+      }) && (!!file.title?.trim() || canListLibraryArtifact({
+        scope: file.scope,
+        grantedScopes: viewerGrantScopes,
+        subscriberValid: viewerSubscriber,
+        owner: viewerIsOwner,
+      }));
+    });
+    // Aggregate every piece's suggested questions into the twin object so the
+    // profile/PLM ask composer can rotate them (deduped, capped). Per-file
+    // questions ride with each file for the reader on that specific piece.
+    const accessibleFiles = visibleFiles.filter((file) => canListLibraryArtifact({
       scope: file.scope,
       grantedScopes: viewerGrantScopes,
       subscriberValid: viewerSubscriber,
       owner: viewerIsOwner,
     }));
-    // Aggregate every piece's suggested questions into the twin object so the
-    // profile/PLM ask composer can rotate them (deduped, capped). Per-file
-    // questions ride with each file for the reader on that specific piece.
     const twinQuestions = Array.from(
-      new Set(visibleFiles.flatMap((f) => {
+      new Set(accessibleFiles.flatMap((f) => {
         const key = libraryArtifactKey(f.scope, f.name);
         return fileQs[key] || (f.scope === f.visibility ? fileQs[f.name] : null) || [];
       })),
@@ -1060,13 +1131,25 @@ export function registerLibraryRoutes(app: Hono): void {
       },
       profile: profileCfg,
       location_options: libraryLocationOptions(),
-      files: visibleFiles.map(file => ({
-        scope: file.scope,
-        name: file.name,
+      files: visibleFiles.map((file, coverIndex) => {
+        const key = libraryArtifactKey(file.scope, file.name);
+        const listed = fileListings.has(key);
+        const canOpen = canListLibraryArtifact({
+          scope: file.scope,
+          grantedScopes: viewerGrantScopes,
+          subscriberValid: viewerSubscriber,
+          owner: viewerIsOwner,
+        });
+        const coverOnly = !canOpen;
+        return {
+        // A public cover gets an opaque response identity. Exact path and file
+        // name arrive only when this viewer can already open the artifact.
+        scope: coverOnly ? file.visibility : file.scope,
+        name: coverOnly ? `cover-${coverIndex + 1}` : file.name,
         title: file.title ?? null,
         // Suggested questions are returned only after the directory-level
         // visibility gate above, so they cannot disclose a hidden cohort.
-        questions: fileQs[libraryArtifactKey(file.scope, file.name)]
+        questions: coverOnly ? null : fileQs[key]
           || (file.scope === file.visibility ? fileQs[file.name] : null)
           || null,
         // Don't leak the author's private preview blurb for gated files:
@@ -1075,16 +1158,20 @@ export function registerLibraryRoutes(app: Hono): void {
         // Always-public teaser (opt-in per file). Lets a gated piece show a
         // one-line subtitle in the browse list without exposing its private
         // `text` blurb. Empty for files the Author hasn't set one on.
-        subtitle: fileSubs[libraryArtifactKey(file.scope, file.name)]
+        subtitle: fileSubs[key]
           || (file.scope === file.visibility ? fileSubs[file.name] : null)
           || null,
         visibility: file.visibility,
-        category: fileCats[libraryArtifactKey(file.scope, file.name)]
+        category: fileCats[key]
           || (file.scope === file.visibility ? fileCats[file.name] : null)
           || categoryFallback(file.name),
-        updated_at: file.updated_at,
-        url: fileAccessUrl(authorId, file.name, file.scope, file.visibility),
-      })),
+        updated_at: coverOnly ? null : file.updated_at,
+        price_cents: file.price_cents,
+        listed,
+        cover_only: coverOnly,
+        url: coverOnly ? null : fileAccessUrl(authorId, file.name, file.scope, file.visibility),
+      };
+      }),
     });
   });
 
@@ -2852,7 +2939,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const body = await c.req.json<{ categories?: Record<string, unknown> }>().catch(() => ({} as { categories?: Record<string, unknown> }));
     const clean: Record<string, string> = {};
     for (const [name, kind] of Object.entries(body.categories || {}).slice(0, LIBRARY_MAX_METADATA_ENTRIES)) {
-      if (isValidFileName(name) && isLibraryCategory(kind)) clean[name] = kind;
+      if ((isValidFileName(name) || isValidArtifactMetadataKey(name)) && isLibraryCategory(kind)) clean[name] = kind;
     }
     await getKV().put(`file_categories:${authorId}`, JSON.stringify(clean));
     logEvent('file_categories_set', { author: authorId, count: String(Object.keys(clean).length) });
@@ -2872,11 +2959,29 @@ export function registerLibraryRoutes(app: Hono): void {
     if ('error' in owner) return owner.error;
     const body = await c.req.json<{ order?: unknown }>().catch(() => ({} as { order?: unknown }));
     const clean = Array.isArray(body.order)
-      ? body.order.filter((n): n is string => typeof n === 'string' && isValidFileName(n.trim())).map((n) => n.trim()).slice(0, LIBRARY_MAX_METADATA_ENTRIES)
+      ? body.order.filter((n): n is string => typeof n === 'string' && (isValidFileName(n.trim()) || isValidArtifactMetadataKey(n.trim()))).map((n) => n.trim()).slice(0, LIBRARY_MAX_METADATA_ENTRIES)
       : [];
     await getKV().put(`file_order:${authorId}`, JSON.stringify(clean));
     logEvent('file_order_set', { author: authorId, count: String(clean.length) });
     return c.json({ ok: true, order: clean });
+  });
+
+  // Owner-approved public covers for protected artifacts. This bit exposes only
+  // the title, public subtitle, category, and base tier; it never changes read
+  // access. Missing/empty means hidden, preserving all older gated files.
+  app.put('/library/:author/file-listings', async (c) => {
+    const authorId = c.req.param('author');
+    const owner = await resolveOwnerOnly(c, authorId);
+    if ('error' in owner) return owner.error;
+    const body = await c.req.json<{ listings?: unknown }>().catch(() => ({} as { listings?: unknown }));
+    const clean = Array.isArray(body.listings)
+      ? [...new Set(body.listings
+        .filter((key): key is string => typeof key === 'string' && isValidArtifactMetadataKey(key.trim()))
+        .map((key) => key.trim()))].slice(0, LIBRARY_MAX_METADATA_ENTRIES)
+      : [];
+    await getKV().put(`file_listings:${authorId}`, JSON.stringify(clean));
+    logEvent('file_listings_set', { author: authorId, count: String(clean.length) });
+    return c.json({ ok: true, listings: clean });
   });
 
   app.put('/library/:author/file-subtitles', async (c) => {
@@ -2886,7 +2991,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const body = await c.req.json<{ subtitles?: Record<string, unknown> }>().catch(() => ({} as { subtitles?: Record<string, unknown> }));
     const clean: Record<string, string> = {};
     for (const [name, value] of Object.entries(body.subtitles || {}).slice(0, LIBRARY_MAX_METADATA_ENTRIES)) {
-      if (!isValidFileName(name)) continue;
+      if (!isValidFileName(name) && !isValidArtifactMetadataKey(name)) continue;
       if (typeof value !== 'string') continue;
       const line = value.replace(/\s+/g, ' ').trim().slice(0, 200);
       if (line) clean[name] = line;
@@ -2908,7 +3013,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const body = await c.req.json<{ questions?: Record<string, unknown> }>().catch(() => ({} as { questions?: Record<string, unknown> }));
     const clean: Record<string, string[]> = {};
     for (const [name, value] of Object.entries(body.questions || {}).slice(0, LIBRARY_MAX_METADATA_ENTRIES)) {
-      if (!isValidFileName(name)) continue;
+      if (!isValidFileName(name) && !isValidArtifactMetadataKey(name)) continue;
       if (!Array.isArray(value)) continue;
       const qs = value
         .filter((q): q is string => typeof q === 'string' && !!q.trim())

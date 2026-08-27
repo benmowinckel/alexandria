@@ -14,167 +14,53 @@ export interface DirectoryAuthor {
   files_url: string;
 }
 
-interface LocationOption {
-  key: string;
-  label: string;
-}
-
-const svgProps = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
-// Filter glyph (decreasing lines) — the location filter lives behind this icon on
-// the right of the search bar, instead of an always-on wall of location pills.
-const FilterIcon = <svg width="18" height="18" {...svgProps}><path d="M3 5h18M6 12h12M10 19h4" /></svg>;
-const CheckIcon = <svg width="14" height="14" {...svgProps}><path d="M20 6L9 17l-5-5" /></svg>;
-
 function normalize(value: string | null | undefined): string {
   return (value || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
 }
 
-export function LibraryDirectory({
-  authors,
-  initialLocationKeys = [],
-}: {
-  authors: DirectoryAuthor[];
-  initialLocationKeys?: string[];
-}) {
-  const [nameQuery, setNameQuery] = useState('');
-  const [locationFilters, setLocationFilters] = useState<string[]>(Array.from(new Set(initialLocationKeys)));
-  const [filterOpen, setFilterOpen] = useState(false);
-  const activeCount = locationFilters.length;
+function alexandriaNumber(value: string): number {
+  const match = /^a\.(\d+)$/i.exec(value.trim());
+  return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+}
+
+export function LibraryDirectory({ authors, initialQuery = '' }: { authors: DirectoryAuthor[]; initialQuery?: string }) {
+  const [query, setQuery] = useState(initialQuery);
 
   const sortedAuthors = useMemo(() => {
-    return [...authors].sort((a, b) => b.id.localeCompare(a.id, undefined, { sensitivity: 'base' }));
+    return [...authors].sort((a, b) => {
+      const byNumber = alexandriaNumber(a.alexandria_id) - alexandriaNumber(b.alexandria_id);
+      if (byNumber) return byNumber;
+      return (a.display_name || a.id).localeCompare(b.display_name || b.id, undefined, { sensitivity: 'base' });
+    });
   }, [authors]);
 
-  const locationOptions = useMemo<LocationOption[]>(() => {
-    const byKey = new Map<string, string>();
-    for (const author of sortedAuthors) {
-      if (!author.location || !author.location_key) continue;
-      if (!byKey.has(author.location_key)) byKey.set(author.location_key, author.location);
-    }
-    return Array.from(byKey.entries())
-      .map(([key, label]) => ({ key, label }))
-      .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
-  }, [sortedAuthors]);
-
   const filtered = useMemo(() => {
-    const needle = normalize(nameQuery.trim());
-    const activeLocations = new Set(locationFilters);
-
-    return sortedAuthors.filter((author) => {
-      const searchableName = normalize(author.display_name || author.id);
-      const matchesName = !needle || searchableName.includes(needle);
-      const matchesLocation = activeLocations.size === 0
-        || (!!author.location_key && activeLocations.has(author.location_key));
-      return matchesName && matchesLocation;
-    });
-  }, [sortedAuthors, nameQuery, locationFilters]);
-
-  const toggleLocation = (key: string) => {
-    setLocationFilters((prev) => (
-      prev.includes(key) ? prev.filter((value) => value !== key) : [...prev, key]
-    ));
-  };
+    const needle = normalize(query.trim());
+    if (!needle) return sortedAuthors;
+    return sortedAuthors.filter((author) => normalize([
+      author.display_name,
+      author.id,
+      author.alexandria_id,
+      author.location,
+    ].filter(Boolean).join(' ')).includes(needle));
+  }, [sortedAuthors, query]);
 
   return (
     <>
-      {/* Search names, with the location filter tucked behind an icon on the right
-          — one clean bar instead of a wall of always-on location pills. */}
-      <div style={{ position: 'relative', marginTop: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderBottom: '1px solid var(--border-light)' }}>
-          <input
-            type="search"
-            value={nameQuery}
-            onChange={(event) => setNameQuery(event.target.value)}
-            placeholder="search names"
-            aria-label="Search Authors by name"
-            style={{
-              flex: 1,
-              minWidth: 0,
-              border: 'none',
-              background: 'transparent',
-              color: 'var(--text-primary)',
-              fontFamily: 'var(--font-eb-garamond)',
-              fontSize: '0.95rem',
-              outline: 'none',
-              padding: '0 0 0.45rem',
-            }}
-          />
-          {locationOptions.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setFilterOpen((v) => !v)}
-              aria-label="Filter by location"
-              aria-expanded={filterOpen}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
-                border: 'none', background: 'none', cursor: 'pointer',
-                padding: '0 0.1rem 0.45rem',
-                color: activeCount > 0 ? 'var(--text-primary)' : 'var(--text-ghost)',
-              }}
-              className="hover:opacity-60"
-            >
-              {FilterIcon}
-              {activeCount > 0 && <span style={{ fontSize: '0.82rem', letterSpacing: '0.02em' }}>{activeCount}</span>}
-            </button>
-          )}
-        </div>
-
-        {filterOpen && (
-          <>
-            {/* click-away backdrop */}
-            <button
-              type="button" aria-hidden tabIndex={-1} onClick={() => setFilterOpen(false)}
-              style={{ position: 'fixed', inset: 0, background: 'transparent', border: 'none', cursor: 'default', zIndex: 10 }}
-            />
-            <div
-              role="listbox" aria-label="Locations"
-              style={{
-                position: 'absolute', right: 0, top: 'calc(100% + 0.4rem)', zIndex: 11,
-                minWidth: '12rem', maxHeight: '18rem', overflowY: 'auto',
-                background: 'var(--bg-primary)', border: '1px solid var(--border-light)',
-                borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.08)', padding: '0.35rem',
-              }}
-            >
-              {locationOptions.map((location) => {
-                const active = locationFilters.includes(location.key);
-                return (
-                  <button
-                    key={location.key}
-                    type="button"
-                    role="option" aria-selected={active}
-                    onClick={() => toggleLocation(location.key)}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.6rem',
-                      width: '100%', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left',
-                      padding: '0.5rem 0.6rem', borderRadius: '7px',
-                      color: active ? 'var(--text-primary)' : 'var(--text-muted)',
-                      fontFamily: 'var(--font-eb-garamond)', fontSize: '0.9rem',
-                    }}
-                    className="hover:opacity-60"
-                  >
-                    <span>{location.label.toLowerCase()}</span>
-                    <span style={{ display: 'inline-flex', opacity: active ? 1 : 0, color: 'var(--text-primary)' }}>{CheckIcon}</span>
-                  </button>
-                );
-              })}
-              {activeCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setLocationFilters([])}
-                  style={{
-                    display: 'block', width: '100%', border: 'none', borderTop: '1px solid var(--border-light)',
-                    background: 'none', cursor: 'pointer', textAlign: 'left', marginTop: '0.25rem',
-                    padding: '0.5rem 0.6rem', color: 'var(--text-ghost)',
-                    fontFamily: 'var(--font-eb-garamond)', fontSize: '0.85rem',
-                  }}
-                  className="hover:opacity-60"
-                >
-                  clear
-                </button>
-              )}
-            </div>
-          </>
-        )}
+      <div style={{ marginTop: '1rem', borderBottom: '1px solid var(--border-light)' }}>
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="search name, number, or city"
+          aria-label="Search Alexandrians by name, number, or city"
+          style={{
+            width: '100%', boxSizing: 'border-box', border: 'none',
+            background: 'transparent', color: 'var(--text-primary)',
+            fontFamily: 'var(--font-eb-garamond)', fontSize: '0.95rem',
+            outline: 'none', padding: '0 0 0.45rem',
+          }}
+        />
       </div>
 
       {filtered.length === 0 ? (
@@ -182,10 +68,7 @@ export function LibraryDirectory({
           no matches.
         </p>
       ) : (
-        // No per-row hairlines — lines separate sections, never siblings; a rule
-        // under every name is just noise once there are more than two (design.md,
-        // the recurring "too many lines" note). The search bar's underline marks
-        // the one boundary; inside the list, whitespace does the work.
+        // The search underline is the sole boundary; whitespace separates rows.
         <section style={{ marginTop: '2rem' }}>
           {filtered.map((author) => (
             <article key={author.id} style={{ padding: '0.85rem 0' }}>
@@ -207,19 +90,15 @@ export function LibraryDirectory({
                 className="hover:opacity-60"
               >
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '1rem' }}>
-                  <h2 style={{ fontSize: '1.1rem', fontWeight: 400, color: 'var(--text-primary)', margin: 0 }}>
+                  <h2 style={{ minWidth: 0, fontSize: '1.1rem', fontWeight: 400, color: 'var(--text-primary)', margin: 0 }}>
                     {author.display_name || author.id}
+                    {author.location ? <span style={{ color: 'var(--text-muted)', fontSize: '0.92rem' }}> · {author.location}</span> : null}
                   </h2>
-                  <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
+                  <span style={{ flex: 'none', fontSize: '0.95rem', color: 'var(--text-muted)', letterSpacing: '0.02em' }}>
                     {author.alexandria_id}
                   </span>
                 </div>
               </Link>
-              {/* Just the name \u2014 no bio, no location/contact line. A row is only
-                  noise to sense-check a person; location + contact live on the
-                  profile you click into, and location is how the filter finds
-                  them (fill-to-appear). The name + the mind carry the directory
-                  (founder 2026-07-19). */}
             </article>
           ))}
         </section>

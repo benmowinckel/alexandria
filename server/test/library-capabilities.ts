@@ -77,7 +77,11 @@ assert.match(contract.browse.public_handoff, /\/library\/someone\/handoff$/);
 assert.match(contract.browse.member_directory, /\/library$/);
 assert.match(contract.browse.rule, /authoritative active membership/);
 assert.equal(contract.scopes.inheritance, false);
-assert.match(contract.scopes.metadata, /invisible without the exact grant/);
+assert.match(contract.scopes.metadata, /explicitly lists that exact artifact/);
+assert.match(contract.scopes.metadata, /exact cohort, filename, questions, and body stay invisible/);
+assert.deepEqual(contract.owner_api.file_listings, {
+  method: 'PUT', path: '/library/someone/file-listings',
+});
 assert.match(contract.scopes.permissions.invite, /exact live invite-scope grant/);
 assert.match(contract.scopes.permissions.authors, /authoritatively active/);
 assert.match(contract.inference.context_rule, /configured PLM scopes.*viewer access.*active artifact access/);

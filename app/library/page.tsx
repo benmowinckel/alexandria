@@ -43,6 +43,7 @@ interface DirectoryResponse {
   membership_verified_at?: string | null;
   authors: DirectoryAuthor[];
   you_listed: boolean;
+  other_author_count: number;
 }
 
 // The directory is authors-only. We forward the viewer's library session
@@ -55,7 +56,7 @@ async function loadDirectory(): Promise<DirectoryResponse> {
       cache: 'no-store',
       headers: cookieHeader ? { cookie: cookieHeader } : {},
     });
-    if (!res.ok) return { signed_in: false, membership_active: false, authors: [], you_listed: false };
+    if (!res.ok) return { signed_in: false, membership_active: false, authors: [], you_listed: false, other_author_count: 0 };
     const data = await res.json() as {
       signed_in?: boolean;
       membership_active?: boolean;
@@ -65,6 +66,7 @@ async function loadDirectory(): Promise<DirectoryResponse> {
       membership_verified_at?: string | null;
       authors?: Partial<DirectoryAuthor>[];
       you_listed?: boolean;
+      other_author_count?: number;
     };
     const authors = (data.authors || []).map((author) => ({
       id: String(author.id ?? ''),
@@ -85,36 +87,24 @@ async function loadDirectory(): Promise<DirectoryResponse> {
       membership_verified_at: data.membership_verified_at,
       authors,
       you_listed: !!data.you_listed,
+      other_author_count: typeof data.other_author_count === 'number' ? Math.max(0, Math.floor(data.other_author_count)) : 0,
     };
   } catch {
-    return { signed_in: false, membership_active: false, authors: [], you_listed: false };
+    return { signed_in: false, membership_active: false, authors: [], you_listed: false, other_author_count: 0 };
   }
 }
 
 const linkStyle = { color: 'var(--text-secondary)', textDecoration: 'underline', textDecorationColor: 'var(--text-muted)', textUnderlineOffset: '3px', textDecorationThickness: '1px' };
 
-export default async function LibraryPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ locations?: string; location?: string }>;
-}) {
+export default async function LibraryPage({ searchParams }: { searchParams?: Promise<{ q?: string }> }) {
   const params = await searchParams;
-  const initialLocationKeys = (params?.locations || params?.location || '')
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean);
-  const { signed_in, membership_active, membership_available, membership_status, authors, you_listed } = await loadDirectory();
+  const initialQuery = (params?.q || '').trim().slice(0, 100);
+  const { signed_in, membership_active, membership_available, membership_status, authors, you_listed, other_author_count } = await loadDirectory();
 
   // Sign-in must return you to the directory, signed in — not the signup
   // callback page (which is a dead end for someone who just wanted to browse).
-  // intent=library skips the billing funnel; next brings you back here. Preserve
-  // any location filter so you land on the same view you left. (This is a server
-  // component — no window.location — so we rebuild the path from searchParams.)
-  const nextQuery = new URLSearchParams();
-  if (params?.locations) nextQuery.set('locations', params.locations);
-  else if (params?.location) nextQuery.set('location', params.location);
-  const nextPath = `/library${nextQuery.toString() ? `?${nextQuery}` : ''}`;
-  const signInUrl = librarySignInUrl(nextPath);
+  // intent=library skips the billing funnel; next brings you back here.
+  const signInUrl = librarySignInUrl(initialQuery ? `/library?q=${encodeURIComponent(initialQuery)}` : '/library');
 
   return (
     <div className="lib-page">
@@ -146,6 +136,12 @@ export default async function LibraryPage({
         {!signed_in ? (
           <nav className="lib-doors" aria-label="open a mind">
             <Link href={FOUNDER_PROFILE_PATH} className="lib-open">Benjamin a. Mowinckel</Link>
+            {other_author_count > 0 ? (
+              <Link href="/join" className="lib-others">
+                <span>{other_author_count} other {other_author_count === 1 ? 'Alexandrian' : 'Alexandrians'}</span>
+                <span className="lib-others-note">members can browse them</span>
+              </Link>
+            ) : null}
           </nav>
         ) : !membership_active ? (
           <div className="lib-gate">
@@ -176,7 +172,7 @@ export default async function LibraryPage({
                 No Alexandrians listed yet — be the first: add your city and a contact to your file.
               </p>
             ) : (
-              <LibraryDirectory authors={authors} initialLocationKeys={initialLocationKeys} />
+              <LibraryDirectory authors={authors} initialQuery={initialQuery} />
             )}
           </>
         )}
@@ -226,13 +222,20 @@ export default async function LibraryPage({
         }
         .lib-main-open .lib-header { margin-bottom: 0; }
         .lib-main-open .lib-h1 { margin-top: 2.8rem; }
-        .lib-doors { margin: 2rem 0 0; }
+        .lib-doors { display: grid; gap: 1.35rem; margin: 2rem 0 0; }
         .lib-open {
           color: var(--text-primary); font-style: italic; font-size: 1.28rem;
           line-height: 1.35; text-decoration: none; letter-spacing: 0.005em;
           transition: opacity 200ms ease;
         }
         .lib-open:hover { opacity: 0.6; }
+        .lib-others {
+          display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem;
+          color: var(--text-muted); font-size: 1.02rem; line-height: 1.35;
+          text-decoration: none; transition: opacity 200ms ease;
+        }
+        .lib-others:hover { opacity: 0.6; }
+        .lib-others-note { flex: none; color: var(--text-ghost); font-size: 0.9rem; font-style: italic; }
 
         .lib-gate { max-width: 30rem; }
         .lib-lede { margin: 0 0 1.9rem; font-size: 1.08rem; line-height: 1.65; color: var(--text-secondary); text-wrap: pretty; }
@@ -254,6 +257,7 @@ export default async function LibraryPage({
 
         @media (max-width: 640px) {
           .lib-main { padding: 4rem 1.5rem 1.5rem; }
+          .lib-others { align-items: flex-start; flex-direction: column; gap: 0.15rem; }
         }
       `}</style>
     </div>

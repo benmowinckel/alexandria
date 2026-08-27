@@ -7,6 +7,7 @@ const OWNER_CONTROLS = new Set([
   'profile',
   'file-order',
   'file-subtitles',
+  'file-listings',
   'twin',
 ]);
 

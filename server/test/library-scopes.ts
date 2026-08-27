@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  canDiscoverLibraryArtifact,
   canListLibraryArtifact,
   effectiveLibraryScopes,
   libraryArtifactKey,
@@ -92,5 +93,18 @@ assert.equal(canListLibraryArtifact({
 assert.equal(canListLibraryArtifact({
   scope: 'invite/investors', grantedScopes: [], subscriberValid: false, owner: true,
 }), true);
+
+assert.equal(canDiscoverLibraryArtifact({
+  scope: 'authors', grantedScopes: [], subscriberValid: false, owner: false, listed: false,
+}), false);
+assert.equal(canDiscoverLibraryArtifact({
+  scope: 'authors', grantedScopes: [], subscriberValid: false, owner: false, listed: true,
+}), true);
+assert.equal(canDiscoverLibraryArtifact({
+  scope: 'invite/friends', grantedScopes: [], subscriberValid: false, owner: false, listed: true,
+}), true);
+assert.equal(canDiscoverLibraryArtifact({
+  scope: 'invite/friends', grantedScopes: [], subscriberValid: false, owner: false, listed: false,
+}), false);
 
 console.log('library scope boundary passed');

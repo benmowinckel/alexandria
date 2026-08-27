@@ -83,3 +83,23 @@ export function canListLibraryArtifact(input: {
   if (visibility === 'authors') return input.subscriberValid;
   return input.grantedScopes.includes(input.scope);
 }
+
+/**
+ * Whether a Library artifact may have a public cover row for this viewer.
+ *
+ * Access and discovery stay separate: an owner may deliberately list the
+ * title and public teaser of an authors/invite artifact without exposing its
+ * exact cohort, filename, questions, or body. Existing gated artifacts remain
+ * invisible until that explicit listing bit exists.
+ */
+export function canDiscoverLibraryArtifact(input: {
+  scope: string;
+  grantedScopes: readonly string[];
+  subscriberValid: boolean;
+  owner: boolean;
+  listed: boolean;
+}): boolean {
+  if (canListLibraryArtifact(input)) return true;
+  const visibility = visibilityForScope(input.scope);
+  return input.listed && (visibility === 'authors' || visibility === 'invite');
+}
