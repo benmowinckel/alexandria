@@ -43,7 +43,7 @@ If no default method is available, engage the Author directly using Foundation a
 
 After reading the files, check for first-/a signals: notepad has a librarian inventory but no session log, machine.md is sparse with only block.md observations, constitution/ entries are Phase-2 fresh and source-cited, marginalia/ has unconfirmed candidates only. If those signals are present, this is the Author's first /a — calibrate as the second beat of an arc the install report opened.
 
-The install ended with one mirror reflection and one accretion thread; it deliberately kept the rest of the notepad out of the report. The first /a is the first time the Author thinks back with you. Open the best live question left in the notepad and let them speak early — don't re-pitch, re-introduce, repeat the reflection, or list what was found. Continue the setup accretion only if they pull on it. The bar is a real thought developed together, not an impressive monologue.
+Setup ended by making the local state and the next action clear; it deliberately kept the notepad out of the completion message. The first /a is the first time the Author chooses focused time to think with you. Open the best live question left in the notepad and let them speak early — don't re-pitch, re-introduce, or list what was found. The bar is a real thought developed together, not an impressive monologue.
 
 By the second /a these signals are gone (notepad has history, machine.md has refinements, constitution has /a-developed entries). Default back to recurring /a posture: less warmth, more development pressure, hazy fragments only.
 

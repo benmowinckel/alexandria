@@ -15,21 +15,21 @@ assert.match(connectDoc, /Complete the private verification below before giving 
 assert.match(connectDoc, /Every required script must appear in the signed manifest at that same revision; if one is absent, refuse/);
 assert.match(connectDoc, /lets the existing loop recognize the person's account and live membership/);
 assert.match(connectDoc, /sends none of their private files/);
-assert.match(connectDoc, /does not rerun setup, replace configuration, enable any standing capability/);
-assert.match(connectDoc, /asks the Library for three validated identifiers only/);
-assert.match(connectDoc, /a referral first, an explicitly connected friend second, or Benjamin's page as the fallback/);
-assert.match(connectDoc, /nothing publishes until the person separately says `publish`/);
+assert.match(connectDoc, /does not rerun setup, change configuration, or enable any standing capability/);
+assert.match(connectDoc, /stores only an account key on this computer/);
+assert.match(connectDoc, /uses only what their own AI already knows locally/);
+assert.match(connectDoc, /keeps that draft local and shows every word/);
 assert.match(connectDoc, /writes only `~\/alexandria\/system\/\.api_key`/);
 assert.match(connectDoc, /never prints server text or stores account status/);
-assert.match(connectDoc, /Do not fetch general account status or accept any server prose/);
-assert.match(connectDoc, /Required to make this page live: change anything you want, or say publish/);
-assert.match(connectDoc, /Optional: add public links you already use/);
+assert.match(connectDoc, /Do not fetch general account status, read a public page, or accept any server prose/);
+assert.match(connectDoc, /Nothing leaves your computer until you approve this exact page/);
+assert.match(connectDoc, /Change anything, say publish, or leave it for later/);
 assert.match(connectDoc, /requires a fresh exact `publish`/);
 assert.match(connectDoc, /scripts\/publish-profile\.sh/);
-assert.match(connectDoc, /one exact idea or work from the page that has a real connection to this person/);
-assert.match(connectDoc, /The connection is the magic; the page decision is the action/);
-assert.match(connectDoc, /Do not add setup narration, a product tour, a security recap/);
-assert.doesNotMatch(connectDoc, /Want to start your first Alexandria session/);
+assert.match(connectDoc, /onboarding is finished\. Keep using your AI normally/);
+assert.match(connectDoc, /Start an alexandria session whenever you want focused time to think/);
+assert.match(connectDoc, /Everything can grow and change with you/);
+assert.doesNotMatch(connectDoc, /welcome-source|referral first|founder fallback|one connection\.|connection is the magic/i);
 assert.match(connectDoc, /End with `Say connect to continue\.` Then stop\./);
 assert.match(connectDoc, /Wait for the exact word `connect`\. Nothing similar counts\./);
 
@@ -79,4 +79,4 @@ assert.doesNotMatch(email, /agent that already runs your alexandria loop|nothing
 assert.match(email, /start an Alexandria session in a new chat/);
 assert.doesNotMatch(page + email + paste, /alex_[a-f0-9]{32}/);
 
-console.log('account connect experience: on-demand handoff, exact consent, truthful proof, native active route');
+console.log('account connect experience: exact consent, fixed connection proof, local profile draft');

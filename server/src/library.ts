@@ -350,56 +350,6 @@ function isValidAuthorId(id: string): boolean {
   return /^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(id) && id.length <= 39;
 }
 
-export type LibraryWelcomeSourceKind = 'referral' | 'friend' | 'founder';
-
-/**
- * Pick one known public person without letting the server return prose, URLs,
- * or instructions. Relationship order is product meaning: referral first,
- * explicit friend grant second, fixed founder fallback last.
- */
-export function selectLibraryWelcomeSource(input: {
-  selfLogin: string;
-  referralLogins: string[];
-  friendLogins: string[];
-  availableLogins: string[];
-  founderLogin?: string;
-}): { source_kind: LibraryWelcomeSourceKind; source_login: string } {
-  const self = input.selfLogin.trim().toLowerCase();
-  const fallbackCandidate = (input.founderLogin || DEFAULT_FOUNDER_LOGIN).trim();
-  const fallback = isValidAuthorId(fallbackCandidate) ? fallbackCandidate : DEFAULT_FOUNDER_LOGIN;
-  const available = new Map<string, string>();
-  for (const login of input.availableLogins) {
-    const clean = login.trim();
-    if (isValidAuthorId(clean)) available.set(clean.toLowerCase(), clean);
-  }
-  const choose = (kind: Exclude<LibraryWelcomeSourceKind, 'founder'>, logins: string[]) => {
-    for (const login of logins) {
-      const clean = login.trim();
-      if (!isValidAuthorId(clean) || clean.toLowerCase() === self) continue;
-      const canonical = available.get(clean.toLowerCase());
-      if (canonical) return { source_kind: kind, source_login: canonical } as const;
-    }
-    return null;
-  };
-  return choose('referral', input.referralLogins)
-    || choose('friend', input.friendLogins)
-    || { source_kind: 'founder', source_login: fallback };
-}
-
-async function welcomeSourceAllowed(accountId: string, limit = 6, windowSec = 600): Promise<boolean> {
-  try {
-    const kv = getKV();
-    const key = `rate:library-welcome:${accountId}`;
-    const raw = await kv.get(key);
-    const count = raw ? Number.parseInt(raw, 10) : 0;
-    if (!Number.isFinite(count) || count >= limit) return false;
-    await kv.put(key, String(count + 1), { expirationTtl: windowSec });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function isValidFileName(name: string): boolean {
   return /^[a-z0-9][a-z0-9-]*$/.test(name) && name.length <= 64;
 }
@@ -645,10 +595,6 @@ export function libraryCapabilityContract(input: {
     },
     owner_api: {
       auth: 'Use the Author API key as Authorization: Bearer <key>, or the signed-in Library session cookie.',
-      welcome_source: {
-        method: 'GET', path: '/library/me/welcome-source',
-        response: { self_login: '<github-login>', source_kind: 'referral | friend | founder', source_login: '<github-login>' },
-      },
       profile: { method: 'PUT', path: `/library/${author}/profile` },
       profile_self: { method: 'PUT', path: '/library/me/profile', response: { ok: true } },
       file_categories: { method: 'PUT', path: `/library/${author}/file-categories` },
@@ -834,84 +780,6 @@ export function registerLibraryRoutes(app: Hono): void {
       membership_verified_at: membership?.verified_at || null,
       cancel_at_period_end: membership?.cancel_at_period_end || false,
       cancel_at: membership?.cancel_at || null,
-    });
-  });
-
-  // One post-connect discovery primitive. It returns only three validated
-  // identifiers; the signed local script constructs the URL and treats the
-  // page itself as untrusted public data. No private context enters this call.
-  app.get('/library/me/welcome-source', async (c) => {
-    const key = extractApiKey(c);
-    const byKey = key ? await findByApiKey(key) : null;
-    const token = extractLibrarySessionToken(c);
-    const bySession = token ? await findByLibrarySessionToken(token) : null;
-    const accessor = byKey || bySession;
-    if (!accessor?.github_id) return c.json({ error: 'Authentication required' }, 401);
-    if (!await welcomeSourceAllowed(String(accessor.github_id))) {
-      return c.json({ error: 'Too many requests' }, 429, { 'Retry-After': '600' });
-    }
-
-    const membership = await resolveMembership(accessor);
-    if (!membership.available || !membership.active) return c.json({ error: 'Active membership required' }, 403);
-
-    const db = getDB();
-    const selfLogin = accessor.github_login;
-    const [referrer, referred, incomingFriends, outgoingFriends, accounts] = await Promise.all([
-      db.prepare(
-        'SELECT author_id FROM referrals WHERE referred_github_login = ? ORDER BY created_at ASC LIMIT 1',
-      ).bind(selfLogin).first<{ author_id: string }>().catch(() => null),
-      db.prepare(
-        'SELECT referred_github_login FROM referrals WHERE author_id = ? AND referred_github_login IS NOT NULL ORDER BY created_at DESC LIMIT 8',
-      ).bind(selfLogin).all<{ referred_github_login: string }>().catch(() => ({ results: [] as { referred_github_login: string }[] })),
-      db.prepare(
-        "SELECT author_id FROM access_grants WHERE account_github_id = ? AND scope = 'invite/friends' AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 8",
-      ).bind(String(accessor.github_id)).all<{ author_id: string }>().catch(() => ({ results: [] as { author_id: string }[] })),
-      db.prepare(
-        "SELECT account_github_id FROM access_grants WHERE author_id = ? AND scope = 'invite/friends' AND revoked_at IS NULL ORDER BY created_at DESC LIMIT 8",
-      ).bind(selfLogin).all<{ account_github_id: string }>().catch(() => ({ results: [] as { account_github_id: string }[] })),
-      loadAccounts<AccountStore>(),
-    ]);
-
-    const accountList = Object.values(accounts).filter((account) => !!account?.github_id && !!account.github_login);
-    const byLogin = new Map(accountList.map((account) => [account.github_login.toLowerCase(), account]));
-    const byId = new Map(accountList.map((account) => [String(account.github_id), account]));
-    const referralLogins = [
-      referrer?.author_id || '',
-      ...(referred.results || []).map((row) => row.referred_github_login),
-    ];
-    const friendLogins = [
-      ...(incomingFriends.results || []).map((row) => row.author_id),
-      ...(outgoingFriends.results || []).map((row) => byId.get(row.account_github_id)?.github_login || ''),
-    ];
-    const orderedAccounts = [...referralLogins, ...friendLogins]
-      .map((login) => byLogin.get(login.toLowerCase()) || null)
-      .filter((account): account is Account => !!account)
-      .filter((account, index, all) => all.findIndex((candidate) => candidate.github_id === account.github_id) === index)
-      .slice(0, 16);
-
-    const availabilityStatements = orderedAccounts.map((account) => db.prepare(
-      `SELECT 1 AS ok FROM authors WHERE id = ?
-       UNION ALL
-       SELECT 1 AS ok FROM protocol_files WHERE account_id = ? AND visibility = 'public'
-       LIMIT 1`,
-    ).bind(account.github_login, String(account.github_id)));
-    const availability = availabilityStatements.length
-      ? await db.batch<{ ok: number }>(availabilityStatements)
-      : [];
-    const availableLogins = orderedAccounts
-      .filter((_, index) => (availability[index]?.results || []).length > 0)
-      .map((account) => account.github_login);
-    const source = selectLibraryWelcomeSource({
-      selfLogin,
-      referralLogins,
-      friendLogins,
-      availableLogins,
-      founderLogin: founderLogin(),
-    });
-
-    return c.json({ self_login: selfLogin, ...source }, 200, {
-      'Cache-Control': 'private, no-store',
-      'X-Content-Type-Options': 'nosniff',
     });
   });
 

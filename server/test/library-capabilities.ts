@@ -13,7 +13,6 @@ import {
   isLibraryCategory,
   libraryLocationOptions,
   libraryCapabilityContract,
-  selectLibraryWelcomeSource,
 } from '../src/library.js';
 import { canonicalLibraryLocation } from '../../shared/library-locations.js';
 import { resolveTwinVariants } from '../src/twin.js';
@@ -89,26 +88,7 @@ assert.match(contract.inference.audit, /context-preview$/);
 assert.deepEqual(contract.owner_api.profile_self, {
   method: 'PUT', path: '/library/me/profile', response: { ok: true },
 });
-assert.deepEqual(contract.owner_api.welcome_source, {
-  method: 'GET', path: '/library/me/welcome-source',
-  response: { self_login: '<github-login>', source_kind: 'referral | friend | founder', source_login: '<github-login>' },
-});
-
-assert.deepEqual(selectLibraryWelcomeSource({
-  selfLogin: 'reader',
-  referralLogins: ['missing', 'referred'],
-  friendLogins: ['friend'],
-  availableLogins: ['referred', 'friend'],
-}), { source_kind: 'referral', source_login: 'referred' });
-assert.deepEqual(selectLibraryWelcomeSource({
-  selfLogin: 'reader',
-  referralLogins: ['missing'],
-  friendLogins: ['reader', 'friend'],
-  availableLogins: ['friend'],
-}), { source_kind: 'friend', source_login: 'friend' });
-assert.deepEqual(selectLibraryWelcomeSource({
-  selfLogin: 'reader', referralLogins: [], friendLogins: [], availableLogins: [],
-}), { source_kind: 'founder', source_login: 'benmowinckel' });
+assert.equal('welcome_source' in contract.owner_api, false);
 assert.equal(contract.owner_api.inference_sidecar.body.own_account, true);
 assert.match(contract.inference.setup.module, /factory\/canon\/plm\.md$/);
 assert.equal(contract.inference.sidecar_contract.context.path, '/agent');
