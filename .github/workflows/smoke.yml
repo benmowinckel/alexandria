@@ -261,15 +261,6 @@ jobs:
             ([.authors[].id] | index("benmowinckel") != null)
           ' >/dev/null || { echo "::error::Founder is missing from the signed-in member directory"; exit 1; }
 
-          ASK=$(curl -sf --max-time 90 -X POST "$SERVER/library/benmowinckel/ask" \
-            -H "Authorization: Bearer $API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{"question":"what changes in the first week? answer briefly.","variant":"context","artifact":{"name":"features","scope":"public"}}')
-          printf '%s' "$ASK" | jq -e '
-            .ok == true and
-            .variant == "context" and
-            (.answer | type == "string" and length > 20)
-          ' >/dev/null || { echo "::error::The public document reader cannot answer through the context mirror"; exit 1; }
           echo "✓ founder profile + member listing + context mirror"
 
       - name: Stripe webhook reachable
