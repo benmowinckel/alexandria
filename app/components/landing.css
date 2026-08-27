@@ -1170,10 +1170,9 @@
              the CTA bottom on the glyph bottom itself — measured via
              canvas font metrics × the 0.9 stage scale, verified by rect. */
           padding-bottom: 106px;
-          /* Squeeze the column — narrower text width pushes the left
-             edge inward (right edge unchanged because right-lower is
-             flex-end aligned). */
-          width: 680px;
+          /* Give the three-part explanation enough scale to balance the
+             wordmark opposite it while keeping its right edge anchored. */
+          width: 800px;
         }
 
         /* ─── BOTTOM SLIDE ─── */
@@ -1530,10 +1529,8 @@
         .wordmark-block {
           align-self: flex-start;
         }
-        /* Two CTAs side by side. Each is a stack — button on top, italic
-           subtitle below. Primary is filled (the action); secondary is a
-           ghost outline (the alternative). Subtitles do the explaining,
-           so the buttons themselves stay as terse two-word verbs. */
+        /* One action. The explanation earns the click; the page does not
+           add a second decision before the loop can begin. */
         .cta-pair {
           margin: 0;
           padding-left: 0;
@@ -1642,8 +1639,7 @@
           display: none;
         }
         /* ─── WHY / WHAT / HOW pillars (2026-07-13 exploration) ─── */
-        /* ─── THE PITCH — one flowing skim. Depth lives behind ask us
-           anything / plainly / the whitepaper. */
+        /* ─── THE PITCH — three editorial rows, one flowing skim. */
         .pitch {
           flex: 1 1 auto;
           min-height: 0;
@@ -1656,20 +1652,23 @@
         .pitch-simple {
           display: flex;
           flex-direction: column;
-          justify-content: center;
-          gap: 34px;
+          justify-content: flex-start;
+          gap: 0;
         }
         .pitch-simple-section {
           min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 18px;
+          display: grid;
+          grid-template-columns: 164px minmax(0, 1fr);
+          align-items: start;
+          gap: 36px;
+          padding: 24px 0 26px;
+          border-top: 1px solid var(--theme-border-soft);
         }
         .pitch-simple-title {
           margin: 0;
           font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic;
-          font-size: 28px;
+          font-size: 32px;
           font-weight: 400;
           line-height: 1.08;
           letter-spacing: -0.012em;
@@ -1684,14 +1683,13 @@
         .pitch-simple-prose {
           margin: 0;
           font-family: var(--font-eb-garamond), var(--font-serif), ui-serif, Georgia, serif;
-          font-size: 17.5px;
-          line-height: 1.48;
+          font-size: 19px;
+          line-height: 1.5;
           letter-spacing: 0.004em;
           font-feature-settings: 'liga', 'dlig';
           color: var(--theme-fg);
           text-wrap: pretty;
-          text-align: justify;
-          text-align-last: left;
+          text-align: left;
         }
         .pitch-nowrap {
           white-space: nowrap;
@@ -2328,48 +2326,6 @@
         /* The mark — upright period, a breath tighter to the word than the
            tracking sets it, echoing the brand nav-dot (same as the shelf). */
         .quiet-link .shelf-dot { letter-spacing: 0; margin-left: 0.02em; }
-        .cta-pair a.lr-cta {
-          font-family: var(--font-serif), ui-serif, Georgia, serif;
-          /* Matches button.install-cta exactly (font-size + padding) so the
-             two CTAs are the same size and their captions align — standardized
-             pair, not two slightly different boxes. */
-          font-size: 17px;
-          padding: 12px 26px;
-          border-radius: 8px;
-          text-decoration: none;
-          font-weight: 500;
-          font-style: normal;
-          letter-spacing: 0.003em;
-          transition:
-            background 180ms ease,
-            color 180ms ease,
-            border-color 180ms ease,
-            opacity 180ms ease;
-        }
-        .cta-pair a.lr-cta-primary {
-          background: var(--theme-fg);
-          color: var(--theme-bg);
-        }
-        .cta-pair a.lr-cta-primary:hover {
-          opacity: 0.86;
-        }
-        /* Ghost — the alternative. Inset box-shadow draws the outline
-           without consuming layout space, so the ghost button matches
-           the primary's exact height to the pixel. A real border would
-           add 2px to the ghost and shift its subtitle 2px below the
-           primary's subtitle. Wakes on hover. */
-        .cta-pair a.lr-cta-ghost {
-          background: transparent;
-          color: var(--theme-fg);
-          box-shadow: inset 0 0 0 1px var(--theme-border-soft);
-          transition:
-            box-shadow 180ms ease,
-            background 180ms ease;
-        }
-        .cta-pair a.lr-cta-ghost:hover {
-          box-shadow: inset 0 0 0 1px var(--theme-fg-muted);
-          background: rgba(0, 0, 0, 0.02);
-        }
         /* Homepage primary CTA — looks exactly like the old "join the tribe"
            filled button (same fill, just a touch bigger), but copies the install
            command to the clipboard instead of navigating. The label stays the
@@ -3038,13 +2994,15 @@
           }
           .pitch-simple {
             display: flex;
-            gap: 42px;
+            gap: 0;
           }
           .pitch-simple-title {
             font-size: clamp(26px, 7vw, 30px);
           }
           .pitch-simple-section {
+            grid-template-columns: 1fr;
             gap: 14px;
+            padding: 30px 0 0;
           }
           .pitch-simple-copy {
             gap: 12px;

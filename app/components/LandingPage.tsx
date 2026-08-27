@@ -1126,12 +1126,6 @@ export default function LandingPage() {
 
                 <div className="cta-pair">
                   <HomeInstall />
-                  <div className="cta-block">
-                    {/* The second door is the action itself: ask. */}
-                    <Link href="/ask" className="lr-cta lr-cta-ghost">
-                      ask anything
-                    </Link>
-                  </div>
                 </div>
 
               </div>

@@ -1,7 +1,7 @@
 const base = (process.env.SITE_URL || process.argv[2] || 'http://127.0.0.1:3000').replace(/\/$/, '');
 
 const publicRoutes = [
-  '/', '/start', '/chat', '/join', '/ask', '/whitepaper', '/features',
+  '/', '/start', '/chat', '/join', '/whitepaper', '/features',
   '/letter', '/library', '/marketplace', '/follow', '/questions', '/updates',
   '/mechanics', '/privacy', '/terms',
 ];
@@ -58,6 +58,12 @@ for (const route of publicRoutes) {
   if (serverHeadingRoutes.has(route)) {
     assert(/<h1(?:\s|>)/i.test(html), `${route}: missing server-rendered h1`);
   }
+}
+
+for (const route of ['/ask', '/plainly']) {
+  const response = await fetch(`${base}${route}`);
+  assert(response.ok, `${route}: HTTP ${response.status}`);
+  assert(new URL(response.url).pathname === '/start', `${route}: must resolve to /start`);
 }
 
 for (const route of ['/memo', '/pitch', '/demo']) {

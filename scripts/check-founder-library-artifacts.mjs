@@ -5,7 +5,6 @@ const api = (process.env.ALEXANDRIA_API_URL || "https://api.alexandria-library.c
 const author = process.env.ALEXANDRIA_LIBRARY_AUTHOR || "benmowinckel";
 
 const artifacts = [
-  ["ask", "public/docs/Ask.md"],
   ["features", "public/docs/Features.md"],
   ["whitepaper", "public/docs/Whitepaper.md"],
   ["letter", "public/docs/letter.txt"],
