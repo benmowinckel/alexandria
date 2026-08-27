@@ -490,6 +490,12 @@ fetch_factory "scripts/configure_grok.py" "$RUNTIME_DIR/scripts/configure_grok.p
 fetch_factory "scripts/uninstall.py" "$RUNTIME_DIR/scripts/uninstall.py" "scripts/uninstall.py" yes
 fetch_factory "scripts/statusline.sh" "$RUNTIME_DIR/scripts/statusline.sh" "scripts/statusline.sh" yes
 chmod +x "$RUNTIME_DIR/scripts/statusline.sh" 2>/dev/null
+# Older builds wrote false "delivered" receipts by grepping whole transcripts.
+# Remove only those product-owned date files; unexpected content is preserved.
+for stale_delivery in "$RUNTIME_DIR/state/visible-cue-delivered"/????-??-??; do
+  [ -f "$stale_delivery" ] && rm -f "$stale_delivery"
+done
+rmdir "$RUNTIME_DIR/state/visible-cue-delivered" 2>/dev/null || true
 fetch_factory "skills/codex-ambient.md" "$RUNTIME_DIR/codex-ambient.md" "skills/codex-ambient.md" yes
 # verify-fetch.sh — the only later "fetch a factory script, then run it" door
 # (install/publish/brief-setup skills, migrate.sh). It lands through this
@@ -1711,8 +1717,8 @@ else
 fi
 
 # The visible route from passive work into /a is on by default. Native chrome
-# wins where available; elsewhere the existing signed SessionStart path gets
-# one quiet local opportunity per day. Only the explicit OFF sentinel is a
+# wins where available; Codex uses a direct SessionStart notice; hosts without
+# either keep the model-mediated floor. Only the explicit OFF sentinel is a
 # valid skip. A missing or broken renderer is a failed core path, not an
 # inferred user choice.
 CUE_RENDERED=""
@@ -1744,12 +1750,51 @@ else
     ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
     bash "$RUNTIME_DIR/scripts/statusline.sh" claim-footer 2>/dev/null | tr -d '\r')
   case "$CUE_CLAIM_ONE:$CUE_CLAIM_TWO" in 'Want me to open your alexandria loop in the background for when you have a minute?:') ;; *) CUE_OUTPUTS_OK=false ;; esac
+
+  # Byte-level rendering is not enough for Codex: prove the assembled installed
+  # hook returns one valid host-visible systemMessage, keeps Author context in
+  # additionalContext, and stays silent on the second same-day start. Run in an
+  # isolated fake home so setup health never consumes the Author's real cue.
+  CUE_DIRECT_PROBE="$RUNTIME_DIR/.cue-direct-probe.$$"
+  CUE_DIRECT_HOME="$CUE_DIRECT_PROBE/home"
+  CUE_DIRECT_RUNTIME="$CUE_DIRECT_HOME/.local/share/alexandria"
+  CUE_DIRECT_ALEX="$CUE_DIRECT_HOME/alexandria"
+  mkdir -p "$CUE_DIRECT_RUNTIME/hooks" "$CUE_DIRECT_RUNTIME/scripts" \
+    "$CUE_DIRECT_ALEX/files/constitution" "$CUE_DIRECT_ALEX/system"
+  cp "$RUNTIME_DIR/hooks/shim.sh" "$CUE_DIRECT_RUNTIME/hooks/shim.sh" 2>/dev/null || CUE_OUTPUTS_OK=false
+  cp "$RUNTIME_DIR/.hooks_payload" "$CUE_DIRECT_RUNTIME/.hooks_payload" 2>/dev/null || CUE_OUTPUTS_OK=false
+  cp "$RUNTIME_DIR/scripts/statusline.sh" "$CUE_DIRECT_RUNTIME/scripts/statusline.sh" 2>/dev/null || CUE_OUTPUTS_OK=false
+  chmod +x "$CUE_DIRECT_RUNTIME/hooks/shim.sh" "$CUE_DIRECT_RUNTIME/.hooks_payload" \
+    "$CUE_DIRECT_RUNTIME/scripts/statusline.sh" 2>/dev/null || CUE_OUTPUTS_OK=false
+  runtime_sha256 "$CUE_DIRECT_RUNTIME/.hooks_payload" > "$CUE_DIRECT_RUNTIME/.payload_verified_sha"
+  touch "$CUE_DIRECT_RUNTIME/.setup_complete" "$CUE_DIRECT_ALEX/system/.block_complete"
+  printf '%0300d\n' 0 > "$CUE_DIRECT_ALEX/files/constitution/_constitution.md"
+  CUE_DIRECT_ONE=$(printf '%s\n' '{"session_id":"setup-probe-1","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}' | \
+    HOME="$CUE_DIRECT_HOME" ALEXANDRIA_DIR="$CUE_DIRECT_ALEX" \
+    ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
+    bash "$CUE_DIRECT_RUNTIME/hooks/shim.sh" session-start 2>/dev/null)
+  CUE_DIRECT_TWO=$(printf '%s\n' '{"session_id":"setup-probe-2","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}' | \
+    HOME="$CUE_DIRECT_HOME" ALEXANDRIA_DIR="$CUE_DIRECT_ALEX" \
+    ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
+    bash "$CUE_DIRECT_RUNTIME/hooks/shim.sh" session-start 2>/dev/null)
+  printf '%s\n%s' "$CUE_DIRECT_ONE" "$CUE_DIRECT_TWO" | python3 -c '
+import json, sys
+first, second = [json.loads(line) for line in sys.stdin.read().splitlines()]
+cue = "Want me to open your alexandria loop in the background for when you have a minute?"
+assert first.get("systemMessage") == cue
+assert cue not in first["hookSpecificOutput"]["additionalContext"]
+assert "systemMessage" not in second
+' 2>/dev/null || CUE_OUTPUTS_OK=false
+  case "$CUE_DIRECT_PROBE" in "$RUNTIME_DIR"/.cue-direct-probe.*) rm -rf "$CUE_DIRECT_PROBE" ;; esac
+
+  rm -f "$CUE_PROBE_HOME/runtime/state/visible-cue-claimed/2030-01-01/owner" \
+    "$CUE_PROBE_HOME/runtime/state/visible-cue-claimed/2030-01-01/seen" 2>/dev/null || true
   rmdir "$CUE_PROBE_HOME/runtime/state/visible-cue-claimed/2030-01-01" \
     "$CUE_PROBE_HOME/runtime/state/visible-cue-claimed" \
     "$CUE_PROBE_HOME/runtime/state" "$CUE_PROBE_HOME/runtime" \
     "$CUE_PROBE_HOME" 2>/dev/null || true
   if [ "$CUE_OUTPUTS_OK" = "true" ]; then
-    STATUS_CUE="ok"; DETAIL_CUE="native chrome or one quiet local offer per day ready"
+    STATUS_CUE="ok"; DETAIL_CUE="native chrome, direct Codex notice, or model fallback ready"
   else
     STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce the fixed consent nudge and per-session a. close route"
   fi

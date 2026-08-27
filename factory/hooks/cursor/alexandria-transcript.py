@@ -77,8 +77,10 @@ def _run() -> None:
     with (STAGING_DIR / f"cursor-{safe_id}.jsonl").open("a", encoding="utf-8") as f:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
-    # Delivery truth, not renderer truth: only an actual completed assistant
-    # message containing the exact owned cue earns the local delivered receipt.
+    # Cursor has no direct user-visible SessionStart field. Its stable
+    # afterAgentResponse text is therefore the delivery boundary: an actual cue
+    # locks the day; an omission releases only this session's claim so a later
+    # session can retry. Hidden instructions and transcript bytes never count.
     if event == "afterAgentResponse" and isinstance(payload, dict):
         text = str(payload.get("text") or "")
         renderer = Path.home() / ".local/share/alexandria/scripts/statusline.sh"
@@ -91,15 +93,15 @@ def _run() -> None:
                     timeout=2,
                     check=False,
                 ).stdout.strip()
-                if cue and cue in text:
-                    subprocess.run(
-                        ["bash", str(renderer), "record-footer"],
-                        stdin=subprocess.DEVNULL,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL,
-                        timeout=2,
-                        check=False,
-                    )
+                mode = "mark-footer-seen" if cue and cue in text else "release-footer"
+                subprocess.run(
+                    ["bash", str(renderer), mode, safe_id],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=2,
+                    check=False,
+                )
             except (OSError, subprocess.TimeoutExpired):
                 pass
 

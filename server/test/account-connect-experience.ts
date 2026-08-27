@@ -62,7 +62,7 @@ assert.match(CHAT_INSTRUCTION, /if unable, name the exact gesture/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /type alexandria|On “alexandria”/i);
 
 const codex = readFileSync(new URL('../../factory/skills/codex-ambient.md', import.meta.url), 'utf8');
-assert.match(codex, /On yes, immediately open a new task and invoke `\$a`/);
+assert.match(codex, /answers yes to that host-rendered notice, immediately open a new task and invoke `\$a`/);
 assert.match(codex, /If it cannot open a task, say exactly: `Open a new task and invoke \$a\.`/);
 const cursor = readFileSync(new URL('../../factory/skills/cursor.mdc', import.meta.url), 'utf8');
 assert.match(cursor, /On yes, immediately open a new chat and invoke `\/a`/);

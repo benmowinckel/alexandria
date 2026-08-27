@@ -3,11 +3,10 @@
 #
 # `statusline` is the persistent native-terminal ceiling. `footer` is the pure
 # portable consent line. `claim-footer` atomically gives one local harness the
-# day's single opportunity to use it; `record-footer` records that the user
-# actually saw it. The only writes are tiny date-named receipts under this
-# product-owned runtime. The footer/claim/record modes never open a tab, start
-# a session, read private source, or call the network; native statusline mode
-# reads only its already-approved local state.
+# day's single opportunity to surface it. The only writes are tiny date-named
+# claim-state files under this product-owned runtime. Footer/claim modes never open a tab,
+# start a session, read private source, or call the network; native statusline
+# mode reads only its already-approved local state.
 
 A="${ALEXANDRIA_HOME:-$HOME/alexandria}"
 MODE="${1:-statusline}"
@@ -33,25 +32,44 @@ fi
 
 if [ "$MODE" = "claim-footer" ]; then
   # mkdir is the cross-process lock: ten tabs opened together still produce
-  # one opportunity. Keep only today's empty receipt; rmdir cannot remove
-  # anything containing user data even if the path were unexpectedly reused.
+  # one opportunity. The owner lets a model-fallback host release only its own
+  # failed attempt; `seen` makes later responses unable to reopen a delivered
+  # day. Both files contain product state only, never Author content.
   umask 077
+  owner="${2:-generic}"
+  owner=$(printf '%s' "$owner" | tr -cd 'A-Za-z0-9._-')
+  [ -n "$owner" ] || owner=generic
   claim_root="$RUNTIME_DIR/state/visible-cue-claimed"
   mkdir -p "$claim_root" 2>/dev/null || exit 0
   mkdir "$claim_root/$local_day" 2>/dev/null || exit 0
+  printf '%s\n' "$owner" > "$claim_root/$local_day/owner" 2>/dev/null || {
+    rmdir "$claim_root/$local_day" 2>/dev/null || true
+    exit 0
+  }
   for old_claim in "$claim_root"/*; do
     [ -d "$old_claim" ] || continue
-    [ "$old_claim" = "$claim_root/$local_day" ] || rmdir "$old_claim" 2>/dev/null || true
+    if [ "$old_claim" != "$claim_root/$local_day" ]; then
+      rm -f "$old_claim/owner" "$old_claim/seen" 2>/dev/null || true
+      rmdir "$old_claim" 2>/dev/null || true
+    fi
   done
   printf '%s\n' "$CUE"
   exit 0
 fi
 
-if [ "$MODE" = "record-footer" ]; then
-  umask 077
-  delivered_root="$RUNTIME_DIR/state/visible-cue-delivered"
-  mkdir -p "$delivered_root" 2>/dev/null || exit 0
-  printf '%s\n' "$(date +%s)" > "$delivered_root/$local_day" 2>/dev/null || true
+if [ "$MODE" = "mark-footer-seen" ] || [ "$MODE" = "release-footer" ]; then
+  owner="${2:-generic}"
+  owner=$(printf '%s' "$owner" | tr -cd 'A-Za-z0-9._-')
+  [ -n "$owner" ] || owner=generic
+  claim_dir="$RUNTIME_DIR/state/visible-cue-claimed/$local_day"
+  [ -d "$claim_dir" ] || exit 0
+  [ "$(cat "$claim_dir/owner" 2>/dev/null)" = "$owner" ] || exit 0
+  if [ "$MODE" = "mark-footer-seen" ]; then
+    printf '%s\n' "$(date +%s)" > "$claim_dir/seen" 2>/dev/null || true
+  elif [ ! -f "$claim_dir/seen" ]; then
+    rm -f "$claim_dir/owner" 2>/dev/null || true
+    rmdir "$claim_dir" 2>/dev/null || true
+  fi
   exit 0
 fi
 

@@ -196,7 +196,7 @@ def _derive_root(agent_path: Path, fallback: Path) -> Path:
     return fallback
 
 
-def _run_shim(root: Path, *, is_background: bool) -> tuple[str, str]:
+def _run_shim(root: Path, *, is_background: bool, session_id: str) -> tuple[str, str]:
     """Run the signed shim session-start chain. Returns (output, status).
 
     status: "ok" | "missing" | "timeout" | "error:<detail>"
@@ -207,6 +207,7 @@ def _run_shim(root: Path, *, is_background: bool) -> tuple[str, str]:
     env = dict(os.environ)
     env["ALEXANDRIA_DIR"] = str(root)
     env["ALEXANDRIA_BACKGROUND_AGENT"] = "1" if is_background else "0"
+    env["ALEXANDRIA_VISIBLE_CUE_OWNER"] = session_id or "unknown"
     try:
         proc = subprocess.run(
             ["bash", str(shim), "session-start"],
@@ -289,7 +290,9 @@ def _run() -> None:
     marginalia_status = _derivative_status(root / "files" / "marginalia", marginalia_file)
 
     swept = _sweep_orphan_transcripts(root, home)
-    shim_output, shim_status = _run_shim(root, is_background=is_bg is True)
+    shim_output, shim_status = _run_shim(
+        root, is_background=is_bg is True, session_id=session_id
+    )
 
     header = (
         "## Alexandria (Cursor sessionStart)\n\n"

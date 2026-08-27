@@ -92,9 +92,19 @@ cp "$ROOT/factory/hooks/shim.sh" "$RUNTIME/hooks/shim.sh"
 cp "$ROOT/factory/hooks/payload.sh" "$RUNTIME/.hooks_payload"
 mkdir -p "$RUNTIME/scripts" "$TEST_ROOT/.codex/sessions"
 cp "$ROOT/factory/scripts/transcript_path.sh" "$RUNTIME/scripts/transcript_path.sh"
+cp "$ROOT/factory/scripts/statusline.sh" "$RUNTIME/scripts/statusline.sh"
+chmod +x "$RUNTIME/hooks/shim.sh" "$RUNTIME/.hooks_payload" "$RUNTIME/scripts/statusline.sh"
 touch "$RUNTIME/.setup_complete"
 sha256 "$RUNTIME/.hooks_payload" > "$RUNTIME/.payload_verified_sha"
-printf '%s\n' '{"event":"test transcript"}' > "$TEST_ROOT/.codex/sessions/source.jsonl"
+mkdir -p "$TEST_ROOT/alex/files/constitution"
+printf '%0300d\n' 0 > "$TEST_ROOT/alex/files/constitution/_constitution.md"
+touch "$TEST_ROOT/alex/system/.block_complete"
+
+# A cue string inside hidden/user transcript content is not delivery. This was
+# the live false positive: SessionEnd grepped the whole JSONL and certified the
+# user's AGENTS text as an assistant-visible nudge.
+printf '%s\n' '{"role":"user","text":"Want me to open your alexandria loop in the background for when you have a minute?"}' \
+  > "$TEST_ROOT/.codex/sessions/source.jsonl"
 printf '{"session_id":"test-123","transcript_path":"%s"}\n' "$TEST_ROOT/.codex/sessions/source.jsonl" | \
   HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
   bash "$RUNTIME/hooks/shim.sh" codex-session-end
@@ -102,6 +112,7 @@ printf '{"session_id":"test-123","transcript_path":"%s"}\n' "$TEST_ROOT/.codex/s
 test -f "$TEST_ROOT/alex/system/.codex_session_end_ok"
 test "$(find "$TEST_ROOT/alex/files/vault" -type f -name '*_codex_test-123.jsonl' | wc -l | tr -d ' ')" = "1"
 test "$(find "$TEST_ROOT/alex/system/.codex_session_end_queue" -type f -name '*.json' | wc -l | tr -d ' ')" = "1"
+test ! -e "$RUNTIME/state/visible-cue-delivered"
 
 # A path outside supported host roots must not be archived.
 printf '%s\n' '{"event":"outside"}' > "$TEST_ROOT/outside.jsonl"
@@ -110,9 +121,47 @@ printf '{"session_id":"bad-1","transcript_path":"%s"}\n' "$TEST_ROOT/outside.jso
   bash "$RUNTIME/hooks/shim.sh" codex-session-end
 test "$(find "$TEST_ROOT/alex/files/vault" -type f -name '*_codex_bad-1.jsonl' | wc -l | tr -d ' ')" = "0"
 
-# The next start drains the bounded end receipt through the normal end path.
-HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
-  bash "$RUNTIME/hooks/shim.sh" session-start </dev/null >/dev/null
+# The next Codex compaction drains the bounded end receipt through the normal
+# end path without consuming or surfacing the daily foreground cue.
+printf '{"session_id":"compact","transcript_path":"%s","hook_event_name":"SessionStart","model":"gpt-test","source":"compact"}\n' \
+  "$TEST_ROOT/.codex/sessions/source.jsonl" | \
+  HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
+  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-03-01 \
+  bash "$RUNTIME/hooks/shim.sh" session-start >/dev/null
 test "$(find "$TEST_ROOT/alex/system/.codex_session_end_queue" -type f -name '*.json' 2>/dev/null | wc -l | tr -d ' ')" = "0"
+test ! -e "$RUNTIME/state/visible-cue-claimed/2030-03-01"
+
+# The first foreground Codex session start of the day receives one host-rendered
+# systemMessage while the existing Alexandria context remains developer-only.
+# A second foreground start on the same local day is quiet.
+START_ONE=$(printf '{"session_id":"start-1","transcript_path":"%s","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}\n' \
+  "$TEST_ROOT/.codex/sessions/source.jsonl" | \
+  HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
+  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-03-01 \
+  bash "$RUNTIME/hooks/shim.sh" session-start)
+printf '%s' "$START_ONE" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+cue = "Want me to open your alexandria loop in the background for when you have a minute?"
+assert d.get("systemMessage") == cue
+assert d["hookSpecificOutput"]["hookEventName"] == "SessionStart"
+assert "AUTHOR CONTEXT" in d["hookSpecificOutput"]["additionalContext"]
+assert cue not in d["hookSpecificOutput"]["additionalContext"]
+'
+START_TWO=$(printf '{"session_id":"start-2","transcript_path":"%s","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}\n' \
+  "$TEST_ROOT/.codex/sessions/source.jsonl" | \
+  HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
+  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-03-01 \
+  bash "$RUNTIME/hooks/shim.sh" session-start)
+printf '%s' "$START_TWO" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+assert "systemMessage" not in d
+'
+
+# Codex instructions explain the yes-path but never make the model a second
+# owner of the generic cue.
+! grep -Fq 'end the first completed ordinary text reply with exactly' \
+  "$ROOT/factory/skills/codex-ambient.md"
 
 echo "Codex integration test passed"
