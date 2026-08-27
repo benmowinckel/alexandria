@@ -148,6 +148,7 @@ assert d["hookSpecificOutput"]["hookEventName"] == "SessionStart"
 assert "AUTHOR CONTEXT" in d["hookSpecificOutput"]["additionalContext"]
 assert cue not in d["hookSpecificOutput"]["additionalContext"]
 '
+
 START_TWO=$(printf '{"session_id":"start-2","transcript_path":"%s","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}\n' \
   "$TEST_ROOT/.codex/sessions/source.jsonl" | \
   HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
@@ -157,6 +158,30 @@ printf '%s' "$START_TWO" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
 assert "systemMessage" not in d
+'
+
+# Interactive Codex can fire SessionStart before the model field exists. Mock
+# its real executable ancestry and prove that startup still gets direct JSON.
+mkdir -p "$TEST_ROOT/fake-codex-bin"
+cat > "$TEST_ROOT/fake-codex-bin/ps" <<'SH'
+#!/bin/sh
+case " $* " in
+  *" -o comm= "*) printf '%s\n' '/usr/local/bin/codex' ;;
+  *" -o ppid= "*) printf '%s\n' '1' ;;
+  *) exit 1 ;;
+esac
+SH
+chmod +x "$TEST_ROOT/fake-codex-bin/ps"
+START_LOADING=$(printf '%s\n' \
+  '{"session_id":"start-loading","hook_event_name":"SessionStart","source":"startup"}' | \
+  PATH="$TEST_ROOT/fake-codex-bin:$PATH" HOME="$TEST_ROOT" \
+  ALEXANDRIA_DIR="$TEST_ROOT/alex" ALEXANDRIA_SETUP_PROBE=1 \
+  ALEXANDRIA_LOCAL_DATE=2030-03-02 \
+  bash "$RUNTIME/hooks/shim.sh" session-start)
+printf '%s' "$START_LOADING" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+assert d.get("systemMessage") == "Want me to open your alexandria loop in the background for when you have a minute?"
 '
 
 # Codex instructions explain the yes-path but never make the model a second

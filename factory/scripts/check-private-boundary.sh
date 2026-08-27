@@ -1291,6 +1291,7 @@ assert d["hookSpecificOutput"]["hookEventName"] == "SessionStart"
 assert "AUTHOR CONTEXT" in ctx
 assert cue not in ctx
 ' || fail 'Codex SessionStart did not return one direct visible cue plus hidden context'
+
 route_codex_second=$(printf '%s\n' \
   '{"session_id":"codex-route-2","transcript_path":"/tmp/.codex/sessions/route-2.jsonl","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}' | \
   HOME="$route_home" ALEXANDRIA_SETUP_PROBE=1 \
@@ -1302,6 +1303,55 @@ d = json.load(sys.stdin)
 assert "systemMessage" not in d
 assert "AUTHOR CONTEXT" in d["hookSpecificOutput"]["additionalContext"]
 ' || fail 'Codex direct visible cue repeated on one local day'
+
+# Ground-truth startup regression: Codex can run SessionStart before its model
+# finishes loading, so the documented `model` extension may be absent. A live
+# Codex parent executable must still select the direct JSON contract without
+# changing the trusted hook command.
+mkdir -p "$test_root/fake-codex-bin"
+cat > "$test_root/fake-codex-bin/ps" <<'SH'
+#!/bin/sh
+case " $* " in
+  *" -o comm= "*) printf '%s\n' '/opt/codex' ;;
+  *" -o ppid= "*) printf '%s\n' '1' ;;
+  *) exit 1 ;;
+esac
+SH
+chmod +x "$test_root/fake-codex-bin/ps"
+route_codex_model_loading=$(printf '%s\n' \
+  '{"session_id":"codex-loading","hook_event_name":"SessionStart","source":"startup"}' | \
+  PATH="$test_root/fake-codex-bin:$PATH" HOME="$route_home" \
+  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-26 \
+  bash "$route_runtime/hooks/shim.sh" session-start)
+printf '%s' "$route_codex_model_loading" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+assert d.get("systemMessage") == "Want me to open your alexandria loop in the background for when you have a minute?"
+assert "AUTHOR CONTEXT" in d["hookSpecificOutput"]["additionalContext"]
+' || fail 'model-loading Codex startup fell back to hidden context'
+
+# The same model-less shape under a non-Codex parent stays on the portable
+# plain-context contract. Executable ancestry must not turn every host into
+# Codex merely because ~/.codex exists on the machine.
+mkdir -p "$test_root/fake-claude-bin"
+cat > "$test_root/fake-claude-bin/ps" <<'SH'
+#!/bin/sh
+case " $* " in
+  *" -o comm= "*) printf '%s\n' '/opt/claude' ;;
+  *" -o ppid= "*) printf '%s\n' '1' ;;
+  *) exit 1 ;;
+esac
+SH
+chmod +x "$test_root/fake-claude-bin/ps"
+route_model_loading_other=$(printf '%s\n' \
+  '{"session_id":"other-loading","hook_event_name":"SessionStart","source":"startup"}' | \
+  PATH="$test_root/fake-claude-bin:$PATH" HOME="$route_home" \
+  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-25 \
+  bash "$route_runtime/hooks/shim.sh" session-start)
+printf '%s' "$route_model_loading_other" | grep -Fq -- 'AUTHOR CONTEXT' \
+  || fail 'model-loading non-Codex host lost portable context'
+printf '%s' "$route_model_loading_other" | grep -Fq -- '"systemMessage"' \
+  && fail 'model-loading non-Codex host was misidentified as Codex'
 route_codex_compact=$(printf '%s\n' \
   '{"session_id":"codex-route-compact","transcript_path":"/tmp/.codex/sessions/route-compact.jsonl","hook_event_name":"SessionStart","model":"gpt-test","source":"compact"}' | \
   HOME="$route_home" ALEXANDRIA_SETUP_PROBE=1 \
