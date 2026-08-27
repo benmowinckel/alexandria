@@ -102,6 +102,19 @@ assert.match(profileWrite, /requestedAuthorId === 'me'/);
 assert.match(profileWrite, /authorId = accessor\.github_login/);
 assert.match(profileWrite, /requestedAuthorId === 'me'[\s\S]*c\.json\(\{ ok: true \}\)/);
 
+const welcomeSource = library.slice(
+  library.indexOf("app.get('/library/me/welcome-source'"),
+  library.indexOf("app.get('/library/:author/capabilities'"),
+);
+assert.match(welcomeSource, /Authentication required/);
+assert.match(welcomeSource, /welcomeSourceAllowed\(String\(accessor\.github_id\)\)/);
+assert.match(welcomeSource, /Too many requests/);
+assert.match(welcomeSource, /Active membership required/);
+assert.match(welcomeSource, /scope = 'invite\/friends'/);
+assert.match(welcomeSource, /self_login: selfLogin/);
+assert.match(welcomeSource, /Cache-Control': 'private, no-store'/);
+assert.doesNotMatch(welcomeSource, /c\.req\.json|c\.req\.text|c\.req\.formData/);
+
 for (const control of controls) {
   const method = control === 'twin' ? 'post' : 'put';
   const marker = `app.${method}('/library/:author/${control}'`;

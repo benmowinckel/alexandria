@@ -75,9 +75,15 @@ assert.match(agentPrompt, /Do not request any new access, read anything private/
 assert.match(agentPrompt, /fit into our existing system/);
 assert.match(agentPrompt, /repository contains the founder’s blueprint/);
 assert.match(agentPrompt, /customise, remove from, and evolve over time/);
-assert.match(agentPrompt, /repository also includes an optional community/);
-assert.match(agentPrompt, /Keep that separate from the private setup/);
-assert.match(agentPrompt, /decide later whether it is useful to us/);
+assert.match(agentPrompt, /what is required for the loop to work/);
+assert.match(agentPrompt, /starting defaults we can change or remove/);
+assert.match(agentPrompt, /optional connections or public actions stay off until I choose them/);
+assert.match(agentPrompt, /Keep the optional community separate from the private setup/);
+assert.match(agentPrompt, /one concise reflection from my material/);
+assert.match(agentPrompt, /one genuinely useful new thread from your existing knowledge/);
+assert.match(agentPrompt, /one neutral link to Alexandria’s community page/);
+assert.match(agentPrompt, /decide for myself whether I want it/);
+assert.match(agentPrompt, /Do not recommend it, personalise that choice from my private material/);
 assert.match(agentPrompt, /Be radically simple and very concise/);
 assert.match(agentPrompt, /tell me clearly whether you think we should proceed/);
 assert.match(agentPrompt, /wait for my clear approval/);

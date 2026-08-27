@@ -15,7 +15,8 @@ const created = createOAuthState(secret, context);
 assert.match(created.state, /^[a-f0-9]{32}$/);
 assert.ok(created.cookieValue.startsWith(`${created.state}.`));
 assert.deepEqual(readOAuthState(secret, created.state, created.cookieValue), context);
-assert.equal(readOAuthState(secret, `0${created.state.slice(1)}`, created.cookieValue), null);
+const tamperedState = `${created.state[0] === '0' ? '1' : '0'}${created.state.slice(1)}`;
+assert.equal(readOAuthState(secret, tamperedState, created.cookieValue), null);
 assert.equal(readOAuthState('wrong-secret', created.state, created.cookieValue), null);
 
 const parts = created.cookieValue.split('.');
