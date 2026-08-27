@@ -896,8 +896,11 @@ export function registerLibraryRoutes(app: Hono): void {
     const token = extractLibrarySessionToken(c);
     const bySession = token ? await findByLibrarySessionToken(token) : null;
     const viewer = byKey || bySession;
-    const { candidates: directoryCandidates } = await loadDirectoryRoster().catch(() => ({ candidates: [] }));
-    const otherAuthorCount = directoryCandidates.filter(({ author }) => author.id !== founderLogin()).length;
+    const { accountList, candidates: directoryCandidates } = await loadDirectoryRoster().catch(() => ({ accountList: [], candidates: [] }));
+    // Public visitors learn only that the collective has depth. Count accounts,
+    // not fill-to-appear roster rows: missing public location/contact should not
+    // make every other Alexandrian disappear from the aggregate tease.
+    const otherAuthorCount = accountList.filter((account) => account.github_login !== founderLogin()).length;
     if (!viewer) return c.json({
       signed_in: false,
       membership_active: false,
