@@ -18,7 +18,7 @@ import { FOUNDER_LIBRARY_ID, FOUNDER_PROFILE_PATH } from '../lib/config';
  */
 export default function PublicDocReader({
   title, mdSrc, pdfSrc, txtSrc, numbered, plain, askQuestions, askFirst,
-  artifactName, artifactScope = 'public',
+  artifactName, artifactScope = 'public', answerInstruction,
 }: {
   title: string;
   mdSrc?: string;   // markdown to fetch + render (the whitepaper)
@@ -30,6 +30,7 @@ export default function PublicDocReader({
   askFirst?: boolean;      // open with the mirror pane up (the /features ask page)
   artifactName: string;    // server-authoritative Library artifact; browser never sends bytes
   artifactScope?: string;
+  answerInstruction?: string; // surface-specific voice/length guidance, hidden from the reader
 }) {
   // The allowance comes from the Author's directory rather than a duplicated
   // client-side limit.
@@ -91,7 +92,7 @@ export default function PublicDocReader({
     const res = await fetch(`/api/library/${FOUNDER_LIBRARY_ID}/ask`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        question,
+        question: answerInstruction ? `${question}\n\n${answerInstruction}` : question,
         variant: 'context',
         artifact: { name: artifactName, scope: artifactScope },
         messages,

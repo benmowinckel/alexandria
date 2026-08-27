@@ -1,12 +1,22 @@
 import { pageMetadata } from '../lib/config';
-import AskClient from './AskClient';
+import PublicDocReader from '../components/PublicDocReader';
 
-// /ask is the second homepage door: a question-led surface, not another
-// document. The public mirror carries changing detail; the page carries only
-// the human-authored frame and one short explanation.
 const TITLE = 'before you start.';
 const DESCRIPTION =
   'Ask what you actually want to know about an Alexandria loop before you start.';
+
+const QUESTIONS = [
+  'what happens when i start?',
+  'does it work with the ai i already use?',
+  'is this just better ai memory?',
+  'what stays private?',
+  'do i need to be technical?',
+  'why start now?',
+];
+
+const ANSWER_INSTRUCTION = `Answer in no more than four short sentences, in plain language.
+The reader is deciding whether to try the free loop. Answer only what they asked.
+Write ai in lowercase. Do not add a generic sales close.`;
 
 export const metadata = pageMetadata({
   path: '/ask',
@@ -16,5 +26,14 @@ export const metadata = pageMetadata({
 });
 
 export default function AskPage() {
-  return <AskClient />;
+  return (
+    <PublicDocReader
+      title={TITLE}
+      artifactName="ask"
+      mdSrc="/docs/Ask.md"
+      askQuestions={QUESTIONS}
+      answerInstruction={ANSWER_INSTRUCTION}
+      askFirst
+    />
+  );
 }
