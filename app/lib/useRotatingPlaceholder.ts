@@ -41,8 +41,13 @@ function clean(qs?: string[]): string[] {
  * coherent with the automatic artifact flow, not hand-authored per surface).
  */
 export function pieceExamples(who?: string, artifactQs?: string[]): string[] {
-  const fromArtifact = clean(artifactQs);
-  if (fromArtifact.length) return [...fromArtifact, 'what is alexandria?', 'ask anything…'];
+  const fromArtifact = clean(artifactQs).slice(0, 5);
+  if (fromArtifact.length) return Array.from(new Set([
+    ...fromArtifact,
+    'what’s the strongest counter to this?',
+    'what changes if this is right?',
+    'ask anything…',
+  ]));
   // Written as a reader actually arrives: most haven't read it yet, so the
   // honest first questions are "what is this", "why does it matter", "what's
   // the counter". Held deliberately short of becoming a substitute for reading
@@ -79,16 +84,18 @@ export function readingExamples(who?: string, artifactQs?: string[]): string[] {
  * pieces); falls back to general questions about the person.
  */
 export function authorExamples(who?: string, artifactQs?: string[]): string[] {
-  const fromArtifact = clean(artifactQs);
-  if (fromArtifact.length) return [...fromArtifact, 'ask anything…'];
+  const fromArtifact = clean(artifactQs).slice(0, 5);
   const first = (who && who.split(' ')[0]) || 'them';
-  return [
-    `what does ${first} believe?`,
-    `what’s ${first} like?`,
-    `how does ${first} think about ai?`,
-    'what should i read first?',
-    `what’s ${first}’s philosophy?`,
-    `what would ${first} push back on?`,
+  return Array.from(new Set([
+    'what’s the strongest idea here?',
+    `what does ${first} believe that most people get wrong?`,
+    `where do ${first}’s ideas pull against each other?`,
+    `which of ${first}’s views has changed most?`,
+    `what connects ${first}’s work?`,
+    `what would ${first} argue against most strongly?`,
+    `what is ${first} still figuring out?`,
+    ...fromArtifact,
+    'where should i start?',
     'ask anything…',
-  ];
+  ])).slice(0, 12);
 }

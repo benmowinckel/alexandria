@@ -12,7 +12,7 @@ import ChatHistoryItem from '../../../components/ChatHistoryItem';
 import { PdfView } from '../../../components/ReaderShell';
 import { useRotatingPlaceholder, authorExamples, pieceExamples, readingExamples } from '../../../lib/useRotatingPlaceholder';
 import { librarySignInUrlHere } from '../../../lib/config';
-import { composeHandoff, copyToClipboard, fetchHandoffContext, type HandoffAuthor } from '../../../lib/handoff';
+import { copyToClipboard } from '../../../lib/handoff';
 import { type TwinVariantSummary } from '../types';
 
 /**
@@ -43,9 +43,6 @@ const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6
 const PaneLeftIcon = <svg width="17" height="17" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
 const LinesIcon = <svg width="17" height="17" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
 const PaneRightIcon = <svg width="17" height="17" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
-// Handoff — an arrow leaving a box (identical to ReaderShell's: one gesture,
-// one glyph, wherever a mind can be carried away).
-const HandoffIcon = <svg width="17" height="17" {...svgProps}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /></svg>;
 const CopyIcon = <svg width="17" height="17" {...svgProps}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
 const DownloadIcon = <svg width="17" height="17" {...svgProps}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>;
 const ExpandIcon = <svg width="17" height="17" {...svgProps}><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M21 16v3a2 2 0 0 1-2 2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /></svg>;
@@ -180,8 +177,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     return () => { live = false; };
   }, [author]);
 
-  // An answer lands at its own top — see ReaderShell. Only your own turn
-  // scrolls to the bottom.
+  // An answer lands at its own top. On mobile, submitting a question must not
+  // move the outer page or the conversation pane; the header stays in view.
   const lastMsgRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const box = threadRef.current;
@@ -189,10 +186,20 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
     const msgs = active?.messages || [];
     const last = msgs[msgs.length - 1];
     const el = lastMsgRef.current;
-    const firstMobileQuestion = typeof window !== 'undefined' && window.innerWidth <= 900 && msgs.length === 1 && last?.role === 'you';
-    if (last && (last.role !== 'you' || firstMobileQuestion) && el) box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'smooth' });
-    else box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
+    const mobile = typeof window !== 'undefined' && window.innerWidth <= 900;
+    if (mobile && last?.role === 'you') return;
+    if (last && last.role !== 'you' && el) box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'smooth' });
+    else if (!mobile) box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
   }, [active?.messages, asking]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.innerWidth > 900) return;
+    const frame = requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      document.scrollingElement?.scrollTo(0, 0);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [mtab]);
 
   const firedRef = useRef(false);
 
@@ -329,39 +336,10 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   const queueRef = useRef<{ text: string; convoId: string }[]>([]);
   const askingRef = useRef(false);
 
-  // The visitor's allowance and the way out of it. Same contract as the reader:
-  // the numbers ride back with the answers, and running out opens the handoff
-  // rather than closing the chat (founder 2026-07-29).
-  const [handoffCtx, setHandoffCtx] = useState<HandoffAuthor | null>(null);
+  // The visitor's allowance. Running out is a plain state; copying the current
+  // conversation remains available in the header without inventing a second
+  // continuation product.
   const spent = budget !== null && budget.remaining <= 0;
-
-  useEffect(() => {
-    if (!author || handoffCtx) return;
-    let live = true;
-    void fetchHandoffContext(author).then((ctx) => {
-      if (live && ctx) setHandoffCtx(ctx);
-    });
-    return () => { live = false; };
-  }, [author, handoffCtx]);
-
-  const takeItWithYou = async () => {
-    let ctx = handoffCtx;
-    if (!ctx && author) {
-      ctx = await fetchHandoffContext(author);
-      if (ctx) setHandoffCtx(ctx);
-    }
-    if (!ctx) throw new Error('Handoff context unavailable');
-    await copyToClipboard(composeHandoff({
-      ctx,
-      // On the profile there is no single piece — whatever the reader has open.
-      piece: open?.content ? {
-        name: open.nice,
-        content: open.content,
-        url: `${ctx.profile_url}/read/${encodeURIComponent(open.name)}?scope=${encodeURIComponent(open.scope)}`,
-      } : null,
-      messages: active?.messages || [],
-    }));
-  };
 
   // One line for every failure, and it says offline — a reader has no use for
   // offline-vs-timeout-vs-error, and offline is the true shape of all of them
@@ -500,11 +478,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
 
   return (
     <>
-      {/* Full-screen reading owns the top-right corner: the mirror switch sits
-          there, so the fixed theme control must leave until the piece closes. */}
-      {!expanded && <ThemeToggle />}
       <div className="plm-shell" style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
-        <header className="plm-global-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 3.2rem 0 0.7rem', borderBottom: 'none' }}>
+        <header className="plm-global-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 0.25rem 0 0.7rem', borderBottom: 'none' }}>
           <Link href={`/library/${encodeURIComponent(author)}`} aria-label="back to the library" title="library"
             style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
           {/* No standing online/offline word here either (founder, 2026-08-02:
@@ -512,7 +487,14 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
               top left") — a failed ask already answers with the offline note
               in-thread; status only exists in the moment it matters. */}
           <span className="doc-title">{who}</span>
+          <span style={{ marginLeft: 'auto' }} />
+          {!expanded && <ThemeToggle inline />}
         </header>
+
+        <nav className="mobile-pane-nav" aria-label="profile panes">
+          <button type="button" data-active={mtab === 'chat'} onClick={() => { setExpanded(false); setMtab('chat'); }} aria-label="open the mirror" title="mirror">{LinesIcon}</button>
+          <button type="button" data-active={mtab === 'pieces'} onClick={() => setMtab('pieces')} aria-label="open pieces" title="pieces">{PaneRightIcon}</button>
+        </nav>
 
         <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-mtab={mtab} data-expanded={expanded ? 'true' : 'false'}
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
@@ -571,15 +553,10 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                   {budget.remaining === 1 ? '1 question left' : `${budget.remaining} questions left`}
                 </span>
               )}
-              <ActionButton icon={HandoffIcon} onAction={takeItWithYou}
-                title="take it with you — copies the mind, the open piece and this conversation for your own AI"
-                style={{ ...iconBtn, color: budget && budget.remaining <= 3 ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
               {/* Copy remains available after the allowance is spent. */}
               {(active?.messages.length ?? 0) > 0 && (
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
               )}
-              <button type="button" onClick={() => setMtab('pieces')} aria-label="open pieces" title="pieces"
-                style={iconBtn} className="mobile-pane-switch hover:opacity-60">{PaneRightIcon}</button>
             </div>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
               {active?.messages.map((m, i) => (
@@ -593,6 +570,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                     ? <p style={{ color: 'var(--text-primary)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>{m.text}</p>
                     : (
                       <>
+                        <p className="mirror-speaker">{who}&rsquo;s mirror</p>
                         <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: '0.9rem', color: 'var(--text-secondary)', fontSize: '0.98rem', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}><TwinText text={m.text} /></div>
                         <div style={{ paddingLeft: '0.9rem' }}>
                           <ActionButton icon={CopyIcon} onAction={() => copyText(m.text)} title="copy" style={{ ...iconBtn, marginTop: '0.45rem', marginRight: '0.5rem', padding: 0 }} className="hover:opacity-60" />
@@ -651,20 +629,9 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             )}
             <div className="ask-dock" style={{ flex: 'none', borderTop: 'none' }}>
               {spent ? (
-                // One status, then the way forward. Copy remains in the header.
-                <div>
-                  <p style={{ margin: '0 0 0.85rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
-                    Out of questions for now.
-                  </p>
-                  <ActionButton icon={HandoffIcon} label="continue in your own AI" doneLabel="copied — paste it into your AI"
-                    onAction={takeItWithYou}
-                    title="copies this chat, the open piece and the writing behind it"
-                    failedLabel="couldn’t copy — try again"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
-                      background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderRadius: '999px', padding: '0.4rem 0.85rem',
-                      color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
-                    className="hover:opacity-75" />
-                </div>
+                <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
+                  Out of questions for now.
+                </p>
               ) : (
                 <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading placeholder={rotatingPlaceholder || 'ask anything…'} bare />
               )}
@@ -723,8 +690,6 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 </>
               )}
               <button type="button" onClick={() => setRightOpen(false)} aria-label="collapse the piece pane" title="collapse" style={{ ...iconBtn, ...(open ? {} : { marginLeft: 'auto' }) }} className="piece-collapse hover:opacity-60">{PaneRightIcon}</button>
-              <button type="button" onClick={() => { setExpanded(false); setMtab('chat'); }} aria-label="open the mirror" title="mirror"
-                style={iconBtn} className="mobile-pane-switch hover:opacity-60">{LinesIcon}</button>
             </div>
             <div className={open && !open.loading && !open.pdfUrl && (mtab === 'pieces' || !midOpen) ? 'piece-fade' : undefined}
               style={{ flex: 1, overflow: open?.pdfUrl ? 'hidden' : 'auto', minHeight: 0 }}>
@@ -864,7 +829,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         .piece-foot { flex: none; height: 0.9rem; }
         .piece-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
           mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }
-        .mobile-pane-switch { display: none !important; }
+        .mobile-pane-nav { display: none; }
+        .mirror-speaker { margin: 0 0 0.35rem 0.9rem; color: var(--text-muted); font-size: 0.78rem; letter-spacing: 0.05em; }
 
         @media (min-width: 901px) {
           .reader-strip { display: none; }
@@ -880,10 +846,18 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         }
         @media (max-width: 900px) {
           .reader-strip, .pane-history { display: none !important; }
-          /* Mobile is two direct rooms, not three desktop panes squeezed into
-             tabs: each fixed pane header carries the one route to the other. */
+          /* Mobile has one stable pane switch row. The two controls keep their
+             left and right positions while the content beneath them changes. */
           .chat-collapse, .chat-label, .pane-div, .pieces-label, .piece-collapse { display: none !important; }
-          .mobile-pane-switch { display: flex !important; margin-left: auto !important; }
+          .mobile-pane-nav {
+            flex: none; display: flex; align-items: center; justify-content: space-between;
+            height: 2.75rem; padding: 0 0.35rem; background: var(--bg-primary); z-index: 25;
+          }
+          .mobile-pane-nav button {
+            width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+            border: 0; background: none; padding: 0; color: var(--text-ghost); cursor: pointer;
+          }
+          .mobile-pane-nav button[data-active="true"] { color: var(--text-primary); }
           .piece-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
           .plm-global-head, .pane-head {
             position: sticky; top: 0; z-index: 20; background: var(--bg-primary);

@@ -283,7 +283,7 @@ export function twinPublicSummary(
 /** Compact machine-facing context for API clients. The website communicates
  *  this through the mirror label and does not render a standing disclaimer. */
 export function twinDisclaimer(displayName: string): string {
-  return `AI reflecting ${displayName}'s published thinking.`;
+  return `ai reflecting ${displayName}'s published thinking.`;
 }
 
 // ---------------------------------------------------------------------------

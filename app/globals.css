@@ -41,28 +41,29 @@
 }
 
 .dark {
-  /* Dark theme — soft warm grey, Claude-inspired */
-  --bg-primary: #2b2a27;
-  --bg-secondary: #333230;
-  --bg-tertiary: #3b3a37;
-  --bg-modal: #333230;
-  --bg-overlay: rgba(0, 0, 0, 0.45);
+  /* Dark theme — warm ink, not a grey wash. Hierarchy comes from readable
+     type and gently stepped paper surfaces; the brand remains tyrian. */
+  --bg-primary: #181512;
+  --bg-secondary: #211d1a;
+  --bg-tertiary: #2a2521;
+  --bg-modal: #24201d;
+  --bg-overlay: rgba(0, 0, 0, 0.58);
 
-  --text-primary: #ece8e1;
-  --text-secondary: #cdc8c0;
-  --text-muted: #a09b95;
-  --text-subtle: #87827c;
-  --text-faint: #736e68;
-  --text-ghost: #5f5a55;
-  --text-whisper: #4d4944;
+  --text-primary: #f1ece4;
+  --text-secondary: #d5cdc3;
+  --text-muted: #aca198;
+  --text-subtle: #978b82;
+  --text-faint: #897e75;
+  --text-ghost: #7d736b;
+  --text-whisper: #6d655e;
 
-  --border-light: #3e3d3a;
-  --border-dashed: #4a4945;
+  --border-light: #39332e;
+  --border-dashed: #463e38;
 
-  --accent: #9F87C5;
-  --accent-hover: #B8A0DA;
-  --accent-faint: rgba(159, 135, 197, 0.15);
-  --selection: rgba(159, 135, 197, 0.3);
+  --accent: #c49aae;
+  --accent-hover: #dab4c5;
+  --accent-faint: rgba(196, 154, 174, 0.16);
+  --selection: rgba(196, 154, 174, 0.28);
 
   --toggle-bg: rgba(255, 255, 255, 0.06);
   --toggle-pill: rgba(255, 255, 255, 0.1);
@@ -70,7 +71,7 @@
   --scrollbar-thumb: rgba(255, 255, 255, 0.1);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.18);
 
-  --caret-color: rgba(236, 232, 225, 0.5);
+  --caret-color: rgba(241, 236, 228, 0.58);
 }
 
 html {

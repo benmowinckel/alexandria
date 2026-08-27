@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'alexandria — your mind, in files you own',
     short_name: 'alexandria',
     description:
-      'Give your AI Alexandria’s instructions. It builds and reads an owned record of your thinking and how it changes.',
+      'Give your ai Alexandria’s instructions. It builds and reads an owned record of your thinking and how it changes.',
     start_url: '/',
     display: 'browser',
     background_color: '#f7f2ec',
@@ -18,19 +18,19 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'en',
     icons: [
       {
-        src: '/icon-192.png?v=5',
+        src: '/icon-192.png?v=6',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/icon-512.png?v=5',
+        src: '/icon-512.png?v=6',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/icon-maskable.png?v=5',
+        src: '/icon-maskable.png?v=6',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',

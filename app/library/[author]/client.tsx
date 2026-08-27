@@ -10,6 +10,7 @@ import { HeaderAction, HeaderActions, headerActionDotStyle } from '../../compone
 import { SignOutLink } from '../../components/SignOutLink';
 import { FETCH_TIMEOUT_MS, librarySignInUrlHere } from '../../lib/config';
 import { safeUrl } from '../../lib/url';
+import { authorExamples } from '../../lib/useRotatingPlaceholder';
 import { type TwinVariantSummary } from './types';
 import { LIBRARY_LOCATIONS } from '../../../shared/library-locations';
 
@@ -62,6 +63,7 @@ interface AuthorData {
     context_enabled?: boolean;
     context_scopes?: string[];
     context_preview_url?: string;
+    questions?: string[];
   };
   files?: ProtocolFile[];
   // Optional per-Author profile config — reorder/subset the emergent sections
@@ -102,6 +104,14 @@ function protocolFileKey(file: Pick<ProtocolFile, 'scope' | 'name'>): string {
 function normalizePreviewText(value: string | null | undefined): string | null {
   if (!value) return null;
   return value.replace(/\uFFFD/g, '-');
+}
+
+function displaySubtitle(value: string): string {
+  return value
+    .replace(/:\s*/g, '. ')
+    .replace(/\.\s*\./g, '.')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 // Small words stay lowercase (unless first): "Droplets of Grace". Overrides let an
@@ -165,9 +175,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // auto-fires it (?q=). The door owns no chat state; the chat is the room.
   const [doorQ, setDoorQ] = useState('');
   const [doorGoing, setDoorGoing] = useState(false);
-  // Offline-attempt feedback — the shake + the transient note (2026-08-02).
+  // Offline-attempt feedback — the door can shake, but the actual operating
+  // model stays visible so "offline" never reads as a broken service.
   const [doorShake, setDoorShake] = useState(false);
-  const [offlineNote, setOfflineNote] = useState(false);
   const [beliCopied, setBeliCopied] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -193,16 +203,19 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   useEffect(() => {
     params.then(({ author }) => {
       setAuthorId(author);
+      const publicPreview = process.env.NODE_ENV === 'development'
+        && new URLSearchParams(window.location.search).get('preview') === 'public';
+      const previewQuery = publicPreview ? '?preview=public' : '';
       const ctrl = new AbortController();
       const timeout = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-      fetch(`/api/library/${encodeURIComponent(author)}`, { signal: ctrl.signal, credentials: 'include' })
+      fetch(`/api/library/${encodeURIComponent(author)}${previewQuery}`, { signal: ctrl.signal, credentials: 'include' })
         .then(r => { if (!r.ok) throw new Error('not found'); return r.json(); })
         .then((d: AuthorData) => {
           // The server resolves sticky legacy GitHub handles by immutable account
           // id. Keep every link and the visible URL on the current handle too.
           if (d.author.id && d.author.id !== author) {
             setAuthorId(d.author.id);
-            router.replace(`/library/${encodeURIComponent(d.author.id)}`);
+            router.replace(`/library/${encodeURIComponent(d.author.id)}${previewQuery}`);
           }
           setData(d);
           setEditFiles(d.files || []);
@@ -223,16 +236,14 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   }, [params, router]);
 
   // The door's question rides to the chat page, which auto-fires it (?q=).
-  // No standing online/offline label anymore (founder, 2026-08-02: "we dont
-  // need to say online and offline") — a dead mind answers the ATTEMPT: the
-  // door shakes (error physics: 300ms, 4px) and a quiet "offline right now"
-  // appears where the status word used to sit, only while it's true.
+  // The profile is always available; only live inference follows the Author's
+  // computer. Keep the failed tap physical without pretending that state is a
+  // transient error.
   const goAskWith = (q: string) => {
     const text = q.trim();
     if (!text || doorGoing) return;
     if (data?.twin?.online !== true) {
       setDoorShake(true);
-      setOfflineNote(true);
       return;
     }
     setDoorGoing(true);
@@ -244,12 +255,6 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     const t = setTimeout(() => setDoorShake(false), 420);
     return () => clearTimeout(t);
   }, [doorShake]);
-  useEffect(() => {
-    if (!offlineNote) return;
-    const t = setTimeout(() => setOfflineNote(false), 2600);
-    return () => clearTimeout(t);
-  }, [offlineNote]);
-
   const editSubtitles = useMemo(
     () => Object.fromEntries(editFiles.filter((file) => file.subtitle?.trim()).map((file) => [protocolFileKey(file), file.subtitle!.trim()])),
     [editFiles],
@@ -463,11 +468,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   // shadows (founder: the five things on the profile). Word underlined (short,
   // not page-wide), whisper italic behind a symmetric middot.
   const sectionHead = (word: string, whisper?: string) => (
-    <p className={editing ? 'profile-edit-background' : undefined} style={{ ...sectionLabelStyle, color: 'var(--text-secondary)' }}>
-      <span style={{ borderBottom: '1px solid var(--text-ghost)', paddingBottom: '3px' }}>{word}</span>
+    <p className={`profile-section-head${editing ? ' profile-edit-background' : ''}`} style={{ ...sectionLabelStyle, color: 'var(--text-secondary)' }}>
+      <span style={{ borderBottom: '1px solid var(--text-ghost)', paddingBottom: '3px', flex: 'none' }}>{word}</span>
       {whisper && <>
-        <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem' }}>·</span>
-        <span style={{ color: 'var(--text-muted)', letterSpacing: 0, fontStyle: 'italic' }}>{whisper}</span>
+        <span aria-hidden style={{ color: 'var(--text-ghost)', margin: '0 0.45rem', flex: 'none' }}>·</span>
+        <span className="profile-section-whisper" style={{ color: 'var(--text-muted)', letterSpacing: 0, fontStyle: 'italic' }}>{whisper}</span>
       </>}
     </p>
   );
@@ -506,11 +511,12 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             <span style={{ color: 'var(--text-primary)', fontSize: '1.06rem' }}>{file.title || fileDisplayName(file.name)}</span>
             <span className="profile-edit-background" style={{ color: 'var(--text-muted)', fontSize: '0.88rem', letterSpacing: '0.04em', flex: 'none' }}>{visibilityLabel(file.visibility, file.price_cents)}</span>
           </div>
-          <textarea
+          <input
+            type="text"
+            maxLength={200}
             aria-label={`${file.title || fileDisplayName(file.name)} description`}
             className="profile-edit-field profile-edit-description"
             style={editFieldStyle}
-            rows={1}
             value={file.subtitle || ''}
             placeholder={file.visibility === 'authors' || file.visibility === 'invite' ? 'public description (optional)' : 'add a description'}
             onChange={(event) => setEditFiles((current) => current.map((candidate) => protocolFileKey(candidate) === fileKey ? { ...candidate, subtitle: event.target.value } : candidate))}
@@ -542,7 +548,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     // the (public-only) text blurb. Gated files rely entirely on the teaser.
     const rawPreview = (file.subtitle && file.subtitle.trim()) || normalizePreviewText(file.text) || '';
     const firstLine = rawPreview.split('\n')[0].trim();
-    const preview = firstLine.length > 110 ? `${firstLine.slice(0, 110).trimEnd()}…` : firstLine;
+    const preview = displaySubtitle(firstLine);
     const rowStyle: CSSProperties = {
       display: 'flex',
       justifyContent: 'space-between',
@@ -563,10 +569,10 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
     };
     const inner = (
       <>
-        <span style={{ minWidth: 0 }}>
+        <span style={{ minWidth: 0, flex: 1 }}>
           <span style={{ color: 'var(--text-primary)', fontSize: '1.06rem' }}>{file.title || fileDisplayName(file.name)}</span>
           {preview && (
-            <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
+            <span className="profile-file-subtitle" style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.45, marginTop: '0.2rem' }}>
               {preview}
             </span>
           )}
@@ -577,17 +583,28 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       </>
     );
 
-    // A public cover routes to the one useful next action. Accessible pieces
-    // keep using the shared reader, which owns the actual permission gate.
-    const href = file.cover_only
-      ? file.visibility === 'authors'
-        ? '/join'
-        : author.contact?.includes('@')
-          ? `mailto:${author.contact.replace(/^mailto:/, '')}?subject=${encodeURIComponent(`Request invite: ${file.title || 'Library piece'}`)}`
-          : author.contact ? contactHref(author.contact) : '/join'
-      : `/library/${encodeURIComponent(authorId)}/read/${encodeURIComponent(file.name)}?scope=${encodeURIComponent(file.scope)}`;
+    // A protected public cover is deliberately inert. The API has already
+    // replaced its name and scope and removed its body, questions, timestamp,
+    // and URL; the page shows only the owner-approved title, one-line subtitle,
+    // and broad tier. No blur: absent bytes are the privacy boundary.
+    if (file.cover_only) {
+      return (
+        <div
+          key={`${file.scope}/${file.name}`}
+          className="profile-locked-row"
+          style={{ ...rowStyle, cursor: 'default' }}
+          aria-label={`${file.title || fileDisplayName(file.name)}, ${visibilityLabel(file.visibility, file.price_cents)} access`}
+        >
+          {inner}
+        </div>
+      );
+    }
+
+    // Accessible pieces use the shared reader, which owns the exact permission
+    // gate. Paid offers remain discoverable and open their purchase gate.
+    const readerHref = `/library/${encodeURIComponent(authorId)}/read/${encodeURIComponent(file.name)}?scope=${encodeURIComponent(file.scope)}`;
     return (
-      <Link key={`${file.scope}/${file.name}`} href={href}
+      <Link key={`${file.scope}/${file.name}`} href={readerHref}
         className="hover:opacity-60" style={rowStyle}>
         {inner}
       </Link>
@@ -596,13 +613,13 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
 
   return (
     <>
-      <ThemeToggle />
-      <main style={{ maxWidth: '820px', margin: '0 auto', padding: '6rem 2.5rem 4rem', fontFamily: 'var(--font-eb-garamond)' }}>
+      <main className="profile-main" style={{ maxWidth: '820px', margin: '0 auto', padding: '6rem 2.5rem 4rem', fontFamily: 'var(--font-eb-garamond)' }}>
         <header className={editing ? 'profile-edit-header' : undefined} style={{ margin: '0 0 2.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '1.75rem' }}>
             <Link href="/library" aria-label="back to the library" title="library" style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
             </Link>
+            <div className="profile-head-actions">
             {isOwner && editing ? (
               <HeaderAction onClick={saveProfile} busy={saving}>
                 {saving ? 'saving changes' : 'save changes'}
@@ -617,9 +634,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             ) : (
               <HeaderActions
                 left={<HeaderAction href={signInUrl}>sign in</HeaderAction>}
-                right={<HeaderAction href="/start">join</HeaderAction>}
+                right={<HeaderAction href="/start">start</HeaderAction>}
               />
             )}
+              <ThemeToggle inline />
+            </div>
           </div>
           {/* The member number rides the name line, baseline-aligned at its
               right — a quiet stamp beside the signature (founder 2026-08-02:
@@ -627,7 +646,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               the right of it"). The identity line below is then purely the
               location · contact pair, uncramped. flex-wrap lets the number
               drop gracefully on narrow screens. */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '1.1rem', flexWrap: 'wrap', margin: '2rem 0 0.35rem' }}>
+          <div className="profile-name-line" style={{ display: 'flex', alignItems: 'baseline', gap: '1.1rem', flexWrap: 'wrap', margin: '2rem 0 0' }}>
             {editing ? (
               <input
                 aria-label="name"
@@ -686,9 +705,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
               </div>
             </>
           ) : (author.location && author.location_key) || author.contact ? (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.35rem 0 0', textTransform: 'lowercase' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.72rem 0 0', textTransform: 'lowercase' }}>
               {author.location && author.location_key && (
-                <Link href={`/library?q=${encodeURIComponent(author.location)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link>
+                <Link href={`/library?location=${encodeURIComponent(author.location_key)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link>
               )}
               {author.contact && (
                 <>
@@ -762,11 +781,6 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             const anyOn = (data.twin.variants || []).some((v) => v.enabled);
             if (!anyOn) return null;
             const first = (author.display_name || author.id).split(' ')[0];
-            const projs = grouped.find((g) => g.cat === 'projects')?.items || [];
-            const projName = (i: number) => (projs[i] ? (projs[i].title || fileDisplayName(projs[i].name)).toLowerCase() : null);
-            const p0 = projName(0);
-            const p1 = projName(1);
-            const p2 = projName(2);
             // The rotation is the marginal-value showcase (founder, 2026-08-02:
             // "most interesting and unique things that only a plm would
             // actually be able to answer"; second pass same day: "they need to
@@ -780,30 +794,13 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             // only where the mirror adds the THINKING behind the surface
             // (beli → what makes a restaurant worth his time), never its
             // clickable content.
-            const linkLabels = new Set(routerLinks.map((l) => l.label));
-            const askExamples = [
-              p0 ? `what is ${p0}?` : `what is ${first} building?`,
-              `what does ${first} believe that most people don’t?`,
-              p1 ? `why ${p1}?` : `what matters most to ${first}?`,
-              `what’s ${first}’s biggest contradiction?`,
-              `what would ${first} push back on?`,
-              `what popular idea does ${first} think is just wrong?`,
-              p2 ? `what is ${p2}?` : `how does ${first} decide what to work on?`,
-              `what’s the most surprising thing in here?`,
-              `what keeps ${first} up at night?`,
-              ...(linkLabels.has('beli') ? [`what makes a restaurant worth ${first}’s time?`] : []),
-              `what’s something ${first} changed positions on?`,
-              `how does ${first} think about ai?`,
-              `what should i read first?`,
-              `what’s ${first}’s philosophy?`,
-              'ask anything…',
-            ];
+            const askExamples = authorExamples(author.display_name || author.id, data.twin?.questions);
             return (
               // The mind is the ONE elevated object on the page (founder: the
               // page read flat — a cold visitor must see what to do without
               // reading). A quiet card lifts the door above everything else;
               // example questions make the first move a single tap.
-              <div className={editing ? 'profile-edit-static-block' : undefined} style={{
+              <div className={`${editing ? 'profile-edit-static-block ' : ''}profile-mind-card`} style={{
                 // Text inside sits on the PAGE's left edge (one text line for
                 // the whole profile); the card's borders protrude symmetrically
                 // instead — margin mirrors padding (founder, round nine).
@@ -812,17 +809,17 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                 boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 6px 18px rgba(0,0,0,0.04)',
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
-                  {sectionHead('mind')}
-                  {/* The old standing online/offline word is gone — the note
-                      exists only in the moment an offline ask is attempted. */}
-                  {offlineNote && (
+                  {sectionHead('mind', 'what’s behind the work')}
+                  {data.twin?.online !== true && (
                     <span className="twin-offline-note" style={{ color: 'var(--text-ghost)', fontStyle: 'italic', fontSize: '0.85rem', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-                      offline right now
+                      offline for now
                     </span>
                   )}
                 </div>
-                <p className="mirror-explainer" style={{ color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.55, margin: '0.75rem 0 0', textWrap: 'pretty' }}>
-                  a mirror of {first}’s mind, built from what {first} has chosen to share. when it doesn’t know, it says so.
+                <p className="mirror-explainer" style={{ color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.55, margin: '0.75rem 0 0' }}>
+                  {data.twin?.online === true
+                    ? `Ask ${first}’s mirror about the thinking behind the work.`
+                    : `The mirror is available when ${first}’s computer is on.`}
                 </p>
                 <div className={doorShake ? 'twin-door-shake' : undefined} style={{ margin: '0.9rem -0.98rem 0' }}>
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing}
@@ -876,6 +873,12 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           </p>
         </footer>}
         <style>{`
+          .profile-head-actions { display: flex; align-items: center; gap: 0.35rem; margin-right: -0.75rem; }
+          .dark .profile-mind-card { background: var(--bg-secondary); box-shadow: none !important; }
+          .profile-section-head { display: flex; align-items: baseline; min-width: 0; max-width: 100%; white-space: nowrap; }
+          .profile-section-whisper { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+          .profile-file-subtitle, .mirror-explainer { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .profile-locked-row { user-select: text; }
           .profile-edit-header { margin-bottom: 3.5rem !important; }
           .profile-edit-background { opacity: 0.5; }
           .profile-edit-static-block { opacity: 0.42; pointer-events: none; border-color: transparent !important; box-shadow: none !important; }
@@ -899,8 +902,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           .profile-edit-location { cursor: pointer; }
           .profile-edit-drag:active { cursor: grabbing; }
           .profile-edit-drag:focus-visible { outline: 1px solid var(--accent); outline-offset: 5px; }
-          .profile-edit-description { field-sizing: content; width: min(38rem, calc(100% - 1.25rem)) !important; min-height: 1.45em; margin: 0.35rem 0 0 1.25rem; border-bottom-color: color-mix(in srgb, var(--text-muted) 12%, transparent) !important; color: var(--text-muted) !important; font-size: 0.92rem !important; resize: none; overflow: hidden; }
+          .profile-edit-description { width: min(38rem, calc(100% - 1.25rem)) !important; min-height: 1.45em; margin: 0.35rem 0 0 1.25rem; border-bottom-color: color-mix(in srgb, var(--text-muted) 12%, transparent) !important; color: var(--text-muted) !important; font-size: 0.92rem !important; overflow: hidden; }
           @media (max-width: 560px) {
+            .profile-main { padding: 4.5rem 1.5rem 3rem !important; }
+            .profile-name-line { column-gap: 0.8rem !important; }
+            .profile-mind-card { margin-left: -0.5rem !important; margin-right: -0.5rem !important; }
             .mirror-explainer { max-width: 28rem; }
             .profile-edit-identity { flex-wrap: wrap; }
             .profile-edit-dot { display: none; }

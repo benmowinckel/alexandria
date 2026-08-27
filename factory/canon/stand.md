@@ -59,6 +59,18 @@ The PLM is one optional module a stand may add. It is not Alexandria's model and
 
 Read `plm.md` and `twin.md` only after the Author directly asks for this module. A custom runner with wider computer access is outside Alexandria's structural guarantee.
 
+## Optional own-domain profile
+
+An Author may ask for an independent copy of their public profile on a domain they control. This is a dormant connection module, not a default export and not a reason to buy a domain.
+
+1. Read only the exact material already approved for public Library access: public identity, declared links, public artifacts, and deliberately listed public covers. Never export an inaccessible body or a private profile setting.
+2. Generate a self-contained static site plus a plain `profile.json` into a local export folder. The copy must render without an Alexandria API call, account, or runtime, so the Author keeps a usable public profile if Alexandria is unavailable.
+3. Preview the generated site locally and show the exact output. The Author supplies and pays for any domain and hosting account; Alexandria never purchases or registers one for them.
+4. Deploying, attaching a domain, or changing already-hosted bytes is a separate outward action requiring the Author's exact approval. Local regeneration may follow an already-approved public source change, but changed hosted bytes stay prepared behind the existing deployment gate.
+5. The independent copy may link back to the Library for community discovery while it exists. A live mirror is optional and necessarily depends on the Author's own inference setup; the static profile and published works do not.
+
+The success condition is one owned folder that any ordinary static host can serve, not a branded wrapper around an Alexandria runtime.
+
 ## The hard floor
 
 - Nothing private is context merely because the ai can see it locally.

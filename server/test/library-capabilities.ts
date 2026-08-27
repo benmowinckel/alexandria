@@ -78,7 +78,7 @@ assert.match(contract.browse.member_directory, /\/library$/);
 assert.match(contract.browse.rule, /authoritative active membership/);
 assert.equal(contract.scopes.inheritance, false);
 assert.match(contract.scopes.metadata, /explicitly lists that exact artifact/);
-assert.match(contract.scopes.metadata, /exact cohort, filename, questions, and body stay invisible/);
+assert.match(contract.scopes.metadata, /exact cohort, filename, questions, timestamp, and body stay invisible/);
 assert.deepEqual(contract.owner_api.file_listings, {
   method: 'PUT', path: '/library/someone/file-listings',
 });

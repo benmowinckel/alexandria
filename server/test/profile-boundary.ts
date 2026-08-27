@@ -13,7 +13,10 @@ import { resolve } from 'node:path';
 
 const root = resolve(process.cwd(), '..');
 const proxy = readFileSync(resolve(root, 'app/api/library/[author]/[control]/route.ts'), 'utf8');
+const profileProxy = readFileSync(resolve(root, 'app/api/library/[author]/route.ts'), 'utf8');
+const directory = readFileSync(resolve(root, 'app/library/LibraryDirectory.tsx'), 'utf8');
 const page = readFileSync(resolve(root, 'app/library/[author]/client.tsx'), 'utf8');
+const handoff = readFileSync(resolve(root, 'app/lib/handoff.ts'), 'utf8');
 const config = readFileSync(resolve(root, 'app/lib/config.ts'), 'utf8');
 const library = readFileSync(resolve(process.cwd(), 'src/library.ts'), 'utf8');
 const limits = readFileSync(resolve(process.cwd(), 'src/library-limits.ts'), 'utf8');
@@ -41,6 +44,21 @@ assert.match(page, />edit profile<\/HeaderAction>/);
 assert.match(page, /saving \? 'saving changes' : 'save changes'/);
 assert.match(page, /reorderWithinSection/);
 assert.match(page, /start your loop/);
+assert.match(page, /if \(file\.cover_only\)/);
+assert.match(page, /className="profile-locked-row"/);
+assert.match(page, /No blur: absent bytes are the privacy boundary\./);
+assert.doesNotMatch(page, /file\.cover_only[\s\S]{0,500}(?:'\/join'|mailto:)/);
+assert.match(page, /profile-file-subtitle, \.mirror-explainer \{ white-space: nowrap;/);
+assert.match(page, /Ask \$\{first\}’s mirror about the thinking behind the work\./);
+assert.doesNotMatch(page, /Ask \$\{first\}’s public mirror/);
+assert.match(directory, /label: 'ascending'/);
+assert.match(directory, /label: 'descending'/);
+assert.doesNotMatch(directory, /label: 'number (?:low|high)'/);
+assert.match(handoff, /\$\{name\}’s mirror on Alexandria/);
+assert.doesNotMatch(handoff, /\$\{name\}’s public mirror on Alexandria/);
+assert.match(profileProxy, /process\.env\.NODE_ENV === 'development'/);
+assert.match(profileProxy, /get\('preview'\) === 'public'/);
+assert.match(profileProxy, /if \(!publicPreview\)/);
 assert.doesNotMatch(page, /copy this stand|start with Benjamin’s stand|FOUNDER_STAND/);
 assert.doesNotMatch(config, /FOUNDER_STAND/);
 assert.match(page, /DEFAULT_CATEGORIES/);
@@ -62,8 +80,13 @@ const twinQuery = library.slice(
 );
 assert.match(twinQuery, /You are the public mirror for \$\{p\.displayName\}/);
 assert.match(twinQuery, /must never claim to be them/);
-assert.match(twinQuery, /Refer to \$\{p\.displayName\} in the third person/);
-assert.match(twinQuery, /when it does not establish an answer, say so plainly/);
+assert.match(twinQuery, /Every statement about \$\{p\.displayName\} must use their name or third-person pronouns/);
+assert.match(twinQuery, /If that material does not establish a fact/);
+assert.match(twinQuery, /Lead with the direct answer in plain language/);
+assert.match(twinQuery, /Clearly distinguish what \$\{p\.displayName\} states from what the mirror is inferring/);
+assert.match(twinQuery, /publicMirrorUsesFirstPerson\(result\.answer\)/);
+assert.match(twinQuery, /identity-boundary retry/);
+assert.match(twinQuery, /identity_violation/);
 assert.doesNotMatch(twinQuery, /You are \$\{p\.displayName\}\. Speak as yourself\./);
 
 const directoryAuthor = library.slice(

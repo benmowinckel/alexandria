@@ -63,6 +63,7 @@ import {
   type TwinVisibility,
   type TwinConfig,
   type TwinEnv,
+  type TwinInferenceRequest,
   type TwinWork,
 } from './twin.js';
 import {
@@ -75,6 +76,14 @@ import {
 } from './library-limits.js';
 
 const DEFAULT_FOUNDER_LOGIN = 'benmowinckel';
+
+// The public speaker is the mirror, never the Author. Prompting is the first
+// line of defence; this gate makes the identity boundary deterministic at the
+// rendered surface even when a weights model falls back into its first-person
+// training voice.
+function publicMirrorUsesFirstPerson(answer: string): boolean {
+  return /\b(?:i|i'm|i’ve|i've|i’d|i'd|i’ll|i'll|me|my|mine|myself|we|we’re|we're|we’ve|we've|we’d|we'd|we’ll|we'll|our|ours|ourselves)\b/i.test(answer);
+}
 
 function founderLogin(): string {
   return (process.env.ADMIN_GITHUB_LOGIN || DEFAULT_FOUNDER_LOGIN).trim().toLowerCase();
@@ -593,7 +602,7 @@ export function libraryCapabilityContract(input: {
     },
     scopes: {
       meaning: 'The first folder is the permission type; every nested folder is an exact cohort. Any approved Library artifact may be context, not only a shadow.',
-      metadata: 'A protected title and owner-written public teaser appear only after the Author explicitly lists that exact artifact. The exact cohort, filename, questions, and body stay invisible without access. Paid offers are discoverable but their bodies remain locked.',
+      metadata: 'A protected title and one-line owner-written public subtitle appear only after the Author explicitly lists that exact artifact. Without access the cover is non-interactive and has no artifact URL; the exact cohort, filename, questions, timestamp, and body stay invisible. Paid offers are discoverable but their bodies remain locked.',
       permissions: {
         public: 'Anyone may read the exact public scope.',
         authors: 'Only an account with authoritatively active Alexandria membership may read an exact authors scope.',
@@ -897,16 +906,16 @@ export function registerLibraryRoutes(app: Hono): void {
     const bySession = token ? await findByLibrarySessionToken(token) : null;
     const viewer = byKey || bySession;
     const { accountList, candidates: directoryCandidates } = await loadDirectoryRoster().catch(() => ({ accountList: [], candidates: [] }));
-    // Public visitors learn only that the collective has depth. Count accounts,
-    // not fill-to-appear roster rows: missing public location/contact should not
-    // make every other Alexandrian disappear from the aggregate tease.
-    const otherAuthorCount = accountList.filter((account) => account.github_login !== founderLogin()).length;
+    // Public visitors learn only that the collective has depth, never its exact
+    // size. Use accounts rather than fill-to-appear rows so missing public
+    // location/contact does not make the rest of the collective disappear.
+    const hasMoreProfiles = accountList.some((account) => account.github_login !== founderLogin());
     if (!viewer) return c.json({
       signed_in: false,
       membership_active: false,
       authors: [],
       you_listed: false,
-      other_author_count: otherAuthorCount,
+      has_more_profiles: hasMoreProfiles,
     });
 
     const viewerMembership = await resolveMembership(viewer);
@@ -925,7 +934,7 @@ export function registerLibraryRoutes(app: Hono): void {
         ...membershipFields,
         authors: [],
         you_listed: false,
-        other_author_count: otherAuthorCount,
+        has_more_profiles: hasMoreProfiles,
       });
     }
 
@@ -948,7 +957,7 @@ export function registerLibraryRoutes(app: Hono): void {
     const youListed = authors.some((a) => a.id === viewer.github_login);
 
     logEvent('library_directory_view', { authors: String(authors.length) });
-    return c.json({ signed_in: true, ...membershipFields, authors, you_listed: youListed, other_author_count: otherAuthorCount });
+    return c.json({ signed_in: true, ...membershipFields, authors, you_listed: youListed, has_more_profiles: hasMoreProfiles });
   });
 
   app.get('/library/:author', async (c) => {
@@ -1761,7 +1770,16 @@ export function registerLibraryRoutes(app: Hono): void {
     // thinking and voice, but the public speaker is always the mirror — never
     // the Author themself. There is deliberately no Author-authored system
     // field outside the exact Library scope broker.
-    const system = `You are the public mirror for ${p.displayName}. You are not ${p.displayName} and must never claim to be them. Refer to ${p.displayName} in the third person. Answer only from the published thinking available to this mirror; when it does not establish an answer, say so plainly.`;
+    const system = [
+      `You are the public mirror for ${p.displayName}. You are not ${p.displayName}, do not role-play as ${p.displayName}, and must never claim to be them.`,
+      `Speak as a clear librarian describing ${p.displayName}'s published mind. Every statement about ${p.displayName} must use their name or third-person pronouns.`,
+      `Never use “I”, “me”, “my”, “we”, or “our” for ${p.displayName}'s beliefs, preferences, possessions, memories, projects, or experiences, even when the source material is written in first person. Convert source first person into third person.`,
+      `Answer only from the published material available to this mirror. If that material does not establish a fact, say “${p.displayName} has not shared that here.” Never fill the gap from general knowledge or guesswork.`,
+      `For your own limits, say “this mirror does not know” — never “I do not know.”`,
+      `Lead with the direct answer in plain language. Then use the strongest specific evidence in the published material; name a real tension, change, or connection when one is present instead of flattening the material into a generic summary.`,
+      `Clearly distinguish what ${p.displayName} states from what the mirror is inferring. Keep casual answers brief and give substantive questions only the depth they earn.`,
+      `Prefer one sharp synthesis to a tour of the profile. Do not merely list documents or restate the question.`,
+    ].join(' ');
     // Build the exact brokered Library view through the same gate as direct reads.
     let bundle: TwinContextBundle | undefined;
     if (cfg.variant === 'context') {
@@ -1794,7 +1812,7 @@ export function registerLibraryRoutes(app: Hono): void {
       if (!links.length) links = undefined;
     }
     const sidecar = await getSidecar(p.authorId);
-    const result = await runTwinInference(
+    const inferenceRequest: TwinInferenceRequest = (
       cfg.variant === 'weights'
         ? { variant: 'weights', question: p.question, system, maxTokens: 512, checkpoint: cfg.checkpoint, base: cfg.base }
         : {
@@ -1820,9 +1838,23 @@ export function registerLibraryRoutes(app: Hono): void {
             messages: p.messages,
             contextHash: bundle?.contextHash,
             contextScopes: effectiveScopes,
-          },
-      { url: sidecar?.url, secret: sidecar?.secret },
+          }
     );
+    const inferenceOpts = { url: sidecar?.url, secret: sidecar?.secret };
+    let result = await runTwinInference(inferenceRequest, inferenceOpts);
+
+    if (result.ok && publicMirrorUsesFirstPerson(result.answer)) {
+      logEvent('library_twin_identity_retry', { author: p.authorId, surface: p.surface, variant: cfg.variant });
+      const repaired = await runTwinInference({
+        ...inferenceRequest,
+        system: `${system} This is an identity-boundary retry: the previous draft used first person. Answer again from scratch with no first-person pronouns anywhere.`,
+      }, inferenceOpts);
+      if (repaired.ok && publicMirrorUsesFirstPerson(repaired.answer)) {
+        result = { ok: false, status: 502, reason: 'identity_violation', error: 'the mirror could not answer without speaking as the author. your question wasn’t answered.' };
+      } else {
+        result = repaired;
+      }
+    }
 
     if (!result.ok) {
       logEvent('library_twin_ask', { author: p.authorId, surface: p.surface, variant: cfg.variant, status: String(result.status), reason: result.reason });

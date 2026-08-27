@@ -15,12 +15,18 @@ export async function GET(
   ctx: { params: Promise<{ author: string }> },
 ): Promise<Response> {
   const { author } = await ctx.params;
+  // Local-only truth view: let the Author inspect the exact public boundary
+  // without signing out. Production never honors this query parameter.
+  const publicPreview = process.env.NODE_ENV === 'development'
+    && req.nextUrl.searchParams.get('preview') === 'public';
   const cookie = req.headers.get('cookie');
   const auth = req.headers.get('authorization');
   const headers: Record<string, string> = {};
-  if (cookie) headers.Cookie = cookie;
-  if (auth) headers.Authorization = auth;
-  Object.assign(headers, localAuth(auth));
+  if (!publicPreview) {
+    if (cookie) headers.Cookie = cookie;
+    if (auth) headers.Authorization = auth;
+    Object.assign(headers, localAuth(auth));
+  }
 
   const upstream = await fetch(`${SERVER_URL}/library/${encodeURIComponent(author)}`, { headers });
   const body = await upstream.json().catch(() => null) as Record<string, unknown> | null;

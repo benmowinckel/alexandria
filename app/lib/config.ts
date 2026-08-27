@@ -55,7 +55,7 @@ const SHARE_IMAGE = {
   url: `${SITE_URL}/opengraph-image`,
   width: 1200,
   height: 630,
-  alt: 'alexandria. Your AI should know how you think. A free loop, in private files you own.',
+  alt: 'alexandria. Your ai should know how you think. A free loop, in private files you own.',
 };
 
 // Per-page canonical + og:url + full openGraph block. The root layout sets

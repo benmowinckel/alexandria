@@ -10,7 +10,7 @@ import ActionButton from './ActionButton';
 import TwinText from './TwinText';
 import ChatHistoryItem from './ChatHistoryItem';
 import { useRotatingPlaceholder, pieceExamples, readingExamples } from '../lib/useRotatingPlaceholder';
-import { composeHandoff, copyToClipboard, fetchHandoffContext, type HandoffAuthor } from '../lib/handoff';
+import { copyToClipboard } from '../lib/handoff';
 import {
   processNumbered, TocBlock,
   MD_COMPONENTS, MD_COMPONENTS_NUMBERED, MD_COMPONENTS_NUMBERED_PRE, MD_COMPONENTS_ABSTRACT,
@@ -54,9 +54,6 @@ const ChevronIcon = <svg width="20" height="20" {...svgProps}><path d="M15 18l-6
 const PaneLeftIcon = <svg width="17" height="17" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="9" y1="4" x2="9" y2="20" /></svg>;
 const LinesIcon = <svg width="17" height="17" {...svgProps}><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></svg>;
 const PaneRightIcon = <svg width="17" height="17" {...svgProps}><rect x="3" y="4" width="18" height="16" rx="2" /><line x1="15" y1="4" x2="15" y2="20" /></svg>;
-// Handoff — an arrow leaving a box. Deliberately not a copy or download glyph:
-// this is the conversation going somewhere else to be continued, not a file.
-const HandoffIcon = <svg width="17" height="17" {...svgProps}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><path d="M10 17l5-5-5-5" /><path d="M15 12H3" /></svg>;
 const CopyIcon = <svg width="17" height="17" {...svgProps}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
 const DownloadIcon = <svg width="17" height="17" {...svgProps}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>;
 const ExpandIcon = <svg width="17" height="17" {...svgProps}><path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M16 3h3a2 2 0 0 1 2 2v3" /><path d="M21 16v3a2 2 0 0 1-2 2h-3" /><path d="M3 16v3a2 2 0 0 0 2 2h3" /></svg>;
@@ -157,13 +154,13 @@ export type ReaderShellProps = {
   askQuestions?: string[];
   /** The twin call (the wrapper decides which mind). Returning the richer shape
    *  lets the reader see what answered and what's left of their allowance; a
-   *  bare string still works. Throw with `allowanceSpent` to trigger the handoff. */
+   *  bare string still works. Throw with `allowanceSpent` to show the limit. */
   askFn: (
     question: string,
     history: { role: 'user' | 'assistant'; content: string }[],
   ) => Promise<string | AskResult>;
-  /** Whose mind this is — enables the handoff (their public shadow + works).
-   *  Without it the reader can still take the piece and the conversation. */
+  /** Legacy call-site field retained while wrappers migrate; no public
+   *  continuation handoff is rendered. */
   handoffAuthorId?: string;
   /** What this reader has left before they've asked anything. Without it the
    *  allowance is only discoverable by hitting it. */
@@ -193,7 +190,7 @@ export default function ReaderShell({
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
   intro, inviteField, askFirst = false, dockedAsk = false, footerCta = 'start your loop',
-  handoffAuthorId, initialBudget = null, docPage = false,
+  initialBudget = null, docPage = false,
 }: ReaderShellProps) {
   const book = useMemo(
     () => (numbered && markdown ? processNumbered(markdown) : null),
@@ -237,7 +234,6 @@ export default function ReaderShell({
   const [asking, setAsking] = useState(false);
   const threadRef = useRef<HTMLDivElement>(null);
   const promptRef = useRef<PromptBoxHandle | null>(null);
-  const placeSubmittedAtTopRef = useRef(false);
 
   // Land a new answer at ITS OWN TOP, not the bottom of the thread. An answer
   // is read from the first line down, so scrolling past it to the end means
@@ -251,12 +247,11 @@ export default function ReaderShell({
     const msgs = active?.messages || [];
     const last = msgs[msgs.length - 1];
     const el = lastMsgRef.current;
-    if (last?.role === 'you' && placeSubmittedAtTopRef.current && el) {
-      placeSubmittedAtTopRef.current = false;
-      box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'auto' });
-    } else if (last && last.role !== 'you' && el) {
+    const mobile = isNarrow();
+    if (mobile && last?.role === 'you') return;
+    if (last && last.role !== 'you' && el) {
       box.scrollTo({ top: Math.max(0, el.offsetTop - 12), behavior: 'smooth' });
-    } else {
+    } else if (!mobile) {
       box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
     }
   }, [active?.messages, asking]);
@@ -348,44 +343,7 @@ export default function ReaderShell({
     const frame = requestAnimationFrame(() => setBudget((b) => b ?? initialBudget));
     return () => cancelAnimationFrame(frame);
   }, [initialBudget]);
-  const [handoffCtx, setHandoffCtx] = useState<HandoffAuthor | null>(null);
   const spent = budget !== null && budget.remaining <= 0;
-
-  // Preload the public context so the eventual click stays inside the browser's
-  // clipboard permission window. The bundle is small, public, and the transfer
-  // button must work on the first press — especially once questions run out.
-  useEffect(() => {
-    if (!handoffAuthorId || handoffCtx) return;
-    let live = true;
-    void fetchHandoffContext(handoffAuthorId).then((ctx) => {
-      if (live && ctx) setHandoffCtx(ctx);
-    });
-    return () => { live = false; };
-  }, [handoffAuthorId, handoffCtx]);
-
-  // The Author's public half of the handoff, fetched once and only when it's
-  // first wanted — most readers never reach for it.
-  const loadHandoff = async (): Promise<HandoffAuthor | null> => {
-    if (handoffCtx || !handoffAuthorId) return handoffCtx;
-    const ctx = await fetchHandoffContext(handoffAuthorId);
-    if (ctx) setHandoffCtx(ctx);
-    return ctx;
-  };
-
-  // Everything the reader needs to carry on somewhere else, on the clipboard.
-  const takeItWithYou = async () => {
-    const ctx = await loadHandoff();
-    if (!ctx) throw new Error('Handoff context unavailable');
-    await copyToClipboard(composeHandoff({
-      ctx,
-      piece: artifactText ? {
-        name,
-        content: artifactText,
-        url: typeof window !== 'undefined' ? window.location.href : undefined,
-      } : null,
-      messages: active?.messages || [],
-    }));
-  };
 
   const ask = async () => {
     const text = question.trim();
@@ -396,7 +354,6 @@ export default function ReaderShell({
       // The first question is sent from the artifact. Close the soft keyboard
       // before opening the mirror, and do not immediately summon it again from
       // the mirror's normal auto-focus behavior.
-      placeSubmittedAtTopRef.current = true;
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     }
     const targetId = activeId;
@@ -419,13 +376,13 @@ export default function ReaderShell({
         setBudget({ remaining: out.remaining, limit: out.limit, signedIn: !!out.signed_in });
       }
     } catch (e) {
-      // Out of questions is not a failure — it's the handoff moment. The mirror
-      // says so in its own voice and the door is already on screen.
+      // Out of questions is not a failure. Keep the unanswered question in the
+      // transcript; the dock reports the limit once.
       const err = e as { allowanceSpent?: boolean; message?: string; limit?: number; signedIn?: boolean };
       if (err?.allowanceSpent) {
         setBudget({ remaining: 0, limit: err.limit ?? 0, signedIn: !!err.signedIn });
         // The dock says the limit once. Keep the unanswered question in the
-        // transcript so copy and handoff can carry it; add no duplicate note.
+        // transcript so the conversation remains honest; add no duplicate note.
       } else {
         add({ role: 'note', text: offlineNote });
       }
@@ -478,14 +435,8 @@ export default function ReaderShell({
 
   return (
     <>
-      {/* Full screen strips all surrounding chrome (footer, panes, strips) so the
-          piece owns the viewport — the theme toggle is chrome too, and it lives in
-          the same top-right corner as the piece's own controls. Hiding it while
-          expanded keeps that corner clear so the shrink control stays clickable
-          (it used to sit under the fixed toggle) — the toggle returns on exit. */}
-      {!expanded && <ThemeToggle />}
       <div className={`reader-shell${docPage ? ' doc-page' : ''}`} style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
-        <header className="reader-global-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 3.2rem 0 0.7rem', borderBottom: 'none' }}>
+        <header className="reader-global-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 0.25rem 0 0.7rem', borderBottom: 'none' }}>
           <Link href={backHref} aria-label={`back to ${backTitle}`} title={backTitle}
             style={{ color: 'var(--text-muted)', display: 'flex', flex: 'none', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
           <span className="doc-title-row">
@@ -497,19 +448,14 @@ export default function ReaderShell({
               </>
             ) : null}
           </span>
+          <span style={{ marginLeft: 'auto' }} />
+          {!expanded && <ThemeToggle inline />}
         </header>
 
-        {!docPage && (
-        <div className="reader-tabs" style={{ display: 'none', flex: 'none', borderBottom: '1px solid var(--border-light)' }}>
-          {(['ask', 'piece'] as const).map((t) => (
-            <button key={t} type="button" onClick={() => setTab(t)}
-              style={{ flex: 1, border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: '0.7rem',
-                color: tab === t ? 'var(--text-primary)' : 'var(--text-ghost)', borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent' }}>
-              {t === 'piece' ? 'read' : 'ask the mirror'}
-            </button>
-          ))}
-        </div>
-        )}
+        <nav className="mobile-pane-nav" aria-label="reader panes">
+          <button type="button" data-active={tab === 'ask'} onClick={() => { setMidOpen(true); setTab('ask'); }} aria-label="open the mirror" title="mirror">{LinesIcon}</button>
+          <button type="button" data-active={tab === 'piece'} onClick={() => { setExpanded(false); setTab('piece'); }} aria-label="open the piece" title="read">{PaneRightIcon}</button>
+        </nav>
 
         <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-tab={tab} data-expanded={expanded ? 'true' : 'false'}
           data-left={leftOpen ? 'open' : 'closed'} data-mid={midOpen ? 'open' : 'closed'} data-right={rightOpen ? 'open' : 'closed'}>
@@ -536,7 +482,6 @@ export default function ReaderShell({
           <section className="reader-pane pane-chat" style={{ order: 2, flex: '1 1 0', minWidth: '340px', flexDirection: 'column', minHeight: 0 }}>
             <div style={paneHead}>
               <button type="button" onClick={() => { setMidOpen(false); setTab('piece'); }} aria-label="collapse the mirror" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
-              <button type="button" onClick={() => { setMidOpen(false); setTab('piece'); }} aria-label="read the artifact" title="read" style={iconBtn} className="mobile-piece hover:opacity-60">{PaneRightIcon}</button>
               {/* Not "ask benjamin" — the product is a MIRROR of a mind,
                   never a twin or stand-in (canon; founder 2026-07-25:
                   "this is so key. its the mirror"). One universal label. */}
@@ -550,9 +495,6 @@ export default function ReaderShell({
                   {budget.remaining === 1 ? '1 question left' : `${budget.remaining} questions left`}
                 </span>
               )}
-              <ActionButton icon={HandoffIcon} onAction={takeItWithYou}
-                title="take it with you — copies the mind, the piece and this conversation for your own AI"
-                style={{ ...iconBtn, color: budget && budget.remaining <= 3 ? 'var(--accent)' : undefined }} className="hover:opacity-60" />
               {/* Copy remains independent of allowance state. Running out
                   removes the composer, never the reader's conversation. */}
               {(active?.messages.length ?? 0) > 0 && (
@@ -573,10 +515,13 @@ export default function ReaderShell({
                     : m.role === 'you'
                     ? <p className="msg-you">{m.text}</p>
                     : (
-                      <p className="msg-mirror">
+                      <div>
+                        <p className="mirror-speaker">{speaker}</p>
+                        <p className="msg-mirror">
                         <TwinText text={m.text.replace(/\s+$/, '')} />
                         <ActionButton icon={CopyIcon} onAction={() => copyText(m.text)} title="copy" className="twin-copy hover:opacity-60" />
-                      </p>
+                        </p>
+                      </div>
                     )}
                 </div>
               ))}
@@ -584,22 +529,9 @@ export default function ReaderShell({
             </div>
             <div className="ask-dock" style={{ flex: 'none', borderTop: 'none' }}>
               {spent ? (
-                // One status, then the way forward. Copy remains in the header.
-                <div>
-                  <p style={{ margin: '0 0 0.85rem', color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
-                    Out of questions for now.
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
-                    <ActionButton icon={HandoffIcon} label="continue in your own AI" doneLabel="copied — paste it into your AI"
-                      onAction={takeItWithYou}
-                      title="copies this chat, the piece and the writing behind it — paste it into ChatGPT, Claude, or whatever you use"
-                      failedLabel="couldn’t copy — try again"
-                      style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
-                        background: 'color-mix(in srgb, var(--accent) 8%, transparent)', borderRadius: '999px', padding: '0.4rem 0.85rem',
-                        color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
-                      className="hover:opacity-75" />
-                  </div>
-                </div>
+                <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.98rem', lineHeight: 1.5 }}>
+                  Out of questions for now.
+                </p>
               ) : (
                 <PromptBox ref={promptRef} value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking} typeWhileLoading shakeWhenBusy placeholder={rotatingPlaceholder || askPlaceholder} bare />
               )}
@@ -613,7 +545,6 @@ export default function ReaderShell({
               <span style={{ marginRight: 'auto' }} />
               {status === 'ok' && (
                 <>
-                  <button type="button" className="mobile-ask" onClick={() => { setMidOpen(true); setTab('ask'); }} aria-label="ask the mirror" title="ask" style={iconBtn}>{LinesIcon}</button>
                   <ActionButton icon={CopyIcon} onAction={copyArtifact} title="copy text" style={iconBtn} className="hover:opacity-60" />
                   {downloadBlob && <ActionButton icon={DownloadIcon} onAction={downloadArtifact} title="download" style={iconBtn} className="hover:opacity-60" />}
                   <ActionButton icon={ShareIcon} onAction={shareArtifact} title="share link" style={iconBtn} className="hover:opacity-60" />
@@ -774,11 +705,11 @@ export default function ReaderShell({
         .piece-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
           mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }
 
-        .mobile-ask, .mobile-piece { display: none !important; }
+        .mobile-pane-nav { display: none; }
+        .mirror-speaker { margin: 0 0 0.35rem 0.9rem; color: var(--text-muted); font-size: 0.78rem; letter-spacing: 0.05em; }
         .doc-page .pdoc-longform .pdoc-h1 { margin-top: 2.2rem; }
 
         @media (min-width: 901px) {
-          .reader-tabs { display: none !important; }
           .reader-strip { display: none; }
           .reader-pane { display: none; }
           main[data-left="closed"] .strip-history { display: flex; }
@@ -791,13 +722,20 @@ export default function ReaderShell({
         @media (max-width: 900px) {
           .reader-strip, .pane-history { display: none !important; }
           .chat-collapse, .piece-collapse { display: none !important; }
-          .reader-tabs { display: none !important; }
-          .mobile-ask, .mobile-piece { display: flex !important; }
+          .mobile-pane-nav {
+            flex: none; display: flex; align-items: center; justify-content: space-between;
+            height: 2.75rem; padding: 0 0.35rem; background: var(--bg-primary); z-index: 25;
+          }
+          .mobile-pane-nav button {
+            width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+            border: 0; background: none; padding: 0; color: var(--text-ghost); cursor: pointer;
+          }
+          .mobile-pane-nav button[data-active="true"] { color: var(--text-primary); }
           .reader-global-head {
             position: sticky; top: 0; z-index: 30;
             background: var(--bg-primary);
           }
-          .doc-page > header { padding: 0 3.2rem 0 0.85rem !important; height: 48px; }
+          .doc-page > header { padding: 0 0.25rem 0 0.85rem !important; height: 48px; }
           .doc-page .doc-title { font-size: 1.02rem; }
           .doc-page > footer { padding: 0.65rem 1rem 1.05rem; }
           .doc-page .pdoc-longform .pdoc-h1 { margin-top: 0.9rem; }

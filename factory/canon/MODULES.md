@@ -45,6 +45,7 @@ Alexandria-built modules are labelled **official** in the marketplace. Most are 
 - **people context** — one removable permission lets the Author's ai use what a named person allowed this account to read when that person materially affects the current task; no prompt or private context leaves.
 - **Library publication** — `library.md` + `filter.md`; exact files and audiences need exact hash-bound approval.
 - **Library stand** — `stand.md`; Benjamin's personalizable starting shape for that connection, installed as a reference, inert until the Author asks, and free to fork or replace.
+- **own-domain profile** — `stand.md § Optional own-domain profile`; a self-contained static copy built from already-public material, dormant until requested, with domain purchase and deployment behind separate approval.
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
 - **public reading** — general browsing remains deliberate browser or isolated-reader access only; people context is the one narrow standing Library read, with no session-start fetch or live private-loop cache.
 - **Git backup** — the owned Git history may use any private remote; GitHub is the current soft default, never the source of truth.

@@ -135,28 +135,13 @@ const PromptBox = forwardRef<PromptBoxHandle, {
         .pb-shake { animation: pb-shake 0.38s ease; }
         @media (prefers-reduced-motion: reduce) { .pb-shake { animation: none; } }
         .pb-send {
-          position: absolute; top: 0; bottom: 0; width: 1.85rem;
+          position: absolute; top: 50%; transform: translateY(-50%); width: 2.35rem; height: 2.35rem;
           display: flex; align-items: center; justify-content: center;
           border: none; background: none; padding: 0; line-height: 0;
         }
         .pb-send svg { display: block; }
-        @media (max-width: 900px) {
-          .pb-bare .pb-textarea {
-            min-height: 4.15rem !important;
-            overflow-y: auto !important;
-          }
-          .pb-bare .pb-ghost {
-            white-space: normal !important;
-            overflow: hidden !important;
-            overflow-wrap: anywhere;
-            text-wrap: pretty;
-            max-height: 3.65rem;
-            -webkit-mask-image: none !important;
-            mask-image: none !important;
-          }
-        }
       `}</style>
-      <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+      <div className="pb-field" style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
         <textarea
           ref={taRef}
           className="pb-textarea"
@@ -177,12 +162,12 @@ const PromptBox = forwardRef<PromptBoxHandle, {
             caretColor: showOwnCaret ? 'transparent' : 'var(--text-muted)',
             ...(bare
               ? {
-                minHeight: '2.2rem', border: 'none', borderBottom: '1px solid var(--border-light)', borderRadius: 0,
-                background: 'none', fontSize: '1.05rem', padding: '0.35rem 0 0.5rem 0',
+                minHeight: '2.75rem', border: 'none', borderBottom: '1px solid var(--border-light)', borderRadius: 0,
+                background: 'none', fontSize: '1.05rem', padding: '0.62rem 2.55rem 0.62rem 0',
               }
               : {
-                minHeight: '2.85rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-secondary)',
-                fontSize: '1rem', padding: '0.62rem 2.5rem 0.62rem 0.95rem',
+                minHeight: '3rem', border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-secondary)',
+                fontSize: '1rem', padding: '0.72rem 3rem 0.72rem 0.95rem',
               }),
           }}
         />
@@ -193,7 +178,7 @@ const PromptBox = forwardRef<PromptBoxHandle, {
           // typed text hold one baseline (founder, 2026-08-02: "it all needs
           // to be consistent").
           <span aria-hidden style={{
-            position: 'absolute', left: bare ? '-4px' : 'calc(0.95rem - 2.5px)', top: bare ? '0.59rem' : '0.91rem',
+            position: 'absolute', left: bare ? '-4px' : 'calc(0.95rem - 2.5px)', top: '50%', transform: 'translateY(-50%)',
             width: '1.5px', height: bare ? '1.05rem' : '1rem', background: 'var(--text-muted)', borderRadius: '1px',
             pointerEvents: 'none', animation: 'pb-caret-blink 1.5s ease-in-out infinite',
           }} />
@@ -205,8 +190,8 @@ const PromptBox = forwardRef<PromptBoxHandle, {
             actual text… it all needs to be consistent" — supersedes the
             07-20 nudge-right, which put the ghost 0.4rem off the typed line). */}
         <div aria-hidden className="pb-ghost" style={{
-          position: 'absolute', left: bare ? 0 : '1px', top: bare ? 0 : '1px', right: bare ? 0 : '2.5rem',
-          padding: bare ? '0.35rem 0 0.5rem 0' : '0.62rem 0 0.62rem 0.95rem',
+          position: 'absolute', left: bare ? 0 : '1px', top: '50%', transform: 'translateY(-50%)', right: bare ? '2.55rem' : '3rem',
+          padding: bare ? 0 : '0 0 0 0.95rem',
           pointerEvents: 'none', color: 'var(--text-ghost)',
           fontFamily: 'var(--font-eb-garamond)', fontSize: bare ? '1.05rem' : '1rem', lineHeight: 1.45,
           whiteSpace: 'nowrap', overflow: 'hidden',

@@ -32,6 +32,7 @@
         { "id": "people-context", "local_ref": "system/permissions/people-context" },
         { "id": "library", "local_ref": "canon/library.md" },
         { "id": "library-stand", "local_ref": "canon/stand.md" },
+        { "id": "own-domain-profile", "local_ref": "canon/stand.md" },
         { "id": "marketplace", "local_ref": "canon/marketplace.md" },
         { "id": "updates", "local_ref": "system/hooks/auto-update" },
         { "id": "git-backup", "local_ref": "system/permissions/backup" },

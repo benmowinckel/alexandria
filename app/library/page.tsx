@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { SERVER_URL, pageMetadata, librarySignInUrl, FOUNDER_PROFILE_PATH } from '../lib/config';
-import { LibraryDirectory, type DirectoryAuthor } from './LibraryDirectory';
+import { LibraryDirectory, type DirectoryAuthor, type LibrarySort } from './LibraryDirectory';
 import SiteFooter from '../components/SiteFooter';
 import { SignOutLink } from '../components/SignOutLink';
 import { HeaderAction, HeaderActions } from '../components/HeaderActions';
+import { localAuth } from '../lib/dev-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,7 @@ interface DirectoryResponse {
   membership_verified_at?: string | null;
   authors: DirectoryAuthor[];
   you_listed: boolean;
-  other_author_count: number;
+  has_more_profiles: boolean;
 }
 
 // The directory is authors-only. We forward the viewer's library session
@@ -52,11 +53,13 @@ interface DirectoryResponse {
 async function loadDirectory(): Promise<DirectoryResponse> {
   try {
     const cookieHeader = (await cookies()).toString();
+    const headers: Record<string, string> = { ...localAuth(null) };
+    if (cookieHeader) headers.cookie = cookieHeader;
     const res = await fetch(`${SERVER_URL}/library`, {
       cache: 'no-store',
-      headers: cookieHeader ? { cookie: cookieHeader } : {},
+      headers,
     });
-    if (!res.ok) return { signed_in: false, membership_active: false, authors: [], you_listed: false, other_author_count: 0 };
+    if (!res.ok) return { signed_in: false, membership_active: false, authors: [], you_listed: false, has_more_profiles: false };
     const data = await res.json() as {
       signed_in?: boolean;
       membership_active?: boolean;
@@ -66,7 +69,7 @@ async function loadDirectory(): Promise<DirectoryResponse> {
       membership_verified_at?: string | null;
       authors?: Partial<DirectoryAuthor>[];
       you_listed?: boolean;
-      other_author_count?: number;
+      has_more_profiles?: boolean;
     };
     const authors = (data.authors || []).map((author) => ({
       id: String(author.id ?? ''),
@@ -87,61 +90,89 @@ async function loadDirectory(): Promise<DirectoryResponse> {
       membership_verified_at: data.membership_verified_at,
       authors,
       you_listed: !!data.you_listed,
-      other_author_count: typeof data.other_author_count === 'number' ? Math.max(0, Math.floor(data.other_author_count)) : 0,
+      has_more_profiles: data.has_more_profiles === true,
     };
   } catch {
-    return { signed_in: false, membership_active: false, authors: [], you_listed: false, other_author_count: 0 };
+    return { signed_in: false, membership_active: false, authors: [], you_listed: false, has_more_profiles: false };
   }
 }
 
 const linkStyle = { color: 'var(--text-secondary)', textDecoration: 'underline', textDecorationColor: 'var(--text-muted)', textUnderlineOffset: '3px', textDecorationThickness: '1px' };
 
-export default async function LibraryPage({ searchParams }: { searchParams?: Promise<{ q?: string }> }) {
+export default async function LibraryPage({ searchParams }: { searchParams?: Promise<{ q?: string; location?: string; sort?: string; preview?: string }> }) {
   const params = await searchParams;
   const initialQuery = (params?.q || '').trim().slice(0, 100);
-  const { signed_in, membership_active, membership_available, membership_status, authors, you_listed, other_author_count } = await loadDirectory();
+  const initialLocation = (params?.location || '').trim().slice(0, 80);
+  const initialSort: LibrarySort = ['number-asc', 'number-desc', 'name-asc', 'name-desc'].includes(params?.sort || '')
+    ? params!.sort as LibrarySort
+    : 'number-asc';
+  const loaded = await loadDirectory();
+  // Local review surfaces for the access states. They do not exist in a
+  // production build and cannot change real authentication or membership.
+  const preview = process.env.NODE_ENV === 'development' ? params?.preview : undefined;
+  const directory: DirectoryResponse = preview === 'public'
+    ? { ...loaded, signed_in: false, membership_active: false, authors: [], you_listed: false, has_more_profiles: true }
+    : preview === 'gate'
+      ? { ...loaded, signed_in: true, membership_active: false, membership_available: true, membership_status: 'none', authors: [], you_listed: false }
+      : loaded;
+  const { signed_in, membership_active, membership_available, membership_status, authors, you_listed, has_more_profiles } = directory;
 
   // Sign-in must return you to the directory, signed in — not the signup
   // callback page (which is a dead end for someone who just wanted to browse).
   // intent=library skips the billing funnel; next brings you back here.
-  const signInUrl = librarySignInUrl(initialQuery ? `/library?q=${encodeURIComponent(initialQuery)}` : '/library');
+  const returnParams = new URLSearchParams();
+  if (initialQuery) returnParams.set('q', initialQuery);
+  if (initialLocation) returnParams.set('location', initialLocation);
+  if (initialSort !== 'number-asc') returnParams.set('sort', initialSort);
+  const returnPath = returnParams.size ? `/library?${returnParams.toString()}` : '/library';
+  const signInUrl = librarySignInUrl(returnPath);
 
   return (
     <div className="lib-page">
-      <ThemeToggle />
       <main className={signed_in && membership_active ? 'lib-main' : signed_in ? 'lib-main lib-main-gate' : 'lib-main lib-main-open'}>
         <header className="lib-header">
           <div className="lib-header-top">
             <Link href="/" className="lib-brand">
               alexandria<span className="lib-brand-dot">.</span>
             </Link>
+            <div className="lib-head-actions">
             {signed_in && membership_active ? (
-              <HeaderActions
-                left={<HeaderAction href="/connect">connect ai</HeaderAction>}
-                right={<SignOutLink />}
-              />
+              <SignOutLink />
             ) : signed_in ? (
               <SignOutLink />
             ) : (
               <HeaderActions
                 left={<HeaderAction href={signInUrl}>sign in</HeaderAction>}
-                right={<HeaderAction href="/start">join</HeaderAction>}
+                right={<HeaderAction href="/start">start</HeaderAction>}
               />
             )}
+              <ThemeToggle inline />
+            </div>
           </div>
           {signed_in && membership_active ? <p className="lib-eyebrow">the collective</p> : null}
           <h1 className="lib-h1">the library</h1>
+          <p className="lib-intro">
+            Public profiles from people using alexandria — what they make, what they&rsquo;re building, and what they choose to share.
+          </p>
         </header>
 
         {!signed_in ? (
           <nav className="lib-doors" aria-label="open a mind">
-            <Link href={FOUNDER_PROFILE_PATH} className="lib-open">Benjamin a. Mowinckel</Link>
-            {other_author_count > 0 ? (
-              <Link href="/join" className="lib-others">
-                <span>{other_author_count} other {other_author_count === 1 ? 'Alexandrian' : 'Alexandrians'}</span>
+            <Link href={FOUNDER_PROFILE_PATH} className="lib-open">
+              <span>Benjamin a. Mowinckel</span>
+              <span className="lib-founder">founder · a.0</span>
+            </Link>
+            {has_more_profiles ? (
+              <div className="lib-others">
+                <span>more profiles</span>
                 <span className="lib-others-note">members can browse them</span>
-              </Link>
+              </div>
             ) : null}
+            <p className="lib-access">
+              Have an account? <Link href={signInUrl}>sign in</Link>.
+              {' '}Already use alexandria? <Link href={signInUrl}>create your profile</Link>.
+              {' '}New here? <Link href="/start">start your loop</Link>.
+            </p>
           </nav>
         ) : !membership_active ? (
           <div className="lib-gate">
@@ -156,7 +187,7 @@ export default async function LibraryPage({ searchParams }: { searchParams?: Pro
               </Link>
             </p>
             <p className="lib-sub">
-              Public profile links remain open — <Link href={FOUNDER_PROFILE_PATH} style={linkStyle}>see Benjamin&rsquo;s library</Link>.
+              Public profile links remain open — <Link href={FOUNDER_PROFILE_PATH} style={linkStyle}>see Benjamin&rsquo;s profile</Link>.
             </p>
           </div>
         ) : (
@@ -169,10 +200,10 @@ export default async function LibraryPage({ searchParams }: { searchParams?: Pro
             ) : null}
             {authors.length === 0 ? (
               <p className="lib-empty">
-                No Alexandrians listed yet — be the first: add your city and a contact to your file.
+                No profiles listed yet — add your city and a contact to appear here.
               </p>
             ) : (
-              <LibraryDirectory authors={authors} initialQuery={initialQuery} />
+              <LibraryDirectory authors={authors} initialQuery={initialQuery} initialLocation={initialLocation} initialSort={initialSort} />
             )}
           </>
         )}
@@ -200,7 +231,8 @@ export default async function LibraryPage({ searchParams }: { searchParams?: Pro
            idiom). The signed-in directory keeps the top-aligned scan layout. */
         .lib-main-gate { display: flex; flex-direction: column; justify-content: center; padding-top: 3rem; padding-bottom: 4rem; }
         .lib-header { margin-bottom: 2.4rem; }
-        .lib-header-top { display: flex; justify-content: space-between; align-items: center; min-height: 1.75rem; gap: 1.5rem; }
+        .lib-header-top { display: flex; justify-content: space-between; align-items: center; min-height: 2.75rem; gap: 1.5rem; }
+        .lib-head-actions { display: flex; align-items: center; gap: 0.35rem; margin-right: -0.75rem; }
         .lib-brand {
           font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
           font-style: italic; font-size: 1.25rem; color: var(--text-primary);
@@ -220,22 +252,31 @@ export default async function LibraryPage({ searchParams }: { searchParams?: Pro
           letter-spacing: -0.01em; color: var(--text-primary);
           font-feature-settings: "kern" 1, "liga" 1, "dlig" 1, "swsh" 1;
         }
+        .lib-intro {
+          max-width: 34rem; margin: 0.85rem 0 0; color: var(--text-muted); font-size: 1rem;
+          line-height: 1.55; text-wrap: pretty;
+        }
         .lib-main-open .lib-header { margin-bottom: 0; }
-        .lib-main-open .lib-h1 { margin-top: 2.8rem; }
+        .lib-main-open .lib-h1 { margin-top: 2.5rem; }
         .lib-doors { display: grid; gap: 1.35rem; margin: 2rem 0 0; }
         .lib-open {
+          display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem;
           color: var(--text-primary); font-style: italic; font-size: 1.28rem;
           line-height: 1.35; text-decoration: none; letter-spacing: 0.005em;
           transition: opacity 200ms ease;
         }
         .lib-open:hover { opacity: 0.6; }
+        .lib-founder { flex: none; color: var(--text-muted); font-style: normal; font-size: 0.88rem; letter-spacing: 0.02em; }
         .lib-others {
           display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem;
           color: var(--text-muted); font-size: 1.02rem; line-height: 1.35;
-          text-decoration: none; transition: opacity 200ms ease;
+          text-decoration: none;
         }
-        .lib-others:hover { opacity: 0.6; }
-        .lib-others-note { flex: none; color: var(--text-ghost); font-size: 0.9rem; font-style: italic; }
+        .lib-others-note { flex: none; color: var(--text-muted); font-size: 0.9rem; font-style: italic; }
+        .lib-access {
+          max-width: 34rem; margin: 1.5rem 0 0; color: var(--text-muted); font-size: 0.94rem; line-height: 1.65; text-wrap: pretty;
+        }
+        .lib-access a { color: var(--text-primary); text-decoration: underline; text-decoration-color: var(--border-light); text-underline-offset: 3px; }
 
         .lib-gate { max-width: 30rem; }
         .lib-lede { margin: 0 0 1.9rem; font-size: 1.08rem; line-height: 1.65; color: var(--text-secondary); text-wrap: pretty; }
@@ -257,7 +298,9 @@ export default async function LibraryPage({ searchParams }: { searchParams?: Pro
 
         @media (max-width: 640px) {
           .lib-main { padding: 4rem 1.5rem 1.5rem; }
-          .lib-others { align-items: flex-start; flex-direction: column; gap: 0.15rem; }
+          .lib-main { padding-top: 2.7rem; }
+          .lib-header-top { min-height: 2.75rem; }
+          .lib-open, .lib-others { align-items: flex-start; flex-direction: column; gap: 0.18rem; }
         }
       `}</style>
     </div>

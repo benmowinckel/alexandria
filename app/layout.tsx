@@ -32,14 +32,14 @@ const SITE_TITLE = "alexandria — your mind, in files you own";
 // keyword-dense, classical, and reads well as a search snippet under the
 // browser tab title.
 const SEO_DESCRIPTION =
-  "Give your AI a free Alexandria loop. It writes what it learns about you into private files you own, then reads them whenever they help.";
+  "Give your ai a free Alexandria loop. It writes what it learns about you into private files you own, then reads them whenever they help.";
 
 // Sharing-optimised description — punchier than the SEO sentence. Lands as
 // the body of social previews (Twitter / Slack / iMessage / LinkedIn).
 // Leads with the live homepage's own question (the 2026-07-16
 // founder-written rebuild), then his answer and the free sample.
 const SHARE_DESCRIPTION =
-  "Your own AI writes what it learns about you into files you own, then reads them whenever they help. The complete loop is free.";
+  "Your own ai writes what it learns about you into files you own, then reads them whenever they help. The complete loop is free.";
 
 export const metadata: Metadata = {
   title: SITE_TITLE,
@@ -53,11 +53,11 @@ export const metadata: Metadata = {
     // Opaque means no platform default backdrop ever leaks through;
     // iOS/Android home screens round the cream square into the brand circle.
     icon: [
-      { url: "/favicon-16.png?v=5", type: "image/png", sizes: "16x16" },
-      { url: "/favicon-32.png?v=5", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16.png?v=6", type: "image/png", sizes: "16x16" },
+      { url: "/favicon-32.png?v=6", type: "image/png", sizes: "32x32" },
     ],
-    apple: [{ url: "/apple-touch-icon.png?v=5", sizes: "180x180", type: "image/png" }],
-    shortcut: "/favicon-32.png?v=5",
+    apple: [{ url: "/apple-touch-icon.png?v=6", sizes: "180x180", type: "image/png" }],
+    shortcut: "/favicon-32.png?v=6",
   },
   manifest: "/manifest.webmanifest",
   openGraph: {
@@ -101,7 +101,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f7f2ec" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1014" },
+    { media: "(prefers-color-scheme: dark)", color: "#181512" },
   ],
 };
 

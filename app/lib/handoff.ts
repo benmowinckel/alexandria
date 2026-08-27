@@ -53,7 +53,7 @@ export function composeHandoff({ ctx, piece, messages = [] }: HandoffInput): str
   out.push('# Continue this conversation');
   out.push('');
   out.push(
-    `This came from ${name}’s public mirror on Alexandria. Use the public context, ` +
+    `This came from ${name}’s mirror on Alexandria. Use the public context, ` +
     `the piece being discussed, and the conversation below to continue helping the reader.`
   );
   out.push('');
