@@ -161,7 +161,7 @@ const THEMES: Theme[] = [
 // action page: open-in-claude-code + copy-command on desktop, shortcut +
 // email on mobile). One scalable door — new agents, deep links, and flows
 // land on /start without ever touching this button again.
-// The homepage action names the start of the practice; /start handles the
+// The homepage action names the thing the reader receives; /start handles the
 // literal agent-or-chat choice and copies the matching prompt.
 function HomeInstall() {
   return (
@@ -1127,16 +1127,9 @@ export default function LandingPage() {
                 <div className="cta-pair">
                   <HomeInstall />
                   <div className="cta-block">
-                    {/* The ghost CTA — the EXTENDED level's door
-                        (2026-07-29): /plainly carries the full
-                        run-through with the ask docked beneath. Label
-                        "the full story" → "ask us anything" (2026-08-03,
-                        founder: the old label hid the interactive ask —
-                        you can literally ask anything there; the
-                        pronoun seam was accepted 07-29, "leave it").
-                        Pairs with "start your loop". */}
-                    <Link href="/plainly" className="lr-cta lr-cta-ghost">
-                      ask us anything
+                    {/* The second door is the action itself: ask. */}
+                    <Link href="/ask" className="lr-cta lr-cta-ghost">
+                      ask anything
                     </Link>
                   </div>
                 </div>

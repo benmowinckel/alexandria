@@ -1,7 +1,7 @@
 const base = (process.env.SITE_URL || process.argv[2] || 'http://127.0.0.1:3000').replace(/\/$/, '');
 
 const publicRoutes = [
-  '/', '/start', '/chat', '/join', '/plainly', '/whitepaper', '/features',
+  '/', '/start', '/chat', '/join', '/ask', '/whitepaper', '/features',
   '/letter', '/library', '/marketplace', '/follow', '/questions', '/updates',
   '/mechanics', '/privacy', '/terms',
 ];

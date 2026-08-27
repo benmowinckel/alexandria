@@ -7,7 +7,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/start`, priority: 0.95 },
     { url: `${SITE_URL}/chat`, priority: 0.9 },
     { url: `${SITE_URL}/join`, priority: 0.95 },
-    { url: `${SITE_URL}/plainly`, priority: 0.9 },
+    { url: `${SITE_URL}/ask`, priority: 0.9 },
     { url: `${SITE_URL}/whitepaper`, priority: 0.9 },
     { url: `${SITE_URL}/features`, priority: 0.85 },
     { url: `${SITE_URL}/letter`, priority: 0.9 },

@@ -6,7 +6,7 @@ on:
       - '.github/workflows/smoke.yml'
       - 'scripts/check-founder-library-artifacts.mjs'
       - 'package.json'
-      - 'public/docs/Plainly.md'
+      - 'public/docs/Ask.md'
       - 'public/docs/Features.md'
       - 'public/docs/Whitepaper.md'
       - 'public/docs/letter.txt'
@@ -237,9 +237,9 @@ jobs:
             (.author.contact | type == "string" and length > 0) and
             .twin.online == true and
             ([.files[] | select(.category == "works") | .name] == ["droplets-of-grace"]) and
-            ([.files[] | select(.name == "plainly" or .name == "features" or .name == "whitepaper" or .name == "letter") | .category] | all(. == "other")) and
+            ([.files[] | select(.name == "ask" or .name == "features" or .name == "whitepaper" or .name == "letter") | .category] | all(. == "other")) and
             (.profile.hidden | index("other") != null)
-          ' >/dev/null || { echo "::error::Founder public profile, identity fields, mirror, or plainly artifact is unavailable"; exit 1; }
+          ' >/dev/null || { echo "::error::Founder public profile, identity fields, mirror, or ask artifact is unavailable"; exit 1; }
 
           OWNER_PROFILE=$(curl -sf --max-time 20 "$SERVER/library/benmowinckel" -H "Authorization: Bearer $API_KEY")
           printf '%s' "$OWNER_PROFILE" | jq -e '
@@ -265,12 +265,12 @@ jobs:
           ASK=$(curl -sf --max-time 90 -X POST "$SERVER/library/benmowinckel/ask" \
             -H "Authorization: Bearer $API_KEY" \
             -H "Content-Type: application/json" \
-            -d '{"question":"what happens when i paste the line in? answer briefly.","variant":"context","artifact":{"name":"plainly","scope":"public"}}')
+            -d '{"question":"what happens when i paste the line in? answer briefly.","variant":"context","artifact":{"name":"ask","scope":"public"}}')
           printf '%s' "$ASK" | jq -e '
             .ok == true and
             .variant == "context" and
             (.answer | type == "string" and length > 20)
-          ' >/dev/null || { echo "::error::The public plainly page cannot answer through the context mirror"; exit 1; }
+          ' >/dev/null || { echo "::error::The public ask page cannot answer through the context mirror"; exit 1; }
           echo "✓ founder profile + member listing + context mirror"
 
       - name: Stripe webhook reachable
