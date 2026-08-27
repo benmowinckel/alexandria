@@ -1126,6 +1126,11 @@ export default function LandingPage() {
 
                 <div className="cta-pair">
                   <HomeInstall />
+                  <div className="cta-block">
+                    <Link href="/follow" className="lr-cta lr-cta-ghost">
+                      show support
+                    </Link>
+                  </div>
                 </div>
 
               </div>
@@ -1145,13 +1150,10 @@ export default function LandingPage() {
                   on desktop (click any feature frame → /features);
                   /features stays live for direct links. */}
               <p className="quiet-links">
-                {/* Paired shelves — same within-pair gap for doors and
-                    places; middot sits in the doors gap without widening
-                    it (founder, 2026-08-11). */}
+                {/* The demo stays quiet; support is promoted to the real
+                    second CTA above rather than appearing twice. */}
                 <span className="quiet-pair">
                   <DemoFilm className="quiet-link quiet-door"><em>watch the demo</em></DemoFilm>
-                  <span className="quiet-sep" aria-hidden>·</span>
-                  <Link href="/follow" className="quiet-link quiet-door"><em>show your support</em></Link>
                 </span>
                 <span className="quiet-div" aria-hidden />
                 <span className="quiet-pair">
