@@ -159,46 +159,28 @@ payload_runnable() {
   [ "$(cat "$MARKER_FILE" 2>/dev/null)" = "$(sha_of "$PAYLOAD_FILE")" ]
 }
 
-# Codex documents `model` on every hook input, but an interactive startup can
-# fire SessionStart while the model is still loading and omit that field. Walk
-# the short parent-process chain as a live-host fallback. Match executable names
-# only (never arguments or paths such as ~/.codex) so Claude and Grok keep their
-# own output contracts even when installed on the same machine.
-codex_in_process_tree() {
-  local pid="${PPID:-}" depth=0 executable next_pid
-  command -v ps >/dev/null 2>&1 || return 1
-  case "$pid" in ''|*[!0-9]*) return 1 ;; esac
-
-  while [ "$pid" -gt 1 ] 2>/dev/null && [ "$depth" -lt 8 ]; do
-    executable=$(ps -p "$pid" -o comm= 2>/dev/null | sed -n '1p')
-    executable=${executable##*/}
-    executable=$(printf '%s' "$executable" | tr '[:upper:]' '[:lower:]')
-    case "$executable" in
-      codex|codex-*|codex\ *) return 0 ;;
-    esac
-
-    next_pid=$(ps -p "$pid" -o ppid= 2>/dev/null | tr -d '[:space:]')
-    case "$next_pid" in ''|*[!0-9]*) return 1 ;; esac
-    [ "$next_pid" = "$pid" ] && return 1
-    pid="$next_pid"
-    depth=$((depth + 1))
-  done
-  return 1
-}
-
 # ─── SESSION START ───────────────────────────────────────────────
 
 # Codex distinguishes plain SessionStart stdout (hidden developer context) from
 # `systemMessage` (a host-rendered UI event). Keep the trusted hook definition
-# stable, detect Codex from its documented input shape or live parent process,
-# and adapt the same signed payload into that JSON shape here. Other hosts keep
-# the portable plain-context path below.
+# stable, detect Codex from its documented model field or its host-provided
+# transcript path, and adapt the same signed payload into that JSON shape here.
+# Other hosts keep the portable plain-context path below.
 if [ "$MODE" = "session-start" ]; then
   session_start_input=$(cat 2>/dev/null)
   is_codex_session=false
+  session_transcript_path=$(printf '%s' "$session_start_input" | \
+    sed -n 's/.*"transcript_path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+  codex_home="${CODEX_HOME:-$HOME/.codex}"
+  codex_session_path=false
+  case "$session_transcript_path" in
+    "$codex_home"/sessions/*|"$codex_home"/archived_sessions/*)
+      codex_session_path=true
+      ;;
+  esac
   if [ -z "${CLAUDE_ENV_FILE:-}" ] && {
     printf '%s' "$session_start_input" | grep -Eq '"model"[[:space:]]*:' \
-      || codex_in_process_tree
+      || [ "$codex_session_path" = "true" ]
   }; then
     is_codex_session=true
   fi
