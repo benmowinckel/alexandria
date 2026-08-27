@@ -19,7 +19,22 @@ export default function ShortcutPage() {
     <div style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh' }}>
       <ThemeToggle />
 
-      <section className="flex items-center justify-center min-h-screen px-6">
+      {/* Phone: the same /shortcut address becomes the direct add action. */}
+      <section className="flex sm:hidden items-center justify-center min-h-screen px-6">
+        <a
+          href={SHORTCUT_URL}
+          className="flex flex-col items-center gap-7 px-10 no-underline transition-opacity hover:opacity-60"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          <span className="text-[1.05rem] tracking-wide font-medium">add to iphone</span>
+          <div className="flex items-center justify-center" style={{ height: '158px' }}>
+            <DownloadIcon />
+          </div>
+        </a>
+      </section>
+
+      {/* Computer: add on this Mac or scan once with the iPhone. */}
+      <section className="hidden sm:flex items-center justify-center min-h-screen px-6">
         <div className="flex flex-col items-center sm:flex-row sm:items-start justify-center">
 
           {/* Mac — click to add */}
@@ -28,7 +43,7 @@ export default function ShortcutPage() {
             className="flex flex-col items-center gap-7 px-10 sm:px-24 no-underline transition-opacity hover:opacity-60"
             style={{ color: 'var(--text-primary)' }}
           >
-            <span className="text-[1.05rem] sm:text-[1.2rem] tracking-wide font-medium">Mac</span>
+            <span className="text-[1.05rem] sm:text-[1.2rem] tracking-wide font-medium">mac</span>
             {/* Box matches the QR card height so the icon centers on the QR's midline. */}
             <div className="flex items-center justify-center" style={{ height: '158px' }}>
               <DownloadIcon />
@@ -36,18 +51,18 @@ export default function ShortcutPage() {
           </a>
 
           {/* Divider */}
-          <div className="hidden sm:block self-stretch w-px" style={{ background: 'var(--border-light)' }} />
-          <div className="sm:hidden h-px w-20 my-12" style={{ background: 'var(--border-light)' }} />
+          <div className="self-stretch w-px" style={{ background: 'var(--border-light)' }} />
 
           {/* iPhone — scan the code */}
           <div className="flex flex-col items-center gap-7 px-10 sm:px-24" style={{ color: 'var(--text-primary)' }}>
-            <span className="text-[1.05rem] sm:text-[1.2rem] tracking-wide font-medium">iPhone</span>
+            <span className="text-[1.05rem] sm:text-[1.2rem] tracking-wide font-medium">iphone</span>
             <div style={{ background: '#fff', padding: '14px', borderRadius: '14px', lineHeight: 0 }}>
               <Image
                 src="/shortcut-qr.svg"
                 alt="Scan with your iPhone camera to add the shortcut"
                 width={130}
                 height={130}
+                priority
                 unoptimized
                 style={{ display: 'block' }}
               />

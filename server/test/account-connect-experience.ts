@@ -6,17 +6,8 @@ import { callbackPageHtml } from '../src/templates.js';
 
 const code = `alex_connect_${'0'.repeat(48)}`;
 const paste = accountConnectPrompt(code);
-const words = paste.trim().split(/\s+/).length;
-assert.ok(words <= 150, `joined paste became too long: ${words} words`);
-assert.equal((paste.match(/github\.com\//g) || []).length, 1, 'joined paste must point to one public location');
-assert.match(paste, /Inspect the public source independently/);
-assert.match(paste, /few plain lines/);
-assert.match(paste, /what connection changes, what stays private, and what it will not do/);
-assert.match(paste, /Do nothing until I say `connect`/);
-assert.match(paste, /follow the rest of factory\/connect\.md one action at a time/);
-assert.match(paste, /Finish the remaining product setup/);
-assert.match(paste, /Never show me a setup checklist/);
-assert.doesNotMatch(paste, /setup\.sh|curl|bash|hash|fingerprint|api_key|--run|rm ~\//i);
+assert.equal(paste, code, 'the browser handoff must be only the opaque code');
+assert.throws(() => accountConnectPrompt('not-a-code'));
 
 const connectDoc = readFileSync(new URL('../../factory/connect.md', import.meta.url), 'utf8');
 assert.match(connectDoc, /reply in no more than four short lines/i);
@@ -25,45 +16,33 @@ assert.match(connectDoc, /including `scripts\/connect-account\.sh`, must appear 
 assert.match(connectDoc, /lets the existing loop recognize the person's account and live membership/);
 assert.match(connectDoc, /does not read or send their private files/);
 assert.match(connectDoc, /does not rerun setup, replace configuration, enable any optional capability/);
-assert.match(connectDoc, /guides the remaining setup one action at a time, with a separate yes for anything optional, then makes one bounded, read-only orientation/);
-assert.match(connectDoc, /Finish the full product/);
-assert.match(connectDoc, /Phone capture/);
-assert.match(connectDoc, /which other ai do you use most\?/);
-assert.match(connectDoc, /\.other_ai_instructions/);
-assert.match(connectDoc, /The operating rules belong in instructions, never account memory/);
-assert.match(connectDoc, /Never display the whole sequence as a checklist/);
-assert.match(connectDoc, /Use context already present in the current session, but do not read new private files/);
-assert.match(connectDoc, /Your public side/);
-assert.match(connectDoc, /Other people's public context/);
-assert.match(connectDoc, /The Marketplace, both ways/);
-assert.match(connectDoc, /Run this orientation once as part of this handoff/);
+assert.match(connectDoc, /Publishing, the Marketplace, and every other public action remain separate and explicit/);
+assert.match(connectDoc, /writes only `~\/alexandria\/system\/\.api_key`/);
+assert.match(connectDoc, /never prints server text or stores account status/);
+assert.match(connectDoc, /Do not fetch account status, public pages, Marketplace content, or an orientation/);
+assert.match(connectDoc, /Legacy reference — never run during connection/);
 assert.match(connectDoc, /End with `Say connect to continue\.` Then stop\./);
 assert.match(connectDoc, /Wait for the exact word `connect`\. Nothing similar counts\./);
-assert.match(connectDoc, /immediately open it and invoke the exact installed Alexandria start skill—no second consent question/);
-assert.match(connectDoc, /Open a new chat and invoke \/a\./);
-assert.match(connectDoc, /Open a new task and invoke \$a\./);
-assert.match(connectDoc, /Only when no native start skill exists, use the portable floor: `Start an Alexandria session\.`/);
-assert.match(connectDoc, /never claim that typing the plain word `alexandria` invokes a skill/i);
 
 const optional = readFileSync(new URL('../../factory/optional.md', import.meta.url), 'utf8');
 assert.match(optional, /only when the Author asks to connect one/);
 assert.match(optional, /scripts\/create-account-handoff\.sh/);
-assert.match(optional, /Do not show or explain the one-use code separately/);
+assert.match(optional, /Give the returned opaque code/);
 
 const connector = readFileSync(new URL('../../factory/scripts/connect-account.sh', import.meta.url), 'utf8');
-assert.match(connector, /connected to alexandria as \$github_login; active membership verified\./);
-assert.match(connector, /existing local loop can now verify your account and membership at session start/);
-assert.match(connector, /it stays passive until you start an Alexandria session/);
-assert.match(connector, /no private files were read and no optional capability was enabled/);
+assert.match(connector, /your loop is connected to your Alexandria account\./);
+assert.match(connector, /only public files you approve can be sent/);
+assert.match(connector, /connection adds no standing instructions/);
+assert.doesNotMatch(connector, /protocol_status|\$SERVER\/alexandria|github_login|j\.error/);
 assert.doesNotMatch(connector, /insight|reflection generated|read your constitution/i);
 assert.doesNotMatch(connector, /community content|other people|shared intelligence/i);
 
 const nudge = 'Want me to open your alexandria loop in the background for when you have a minute?';
 assert.match(CHAT_INSTRUCTION, new RegExp(nudge.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-assert.match(CHAT_INSTRUCTION, /Never ask twice that local day or during setup, security review, background work, voice/);
-assert.match(CHAT_INSTRUCTION, /Consent only: open nothing before yes/);
-assert.match(CHAT_INSTRUCTION, /On yes, open a new chat and invoke the native Alexandria skill/);
-assert.match(CHAT_INSTRUCTION, /if unable, tell me to open one and name the host's actual gesture/);
+assert.match(CHAT_INSTRUCTION, /outside setup, voice, background work, security review/);
+assert.match(CHAT_INSTRUCTION, /Never repeat it or open anything before yes/);
+assert.match(CHAT_INSTRUCTION, /On yes, open a new chat and invoke the native skill/);
+assert.match(CHAT_INSTRUCTION, /if unable, name the exact gesture/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /type alexandria|On “alexandria”/i);
 
 const codex = readFileSync(new URL('../../factory/skills/codex-ambient.md', import.meta.url), 'utf8');
@@ -75,6 +54,10 @@ assert.match(cursor, /If it cannot open a chat, say exactly: `Open a new chat an
 
 const page = await callbackPageHtml(false, 'new-author');
 assert.doesNotMatch(page, /connect your existing loop|paste this into your computer agent|connection code/i);
+const pageWithCode = await callbackPageHtml(false, 'new-author', 1, 0, code);
+assert.match(pageWithCode, /connect your loop/);
+assert.match(pageWithCode, /copy for your computer agent/);
+assert.match(pageWithCode, new RegExp(code));
 const email = welcomeEmailContent('new-author', 'TOKEN').html;
 assert.doesNotMatch(email, /agent that already runs your alexandria loop|nothing changes until you say|connection code/i);
 assert.match(email, /start an Alexandria session in a new chat/);

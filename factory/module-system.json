@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "groups": {
     "core": {
       "default_state": "on",
@@ -32,7 +32,6 @@
         { "id": "library", "local_ref": "canon/library.md" },
         { "id": "library-stand", "local_ref": "canon/stand.md" },
         { "id": "marketplace", "local_ref": "canon/marketplace.md" },
-        { "id": "network", "local_ref": "system/permissions/network" },
         { "id": "updates", "local_ref": "system/hooks/auto-update" },
         { "id": "git-backup", "local_ref": "system/permissions/backup" },
         { "id": "agent-workspace", "marketplace_ref": "factory/systems/agent-workspace", "local_ref": "system/permissions/agent-workspace-<name>" },
@@ -46,7 +45,7 @@
   },
   "rules": {
     "local_state_authority": "local_files_and_permissions",
-    "community_availability_authority": "authenticated_alexandria_handshake",
+    "community_availability_authority": "alexandria_owned_web_surfaces",
     "foreign_module_trust": "untrusted_until_inspected",
     "updates": "notify_only_explicit_apply",
     "connections": "separate_exact_scope_consent",

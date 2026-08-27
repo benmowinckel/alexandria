@@ -62,8 +62,8 @@ The website does not send the read-only evaluation request to an AI that cannot 
 
 The private loop is complete without joining. The fixed collective destination is `https://alexandria-library.com/join`.
 
-- Local first, join later: use the focused `factory/connect.md` route. It requires the healthy existing loop and changes only its account key and cached account status.
+- Local first, join later: use the focused `factory/connect.md` route. It requires the healthy existing loop and writes only its account key; it stores no account status.
 - Join first, local later: do not connect yet. Complete the normal keyless `/start` setup first, including its own independent audit and exact `start` consent; then return to a fresh joined handoff and use the separate exact `connect` consent. Joining is not permission to set up the computer.
 - Chat or folder mode: joining must not imply that local hooks exist. Continue using the verified mode; link it to local files later through the documented Drive/chat bridge only when the user asks.
 
-Never connect an account, publish, enable network reading, or turn on backup merely because the user started the private loop.
+Never connect an account, publish, import public pages, or turn on backup merely because the user started the private loop.

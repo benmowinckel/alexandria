@@ -46,9 +46,9 @@ export default async function ConnectPage() {
         {session.membership_active ? (
           <>
             <h1>connect your ai.</h1>
-            <p>copy this on your phone, then paste it into your ai on your computer.</p>
+            <p>copy the code, then paste it into the AI agent on your computer.</p>
             <ConnectClient />
-            <p className="connect-private">your private files stay on your computer. nothing connects until you say <em>connect</em> in Claude.</p>
+            <p className="connect-private">your computer agent will explain the change first. nothing connects until you say <em>connect</em>.</p>
           </>
         ) : (
           <>

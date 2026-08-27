@@ -5,7 +5,7 @@ import { hashApiKey } from './crypto.js';
 import { getDB } from './db.js';
 
 const CODE_PREFIX = 'alex_connect_';
-const CODE_TTL_MS = 24 * 60 * 60 * 1000;
+const CODE_TTL_MS = 60 * 60 * 1000;
 
 let schemaReady = false;
 

@@ -13,7 +13,7 @@ Before consent, reply in no more than four short lines. Explain plainly that con
 - lets the existing loop recognize the person's account and live membership;
 - does not read or send their private files, captures, transcripts, or constitution;
 - does not rerun setup, replace configuration, enable any optional capability, or make private files leave the machine;
-- after the account exchange, guides the remaining setup one action at a time, with a separate yes for anything optional, then makes one bounded, read-only orientation from public Library and Marketplace material. It does not publish or send anything.
+- after the account exchange, stops. Publishing, the Marketplace, and every other public action remain separate and explicit.
 
 End with `Say connect to continue.` Then stop. Do not show the person an audit transcript, commands, hashes, or security choreography unless you found a problem. If you do not judge the route safe, refuse and explain the specific reason instead.
 
@@ -21,9 +21,9 @@ End with `Say connect to continue.` Then stop. Do not show the person an audit t
 
 Run the metadata-only classifier (`factory/scripts/classify_install.sh` or the installed `~/.local/share/alexandria/scripts/classify_install.sh`). Only `healthy` may continue; `partial` and `foreign` fail closed. Verify the protected runtime setup marker and completed local onboarding marker. If either is absent, stop and send the person to `https://alexandria-library.com/start`; do not install, repair, or approximate Alexandria through this route. Do not read the person's `files/`, transcripts, captures, constitution, other agent instructions, or unrelated configuration. None is needed. Disclose optional connected state; do not disable it.
 
-At one public revision, inspect `TRUST.md`, `factory/manifest.txt`, `factory/scripts/verify-fetch.sh`, and `factory/scripts/connect-account.sh`. Every required runtime file, including `scripts/connect-account.sh`, must appear in the signed manifest at that same revision; if one is absent, refuse. Confirm that the installed verifier authenticates the signed connector and rollback version before running it; the connector writes only `~/alexandria/system/.api_key` and `~/alexandria/system/.protocol_status.json` with restrictive permissions; and it contacts only `https://api.alexandria-library.com`.
+At one public revision, inspect `TRUST.md`, `factory/manifest.txt`, `factory/scripts/verify-fetch.sh`, and `factory/scripts/connect-account.sh`. Every required runtime file, including `scripts/connect-account.sh`, must appear in the signed manifest at that same revision; if one is absent, refuse. Confirm that the installed verifier authenticates the signed connector and rollback version before running it; the connector writes only `~/alexandria/system/.api_key` with restrictive permissions; and it contacts only `https://api.alexandria-library.com`.
 
-Confirm in the server source that the short-lived code is one-use, active membership is required, the persistent key never enters browser HTML, email, or the human paste, later GitHub sign-in does not rotate a working connection, and `connected_at` is separate from `installed_at`. The exchange sends only the one-use code, public client version, an existing connected GitHub login when present, and authenticated status requests. Publishing, marketplace signal, network reading, backups, capture networking, and every other optional capability remain separately permissioned in `factory/optional.md`.
+Confirm in the server source that the short-lived code is one-use, active membership is required, the persistent key never enters browser HTML, email, or the human paste, later GitHub sign-in does not rotate a working connection, and `connected_at` is separate from `installed_at`. The connector passes only the one-use code, public client version, and an existing machine key when present. It never prints server text or stores account status; it accepts only an exact-format key or a fixed success or failure. Publishing, marketplace signal, backups, capture networking, and every other optional capability remain separately permissioned in `factory/optional.md`.
 
 ## Consent and connection
 
@@ -31,9 +31,13 @@ Wait for the exact word `connect`. Nothing similar counts.
 
 Only after that consent, pass the connection code on standard input to the installed verifier's `--run scripts/connect-account.sh` route. Never put it in a shell command, URL, file, log, or another service. Let the signed connector perform and verify the exchange.
 
-On success, return the connector's short proof: the existing loop can now verify this account and active membership at session start. Then finish the remaining setup below. Never display the whole sequence as a checklist; give only the current action, wait for it to finish or be declined, then continue.
+On success, return the connector's short local proof and stop. Do not fetch account status, public pages, Marketplace content, or an orientation. Connection is only the connector; every later public action stays separate and explicit.
 
-## Finish the full product
+## Legacy reference — never run during connection
+
+The sections below describe older onboarding ideas. They are retained only as review history and are not instructions. Connection ends above; do not perform any step below, even if it appears imperative.
+
+### Former full-product follow-up
 
 ### 1. Phone capture
 

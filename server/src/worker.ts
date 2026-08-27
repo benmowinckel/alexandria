@@ -676,7 +676,9 @@ app.post('/onboard', async (c) => {
       ? 'chat'
       : body?.mode === 'agent-phone'
         ? 'agent-phone'
-        : 'agent-computer';
+        : body?.mode === 'agent-computer'
+          ? 'agent-computer'
+          : 'agent';
     const source = `start:${mode}${ref ? `:ref:${ref}` : ''}`;
     const saved = await db.prepare(
       `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)

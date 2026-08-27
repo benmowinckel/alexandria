@@ -19,7 +19,6 @@ import { listAuditArchive, mirrorPendingAuditBatch, readAuditArchive, verifyAudi
 import moduleSystem from '../../factory/module-system.json';
 import { consumeAccountConnectCode, createAccountConnectCode, isAccountConnectCode, peekAccountConnectCode } from './account-connect.js';
 import { AccountPurgeError, runAccountPurge } from './account-purge.js';
-import { accountConnectPrompt } from '../../shared/onboarding-prompts.js';
 import { createOAuthState, readOAuthState, type OAuthStateData } from './oauth-state.js';
 
 /**
@@ -194,7 +193,7 @@ export function registerRoutes(app: Hono) {
       referral_active: 'A referred person counts while that same membership_active test is true. Reading, publishing, calls, and recent app use do not change referral credit.',
       product_active: 'Operational signal only: the account has made a module call or refreshed a shared file in the last 30 days. This never grants membership or referral credit.',
       local_core: 'The local Alexandria core remains on the user’s machine. Community sync is optional and permission-gated; turning it off does not break the local loop.',
-      ai_help: 'An AI should GET /alexandria for rules and live account state, GET /marketplace to browse modules, and use authenticated endpoints only after the human has enabled the matching local permission.',
+      ai_help: 'The private AI uses the signed local canon and needs no account-status read. Public browsing and authenticated actions happen only after the human explicitly requests and approves that separate action.',
     };
 
     if (!key && suppliedAuth) {
@@ -698,7 +697,7 @@ export function registerRoutes(app: Hono) {
       let kinCompliant = 0;
       try { kinCompliant = (await countActiveKin(user.login)).compliant; } catch { /* D1 down — show 0 */ }
 
-      const needsConnection = !updatedAccount.connected_at && !updatedAccount.installed_at;
+      const needsConnection = !updatedAccount.connected_at;
 
       // Skip checkout only when the SAME authoritative membership resolver
       // used by publishing says this account is active. A Stripe customer id
@@ -716,7 +715,18 @@ export function registerRoutes(app: Hono) {
         if (email && needsConnection) {
           await sendWelcomeEmail(email, user.login, emailToken);
         }
-        return c.redirect(await welcomeHandoffUrl(kv, librarySessionToken, user.login, !needsConnection, number ?? 0, kinCompliant));
+        const connectionCode = needsConnection
+          ? await createAccountConnectCode(key)
+          : '';
+        return c.redirect(await welcomeHandoffUrl(
+          kv,
+          librarySessionToken,
+          user.login,
+          !needsConnection,
+          number ?? 0,
+          kinCompliant,
+          connectionCode,
+        ));
       }
 
       // New join → Stripe Checkout. Connection material is minted only after
@@ -805,15 +815,15 @@ export function registerRoutes(app: Hono) {
       github_login: account.github_login,
       source: 'browser',
     });
-    return c.text(accountConnectPrompt(connectionCode));
+    return c.text(connectionCode);
   });
 
   // Welcome page peek. The signup/billing flows stash the rendered founding-member
   // page under a one-time code (welcomeHandoffUrl) and redirect to the website
   // /welcome, which calls this SERVER-SIDE to fetch the HTML, serve it first-party,
   // and set the session cookie via /api/auth/session — so the post-signup cookie
-  // sticks in Safari too. Deleted on first read. The HTML carries no account
-  // credentials or connection material.
+  // sticks in Safari too. Deleted on first read. The HTML may carry one opaque,
+  // one-use connection code, but never a persistent account credential.
   app.get('/auth/welcome/peek', async (c) => {
     const code = c.req.query('code') || '';
     if (!code) return c.json({ error: 'missing code' }, 400);
@@ -845,7 +855,7 @@ export function registerRoutes(app: Hono) {
 
     const connectionCode = await createAccountConnectCode(accountKey);
     logEvent('account_handoff_created', { github_login: auth.account.github_login });
-    return c.text(accountConnectPrompt(connectionCode));
+    return c.text(connectionCode);
   });
 
   // Narrow account connection. The code is short-lived and D1 consumes it
@@ -878,6 +888,9 @@ export function registerRoutes(app: Hono) {
     }
     const suppliedKey = extractApiKey(c);
     const currentAccount = suppliedKey ? await findByApiKey(suppliedKey) : null;
+    if (suppliedKey && !currentAccount) {
+      return c.json({ error: 'This computer connection is no longer valid.' }, 401);
+    }
     if (currentAccount && currentAccount.github_id !== account.github_id) {
       return c.json({ error: 'This computer is connected to a different Alexandria account.' }, 409);
     }
@@ -904,8 +917,6 @@ export function registerRoutes(app: Hono) {
       return c.json({
         connected: true,
         use_existing_key: true,
-        github_login: account.github_login,
-        connected_at: connectedAt,
       });
     }
 
@@ -932,9 +943,14 @@ export function registerRoutes(app: Hono) {
     return c.json({
       connected: true,
       api_key: apiKey,
-      github_login: account.github_login,
-      connected_at: connectedAt,
     });
+  });
+
+  // Empty liveness check for legacy setup refreshes. A valid key produces only
+  // a status code; no account data or server-authored text enters the loop.
+  app.on('HEAD', '/account/connect/current', async (c) => {
+    const auth = await requireAuth(c);
+    return auth ? c.body(null, 204) : c.body(null, 401);
   });
 
   // --- Account management (redirects to Stripe portal) ---
@@ -1523,7 +1539,18 @@ export function registerRoutes(app: Hono) {
     // and route it through the welcome handoff so the cookie sticks (Safari).
     const sessionToken = randomBytes(24).toString('hex');
     await kv.put(`library:session:${sessionToken}`, JSON.stringify({ account_key: accountResult.storeKey, github_login }), { expirationTtl: 30 * 24 * 60 * 60 });
-    return c.redirect(await welcomeHandoffUrl(kv, sessionToken, github_login, false, number ?? 0, kinCompliant));
+    const connectionCode = accountResult.account.connected_at
+      ? ''
+      : await createAccountConnectCode(accountResult.storeKey);
+    return c.redirect(await welcomeHandoffUrl(
+      kv,
+      sessionToken,
+      github_login,
+      !!accountResult.account.connected_at,
+      number ?? 0,
+      kinCompliant,
+      connectionCode,
+    ));
   });
 
   // Public preview — renders the WELCOME page HTML (the post-signup/post-Stripe
@@ -1535,7 +1562,13 @@ export function registerRoutes(app: Hono) {
   const previewWelcome = async (c: Context) => {
     const returning = c.req.query('returning') === 'true';
     // Dummy number + kin count for the founding-member preview; no side effects.
-    const html = await callbackPageHtml(returning, 'benmowinckel', returning ? 0 : 142, 1);
+    const html = await callbackPageHtml(
+      returning,
+      'benmowinckel',
+      returning ? 0 : 142,
+      1,
+      returning ? '' : 'alex_connect_0123456789abcdef0123456789abcdef0123456789abcdef',
+    );
     return c.html(html);
   };
   app.get('/preview/welcome', previewWelcome);

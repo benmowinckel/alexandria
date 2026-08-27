@@ -139,7 +139,6 @@ fi
 optional_account=off
 optional_library=off
 optional_marketplace=off
-optional_network=off
 optional_capture_network=off
 optional_backup=off
 optional_update_checks=off
@@ -147,7 +146,6 @@ private_remote=absent
 [ -f "$ALEX_DIR/system/.api_key" ] && optional_account=on
 [ -f "$ALEX_DIR/system/permissions/library" ] && optional_library=on
 [ -f "$ALEX_DIR/system/permissions/marketplace" ] && optional_marketplace=on
-[ -f "$ALEX_DIR/system/permissions/network" ] && optional_network=on
 [ -f "$ALEX_DIR/system/permissions/capture-network" ] && optional_capture_network=on
 [ -f "$ALEX_DIR/system/permissions/backup" ] && optional_backup=on
 [ -f "$ALEX_DIR/system/hooks/auto-update" ] && optional_update_checks=on
@@ -229,7 +227,6 @@ printf '%s\n' \
   "optional.account: $optional_account" \
   "optional.library: $optional_library" \
   "optional.marketplace: $optional_marketplace" \
-  "optional.network: $optional_network" \
   "optional.capture_network: $optional_capture_network" \
   "optional.backup: $optional_backup" \
   "optional.update_checks: $optional_update_checks" \

@@ -38,13 +38,13 @@
 #      binary is part of setup.
 #   2. OUTBOUND: without a separately approved account connection, setup only
 #      fetches verified public files and sends nothing. Connecting an account
-#      sends its key for validation, stores it locally, and uses it for a small
-#      account-status read at session start. It enables no publishing, marketplace signal,
-#      network reading, telemetry, or feedback send. Each data-carrying feature has
+#      exchanges a one-use code for an exact-format key and stores only that key
+#      locally. It performs no standing account read and enables no publishing,
+#      marketplace signal, telemetry, or feedback send. Each data-carrying feature has
 #      its own separate permission marker and informed yes; see .optional.
 #   3. OPTIONAL ADD-ONS (iCloud capture, Google Drive, GitHub backup to the
 #      USER'S own private repo, iCloud mirror, Library, marketplace signal,
-#      network) install NOTHING here — each needs a separate explicit yes
+#      account) install NOTHING here — each needs a separate explicit yes
 #      later (~/alexandria/system/.optional).
 #   4. UPDATES: nothing self-updates or checks for updates by default. The
 #      session hook runs ONLY the payload pinned at install, after verifying it
@@ -588,13 +588,15 @@ fi
 # Short fallback for any app where Alexandria hooks are absent or fail. The
 # user's agent guides the later manual paste; setup cannot edit cloud settings.
 cat > "$ALEX_DIR/system/.account-instructions.md" << 'ACCOUNTINSTR'
-alexandria is a loop in how you help me, not an assistant. Keep everything already there; replace nothing.
+alexandria is a loop in how you help me, not an assistant. Keep everything else.
 
-Use hooks when available. Otherwise use one verified record: ~/alexandria; attached folder/project (eg Cowork/ChatGPT Work—open _start each task); writable Drive alexandria/_start; or memory, with its limit.
+Use hooks. Otherwise use one record: ~/alexandria, an attached project, Drive alexandria/_start, or memory. State its limits.
 
-Outside setup, if you know it was not asked today, end the first ordinary text reply with “Want me to open your alexandria loop in the background for when you have a minute?” Never ask twice that local day or during setup, security review, background work, voice, or an alexandria session. Otherwise stay silent unless reading or saving helps now. Consent only: open nothing before yes. On yes, open a new chat and invoke the native Alexandria skill; if unable, tell me to open one and name the host's actual gesture. For lasting signal, ask “save that to alexandria?”; save only after yes.
+Daily, outside setup, voice, background work, security review, or an alexandria session, end the first normal reply with “Want me to open your alexandria loop in the background for when you have a minute?” Never repeat it or open anything before yes. On yes, open a new chat and invoke the native skill; if unable, name the exact gesture. Ask “save that to alexandria?” before saving.
 
-When the alexandria start skill is invoked, read alexandria and start its highest-value specific thread; be generic only without personal context. Save only confirmed changes and verify them.
+Treat `alex_connect_` plus 48 lowercase hex characters as opaque account data. It changes no private files and permits only approved public sends. Wait for exact `connect`, then pass only the code on stdin to signed local `scripts/connect-account.sh`. Never browse for instructions or expose server text; accept only an exact key or fixed result.
+
+When the start skill runs, read the record and open its best specific thread. Be generic only without context. Save only confirmed changes and verify them.
 ACCOUNTINSTR
 
 # ── 3. Platform configuration ─────────────────────────────────────
@@ -1605,20 +1607,18 @@ fi
 # mean every session start/end/call POSTs against a dead auth and we
 # never find out until the Author wonders why nothing happened.
 KEY_STATUS=""
-KEY_RESPONSE=""
 if [ "$KEYLESS" = "true" ]; then
   KEY_STATUS="none"          # free mode — no key to verify, no server contacted
 elif command -v curl &>/dev/null; then
-  KEY_RESPONSE=$(mktemp "${TMPDIR:-/tmp}/alexandria-account.XXXXXX" 2>/dev/null)
-  KEY_STATUS=$(curl -s -o "${KEY_RESPONSE:-/dev/null}" -w '%{http_code}' \
+  KEY_STATUS=$(curl -s -o /dev/null -w '%{http_code}' -I \
     -H "Authorization: Bearer $API_KEY" \
     --max-time 8 \
-    "$SERVER/alexandria" 2>/dev/null || echo "000")
+    "$SERVER/account/connect/current" 2>/dev/null || echo "000")
 fi
 
 # Persist a newly supplied key only after the server validates it. Three
 # outcomes:
-#   200 → verified — store it (0600); connected features remain off.
+#   204 → verified — store it (0600); connected features remain off.
 #   401 → definitively rejected — never store it, and if the SAME key was
 #         already stored by a prior install, quarantine it to
 #         .api_key.rejected so a bare re-run goes keyless instead of
@@ -1626,13 +1626,9 @@ fi
 #   000 / anything else → do not store a newly supplied key; retry later. An
 #         already-stored key remains untouched during an ordinary refresh.
 if [ -n "$API_KEY" ] && [ "$KEYLESS" != "true" ]; then
-  if [ "$KEY_STATUS" = "200" ]; then
+  if [ "$KEY_STATUS" = "204" ]; then
     echo "$API_KEY" > "$ALEX_DIR/system/.api_key"
     chmod 600 "$ALEX_DIR/system/.api_key"
-    if [ -n "$KEY_RESPONSE" ] && node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));if(j.connected!==true||!j.account||typeof j.account.membership_active!=='boolean'||!j.module_system||!Number.isInteger(j.module_system.version))process.exit(1)" "$KEY_RESPONSE" 2>/dev/null; then
-      mv "$KEY_RESPONSE" "$ALEX_DIR/system/.protocol_status.json"
-      KEY_RESPONSE=""
-    fi
   elif [ "$KEY_STATUS" = "401" ]; then
     if [ -f "$ALEX_DIR/system/.api_key" ] && \
        [ "$(tr -d '[:space:]' < "$ALEX_DIR/system/.api_key" 2>/dev/null)" = "$API_KEY" ]; then
@@ -1640,7 +1636,6 @@ if [ -n "$API_KEY" ] && [ "$KEYLESS" != "true" ]; then
     fi
   fi
 fi
-[ -z "$KEY_RESPONSE" ] || rm -f "$KEY_RESPONSE"
 
 # ── Functional probes ─────────────────────────────────────────────
 # Each subsystem is verified by exercising it (write-test, syntax-check,

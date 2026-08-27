@@ -351,6 +351,53 @@ export function registerProtocol(app: Hono) {
     return c.json({ ok: true });
   });
 
+  // Owner-only read-back routes for exact publication verification. These
+  // expose no account profile or membership document: the authenticated key
+  // selects its own files, and the client reduces the response to local hashes.
+  app.get('/files', async (c) => {
+    const auth = await requireAuth(c);
+    if (!auth?.account.github_id) return c.text('Unauthorized', 401);
+
+    const { results } = await getDB().prepare(
+      'SELECT scope, name, visibility, updated_at FROM protocol_files WHERE account_id = ? LIMIT 1000'
+    ).bind(String(auth.account.github_id)).all<{
+      scope: string;
+      name: string;
+      visibility: string;
+      updated_at: string;
+    }>();
+
+    return c.json({ files: results || [] });
+  });
+
+  app.get('/file/:name', async (c) => {
+    const auth = await requireAuth(c);
+    if (!auth?.account.github_id) return c.text('Unauthorized', 401);
+
+    const name = c.req.param('name');
+    if (!name || !/^[a-z0-9][a-z0-9-]*$/.test(name) || name.length > 64) {
+      return c.text('Invalid file', 400);
+    }
+    const requestedScope = c.req.query('scope')?.trim() || '';
+    const scope = requestedScope ? normalizeLibraryScope(requestedScope, 'authors') : null;
+    if (requestedScope && !scope) return c.text('Invalid scope', 400);
+
+    const result = await readProtocolFile({
+      authorGithubId: auth.account.github_id,
+      fileName: name,
+      scope: scope || undefined,
+      accessorGithubId: auth.account.github_id,
+    });
+    if (!result.ok) return c.text('File unavailable', result.status);
+
+    logEvent('protocol_file_owner_verified', {
+      author: auth.account.github_login,
+      name,
+      scope: result.file.scope,
+    });
+    return c.body(await result.obj.arrayBuffer(), 200, { 'Content-Type': result.contentType });
+  });
+
   // ── Library: read per Author ───────────────────────────────────
 
   app.get('/library/:id', async (c, next) => {

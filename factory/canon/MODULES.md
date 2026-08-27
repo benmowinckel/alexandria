@@ -1,6 +1,6 @@
 # What ships, what runs, and what waits
 
-*Architecture reference only. It does not activate the Library, marketplace, account, or any Alexandria ask. Before membership, the private ai leaves those surfaces silent unless the Author directly requests one. After membership is connected, it may explain the signed module map once and surface a later map-version change as a compact `system` action; that is product orientation for an existing member, never a pitch or permission to activate anything.*
+*Architecture reference only. It does not activate the Library, marketplace, account, or any Alexandria ask. The private ai leaves those surfaces silent unless the Author directly requests one. It may explain the signed local module map once and surface a later locally installed map-version change as a compact `system` action; that is local orientation, never a pitch or permission to activate anything.*
 
 *The canon is just files on your machine — your `alexandria.md`, the system that develops your mind (the working loop plus how to run it well), like a `design.md` or any script you keep. What it produces is your `mind.md` — your mind itself, the data. Both are yours: edit, replace, or ignore them. Alexandria is an aggregation hub you optionally connect to; it offers strong defaults and aggregates what works across everyone. The only thing that is not a file is the spine (account · file · call) — the connection to the hub itself.*
 
@@ -41,11 +41,11 @@ Alexandria-built modules are labelled **official** in the marketplace. Most are 
 ## connections — dormant until separately approved
 
 - **signed update notices** — public release checks only; nothing applies automatically.
-- **account** — establishes identity and live membership state; it does not activate any other local connection.
+- **account** — stores one local key for separately requested account actions; it adds no standing read or inbound instruction.
 - **Library publication** — `library.md` + `filter.md`; exact files and audiences need exact hash-bound approval.
 - **Library stand** — `stand.md`; Benjamin's personalizable starting shape for that connection, installed as a reference, inert until the Author asks, and free to fork or replace.
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
-- **network reading** — only the exact approved Author list is fetched.
+- **public reading** — deliberate browser or isolated-reader access only; no session-start fetch or live private-loop cache.
 - **Git backup** — the owned Git history may use any private remote; GitHub is the current soft default, never the source of truth.
 - **agent workspace** — one fresh private Git repo per experimental AI, containing only exact selected context plus an untrusted write-back inbox; discoverable as an official module, but never part of Foundation or default setup.
 - **Drive pocket copy** — a narrow chat projection and capture inbox, not canon and not a general trial-agent grant.
@@ -61,7 +61,7 @@ Their signed references may be installed so the Author's ai can explain a direct
 
 The marketplace shows the two core recovery references, the five method defaults, curated official modules, and modules published by individual Authors. Alexandria's own inventory is explicit and remains visible even when no recent use has been reported; approved usage only discovers community additions. Most dormant connection instructions, internal architecture maps, and the private ai's Library starting reference are not marketplace listings. Agent workspace is listed because it is a reusable Alexandria module; its listing still activates nothing.
 
-The signed `~/alexandria/system/modules.json` is the portable local map; the authenticated `/alexandria` handshake carries its current version so a joined Author's ai notices a real packaging change without the Author remembering to check. A version change permits one compact `system` action only. The ai explains new details from the integrity-verified local map after a signed refresh, not from network text. Browsing community modules or fetching their bodies still requires the Author to ask. The private ai never recommends from private material, turns browsing into a sales step, or reports usage without exact manifest approval.
+The signed `~/alexandria/system/modules.json` is the portable local map. The private ai compares only that installed local version with the last locally seen version. A version change permits one compact `system` action only. The ai explains new details from the integrity-verified local map after a signed refresh, never from network text. Browsing community modules or fetching their bodies still requires the Author to ask. The private ai never recommends from private material, turns browsing into a sales step, or reports usage without exact manifest approval.
 
 ---
 

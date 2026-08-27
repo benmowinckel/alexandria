@@ -109,9 +109,14 @@ assert.match(reminderPrompt, /Do not inspect the project or begin setup now/);
 
 await page.goto(`${base}/shortcut`, { waitUntil: 'networkidle' });
 const shortcutBody = await page.locator('body').innerText();
-assert.match(shortcutBody, /\bmac\b/i);
-assert.match(shortcutBody, /\biphone\b/i);
-assert.doesNotMatch(shortcutBody, /add to iphone/i);
+if (mobile) {
+  assert.match(shortcutBody, /add to iphone/i);
+  assert.doesNotMatch(shortcutBody, /\bmac\b/i);
+} else {
+  assert.match(shortcutBody, /\bmac\b/i);
+  assert.match(shortcutBody, /\biphone\b/i);
+  assert.doesNotMatch(shortcutBody, /add to iphone/i);
+}
 
 await page.goto(`${base}/start#chat`, { waitUntil: 'networkidle' });
 const chatChoiceBody = await page.locator('body').innerText();

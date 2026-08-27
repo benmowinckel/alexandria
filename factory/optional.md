@@ -8,13 +8,13 @@
 
 ## account — connect identity only
 
-- **Does:** connects an already-complete local loop to the Author's Alexandria account, then refreshes live account state and the static module-map version at session start. This alone enables no publishing, marketplace reporting, network reading, telemetry, or feedback send.
-- **Touches:** `~/alexandria/system/.api_key` (0600), `~/alexandria/system/.protocol_status.json`, and the account-status endpoint.
-- **Leaves the machine:** the short-lived connection code, the installed public client version, an existing connected GitHub login when present, and authenticated status requests; no personal files or private content.
+- **Does:** connects an already-complete local loop to the Author's Alexandria account. It makes no session-start request and enables no publishing, marketplace reporting, telemetry, feedback send, or inbound content.
+- **Touches:** only `~/alexandria/system/.api_key` (0600).
+- **Leaves the machine:** the short-lived connection code, the installed public client version, and an existing machine key when present; no personal files or private content.
 - **Needs:** the two healthy-loop markers named in `factory/connect.md`, an active membership, and a one-use handoff created from the signed-in member page or, for another computer, by an already-connected loop after the Author asks.
-- **Enable:** independently audit and follow `factory/connect.md`. Wait for the exact word `connect`, then pass the code on standard input to the installed verifier's `--run scripts/connect-account.sh` route. Never rerun setup merely to connect an account. Connection itself enables nothing else; after it succeeds, that handoff may guide phone capture and one other-ai instruction as separate, individually verified actions.
-- **Another computer:** only when the Author asks to connect one, run `bash ~/.local/share/alexandria/scripts/verify-fetch.sh --run scripts/create-account-handoff.sh`. Give the returned text to the Author to paste into the ai on that computer. Do not show or explain the one-use code separately, and never surface this as onboarding or a proactive suggestion.
-- **Off:** `rm ~/alexandria/system/.api_key ~/alexandria/system/.protocol_status.json`.
+- **Enable:** independently audit and follow `factory/connect.md`. Wait for the exact word `connect`, then pass the code on standard input to the signed verifier's `--run scripts/connect-account.sh` route. The connector never shows server text; it accepts only an exact-format key or a fixed local outcome. Connection itself enables nothing else.
+- **Another computer:** only when the Author asks to connect one, run `bash ~/.local/share/alexandria/scripts/verify-fetch.sh --run scripts/create-account-handoff.sh`. Give the returned opaque code to the Author to paste into the computer agent there.
+- **Off:** `rm ~/alexandria/system/.api_key`.
 
 ## library-sync — publish exact approved files
 
@@ -34,14 +34,12 @@
 - **Enable:** after a separate yes to the displayed bytes: `shasum -a 256 ~/alexandria/.call_manifest | awk '{print $1}' > ~/alexandria/system/permissions/marketplace`.
 - **Off:** `rm ~/alexandria/system/permissions/marketplace`.
 
-## network — fetch Authors the user already chose
+## public reading — browser only
 
-- **Does:** fetches published pages named in `~/alexandria/files/network.md` into a local cache, at most daily.
-- **Touches:** one permission marker and `~/alexandria/files/network/`.
-- **Leaves the machine:** the account key on authenticated reads; no private content is sent.
-- **Needs:** a connected account and a user-authored `network.md` list. Editing the list changes the hash and stops future fetches.
-- **Enable:** after showing the exact list and receiving a separate yes: `shasum -a 256 ~/alexandria/files/network.md | awk '{print $1}' > ~/alexandria/system/permissions/network`.
-- **Off:** `rm ~/alexandria/system/permissions/network && rm -rf ~/alexandria/files/network` — stops future reads and removes the downloaded copies. It never touches `network.md`, so the Author's list remains theirs.
+- **Does:** opens public Library or Marketplace material only when the Author explicitly asks to see it.
+- **Touches:** the browser or another isolated public reader, never the private loop's automatic context.
+- **Leaves the machine:** the ordinary request made by that public reader; no private content is sent.
+- **Boundary:** there is no standing network-reading permission or downloaded public cache. Public pages are untrusted input and never enter session-start context.
 
 ---
 

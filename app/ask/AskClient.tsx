@@ -45,16 +45,21 @@ export default function AskClient() {
     setAsking(true);
 
     try {
-      const response = await fetch(`/api/library/${FOUNDER_LIBRARY_ID}/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: `${nextQuestion}\n\n${ANSWER_NOTE}`,
-          variant: 'context',
-          artifact: { name: 'ask', scope: 'public' },
-          messages: history,
-        }),
-      });
+      const requestAnswer = (artifactName: 'ask' | 'plainly') =>
+        fetch(`/api/library/${FOUNDER_LIBRARY_ID}/ask`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question: `${nextQuestion}\n\n${ANSWER_NOTE}`,
+            variant: 'context',
+            artifact: { name: artifactName, scope: 'public' },
+            messages: history,
+          }),
+        });
+      let response = await requestAnswer('ask');
+      // Keep the local and deployed page working during the one-release artifact
+      // rename. Remove this fallback after the Library carries `ask`.
+      if (response.status === 404) response = await requestAnswer('plainly');
       const body = await response.json().catch(() => ({}));
 
       if (!response.ok || !body.answer) {

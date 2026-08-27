@@ -11,8 +11,8 @@ import { SERVER_URL } from '../lib/config';
  * the rendered page + a session token under a one-time code and redirect here.
  * We fetch the page server-side, serve it from our own origin, and inject a
  * script that POSTs the code to /api/auth/session — the same same-origin cookie
- * set that already works for library sign-in. The api key only travels
- * Worker→Vercel server-side; it never rides a browser-visible URL.
+ * set that already works for library sign-in. The private session token moves
+ * only Worker→Vercel server-side; it never rides a browser-visible URL.
  */
 export async function GET(req: NextRequest): Promise<Response> {
   const code = req.nextUrl.searchParams.get('code') || '';

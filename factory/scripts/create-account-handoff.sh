@@ -16,8 +16,19 @@ API_KEY=$(tr -d '[:space:]' < "$KEY_FILE")
   exit 1
 }
 
-curl --fail-with-body --silent --show-error --max-time 20 \
+response=$(mktemp "${TMPDIR:-/tmp}/alexandria-handoff.XXXXXX") || exit 1
+trap 'rm -f "$response"' EXIT
+status=$(curl --silent --show-error --max-time 20 --max-filesize 1024 -o "$response" -w '%{http_code}' \
   -X POST \
   -H "Authorization: Bearer $API_KEY" \
-  "$SERVER/account/connect/handoff"
-printf '\n'
+  "$SERVER/account/connect/handoff" 2>/dev/null || true)
+[ "$status" = "200" ] || {
+  echo "could not create a connection code (status $status)" >&2
+  exit 1
+}
+code=$(tr -d '\r\n' < "$response")
+[[ "$code" =~ ^alex_connect_[a-f0-9]{48}$ ]] || {
+  echo "the server returned an invalid connection code" >&2
+  exit 1
+}
+printf '%s\n' "$code"

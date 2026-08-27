@@ -81,14 +81,19 @@ export function authErrorHtml(message: string): string {
 // Callback page — the first brand moment after signup
 // ---------------------------------------------------------------------------
 
-export async function callbackPageHtml(isReturning: boolean, githubLogin = '', authorNumber = 0, _kinCompliant = 0): Promise<string> {
+export async function callbackPageHtml(
+  isReturning: boolean,
+  githubLogin = '',
+  authorNumber = 0,
+  _kinCompliant = 0,
+  connectionCode = '',
+): Promise<string> {
   void authorNumber;
   void _kinCompliant;
   const WEBSITE_URL = getWebsiteUrl();
-  // Membership is already complete here. The first action closes the account
-  // loop: it opens a first-party page where this signed-in browser can mint a
-  // one-use paste for the person's own AI. No connection material is embedded
-  // in this HTML. The invite remains the second action.
+  // Membership is already complete here. For a first connection, the first
+  // action copies only an opaque, one-use code. The signed local installer owns
+  // every instruction and waits for the person's approval before exchanging it.
   // A founding number is assigned server-side but is not the pitch.
   // The invite link now opens /invite — the self-contained referral landing
   // (founder 2026-07-17: a cold recipient dropped on /start had "no idea what
@@ -96,6 +101,7 @@ export async function callbackPageHtml(isReturning: boolean, githubLogin = '', a
   // where install → eventual join credits kin (validates ref → existing
   // login, rejects self-referral). Three who join and stay = free while they stay.
   const inviteUrl = githubLogin ? `${WEBSITE_URL}/invite?ref=${encodeURIComponent(githubLogin)}` : '';
+  const libraryUrl = githubLogin ? `${WEBSITE_URL}/library/${encodeURIComponent(githubLogin)}` : `${WEBSITE_URL}/library`;
   // The Web Share sheet puts the invite one tap from a real conversation.
   // Desktop browsers without it fall back to copying the link.
   return `<!DOCTYPE html>
@@ -218,7 +224,9 @@ export async function callbackPageHtml(isReturning: boolean, githubLogin = '', a
 <a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
 <main class="wrap">
   <h1 class="welcome">${isReturning ? `welcome back.` : `welcome to alexandria.`}</h1>
-  <a class="cta-box" href="${WEBSITE_URL}/connect"><span class="cta-copy"><span class="cta-label">connect your ai</span><span class="cta-sep"> &mdash; </span><span class="cta-why">copy the handoff</span></span></a>
+  ${connectionCode
+    ? `<button type="button" class="cta-box" onclick="copyConnection(this)"><span class="cta-copy"><span class="cta-label">connect your loop</span><span class="cta-sep"> &mdash; </span><span class="cta-why">copy for your computer agent</span></span></button>`
+    : `<a class="cta-box" href="${libraryUrl}"><span class="cta-copy"><span class="cta-label">open your library</span><span class="cta-sep"> &mdash; </span><span class="cta-why">see your public page</span></span></a>`}
   ${inviteUrl
     ? `<button type="button" class="cta-box" onclick="shareInvite(this)"><span class="cta-copy"><span class="cta-label">invite people to alexandria</span><span class="cta-sep"> &mdash; </span><span class="cta-why">share it widely</span></span></button>`
     : ''}
@@ -254,6 +262,9 @@ function manualCopy(text, el, label, why) {
   } catch (e) {
     window.prompt('copy this:', text);
   }
+}
+function copyConnection(el) {
+  copyText(${jsLiteral(connectionCode)}, el, 'copied', 'paste into your computer agent');
 }
 // Share, not copy (founder 2026-07-27): the native sheet puts the link one tap
 // from a real conversation — Messages, WhatsApp, wherever they'd actually send
@@ -315,8 +326,9 @@ export async function welcomeHandoffUrl(
   isReturning: boolean,
   authorNumber: number,
   kinCompliant = 0,
+  connectionCode = '',
 ): Promise<string> {
-  const html = await callbackPageHtml(isReturning, githubLogin, authorNumber, kinCompliant);
+  const html = await callbackPageHtml(isReturning, githubLogin, authorNumber, kinCompliant, connectionCode);
   const code = randomBytes(24).toString('hex');
   // handoff:<code> → session token, consumed by /api/auth/session (sets the cookie).
   // welcome:<code> → the rendered page, consumed by the website /welcome peek.

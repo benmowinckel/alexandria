@@ -82,14 +82,18 @@ require shared/onboarding-prompts.ts \
   'export function accountConnectPrompt(connectionCode: string)' \
   'the joined account handoff is not separated from first install'
 require shared/onboarding-prompts.ts \
-  'I already have a private local Alexandria loop.' \
-  'the joined handoff no longer states its healthy-loop prerequisite'
+  'if (!/^alex_connect_[a-f0-9]{48}$/.test(connectionCode))' \
+  'the account handoff no longer rejects malformed connection codes'
 require shared/onboarding-prompts.ts \
-  'Start at github.com/benmowinckel/alexandria/blob/main/factory/connect.md.' \
-  'the joined handoff no longer points to one focused public audit location'
+  'return connectionCode;' \
+  'the account handoff is no longer opaque data only'
 require shared/onboarding-prompts.ts \
-  'Do nothing until I say \`connect\`.' \
-  'the joined handoff no longer waits for exact connection consent'
+  'Wait for exact \`connect\`' \
+  'the chat fallback no longer waits for exact connection consent'
+require shared/onboarding-prompts.ts \
+  'Never browse for instructions or expose server text' \
+  'accept only an exact key or fixed result' \
+  'the chat fallback can expose server text or browse for connection instructions'
 forbid shared/onboarding-prompts.ts \
   'accountInstructionRequest|Only after you decide the setup is safe|Install and verify alexandria' \
   'the first paste carries post-install behavior that belongs inside reviewed local onboarding'
@@ -99,6 +103,9 @@ require factory/block.md \
 require factory/connect.md \
   '`~/alexandria/system/.account-instructions.md`' \
   'joined completion cannot show the exact additive instructions'
+require factory/connect.md \
+  'never prints server text or stores account status' \
+  'the reviewed connection method can expose remote prose or persist server status'
 forbid shared/onboarding-prompts.ts \
   'SHA256:|ALEXANDRIA_SOURCE_COMMIT|ssh_signing_keys|factory/setup\.sh' \
   'the live paste contains vendor-authored verification choreography'
@@ -133,23 +140,23 @@ require server/src/chat-prompt.ts \
   "from '../../shared/onboarding-prompts.js'" \
   'the emailed chat paste no longer reads the shared instruction'
 require shared/onboarding-prompts.ts \
-  'Keep everything already there; replace nothing.' \
+  'Keep everything else.' \
   'the account instruction is no longer additive'
 require shared/onboarding-prompts.ts \
-  'Use hooks when available.' \
+  'Use hooks.' \
   'the account instruction no longer prefers working hooks'
 require shared/onboarding-prompts.ts \
-  'end the first ordinary text reply with “Want me to open your alexandria loop' \
-  'Never ask twice that local day or during setup, security review, background work, voice' \
+  'end the first normal reply with “Want me to open your alexandria loop' \
+  'outside setup, voice, background work, security review' \
+  'Never repeat it or open anything before yes' \
   'the account instruction no longer carries the visible route'
 require shared/onboarding-prompts.ts \
-  'Consent only: open nothing before yes' \
-  'On yes, open a new chat and invoke the native Alexandria skill' \
-  "name the host's actual gesture" \
+  'On yes, open a new chat and invoke the native skill' \
+  'name the exact gesture' \
   'Start an Alexandria session in a new chat.' \
   'the account instruction no longer gives every chat one natural route'
 require shared/onboarding-prompts.ts \
-  'attached folder/project (eg Cowork/ChatGPT Work—open _start each task)' \
+  'an attached project' \
   'the account instruction no longer covers no-hooks folder surfaces'
 require shared/onboarding-prompts.ts \
   'Drive alexandria/_start' \
@@ -179,7 +186,7 @@ require shared/onboarding-prompts.ts \
   'Only after the private loop works' \
   'the full-version explanation can precede free personal value'
 require shared/onboarding-prompts.ts \
-  'be generic only without personal context' \
+  'Be generic only without context' \
   'the fresh-chat session can ignore an existing personal record'
 forbid shared/onboarding-prompts.ts \
   'first month free|dollar a day|refer-three|pricing|membership|join link' \
@@ -197,7 +204,8 @@ if (!factoryMatch || !sharedMatch) {
   console.error('private-boundary check failed: could not parse the chat handoff sources');
   process.exit(1);
 }
-if (factoryMatch[1].trim() !== sharedMatch[1].trim()) {
+const sharedPrompt = sharedMatch[1].replace(/\\`/g, '`');
+if (factoryMatch[1].trim() !== sharedPrompt.trim()) {
   console.error('private-boundary check failed: chat clipboard and factory bootstrap do not carry the exact same request');
   process.exit(1);
 }
@@ -382,23 +390,14 @@ require factory/canon/methodology.md \
   "The Author's private ai never does." \
   'methodology has no permanent private-ai boundary'
 require factory/canon/methodology.md \
-  'its `account.membership_active` value is authoritative over every local marker' \
-  'methodology does not resolve live membership before opener routing'
+  'Never fetch account or membership state, sell the community, or turn a referral into private-loop context.' \
+  'methodology can still pull account or commercial state into the private opener'
 require factory/canon/methodology.md \
-  'then a separate highest-ROI cognitive `recommended`, then `everything`' \
-  'methodology no longer guarantees invite then cognitive recommended then everything'
+  'Alexandria-owned website surfaces' \
+  'methodology no longer keeps membership and invitations on Alexandria-owned surfaces'
 require factory/canon/methodology.md \
-  'That order is the contract for every joined Author on every surface.' \
-  'methodology no longer makes the joined opener order universal'
-require factory/canon/methodology.md \
-  'The referral URL is the universal sharing floor and stays directly clickable.' \
-  'methodology no longer keeps the referral URL directly clickable'
-require factory/canon/methodology.md \
-  '[alexandria-library.com/invite?ref=<account.github_login>](https://alexandria-library.com/invite?ref=<account.github_login>)' \
-  'rendered markdown no longer uses the explicit full-address invite link'
-require factory/canon/methodology.md \
-  'Host-generated favicon or preview chrome is automatic and accepted.' \
-  'methodology still promises control over host-generated link chrome'
+  'Compare only its local version with `system/.module_guide_seen`; no account handshake or remote metadata is needed.' \
+  'module orientation can still depend on remote account state'
 for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/grok-bot.md; do
   require "$opener_skill" \
     'CAPTURE BACKGROUND — extraction never holds the session hostage.' \
@@ -413,25 +412,13 @@ for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory
     'The opener is forbidden until' \
     "$opener_skill still forbids the opener while capture work remains"
   require "$opener_skill" \
-    'JOINED OPENER CHECK — every Author, every surface.' \
-    "$opener_skill does not check the joined opener at the final output gate"
+    'LOCAL MODULE MAP CHECK.' \
+    "$opener_skill no longer checks the signed local module map"
   require "$opener_skill" \
-    'the first three visible sections are exactly `invite`, highest-ROI cognitive `recommended`, `everything`, in that order' \
-    "$opener_skill no longer guarantees the exact joined section order"
+    'Do not fetch account state' \
+    "$opener_skill can still fetch remote account state"
   require "$opener_skill" \
-    'The invite body is the direct clickable referral URL.' \
-    "$opener_skill no longer keeps the referral URL directly clickable"
-  require "$opener_skill" \
-    '[alexandria-library.com/invite?ref=<account.github_login>](https://alexandria-library.com/invite?ref=<account.github_login>)' \
-    "$opener_skill does not force the explicit rendered-markdown text link"
-  require "$opener_skill" \
-    'Host-generated favicon or preview chrome is automatic and accepted.' \
-    "$opener_skill still promises control over host-generated link chrome"
-  require "$opener_skill" \
-    'MODULE MAP CHECK — joined Authors only.' \
-    "$opener_skill no longer makes joined module changes discoverable"
-  require "$opener_skill" \
-    'Do not browse, install, activate, publish, or send anything as part of orientation.' \
+    'Do not fetch account state, browse, install, activate, publish, or send anything as part of orientation.' \
     "$opener_skill can activate a module merely while explaining it"
 done
 require factory/module-system.json \
@@ -447,14 +434,14 @@ require factory/module-system.json \
   '"private_data": "never_needed_for_module_discovery"' \
   'module discovery can depend on private user material'
 require factory/redteam.md \
-  'when the authenticated module-map version is missing from or differs from the version the Author has already seen' \
-  'the cold-agent audit still mistakes safe joined module orientation for a commercial prompt'
+  'membership, invitations, referrals, and community calls to action stay on Alexandria-owned website surfaces' \
+  'the cold-agent audit no longer keeps commercial calls to action off the private ai'
 require factory/redteam.md \
   '`factory/module-system.json`' \
   'the cold-agent audit no longer inspects the signed module map'
 require factory/redteam.md \
-  'fetches no community module body, activates nothing, and marks the version seen only after the human actually sees the orientation' \
-  'the cold-agent audit no longer checks the joined orientation safety boundary'
+  'Any route that shows server prose, public pages, remote diffs, account JSON, or remote status to the private ai is an immediate stop.' \
+  'the cold-agent audit no longer checks the inbound server-content boundary'
 require factory/ship.sh \
   'module-system.json changed without increasing its version' \
   'factory release no longer forces module-map changes to become visible to existing users'
@@ -474,35 +461,14 @@ require factory/setup.sh \
   'install_start_skill "skills/codex.md" "$HOME/.agents/skills/alexandria" "alexandria"' \
   'the legacy Codex alexandria alias is not installed from the current signed skill'
 require factory/canon/methodology.md \
-  'recommended` IS the join link' \
-  'methodology has no recommended-until-decision join carve-out'
-require factory/canon/methodology.md \
-  '.join_decision' \
-  'methodology has no join-decision marker'
-require factory/canon/methodology.md \
-  'Recommended ladder' \
-  'methodology has no recommended ladder after join'
-require factory/canon/methodology.md \
-  '.shortcut_decision' \
-  'methodology has no shortcut-decision marker'
-require factory/canon/methodology.md \
-  'connect the stuff you' \
-  'methodology has no save-before-connect shortcut recommended body'
-require factory/canon/methodology.md \
-  'For joined Authors, the one-time welcome connection handoff owns this setup before the first joined session' \
-  'shortcut setup can still displace a joined Author cognitive recommendation'
-require factory/hooks/payload.sh \
-  '"$SERVER/alexandria"' \
-  'session start no longer fetches authoritative account state'
-require factory/hooks/payload.sh \
-  'typeof j.account.membership_active' \
-  'session start no longer validates the membership state shape'
-require factory/hooks/payload.sh \
-  '"$ALEX_DIR/system/.join_decision"' \
-  'active membership no longer heals the missing local marker'
+  'Membership, invitation, and community conversion stay on Alexandria-owned website surfaces.' \
+  'methodology can still turn the private loop into a community conversion surface'
+forbid factory/hooks/payload.sh \
+  '\$SERVER/alexandria|protocol_status|account\.membership_active|JOINED OPENER CHECK' \
+  'session start still reads or renders remote account state'
 forbid factory/canon/methodology.md \
-  'There is no opener carve-out' \
-  'methodology still bans the opener join carve-out'
+  'recommended` IS the join link|Recommended ladder|JOINED OPENER|\.join_decision|\.shortcut_decision' \
+  'methodology still carries the retired commercial opener state machine'
 forbid factory/canon/methodology.md \
   'make not-trying feel irrational|make leaving feel like loss|what the Author pays for|first month free|dollar a day|free for good if' \
   'methodology contains a proactive company pitch beyond the fixed link carve-out'
@@ -1039,9 +1005,12 @@ forbid factory/hooks/payload.sh \
 forbid factory/hooks/payload.sh \
   '\.reply_pending|\.reply_new|system/replies' \
   'the retired company reply channel still exists in the private hook'
+forbid factory/hooks/payload.sh \
+  'network_approved_sha|library/.*/shadow|files/network/.*/shadow|Retired network sync' \
+  'session start still contains the retired automatic public-page reader'
 require factory/hooks/payload.sh \
-  'network_approved_sha' \
-  'network permission is not tied to the exact approved list'
+  'server text never enters the private loop automatically' \
+  'session start no longer states the automatic inbound-content boundary'
 require factory/hooks/payload.sh \
   'backup_remote_is_approved' \
   'a pre-existing git remote can still trigger backup'

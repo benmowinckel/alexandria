@@ -18,6 +18,7 @@ import { getDB } from './db.js';
 import { sendPatronWelcome, sendKinFreeUnlocked, sendKinLapseWarning, sendPreBillWarning, sendWelcomeEmail } from './email.js';
 import { generateToken } from './crypto.js';
 import { safeEqual, hashApiKey } from './crypto.js';
+import { createAccountConnectCode } from './account-connect.js';
 
 // ---------------------------------------------------------------------------
 // Membership price — source of truth for NEW Stripe prices (ensurePrice).
@@ -1287,7 +1288,18 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       // drops one set on the api subdomain mid-redirect — WebKit #196375).
       const sessionToken = randomBytes(24).toString('hex');
       await kv.put(`library:session:${sessionToken}`, JSON.stringify({ account_key: accountResult.storeKey, github_login: login }), { expirationTtl: 30 * 24 * 60 * 60 });
-      return c.redirect(await welcomeHandoffUrl(kv, sessionToken, login, false, number ?? 0, kinCompliant));
+      const connectionCode = accountResult.account.connected_at
+        ? ''
+        : await createAccountConnectCode(accountResult.storeKey);
+      return c.redirect(await welcomeHandoffUrl(
+        kv,
+        sessionToken,
+        login,
+        !!accountResult.account.connected_at,
+        number ?? 0,
+        kinCompliant,
+        connectionCode,
+      ));
     } catch (err) {
       console.error('Billing success page error:', err);
       return c.redirect(`${WEBSITE_URL}/join`);
