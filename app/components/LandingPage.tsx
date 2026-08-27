@@ -1128,7 +1128,7 @@ export default function LandingPage() {
                   <HomeInstall />
                   <div className="cta-block">
                     <Link href="/follow" className="lr-cta lr-cta-ghost">
-                      show support
+                      follow along
                     </Link>
                   </div>
                 </div>
@@ -1150,8 +1150,8 @@ export default function LandingPage() {
                   on desktop (click any feature frame → /features);
                   /features stays live for direct links. */}
               <p className="quiet-links">
-                {/* The demo stays quiet; support is promoted to the real
-                    second CTA above rather than appearing twice. */}
+                {/* The demo stays quiet; following along is promoted to the
+                    real second CTA above rather than appearing twice. */}
                 <span className="quiet-pair">
                   <DemoFilm className="quiet-link quiet-door"><em>watch the demo</em></DemoFilm>
                 </span>
