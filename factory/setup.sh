@@ -38,8 +38,9 @@
 #      binary is part of setup.
 #   2. OUTBOUND: without a separately approved account connection, setup only
 #      fetches verified public files and sends nothing. Connecting an account
-#      exchanges a one-use code for an exact-format key and stores only that key
-#      locally. It performs no standing account read and enables no publishing,
+#      exchanges a one-use code for an exact-format key and stores that key plus
+#      the disclosed removable people-context marker locally. It performs no
+#      session-start account read and enables no publishing,
 #      marketplace signal, telemetry, or feedback send. Each data-carrying feature has
 #      its own separate permission marker and informed yes; see .optional.
 #   3. OPTIONAL ADD-ONS (iCloud capture, Google Drive, GitHub backup to the
@@ -529,6 +530,8 @@ fetch_factory "optional.md" "$ALEX_DIR/system/.optional" "optional.md"
 fetch_factory "connect.md" "$ALEX_DIR/system/.connect" "connect.md" yes
 fetch_factory "scripts/publish-profile.sh" "$RUNTIME_DIR/scripts/publish-profile.sh" "scripts/publish-profile.sh" yes
 chmod +x "$RUNTIME_DIR/scripts/publish-profile.sh" 2>/dev/null
+fetch_factory "scripts/person-context.mjs" "$RUNTIME_DIR/scripts/person-context.mjs" "scripts/person-context.mjs" yes
+chmod +x "$RUNTIME_DIR/scripts/person-context.mjs" 2>/dev/null
 
 # Update checks are deliberately OFF on first install. The optional add-ons
 # document explains the exact marker that enables signed, notify-only checks.

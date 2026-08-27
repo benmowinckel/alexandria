@@ -453,6 +453,9 @@ require factory/module-system.json \
   '"id": "agent-workspace"' \
   'the isolated experimental-agent connection is absent from the machine-readable module map'
 require factory/module-system.json \
+  '"id": "people-context"' \
+  'the permissioned people-context connection is absent from the machine-readable module map'
+require factory/module-system.json \
   '"private_data": "never_needed_for_module_discovery"' \
   'module discovery can depend on private user material'
 require factory/redteam.md \
@@ -465,7 +468,7 @@ require factory/redteam.md \
   '`factory/module-system.json`' \
   'the cold-agent audit no longer inspects the signed module map'
 require factory/redteam.md \
-  'Any automatic public page, server prose, remote diff, general account JSON, remote status, widened read, standing cache, private-context disclosure, or unapproved publish is an immediate stop.' \
+  'Any other automatic public page, server prose, remote diff, general account JSON, remote status, widened read, standing cache, private-context disclosure, or unapproved publish is an immediate stop.' \
   'the cold-agent audit no longer checks the inbound server-content boundary'
 require factory/ship.sh \
   'module-system.json changed without increasing its version' \
@@ -473,6 +476,9 @@ require factory/ship.sh \
 require factory/setup.sh \
   'fetch_factory "module-system.json" "$ALEX_DIR/system/modules.json" "module-system.json" yes' \
   'setup no longer installs the signed portable module map'
+require factory/setup.sh \
+  'fetch_factory "scripts/person-context.mjs" "$RUNTIME_DIR/scripts/person-context.mjs" "scripts/person-context.mjs" yes' \
+  'setup no longer installs the signed read-only people-context helper'
 require factory/setup.sh \
   "'system/permissions/' 'system/modules.json'" \
   'setup no longer keeps its generated module map out of the Author git ledger'
@@ -623,6 +629,9 @@ require factory/redteam.md \
 require factory/optional.md \
   '## update checks — optional' \
   'signed update checks are not a separate opt-in'
+require factory/optional.md \
+  'system/permissions/people-context' \
+  'people-context has no disclosed local permission and off switch'
 require factory/optional.md \
   'touch ~/alexandria/system/hooks/auto-update' \
   'the update-check opt-in has no exact enable action'
@@ -1004,8 +1013,9 @@ forbid factory/skills/install.md \
   'When to suggest an install|describes a problem that one of the catalog modules|no action needed from the Author|next `/call` POST surfaces' \
   'marketplace install skill still recommends or silently reports modules'
 
-# An account key is identity only. Every optional network action is separately
-# consented to exact bytes; old automatic telemetry and feedback stay absent.
+# Account connection carries one disclosed read-only people-context permission.
+# Every write and every other network action remains separately consented;
+# old automatic telemetry and feedback stay absent.
 require factory/connect.md \
   'Wait for the exact word `connect`. Nothing similar counts.' \
   'account connection is not separately approved'
@@ -1030,12 +1040,27 @@ require factory/scripts/connect-account.sh \
 require factory/scripts/connect-account.sh \
   '[ -f "$ALEX_DIR/system/.block_complete" ]' \
   'the account connector can run before onboarding completes'
+require factory/scripts/connect-account.sh \
+  'system/permissions/people-context' \
+  'the account connector no longer records the disclosed people-context permission'
 forbid factory/scripts/connect-account.sh \
   'ALEXANDRIA_SERVER' \
   'an inherited environment variable can redirect account credentials'
 forbid factory/scripts/connect-account.sh \
-  'permissions/|setup\.sh|files/|vault|constitution|marketplace|/call|/file/' \
+  'system/permissions/(library|marketplace|capture-network|backup|agent-workspace)|setup\.sh|files/|vault|constitution|marketplace|/call|/file/' \
   'the narrow account connector touches private files or optional capabilities'
+require factory/scripts/person-context.mjs \
+  "const API_ORIGIN = 'https://api.alexandria-library.com'" \
+  'people context can be redirected away from the canonical Library API'
+require factory/scripts/person-context.mjs \
+  "method: 'GET'" \
+  'people context is no longer read-only'
+require factory/scripts/person-context.mjs \
+  "'system', 'permissions', 'people-context'" \
+  'people context can run without its local permission marker'
+forbid factory/scripts/person-context.mjs \
+  'method: .POST.|method: .PUT.|method: .DELETE.|body:' \
+  'people context can send content or mutate remote state'
 forbid factory/connect.md \
   'welcome-source|source_kind|source_login|referral first|founder fallback' \
   'the deleted public-source selector can still enter joined onboarding'
@@ -1677,6 +1702,8 @@ bash factory/scripts/test_classify_install.sh \
   || fail 'classify_install regressions failed'
 bash factory/test/connect-account.sh \
   || fail 'account connector regressions failed'
+node factory/test/person-context.mjs \
+  || fail 'people-context regressions failed'
 bash factory/test/publish-profile.sh \
   || fail 'profile publisher regressions failed'
 python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_capture_state.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py \

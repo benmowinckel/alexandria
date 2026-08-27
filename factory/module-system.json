@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "groups": {
     "core": {
       "default_state": "on",
@@ -29,6 +29,7 @@
       "default_state": "off_until_exact_approval",
       "items": [
         { "id": "account", "local_ref": "system/.api_key" },
+        { "id": "people-context", "local_ref": "system/permissions/people-context" },
         { "id": "library", "local_ref": "canon/library.md" },
         { "id": "library-stand", "local_ref": "canon/stand.md" },
         { "id": "marketplace", "local_ref": "canon/marketplace.md" },

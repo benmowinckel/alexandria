@@ -42,10 +42,11 @@ Alexandria-built modules are labelled **official** in the marketplace. Most are 
 
 - **signed update notices** — public release checks only; nothing applies automatically.
 - **account** — stores one local key for separately requested account actions; it adds no standing read or inbound instruction.
+- **people context** — one removable permission lets the Author's ai use what a named person allowed this account to read when that person materially affects the current task; no prompt or private context leaves.
 - **Library publication** — `library.md` + `filter.md`; exact files and audiences need exact hash-bound approval.
 - **Library stand** — `stand.md`; Benjamin's personalizable starting shape for that connection, installed as a reference, inert until the Author asks, and free to fork or replace.
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
-- **public reading** — deliberate browser or isolated-reader access only; no session-start fetch or live private-loop cache.
+- **public reading** — general browsing remains deliberate browser or isolated-reader access only; people context is the one narrow standing Library read, with no session-start fetch or live private-loop cache.
 - **Git backup** — the owned Git history may use any private remote; GitHub is the current soft default, never the source of truth.
 - **agent workspace** — one fresh private Git repo per experimental AI, containing only exact selected context plus an untrusted write-back inbox; discoverable as an official module, but never part of Foundation or default setup.
 - **Drive pocket copy** — a narrow chat projection and capture inbox, not canon and not a general trial-agent grant.

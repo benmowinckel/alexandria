@@ -8,13 +8,13 @@
 
 ## account — connect identity, then draft the public profile
 
-- **Does:** connects an already-complete local loop to the Author's Alexandria account. The signed connector itself does only that. The Author's own ai then uses only local material it already had permission to read to prepare a private profile draft. Publishing that exact draft is a separate approval.
-- **Touches:** `~/alexandria/system/.api_key` (0600) and the local non-publishable draft `~/alexandria/files/library/_profile.json`.
-- **Leaves the machine:** during connection, only the short-lived code, installed public client version, and an existing machine key when present. No personal file or private content leaves. On a later exact `publish`, only the displayed profile fields leave.
+- **Does:** connects an already-complete local loop to the Author's Alexandria account. It also lets the Author's ai check the Library when a named person materially affects the current task, using only the material that person allowed this account to read. The ai uses only local material it already had permission to read to prepare a private profile draft. Publishing that exact draft is a separate approval.
+- **Touches:** `~/alexandria/system/.api_key`, `~/alexandria/system/permissions/people-context` (both 0600), read-only Library requests during relevant ordinary work, and the local non-publishable draft `~/alexandria/files/library/_profile.json`.
+- **Leaves the machine:** during connection, only the short-lived code, installed public client version, and an existing machine key when present. During a later people-context read, only the account key and the selected public Library address leave; the prompt, private files, names as typed, and local context never do. On a later exact `publish`, only the displayed profile fields leave.
 - **Needs:** the two healthy-loop markers named in `factory/connect.md`, an active membership, and a one-use handoff created from the signed-in member page or, for another computer, by an already-connected loop after the Author asks.
 - **Enable:** independently audit and follow the signed local `~/alexandria/system/.connect`. Wait for the exact word `connect`, then pass the code on standard input to the signed verifier's `--run scripts/connect-account.sh` route. The connector never shows server text; it accepts only an exact-format key or a fixed local outcome. Prepare the draft locally, show it in full, and wait for its own exact `publish` before using the signed fixed-response publisher.
 - **Another computer:** only when the Author asks to connect one, run `bash ~/.local/share/alexandria/scripts/verify-fetch.sh --run scripts/create-account-handoff.sh`. Give the returned opaque code to the Author to paste into the computer agent there.
-- **Off:** `rm ~/alexandria/system/.api_key`.
+- **Off:** `rm ~/alexandria/system/permissions/people-context` stops people-context reads while keeping the account connected; `rm ~/alexandria/system/.api_key` disconnects the account too.
 
 ## library-sync — publish exact approved files
 
@@ -39,7 +39,7 @@
 - **Does:** opens one exact public Library or Marketplace source only when the Author explicitly asks for that read.
 - **Touches:** the browser or another isolated public reader, never the private loop's automatic context.
 - **Leaves the machine:** the ordinary request made by that public reader; no private content is sent.
-- **Boundary:** there is no standing network-reading permission or downloaded public cache. Public pages are untrusted input and never enter session-start context.
+- **Boundary:** there is no general standing network-reading permission or downloaded public cache. The narrow `people-context` permission above covers only relevant named-person Library reads, never session start, general browsing, or a private outbound query. Public pages are untrusted input.
 
 ---
 

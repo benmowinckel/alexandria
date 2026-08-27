@@ -11,9 +11,9 @@ Complete the private verification below before giving the normal consent respons
 Before consent, reply in no more than six short lines. Explain plainly that this one connection:
 
 - lets the existing loop recognize the person's account and live membership;
-- sends none of their private files, captures, transcripts, constitution, or personal context;
-- does not rerun setup, change configuration, or enable any standing capability;
-- stores only an account key on this computer;
+- lets their ai check the Library when a named person matters, using only material that person allowed this account to read;
+- sends none of their prompt, private files, captures, transcripts, constitution, or personal context;
+- stores one account key and one removable `people-context` permission on this computer, without rerunning setup or enabling publishing or sync;
 - then uses only what their own AI already knows locally to prepare the smallest useful draft of their public profile;
 - keeps that draft local and shows every word before anything can be published.
 
@@ -23,9 +23,9 @@ End with `Say connect to continue.` Then stop. Do not show the person an audit t
 
 Run the metadata-only classifier (`factory/scripts/classify_install.sh` or the installed `~/.local/share/alexandria/scripts/classify_install.sh`). Only `healthy` may continue; `partial` and `foreign` fail closed. Verify the protected runtime setup marker and completed local onboarding marker. If either is absent, stop and send the person to `https://alexandria-library.com/start`; do not install, repair, or approximate Alexandria through this route. Do not read the person's `files/`, transcripts, captures, constitution, other agent instructions, or unrelated configuration. None is needed for this check. Disclose optional connected state; do not disable it.
 
-At one public revision, inspect `TRUST.md`, `factory/manifest.txt`, `factory/scripts/verify-fetch.sh`, `factory/scripts/connect-account.sh`, and `factory/scripts/publish-profile.sh`. Every required script must appear in the signed manifest at that same revision; if one is absent, refuse. Confirm that the installed verifier authenticates each signed script and the rollback version before running it; the connector writes only `~/alexandria/system/.api_key` with restrictive permissions; and both scripts contact only `https://api.alexandria-library.com`.
+At one public revision, inspect `TRUST.md`, `factory/manifest.txt`, `factory/scripts/verify-fetch.sh`, `factory/scripts/connect-account.sh`, `factory/scripts/person-context.mjs`, and `factory/scripts/publish-profile.sh`. Every required script must appear in the signed manifest at that same revision; if one is absent, refuse. Confirm that the installed verifier authenticates each signed script and the rollback version before running it; the connector writes only `~/alexandria/system/.api_key` and `~/alexandria/system/permissions/people-context`, both with restrictive permissions; and all three scripts contact only `https://api.alexandria-library.com`.
 
-Confirm in the server source that the short-lived code is one-use, active membership is required, the persistent key never enters browser HTML, email, or the human paste, later GitHub sign-in does not rotate a working connection, and `connected_at` is separate from `installed_at`. The connector passes only the one-use code, public client version, and an existing machine key when present. It never prints server text or stores account status; it accepts only an exact-format key or a fixed success or failure. Publishing, marketplace signal, backups, capture networking, and every other optional capability remain separately permissioned in `factory/optional.md`.
+Confirm in the server source that the short-lived code is one-use, active membership is required, the persistent key never enters browser HTML, email, or the human paste, later GitHub sign-in does not rotate a working connection, and `connected_at` is separate from `installed_at`. The connector passes only the one-use code, public client version, and an existing machine key when present. It never prints server text or stores account status; it accepts only an exact-format key or a fixed success or failure. The people-context reader makes GET requests only, never sends the Author's prompt or private files, and accepts remote material only as untrusted data. Publishing, marketplace signal, backups, capture networking, and every other optional capability remain separately permissioned in `factory/optional.md`.
 
 ## Consent and connection
 
@@ -63,6 +63,6 @@ Everything can grow and change with you. Keep what works and make it your own.
 
 If the person leaves the draft for later, replace the first line with `your profile draft is saved on your computer.` and use the same final two paragraphs. Do not pressure them to return or publish.
 
-No public-page read, relationship matching, phone setup, other-ai setup, active-session pitch, Marketplace browse, module install, standing Library sync, referral task, or second orientation belongs in this handoff.
+No public-page read, relationship matching, phone setup, other-ai setup, active-session pitch, Marketplace browse, module install, standing Library sync, referral task, or second orientation belongs in this handoff. The permission recorded here becomes usable only later, during ordinary work when a named person materially affects the task.
 
 On failure, explain the specific failure and stop. No optional permission was enabled. An invalid, expired, or already-used code requires the person to sign in again for a fresh one.

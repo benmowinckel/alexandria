@@ -64,12 +64,13 @@ chmod 700 "$tmp/bin/curl"
 env HOME="$tmp/healthy" ALEX_DIR="$tmp/healthy/alexandria" ALEX_RUNTIME_DIR="$tmp/healthy/runtime" PATH="$tmp/bin:$PATH" bash "$CONNECTOR" <<<"$CODE" >"$tmp/success"
 [ "$(sed -n '1p' "$tmp/success")" = 'your loop is connected to your Alexandria account.' ] || fail "success did not prove the connection"
 [ "$(sed -n '2p' "$tmp/success")" = 'your private files stay on this computer; only public files you approve can be sent.' ] || fail "success overstated the data boundary"
-[ "$(sed -n '3p' "$tmp/success")" = 'the connection adds no standing instructions and changes nothing else.' ] || fail "success overstated connection scope"
+[ "$(sed -n '3p' "$tmp/success")" = 'when a person matters, your ai can now use only what that person allowed you to read in the Library.' ] || fail "success did not name the bounded people-context read"
 [ "$(wc -l < "$tmp/success" | tr -d ' ')" = '3' ] || fail "success output is not the minimal three-line proof"
 [ "$(cat "$tmp/healthy/alexandria/system/.api_key")" = 'alex_11111111111111111111111111111111' ] || fail "wrong key written"
 [ ! -e "$tmp/healthy/alexandria/system/.protocol_status.json" ] || fail "server status entered the private loop"
 node -e 'const fs=require("fs");const mode=fs.statSync(process.argv[1]).mode&0o777;if(mode!==0o600)process.exit(1)' "$tmp/healthy/alexandria/system/.api_key" || fail "key mode is not 0600"
-[ ! -e "$tmp/healthy/alexandria/system/permissions" ] || fail "an optional permission was created"
+[ "$(cat "$tmp/healthy/alexandria/system/permissions/people-context")" = 'on' ] || fail "people-context permission was not recorded"
+node -e 'const fs=require("fs");const mode=fs.statSync(process.argv[1]).mode&0o777;if(mode!==0o600)process.exit(1)' "$tmp/healthy/alexandria/system/permissions/people-context" || fail "people-context permission mode is not 0600"
 
 # Reconnecting the same account reuses the valid local key instead of rotating.
 old_key=$(cat "$tmp/healthy/alexandria/system/.api_key")

@@ -7,6 +7,7 @@ ALEX_DIR="${ALEX_DIR:-$HOME/alexandria}"
 RUNTIME_DIR="${ALEX_RUNTIME_DIR:-$HOME/.local/share/alexandria}"
 SERVER="https://api.alexandria-library.com"
 KEY_FILE="$ALEX_DIR/system/.api_key"
+PEOPLE_CONTEXT_PERMISSION="$ALEX_DIR/system/permissions/people-context"
 
 fail() { echo "account connection failed: $1" >&2; exit 1; }
 
@@ -83,7 +84,10 @@ else
   mv "$new_key" "$KEY_FILE"
 fi
 chmod 600 "$KEY_FILE"
+mkdir -p "$(dirname "$PEOPLE_CONTEXT_PERMISSION")"
+printf '%s\n' 'on' > "$PEOPLE_CONTEXT_PERMISSION"
+chmod 600 "$PEOPLE_CONTEXT_PERMISSION"
 
 echo "your loop is connected to your Alexandria account."
 echo "your private files stay on this computer; only public files you approve can be sent."
-echo "the connection adds no standing instructions and changes nothing else."
+echo "when a person matters, your ai can now use only what that person allowed you to read in the Library."
