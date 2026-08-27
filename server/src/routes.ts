@@ -946,9 +946,10 @@ export function registerRoutes(app: Hono) {
     });
   });
 
-  // Empty liveness check for legacy setup refreshes. A valid key produces only
-  // a status code; no account data or server-authored text enters the loop.
-  app.on('HEAD', '/account/connect/current', async (c) => {
+  // Empty liveness check for legacy setup refreshes. Hono maps HEAD to a GET
+  // route and strips the body. Both methods therefore produce only a status
+  // code; no account data or server-authored text enters the loop.
+  app.get('/account/connect/current', async (c) => {
     const auth = await requireAuth(c);
     return auth ? c.body(null, 204) : c.body(null, 401);
   });

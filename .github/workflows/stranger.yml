@@ -1,14 +1,8 @@
 name: Stranger
 on:
   workflow_run:
-    workflows: [Deploy]
+    workflows: [Build]
     types: [completed]
-  push:
-    branches: [main]
-    paths:
-      - 'server/test/stranger.sh'
-      - 'factory/**'
-      - 'shared/**'
   workflow_dispatch: {}
 
 permissions:
@@ -16,7 +10,9 @@ permissions:
 
 jobs:
   stranger:
-    # Run after Deploy succeeds, on installer/test changes, or manual trigger
+    # Build covers every installer, server, shared, and stranger-test change.
+    # Running only after it succeeds avoids a duplicate clean-machine matrix
+    # racing the API deployment from the same commit.
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 5
     strategy:

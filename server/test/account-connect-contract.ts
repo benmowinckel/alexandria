@@ -57,7 +57,7 @@ assert.doesNotMatch(connector, /j\.error|github_login/, 'remote prose and identi
 assert.match(connector, /\^alex_\[a-f0-9\]\{32\}\$/);
 assert.match(connector, /Object\.keys\(j\)\.sort\(\)\.join/);
 assert.match(connector, /--max-filesize 4096/);
-assert.match(routes, /app\.on\('HEAD', '\/account\/connect\/current'/);
+assert.match(routes, /app\.get\('\/account\/connect\/current'/);
 
 const protocol = readFileSync(new URL('../src/protocol.ts', import.meta.url), 'utf8');
 assert.match(protocol, /app\.get\('\/files'/);

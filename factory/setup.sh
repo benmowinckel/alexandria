@@ -1755,7 +1755,7 @@ fi
 # api key: HTTP probe (already done above)
 case "$KEY_STATUS" in
   none) STATUS_KEY="skip"; DETAIL_KEY="not connected — private local loop only" ;;
-  200) STATUS_KEY="ok"; DETAIL_KEY="verified (HTTP 200)" ;;
+  204) STATUS_KEY="ok"; DETAIL_KEY="verified (HTTP 204)" ;;
   401) STATUS_KEY="fail"; DETAIL_KEY="rejected — get a fresh key at https://alexandria-library.com/signup" ;;
   000|"") STATUS_KEY="fail"; DETAIL_KEY="server unreachable — check https://api.alexandria-library.com/health" ;;
   *) STATUS_KEY="fail"; DETAIL_KEY="server returned HTTP $KEY_STATUS — protocol may be degraded" ;;
