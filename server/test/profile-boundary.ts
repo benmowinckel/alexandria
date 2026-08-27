@@ -94,6 +94,14 @@ assert.match(ownerGate, /String\(ownerId\) === String\(accessor\.github_id\)/);
 assert.match(ownerGate, /Authentication required/);
 assert.match(ownerGate, /403/);
 
+const profileWrite = library.slice(
+  library.indexOf("app.put('/library/:author/profile'"),
+  library.indexOf("app.get('/library/:author/grants'"),
+);
+assert.match(profileWrite, /requestedAuthorId === 'me'/);
+assert.match(profileWrite, /authorId = accessor\.github_login/);
+assert.match(profileWrite, /requestedAuthorId === 'me'[\s\S]*c\.json\(\{ ok: true \}\)/);
+
 for (const control of controls) {
   const method = control === 'twin' ? 'post' : 'put';
   const marker = `app.${method}('/library/:author/${control}'`;

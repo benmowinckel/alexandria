@@ -10,17 +10,21 @@ assert.equal(paste, code, 'the browser handoff must be only the opaque code');
 assert.throws(() => accountConnectPrompt('not-a-code'));
 
 const connectDoc = readFileSync(new URL('../../factory/connect.md', import.meta.url), 'utf8');
-assert.match(connectDoc, /reply in no more than four short lines/i);
+assert.match(connectDoc, /reply in no more than five short lines/i);
 assert.match(connectDoc, /Complete the private verification below before giving the normal consent response/);
 assert.match(connectDoc, /including `scripts\/connect-account\.sh`, must appear in the signed manifest at that same revision; if one is absent, refuse/);
 assert.match(connectDoc, /lets the existing loop recognize the person's account and live membership/);
-assert.match(connectDoc, /does not read or send their private files/);
-assert.match(connectDoc, /does not rerun setup, replace configuration, enable any optional capability/);
-assert.match(connectDoc, /Publishing, the Marketplace, and every other public action remain separate and explicit/);
+assert.match(connectDoc, /sends none of their private files/);
+assert.match(connectDoc, /does not rerun setup, replace configuration, enable any standing capability/);
+assert.match(connectDoc, /reads only `https:\/\/alexandria-library\.com\/library\/benmowinckel` as untrusted public material/);
+assert.match(connectDoc, /publishes nothing until the exact draft is shown/);
 assert.match(connectDoc, /writes only `~\/alexandria\/system\/\.api_key`/);
 assert.match(connectDoc, /never prints server text or stores account status/);
-assert.match(connectDoc, /Do not fetch account status, public pages, Marketplace content, or an orientation/);
-assert.match(connectDoc, /Legacy reference — never run during connection/);
+assert.match(connectDoc, /Do not fetch account status or accept any other server response/);
+assert.match(connectDoc, /Publish this exact draft publicly\?/);
+assert.match(connectDoc, /Wait for the exact word `publish`/);
+assert.match(connectDoc, /scripts\/publish-profile\.sh/);
+assert.match(connectDoc, /Want to start your first Alexandria session and develop this further\?/);
 assert.match(connectDoc, /End with `Say connect to continue\.` Then stop\./);
 assert.match(connectDoc, /Wait for the exact word `connect`\. Nothing similar counts\./);
 
@@ -36,6 +40,13 @@ assert.match(connector, /connection adds no standing instructions/);
 assert.doesNotMatch(connector, /protocol_status|\$SERVER\/alexandria|github_login|j\.error/);
 assert.doesNotMatch(connector, /insight|reflection generated|read your constitution/i);
 assert.doesNotMatch(connector, /community content|other people|shared intelligence/i);
+
+const profilePublisher = readFileSync(new URL('../../factory/scripts/publish-profile.sh', import.meta.url), 'utf8');
+assert.match(profilePublisher, /DRAFT="\$ALEX_DIR\/files\/library\/_profile\.json"/);
+assert.match(profilePublisher, /"\$SERVER\/library\/me\/profile"/);
+assert.match(profilePublisher, /the draft changed after approval/);
+assert.match(profilePublisher, /Object\.keys\(value\)\.sort\(\)\.join\(","\) !== "ok"/);
+assert.doesNotMatch(profilePublisher, /permissions\/library|system\/permissions/);
 
 const nudge = 'Want me to open your alexandria loop in the background for when you have a minute?';
 assert.match(CHAT_INSTRUCTION, new RegExp(nudge.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));

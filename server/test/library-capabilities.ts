@@ -85,6 +85,9 @@ assert.match(contract.inference.context_rule, /shadows are always-loaded unified
 assert.equal(contract.inference.sidecar_contract.context.request.works[0].category, 'shadows');
 assert.equal(contract.inference.hidden_context_fields, false);
 assert.match(contract.inference.audit, /context-preview$/);
+assert.deepEqual(contract.owner_api.profile_self, {
+  method: 'PUT', path: '/library/me/profile', response: { ok: true },
+});
 assert.equal(contract.owner_api.inference_sidecar.body.own_account, true);
 assert.match(contract.inference.setup.module, /factory\/canon\/plm\.md$/);
 assert.equal(contract.inference.sidecar_contract.context.path, '/agent');

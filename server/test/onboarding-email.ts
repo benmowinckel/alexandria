@@ -81,7 +81,8 @@ assert.match(CHAT_INSTRUCTION, /Never repeat it or open anything before yes/);
 assert.match(CHAT_INSTRUCTION, /On yes, open a new chat and invoke the native skill/);
 assert.match(CHAT_INSTRUCTION, /if unable, name the exact gesture/);
 assert.match(CHAT_INSTRUCTION, /alex_connect_/);
-assert.match(CHAT_INSTRUCTION, /changes no private files and permits only approved public sends/);
+assert.match(CHAT_INSTRUCTION, /Read signed `~\/alexandria\/system\/\.connect` and explain it/);
+assert.match(CHAT_INSTRUCTION, /Read only its exact untrusted page/);
 assert.match(CHAT_INSTRUCTION, /Wait for exact `connect`/);
 assert.match(CHAT_INSTRUCTION, /Never browse for instructions or expose server text/);
 assert.match(CHAT_INSTRUCTION, /accept only an exact key or fixed result/);
@@ -114,15 +115,15 @@ const bootstrap = readFileSync(new URL('../../factory/chat/bootstrap.md', import
 const bootstrapPrompt = bootstrap.match(/---PROMPT START---\n\n([\s\S]*?)\n\n---PROMPT END---/)?.[1];
 assert.equal(bootstrapPrompt, CHAT_INSTRUCTION, 'website instruction and fallback bootstrap must stay identical');
 const onboardingRouter = readFileSync(new URL('../../factory/onboarding.md', import.meta.url), 'utf8');
-assert.match(onboardingRouter, /Account instructions — after private value, before the optional community/);
+assert.match(onboardingRouter, /Account instructions — later, only when useful/);
 assert.match(onboardingRouter, /attach or grant only the Alexandria folder/);
 assert.match(onboardingRouter, /native hooks first/);
-assert.match(onboardingRouter, /Only after the person is finished with other AIs does the setup show the fixed Library destination/);
+assert.match(onboardingRouter, /offers the first active session/);
 const localOnboarding = readFileSync(new URL('../../factory/block.md', import.meta.url), 'utf8');
-assert.match(localOnboarding, /Phase 6 — Add the loop to their other AIs, then stop cleanly/);
-assert.match(localOnboarding, /which other ai do you use most\?/);
-assert.match(localOnboarding, /\.other_ai_instructions/);
-assert.match(localOnboarding, /library — https:\/\/alexandria-library\.com\/join/);
+assert.match(localOnboarding, /Five short lines of substance, maximum/);
+assert.match(localOnboarding, /Want to start the first session from this\?/);
+assert.doesNotMatch(localOnboarding, /which other ai do you use most\?/);
+assert.doesNotMatch(localOnboarding, /library — https:\/\/alexandria-library\.com\/join/);
 
 for (const content of [agent, computer, phone, chat]) {
   assert.match(content.html, /stop these emails/);

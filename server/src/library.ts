@@ -596,6 +596,7 @@ export function libraryCapabilityContract(input: {
     owner_api: {
       auth: 'Use the Author API key as Authorization: Bearer <key>, or the signed-in Library session cookie.',
       profile: { method: 'PUT', path: `/library/${author}/profile` },
+      profile_self: { method: 'PUT', path: '/library/me/profile', response: { ok: true } },
       file_categories: { method: 'PUT', path: `/library/${author}/file-categories` },
       file_order: { method: 'PUT', path: `/library/${author}/file-order` },
       file_subtitles: { method: 'PUT', path: `/library/${author}/file-subtitles` },
@@ -2928,9 +2929,20 @@ export function registerLibraryRoutes(app: Hono): void {
   // config); the public read rides GET /library/:author. The safe renderer and
   // visibility tiers remain shared; section slugs and routing belong to the Author.
   app.put('/library/:author/profile', async (c) => {
-    const authorId = c.req.param('author');
-    const owner = await resolveOwnerOnly(c, authorId);
-    if ('error' in owner) return owner.error;
+    const requestedAuthorId = c.req.param('author');
+    let authorId = requestedAuthorId;
+    if (requestedAuthorId === 'me') {
+      const accessorKey = extractApiKey(c);
+      const sessionToken = extractLibrarySessionToken(c);
+      const accessor = accessorKey
+        ? await findByApiKey(accessorKey)
+        : sessionToken ? await findByLibrarySessionToken(sessionToken) : null;
+      if (!accessor) return c.json({ error: 'Authentication required' }, 401);
+      authorId = accessor.github_login;
+    } else {
+      const owner = await resolveOwnerOnly(c, authorId);
+      if ('error' in owner) return owner.error;
+    }
 
     const body = await c.req.json().catch(() => ({})) as {
       display_name?: unknown; location?: unknown; contact?: unknown; website?: unknown;
@@ -3017,7 +3029,9 @@ export function registerLibraryRoutes(app: Hono): void {
     ).bind(authorId, JSON.stringify(settings), now, now).run();
 
     logEvent('library_profile_set', { author: authorId });
-    return c.json({ ok: true, profile: normalizeProfile(settings) });
+    return requestedAuthorId === 'me'
+      ? c.json({ ok: true })
+      : c.json({ ok: true, profile: normalizeProfile(settings) });
   });
 
   app.get('/library/:author/grants', async (c) => {
