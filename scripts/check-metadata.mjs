@@ -74,8 +74,9 @@ for (const route of ['/memo', '/pitch', '/demo']) {
 }
 
 for (const asset of [
-  '/robots.txt', '/sitemap.xml', '/manifest.webmanifest', '/favicon-16.png',
-  '/favicon-32.png', '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png',
+  '/robots.txt', '/sitemap.xml', '/manifest.webmanifest', '/favicon.ico',
+  '/icon.svg', '/favicon-16.png', '/favicon-32.png', '/favicon-64.png',
+  '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png',
   '/icon-maskable.png', '/opengraph-image',
 ]) {
   const response = await fetch(`${base}${asset}`);

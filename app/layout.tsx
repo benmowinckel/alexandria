@@ -49,15 +49,13 @@ export const metadata: Metadata = {
   creator: "Benjamin a. Mowinckel",
   publisher: "alexandria",
   icons: {
-    // Opaque cream square + upright black "a." — matches brand mark.
-    // Opaque means no platform default backdrop ever leaks through;
-    // iOS/Android home screens round the cream square into the brand circle.
+    // Safari 26+ gets the vector mark; older Safari gets one ICO containing
+    // 16/32/64px frames so Retina tabs never stretch a 16px bitmap.
     icon: [
-      { url: "/favicon-16.png?v=6", type: "image/png", sizes: "16x16" },
-      { url: "/favicon-32.png?v=6", type: "image/png", sizes: "32x32" },
+      { url: "/favicon.ico?v=7", type: "image/x-icon", sizes: "16x16 32x32 64x64" },
+      { url: "/icon.svg?v=7", type: "image/svg+xml", sizes: "any" },
     ],
-    apple: [{ url: "/apple-touch-icon.png?v=6", sizes: "180x180", type: "image/png" }],
-    shortcut: "/favicon-32.png?v=6",
+    apple: [{ url: "/apple-touch-icon.png?v=7", sizes: "180x180", type: "image/png" }],
   },
   manifest: "/manifest.webmanifest",
   openGraph: {

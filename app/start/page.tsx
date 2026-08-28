@@ -304,6 +304,25 @@ export default async function StartPage({
         }
 
         .door-block { margin: 4px 0 0; width: 100%; }
+        .door-stage {
+          width: 100%;
+          transition:
+            opacity 170ms cubic-bezier(0.65, 0, 0.35, 1),
+            transform 170ms cubic-bezier(0.65, 0, 0.35, 1);
+        }
+        .door-stage.is-leaving {
+          opacity: 0;
+          transform: translateY(-4px);
+          pointer-events: none;
+        }
+        .door-stage.is-entering {
+          animation: doorStageIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+          pointer-events: none;
+        }
+        @keyframes doorStageIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: none; }
+        }
         .door-q {
           margin: 0 0 16px; font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-size: 19px; letter-spacing: 0.01em; color: var(--text-primary);
@@ -501,6 +520,19 @@ export default async function StartPage({
           .act-email.is-focused { flex-wrap: nowrap; }
           .act-email.is-focused .act-email-why { flex-basis: 0; margin-top: 0; }
           .act-email input { font-size: 16px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .door-stage {
+            transition: opacity 80ms cubic-bezier(0.25, 1, 0.5, 1);
+          }
+          .door-stage.is-leaving { transform: none; }
+          .door-stage.is-entering {
+            animation: doorStageFadeIn 160ms cubic-bezier(0.25, 1, 0.5, 1) both;
+          }
+          @keyframes doorStageFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
         }
       `}</style>
     </div>

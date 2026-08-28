@@ -49,6 +49,7 @@ assert.doesNotMatch(initial, /phone|which ai/i);
 assert.equal(await page.locator('.door-answers .door-btn').count(), 2);
 
 await page.getByRole('button', { name: /an agent/ }).click();
+await page.waitForURL(/#agent$/);
 assert.match(page.url(), /#agent$/);
 const reachBody = await page.locator('body').innerText();
 assert.match(reachBody, /is your computer in reach\?/);
@@ -56,6 +57,7 @@ assert.match(reachBody, /yes — i’ll grab it now/);
 assert.match(reachBody, /no — not right now/);
 
 await page.getByRole('button', { name: /yes — i’ll grab it now/ }).click();
+await page.waitForURL(/#computer$/);
 assert.match(page.url(), /#computer$/);
 const computerBody = await page.locator('body').innerText();
 assert.equal(await page.locator('.act-num').count(), 3);
@@ -125,7 +127,9 @@ if (mobile) {
   assert.doesNotMatch(shortcutBody, /add to iphone/i);
 }
 
-await page.goto(`${base}/start#chat`, { waitUntil: 'networkidle' });
+await page.goto(`${base}/start`, { waitUntil: 'networkidle' });
+await page.getByRole('button', { name: /just chat/ }).click();
+await page.waitForURL(/#chat$/);
 const chatChoiceBody = await page.locator('body').innerText();
 assert.match(chatChoiceBody, /which chat do you use most\?/);
 assert.match(chatChoiceBody, /chatgpt/);
@@ -133,6 +137,7 @@ assert.match(chatChoiceBody, /claude/);
 assert.match(chatChoiceBody, /gemini/);
 assert.equal(await page.locator('.door-answers .door-btn').count(), 3);
 await page.getByRole('button', { name: 'chatgpt' }).click();
+await page.waitForURL(/#chatgpt$/);
 assert.match(page.url(), /#chatgpt$/);
 const chatBody = await page.locator('body').innerText();
 assert.equal(await page.locator('.act-num').count(), 3);
@@ -170,6 +175,7 @@ assert.doesNotMatch(CHAT_SETUP_PROMPT, /you have my permission/i);
 await page.goto(`${base}/chat`, { waitUntil: 'networkidle' });
 assert.match(await page.locator('body').innerText(), /which chat do you use most\?/);
 await page.getByRole('button', { name: 'claude' }).click();
+await page.waitForURL(/#claude$/);
 const directChatBody = await page.locator('body').innerText();
 assert.equal(await page.locator('.act-num').count(), 3);
 assert.match(directChatBody, new RegExp(CHAT_HOSTS.claude.instructionPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
@@ -177,6 +183,7 @@ assert.match(directChatBody, new RegExp(CHAT_HOSTS.claude.drivePath.replace(/[.*
 
 await page.goto(`${base}/chat`, { waitUntil: 'networkidle' });
 await page.getByRole('button', { name: 'gemini' }).click();
+await page.waitForURL(/#gemini$/);
 const geminiChatBody = await page.locator('body').innerText();
 assert.match(geminiChatBody, new RegExp(CHAT_HOSTS.gemini.instructionPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 assert.match(geminiChatBody, new RegExp(CHAT_HOSTS.gemini.drivePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
