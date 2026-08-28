@@ -49,13 +49,11 @@ export const metadata: Metadata = {
   creator: "Benjamin a. Mowinckel",
   publisher: "alexandria",
   icons: {
-    // Safari 26+ gets the vector mark; older Safari gets one ICO containing
-    // 16/32/64px frames so Retina tabs never stretch a 16px bitmap.
-    icon: [
-      { url: "/favicon.ico?v=7", type: "image/x-icon", sizes: "16x16 32x32 64x64" },
-      { url: "/icon.svg?v=7", type: "image/svg+xml", sizes: "any" },
-    ],
-    apple: [{ url: "/apple-touch-icon.png?v=7", sizes: "180x180", type: "image/png" }],
+    // Safari briefly renders the ICO, then replaces it with a visually larger
+    // SVG when both are declared. Keep one favicon source so the small tab mark
+    // stays unchanged after the page finishes loading.
+    icon: [{ url: "/favicon.ico?v=8", type: "image/x-icon", sizes: "16x16 32x32 64x64" }],
+    apple: [{ url: "/apple-touch-icon.png?v=8", sizes: "180x180", type: "image/png" }],
   },
   manifest: "/manifest.webmanifest",
   openGraph: {

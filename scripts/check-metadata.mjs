@@ -27,11 +27,16 @@ function meta(html, key, value) {
 }
 
 function link(html, rel) {
+  return links(html, rel)[0] || '';
+}
+
+function links(html, rel) {
+  const hrefs = [];
   for (const match of html.matchAll(/<link\s+[^>]*>/gi)) {
     const a = attrs(match[0]);
-    if ((a.rel || '').split(/\s+/).includes(rel)) return a.href || '';
+    if ((a.rel || '').split(/\s+/).includes(rel) && a.href) hrefs.push(a.href);
   }
-  return '';
+  return hrefs;
 }
 
 function assert(ok, message) {
@@ -47,6 +52,7 @@ for (const route of publicRoutes) {
   const canonical = link(html, 'canonical');
   const ogImage = meta(html, 'property', 'og:image');
   const twitterImage = meta(html, 'name', 'twitter:image');
+  const favicons = links(html, 'icon');
   const resolvedPath = new URL(response.url).pathname;
   const expectedCanonical = resolvedPath === '/' ? 'https://alexandria-library.com' : `https://alexandria-library.com${resolvedPath}`;
 
@@ -55,6 +61,8 @@ for (const route of publicRoutes) {
   assert(canonical === expectedCanonical, `${route}: canonical is ${canonical || 'missing'}`);
   assert(ogImage, `${route}: missing og:image`);
   assert(twitterImage, `${route}: missing twitter:image`);
+  assert(favicons.some((href) => href.includes('/favicon.ico?v=8')), `${route}: missing stable ICO favicon`);
+  assert(!favicons.some((href) => href.includes('.svg')), `${route}: SVG favicon causes Safari to resize after load`);
   if (serverHeadingRoutes.has(route)) {
     assert(/<h1(?:\s|>)/i.test(html), `${route}: missing server-rendered h1`);
   }
