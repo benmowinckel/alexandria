@@ -61,7 +61,9 @@ for (const route of publicRoutes) {
   assert(canonical === expectedCanonical, `${route}: canonical is ${canonical || 'missing'}`);
   assert(ogImage, `${route}: missing og:image`);
   assert(twitterImage, `${route}: missing twitter:image`);
-  assert(favicons.some((href) => href.includes('/favicon.ico?v=8')), `${route}: missing stable ICO favicon`);
+  assert(favicons.some((href) => href.includes('/favicon-16.png?v=9')), `${route}: missing exact 16px favicon`);
+  assert(favicons.some((href) => href.includes('/favicon-32.png?v=9')), `${route}: missing exact Retina favicon`);
+  assert(!favicons.some((href) => href.includes('/favicon.ico')), `${route}: ICO must remain fallback-only`);
   assert(!favicons.some((href) => href.includes('.svg')), `${route}: SVG favicon causes Safari to resize after load`);
   if (serverHeadingRoutes.has(route)) {
     assert(/<h1(?:\s|>)/i.test(html), `${route}: missing server-rendered h1`);

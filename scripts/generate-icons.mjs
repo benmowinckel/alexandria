@@ -2,12 +2,15 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
-const source = await readFile(new URL('../public/icon.svg', import.meta.url));
-const targets = [
+const faviconSource = await readFile(new URL('./favicon-source.svg', import.meta.url));
+const appSource = await readFile(new URL('../public/icon.svg', import.meta.url));
+const faviconTargets = [
   ['favicon-16.png', 16],
   ['favicon-32.png', 32],
   ['favicon-64.png', 64],
   ['favicon.png', 64],
+];
+const appTargets = [
   ['apple-touch-icon.png', 180],
   ['icon-192.png', 192],
   ['icon-512.png', 512],
@@ -16,8 +19,8 @@ const targets = [
 
 const rendered = new Map();
 
-for (const [name, size] of targets) {
-  const png = await sharp(source, { density: 768 })
+for (const [name, size] of faviconTargets) {
+  const png = await sharp(faviconSource, { density: 768 })
     .resize(size, size, { fit: 'fill', kernel: sharp.kernel.lanczos3 })
     .png({ compressionLevel: 9, palette: false })
     .toBuffer();
@@ -26,8 +29,14 @@ for (const [name, size] of targets) {
   await writeFile(fileURLToPath(new URL(`../public/${name}`, import.meta.url)), png);
 }
 
-// Older Safari gets one ICO containing both standard- and Retina-density
-// frames, which lets WebKit choose without ever stretching a 16px bitmap.
+for (const [name, size] of appTargets) {
+  await sharp(appSource, { density: 768 })
+    .resize(size, size, { fit: 'fill', kernel: sharp.kernel.lanczos3 })
+    .png({ compressionLevel: 9, palette: false })
+    .toFile(fileURLToPath(new URL(`../public/${name}`, import.meta.url)));
+}
+
+// Keep the root fallback visually identical to the declared PNG favicons.
 const icoSizes = [16, 32, 64];
 const directoryBytes = 6 + (16 * icoSizes.length);
 let imageOffset = directoryBytes;
