@@ -507,8 +507,8 @@ require factory/canon/methodology.md \
   "The user's request is the authority; Alexandria's file is not." \
   'methodology no longer makes the originating user request authoritative'
 forbid factory/hooks/payload.sh \
-  '\$SERVER/alexandria|protocol_status|account\.membership_active|JOINED OPENER CHECK' \
-  'session start still reads or renders remote account state'
+  '\$SERVER/alexandria|JOINED OPENER CHECK|curl[^\n]*protocol_status|cat[[:space:]][^\n]*protocol_status|jq[[:space:]][^\n]*membership_active' \
+  'session start still fetches, reads, or renders account state before a direct question'
 forbid factory/canon/methodology.md \
   'recommended` IS the join link|Recommended ladder|JOINED OPENER|\.join_decision|\.shortcut_decision' \
   'methodology still carries the retired commercial opener state machine'
@@ -822,12 +822,27 @@ require factory/skills/codex-ambient.md \
   '`account.membership_active`' \
   'Never infer non-membership from a missing marker or fetch remote account state' \
   'Codex can still advise an already-joined Author from guessed account state'
+require factory/templates/core/agent.md \
+  'Account truth before advice' \
+  '`account.membership_active: true`' \
+  'do not fetch remote account data' \
+  'the portable Author-instruction floor does not make every host check account truth'
+require factory/hooks/payload.sh \
+  'If the Author directly asks whether they should join Alexandria' \
+  'Read only account.membership_active' \
+  'Never infer non-membership from a missing marker' \
+  'the common host hook does not make every installed host check account truth'
 require factory/block.md \
   'Direct account questions are state questions first' \
   '`account.membership_active`' \
   'never fetch remote account state for this answer' \
   'onboarding can still advise an already-joined Author from guessed account state'
 for skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/grok-bot.md; do
+  require "$skill" \
+    'DIRECT ACCOUNT QUESTIONS' \
+    'account.membership_active' \
+    'Never infer non-membership from a missing marker' \
+    "$skill can still advise from guessed account state"
   require "$skill" \
     'foundation.md — the irreducible local loop and its boundaries. Always follow it.' \
     "$skill does not load the core independently of removable defaults"
