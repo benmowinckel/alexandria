@@ -41,7 +41,7 @@
 }
 
 .join-title {
-  margin: 0 0 44px;
+  margin: 0 0 64px;
   color: var(--text-secondary);
   font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
   font-size: 21px;
@@ -243,7 +243,7 @@
 @media (max-width: 640px) {
   .join-header { padding: 20px 20px 0; }
   .join-main { padding: 3rem 24px 5rem; }
-  .join-title { margin-bottom: 40px; font-size: 20px; }
+  .join-title { margin-bottom: 56px; font-size: 20px; }
   .join-argument { gap: 32px; }
   .join-claim { font-size: 27px; }
   .join-argument p {
