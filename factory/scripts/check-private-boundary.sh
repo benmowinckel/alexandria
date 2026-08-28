@@ -420,7 +420,16 @@ require factory/canon/methodology.md \
 require factory/canon/methodology.md \
   'Compare only its local version with `system/.module_guide_seen`; no account handshake or remote metadata is needed.' \
   'module orientation can still depend on remote account state'
+require factory/canon/methodology.md \
+  '**Direct material owns the opening.**' \
+  'methodology can still replace supplied Author material with a generic opener'
 for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/grok-bot.md; do
+  require "$opener_skill" \
+    'that material owns the opening' \
+    "$opener_skill can still replace direct Author material with the menu opener"
+  require "$opener_skill" \
+    'Do not replace their thought with `invite`, `recommended`, `everything`, or another menu' \
+    "$opener_skill no longer protects a supplied thought from the menu opener"
   require "$opener_skill" \
     'CAPTURE BACKGROUND — extraction never holds the session hostage.' \
     "$opener_skill no longer makes capture extraction non-blocking"
