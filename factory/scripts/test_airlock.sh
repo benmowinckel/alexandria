@@ -7,7 +7,8 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 export ALEXANDRIA_DIR="$TMP/alexandria"
-mkdir -p "$ALEXANDRIA_DIR/files/library/public" "$ALEXANDRIA_DIR/files/private"
+mkdir -p "$ALEXANDRIA_DIR/files/library/public" "$ALEXANDRIA_DIR/files/private" \
+  "$ALEXANDRIA_DIR/system/permissions"
 printf 'safe public context\n' > "$ALEXANDRIA_DIR/files/library/public/everyone.md"
 printf 'must never appear\n' > "$ALEXANDRIA_DIR/files/private/secret.md"
 printf 'files/library/public/everyone.md\tcontext/everyone.md\n' > "$TMP/allowlist.tsv"
@@ -22,12 +23,6 @@ if git -C "$TMP/workspace" rev-list --objects --all | grep -q 'secret.md'; then
   exit 1
 fi
 
-printf 'files/private/secret.md\tcontext/secret.md\n' > "$TMP/private.tsv"
-if python3 "$SCRIPT" plan airlock "$TMP/private.tsv" >/dev/null 2>&1; then
-  echo 'Airlock test failed: private context was exportable' >&2
-  exit 1
-fi
-
 printf 'changed public context\n' > "$ALEXANDRIA_DIR/files/library/public/everyone.md"
 python3 "$SCRIPT" refresh airlock >/dev/null
 test "$(cat "$TMP/workspace/context/everyone.md")" = 'changed public context'
@@ -35,7 +30,7 @@ test "$(cat "$TMP/workspace/context/everyone.md")" = 'changed public context'
 git init --bare "$TMP/remote.git" >/dev/null
 git -C "$TMP/workspace" config \
   url."file://$TMP/remote.git".insteadOf \
-  https://github.com/fixture/alexandria-airlock.git
+  https://github.com/fixture/fixture-ai-airlock.git
 
 mkdir -p "$TMP/bin"
 printf '%s\n' \
@@ -47,14 +42,14 @@ printf '%s\n' \
   '  "api user") printf "%s\n" "${GH_IDENTITY:-fixture}" ;;' \
   '  "api user/orgs") if [ -n "${GH_ORG:-}" ]; then printf "unsafe-org\n"; fi ;;' \
   '  "api --paginate")' \
-  '    printf "fixture/alexandria-airlock\n"' \
+  '    printf "fixture/fixture-ai-airlock\n"' \
   '    if [ -n "${GH_EXTRA_REPO:-}" ]; then printf "fixture/sovereign\n"; fi' \
   '    ;;' \
   '  "repo view")' \
-  '    printf '\''{"nameWithOwner":"fixture/alexandria-airlock","visibility":"PRIVATE","isArchived":false}'\''' \
+  '    printf '\''{"nameWithOwner":"fixture/fixture-ai-airlock","visibility":"PRIVATE","isArchived":false}'\''' \
   '    ;;' \
   '  "issue list")' \
-  '    printf '\''[{"number":7,"title":"One thought","body":"issue capture body\\n","createdAt":"2026-08-27T12:00:00Z","url":"https://github.com/fixture/alexandria-airlock/issues/7"}]'\''' \
+  '    printf '\''[{"number":7,"title":"One thought","body":"issue capture body\\n","createdAt":"2026-08-27T12:00:00Z","url":"https://github.com/fixture/fixture-ai-airlock/issues/7"}]'\''' \
   '    ;;' \
   '  "issue close") printf "%s\n" "$3" >> "$GH_CLOSED" ;;' \
   '  *) exit 2 ;;' \
@@ -84,7 +79,9 @@ status="$(python3 "$SCRIPT" status airlock)"
 grep -q '^GitHub account: fixture$' <<< "$status"
 grep -q '^current occupant: Fixture AI$' <<< "$status"
 test "$(git -C "$TMP/workspace" config --get remote.origin.url)" = \
-  'https://github.com/fixture/alexandria-airlock.git'
+  'https://github.com/fixture/fixture-ai-airlock.git'
+grep -q '^Current AI: \*\*Fixture AI\*\*' "$TMP/workspace/README.md"
+grep -q '^Repository: \*\*fixture/fixture-ai-airlock\*\*' "$TMP/workspace/README.md"
 
 if GH_EXTRA_REPO=1 python3 "$SCRIPT" import airlock >/dev/null 2>&1; then
   echo 'Airlock test failed: account with another repository was accepted' >&2
@@ -95,13 +92,21 @@ if GH_ORG=1 python3 "$SCRIPT" import airlock >/dev/null 2>&1; then
   exit 1
 fi
 git -C "$TMP/workspace" remote set-url origin \
-  https://github.com/benmowinckel/alexandria-airlock.git
+  https://github.com/benmowinckel/fixture-ai-airlock.git
 if python3 "$SCRIPT" import airlock >/dev/null 2>&1; then
   echo 'Airlock test failed: sovereign-account remote was accepted' >&2
   exit 1
 fi
 git -C "$TMP/workspace" remote set-url origin \
+  https://github.com/fixture/fixture-ai-airlock.git
+git -C "$TMP/workspace" remote set-url origin \
   https://github.com/fixture/alexandria-airlock.git
+if python3 "$SCRIPT" import airlock >/dev/null 2>&1; then
+  echo 'Airlock test failed: generic repository name was accepted' >&2
+  exit 1
+fi
+git -C "$TMP/workspace" remote set-url origin \
+  https://github.com/fixture/fixture-ai-airlock.git
 
 printf 'a proposed idea\n' > "$TMP/workspace/inbox/proposal.md"
 git -C "$TMP/workspace" add inbox/proposal.md
@@ -122,7 +127,7 @@ grep -q '^trust: untrusted$' "$imported"
 grep -q '^a proposed idea$' "$imported"
 issue_imported="$ALEXANDRIA_DIR/files/vault/input/2026-08-27-airlock-issue-7.md"
 grep -q '^channel: github-issue$' "$issue_imported"
-grep -q '^repository: "fixture/alexandria-airlock"$' "$issue_imported"
+grep -q '^repository: "fixture/fixture-ai-airlock"$' "$issue_imported"
 grep -q '^issue capture body$' "$issue_imported"
 grep -q '^7$' "$GH_CLOSED"
 test "$(find "$ALEXANDRIA_DIR/files/vault/input" -name '*issue-7.md' | wc -l | tr -d ' ')" = 1
@@ -136,7 +141,7 @@ if python3 "$SCRIPT" import-all >/dev/null 2>&1; then
   echo 'Airlock test failed: changed issue capture was treated as safe to close' >&2
   exit 1
 fi
-printf '%s' $'---\nsource: airlock\nchannel: github-issue\nairlock: airlock\nrepository: "fixture/alexandria-airlock"\nissue: 7\nurl: "https://github.com/fixture/alexandria-airlock/issues/7"\ncreated: "2026-08-27T12:00:00Z"\ntitle: "One thought"\ntrust: untrusted\n---\n\nissue capture body\n' > \
+printf '%s' $'---\nsource: airlock\nchannel: github-issue\nairlock: airlock\nrepository: "fixture/fixture-ai-airlock"\nissue: 7\nurl: "https://github.com/fixture/fixture-ai-airlock/issues/7"\ncreated: "2026-08-27T12:00:00Z"\ntitle: "One thought"\ntrust: untrusted\n---\n\nissue capture body\n' > \
   "$ALEXANDRIA_DIR/files/vault/_input/$(basename "$issue_imported")"
 python3 "$SCRIPT" import-all >/dev/null &
 first_import=$!
@@ -144,6 +149,29 @@ python3 "$SCRIPT" import-all >/dev/null &
 second_import=$!
 wait "$first_import" "$second_import"
 test "$(find "$ALEXANDRIA_DIR/files/vault/_input" -name '*issue-7.md' | wc -l | tr -d ' ')" = 1
+
+printf 'files/library/public/everyone.md\tcontext/everyone.md\nfiles/private/secret.md\tcontext/private.md\n' > \
+  "$TMP/allowlist.tsv"
+private_plan="$(python3 "$SCRIPT" plan airlock "$TMP/allowlist.tsv")"
+grep -q 'bounded private snapshot; exact selected bytes need approval' <<< "$private_plan"
+private_digest="$(awk '/selection sha256:/ {print $3}' <<< "$private_plan")"
+if python3 "$SCRIPT" refresh airlock >/dev/null 2>&1; then
+  echo 'Airlock test failed: private context crossed without approval' >&2
+  exit 1
+fi
+printf '%s\n' "$private_digest" > "$ALEXANDRIA_DIR/system/permissions/airlock"
+python3 "$SCRIPT" refresh airlock >/dev/null
+test "$(cat "$TMP/workspace/context/private.md")" = 'must never appear'
+status="$(python3 "$SCRIPT" status airlock)"
+grep -q 'bounded private snapshot (exact bytes approved; frozen until reapproved)' <<< "$status"
+printf 'changed private context\n' > "$ALEXANDRIA_DIR/files/private/secret.md"
+if python3 "$SCRIPT" refresh airlock >/dev/null 2>&1; then
+  echo 'Airlock test failed: changed private bytes exported without new approval' >&2
+  exit 1
+fi
+test "$(cat "$TMP/workspace/context/private.md")" = 'must never appear'
+python3 "$SCRIPT" import-all >/dev/null
+test "$(cat "$TMP/workspace/context/private.md")" = 'must never appear'
 
 printf 'safe public context\n' > "$ALEXANDRIA_DIR/files/library/public/everyone.md"
 git -C "$TMP/workspace" checkout -b context-attack >/dev/null

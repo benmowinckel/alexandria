@@ -80,7 +80,7 @@
     {
       "path": "factory/systems/airlock",
       "name": "airlock",
-      "description": "A public-only context shadow and untrusted inbox behind a separate GitHub account.",
+      "description": "A bounded, approved context projection and untrusted inbox behind a separate GitHub account.",
       "kind": "system",
       "role": "official",
       "adaptation": "universal"
