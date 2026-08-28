@@ -24,6 +24,15 @@ test -f "$ALLOWED_SIGNERS" || { echo "error: Git allowed-signers file is missing
 test -f "$RELEASE_KEY_REFERENCE" || { echo "error: Touch ID release key is missing" >&2; exit 1; }
 test -f "$RELEASE_PUBLIC_KEY" || { echo "error: Touch ID release public key is missing" >&2; exit 1; }
 
+# Prefer the founder's authenticated GitHub session when present. Anonymous API
+# polling has a small shared rate limit and can falsely strand a release after
+# its checks have already passed.
+if command -v gh >/dev/null 2>&1 && gh auth status --hostname github.com >/dev/null 2>&1; then
+  github_api() { gh api "$1"; }
+else
+  github_api() { curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://api.github.com/$1"; }
+fi
+
 if [ ! -x "$SIGNER" ] || [ "$SIGNER_SOURCE" -nt "$SIGNER" ]; then
   mkdir -p "$(dirname "$SIGNER")"
   signer_tmp="${SIGNER}.tmp.$$"
@@ -110,13 +119,13 @@ verify=""
 test_job=""
 while [ "$SECONDS" -lt "$deadline" ]; do
   if [ -z "$run_id" ]; then
-    if ! runs="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://api.github.com/repos/benmowinckel/alexandria/actions/workflows/structural-release.yml/runs?head_sha=$signed&event=create&per_page=5")"; then
+    if ! runs="$(github_api "repos/benmowinckel/alexandria/actions/workflows/structural-release.yml/runs?head_sha=$signed&event=create&per_page=5")"; then
       sleep 20
       continue
     fi
     run_id="$(printf '%s' "$runs" | jq -r '.workflow_runs[0].id // empty')"
   else
-    if ! jobs="$(curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 "https://api.github.com/repos/benmowinckel/alexandria/actions/runs/$run_id/jobs?per_page=20")"; then
+    if ! jobs="$(github_api "repos/benmowinckel/alexandria/actions/runs/$run_id/jobs?per_page=20")"; then
       sleep 20
       continue
     fi

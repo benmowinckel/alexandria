@@ -817,6 +817,16 @@ require factory/skills/droid.md \
 require factory/skills/codex-ambient.md \
   'Do not reinterpret a name owned by a pre-existing foreign skill' \
   'Codex ambient instructions can still hijack a preserved foreign skill name'
+require factory/skills/codex-ambient.md \
+  'resolve current local state before giving advice' \
+  '`account.membership_active`' \
+  'Never infer non-membership from a missing marker or fetch remote account state' \
+  'Codex can still advise an already-joined Author from guessed account state'
+require factory/block.md \
+  'Direct account questions are state questions first' \
+  '`account.membership_active`' \
+  'never fetch remote account state for this answer' \
+  'onboarding can still advise an already-joined Author from guessed account state'
 for skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/grok-bot.md; do
   require "$skill" \
     'foundation.md — the irreducible local loop and its boundaries. Always follow it.' \

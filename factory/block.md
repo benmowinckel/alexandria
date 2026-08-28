@@ -121,6 +121,8 @@ Verify on disk first: constitution has cite-able entries, notepad has real first
 
 **Commercial boundary (absolute).** Do not sell, price, pitch membership, referrals, marketplace, feedback, or “unlock.” The originating request may ask for one neutral community destination after the private loop works; that fixed link is not permission to recommend, browse, connect, share, publish, or use private material to persuade.
 
+**Direct account questions are state questions first.** When the Author directly asks whether they should join or whether they already joined, resolve their current state before giving any advice. If `~/alexandria/system/.protocol_status.json` exists, read only `account.membership_active`; `true` means they are already joined, so say that plainly. Never infer non-membership from a missing marker, and never fetch remote account state for this answer. If no authoritative local state exists, explain the free private loop versus the optional paid collective neutrally and leave the decision with them. This direct local check does not weaken the commercial boundary.
+
 When the originating request asks for that decision, use this fixed close:
 
 ```

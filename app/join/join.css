@@ -42,12 +42,13 @@
 
 .join-title {
   margin: 0 0 64px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-family: var(--font-eb-garamond), ui-serif, Georgia, serif;
-  font-size: 21px;
+  font-size: 36px;
   font-style: italic;
   font-weight: 400;
-  line-height: 1.1;
+  line-height: 1.05;
+  letter-spacing: -.015em;
 }
 
 .join-argument {
@@ -243,7 +244,7 @@
 @media (max-width: 640px) {
   .join-header { padding: 20px 20px 0; }
   .join-main { padding: 3rem 24px 5rem; }
-  .join-title { margin-bottom: 56px; font-size: 20px; }
+  .join-title { margin-bottom: 56px; font-size: 33px; }
   .join-argument { gap: 32px; }
   .join-claim { font-size: 27px; }
   .join-argument p {
