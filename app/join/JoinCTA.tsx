@@ -91,7 +91,7 @@ export default function JoinCTA({
           <section className="join-move">
             <h2 className="join-claim">the connector.</h2>
             <p>
-              Joining adds a connector that brings the private parts you choose to share together with the public parts already spread across your other networks. You decide what friends, groups, or anyone can see, creating one public home you control, like <a href={FOUNDER_PROFILE_PATH}>the founder&apos;s</a>, while everything else stays private.
+              Joining adds a connector that brings the private parts you choose to share together with the public parts already spread across your other networks. You decide what friends, groups, or anyone can see, creating one public home you control, like <a href={FOUNDER_PROFILE_PATH} target="_blank" rel="noopener noreferrer">the founder&apos;s</a>, while everything else stays private.
             </p>
           </section>
           <section className="join-move">
