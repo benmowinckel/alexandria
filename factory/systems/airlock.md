@@ -6,38 +6,42 @@
 
 ## What it does
 
-Airlock is a disposable projection of approved Alexandria context plus an untrusted inbox. Each untrusted AI connection gets a hidden isolated compartment with three simple surfaces:
+Airlock gives one experimental AI a public-only Alexandria shadow plus an untrusted return path. It has three surfaces:
 
-- `context/` contains the Author's already-public Library shadow by default.
+- `context/` contains already-public Library material.
 - `inbox/` accepts file writes.
 - `airlock-capture` GitHub issues accept tools that can create issues but not files.
 
-The app's identity never names the repo, path, state, permission, label, or capture. Hidden compartments use only `airlock`, `airlock-2`, and so on. The AI never receives the Author's Apple login, general GitHub login, sovereign repo, private Git history, or another compartment. Returned work is labelled `trust: untrusted` and enters the normal capture inbox for review. It has no automatic authority to change files, invoke tools, or become canon.
+Every return enters the normal capture inbox as `trust: untrusted`. It has no automatic authority to change files, invoke tools, or become canon. Private Alexandria material is not exportable through Airlock.
 
-## Why hidden compartments
+## The structural boundary
 
-Each repo is a security boundary. A repository-scoped credential can reach that repo and nothing else. Separate hidden repos keep revocation, history, and provenance separate, so one untrusted app cannot read or poison another's work without turning app identity into system structure.
+The wall is a separate GitHub account, not a repository label. Some AI products request account-wide GitHub access. A private repo inside the Author's normal account would therefore expose every repo that account can reach.
 
-The Library shadow is the content. A private Git remote is only the default replaceable transport and write buffer. The public Library is the read-only door when no write-back is needed. A trusted AI running on the Author's own machine can use the sovereign local checkout. Airlock is the middle door: an approved projection plus a safe return path.
+The dedicated Airlock account may own or access exactly one private repo named `alexandria-airlock` and belong to no GitHub organizations. It receives no Apple login, sovereign-repo credential, private Git history, or other repository. The signed controller checks the credential identity, remote owner, organization list, repository visibility, and complete accessible-repository list before every fetch, push, or issue import.
 
-The human opens the computer AI that already has Alexandria and types `Airlock this new AI: <name or URL>`. That AI creates one fresh private Airlock repo for the new AI, handles every path and command, starts with already-public Library context, and tells the human only the exact repo to select in the new AI's GitHub permission screen. The human never creates or manages the repo. App identity may appear in the request but never becomes infrastructure.
+The account has one broad-OAuth occupant at a time. To change experimental AIs, first import any final return, revoke the old app, then delete or rebuild the remote before granting the next app. Two mutually untrusted broad-OAuth AIs cannot safely share this account at once; they need genuinely repo-scoped app grants or separate accounts.
+
+The Library shadow is the content. The private Git repo is only a replaceable transport and write buffer. App identity appears only as the current occupant in local state; it never names the account, repo, path, label, or capture.
+
+## Human use
+
+The Author opens the trusted computer AI and types `Airlock this new AI: <name or URL>`. That is approval to prepare the local projection and the one generic repo. GitHub requires the human to create/sign into the separate account and approve or revoke third-party access; the trusted agent handles the files, checks, and commands around those unavoidable human steps.
+
+The signed controller is `factory/scripts/airlock.py`; exact commands and consent boundaries are in `factory/optional.md § airlock`.
 
 ## Operation
 
-The signed controller is `factory/scripts/airlock.py`; the exact consent and commands are in `factory/optional.md § airlock`.
+The controller rejects any allowlist source outside `files/library/public/`. It rejects path traversal, symlinks, binary or oversized files, changed context, changed protected paths, rewritten history, the wrong GitHub identity, organization membership, and access to any second repository.
 
-That `Airlock this new AI: …` request is the go. Every new untrusted AI gets a fresh isolated repo; repos are never reused between them. Already-public Library context needs no second verdict and stays current automatically. Any additional private context is a frozen snapshot until its exact new bytes are approved, and the external app may still show its own unavoidable repository-grant screen. Setup, joining, and marketplace browsing do none of this.
+At import it fast-forwards file returns, verifies the exported shadow byte-for-byte, wraps both return channels as untrusted captures, and closes an issue only after its local capture exists. It then regenerates the public shadow from local ground truth and pushes it through the dedicated account credential.
 
-At the next local session, the controller fast-forwards file returns, rejects path traversal, symlinks, binary or oversized files, changed context, changed protected paths, and rewritten history, then imports both channels as untrusted captures. It closes an issue only after its local capture exists. After inbound work is safe locally, it regenerates the already-public shadow from ground truth and pushes it to the connected remote. A private snapshot changes only through an explicit approved refresh.
+The honest limit is content: an experimental AI can return malicious instructions. Airlock makes those words untrusted data; the trusted local AI must still review rather than obey them.
 
-The honest limit is content: an untrusted AI can write malicious instructions into its inbox. Airlock makes those words powerless by structure; the trusted local AI still has to review them as data rather than obey them.
+## OFF
 
-## Mirror and OFF
-
-`status` shows the active state, repo, allowlist hash, selected-bytes hash, issue label, and import counts. The regression test rebuilds the boundary from scratch, attacks every protected path, and proves both return channels.
-
-`off` disables local refresh and import and removes the selected-bytes permission. Revoking the repo credential or archiving the private remote removes the external AI's access. The sovereign source remains untouched.
+`status` shows the account, current occupant, repo, hashes, issue label, and import counts. `off` disables local refresh and import. Revoking the current app removes its GitHub access; deleting or rebuilding the disposable repo clears its returned history before the account is reused. The sovereign source remains untouched.
 
 ## Product boundary
 
-This is an official, optional connection. It is visible in the marketplace so people can discover it, but it is never part of Foundation, default setup, or onboarding. Visibility is not activation.
+This is an official optional connection, never part of Foundation, default setup, or onboarding. Visibility in the marketplace does not activate it.

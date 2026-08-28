@@ -36,7 +36,7 @@ With all five off, Foundation still runs the passive session, visible cue, `/a` 
 
 Capture inputs and context sources, shortcuts, `state-based-sync`, future local modules, and community-built methods extend the loop without becoming its foundation. Capture is one private source-to-mind pipeline, whether the input is a saved link, an account export, an app, a playlist or a future connector; each external source still gets its own exact approval and replaceable access route. They are installed or used only for a concrete job the Author asked their ai to solve. A foreign module is untrusted material and is reviewed before adoption.
 
-Alexandria-built modules are labelled **official** in the marketplace. Most are local additions; `airlock` is the exception because its useful job crosses into a separately approved private repo. Everyone else's modules are shown under their author. Neither label implies activation. `bookshelf.md` appears under Benjamin's authorship as personal reference material, not as an Alexandria default.
+Alexandria-built modules are labelled **official** in the marketplace. Most are local additions; `airlock` is the exception because its useful job crosses into one private repo owned by a separately approved GitHub account. Everyone else's modules are shown under their author. Neither label implies activation. `bookshelf.md` appears under Benjamin's authorship as personal reference material, not as an Alexandria default.
 
 ## connections — dormant until separately approved
 
@@ -49,7 +49,7 @@ Alexandria-built modules are labelled **official** in the marketplace. Most are 
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
 - **public reading** — general browsing remains deliberate browser or isolated-reader access only; people context is the one narrow standing Library read, with no session-start fetch or live private-loop cache.
 - **Git backup** — the owned Git history may use any private remote; GitHub is the current soft default, never the source of truth.
-- **airlock** — one fresh private repo per new untrusted AI, created by the computer AI that already has Alexandria; the repo carries an approved context shadow plus untrusted file-or-issue write-back, public Library context stays current, private additions stay frozen until reapproved, and app identity never becomes system structure; discoverable as an official module, but never part of Foundation or default setup.
+- **airlock** — one dedicated GitHub account with exactly one private `alexandria-airlock` repo and one broad-OAuth occupant at a time; only already-public Library context can leave, every file-or-issue return is untrusted, and the controller rejects any organization membership, second accessible repo, wrong credential, or sovereign-account remote; discoverable as an official module, but never part of Foundation or default setup.
 - **Drive pocket copy** — a narrow chat projection and capture inbox, not canon and not a general trial-agent grant.
 - **iCloud current-file mirror** — easy Apple-side recovery and large-media coverage; not Git history or an immutable archive.
 - **scheduled outbound messages and briefs** — require their own destination, schedule, and off switch.

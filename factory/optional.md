@@ -107,31 +107,32 @@
   ```
 - **Off:** `rm ~/alexandria/system/permissions/backup` — stops all automatic pushes and pulls while leaving the remote and the repo on their GitHub untouched.
 
-## airlock — an approved shadow and an untrusted inbox
+## airlock — a public shadow and an untrusted inbox
 
-- **Human use:** open the computer AI that already has Alexandria and type `Airlock this new AI: <name or URL>`. It creates one fresh private Airlock repo for that AI and tells the Author the exact repo to select in the new AI's GitHub permission screen. The Author selects only that repo; they never create or manage it themselves. The commands below are implementation, not homework.
-- **Does:** gives an untrusted AI a disposable projection of approved Alexandria context plus an inbox. The default projection is the already-public Library shadow. The AI returns work through `inbox/` files or `airlock-capture` GitHub issues. Both become provenance-wrapped `trust: untrusted` captures with no automatic authority to change canon or invoke tools.
-- **Naming:** app identity never enters a repo name, path, state, permission, label, or capture. Hidden compartments are named only `airlock`, `airlock-2`, and so on.
-- **Why isolated compartments:** the credential, history, revocation, and provenance stay separate. A shared repo would let one untrusted AI read or poison another's work.
-- **Touches:** the first hidden local clone at `~/.local/share/alexandria/airlock` and later clones under `~/.local/share/alexandria/airlocks/airlock-N`; `~/alexandria/system/airlock/<slot>.json`; the capture inbox after an import; and `~/alexandria/system/permissions/<slot>` only when private context is added.
-- **Leaves the machine:** only the selected context and the empty write-back structure, after the Author separately creates or connects a private remote. No secret, unselected file, sovereign history, or Alexandria account key enters the Airlock repo.
-- **Needs:** Python 3 and Git. The remote is optional and provider-neutral. If one is added, use a repository-scoped credential that can reach only this Airlock repo; never give an experimental AI the Author's general GitHub login or sovereign-repo key.
-- **Enable:** first write a TSV allowlist with one `source<TAB>context/destination` per line. Start with the already-public Library shadow. Fetch the signed controller, show the plan, and enable. If any selected file is private, stop after `plan`, show every source and hash, and bind the printed selection hash only after exact approval:
+- **Human use:** open the trusted computer AI and type `Airlock this new AI: <name or URL>`. The trusted AI prepares the one generic Airlock repo. The Author creates or signs into a separate GitHub account and approves or revokes third-party access when GitHub asks; those human GitHub steps cannot be delegated.
+- **Does:** gives one experimental AI a disposable projection of already-public Library context plus `inbox/` files and `airlock-capture` issues for returns. Every return becomes a provenance-wrapped `trust: untrusted` capture with no automatic authority to change canon or invoke tools.
+- **Structural wall:** the separate GitHub account is the boundary. It may own or access exactly one private repo named `alexandria-airlock` and belong to no organizations. The controller checks the credential, account, remote, visibility, organizations, and complete accessible-repo list before every network action.
+- **One occupant:** only one broad-OAuth experimental AI may be connected at a time. Before switching, import its final return, revoke it, and delete or rebuild the disposable remote. Concurrent broad-OAuth AIs need separate accounts or genuinely repo-scoped app grants.
+- **Naming:** app identity is recorded only as the current occupant in local state. It never names the account, repo, path, label, or capture.
+- **Touches:** `~/.local/share/alexandria/airlock`; `~/alexandria/system/airlock/airlock.json`; the dedicated GitHub account's one `alexandria-airlock` repo; and the capture inbox after import.
+- **Leaves the machine:** already-public files selected from `~/alexandria/files/library/public/`, plus the empty write-back structure. Private files, secrets, sovereign history, and the Author's normal GitHub credential cannot cross through this controller.
+- **Needs:** Python 3, Git, GitHub CLI, and one GitHub CLI login for the dedicated Airlock account. Never connect that account to an organization or another repo.
+- **Enable:** fetch the signed controller, show the public-only plan, create the local Airlock, then bind it to the dedicated account and name the current AI:
   ```bash
   VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"
   AIRLOCK="$HOME/.local/share/alexandria/scripts/airlock.py"
   tmp=$(mktemp); bash "$VF" scripts/airlock.py > "$tmp" && mv "$tmp" "$AIRLOCK" && chmod 700 "$AIRLOCK"
-  python3 "$AIRLOCK" plan <slot> <allowlist.tsv>
-  # private context only, after the Author approves the displayed files:
-  mkdir -p "$HOME/alexandria/system/permissions" && printf '%s\n' '<selection-sha256>' > "$HOME/alexandria/system/permissions/<slot>"
-  python3 "$AIRLOCK" enable <slot> <allowlist.tsv>
+  python3 "$AIRLOCK" plan airlock <allowlist.tsv>
+  python3 "$AIRLOCK" enable airlock <allowlist.tsv>
+  gh auth login --hostname github.com
+  python3 "$AIRLOCK" connect-github airlock <dedicated-account> '<AI name>'
   ```
-- **Use:** the computer AI creates a generic private remote for that fresh slot, pushes it, and tells the Author which single repo to select in the new AI's GitHub screen. Never reuse an Airlock repo across untrusted AIs. GitHub is replaceable transport, not the content or ground truth. The next local session safely imports returns, then regenerates and pushes the already-public Library shadow. Run `python3 "$AIRLOCK" import <slot>` for an immediate loop. Private context stays frozen until a newly approved `refresh <slot>`.
-- **Off:** `python3 "$AIRLOCK" off <slot>`, then revoke that repo's credential or archive the remote. The repo is kept for recovery; the sovereign source is untouched.
+- **Use:** connect only the named AI to the dedicated account. Run `python3 "$AIRLOCK" import airlock` for an immediate safe import and public-shadow refresh. GitHub is replaceable transport, not content or ground truth.
+- **Off:** first revoke the current AI in the dedicated account, then run `python3 "$AIRLOCK" off airlock`. Delete or rebuild the disposable repo before reusing the account for a different broad-OAuth AI. The sovereign source is untouched.
 
 ## drive — the chat pocket copy in your own Google Drive
 
-- **Does:** keeps the sovereign Git history as ground truth, with the local checkout primary, while projecting `_start` and the compact constitution into `Google Drive/alexandria` as native Google Docs. New or changed chat writings in `vault/`, `marginalia/`, and versioned constitution proposals are copied home to `~/alexandria/files/vault/input/chat/` for `/a` to drain. Drive is not the trial-agent boundary: connector grants may be broader than one folder, while an Airlock credential can be scoped to one fresh repo.
+- **Does:** keeps the sovereign Git history as ground truth, with the local checkout primary, while projecting `_start` and the compact constitution into `Google Drive/alexandria` as native Google Docs. New or changed chat writings in `vault/`, `marginalia/`, and versioned constitution proposals are copied home to `~/alexandria/files/vault/input/chat/` for `/a` to drain. Drive is not the trial-agent boundary: connector grants may be broader than one folder, while Airlock confines any broad grant to a separate account that holds only public context and one disposable repo.
 - **Touches:** the Author's own Google Drive `alexandria` folder; local rclone config and OAuth token; two signed scripts; one daily macOS job `io.alexandria.drive-sync`.
 - **Leaves the machine:** the compact position layer and whatever the Author deliberately writes through chat → the Author's own Google Drive. Credentials and private data never go to Alexandria.
 - **Enable:** after the Author says yes, fetch the controller through the installed verifier and run it. Google opens once for the unavoidable approval; do not turn that approval into a checklist.

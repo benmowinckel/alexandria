@@ -645,7 +645,7 @@ require factory/optional.md \
   'touch ~/alexandria/system/hooks/auto-update' \
   'the update-check opt-in has no exact enable action'
 require factory/optional.md \
-  '## airlock — an approved shadow and an untrusted inbox' \
+  '## airlock — a public shadow and an untrusted inbox' \
   'experimental agents have no separately consented, structurally isolated connection'
 require factory/optional.md \
   'no automatic authority to change canon or invoke tools' \
@@ -654,14 +654,17 @@ require factory/templates/core/agent.md \
   'Airlock this new AI: <name or URL>' \
   'the installed agent instructions have no concrete Airlock fire surface'
 require factory/templates/core/agent.md \
-  'I never create or manage the repo myself.' \
-  'Airlock still makes the Author create or manage repositories'
+  'I handle GitHub'"'"'s unavoidable account sign-in and app approval or revocation' \
+  'Airlock hides unavoidable human GitHub authorization steps'
 require factory/optional.md \
-  'Never reuse an Airlock repo across untrusted AIs.' \
-  'separate untrusted AIs can still share one Airlock repository'
+  'only one broad-OAuth experimental AI may be connected at a time' \
+  'multiple broad-OAuth AIs can share one Airlock account'
 require factory/optional.md \
-  'never give an experimental AI the Author'"'"'s general GitHub login or sovereign-repo key' \
-  'Airlock instructions can expose an account-wide or sovereign credential'
+  'It may own or access exactly one private repo named `alexandria-airlock` and belong to no organizations.' \
+  'Airlock account isolation is not checked structurally'
+require factory/optional.md \
+  'Private files, secrets, sovereign history, and the Author'"'"'s normal GitHub credential cannot cross through this controller.' \
+  'Airlock can still export private context'
 require factory/canon/MODULES.md \
   'move its file into `~/alexandria/system/canon/disabled/`' \
   'default methods have no durable, reversible opt-out'

@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "groups": {
     "core": {
       "default_state": "on",
@@ -36,7 +36,7 @@
         { "id": "marketplace", "local_ref": "canon/marketplace.md" },
         { "id": "updates", "local_ref": "system/hooks/auto-update" },
         { "id": "git-backup", "local_ref": "system/permissions/backup" },
-        { "id": "airlock", "marketplace_ref": "factory/systems/airlock", "local_ref": "system/airlock/airlock[-N].json" },
+        { "id": "airlock", "marketplace_ref": "factory/systems/airlock", "local_ref": "system/airlock/airlock.json" },
         { "id": "drive", "local_ref": "system/.drive_sync_status" },
         { "id": "icloud-mirror", "local_ref": "system/.optional" },
         { "id": "outbound", "local_ref": "system/.optional" },
