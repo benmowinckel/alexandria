@@ -107,31 +107,31 @@
   ```
 - **Off:** `rm ~/alexandria/system/permissions/backup` — stops all automatic pushes and pulls while leaving the remote and the repo on their GitHub untouched.
 
-## agent-workspace — selected context and a safe return path for one experimental AI
+## airlock — an approved shadow and an untrusted inbox
 
-- **Does:** creates one fresh private Git repo for one AI the Author is testing. `context/` contains only exact UTF-8 files selected in an allowlist; `inbox/` is the AI's only accepted write-back surface. Inbox files return to `~/alexandria/files/vault/input/agent/<name>/` with repository, commit, path, hash, and `trust: untrusted` provenance. Nothing merges into canon automatically.
-- **Why one repo per AI:** the credential, history, revocation, and provenance stay separate. A shared workspace would let one AI read or poison another's work.
-- **Touches:** the fresh workspace repo; `~/alexandria/system/agent-workspaces/<name>.json`; one exact selected-bytes permission at `~/alexandria/system/permissions/agent-workspace-<name>`; and the agent capture inbox after an import.
-- **Leaves the machine:** only the selected context and the empty write-back structure, after the Author separately creates or connects a private remote. No secret, unselected file, sovereign history, or Alexandria account key enters the workspace repo.
-- **Needs:** Python 3 and Git. The remote is optional and provider-neutral. If one is added, use a repository-scoped credential that can reach only this workspace repo; never give an experimental AI the Author's general GitHub login or sovereign-repo key.
-- **Enable:** first write an explicit TSV allowlist with one `source<TAB>context/destination` per line. Start with already-public Library bytes. Fetch the signed controller, run `plan`, show every source, destination, and hash, and wait for exact approval. Then bind the printed selection hash — which covers those paths, destinations, and current bytes — and enable:
+- **Human use:** tell a trusted local agent `Airlock` while the untrusted AI is in view. That is the whole interface; the commands below are the trusted agent's implementation, not homework for the Author.
+- **Does:** gives an untrusted AI a disposable projection of approved Alexandria context plus an inbox. The default projection is the already-public Library shadow. The AI returns work through `inbox/` files or `airlock-capture` GitHub issues. Both become provenance-wrapped `trust: untrusted` captures with no automatic authority to change canon or invoke tools.
+- **Naming:** app identity never enters a repo name, path, state, permission, label, or capture. Hidden compartments are named only `airlock`, `airlock-2`, and so on.
+- **Why isolated compartments:** the credential, history, revocation, and provenance stay separate. A shared repo would let one untrusted AI read or poison another's work.
+- **Touches:** the first hidden local clone at `~/.local/share/alexandria/airlock` and later clones under `~/.local/share/alexandria/airlocks/airlock-N`; `~/alexandria/system/airlock/<slot>.json`; the capture inbox after an import; and `~/alexandria/system/permissions/<slot>` only when private context is added.
+- **Leaves the machine:** only the selected context and the empty write-back structure, after the Author separately creates or connects a private remote. No secret, unselected file, sovereign history, or Alexandria account key enters the Airlock repo.
+- **Needs:** Python 3 and Git. The remote is optional and provider-neutral. If one is added, use a repository-scoped credential that can reach only this Airlock repo; never give an experimental AI the Author's general GitHub login or sovereign-repo key.
+- **Enable:** first write a TSV allowlist with one `source<TAB>context/destination` per line. Start with the already-public Library shadow. Fetch the signed controller, show the plan, and enable. If any selected file is private, stop after `plan`, show every source and hash, and bind the printed selection hash only after exact approval:
   ```bash
   VF="$HOME/.local/share/alexandria/scripts/verify-fetch.sh"
-  AW="$HOME/.local/share/alexandria/scripts/agent_workspace.py"
-  tmp=$(mktemp); bash "$VF" scripts/agent_workspace.py > "$tmp" && mv "$tmp" "$AW" && chmod 700 "$AW"
-  python3 "$AW" plan <one-word-name> <allowlist.tsv>
-  # only after the Author approves the displayed files:
-  mkdir -p "$HOME/alexandria/system/permissions"
-  # copy the `selection sha256` printed by plan — it binds paths, destinations, and current bytes:
-  printf '%s\n' '<selection-sha256>' > "$HOME/alexandria/system/permissions/agent-workspace-<one-word-name>"
-  python3 "$AW" enable <one-word-name> <allowlist.tsv> "$HOME/alexandria-<one-word-name>"
+  AIRLOCK="$HOME/.local/share/alexandria/scripts/airlock.py"
+  tmp=$(mktemp); bash "$VF" scripts/airlock.py > "$tmp" && mv "$tmp" "$AIRLOCK" && chmod 700 "$AIRLOCK"
+  python3 "$AIRLOCK" plan <slot> <allowlist.tsv>
+  # private context only, after the Author approves the displayed files:
+  mkdir -p "$HOME/alexandria/system/permissions" && printf '%s\n' '<selection-sha256>' > "$HOME/alexandria/system/permissions/<slot>"
+  python3 "$AIRLOCK" enable <slot> <allowlist.tsv>
   ```
-- **Use:** connect that fresh repo to one private remote, grant the experimental AI only that repo, and let it write under `inbox/`. On the Mac, pull the workspace repo, then run `python3 "$AW" import <one-word-name>`. The importer rejects force-rewritten ancestry, changes outside `inbox/`, symlinks, binary or oversized files, and any changed context. Run `refresh <one-word-name>` only after the approved source files change; it commits the regenerated context but never pushes automatically.
-- **Off:** `python3 "$AW" off <one-word-name>`, then revoke that repo's credential or archive the remote. The workspace repo is kept for recovery; the sovereign source is untouched.
+- **Use:** connect that fresh repo to one private remote and grant only that repo to the untrusted AI. GitHub is a replaceable transport, not the content or ground truth. The next local session safely imports returns, then regenerates and pushes the already-public Library shadow. Run `python3 "$AIRLOCK" import <slot>` for an immediate loop. Private context stays frozen until a newly approved `refresh <slot>`.
+- **Off:** `python3 "$AIRLOCK" off <slot>`, then revoke that repo's credential or archive the remote. The repo is kept for recovery; the sovereign source is untouched.
 
 ## drive — the chat pocket copy in your own Google Drive
 
-- **Does:** keeps the sovereign Git history as ground truth, with the local checkout primary, while projecting `_start` and the compact constitution into `Google Drive/alexandria` as native Google Docs. New or changed chat writings in `vault/`, `marginalia/`, and versioned constitution proposals are copied home to `~/alexandria/files/vault/input/chat/` for `/a` to drain. Drive is not the trial-agent boundary: connector grants may be broader than one folder, while an agent-workspace credential can be scoped to one fresh repo.
+- **Does:** keeps the sovereign Git history as ground truth, with the local checkout primary, while projecting `_start` and the compact constitution into `Google Drive/alexandria` as native Google Docs. New or changed chat writings in `vault/`, `marginalia/`, and versioned constitution proposals are copied home to `~/alexandria/files/vault/input/chat/` for `/a` to drain. Drive is not the trial-agent boundary: connector grants may be broader than one folder, while an Airlock credential can be scoped to one fresh repo.
 - **Touches:** the Author's own Google Drive `alexandria` folder; local rclone config and OAuth token; two signed scripts; one daily macOS job `io.alexandria.drive-sync`.
 - **Leaves the machine:** the compact position layer and whatever the Author deliberately writes through chat → the Author's own Google Drive. Credentials and private data never go to Alexandria.
 - **Enable:** after the Author says yes, fetch the controller through the installed verifier and run it. Google opens once for the unavoidable approval; do not turn that approval into a checklist.

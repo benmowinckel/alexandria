@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "author": {
     "name": "Benjamin a. Mowinckel",
     "github_login": "benmowinckel"
@@ -78,9 +78,9 @@
       "adaptation": "universal"
     },
     {
-      "path": "factory/systems/agent-workspace",
-      "name": "agent workspace",
-      "description": "Safely lets an AI you are testing read selected files and send work back.",
+      "path": "factory/systems/airlock",
+      "name": "airlock",
+      "description": "An approved context shadow and an untrusted inbox for any AI app.",
       "kind": "system",
       "role": "official",
       "adaptation": "universal"

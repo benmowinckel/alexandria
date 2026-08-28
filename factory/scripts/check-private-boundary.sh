@@ -459,7 +459,7 @@ require factory/module-system.json \
   '"id": "plm"' \
   'the PLM connection is absent from the machine-readable module map'
 require factory/module-system.json \
-  '"id": "agent-workspace"' \
+  '"id": "airlock"' \
   'the isolated experimental-agent connection is absent from the machine-readable module map'
 require factory/module-system.json \
   '"id": "people-context"' \
@@ -645,14 +645,14 @@ require factory/optional.md \
   'touch ~/alexandria/system/hooks/auto-update' \
   'the update-check opt-in has no exact enable action'
 require factory/optional.md \
-  '## agent-workspace — selected context and a safe return path for one experimental AI' \
+  '## airlock — an approved shadow and an untrusted inbox' \
   'experimental agents have no separately consented, structurally isolated connection'
 require factory/optional.md \
-  'Nothing merges into canon automatically.' \
+  'no automatic authority to change canon or invoke tools' \
   'guest output can become canon without review'
 require factory/optional.md \
   'never give an experimental AI the Author'"'"'s general GitHub login or sovereign-repo key' \
-  'agent-workspace instructions can expose an account-wide or sovereign credential'
+  'Airlock instructions can expose an account-wide or sovereign credential'
 require factory/canon/MODULES.md \
   'move its file into `~/alexandria/system/canon/disabled/`' \
   'default methods have no durable, reversible opt-out'
@@ -676,9 +676,9 @@ forbid factory/canon/MODULES.md \
   'the product map still carries the removed Optimise feature or old taxonomy'
 require factory/canon/MODULES.md \
   'never part of Foundation or default setup' \
-  'the agent workspace has leaked into the incompressible core'
-bash factory/scripts/test_agent_workspace.sh \
-  || fail 'agent-workspace isolation regressions failed'
+  'Airlock has leaked into the incompressible core'
+bash factory/scripts/test_airlock.sh \
+  || fail 'Airlock isolation regressions failed'
 require factory/setup.sh \
   '[ -f "$ALEX_DIR/system/canon/disabled/$module.md" ] && continue' \
   'setup does not honor disabled default modules'
@@ -820,8 +820,8 @@ require factory/skills/grok-bot.md \
   'HOST — Cursor Grok Bot, not Grok CLI.' \
   'Grok Bot skill does not declare it is not Grok CLI'
 require factory/skills/grok-bot.md \
-  'a connected agent workspace, recognized by `CONTEXT.manifest` plus `context/` and `inbox/`' \
-  'Grok Bot skill does not prefer the structurally isolated workspace'
+  'a connected Airlock, recognized by `CONTEXT.manifest` plus `context/` and `inbox/`' \
+  'Grok Bot skill does not prefer the structurally isolated Airlock'
 require factory/skills/grok-bot.md \
   'Never ask for or use the Author'"'"'s general GitHub login, full sovereign repo, or Apple login as a fallback.' \
   'Grok Bot skill can still ask for broad credentials when the computer is unavailable'
@@ -1056,7 +1056,7 @@ forbid factory/scripts/connect-account.sh \
   'ALEXANDRIA_SERVER' \
   'an inherited environment variable can redirect account credentials'
 forbid factory/scripts/connect-account.sh \
-  'system/permissions/(library|marketplace|capture-network|backup|agent-workspace)|setup\.sh|files/|vault|constitution|marketplace|/call|/file/' \
+  'system/permissions/(library|marketplace|capture-network|backup|airlock)|setup\.sh|files/|vault|constitution|marketplace|/call|/file/' \
   'the narrow account connector touches private files or optional capabilities'
 require factory/scripts/person-context.mjs \
   "const API_ORIGIN = 'https://api.alexandria-library.com'" \

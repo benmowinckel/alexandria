@@ -34,6 +34,7 @@ import re
 import shutil
 import socket
 import ssl
+import subprocess
 import sys
 import urllib.error
 import urllib.parse
@@ -49,6 +50,7 @@ INPUT = Path.home() / "alexandria/files/vault/input"       # raw, iCloud-synced
 OUTPUT = Path.home() / "alexandria/files/vault/_input"     # resolved, local-only derivative
 NETWORK_PERMISSION = Path.home() / "alexandria/system/permissions/capture-network"
 RUNTIME_MARKER = Path.home() / ".local/share/alexandria/.setup_complete"
+AIRLOCK_CONTROLLER = Path.home() / ".local/share/alexandria/scripts/airlock.py"
 
 CONNECT_TIMEOUT_SECONDS = 5
 READ_TIMEOUT_SECONDS = 15
@@ -588,6 +590,31 @@ def process_txt(f: Path, stats: dict) -> None:
         print(f"  ⚠ {f.name}: source move failed ({e})", file=sys.stderr)
 
 
+def drain_airlocks(stats: dict) -> None:
+    if not AIRLOCK_CONTROLLER.is_file():
+        return
+    try:
+        result = subprocess.run(
+            (sys.executable, str(AIRLOCK_CONTROLLER), "import-all"),
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=7,
+        )
+    except subprocess.TimeoutExpired:
+        stats["airlock_error"] = "drain timed out"
+        print("  ⚠ Airlock drain timed out", file=sys.stderr)
+        return
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip()
+        stats["airlock_error"] = detail[-300:] or "drain failed"
+        print(f"  ⚠ Airlock drain failed: {stats['airlock_error']}", file=sys.stderr)
+        return
+    if result.stdout.strip():
+        stats["airlock"] = result.stdout.strip()
+
+
 def main() -> int:
     if not RUNTIME_MARKER.is_file():
         return 0
@@ -605,6 +632,7 @@ def main() -> int:
         "fetch_failed": 0,
         "verify_failed": 0,
     }
+    drain_airlocks(stats)
     network_approved = NETWORK_PERMISSION.is_file()
     for f in sorted(p for p in INPUT.iterdir() if p.is_file() and not p.name.startswith(".")):
         suffix = f.suffix.lower()

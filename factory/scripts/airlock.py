@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Create and operate a structurally isolated Git workspace for one external AI."""
+"""Connect any untrusted AI through structurally isolated Airlock compartments."""
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
@@ -12,15 +13,16 @@ import stat
 import subprocess
 import sys
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 
 
 MAX_BYTES = 1_000_000
-NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,47}$")
+NAME_RE = re.compile(r"^airlock(?:-[1-9][0-9]*)?$")
 
 
 def die(message: str) -> "NoReturn":
-    raise SystemExit(f"agent-workspace: {message}")
+    raise SystemExit(f"airlock: {message}")
 
 
 def run(*args: str, cwd: Path | None = None, capture: bool = False) -> str:
@@ -52,7 +54,7 @@ def sha256_file(path: Path) -> str:
 
 def safe_name(raw: str) -> str:
     if not NAME_RE.fullmatch(raw):
-        die("name must use lowercase letters, numbers, or hyphens (48 characters maximum)")
+        die("internal slot must be airlock or airlock-N; never name it after an app")
     return raw
 
 
@@ -61,15 +63,52 @@ def alex_dir() -> Path:
 
 
 def state_dir(root: Path) -> Path:
-    return root / "system" / "agent-workspaces"
+    return root / "system" / "airlock"
 
 
 def permission_path(root: Path, name: str) -> Path:
-    return root / "system" / "permissions" / f"agent-workspace-{name}"
+    return root / "system" / "permissions" / name
 
 
 def state_path(root: Path, name: str) -> Path:
     return state_dir(root) / f"{name}.json"
+
+
+def ensure_state_ignores(root: Path) -> Path:
+    directory = state_dir(root)
+    directory.mkdir(parents=True, exist_ok=True)
+    ignore = directory / ".gitignore"
+    if ignore.is_symlink():
+        die(f"Airlock state ignore file must not be a symlink: {ignore}")
+    lines = ignore.read_text(encoding="utf-8").splitlines() if ignore.is_file() else []
+    changed = False
+    for pattern in ("*.json", "*.lock"):
+        if pattern not in lines:
+            lines.append(pattern)
+            changed = True
+    if changed:
+        write_text_atomic(ignore, "\n".join(lines) + "\n")
+    return directory
+
+
+@contextmanager
+def airlock_lock(root: Path, name: str):
+    directory = ensure_state_ignores(root)
+    lock_path = directory / f"{name}.lock"
+    descriptor = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+    os.fchmod(descriptor, 0o600)
+    with os.fdopen(descriptor, "r+") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        yield
+
+
+def managed_repo_path(name: str) -> Path:
+    base = Path(
+        os.environ.get("ALEXANDRIA_DATA_DIR", "~/.local/share/alexandria")
+    ).expanduser()
+    if name == "airlock":
+        return (base / "airlock").resolve()
+    return (base / "airlocks" / name).resolve()
 
 
 def validate_relative(raw: str, label: str) -> PurePosixPath:
@@ -168,6 +207,10 @@ def selection_digest(rows: list[dict[str, str]]) -> str:
     return sha256_bytes(expected_manifest(rows).encode("utf-8"))
 
 
+def is_public_projection(rows: list[dict[str, str]]) -> bool:
+    return all(row["source"].startswith("files/library/public/") for row in rows)
+
+
 def copy_context(root: Path, repo: Path, rows: list[dict[str, str]]) -> None:
     context = repo / "context"
     if context.exists():
@@ -200,9 +243,9 @@ def load_state(root: Path, name: str) -> dict:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
-        die(f"no active workspace named {name}")
+        die(f"no active Airlock slot named {name}")
     if payload.get("name") != name:
-        die("workspace state does not match its name")
+        die("Airlock state does not match its slot")
     return payload
 
 
@@ -218,32 +261,97 @@ def require_approval(root: Path, name: str, digest: str) -> None:
 
 def assert_clean_repo(repo: Path) -> None:
     if not (repo / ".git").exists():
-        die(f"not an Alexandria agent workspace: {repo}")
+        die(f"not an Alexandria Airlock: {repo}")
     if run("git", "status", "--porcelain", cwd=repo, capture=True):
-        die("agent workspace has uncommitted files; commit or discard them before continuing")
+        die("Airlock has uncommitted files; commit or discard them before continuing")
+
+
+def remote_url(repo: Path) -> str | None:
+    result = subprocess.run(
+        ("git", "config", "--get", "remote.origin.url"),
+        cwd=repo,
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def sync_remote(repo: Path) -> None:
+    upstream = subprocess.run(
+        ("git", "rev-parse", "--verify", "--quiet", "@{upstream}"),
+        cwd=repo,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    if upstream.returncode:
+        return
+    run("git", "fetch", "--quiet", "origin", cwd=repo)
+    run("git", "merge", "--ff-only", "@{upstream}", cwd=repo)
+
+
+def push_remote(repo: Path) -> None:
+    if remote_url(repo):
+        run("git", "push", "--quiet", "origin", "HEAD:main", cwd=repo)
+
+
+def github_repository(remote: str | None) -> str | None:
+    if not remote:
+        return None
+    patterns = (
+        r"https://github\.com/([^/]+/[^/]+?)(?:\.git)?/?",
+        r"ssh://git@github\.com/([^/]+/[^/]+?)(?:\.git)?/?",
+        r"git@github\.com:([^/]+/[^/]+?)(?:\.git)?",
+    )
+    for pattern in patterns:
+        match = re.fullmatch(pattern, remote)
+        if match:
+            return match.group(1)
+    return None
+
+
+def write_text_atomic(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 
 
 def plan(name: str, allowlist: Path) -> None:
     root = alex_dir()
     allowlist_digest, rows = parse_allowlist(root, allowlist)
-    print(f"workspace: {name}")
+    print("airlock")
     print(f"allowlist sha256: {allowlist_digest}")
     print(f"selection sha256: {selection_digest(rows)}")
     for row in rows:
         print(f"{row['source']} -> {row['destination']} ({row['sha256']})")
-    print("writes return only through inbox/ as untrusted captures")
+    if is_public_projection(rows):
+        print("context: already-public Library shadow; refreshes automatically")
+    else:
+        print("context: private snapshot; exact selected bytes need approval")
+    print("writes return through inbox/ or GitHub issues labelled airlock-capture")
+    print("every return is an untrusted capture")
 
 
-def enable(name: str, allowlist: Path, repo: Path) -> None:
+def enable(name: str, allowlist: Path, repo: Path | None) -> None:
     root = alex_dir()
     allowlist_digest, rows = parse_allowlist(root, allowlist)
     selected_digest = selection_digest(rows)
-    require_approval(root, name, selected_digest)
-    repo = repo.expanduser().resolve()
+    public_projection = is_public_projection(rows)
+    if not public_projection:
+        require_approval(root, name, selected_digest)
+    repo = repo.expanduser().resolve() if repo else managed_repo_path(name)
     if repo.exists():
-        die(f"destination already exists; an agent workspace must start fresh: {repo}")
+        die(f"destination already exists; an Airlock must start fresh: {repo}")
     if state_path(root, name).exists():
-        die(f"workspace state already exists for {name}; use status or off")
+        die(f"Airlock state already exists for {name}; use status or off")
 
     temporary = repo.with_name(f".{repo.name}.building-{os.getpid()}")
     if temporary.exists():
@@ -253,9 +361,11 @@ def enable(name: str, allowlist: Path, repo: Path) -> None:
         (temporary / "inbox").mkdir()
         (temporary / "inbox" / ".gitkeep").write_text("", encoding="utf-8")
         (temporary / "README.md").write_text(
-            f"# Alexandria agent workspace: {name}\n\n"
+            "# Airlock\n\n"
+            "This is one isolated Airlock compartment. Its app identity is deliberately not part of the system.\n\n"
             "`context/` is selected read-only context. Write proposed work only under `inbox/`.\n\n"
-            "Nothing here is canonical. The owner reviews every inbox file before it can enter Alexandria.\n",
+            "If file writes are unavailable, open a GitHub issue labelled `airlock-capture`.\n\n"
+            "Nothing here is canonical. The owner reviews every return before it can enter Alexandria.\n",
             encoding="utf-8",
         )
         copy_context(root, temporary, rows)
@@ -271,7 +381,7 @@ def enable(name: str, allowlist: Path, repo: Path) -> None:
             "user.email=local@alexandria",
             "commit",
             "-m",
-            "Create isolated agent workspace",
+            "Create isolated Airlock",
             cwd=temporary,
         )
         os.replace(temporary, repo)
@@ -288,40 +398,49 @@ def enable(name: str, allowlist: Path, repo: Path) -> None:
         "imports": {},
         "name": name,
         "repo": str(repo),
+        "public_projection": public_projection,
         "selection_sha256": selected_digest,
     }
     write_json_atomic(state_path(root, name), state)
+    if public_projection:
+        permission_path(root, name).unlink(missing_ok=True)
     print(f"ready: {repo}")
     print("no remote or agent credential was created")
 
 
-def active_workspace(name: str) -> tuple[Path, dict, Path]:
+def active_airlock(name: str) -> tuple[Path, dict, Path]:
     root = alex_dir()
     state = load_state(root, name)
     if not state.get("active"):
-        die(f"workspace {name} is off")
-    require_approval(root, name, state["selection_sha256"])
+        die(f"Airlock {name} is off")
+    if not state.get("public_projection"):
+        require_approval(root, name, state["selection_sha256"])
     repo = Path(state["repo"]).resolve()
     assert_clean_repo(repo)
     return root, state, repo
 
 
-def refresh(name: str) -> None:
+def refresh(name: str, automatic: bool = False) -> bool:
     root = alex_dir()
     state = load_state(root, name)
     if not state.get("active"):
-        die(f"workspace {name} is off")
+        die(f"Airlock {name} is off")
     repo = Path(state["repo"]).resolve()
     assert_clean_repo(repo)
     allowlist = Path(state["allowlist"])
     allowlist_digest, rows = parse_allowlist(root, allowlist)
     selected_digest = selection_digest(rows)
-    require_approval(root, name, selected_digest)
+    public_projection = is_public_projection(rows)
+    if automatic and not public_projection:
+        return False
+    if not public_projection:
+        require_approval(root, name, selected_digest)
     copy_context(root, repo, rows)
     allowed = {"CONTEXT.manifest"}
     changed = run("git", "status", "--porcelain", cwd=repo, capture=True).splitlines()
     for line in changed:
-        path = line[3:]
+        fields = line.split(maxsplit=1)
+        path = fields[1] if len(fields) == 2 else ""
         if path not in allowed and not path.startswith("context/"):
             die(f"refresh would touch an unexpected path: {path}")
     if changed:
@@ -341,9 +460,14 @@ def refresh(name: str) -> None:
         )
     state["export_commit"] = run("git", "rev-parse", "HEAD", cwd=repo, capture=True)
     state["allowlist_sha256"] = allowlist_digest
+    state["public_projection"] = public_projection
     state["selection_sha256"] = selected_digest
     write_json_atomic(state_path(root, name), state)
+    if public_projection:
+        permission_path(root, name).unlink(missing_ok=True)
+    push_remote(repo)
     print(f"context current at {state['export_commit']}")
+    return bool(changed)
 
 
 def verify_exported_context(repo: Path, approved_selection: str) -> None:
@@ -364,11 +488,11 @@ def verify_exported_context(repo: Path, approved_selection: str) -> None:
     actual_paths: set[str] = set()
     for path in (repo / "context").rglob("*"):
         if path.is_symlink():
-            die(f"agent workspace context contains a symlink: {path.relative_to(repo)}")
+            die(f"Airlock context contains a symlink: {path.relative_to(repo)}")
         if path.is_file():
             actual_paths.add(path.relative_to(repo).as_posix())
     if actual_paths != expected_paths:
-        die("agent workspace context path set differs from the approved projection")
+        die("Airlock context path set differs from the approved projection")
     for row in rows:
         destination = repo / Path(*PurePosixPath(row["destination"]).parts)
         read_text_file(destination, "exported context")
@@ -376,22 +500,23 @@ def verify_exported_context(repo: Path, approved_selection: str) -> None:
                 die(f"external agent changed selected context: {row['destination']}")
 
 
-def import_inbox(name: str) -> None:
-    root, state, repo = active_workspace(name)
+def import_inbox(name: str) -> int:
+    root, state, repo = active_airlock(name)
+    sync_remote(repo)
     export_commit = state["export_commit"]
     head = run("git", "rev-parse", "HEAD", cwd=repo, capture=True)
     result = subprocess.run(
         ("git", "merge-base", "--is-ancestor", export_commit, head), cwd=repo, check=False
     )
     if result.returncode:
-        die("agent workspace history no longer descends from the last trusted context export")
+        die("Airlock history no longer descends from the last trusted context export")
     changed = run("git", "diff", "--name-only", f"{export_commit}..{head}", cwd=repo, capture=True)
     for path in changed.splitlines():
         if path and not path.startswith("inbox/"):
             die(f"external agent commit changed a protected path: {path}")
     verify_exported_context(repo, state["selection_sha256"])
 
-    destination_root = root / "files" / "vault" / "input" / "agent" / name
+    destination_root = root / "files" / "vault" / "input"
     imported = state.setdefault("imports", {})
     count = 0
     inbox = repo / "inbox"
@@ -400,24 +525,21 @@ def import_inbox(name: str) -> None:
             continue
         if path.is_symlink() or not path.is_file():
             die(f"inbox contains a non-regular file: {path.relative_to(repo)}")
-        content = read_text_file(path, "agent workspace inbox file")
+        content = read_text_file(path, "Airlock inbox file")
         relative = path.relative_to(repo).as_posix()
         digest = sha256_bytes(content.encode("utf-8"))
         key = f"{relative}\t{digest}"
         if key in imported:
             continue
-        safe_stem = re.sub(r"[^A-Za-z0-9._-]+", "-", path.name).strip(".-") or "note"
-        output = destination_root / f"{head[:12]}-{safe_stem}.md"
-        if output.exists():
-            output = destination_root / f"{head[:12]}-{digest[:12]}-{safe_stem}.md"
-        destination_root.mkdir(parents=True, exist_ok=True)
-        remote = run("git", "remote", "get-url", "origin", cwd=repo, capture=True) if subprocess.run(
-            ("git", "remote", "get-url", "origin"), cwd=repo, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        ).returncode == 0 else str(repo)
+        source_name = path.name[:-3] if path.name.lower().endswith(".md") else path.name
+        safe_stem = re.sub(r"[^A-Za-z0-9._-]+", "-", source_name).strip(".-") or "note"
+        output = destination_root / f"{name}-{head[:12]}-{digest[:12]}-{safe_stem}.md"
+        remote = remote_url(repo) or str(repo)
         payload = (
             "---\n"
-            "source: agent-workspace\n"
-            f"workspace: {name}\n"
+            "source: airlock\n"
+            "channel: inbox\n"
+            f"airlock: {name}\n"
             f"repository: {json.dumps(remote)}\n"
             f"commit: {head}\n"
             f"path: {json.dumps(relative)}\n"
@@ -426,22 +548,171 @@ def import_inbox(name: str) -> None:
             "---\n\n"
             f"{content}"
         )
-        output.write_text(payload, encoding="utf-8")
+        if output.exists():
+            if output.read_text(encoding="utf-8") != payload:
+                die(f"capture path collision: {output}")
+        else:
+            write_text_atomic(output, payload)
         imported[key] = str(output.relative_to(root))
+        write_json_atomic(state_path(root, name), state)
         count += 1
     write_json_atomic(state_path(root, name), state)
-    print(f"imported {count} new inbox file(s) as untrusted captures")
+    return count
+
+
+def import_issues(name: str) -> int:
+    root, state, repo = active_airlock(name)
+    repository = github_repository(remote_url(repo))
+    if not repository:
+        return 0
+    if shutil.which("gh") is None:
+        die("GitHub Airlock detected but `gh` is unavailable, so issues cannot drain")
+
+    label = "airlock-capture"
+    raw = run(
+        "gh",
+        "issue",
+        "list",
+        "--repo",
+        repository,
+        "--label",
+        label,
+        "--state",
+        "open",
+        "--limit",
+        "1000",
+        "--json",
+        "number,title,body,createdAt,url",
+        capture=True,
+    )
+    try:
+        issues = json.loads(raw)
+    except json.JSONDecodeError:
+        die("GitHub returned invalid issue data")
+    if not isinstance(issues, list):
+        die("GitHub issue data is not a list")
+
+    destination_root = root / "files" / "vault" / "input"
+    imported = state.setdefault("issue_imports", {})
+    count = 0
+    for issue in issues:
+        if not isinstance(issue, dict):
+            die("GitHub returned an invalid issue")
+        number = issue.get("number")
+        title = issue.get("title")
+        body = issue.get("body")
+        if body is None:
+            body = ""
+        created_at = issue.get("createdAt")
+        url = issue.get("url")
+        if not isinstance(number, int) or number < 1:
+            die("GitHub issue number is invalid")
+        if not all(isinstance(value, str) for value in (title, body, created_at, url)):
+            die(f"GitHub issue #{number} has invalid text fields")
+        if "\x00" in body or len(body.encode("utf-8")) > MAX_BYTES:
+            die(f"GitHub issue #{number} is binary or exceeds {MAX_BYTES} bytes")
+        date = created_at[:10] if re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", created_at) else "undated"
+        key = f"{repository}#{number}"
+        output = destination_root / f"{date}-{name}-issue-{number}.md"
+        payload = (
+            "---\n"
+            "source: airlock\n"
+            "channel: github-issue\n"
+            f"airlock: {name}\n"
+            f"repository: {json.dumps(repository)}\n"
+            f"issue: {number}\n"
+            f"url: {json.dumps(url)}\n"
+            f"created: {json.dumps(created_at)}\n"
+            f"title: {json.dumps(title)}\n"
+            "trust: untrusted\n"
+            "---\n\n"
+            f"{body}"
+        )
+        if key not in imported:
+            if output.exists():
+                if output.read_text(encoding="utf-8") != payload:
+                    die(f"capture path collision: {output}")
+            else:
+                write_text_atomic(output, payload)
+            imported[key] = str(output.relative_to(root))
+            write_json_atomic(state_path(root, name), state)
+            count += 1
+        else:
+            recorded = root / imported[key]
+            archived = root / "files" / "vault" / "_input" / recorded.name
+            copies = [path for path in (recorded, archived) if path.is_file()]
+            if not copies or all(path.read_text(encoding="utf-8") != payload for path in copies):
+                die(f"recorded capture is missing or changed for GitHub issue #{number}")
+        run(
+            "gh",
+            "issue",
+            "close",
+            str(number),
+            "--repo",
+            repository,
+            capture=True,
+        )
+    return count
+
+
+def import_all(name: str) -> None:
+    with airlock_lock(alex_dir(), name):
+        inbox_count = import_inbox(name)
+        issue_count = import_issues(name)
+        context_updated = refresh(name, automatic=True)
+    print(
+        f"imported {inbox_count} inbox file(s) and {issue_count} GitHub issue(s) "
+        "as untrusted captures"
+    )
+    if context_updated:
+        print("updated the already-public Library shadow")
+
+
+def import_all_active() -> None:
+    root = alex_dir()
+    directory = state_dir(root)
+    if not directory.is_dir():
+        return
+    failures: list[str] = []
+    for path in sorted(directory.glob("*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            failures.append(f"{path.name}: invalid state")
+            continue
+        name = payload.get("name")
+        if not payload.get("active"):
+            continue
+        if not isinstance(name, str) or not NAME_RE.fullmatch(name):
+            failures.append(f"{path.name}: invalid name")
+            continue
+        try:
+            import_all(name)
+        except SystemExit as exc:
+            failures.append(f"{name}: {exc}")
+    if failures:
+        die("; ".join(failures))
 
 
 def status(name: str) -> None:
     root = alex_dir()
     state = load_state(root, name)
-    print(f"workspace: {name}")
+    print("airlock")
     print(f"active: {'yes' if state.get('active') else 'no'}")
     print(f"repo: {state.get('repo')}")
+    print(
+        "context: "
+        + (
+            "public Library shadow (auto-sync)"
+            if state.get("public_projection")
+            else "private approved snapshot"
+        )
+    )
     print(f"allowlist sha256: {state.get('allowlist_sha256')}")
     print(f"selection sha256: {state.get('selection_sha256')}")
-    print(f"imported: {len(state.get('imports', {}))}")
+    print(f"inbox imports: {len(state.get('imports', {}))}")
+    print(f"issue imports: {len(state.get('issue_imports', {}))}")
+    print("issue label: airlock-capture")
 
 
 def off(name: str) -> None:
@@ -451,33 +722,39 @@ def off(name: str) -> None:
     write_json_atomic(state_path(root, name), state)
     permission_path(root, name).unlink(missing_ok=True)
     print("off: local import and context refresh are disabled")
-    print("the workspace repo remains; revoke its remote credential or archive it separately")
+    print("the Airlock repo remains; revoke its remote credential or archive it separately")
 
 
 def usage() -> "NoReturn":
     die(
-        "use: agent_workspace.py plan NAME ALLOWLIST | enable NAME ALLOWLIST REPO | "
-        "refresh NAME | import NAME | status NAME | off NAME"
+        "use: airlock.py plan SLOT ALLOWLIST | enable SLOT ALLOWLIST [REPO] | "
+        "refresh SLOT | import SLOT | import-all | status SLOT | off SLOT"
     )
 
 
 def main() -> None:
+    if len(sys.argv) == 2 and sys.argv[1] == "import-all":
+        import_all_active()
+        return
     if len(sys.argv) < 3:
         usage()
     command = sys.argv[1]
     name = safe_name(sys.argv[2])
     if command == "plan" and len(sys.argv) == 4:
         plan(name, Path(sys.argv[3]))
-    elif command == "enable" and len(sys.argv) == 5:
-        enable(name, Path(sys.argv[3]), Path(sys.argv[4]))
+    elif command == "enable" and len(sys.argv) in (4, 5):
+        with airlock_lock(alex_dir(), name):
+            enable(name, Path(sys.argv[3]), Path(sys.argv[4]) if len(sys.argv) == 5 else None)
     elif command == "refresh" and len(sys.argv) == 3:
-        refresh(name)
+        with airlock_lock(alex_dir(), name):
+            refresh(name)
     elif command == "import" and len(sys.argv) == 3:
-        import_inbox(name)
+        import_all(name)
     elif command == "status" and len(sys.argv) == 3:
         status(name)
     elif command == "off" and len(sys.argv) == 3:
-        off(name)
+        with airlock_lock(alex_dir(), name):
+            off(name)
     else:
         usage()
 
