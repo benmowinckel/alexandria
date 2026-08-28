@@ -61,8 +61,8 @@ for (const route of publicRoutes) {
   assert(canonical === expectedCanonical, `${route}: canonical is ${canonical || 'missing'}`);
   assert(ogImage, `${route}: missing og:image`);
   assert(twitterImage, `${route}: missing twitter:image`);
-  assert(favicons.some((href) => href.includes('/favicon-16.png?v=9')), `${route}: missing exact 16px favicon`);
-  assert(favicons.some((href) => href.includes('/favicon-32.png?v=9')), `${route}: missing exact Retina favicon`);
+  assert(favicons.length === 1, `${route}: expected one unambiguous favicon, found ${favicons.length}`);
+  assert(favicons[0].includes('/alexandria-tab.png'), `${route}: missing exact Safari tab favicon`);
   assert(!favicons.some((href) => href.includes('/favicon.ico')), `${route}: ICO must remain fallback-only`);
   assert(!favicons.some((href) => href.includes('.svg')), `${route}: SVG favicon causes Safari to resize after load`);
   if (serverHeadingRoutes.has(route)) {
@@ -85,7 +85,7 @@ for (const route of ['/memo', '/pitch', '/demo']) {
 
 for (const asset of [
   '/robots.txt', '/sitemap.xml', '/manifest.webmanifest', '/favicon.ico',
-  '/icon.svg', '/favicon-16.png', '/favicon-32.png', '/favicon-64.png',
+  '/icon.svg', '/favicon-16.png', '/favicon-32.png', '/alexandria-tab.png', '/favicon-64.png',
   '/apple-touch-icon.png', '/icon-192.png', '/icon-512.png',
   '/icon-maskable.png', '/opengraph-image',
 ]) {

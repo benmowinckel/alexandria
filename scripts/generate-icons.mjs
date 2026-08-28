@@ -7,6 +7,7 @@ const appSource = await readFile(new URL('../public/icon.svg', import.meta.url))
 const faviconTargets = [
   ['favicon-16.png', 16],
   ['favicon-32.png', 32],
+  ['alexandria-tab.png', 32],
   ['favicon-64.png', 64],
   ['favicon.png', 64],
 ];

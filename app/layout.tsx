@@ -49,14 +49,10 @@ export const metadata: Metadata = {
   creator: "Benjamin a. Mowinckel",
   publisher: "alexandria",
   icons: {
-    // These are the exact small tab renders Safari showed before the enlarged
-    // replacement loaded. The ICO fallback is built from the same pixels.
-    icon: [
-      { url: "/favicon-16.png?v=9", type: "image/png", sizes: "16x16" },
-      { url: "/favicon-32.png?v=9", type: "image/png", sizes: "32x32" },
-    ],
+    // One unambiguous tab icon. The new pathname breaks Safari's historical
+    // per-page mappings to the old v4-v7 favicon URLs.
+    icon: [{ url: "/alexandria-tab.png", type: "image/png", sizes: "32x32" }],
     apple: [{ url: "/apple-touch-icon.png?v=9", sizes: "180x180", type: "image/png" }],
-    shortcut: "/favicon-32.png?v=9",
   },
   manifest: "/manifest.webmanifest",
   openGraph: {
