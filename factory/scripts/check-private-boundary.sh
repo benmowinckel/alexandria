@@ -650,6 +650,15 @@ require factory/optional.md \
 require factory/optional.md \
   'no automatic authority to change canon or invoke tools' \
   'guest output can become canon without review'
+require factory/templates/core/agent.md \
+  'Airlock this new AI: <name or URL>' \
+  'the installed agent instructions have no concrete Airlock fire surface'
+require factory/templates/core/agent.md \
+  'I never create or manage the repo myself.' \
+  'Airlock still makes the Author create or manage repositories'
+require factory/optional.md \
+  'Never reuse an Airlock repo across untrusted AIs.' \
+  'separate untrusted AIs can still share one Airlock repository'
 require factory/optional.md \
   'never give an experimental AI the Author'"'"'s general GitHub login or sovereign-repo key' \
   'Airlock instructions can expose an account-wide or sovereign credential'

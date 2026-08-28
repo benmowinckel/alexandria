@@ -49,7 +49,7 @@ Alexandria-built modules are labelled **official** in the marketplace. Most are 
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
 - **public reading** — general browsing remains deliberate browser or isolated-reader access only; people context is the one narrow standing Library read, with no session-start fetch or live private-loop cache.
 - **Git backup** — the owned Git history may use any private remote; GitHub is the current soft default, never the source of truth.
-- **airlock** — an approved context shadow plus untrusted file-or-issue write-back; already-public Library context stays current, private additions stay frozen until reapproved, and app identity never becomes system structure; discoverable as an official module, but never part of Foundation or default setup.
+- **airlock** — one fresh private repo per new untrusted AI, created by the computer AI that already has Alexandria; the repo carries an approved context shadow plus untrusted file-or-issue write-back, public Library context stays current, private additions stay frozen until reapproved, and app identity never becomes system structure; discoverable as an official module, but never part of Foundation or default setup.
 - **Drive pocket copy** — a narrow chat projection and capture inbox, not canon and not a general trial-agent grant.
 - **iCloud current-file mirror** — easy Apple-side recovery and large-media coverage; not Git history or an immutable archive.
 - **scheduled outbound messages and briefs** — require their own destination, schedule, and off switch.

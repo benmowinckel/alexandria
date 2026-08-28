@@ -109,7 +109,7 @@
 
 ## airlock — an approved shadow and an untrusted inbox
 
-- **Human use:** tell a trusted local agent `Airlock` while the untrusted AI is in view. That is the whole interface; the commands below are the trusted agent's implementation, not homework for the Author.
+- **Human use:** open the computer AI that already has Alexandria and type `Airlock this new AI: <name or URL>`. It creates one fresh private Airlock repo for that AI and tells the Author the exact repo to select in the new AI's GitHub permission screen. The Author selects only that repo; they never create or manage it themselves. The commands below are implementation, not homework.
 - **Does:** gives an untrusted AI a disposable projection of approved Alexandria context plus an inbox. The default projection is the already-public Library shadow. The AI returns work through `inbox/` files or `airlock-capture` GitHub issues. Both become provenance-wrapped `trust: untrusted` captures with no automatic authority to change canon or invoke tools.
 - **Naming:** app identity never enters a repo name, path, state, permission, label, or capture. Hidden compartments are named only `airlock`, `airlock-2`, and so on.
 - **Why isolated compartments:** the credential, history, revocation, and provenance stay separate. A shared repo would let one untrusted AI read or poison another's work.
@@ -126,7 +126,7 @@
   mkdir -p "$HOME/alexandria/system/permissions" && printf '%s\n' '<selection-sha256>' > "$HOME/alexandria/system/permissions/<slot>"
   python3 "$AIRLOCK" enable <slot> <allowlist.tsv>
   ```
-- **Use:** connect that fresh repo to one private remote and grant only that repo to the untrusted AI. GitHub is a replaceable transport, not the content or ground truth. The next local session safely imports returns, then regenerates and pushes the already-public Library shadow. Run `python3 "$AIRLOCK" import <slot>` for an immediate loop. Private context stays frozen until a newly approved `refresh <slot>`.
+- **Use:** the computer AI creates a generic private remote for that fresh slot, pushes it, and tells the Author which single repo to select in the new AI's GitHub screen. Never reuse an Airlock repo across untrusted AIs. GitHub is replaceable transport, not the content or ground truth. The next local session safely imports returns, then regenerates and pushes the already-public Library shadow. Run `python3 "$AIRLOCK" import <slot>` for an immediate loop. Private context stays frozen until a newly approved `refresh <slot>`.
 - **Off:** `python3 "$AIRLOCK" off <slot>`, then revoke that repo's credential or archive the remote. The repo is kept for recovery; the sovereign source is untouched.
 
 ## drive — the chat pocket copy in your own Google Drive

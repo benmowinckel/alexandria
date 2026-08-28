@@ -20,13 +20,13 @@ Each repo is a security boundary. A repository-scoped credential can reach that 
 
 The Library shadow is the content. A private Git remote is only the default replaceable transport and write buffer. The public Library is the read-only door when no write-back is needed. A trusted AI running on the Author's own machine can use the sovereign local checkout. Airlock is the middle door: an approved projection plus a safe return path.
 
-The human interface is one word: `Airlock`. It means connect the untrusted AI currently in view through this boundary. The trusted local agent chooses the next hidden compartment, handles every path and command, starts with already-public Library context, and asks once only if extra private context or the app's own approval screen is actually required.
+The human opens the computer AI that already has Alexandria and types `Airlock this new AI: <name or URL>`. That AI creates one fresh private Airlock repo for the new AI, handles every path and command, starts with already-public Library context, and tells the human only the exact repo to select in the new AI's GitHub permission screen. The human never creates or manages the repo. App identity may appear in the request but never becomes infrastructure.
 
 ## Operation
 
 The signed controller is `factory/scripts/airlock.py`; the exact consent and commands are in `factory/optional.md § airlock`.
 
-Saying `Airlock` is the go to connect the untrusted AI currently in view through a fresh isolated compartment. Already-public Library context needs no second verdict and stays current automatically. Any additional private context is a frozen snapshot until its exact new bytes are approved, and the external app may still show its own unavoidable repository-grant screen. Setup, joining, and marketplace browsing do none of this.
+That `Airlock this new AI: …` request is the go. Every new untrusted AI gets a fresh isolated repo; repos are never reused between them. Already-public Library context needs no second verdict and stays current automatically. Any additional private context is a frozen snapshot until its exact new bytes are approved, and the external app may still show its own unavoidable repository-grant screen. Setup, joining, and marketplace browsing do none of this.
 
 At the next local session, the controller fast-forwards file returns, rejects path traversal, symlinks, binary or oversized files, changed context, changed protected paths, and rewritten history, then imports both channels as untrusted captures. It closes an issue only after its local capture exists. After inbound work is safe locally, it regenerates the already-public shadow from ground truth and pushes it to the connected remote. A private snapshot changes only through an explicit approved refresh.
 
