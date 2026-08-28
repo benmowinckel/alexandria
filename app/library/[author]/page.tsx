@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ author: s
     const name = data.author?.display_name || data.author?.id || author;
     const slug = data.author?.id || author;
     const title = `alexandria/${slug}`;
-    const description = `${name}’s public alexandria profile — what they make, what they’re building, and what they choose to share.`;
+    const description = `${name}’s public alexandria profile — what they make, build, and share.`;
     const url = `${SITE_URL}/library/${encodeURIComponent(slug)}`;
     return {
       title,

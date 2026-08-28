@@ -152,7 +152,7 @@ export default async function LibraryPage({ searchParams }: { searchParams?: Pro
           {signed_in && membership_active ? <p className="lib-eyebrow">the collective</p> : null}
           <h1 className="lib-h1">the library</h1>
           <p className="lib-intro">
-            Public profiles from people using alexandria — what they make, what they&rsquo;re building, and what they choose to share.
+            Public profiles from people using alexandria — what they make, build, and share.
           </p>
         </header>
 
