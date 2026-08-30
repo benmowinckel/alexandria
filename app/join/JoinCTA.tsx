@@ -31,7 +31,8 @@ export default function JoinCTA({
     try { return parseReferralInput(window.localStorage.getItem('alexandria-referrer') || ''); }
     catch { return ''; }
   });
-  const candidateUrlRef = urlRef || savedRef;
+  const [initialRefRemoved, setInitialRefRemoved] = useState(false);
+  const candidateUrlRef = initialRefRemoved ? '' : (urlRef || savedRef);
   const validUrlRef = candidateUrlRef && urlCheck?.input === candidateUrlRef ? urlCheck.valid : null;
   const [confirmedManualRef, setConfirmedManualRef] = useState('');
   const [manualRef, setManualRef] = useState('');
@@ -76,6 +77,23 @@ export default function JoinCTA({
   const confirmedRef = confirmedManualRef || validUrlRef || '';
   const joinUrl = githubUrl(confirmedRef, refSource);
 
+  const removeReferral = () => {
+    setInitialRefRemoved(true);
+    setConfirmedManualRef('');
+    setManualRef('');
+    setManualCheck(null);
+    try { window.localStorage.removeItem('alexandria-referrer'); } catch { /* storage is optional */ }
+
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.delete('ref');
+    nextUrl.searchParams.delete('ref_source');
+    window.history.replaceState(
+      window.history.state,
+      '',
+      `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`,
+    );
+  };
+
   return (
     <>
       <section className="join-section">
@@ -119,15 +137,25 @@ export default function JoinCTA({
 
         <div className="join-referral">
           {confirmedRef ? (
-            <p className="door-btn act-box act-email is-saved">
+            <div className="door-btn act-box act-email is-saved">
               <span className="act-sent">
                 @{confirmedRef} invited you
                 <span className="act-why">{'\u00a0'}— referral saved</span>
               </span>
-              <span className="join-door-go is-done" aria-hidden="true">
-                <TickIcon />
+              <span className="join-referral-state">
+                <span className="join-door-go is-done join-referral-tick" aria-hidden="true">
+                  <TickIcon />
+                </span>
+                <button
+                  type="button"
+                  className="join-referral-remove"
+                  aria-label={`remove @${confirmedRef} referral`}
+                  onClick={removeReferral}
+                >
+                  ×
+                </button>
               </span>
-            </p>
+            </div>
           ) : (
             <form
               className={`door-btn act-box act-email${referralFocused ? ' is-focused' : ''}`}

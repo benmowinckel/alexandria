@@ -12,7 +12,8 @@
     "audit:metadata": "node scripts/check-metadata.mjs",
     "audit": "node scripts/audit-robustness.cjs",
     "audit:snap": "node scripts/snap-audit.cjs",
-    "test:handoff": "node scripts/test-handoff.mjs"
+    "test:handoff": "node scripts/test-handoff.mjs",
+    "test:join-referral": "node scripts/test-join-referral-remove.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
