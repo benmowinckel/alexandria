@@ -2,6 +2,8 @@
 export function agentSetupPrompt(): string {
   return `I’m considering changing our setup so you can build a deeper, lasting understanding of me and use it throughout our work.
 
+Before reading anything, check whether this exact session can run commands on my actual computer. A GitHub copy in a cloud session is not my computer. If you cannot reach the computer, do not inspect any selected private repository or use it to guess my live setup. Tell me to paste this into an agent running on my computer, then stop.
+
 I deliberately chose this public project and am asking you to inspect it:
 https://github.com/benmowinckel/alexandria
 

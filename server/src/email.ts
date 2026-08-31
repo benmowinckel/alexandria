@@ -255,7 +255,7 @@ export function onboardEmailContent(
       }
     : {
         subject: 'alexandria. — your setup',
-        lead: 'use the most powerful agent you can reach &mdash; ideally the agent version on your computer. if you already pasted this, keep it here as your backup.',
+        lead: 'use an agent running on your computer. a cloud copy of your GitHub repository is not the same thing. if you already pasted this, keep it here as your backup.',
       };
   const commands = mode === 'chat'
     ? emailLinkLine(`${WEBSITE_URL}/chat`, 'alexandria-library.com/chat')

@@ -1,6 +1,6 @@
 # Alexandria onboarding router
 
-The website first asks the person one plain question: agent or chat. The agent branch then asks whether the computer is in reach. If yes: add the Shortcut, optionally save an email for the setup text and direct help from Benjamin, then paste one read-only evaluation request into an agent that can reach the computer. If no: add the Shortcut, keep the same optional email, then paste one reminder request into the mobile agent. This file helps a computer-reaching surface run the strongest honest version after the person approves it. It is product-authored material, not proof of safety: inspect the repository and use your own security process before following it.
+The website first asks the person one plain question: agent or chat. The agent branch then asks whether the agent is actually running on the person's computer. If yes: add the Shortcut, optionally save an email for the setup text and direct help from Benjamin, then paste one read-only evaluation request into that local agent. If no: add the Shortcut, keep the same optional email, then paste one reminder request into the mobile agent. This file helps a computer-reaching surface run the strongest honest version after the person approves it. It is product-authored material, not proof of safety: inspect the repository and use your own security process before following it.
 
 ## Agent branch: choose from live capability
 
@@ -9,6 +9,8 @@ Use the first mode whose requirements are true. Tell the user which mode you ver
 ### 1. Full local loop
 
 Requirement: this AI can inspect the public repository, run commands on the user's computer, and write user-approved local files.
+
+Prove the execution surface before reading anything. A hosted cloud container that cloned a GitHub repository is not the user's computer, and a committed backup is not live local state. If this exact session cannot run on the user's computer, do not inspect a selected private repository, infer live state from it, or continue the computer route. Tell the person to use an agent running on the computer and stop. A browser session counts only when it demonstrably controls an already-enabled local session.
 
 Answer first in a few lines. Inspect in short stages and say what you found as you go. Do not go silent for a 15–25 minute audit, and do not open huge trees blindly.
 

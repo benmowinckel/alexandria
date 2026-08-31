@@ -29,7 +29,7 @@ We do not claim:
 
 ## Inspect before running
 
-Start at [`/start`](https://alexandria-library.com/start). Choose agent or chat. The agent path asks whether your computer is in reach. If it is, add the Shortcut, optionally save your email for the setup text and direct help from Benjamin, then paste one evaluation request into an agent that can reach that computer. If it is not, add the Shortcut, keep the same optional email backup, then paste one reminder request into the AI already in your hand. The Shortcut link adapts to the device: direct add on iPhone; Mac download and an iPhone QR code on computer.
+Start at [`/start`](https://alexandria-library.com/start). Choose agent or chat. The agent path asks whether the agent is actually running on your computer. A cloud session with a GitHub copy does not count. If it is local, add the Shortcut, optionally save your email for the setup text and direct help from Benjamin, then paste one evaluation request into that agent. If it is not, add the Shortcut, keep the same optional email backup, then paste one reminder request into the AI already in your hand. The Shortcut link adapts to the device: direct add on iPhone; Mac download and an iPhone QR code on computer.
 
 On the computer route, the receiving agent independently inspects `github.com/benmowinckel/alexandria`, decides how the founder's blueprint should fit around your existing setup, and gives you a short recommendation. It may continue with the strongest local route only after you approve. A phone can still use this route when its AI has a real remote connection to the computer; merely using the same account on both devices does not count.
 

@@ -66,6 +66,21 @@ require shared/onboarding-prompts.ts \
   'tell me plainly that it is ready, that its files are on my computer, and that I keep using you normally' \
   'the user request no longer asks for a clear completion state'
 require shared/onboarding-prompts.ts \
+  'check whether this exact session can run commands on my actual computer' \
+  'the computer setup paste no longer checks for live local execution'
+require shared/onboarding-prompts.ts \
+  'A GitHub copy in a cloud session is not my computer' \
+  'the computer setup paste can still mistake a cloud clone for live local access'
+require shared/onboarding-prompts.ts \
+  'do not inspect any selected private repository or use it to guess my live setup' \
+  'the cloud stop can still expose or misread the selected private repository'
+require shared/onboarding-prompts.ts \
+  'Tell me to paste this into an agent running on my computer, then stop' \
+  'the cloud stop no longer gives one clear safe next action'
+require factory/redteam.md \
+  'hosted code session whose required workspace is a selected private GitHub backup' \
+  'the cold-user simulation no longer reproduces the cloud-clone failure'
+require shared/onboarding-prompts.ts \
   'one neutral link to Alexandria’s community page so I can decide for myself whether I also want a public profile and a way to connect with other people' \
   'the user request no longer owns the neutral community decision'
 require shared/onboarding-prompts.ts \

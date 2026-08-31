@@ -153,13 +153,13 @@ export default function StartCTA({
         >
           {copyState === 'copied'
             ? <>
-                copied<span className="act-why"> — paste into {mode === 'later' ? 'your mobile agent' : 'your computer agent'}</span>
+                copied<span className="act-why"> — paste into {mode === 'later' ? 'your mobile agent' : 'that local agent'}</span>
               </>
             : copyState === 'error'
               ? 'couldn’t copy — try again'
               : <>
                   {mode === 'later' ? 'copy the reminder' : 'copy the setup'}
-                  <span className="act-why"> — paste into {mode === 'later' ? 'your mobile agent' : 'your computer agent'}</span>
+                  <span className="act-why"> — paste into {mode === 'later' ? 'your mobile agent' : 'that local agent'}</span>
                 </>}
         </button>
       </div>

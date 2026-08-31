@@ -12,9 +12,9 @@ export const metadata = pageMetadata({
     'start your alexandria loop from the ai you already use — local, remote, folder-based, or chat.',
 });
 
-// One front door, then agent or chat. The agent branch asks whether the
-// computer is in reach because the action changes: setup now or leave a
-// verified cross-device reminder. Chat restores its approved host-specific
+// One front door, then agent or chat. The agent branch asks whether the agent
+// actually runs on the computer because the action changes: setup now or leave
+// a verified cross-device reminder. Chat restores its approved host-specific
 // instructions → Drive → first-setup path.
 //
 // Composition: a single flush-left editorial column (not a centred stack). The
@@ -53,7 +53,7 @@ export default async function StartPage({
         <h1 className="primer-h1">start your loop</h1>
 
         {/* The person chooses the category they already understand. Agents
-            then split only on whether the computer can actually be reached. */}
+            then split only on whether execution is actually local. */}
         <StartDoor refCode={ref} />
 
       </main>

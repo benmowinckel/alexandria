@@ -17,8 +17,8 @@ const ENTER_MS = 320;
 const REDUCED_EXIT_AND_BREATH_MS = 100;
 const REDUCED_ENTER_MS = 160;
 
-// Agent/chat chooses the product. Computer reach then changes the action:
-// setup now, or leave a verified cross-device reminder and durable email copy.
+// Agent/chat chooses the product. Actual local execution then changes the
+// action: setup now, or leave a verified cross-device reminder and email copy.
 export default function StartDoor({ refCode }: { refCode?: string }) {
   const [screen, go] = useDoorStep(STEPS);
   const [phase, setPhase] = useState<StagePhase>('idle');
@@ -87,9 +87,9 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
   if (screen === 'agent') {
     return stage(
       <div className="door-block">
-        <p className="door-q">is your computer in reach?</p>
+        <p className="door-q">is your agent running on your computer?</p>
         <div className="door-answers">
-          <button className="door-btn" onClick={() => transitionTo('computer')}>yes — i’ll grab it now</button>
+          <button className="door-btn" onClick={() => transitionTo('computer')}>yes — it runs here</button>
           <button className="door-btn" onClick={() => transitionTo('phone')}>no — not right now</button>
         </div>
       </div>
@@ -109,7 +109,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
       <p className="door-q">what do you have access to?</p>
       <div className="door-answers">
         <button className="door-btn" onClick={() => transitionTo('agent')}>
-          an agent<span className="act-why"> — eg codex, claude code, cursor</span>
+          an agent<span className="act-why"> — eg codex, claude code or cursor on your computer</span>
         </button>
         <button className="door-btn" onClick={() => transitionTo('chat')}>
           just chat<span className="act-why"> — eg chatgpt, claude, gemini</span>
