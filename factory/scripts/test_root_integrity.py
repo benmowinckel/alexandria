@@ -113,6 +113,7 @@ def root_packet(**overrides: str) -> str:
         "author_signoff": "I am marking Hold the line as root because I do not want it silently replaced.",
         "timestamp": "2026-08-12T19:10:00Z",
         "git_commit": "pending",
+        "statement": "The original position. It should not move silently.",
         "case_for": "The position is upstream of many choices; losing it quietly would rewrite the person.",
         "case_against": "Freezing it now hard-codes one influenced collage and calls it sacred.",
     }
@@ -145,6 +146,8 @@ def accepted_root() -> str:
 ### mind.hold-the-line
 - file: files/constitution/Mind.md
 - section: Hold the line
+- statement: |
+    The original position. It should not move silently.
 - since: 2026-08-12
 - packet: files/works/root-packets/mind.hold-the-line.md
 """
@@ -251,6 +254,11 @@ kind: ordinary
         self.assertEqual(rec.get("git_commit"), "unknown")
         self.assertEqual(ri.ordinary_record_ok(rec), [])
 
+    def test_non_root_provenance_kind_is_open_vocabulary(self) -> None:
+        for kind in ("ordinary", "form", "historical", "development", "correction"):
+            rec = ri.parse_records(ordinary_record(kind=kind), "files/works/provenance.md")[0]
+            self.assertEqual(ri.ordinary_record_ok(rec), [], kind)
+
     def test_model_provider_session_tags_survive_round_trip(self) -> None:
         text = ordinary_record()
         records = ri.parse_records(text, "files/works/provenance.md")
@@ -296,6 +304,43 @@ class IntegrityTests(unittest.TestCase):
         repo = Repo()
         repo.stage("files/works/root.md", accepted_root())
         self.assertIn("root-packet-missing", repo.codes())
+
+    def test_adding_a_root_without_the_actual_statement(self) -> None:
+        repo = Repo()
+        registry = accepted_root().replace(
+            "- statement: |\n    The original position. It should not move silently.\n",
+            "",
+        )
+        repo.stage("files/works/root-packets/mind.hold-the-line.md", root_packet())
+        repo.stage("files/works/root.md", registry)
+        self.assertIn("root-statement-missing", repo.codes())
+
+    def test_adding_a_root_with_a_statement_absent_from_constitution(self) -> None:
+        repo = Repo()
+        packet = root_packet(statement="A thought that is not in the target section.")
+        registry = accepted_root().replace(
+            "The original position. It should not move silently.",
+            "A thought that is not in the target section.",
+        )
+        repo.stage("files/works/root-packets/mind.hold-the-line.md", packet)
+        repo.stage("files/works/root.md", registry)
+        self.assertIn("root-statement-not-found", repo.codes())
+
+    def test_statement_matching_ignores_markdown_emphasis_and_quote_typography(self) -> None:
+        repo = Repo()
+        styled = CONSTITUTION.replace(
+            "The original position. It should not move silently.",
+            "**The original position.** It shouldn’t move silently.",
+        )
+        packet = root_packet(statement="The original position. It shouldn't move silently.")
+        registry = accepted_root().replace(
+            "The original position. It should not move silently.",
+            "The original position. It shouldn't move silently.",
+        )
+        repo.stage("files/constitution/Mind.md", styled)
+        repo.stage("files/works/root-packets/mind.hold-the-line.md", packet)
+        repo.stage("files/works/root.md", registry)
+        self.assertEqual(repo.codes(), set(), repo.check().findings)
 
     def test_root_change_with_same_provider_reviewer(self) -> None:
         repo = Repo()
@@ -380,16 +425,130 @@ class IntegrityTests(unittest.TestCase):
         )
         codes = repo.codes()
         self.assertTrue(
-            {"root-packet-missing", "root-gate-incomplete"} & codes,
+            {"root-packet-missing", "root-gate-incomplete", "root-statement-removed"} & codes,
             codes,
         )
 
         deleted = CONSTITUTION.replace("### Hold the line\nThe original position. It should not move silently.\n\n", "")
         repo.stage("files/constitution/Mind.md", deleted)
         self.assertTrue(
-            {"root-packet-missing", "root-gate-incomplete"} & repo.codes(),
+            {"root-packet-missing", "root-gate-incomplete", "root-statement-removed"} & repo.codes(),
             repo.codes(),
         )
+
+    def test_surrounding_reasoning_can_change_without_root_gate(self) -> None:
+        repo = Repo()
+        repo.stage(
+            "files/works/root-packets/mind.hold-the-line.md",
+            root_packet(),
+        )
+        repo.stage("files/works/root.md", accepted_root())
+        repo.commit_all("land root")
+
+        updated = CONSTITUTION.replace(
+            "The original position. It should not move silently.",
+            "The original position. It should not move silently.\nNew surrounding reasoning.",
+        )
+        repo.stage("files/constitution/Mind.md", updated)
+        repo.stage(
+            "files/works/provenance.md",
+            PROVENANCE_HEADER
+            + ordinary_record(
+                position="mind.hold-the-line-context",
+                section="Hold the line",
+                before="The original position. It should not move silently.",
+                after="The original position. It should not move silently. New surrounding reasoning.",
+            ),
+        )
+        self.assertEqual(repo.codes(), set(), repo.check().findings)
+
+    def test_root_statement_registry_rewrite_needs_matching_packet(self) -> None:
+        repo = Repo()
+        repo.stage(
+            "files/works/root-packets/mind.hold-the-line.md",
+            root_packet(),
+        )
+        repo.stage("files/works/root.md", accepted_root())
+        repo.commit_all("land root")
+
+        rewritten = accepted_root().replace(
+            "The original position. It should not move silently.",
+            "A replacement position.",
+        )
+        repo.stage("files/works/root.md", rewritten)
+        self.assertIn("root-packet-missing", repo.codes())
+
+    def test_valid_root_unmark_keeps_constitution_statement(self) -> None:
+        repo = Repo()
+        repo.stage("files/works/root-packets/mind.hold-the-line.md", root_packet())
+        repo.stage("files/works/root.md", accepted_root())
+        repo.commit_all("land root")
+
+        repo.stage(
+            "files/works/root-packets/mind.hold-the-line.md",
+            root_packet(
+                kind="root-unmark",
+                before="root",
+                after="non-root",
+                reason="The thought remains, but exceptional protection no longer serves the Author.",
+            ),
+        )
+        repo.stage("files/works/root.md", ROOT_EMPTY)
+        self.assertEqual(repo.codes(), set(), repo.check().findings)
+
+    def test_root_unmark_cannot_authorise_deleting_the_thought(self) -> None:
+        repo = Repo()
+        repo.stage("files/works/root-packets/mind.hold-the-line.md", root_packet())
+        repo.stage("files/works/root.md", accepted_root())
+        repo.commit_all("land root")
+
+        deleted = CONSTITUTION.replace(
+            "### Hold the line\nThe original position. It should not move silently.\n\n",
+            "",
+        )
+        repo.stage(
+            "files/works/root-packets/mind.hold-the-line.md",
+            root_packet(kind="root-unmark", before="root", after="non-root"),
+        )
+        repo.stage("files/works/root.md", ROOT_EMPTY)
+        repo.stage("files/constitution/Mind.md", deleted)
+        self.assertIn("root-packet-missing", repo.codes())
+
+    def test_valid_root_delete_removes_registry_and_thought(self) -> None:
+        repo = Repo()
+        repo.stage("files/works/root-packets/mind.hold-the-line.md", root_packet())
+        repo.stage("files/works/root.md", accepted_root())
+        repo.commit_all("land root")
+
+        deleted = CONSTITUTION.replace(
+            "### Hold the line\nThe original position. It should not move silently.\n\n",
+            "",
+        )
+        repo.stage(
+            "files/works/root-packets/mind.hold-the-line.md",
+            root_packet(
+                kind="root-delete",
+                before="The original position. It should not move silently.",
+                after="deleted",
+                reason="The Author chose to remove the protected thought itself.",
+            ),
+        )
+        repo.stage("files/works/root.md", ROOT_EMPTY)
+        repo.stage("files/constitution/Mind.md", deleted)
+        self.assertEqual(repo.codes(), set(), repo.check().findings)
+
+    def test_root_delete_cannot_authorise_unmarking_only(self) -> None:
+        repo = Repo()
+        repo.stage("files/works/root-packets/mind.hold-the-line.md", root_packet())
+        repo.stage("files/works/root.md", accepted_root())
+        repo.commit_all("land root")
+
+        repo.stage(
+            "files/works/root-packets/mind.hold-the-line.md",
+            root_packet(kind="root-delete", before="root", after="deleted"),
+        )
+        repo.stage("files/works/root.md", ROOT_EMPTY)
+        self.assertIn("root-packet-missing", repo.codes())
 
     def test_historical_unknown_does_not_fail_ordinary(self) -> None:
         repo = Repo()

@@ -123,6 +123,7 @@ canon_row=$(report_row canon)
 methods_row=$(report_row methods)
 hooks_row=$(report_row hooks)
 core_row=$(report_row core)
+root_row=$(report_row root_integrity)
 passive_row=$(report_row passive_session)
 cue_row=$(report_row visible_cue)
 loop_row=$(report_row loop)
@@ -131,6 +132,7 @@ report_core_ok=no
 if [ "$report_present" = "yes" ] && \
    [ "$files_row" = "ok" ] && [ "$canon_row" = "ok" ] && \
    [ "$hooks_row" = "ok" ] && [ "$core_row" = "ok" ] && \
+   [ "$root_row" != "fail" ] && \
    [ "$loop_row" != "fail" ]; then
   report_core_ok=yes
 fi

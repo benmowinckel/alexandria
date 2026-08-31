@@ -1,6 +1,8 @@
 # Root set
 
-Root is not epistemic status. Empty until the Author signs a position in.
+The minimal protected thoughts themselves live here, with a pointer to their
+full reasoning in the Constitution. Root is not epistemic status. Empty until
+the Author signs a position in.
 
 This is a habit gate, not a lock. The files are yours; override is easy.
 The pause is the point: notice that an AI moved something load-bearing.

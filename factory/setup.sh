@@ -518,9 +518,6 @@ chmod +x "$ALEX_DIR/system/git-hooks/pre-commit" 2>/dev/null
 fetch_factory "templates/works/root.md" "$ALEX_DIR/files/works/root.md" "works/root.md"
 fetch_factory "templates/works/provenance.md" "$ALEX_DIR/files/works/provenance.md" "works/provenance.md"
 fetch_factory "templates/works/root-packets-readme.md" "$ALEX_DIR/files/works/root-packets/README.md" "works/root-packets/README.md"
-if [ -d "$ALEX_DIR/.git" ] && [ -x "$ALEX_DIR/system/scripts/install-root-hook.sh" ]; then
-  (cd "$ALEX_DIR" && bash system/scripts/install-root-hook.sh) >/dev/null 2>&1 || true
-fi
 
 # Optional add-ons doc — the agent-readable menu (backup, iCloud mirror,
 # capture, Drive, and separately consented connections), each with
@@ -1535,6 +1532,17 @@ GITIGNORE
     git -C "$ALEX_DIR" config user.email "${USER:-author}@alexandria.local" 2>/dev/null
   fi
 
+  # The root gate must be wired only after the local ledger exists. Earlier
+  # releases attempted this before `git init`, so a fresh Author received the
+  # checker files but no live pre-commit pause. Keep the result for the setup
+  # health matrix below; never swallow a failed sovereignty surface.
+  ROOT_HOOK_INSTALL_OK=""
+  if [ -x "$ALEX_DIR/system/scripts/install-root-hook.sh" ]; then
+    if (cd "$ALEX_DIR" && bash system/scripts/install-root-hook.sh) >/dev/null 2>&1; then
+      ROOT_HOOK_INSTALL_OK=1
+    fi
+  fi
+
   # Detect an existing SSH public key (any type — works for ed25519, rsa, ecdsa).
   # No hard-coded path list — ls *.pub, take the first one.
   SSH_PUBKEY=""
@@ -1717,6 +1725,25 @@ if [ -z "$CORE_MISSING" ]; then
   STATUS_CORE="ok"; DETAIL_CORE="agent + machine + notepad + feedback + shelf"
 else
   STATUS_CORE="fail"; DETAIL_CORE="missing:${CORE_MISSING} — re-run setup"
+fi
+
+# root stewardship: exercise the checker and prove the tracked pre-commit gate
+# is the exact hook Git will run. With no Git binary the model-enforced habit
+# pause remains available, so report the missing technical ceiling as a skip.
+if ! command -v git &>/dev/null; then
+  STATUS_ROOT="skip"; DETAIL_ROOT="model habit gate only — install git for the local commit pause"
+elif [ ! -d "$ALEX_DIR/.git" ]; then
+  STATUS_ROOT="fail"; DETAIL_ROOT="local git ledger missing — re-run setup"
+elif [ -z "${ROOT_HOOK_INSTALL_OK:-}" ]; then
+  STATUS_ROOT="fail"; DETAIL_ROOT="pre-commit gate could not be installed — re-run setup"
+elif [ ! -f "$ALEX_DIR/system/scripts/root_integrity.py" ] || \
+     ! python3 "$ALEX_DIR/system/scripts/root_integrity.py" status >/dev/null 2>&1; then
+  STATUS_ROOT="fail"; DETAIL_ROOT="root checker did not run — re-run setup"
+elif [ ! -x "$ALEX_DIR/.git/hooks/pre-commit" ] || \
+     ! cmp -s "$ALEX_DIR/system/git-hooks/pre-commit" "$ALEX_DIR/.git/hooks/pre-commit"; then
+  STATUS_ROOT="fail"; DETAIL_ROOT="Git is not using the installed root gate — re-run setup"
+else
+  STATUS_ROOT="ok"; DETAIL_ROOT="root set + provenance + independent-review commit pause"
 fi
 
 # The visible route from passive work into /a is on by default. Native chrome
@@ -2124,6 +2151,7 @@ MISSING=""
 [ "$STATUS_CANON" != "ok" ] && MISSING="$MISSING canon"
 [ "$STATUS_HOOKS" != "ok" ] && MISSING="$MISSING hooks"
 [ "$STATUS_CORE" != "ok" ] && MISSING="$MISSING${CORE_MISSING}"
+[ "$STATUS_ROOT" = "fail" ] && MISSING="$MISSING root_integrity"
 [ "$STATUS_LOOP" = "fail" ] && MISSING="$MISSING loop"
 [ ! -f "$ALEX_DIR/system/.block" ] && MISSING="$MISSING block"
 
@@ -2151,6 +2179,7 @@ SETUP_STATUS="ok"
   echo "  methods: $STATUS_DEFAULTS"
   echo "  hooks: $STATUS_HOOKS"
   echo "  core: $STATUS_CORE"
+  echo "  root_integrity: $STATUS_ROOT"
   echo "  passive_session: $STATUS_PASSIVE"
   echo "  visible_cue: $STATUS_CUE"
   echo "  loop: $STATUS_LOOP"
@@ -2202,6 +2231,7 @@ count_status "$STATUS_CANON"
 count_status "$STATUS_DEFAULTS"
 count_status "$STATUS_HOOKS"
 count_status "$STATUS_CORE"
+count_status "$STATUS_ROOT"
 count_status "$STATUS_PASSIVE"
 count_status "$STATUS_CUE"
 count_status "$STATUS_LOOP"
@@ -2226,6 +2256,7 @@ emit_row "$STATUS_CANON" "canon" "$DETAIL_CANON"
 emit_row "$STATUS_DEFAULTS" "starting methods" "$DETAIL_DEFAULTS"
 emit_row "$STATUS_HOOKS" "hooks" "$DETAIL_HOOKS"
 emit_row "$STATUS_CORE" "core templates" "$DETAIL_CORE"
+emit_row "$STATUS_ROOT" "protected root" "$DETAIL_ROOT"
 emit_row "$STATUS_PASSIVE" "passive session" "$DETAIL_PASSIVE"
 emit_row "$STATUS_CUE" "visible cue" "$DETAIL_CUE"
 emit_row "$STATUS_LOOP" "local loop" "$DETAIL_LOOP"
@@ -2254,6 +2285,7 @@ CORE_OK=true
 for s in "$STATUS_FILES" "$STATUS_CANON" "$STATUS_HOOKS" "$STATUS_CORE"; do
   [ "$s" = "ok" ] || CORE_OK=false
 done
+[ "$STATUS_ROOT" = "fail" ] && CORE_OK=false
 [ "$STATUS_LOOP" = "fail" ] && CORE_OK=false
 # The block is core for a FRESH install: the close below points the agent at
 # ~/alexandria/system/.block, so a missing block would send it to a file that

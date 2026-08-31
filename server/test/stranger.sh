@@ -229,6 +229,9 @@ check "Grok absent is reported"            grep -q '^  grok: absent$' "$HOME/ale
 check "Grok directory not invented"        bash -c '[ ! -d "$HOME/.grok" ]'
 check "passive-active loop healthy" grep -q '^  loop: ok$' "$HOME/alexandria/system/.setup_report"
 check "visible cue healthy"       grep -q '^  visible_cue: ok$' "$HOME/alexandria/system/.setup_report"
+check "protected root healthy"    grep -q '^  root_integrity: ok$' "$HOME/alexandria/system/.setup_report"
+check "root checker runs"         python3 "$HOME/alexandria/system/scripts/root_integrity.py" status
+check "root pre-commit installed" cmp -s "$HOME/alexandria/system/git-hooks/pre-commit" "$HOME/alexandria/.git/hooks/pre-commit"
 check "Claude root uses native home path" node -e "const fs=require('fs'),os=require('os'),path=require('path');const s=JSON.parse(fs.readFileSync(path.join(process.env.HOME,'.claude','settings.json'),'utf8'));process.exit(s.permissions.additionalDirectories.includes(path.join(os.homedir(),'alexandria'))?0:1)"
 MINUTE_CUE='Want me to open your alexandria loop in the background for when you have a minute?'
 check "first-reply cue is consent" bash -c 'HOME="$1" bash "$1/.local/share/alexandria/scripts/statusline.sh" footer | grep -qxF "$2"' _ "$HOME" "$MINUTE_CUE"
@@ -344,6 +347,8 @@ check_output "marginalia pointer"        "marginalia/"           "$SESSION_START
 check_output "machine pointer"           "core/machine.md"       "$SESSION_START_OUTPUT"
 check_output "notepad pointer"           "core/notepad.md"       "$SESSION_START_OUTPUT"
 check_output "feedback pointer"          "core/feedback.md"      "$SESSION_START_OUTPUT"
+check_output "root stewardship status"   "root integrity status" "$SESSION_START_OUTPUT"
+check_output "root registry pointer"     "files/works/root.md"   "$SESSION_START_OUTPUT"
 check "hooks_payload cached"             [ -f "$HOME/.local/share/alexandria/.hooks_payload" ]
 check "hooks_payload non-empty"          [ -s "$HOME/.local/share/alexandria/.hooks_payload" ]
 check "Foundation cached"                [ -f "$HOME/alexandria/system/canon/foundation.md" ]
@@ -389,6 +394,7 @@ SUBAGENT_EXIT=$?
 check "subagent ran"                     [ "$SUBAGENT_EXIT" -eq 0 ]
 check_output "subagent context block"    "AUTHOR CONTEXT"        "$SUBAGENT_OUTPUT"
 check_output "subagent constitution ptr" "constitution/"         "$SUBAGENT_OUTPUT"
+check_output "subagent root gate"        "files/works/root.md"   "$SUBAGENT_OUTPUT"
 
 # ═══════════════════════════════════════════════════════════
 # Summary

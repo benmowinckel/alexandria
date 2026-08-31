@@ -44,8 +44,6 @@ PLACEHOLDERS = {
 }
 
 ROOT_KINDS = {"root-add", "root-change", "root-delete", "root-unmark"}
-ORDINARY_KINDS = {"ordinary", "form"}
-ALL_KINDS = ROOT_KINDS | ORDINARY_KINDS | {"historical"}
 
 # Independently trained model families. The app (Cursor, Claude Code, Codex)
 # is not a family. Fable then Grok in the same Cursor window counts.
@@ -108,6 +106,7 @@ class RootEntry:
     position: str
     file: str
     section: str
+    statement: str = ""
     since: str = ""
     packet: str = ""
 
@@ -154,6 +153,28 @@ def normalize_token(value: str) -> str:
 def fingerprint_text(text: str) -> str:
     collapsed = re.sub(r"\s+", " ", (text or "").strip())
     return hashlib.sha256(collapsed.encode("utf-8")).hexdigest()[:16]
+
+
+def normalize_statement_text(text: str) -> str:
+    """Normalise form, not words, so typography does not pay the root gate."""
+    value = (text or "").translate(
+        str.maketrans(
+            {
+                "“": '"',
+                "”": '"',
+                "‘": "'",
+                "’": "'",
+                "\u00a0": " ",
+            }
+        )
+    )
+    value = re.sub(r"\*\*(.+?)\*\*", r"\1", value, flags=re.DOTALL)
+    value = re.sub(r"__(.+?)__", r"\1", value, flags=re.DOTALL)
+    return re.sub(r"\s+", " ", value.strip())
+
+
+def fingerprint_statement(text: str) -> str:
+    return hashlib.sha256(normalize_statement_text(text).encode("utf-8")).hexdigest()[:16]
 
 
 def slugify(text: str) -> str:
@@ -307,6 +328,7 @@ def parse_root_set(text: str) -> list[RootEntry]:
                 position=position,
                 file=file_path,
                 section=section,
+                statement=fields.get("statement", "").strip(),
                 since=fields.get("since", "").strip(),
                 packet=fields.get("packet", "").strip(),
             )
@@ -341,6 +363,15 @@ def section_by_heading(sections: Iterable[Section], heading: str) -> Section | N
         if section.heading.strip().lower() == want:
             return section
     return None
+
+
+def contains_statement(section: Section | None, statement: str) -> bool:
+    """Exact words, form-insensitive; surrounding reasoning may evolve."""
+    if section is None or not statement.strip():
+        return False
+    needle = normalize_statement_text(statement)
+    haystack = normalize_statement_text(section.body)
+    return needle in haystack
 
 
 def is_constitution_source(path: Path) -> bool:
@@ -551,9 +582,8 @@ def ordinary_record_ok(record: Record) -> list[str]:
     ):
         if not record.get(key):
             missing.append(key)
-    kind = record.get("kind") or "ordinary"
-    if normalize_token(kind) not in {normalize_token(k) for k in ALL_KINDS}:
-        missing.append(f"kind ({kind!r} is not recognised)")
+    if not record.get("kind"):
+        missing.append("kind")
     return missing
 
 
@@ -669,6 +699,16 @@ def check_repo(root: Path, staged: bool = True) -> CheckResult:
         before: str | None = None,
         after: str | None = None,
     ) -> None:
+        if kind == "root-add" and not entry.statement:
+            result.findings.append(
+                Finding(
+                    "root-statement-missing",
+                    f"{kind} for {entry.position!r} has no exact statement in {ROOT_SET_PATH.as_posix()}. "
+                    "The protected root file must carry the actual thought, not only a pointer.",
+                    ROOT_SET_PATH.as_posix(),
+                )
+            )
+            return
         packet = matching_root_packet(
             packets,
             entry.position,
@@ -688,6 +728,43 @@ def check_repo(root: Path, staged: bool = True) -> CheckResult:
                 )
             )
             return
+        if entry.statement:
+            packet_statement = packet.get("statement")
+            if not packet_statement:
+                result.findings.append(
+                    Finding(
+                        "root-packet-incomplete",
+                        f"{kind} for {entry.position!r} has no statement field matching the exact thought in "
+                        f"{ROOT_SET_PATH.as_posix()}.",
+                        packet.source_path or PACKET_DIR.as_posix(),
+                    )
+                )
+                return
+            if fingerprint_statement(packet_statement) != fingerprint_statement(entry.statement):
+                result.findings.append(
+                    Finding(
+                        "root-statement-mismatch",
+                        f"{kind} for {entry.position!r} does not match the statement reviewed in its packet.",
+                        packet.source_path or PACKET_DIR.as_posix(),
+                    )
+                )
+                return
+            if kind != "root-delete":
+                target_rel = entry.file.replace("\\", "/")
+                if not target_rel.startswith("files/"):
+                    target_rel = str(Path("files/constitution") / Path(target_rel).name)
+                target_text = file_at(root, target_rel, staged)
+                target_section = section_by_heading(extract_sections(target_text or ""), entry.section)
+                if not contains_statement(target_section, entry.statement):
+                    result.findings.append(
+                        Finding(
+                            "root-statement-not-found",
+                            f"{kind} for {entry.position!r} protects a statement that does not appear in "
+                            f"{target_rel} / {entry.section!r}.",
+                            target_rel,
+                        )
+                    )
+                    return
         missing = complete_root_packet(packet)
         if missing:
             result.findings.append(
@@ -703,10 +780,33 @@ def check_repo(root: Path, staged: bool = True) -> CheckResult:
     for entry in added:
         require_complete("root-add", entry)
     for entry in removed:
-        require_complete("root-delete", entry)
+        target_rel = entry.file.replace("\\", "/")
+        if not target_rel.startswith("files/"):
+            target_rel = str(Path("files/constitution") / Path(target_rel).name)
+        target_text = file_at(root, target_rel, staged)
+        target_section = section_by_heading(extract_sections(target_text or ""), entry.section)
+        # Removing protection while leaving the thought intact is an unmark.
+        # Removing the thought itself is a deletion. They are different Author
+        # choices and must not be authorised by the other packet kind.
+        thought_remains = (
+            contains_statement(target_section, entry.statement)
+            if entry.statement
+            else target_section is not None
+        )
+        require_complete("root-unmark" if thought_remains else "root-delete", entry)
     for old, new in retained:
-        if old.file != new.file or old.section != new.section:
-            require_complete("root-change", new, extra="registry retarget")
+        if (
+            old.file != new.file
+            or old.section != new.section
+            or fingerprint_statement(old.statement) != fingerprint_statement(new.statement)
+        ):
+            require_complete(
+                "root-change",
+                new,
+                extra="registry retarget or protected statement rewrite",
+                before=old.statement or None,
+                after=new.statement or None,
+            )
 
     # Root passage overwrite / deletion against the operative (HEAD) root set,
     # and against the new set for files that remain listed.
@@ -720,10 +820,17 @@ def check_repo(root: Path, staged: bool = True) -> CheckResult:
         rel = entry.file.replace("\\", "/")
         if not rel.startswith("files/"):
             rel = str(Path("files/constitution") / Path(rel).name)
+        replacement = new_by_pos.get(entry.position.lower())
         old_text = file_at_head(root, rel)
         new_text = file_at(root, rel, staged)
         deleted_file = old_text is not None and new_text is None and rel in changed
         if deleted_file:
+            if replacement is None:
+                # The matching root-delete transition was checked above.
+                continue
+            if replacement.file != entry.file or replacement.section != entry.section:
+                # The matching root-change retarget was checked above.
+                continue
             require_complete("root-delete", entry, extra="constitution file deleted")
             continue
         if old_text is None and new_text is None:
@@ -731,16 +838,40 @@ def check_repo(root: Path, staged: bool = True) -> CheckResult:
         old_sec = section_by_heading(extract_sections(old_text or ""), entry.section)
         new_sec = section_by_heading(extract_sections(new_text or old_text or ""), entry.section)
         if old_sec and new_sec is None:
+            if replacement is None:
+                # The matching root-delete transition was checked above.
+                continue
+            if replacement.file != entry.file or replacement.section != entry.section:
+                # The matching root-change retarget was checked above.
+                continue
             require_complete("root-delete", entry, extra="root section heading removed")
             continue
         if old_sec and new_sec and old_sec.fingerprint != new_sec.fingerprint:
-            require_complete(
-                "root-change",
-                entry,
-                extra="root passage overwritten",
-                before=old_sec.body,
-                after=new_sec.body,
-            )
+            if entry.statement:
+                if not contains_statement(new_sec, entry.statement):
+                    if replacement is None:
+                        # Root removal was checked above as either unmark or
+                        # delete, based on whether this thought still exists.
+                        continue
+                    if fingerprint_statement(replacement.statement) == fingerprint_statement(entry.statement):
+                        result.findings.append(
+                            Finding(
+                                "root-statement-removed",
+                                f"accepted root {entry.position!r} no longer appears in {rel} / {entry.section!r}. "
+                                "Keep the old statement operative, or update the registry and complete a root-change/root-delete packet.",
+                                rel,
+                            )
+                        )
+            else:
+                # Backward-compatible protection for accepted roots created by
+                # older releases that stored only a section pointer.
+                require_complete(
+                    "root-change",
+                    entry,
+                    extra="legacy whole-section root passage overwritten",
+                    before=old_sec.body,
+                    after=new_sec.body,
+                )
 
     if root_set_changed and not added and not removed:
         # Edits to preamble/notes of the registry are allowed without a packet.
