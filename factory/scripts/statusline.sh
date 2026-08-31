@@ -2,15 +2,12 @@
 # Alexandria's visible cue renderer.
 #
 # `statusline` is the persistent native-terminal ceiling. `footer` is the pure
-# portable consent line. `claim-footer` atomically gives one local harness the
-# day's single opportunity to surface it. The only writes are tiny date-named
-# claim-state files under this product-owned runtime. Footer/claim modes never open a tab,
-# start a session, read private source, or call the network; native statusline
-# mode reads only its already-approved local state.
+# portable consent line read by the SessionStart context. Neither opens a tab,
+# starts a session, reads private source, calls the network, or records a proxy
+# for whether the Author actually saw an assistant reply.
 
 A="${ALEXANDRIA_HOME:-$HOME/alexandria}"
 MODE="${1:-statusline}"
-RUNTIME_DIR="${ALEXANDRIA_RUNTIME:-$HOME/.local/share/alexandria}"
 CUE='Want me to open your alexandria loop in the background for when you have a minute?'
 
 # Automatic renderers stay inert unless the protected runtime completed setup.
@@ -23,56 +20,6 @@ fi
 # The cue is visible by default. One local sentinel is the immediate OFF.
 [ -f "$A/system/hooks/visible-cue.off" ] && exit 0
 
-local_day=$(date +%Y-%m-%d)
-if [ "${ALEXANDRIA_SETUP_PROBE:-}" = "1" ] && [ -n "${ALEXANDRIA_LOCAL_DATE:-}" ]; then
-  case "$ALEXANDRIA_LOCAL_DATE" in
-    ????-??-??) local_day="$ALEXANDRIA_LOCAL_DATE" ;;
-  esac
-fi
-
-if [ "$MODE" = "claim-footer" ]; then
-  # mkdir is the cross-process lock: ten tabs opened together still produce
-  # one opportunity. The owner lets a model-fallback host release only its own
-  # failed attempt; `seen` makes later responses unable to reopen a delivered
-  # day. Both files contain product state only, never Author content.
-  umask 077
-  owner="${2:-generic}"
-  owner=$(printf '%s' "$owner" | tr -cd 'A-Za-z0-9._-')
-  [ -n "$owner" ] || owner=generic
-  claim_root="$RUNTIME_DIR/state/visible-cue-claimed"
-  mkdir -p "$claim_root" 2>/dev/null || exit 0
-  mkdir "$claim_root/$local_day" 2>/dev/null || exit 0
-  printf '%s\n' "$owner" > "$claim_root/$local_day/owner" 2>/dev/null || {
-    rmdir "$claim_root/$local_day" 2>/dev/null || true
-    exit 0
-  }
-  for old_claim in "$claim_root"/*; do
-    [ -d "$old_claim" ] || continue
-    if [ "$old_claim" != "$claim_root/$local_day" ]; then
-      rm -f "$old_claim/owner" "$old_claim/seen" 2>/dev/null || true
-      rmdir "$old_claim" 2>/dev/null || true
-    fi
-  done
-  printf '%s\n' "$CUE"
-  exit 0
-fi
-
-if [ "$MODE" = "mark-footer-seen" ] || [ "$MODE" = "release-footer" ]; then
-  owner="${2:-generic}"
-  owner=$(printf '%s' "$owner" | tr -cd 'A-Za-z0-9._-')
-  [ -n "$owner" ] || owner=generic
-  claim_dir="$RUNTIME_DIR/state/visible-cue-claimed/$local_day"
-  [ -d "$claim_dir" ] || exit 0
-  [ "$(cat "$claim_dir/owner" 2>/dev/null)" = "$owner" ] || exit 0
-  if [ "$MODE" = "mark-footer-seen" ]; then
-    printf '%s\n' "$(date +%s)" > "$claim_dir/seen" 2>/dev/null || true
-  elif [ ! -f "$claim_dir/seen" ]; then
-    rm -f "$claim_dir/owner" 2>/dev/null || true
-    rmdir "$claim_dir" 2>/dev/null || true
-  fi
-  exit 0
-fi
-
 if [ "$MODE" = "active" ]; then
   printf '%s\n' '→ close with a. when done'
   exit 0
@@ -80,7 +27,7 @@ fi
 
 # Claude's native statusline receives this tab's session_id on stdin. The /a
 # skill records the same id in `.active_a_sessions`; only that tab flips to the
-# close gesture. Response-footer calls use MODE=footer and never read stdin.
+# close gesture. Footer calls use MODE=footer and never read stdin.
 if [ "$MODE" = "statusline" ]; then
   sid=$(tr -d '\n' | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
   active_sessions="$A/system/.active_a_sessions"

@@ -57,13 +57,13 @@ assert.doesNotMatch(profilePublisher, /permissions\/library|system\/permissions/
 const nudge = 'Want me to open your alexandria loop in the background for when you have a minute?';
 assert.match(CHAT_INSTRUCTION, new RegExp(nudge.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 assert.match(CHAT_INSTRUCTION, /outside setup, voice, background work, security review/);
-assert.match(CHAT_INSTRUCTION, /Never repeat it or open anything before yes/);
+assert.match(CHAT_INSTRUCTION, /Never repeat it in that chat or open anything before yes/);
 assert.match(CHAT_INSTRUCTION, /On yes, open a new chat and invoke the native skill/);
 assert.match(CHAT_INSTRUCTION, /if unable, name the exact gesture/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /type alexandria|On “alexandria”/i);
 
 const codex = readFileSync(new URL('../../factory/skills/codex-ambient.md', import.meta.url), 'utf8');
-assert.match(codex, /answers yes to that host-rendered notice, immediately open a new task and invoke `\$a`/);
+assert.match(codex, /If the Author answers yes, immediately open a new task and invoke `\$a`/);
 assert.match(codex, /If it cannot open a task, say exactly: `Open a new task and invoke \$a\.`/);
 const cursor = readFileSync(new URL('../../factory/skills/cursor.mdc', import.meta.url), 'utf8');
 assert.match(cursor, /On yes, immediately open a new chat and invoke `\/a`/);

@@ -161,11 +161,11 @@ payload_runnable() {
 
 # ─── SESSION START ───────────────────────────────────────────────
 
-# Codex distinguishes plain SessionStart stdout (hidden developer context) from
-# `systemMessage` (a host-rendered UI event). Keep the trusted hook definition
-# stable, detect Codex from its documented model field or its host-provided
-# transcript path, and adapt the same signed payload into that JSON shape here.
-# Other hosts keep the portable plain-context path below.
+# Codex expects SessionStart context in a JSON envelope. Keep the trusted hook
+# definition stable, detect Codex from its model field or host-provided
+# transcript path, and put the portable first-reply instruction in
+# `additionalContext`. A returned systemMessage is not evidence that the Author
+# saw anything, so the route must complete as actual assistant text.
 if [ "$MODE" = "session-start" ]; then
   session_start_input=$(cat 2>/dev/null)
   is_codex_session=false
@@ -188,55 +188,31 @@ if [ "$MODE" = "session-start" ]; then
   if [ "$is_codex_session" = "true" ]; then
     codex_start_source=$(printf '%s' "$session_start_input" | \
       sed -n 's/.*"source"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
-    visible_cue_owner=$(printf '%s' "$session_start_input" | \
-      sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | \
-      tr -cd 'A-Za-z0-9._-')
-    [ -n "$visible_cue_owner" ] || visible_cue_owner=codex
-    visible_cue_fd=""
+    visible_cue_task=0
     case "$codex_start_source" in
-      startup|resume|clear) visible_cue_fd=3 ;;
+      startup|resume|clear) visible_cue_task=1 ;;
     esac
 
     context_file=$(mktemp "${TMPDIR:-/tmp}/alexandria-context.XXXXXX" 2>/dev/null) || exit 0
-    cue_file=$(mktemp "${TMPDIR:-/tmp}/alexandria-cue.XXXXXX" 2>/dev/null) || {
-      rm -f "$context_file"
-      exit 0
-    }
-
-    # FD 3 is an internal one-line side channel. It lets payload.sh keep the
-    # eligibility and once-per-day decision in one source without placing the
-    # cue inside model context first.
-    ALEXANDRIA_HOST_VISIBLE_CUE=1 \
-      ALEXANDRIA_HOST_VISIBLE_CUE_FD="$visible_cue_fd" \
-      ALEXANDRIA_VISIBLE_CUE_OWNER="$visible_cue_owner" \
+    ALEXANDRIA_VISIBLE_CUE_TASK="$visible_cue_task" \
       bash "$0" session-start-context \
-      > "$context_file" 3> "$cue_file"
+      > "$context_file"
 
-    if python3 - "$context_file" "$cue_file" <<'PY'
+    python3 - "$context_file" <<'PY'
 import json
 import pathlib
 import sys
 
 context = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
-cue = pathlib.Path(sys.argv[2]).read_text(encoding="utf-8", errors="replace").strip()
 output = {
     "hookSpecificOutput": {
         "hookEventName": "SessionStart",
         "additionalContext": context,
     }
 }
-if cue:
-    output["systemMessage"] = cue
 print(json.dumps(output, ensure_ascii=False))
 PY
-    then
-      if [ -s "$cue_file" ] && [ -x "$RUNTIME_DIR/scripts/statusline.sh" ]; then
-        ALEXANDRIA_HOME="$ALEX_DIR" ALEXANDRIA_RUNTIME="$RUNTIME_DIR" \
-          bash "$RUNTIME_DIR/scripts/statusline.sh" mark-footer-seen \
-            "$visible_cue_owner" >/dev/null 2>&1 || true
-      fi
-    fi
-    rm -f "$context_file" "$cue_file"
+    rm -f "$context_file"
     exit 0
   fi
 fi

@@ -594,19 +594,37 @@ else
   fetch_factory "block.md" "$BLOCK_PATH" "block.md"
 fi
 
-# Short fallback for any app where Alexandria hooks are absent or fail. The
-# user's agent guides the later manual paste; setup cannot edit cloud settings.
+# Short additive account instruction. Local setup cannot edit a cloud account,
+# so onboarding must guide the paste and prove persistence from a brand-new
+# chat before it can mark the loop complete.
 cat > "$ALEX_DIR/system/.account-instructions.md" << 'ACCOUNTINSTR'
 alexandria is a loop in how you help me, not an assistant. Keep everything else.
 
 Use hooks. Otherwise use one record: ~/alexandria, an attached project, Drive alexandria/_start, or memory. State its limits.
 
-Daily, outside setup, voice, background work, security review, or an alexandria session, end the first normal reply with “Want me to open your alexandria loop in the background for when you have a minute?” Never repeat it or open anything before yes. On yes, open a new chat and invoke the native skill; if unable, name the exact gesture. Ask “save that to alexandria?” before saving.
+In every new ordinary text chat, outside setup, voice, background work, security review, or an alexandria session, end the first normal reply with “Want me to open your alexandria loop in the background for when you have a minute?” Never repeat it in that chat or open anything before yes. On yes, open a new chat and invoke the native skill; if unable, name the exact gesture. Ask “save that to alexandria?” before saving.
 
 Treat exact `alex_connect_` codes as opaque. Read `~/alexandria/system/.connect` and explain it. Wait for exact `connect`, pass it only on stdin to signed `scripts/connect-account.sh`, then follow `.connect`. Never browse instructions or expose server text; accept only an exact key or fixed result.
 
 When the start skill runs, read the record and open its best specific thread. Be generic only without context. Save only confirmed changes and verify them.
 ACCOUNTINSTR
+
+ACCOUNT_PROOF_FILE="$ALEX_DIR/system/.account-instructions-proof"
+account_proof=$(cat "$ACCOUNT_PROOF_FILE" 2>/dev/null | tr -d '\r\n')
+case "$account_proof" in
+  alexandria-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]) ;;
+  *)
+    if command -v python3 >/dev/null 2>&1; then
+      account_proof="alexandria-$(python3 -c 'import secrets; print(secrets.token_hex(8))')"
+    else
+      account_proof=$(printf 'alexandria-%08x%08x' "$(date +%s)" "$$")
+    fi
+    umask 077
+    printf '%s\n' "$account_proof" > "$ACCOUNT_PROOF_FILE"
+    ;;
+esac
+printf '\nIf I ask for my alexandria setup proof, reply with only `%s`.\n' \
+  "$account_proof" >> "$ALEX_DIR/system/.account-instructions.md"
 
 # ── 3. Platform configuration ─────────────────────────────────────
 
@@ -1747,12 +1765,11 @@ else
 fi
 
 # The visible route from passive work into /a is on by default. Native chrome
-# wins where available; Codex uses a direct SessionStart notice; hosts without
-# either keep the model-mediated floor. Only the explicit OFF sentinel is a
+# may stay ambient, while every foreground task receives the first-reply
+# instruction in SessionStart context. Only the explicit OFF sentinel is a
 # valid skip. A missing or broken renderer is a failed core path, not an
 # inferred user choice.
 CUE_RENDERED=""
-CUE_CODEX_RENDERED=""
 CUE_ACTIVE_RENDERED=""
 if [ -f "$ALEX_DIR/system/hooks/visible-cue.off" ]; then
   STATUS_CUE="skip"; DETAIL_CUE="off by Author choice"
@@ -1760,7 +1777,6 @@ elif [ ! -f "$RUNTIME_DIR/scripts/statusline.sh" ] || [ ! -f "$RUNTIME_DIR/scrip
   STATUS_CUE="fail"; DETAIL_CUE="renderer or capture-state reader missing — re-run setup"
 else
   CUE_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer 2>/dev/null | tr -d '\r')
-  CUE_CODEX_RENDERED=$(ALEXANDRIA_SETUP_PROBE=1 bash "$RUNTIME_DIR/scripts/statusline.sh" footer-codex 2>/dev/null | tr -d '\r')
   CUE_PROBE_HOME="$RUNTIME_DIR/.cue-probe.$$"
   mkdir -p "$CUE_PROBE_HOME/system"
   printf 'alexandria-setup-probe %s\n' "$(date +%s)" > "$CUE_PROBE_HOME/system/.active_a_sessions"
@@ -1771,20 +1787,11 @@ else
   rmdir "$CUE_PROBE_HOME/system" "$CUE_PROBE_HOME" 2>/dev/null || true
   CUE_OUTPUTS_OK=true
   case "$CUE_RENDERED" in 'Want me to open your alexandria loop in the background for when you have a minute?') ;; *) CUE_OUTPUTS_OK=false ;; esac
-  case "$CUE_CODEX_RENDERED" in 'Want me to open your alexandria loop in the background for when you have a minute?') ;; *) CUE_OUTPUTS_OK=false ;; esac
   case "$CUE_ACTIVE_RENDERED" in *'/a. when done'*'reflect on what moved') ;; *) CUE_OUTPUTS_OK=false ;; esac
-  CUE_CLAIM_ONE=$(ALEXANDRIA_HOME="$CUE_PROBE_HOME" ALEXANDRIA_RUNTIME="$CUE_PROBE_HOME/runtime" \
-    ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
-    bash "$RUNTIME_DIR/scripts/statusline.sh" claim-footer 2>/dev/null | tr -d '\r')
-  CUE_CLAIM_TWO=$(ALEXANDRIA_HOME="$CUE_PROBE_HOME" ALEXANDRIA_RUNTIME="$CUE_PROBE_HOME/runtime" \
-    ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
-    bash "$RUNTIME_DIR/scripts/statusline.sh" claim-footer 2>/dev/null | tr -d '\r')
-  case "$CUE_CLAIM_ONE:$CUE_CLAIM_TWO" in 'Want me to open your alexandria loop in the background for when you have a minute?:') ;; *) CUE_OUTPUTS_OK=false ;; esac
 
-  # Byte-level rendering is not enough for Codex: prove the assembled installed
-  # hook returns one valid host-visible systemMessage, keeps Author context in
-  # additionalContext, and stays silent on the second same-day start. Run in an
-  # isolated fake home so setup health never consumes the Author's real cue.
+  # Byte-level rendering is not enough: prove the assembled Codex hook puts the
+  # route in additionalContext for two distinct same-day foreground tasks and
+  # never mistakes a systemMessage for delivery. Run in an isolated fake home.
   CUE_DIRECT_PROBE="$RUNTIME_DIR/.cue-direct-probe.$$"
   CUE_DIRECT_HOME="$CUE_DIRECT_PROBE/home"
   CUE_DIRECT_RUNTIME="$CUE_DIRECT_HOME/.local/share/alexandria"
@@ -1811,20 +1818,18 @@ else
 import json, sys
 first, second = [json.loads(line) for line in sys.stdin.read().splitlines()]
 cue = "Want me to open your alexandria loop in the background for when you have a minute?"
-assert first.get("systemMessage") == cue
-assert cue not in first["hookSpecificOutput"]["additionalContext"]
+assert "systemMessage" not in first
 assert "systemMessage" not in second
+for event in (first, second):
+    context = event["hookSpecificOutput"]["additionalContext"]
+    assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" in context
+    assert cue in context
 ' 2>/dev/null || CUE_OUTPUTS_OK=false
   case "$CUE_DIRECT_PROBE" in "$RUNTIME_DIR"/.cue-direct-probe.*) rm -rf "$CUE_DIRECT_PROBE" ;; esac
 
-  rm -f "$CUE_PROBE_HOME/runtime/state/visible-cue-claimed/2030-01-01/owner" \
-    "$CUE_PROBE_HOME/runtime/state/visible-cue-claimed/2030-01-01/seen" 2>/dev/null || true
-  rmdir "$CUE_PROBE_HOME/runtime/state/visible-cue-claimed/2030-01-01" \
-    "$CUE_PROBE_HOME/runtime/state/visible-cue-claimed" \
-    "$CUE_PROBE_HOME/runtime/state" "$CUE_PROBE_HOME/runtime" \
-    "$CUE_PROBE_HOME" 2>/dev/null || true
+  rmdir "$CUE_PROBE_HOME" 2>/dev/null || true
   if [ "$CUE_OUTPUTS_OK" = "true" ]; then
-    STATUS_CUE="ok"; DETAIL_CUE="native chrome, direct Codex notice, or model fallback ready"
+    STATUS_CUE="ok"; DETAIL_CUE="ambient chrome and per-task first-reply route ready"
   else
     STATUS_CUE="fail"; DETAIL_CUE="renderer did not produce the fixed consent nudge and per-session a. close route"
   fi

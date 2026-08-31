@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
 import traceback
 from datetime import datetime, timezone
@@ -76,34 +75,6 @@ def _run() -> None:
     STAGING_DIR.mkdir(parents=True, exist_ok=True)
     with (STAGING_DIR / f"cursor-{safe_id}.jsonl").open("a", encoding="utf-8") as f:
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
-
-    # Cursor has no direct user-visible SessionStart field. Its stable
-    # afterAgentResponse text is therefore the delivery boundary: an actual cue
-    # locks the day; an omission releases only this session's claim so a later
-    # session can retry. Hidden instructions and transcript bytes never count.
-    if event == "afterAgentResponse" and isinstance(payload, dict):
-        text = str(payload.get("text") or "")
-        renderer = Path.home() / ".local/share/alexandria/scripts/statusline.sh"
-        if renderer.is_file():
-            try:
-                cue = subprocess.run(
-                    ["bash", str(renderer), "footer"],
-                    capture_output=True,
-                    text=True,
-                    timeout=2,
-                    check=False,
-                ).stdout.strip()
-                mode = "mark-footer-seen" if cue and cue in text else "release-footer"
-                subprocess.run(
-                    ["bash", str(renderer), mode, safe_id],
-                    stdin=subprocess.DEVNULL,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    timeout=2,
-                    check=False,
-                )
-            except (OSError, subprocess.TimeoutExpired):
-                pass
 
     _emit({})
 

@@ -85,7 +85,7 @@ assert.match(CHAT_INSTRUCTION, /Be generic only without context/);
 assert.match(CHAT_INSTRUCTION, /Save only confirmed changes and verify them/);
 assert.match(CHAT_INSTRUCTION, /end the first normal reply with “Want me to open your alexandria loop/);
 assert.match(CHAT_INSTRUCTION, /outside setup, voice, background work, security review/);
-assert.match(CHAT_INSTRUCTION, /Never repeat it or open anything before yes/);
+assert.match(CHAT_INSTRUCTION, /Never repeat it in that chat or open anything before yes/);
 assert.match(CHAT_INSTRUCTION, /On yes, open a new chat and invoke the native skill/);
 assert.match(CHAT_INSTRUCTION, /if unable, name the exact gesture/);
 assert.match(CHAT_INSTRUCTION, /alex_connect_/);
@@ -124,10 +124,10 @@ const bootstrap = readFileSync(new URL('../../factory/chat/bootstrap.md', import
 const bootstrapPrompt = bootstrap.match(/---PROMPT START---\n\n([\s\S]*?)\n\n---PROMPT END---/)?.[1];
 assert.equal(bootstrapPrompt, CHAT_INSTRUCTION, 'website instruction and fallback bootstrap must stay identical');
 const onboardingRouter = readFileSync(new URL('../../factory/onboarding.md', import.meta.url), 'utf8');
-assert.match(onboardingRouter, /Account instructions — later, only when useful/);
+assert.match(onboardingRouter, /Account instructions — required before agent onboarding completes/);
 assert.match(onboardingRouter, /attach or grant only the Alexandria folder/);
 assert.match(onboardingRouter, /native hooks first/);
-assert.match(onboardingRouter, /one clear next action/);
+assert.match(onboardingRouter, /one next action/);
 const localOnboarding = readFileSync(new URL('../../factory/block.md', import.meta.url), 'utf8');
 assert.match(localOnboarding, /completion to a few short lines/);
 assert.match(localOnboarding, /Do not force a reflection, accretion/);
@@ -136,7 +136,9 @@ assert.match(localOnboarding, /Your AI now has local files it can keep building 
 assert.match(localOnboarding, /no personal data was shared, and no account was connected/);
 assert.match(localOnboarding, /originating request explicitly asked/);
 assert.match(localOnboarding, /not permission to recommend, browse, connect, share, publish, or use private material to persuade/);
-assert.doesNotMatch(localOnboarding, /which other ai do you use most\?/);
+assert.match(localOnboarding, /Which AI app do you use for normal chats\?/);
+assert.match(localOnboarding, /What is my alexandria setup proof\? Reply with only the proof\./);
+assert.match(localOnboarding, /\.account_instructions_complete/);
 assert.doesNotMatch(localOnboarding, /first month free|dollar a day|refer three friends|you should join|recommend joining/i);
 
 for (const content of [agent, computer, phone, chat]) {

@@ -122,18 +122,17 @@ printf '{"session_id":"bad-1","transcript_path":"%s"}\n' "$TEST_ROOT/outside.jso
 test "$(find "$TEST_ROOT/alex/files/vault" -type f -name '*_codex_bad-1.jsonl' | wc -l | tr -d ' ')" = "0"
 
 # The next Codex compaction drains the bounded end receipt through the normal
-# end path without consuming or surfacing the daily foreground cue.
+# end path without surfacing the new-task cue.
 printf '{"session_id":"compact","transcript_path":"%s","hook_event_name":"SessionStart","model":"gpt-test","source":"compact"}\n' \
   "$TEST_ROOT/.codex/sessions/source.jsonl" | \
   HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
   ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-03-01 \
   bash "$RUNTIME/hooks/shim.sh" session-start >/dev/null
 test "$(find "$TEST_ROOT/alex/system/.codex_session_end_queue" -type f -name '*.json' 2>/dev/null | wc -l | tr -d ' ')" = "0"
-test ! -e "$RUNTIME/state/visible-cue-claimed/2030-03-01"
 
-# The first foreground Codex session start of the day receives one host-rendered
-# systemMessage while the existing Alexandria context remains developer-only.
-# A second foreground start on the same local day is quiet.
+# Every foreground Codex task receives the first-reply instruction in model
+# context. No hook-level system message is counted as delivery, and another new
+# task on the same day gets the route again.
 START_ONE=$(printf '{"session_id":"start-1","transcript_path":"%s","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}\n' \
   "$TEST_ROOT/.codex/sessions/source.jsonl" | \
   HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
@@ -143,10 +142,12 @@ printf '%s' "$START_ONE" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
 cue = "Want me to open your alexandria loop in the background for when you have a minute?"
-assert d.get("systemMessage") == cue
+assert "systemMessage" not in d
 assert d["hookSpecificOutput"]["hookEventName"] == "SessionStart"
-assert "AUTHOR CONTEXT" in d["hookSpecificOutput"]["additionalContext"]
-assert cue not in d["hookSpecificOutput"]["additionalContext"]
+ctx = d["hookSpecificOutput"]["additionalContext"]
+assert "AUTHOR CONTEXT" in ctx
+assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" in ctx
+assert cue in ctx
 '
 
 START_TWO=$(printf '{"session_id":"start-2","transcript_path":"%s","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}\n' \
@@ -158,6 +159,7 @@ printf '%s' "$START_TWO" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
 assert "systemMessage" not in d
+assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" in d["hookSpecificOutput"]["additionalContext"]
 '
 
 # Interactive Codex can fire SessionStart before the model field exists. Its
@@ -171,12 +173,13 @@ START_LOADING=$(printf \
 printf '%s' "$START_LOADING" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-assert d.get("systemMessage") == "Want me to open your alexandria loop in the background for when you have a minute?"
+assert "systemMessage" not in d
+assert "Want me to open your alexandria loop in the background for when you have a minute?" in d["hookSpecificOutput"]["additionalContext"]
 '
 
-# Codex instructions explain the yes-path but never make the model a second
-# owner of the generic cue.
-! grep -Fq 'end the first completed ordinary text reply with exactly' \
+# Codex's persistent instruction and SessionStart context agree that the first
+# actual assistant reply owns the cue.
+grep -Fq 'first completed assistant reply of each new ordinary text task' \
   "$ROOT/factory/skills/codex-ambient.md"
 
 echo "Codex integration test passed"

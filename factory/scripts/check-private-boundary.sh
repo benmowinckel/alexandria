@@ -158,9 +158,12 @@ require shared/onboarding-prompts.ts \
   'Use hooks.' \
   'the account instruction no longer prefers working hooks'
 require shared/onboarding-prompts.ts \
+  'In every new ordinary text chat' \
+  'the account instruction no longer repeats the visible route in each new chat'
+require shared/onboarding-prompts.ts \
   'end the first normal reply with “Want me to open your alexandria loop' \
   'outside setup, voice, background work, security review' \
-  'Never repeat it or open anything before yes' \
+  'Never repeat it in that chat or open anything before yes' \
   'the account instruction no longer carries the visible route'
 require shared/onboarding-prompts.ts \
   'On yes, open a new chat and invoke the native skill' \
@@ -375,9 +378,9 @@ require factory/block.md \
 forbid factory/block.md \
   'Find all of them|open every file on their computer|whole digital footprint|search for unexpected (ones|sources)|psychological file' \
   'onboarding still contains broad private-data or psychological-profiling language'
-# Private onboarding ends with a clear local state plus the one neutral Library
-# decision explicitly requested by the user. It never becomes a pitch, forced
-# insight, or cross-ai setup.
+# Private onboarding ends only after the ordinary AI proves the additive
+# instruction persists in a brand-new chat. It never becomes a pitch or forced
+# insight.
 require factory/block.md \
   'Keep the completion to a few short lines.' \
   'onboarding no longer has a hard glance-length output bar'
@@ -390,9 +393,20 @@ require factory/block.md \
 require factory/block.md \
   'Do not force a reflection, accretion, product tour, checklist, list of findings, or several next steps.' \
   'onboarding can still force a brittle magic output instead of closing clearly'
-forbid factory/block.md \
-  'which other ai do you use most\?|Phase 6 — Add the loop' \
-  'private onboarding still diverts into cross-ai setup'
+require factory/block.md \
+  'Which AI app do you use for normal chats?' \
+  'What is my alexandria setup proof? Reply with only the proof.' \
+  '.account_instructions_complete' \
+  'Do not continue or mark onboarding complete without the marker.' \
+  'agent onboarding can still finish without proven account instructions'
+require factory/hooks/payload.sh \
+  '.account_instructions_complete' \
+  'resume at the account-instructions proof in Phase 5' \
+  'a restarted onboarding session can still bypass the account-instructions proof'
+require factory/setup.sh \
+  'ACCOUNT_PROOF_FILE="$ALEX_DIR/system/.account-instructions-proof"' \
+  'If I ask for my alexandria setup proof, reply with only' \
+  'setup does not generate the cross-chat persistence proof'
 forbid factory/block.md \
   'first month free|free for good|dollar a day|refer-three|conversion moment|commercial beat|join — unlock everything|you should join|recommend joining' \
   'onboarding contains a commercial or referral pitch'
@@ -537,21 +551,20 @@ require factory/canon/foundation.md \
   'private material never becomes an outbound query by default.' \
   'Foundation has no permanent private-query boundary'
 require factory/canon/foundation.md \
-  'A direct host notice is deterministic where the hook API guarantees a visible surface' \
-  'first `startup`, `resume`, or `clear` start of each local day' \
-  '`compact` and subagent starts never claim it' \
+  'one actual assistant sentence in every new ordinary foreground task' \
+  'Setup, install or security review, background work, voice, compaction, subagents' \
+  'There is no daily lock, `systemMessage`, warning-field proxy' \
   'There is no Stop-loop enforcement' \
   'Foundation no longer states the disclosed visible cue clearly'
 require factory/canon/foundation.md \
   '`/a` in Claude Code, Cursor, Factory, or Grok CLI; `$a` in Codex' \
   'Foundation no longer names Grok CLI as a native /a host'
 require factory/canon/foundation.md \
-  'Hosts without native chrome or a direct notice keep the portable model-mediated floor' \
-  'cannot know whether that prompt will be voice, setup, security review, or `$a`' \
-  'hidden model context is never counted as delivery' \
+  'Hidden model context, valid hook JSON, and transcript matches are not delivery' \
+  'only the completed visible assistant reply is' \
   'a capable host immediately opens a new chat and invokes its native Alexandria skill without another question' \
   'An incapable host gives one clear sentence naming the exact host-native gesture' \
-  'the Foundation no longer states the honest direct-notice tradeoff'
+  'the Foundation no longer states the honest visible-delivery boundary'
 require factory/canon/foundation.md \
   '**passive session → visible route into an Alexandria session → active session → a better mirror → and back.**' \
   'Foundation no longer defines the complete passive-to-active product loop'
@@ -1293,36 +1306,12 @@ grep -qxF 'Want me to open your alexandria loop in the background for when you h
 HOME="$test_root/cue-home" bash factory/scripts/statusline.sh footer-codex > "$test_root/cue-codex"
 grep -qxF 'Want me to open your alexandria loop in the background for when you have a minute?' "$test_root/cue-codex" \
   || fail 'Codex visible cue did not use the fixed consent nudge'
-cue_claim_one=$(HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
-  bash factory/scripts/statusline.sh claim-footer)
-cue_claim_two=$(HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-01 \
-  bash factory/scripts/statusline.sh claim-footer)
-[ "$cue_claim_one" = 'Want me to open your alexandria loop in the background for when you have a minute?' ] \
-  || fail 'first local daily cue opportunity did not render'
-[ -z "$cue_claim_two" ] || fail 'daily cue opportunity repeated on the same local day'
-cue_claim_next=$(HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-02 \
-  bash factory/scripts/statusline.sh claim-footer)
-[ "$cue_claim_next" = 'Want me to open your alexandria loop in the background for when you have a minute?' ] \
-  || fail 'daily cue opportunity did not reopen on the next local day'
-HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-02 \
-  bash factory/scripts/statusline.sh release-footer generic
-cue_retry=$(HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-02 \
-  bash factory/scripts/statusline.sh claim-footer generic)
-[ "$cue_retry" = 'Want me to open your alexandria loop in the background for when you have a minute?' ] \
-  || fail 'an omitted model-fallback cue could not retry later that day'
-HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-02 \
-  bash factory/scripts/statusline.sh mark-footer-seen generic
-HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-02 \
-  bash factory/scripts/statusline.sh release-footer generic
-cue_after_seen=$(HOME="$test_root/cue-home" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-01-02 \
-  bash factory/scripts/statusline.sh claim-footer generic)
-[ -z "$cue_after_seen" ] || fail 'a seen model-fallback cue reopened later that day'
 touch "$cue_root/system/hooks/visible-cue.off"
 HOME="$test_root/cue-home" bash factory/scripts/statusline.sh footer > "$test_root/cue-off-again"
 [ ! -s "$test_root/cue-off-again" ] || fail 'visible cue did not turn off immediately'
 
 # Runtime regression: the existing signed SessionStart path carries the offer
-# once, only after onboarding. Background work and native Claude chrome stay
+# in every new foreground task, only after onboarding. Background work stays
 # silent without adding a Stop hook or changing any host trust definition.
 route_home="$test_root/route-home"
 route_root="$route_home/alexandria"
@@ -1344,9 +1333,9 @@ else
     > "$route_runtime/.payload_verified_sha"
 fi
 
-# Codex gets the cue from its direct, user-visible systemMessage field. The
-# hidden additionalContext must still carry the full Alexandria session start,
-# and a second start on the same local day must stay silent.
+# Codex gets the cue as a first-reply instruction in additionalContext. A hook
+# systemMessage is never treated as delivery, and a second new task on the same
+# local day receives the route again.
 route_codex_first=$(printf '%s\n' \
   '{"session_id":"codex-route","transcript_path":"/tmp/.codex/sessions/route.jsonl","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}' | \
   HOME="$route_home" ALEXANDRIA_SETUP_PROBE=1 \
@@ -1356,12 +1345,13 @@ printf '%s' "$route_codex_first" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
 cue = "Want me to open your alexandria loop in the background for when you have a minute?"
-assert d.get("systemMessage") == cue
+assert "systemMessage" not in d
 ctx = d["hookSpecificOutput"]["additionalContext"]
 assert d["hookSpecificOutput"]["hookEventName"] == "SessionStart"
 assert "AUTHOR CONTEXT" in ctx
-assert cue not in ctx
-' || fail 'Codex SessionStart did not return one direct visible cue plus hidden context'
+assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" in ctx
+assert cue in ctx
+' || fail 'Codex SessionStart did not carry the visible first-reply route'
 
 route_codex_second=$(printf '%s\n' \
   '{"session_id":"codex-route-2","transcript_path":"/tmp/.codex/sessions/route-2.jsonl","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}' | \
@@ -1372,8 +1362,10 @@ printf '%s' "$route_codex_second" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
 assert "systemMessage" not in d
-assert "AUTHOR CONTEXT" in d["hookSpecificOutput"]["additionalContext"]
-' || fail 'Codex direct visible cue repeated on one local day'
+ctx = d["hookSpecificOutput"]["additionalContext"]
+assert "AUTHOR CONTEXT" in ctx
+assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" in ctx
+' || fail 'a second same-day Codex task did not receive the first-reply route'
 
 # Ground-truth startup regression: Codex can run SessionStart before its model
 # finishes loading, so the documented `model` extension may be absent. A live
@@ -1387,9 +1379,11 @@ route_codex_model_loading=$(printf \
 printf '%s' "$route_codex_model_loading" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-assert d.get("systemMessage") == "Want me to open your alexandria loop in the background for when you have a minute?"
-assert "AUTHOR CONTEXT" in d["hookSpecificOutput"]["additionalContext"]
-' || fail 'model-loading Codex startup fell back to hidden context'
+assert "systemMessage" not in d
+ctx = d["hookSpecificOutput"]["additionalContext"]
+assert "AUTHOR CONTEXT" in ctx
+assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" in ctx
+' || fail 'model-loading Codex startup lost the first-reply context'
 
 # The same model-less shape under another host's transcript root stays on the
 # portable plain-context contract. Having ~/.codex on the machine is not enough
@@ -1412,10 +1406,8 @@ printf '%s' "$route_codex_compact" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
 assert "systemMessage" not in d
-assert "TODAY" not in d["hookSpecificOutput"]["additionalContext"]
-' || fail 'Codex compact incorrectly consumed or surfaced the new-task cue'
-[ ! -e "$route_runtime/state/visible-cue-claimed/2030-01-30" ] \
-  || fail 'Codex compact consumed the next real new-task cue opportunity'
+assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" not in d["hookSpecificOutput"]["additionalContext"]
+' || fail 'Codex compact incorrectly surfaced the new-task cue'
 route_codex_resume=$(printf '%s\n' \
   '{"session_id":"codex-route-resume","transcript_path":"/tmp/.codex/sessions/route-resume.jsonl","hook_event_name":"SessionStart","model":"gpt-test","source":"resume"}' | \
   HOME="$route_home" ALEXANDRIA_SETUP_PROBE=1 \
@@ -1424,10 +1416,11 @@ route_codex_resume=$(printf '%s\n' \
 printf '%s' "$route_codex_resume" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
-assert d.get("systemMessage") == "Want me to open your alexandria loop in the background for when you have a minute?"
-' || fail 'first Codex resume of the local day did not surface the direct cue'
+assert "systemMessage" not in d
+assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" in d["hookSpecificOutput"]["additionalContext"]
+' || fail 'Codex resume did not carry the first-reply route'
 
-# The existing OFF control and onboarding gate still silence the direct path.
+# The existing OFF control and onboarding gate still silence the route.
 touch "$route_root/system/hooks/visible-cue.off"
 route_codex_off=$(printf '%s\n' \
   '{"session_id":"codex-route-off","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}' | \
@@ -1435,8 +1428,10 @@ route_codex_off=$(printf '%s\n' \
   bash "$route_runtime/hooks/shim.sh" session-start)
 printf '%s' "$route_codex_off" | python3 -c '
 import json, sys
-assert "systemMessage" not in json.load(sys.stdin)
-' || fail 'visible-cue.off did not silence Codex direct delivery'
+d = json.load(sys.stdin)
+assert "systemMessage" not in d
+assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" not in d["hookSpecificOutput"]["additionalContext"]
+' || fail 'visible-cue.off did not silence the Codex first-reply route'
 rm -f "$route_root/system/hooks/visible-cue.off"
 rm -f "$route_root/system/.block_complete"
 touch "$route_root/system/.block"
@@ -1446,27 +1441,28 @@ route_codex_onboarding=$(printf '%s\n' \
   bash "$route_runtime/hooks/shim.sh" session-start)
 printf '%s' "$route_codex_onboarding" | python3 -c '
 import json, sys
-assert "systemMessage" not in json.load(sys.stdin)
-' || fail 'Codex direct delivery appeared before onboarding completed'
+d = json.load(sys.stdin)
+assert "systemMessage" not in d
+assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" not in d["hookSpecificOutput"]["additionalContext"]
+' || fail 'Codex first-reply route appeared before onboarding completed'
 rm -f "$route_root/system/.block"
 touch "$route_root/system/.block_complete"
 
-# Hosts without a direct start-message surface keep the portable first-response
-# instruction as the agnostic floor.
+# Plain-context hosts keep the same portable first-response instruction.
 route_first=$(HOME="$route_home" ALEXANDRIA_RUNTIME_DIR="$route_runtime" \
   ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-01 \
   bash factory/hooks/payload.sh session-start "$route_root" '' '' '')
-printf '%s\n' "$route_first" | grep -Fq -- "--- ONE QUIET ALEXANDRIA ROUTE (TODAY'S ONLY GENERIC OFFER) ---" \
-  || fail 'signed SessionStart path did not carry the first daily route'
+printf '%s\n' "$route_first" | grep -Fq -- "--- ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK ---" \
+  || fail 'signed SessionStart path did not carry the new-task route'
 route_second=$(HOME="$route_home" ALEXANDRIA_RUNTIME_DIR="$route_runtime" \
   ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-01 \
   bash factory/hooks/payload.sh session-start "$route_root" '' '' '')
-printf '%s\n' "$route_second" | grep -Fq -- 'TODAY' \
-  && fail 'signed SessionStart path repeated the generic route on one local day'
+printf '%s\n' "$route_second" | grep -Fq -- 'ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK' \
+  || fail 'a second plain-context task on the same day lost the route'
 route_background=$(HOME="$route_home" ALEXANDRIA_RUNTIME_DIR="$route_runtime" \
   ALEXANDRIA_BACKGROUND_AGENT=1 ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-02 \
   bash factory/hooks/payload.sh session-start "$route_root" '' '' '')
-printf '%s\n' "$route_background" | grep -Fq -- 'TODAY' \
+printf '%s\n' "$route_background" | grep -Fq -- 'ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK' \
   && fail 'background agent received the generic route'
 mkdir -p "$route_home/.claude"
 printf '%s\n' '{"statusLine":{"command":"~/.local/share/alexandria/scripts/statusline.sh"}}' \
@@ -1474,66 +1470,31 @@ printf '%s\n' '{"statusLine":{"command":"~/.local/share/alexandria/scripts/statu
 route_native=$(HOME="$route_home" CLAUDE_ENV_FILE="$route_home/.claude/env" \
   ALEXANDRIA_RUNTIME_DIR="$route_runtime" ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-03 \
   bash factory/hooks/payload.sh session-start "$route_root" '' '' '')
-printf '%s\n' "$route_native" | grep -Fq -- 'TODAY' \
-  && fail 'native Claude statusline received a duplicate response cue'
+printf '%s\n' "$route_native" | grep -Fq -- 'ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK' \
+  || fail 'native Claude chrome incorrectly replaced the visible assistant cue'
 
-# Cursor's actual afterAgentResponse text, not its hidden transcript, decides
-# whether a model-fallback attempt is released for retry or locks the day.
-cursor_cue_home="$test_root/cursor-cue-home"
-cursor_cue_root="$cursor_cue_home/alexandria"
-cursor_cue_runtime="$cursor_cue_home/.local/share/alexandria"
-mkdir -p "$cursor_cue_root/system" "$cursor_cue_runtime/scripts"
-touch "$cursor_cue_runtime/.setup_complete"
-cp factory/scripts/statusline.sh "$cursor_cue_runtime/scripts/statusline.sh"
-chmod +x "$cursor_cue_runtime/scripts/statusline.sh"
-HOME="$cursor_cue_home" ALEXANDRIA_HOME="$cursor_cue_root" \
-  ALEXANDRIA_RUNTIME="$cursor_cue_runtime" ALEXANDRIA_SETUP_PROBE=1 \
-  ALEXANDRIA_LOCAL_DATE=2030-02-04 \
-  bash "$cursor_cue_runtime/scripts/statusline.sh" claim-footer cursor-one >/dev/null
-printf '%s\n' '{"session_id":"cursor-one","text":"ordinary answer"}' | \
-  HOME="$cursor_cue_home" ALEXANDRIA_ROOT="$cursor_cue_root" \
-  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-04 \
-  python3 factory/hooks/cursor/alexandria-transcript.py afterAgentResponse >/dev/null
-[ ! -d "$cursor_cue_runtime/state/visible-cue-claimed/2030-02-04" ] \
-  || fail 'Cursor omission did not release its own daily cue claim'
-HOME="$cursor_cue_home" ALEXANDRIA_HOME="$cursor_cue_root" \
-  ALEXANDRIA_RUNTIME="$cursor_cue_runtime" ALEXANDRIA_SETUP_PROBE=1 \
-  ALEXANDRIA_LOCAL_DATE=2030-02-04 \
-  bash "$cursor_cue_runtime/scripts/statusline.sh" claim-footer cursor-one >/dev/null
-printf '%s\n' '{"session_id":"cursor-one","text":"Want me to open your alexandria loop in the background for when you have a minute?"}' | \
-  HOME="$cursor_cue_home" ALEXANDRIA_ROOT="$cursor_cue_root" \
-  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-04 \
-  python3 factory/hooks/cursor/alexandria-transcript.py afterAgentResponse >/dev/null
-[ -f "$cursor_cue_runtime/state/visible-cue-claimed/2030-02-04/seen" ] \
-  || fail 'Cursor actual assistant cue did not lock the day as seen'
-printf '%s\n' '{"session_id":"cursor-one","text":"later answer"}' | \
-  HOME="$cursor_cue_home" ALEXANDRIA_ROOT="$cursor_cue_root" \
-  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-02-04 \
-  python3 factory/hooks/cursor/alexandria-transcript.py afterAgentResponse >/dev/null
-[ -f "$cursor_cue_runtime/state/visible-cue-claimed/2030-02-04/seen" ] \
-  || fail 'a later Cursor answer reopened an already seen daily cue'
-require factory/hooks/shim.sh \
-  'output["systemMessage"] = cue' \
-  'Codex SessionStart does not use its direct user-visible message field'
 require factory/hooks/shim.sh \
   '"hookEventName": "SessionStart"' \
   'Codex SessionStart no longer preserves hidden Alexandria context'
 require factory/hooks/shim.sh \
-  'startup|resume|clear) visible_cue_fd=3' \
-  'Codex foreground start sources no longer share the direct daily cue'
+  'startup|resume|clear) visible_cue_task=1' \
+  'Codex foreground start sources no longer receive the first-reply route'
+require factory/hooks/payload.sh \
+  'ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK' \
+  'visible assistant text, not a system message' \
+  'the portable first-reply instruction is missing'
 require factory/setup.sh \
   'state/visible-cue-delivered"/????-??-??' \
   'setup does not remove obsolete false-delivery receipts'
-require factory/scripts/statusline.sh \
-  'mark-footer-seen' \
-  'release-footer' \
-  'the model-fallback cue has no retry-safe delivered state'
 forbid factory/hooks/shim.sh \
-  'record-footer|grep -Fq "\$cue"' \
-  'Codex still infers user-visible delivery from transcript contents'
+  'systemMessage.*cue|mark-footer-seen|claim-footer|release-footer' \
+  'Codex still treats hook state as user-visible cue delivery'
 forbid factory/hooks/cursor/alexandria-transcript.py \
-  'record-footer|visible-cue-delivered' \
-  'Cursor still maintains the deleted proxy delivery receipt'
+  'record-footer|visible-cue-delivered|mark-footer-seen|claim-footer|release-footer' \
+  'Cursor still maintains a proxy cue-delivery receipt'
+forbid factory/scripts/statusline.sh \
+  'mark-footer-seen|claim-footer|release-footer|visible-cue-claimed' \
+  'the deleted once-per-day claim state still exists'
 forbid factory/hooks/payload.sh \
   'followup_message' \
   'the passive route introduced a forced second turn'

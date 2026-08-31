@@ -113,7 +113,28 @@ Install and verify this host's normal Alexandria hooks and the full private loca
 
 Commit the generated local files to the local Git repository so the Author can inspect and reverse changes. A local commit is not an upload.
 
-## Phase 5 — Verify and Report
+## Phase 5 — Put Alexandria in the Author's ordinary AI
+
+The local coding host is only one surface. Onboarding is not complete until the Author's ordinary chat AI carries the same small additive instruction across brand-new chats. Do this now, after the private local loop works; never leave it as an optional later chore.
+
+If the ordinary chat AI is not already clear from the conversation, ask one short question: `Which AI app do you use for normal chats?` Then give only the matching next action, not a menu:
+
+- ChatGPT: Settings → Personalization → Custom Instructions.
+- Claude: Settings → Profile → Preferences.
+- Gemini: Settings & help → Personal intelligence → Instructions for Gemini.
+- Another host: use its persistent account-instructions, profile-preferences, or agent-description field. If it has no persistent field, say plainly that this host cannot pass the cross-chat proof; do not pretend chat memory is equivalent.
+
+Have the Author paste the complete contents of `~/alexandria/system/.account-instructions.md` **below** anything already there and save. Never replace their existing instructions. Give one action at a time.
+
+After they save it, ask them to open a brand-new chat in that AI and send exactly:
+
+```
+What is my alexandria setup proof? Reply with only the proof.
+```
+
+Ask them to paste that new chat's one-line reply back here. Read `~/alexandria/system/.account-instructions-proof` and require an exact match. A claim that it was pasted, a reply from this setup chat, or an explanation of what the instructions say is not persistence proof. On an exact match, run `touch ~/alexandria/system/.account_instructions_complete`. On a mismatch, fix only this setting and repeat the brand-new-chat check. Do not continue or mark onboarding complete without the marker.
+
+## Phase 6 — Verify and Report
 
 Verify on disk first: constitution has cite-able entries, notepad has real first-/a material, and machine.md has observations. Thin = go back. The detailed work belongs in the files; the completion message only makes the new state and the next action obvious.
 
@@ -135,8 +156,8 @@ Next, decide whether you also want a public profile and a way to connect with ot
 [See the community](https://alexandria-library.com/join).
 ```
 
-If the originating request did not ask about the community, omit the final two lines and add nothing in their place. On delivery, run `touch ~/alexandria/system/.block_complete`.
+If the originating request did not ask about the community, omit the final two lines and add nothing in their place. Before delivery, require `~/alexandria/system/.account_instructions_complete`; if it is missing, return to Phase 5. Only then run `touch ~/alexandria/system/.block_complete`.
 
-Initial setup ends there. Shortcut connection, other AIs, backup, account connection, and every optional capability remain separate.
+Initial setup ends there. Shortcut connection, additional AIs, backup, Alexandria account connection, and every optional capability remain separate.
 
 Test: *"I know setup is finished, what changed, and the one thing I can decide next."* A personalised join argument, automatic browsing, a forced insight, or more than one action = fail.
