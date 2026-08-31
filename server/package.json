@@ -15,7 +15,8 @@
     "test:membership": "tsx test/membership-contract.ts",
     "test:community": "tsx test/community-loop.ts",
     "test:profile-boundary": "tsx test/profile-boundary.ts",
-    "test:secret-fingerprint": "tsx test/secret-fingerprint.ts"
+    "test:secret-fingerprint": "tsx test/secret-fingerprint.ts",
+    "test:cors": "tsx test/cors-preflight.ts"
   },
   "dependencies": {
     "hono": "^4.13.0",
@@ -26,7 +27,7 @@
     "@types/node": "^22",
     "tsx": "^4.22.4",
     "typescript": "^5.8.0",
-    "wrangler": "^4.118.0"
+    "wrangler": "^4.127.1"
   },
   "engines": {
     "node": ">=20"

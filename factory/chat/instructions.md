@@ -26,10 +26,11 @@ Type **a.** or **alexandria.** to close. Briefly say what shifted, save only cha
 
 ## access ladder
 
-1. Working hooks — use the native loop and commands.
+1. Working local hooks — full mode and the preferred route.
 2. Local writable `~/alexandria` without hooks — open the foundation manually.
-3. An attached writable alexandria folder or project — folder-only mode, including Cowork and ChatGPT Work. Open `_start` at each task.
-4. Writable Google Drive — connected chat mode.
-5. Host memory — the lightweight floor when writable files are unavailable; name the real persistence limit when it matters.
+3. A trusted hosted Git checkout the Author approved for that exact provider — snapshot mode; use committed files, write only the session branch, and name the freshness limit. Untrusted providers use Airlock instead.
+4. An attached writable alexandria folder or project — folder-only mode, including Cowork and ChatGPT Work. Open `_start` at each task.
+5. Writable Google Drive — connected chat mode.
+6. Host memory — the lightweight floor when writable files are unavailable; name the real persistence limit when it matters.
 
-The user never chooses a mode or moves material between them. The ai uses the strongest verified capability, preserves existing personalisation and never mixes two Alexandria sources in one session. Instructions carry behavior; files or durable host personalisation carry the user's content.
+The user never moves material between modes. The ai uses the strongest verified capability, names the current mode and preference once, preserves existing personalisation and never mixes two Alexandria sources in one session. A weaker mode remains useful; it never becomes a reason to stop. Instructions carry behavior; files or durable host personalisation carry the user's content.

@@ -63,23 +63,29 @@ require shared/onboarding-prompts.ts \
   'Keep the optional community separate from the private setup.' \
   'the optional community is no longer neutrally separated from the private setup decision'
 require shared/onboarding-prompts.ts \
-  'tell me plainly that it is ready, that its files are on my computer, and that I keep using you normally' \
+  'tell me plainly that it is ready and that I keep using you normally' \
   'the user request no longer asks for a clear completion state'
 require shared/onboarding-prompts.ts \
-  'check whether this exact session can run commands on my actual computer' \
-  'the computer setup paste no longer checks for live local execution'
+  '**full — preferred:**' \
+  'the setup paste no longer names the preferred live-computer mode'
 require shared/onboarding-prompts.ts \
-  'A GitHub copy in a cloud session is not my computer' \
-  'the computer setup paste can still mistake a cloud clone for live local access'
+  '**snapshot — useful:**' \
+  'the setup paste no longer keeps hosted Git useful while naming its limit'
 require shared/onboarding-prompts.ts \
-  'do not inspect any selected private repository or use it to guess my live setup' \
-  'the cloud stop can still expose or misread the selected private repository'
+  'A weaker mode is still Alexandria; never make switching modes a prerequisite.' \
+  'the setup paste can still turn a capability gap into a blocker'
 require shared/onboarding-prompts.ts \
-  'Tell me to paste this into an agent running on my computer, then stop' \
-  'the cloud stop no longer gives one clear safe next action'
+  'Do not inspect its personal files during this first public evaluation.' \
+  'snapshot mode can read private files before the user approves proceeding'
+require shared/onboarding-prompts.ts \
+  'work on your own branch, name its freshness limits, and never claim you changed my live computer or installed local hooks' \
+  'snapshot mode no longer preserves one-writer and live-state honesty'
 require factory/redteam.md \
   'hosted code session whose required workspace is a selected private GitHub backup' \
   'the cold-user simulation no longer reproduces the cloud-clone failure'
+require factory/redteam.md \
+  'missing live access is never proof that Alexandria is unusable' \
+  'the cold-user simulation can still reject a useful weaker mode'
 require shared/onboarding-prompts.ts \
   'one neutral link to Alexandria’s community page so I can decide for myself whether I also want a public profile and a way to connect with other people' \
   'the user request no longer owns the neutral community decision'
@@ -99,12 +105,6 @@ AGENT_SETUP_BLOCK="$(sed -n '/export function agentSetupPrompt/,/export function
 if grep -qiE 'first month free|dollar a day|membership|referral|price|paid|invite three|you should join|recommend joining|unlock' <<< "$AGENT_SETUP_BLOCK"; then
   fail 'the private setup paste contains commercial steering rather than a neutral decision'
 fi
-require shared/onboarding-prompts.ts \
-  'export function agentReminderPrompt(): string' \
-  'the later-computer route no longer has a durable reminder request'
-require shared/onboarding-prompts.ts \
-  'Use only a reminder, task, or other lasting feature you can verify will reach me across devices.' \
-  'the reminder request can claim persistence without proving it'
 require shared/onboarding-prompts.ts \
   'export function accountConnectPrompt(connectionCode: string)' \
   'the joined account handoff is not separated from first install'

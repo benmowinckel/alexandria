@@ -132,7 +132,7 @@ jobs:
         run: |
           npm ci
           npx tsc --noEmit
-          for test in account-connect-contract account-connect-experience audit cron-scanner file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
+          for test in account-connect-contract account-connect-experience audit cors-preflight cron-scanner file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
             npx tsx "test/$test.ts"
           done
 
@@ -162,5 +162,23 @@ jobs:
           node scripts/verify-onboarding.mjs http://localhost:3000
           node scripts/verify-onboarding.mjs http://localhost:3000 mobile
 
+  cleanup:
+    needs: [verify, test]
+    if: always() && github.event.ref_type == 'branch' && startsWith(github.event.ref, 'release/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Delete the tested candidate branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_BRANCH: ${{ github.event.ref }}
+        run: |
+          set -euo pipefail
+          gh api --method DELETE \
+            "repos/${GITHUB_REPOSITORY}/git/refs/heads/${RELEASE_BRANCH}"
+
   # Promotion is deliberately absent: GitHub has no Touch ID. scripts/push.sh
-  # waits for both jobs above, then the Mac releases those exact bytes.
+  # waits for verify + test, then the Mac releases those exact bytes. The only
+  # write permission above can delete the temporary candidate; it cannot bypass
+  # the protected main branch.

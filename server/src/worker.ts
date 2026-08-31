@@ -674,11 +674,13 @@ app.post('/onboard', async (c) => {
     const newToken = generateToken();
     const mode: OnboardingMode = body?.mode === 'chat'
       ? 'chat'
-      : body?.mode === 'agent-phone'
-        ? 'agent-phone'
-        : body?.mode === 'agent-computer'
-          ? 'agent-computer'
-          : 'agent';
+      : body?.mode === 'agent-cloud'
+        ? 'agent-cloud'
+        : body?.mode === 'agent-phone'
+          ? 'agent-phone'
+          : body?.mode === 'agent-computer'
+            ? 'agent-computer'
+            : 'agent';
     const source = `start:${mode}${ref ? `:ref:${ref}` : ''}`;
     const saved = await db.prepare(
       `INSERT INTO waitlist (email, type, source, created_at, unsubscribe_token)

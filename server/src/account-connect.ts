@@ -1,6 +1,7 @@
 /** Short-lived, one-use account connection codes. */
 
-import { randomBytes } from 'crypto';
+import { Buffer } from 'node:buffer';
+import { randomBytes } from 'node:crypto';
 import { hashApiKey } from './crypto.js';
 import { getDB } from './db.js';
 
@@ -28,7 +29,7 @@ export function isAccountConnectCode(value: string): boolean {
 
 export async function createAccountConnectCode(accountKey: string): Promise<string> {
   await ensureSchema();
-  const code = `${CODE_PREFIX}${randomBytes(24).toString('hex')}`;
+  const code = `${CODE_PREFIX}${Buffer.from(randomBytes(24)).toString('hex')}`;
   const now = new Date();
   const expiresAt = new Date(now.getTime() + CODE_TTL_MS).toISOString();
   await getDB().batch([

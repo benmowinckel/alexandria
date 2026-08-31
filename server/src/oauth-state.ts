@@ -1,4 +1,5 @@
-import { createHmac, randomBytes } from 'crypto';
+import { Buffer } from 'node:buffer';
+import { createHmac, randomBytes } from 'node:crypto';
 import { safeEqual } from './crypto.js';
 
 export type OAuthStateData = {
@@ -20,7 +21,7 @@ function signature(secret: string, state: string, payload: string): string {
  * stays first-party, and the callback has no eventually-consistent read.
  */
 export function createOAuthState(secret: string, data: OAuthStateData): { state: string; cookieValue: string } {
-  const state = randomBytes(16).toString('hex');
+  const state = Buffer.from(randomBytes(16)).toString('hex');
   const payload = Buffer.from(JSON.stringify(data), 'utf8').toString('base64url');
   return { state, cookieValue: `${state}.${payload}.${signature(secret, state, payload)}` };
 }

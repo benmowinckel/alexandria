@@ -2755,12 +2755,11 @@ export function registerLibraryRoutes(app: Hono): void {
   // ACCESS LOG (Author-authenticated — see who has read your files)
   // =========================================================================
 
-  // Per-author audit feed. Long-term tamper-evident history lives in the
-  // alexandria-audit GitHub repo (one JSONL batch per cron run, hash-
-  // chained). This endpoint exposes the rolling 30-day KV window so the
-  // Author can see recent activity without cloning the repo. The current
-  // chain head is included so the Author can cross-check against /audit/head
-  // and the published repo to verify nothing was tampered with.
+  // Per-author audit feed. Current long-term history lives in private R2 as
+  // content-addressed hash-chained JSONL batches; the read-only alexandria-audit repo
+  // preserves entries 1-4,242 from before that migration. This endpoint exposes
+  // the rolling 30-day KV window and the current head without exposing archive
+  // contents.
   app.get('/library/:author/access-log', async (c) => {
     const authorId = c.req.param('author');
     const accessorKey = extractApiKey(c);
@@ -2780,8 +2779,13 @@ export function registerLibraryRoutes(app: Hono): void {
       author: authorId,
       head,
       entries,
-      audit_repo: 'benmowinckel/alexandria-audit',
-      note: 'Long-term tamper-evident history lives in the audit_repo. Walk the hash chain from genesis to verify entries match the head_hash.',
+      archive: {
+        current: head.archive,
+        current_key: head.archive_key,
+        legacy_repo: 'benmowinckel/alexandria-audit',
+        legacy_through_n: 4242,
+      },
+      note: 'Entries 1-4,242 are frozen in the read-only legacy repo; the same hash chain continues in private R2.',
     });
   });
 

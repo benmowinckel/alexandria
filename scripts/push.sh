@@ -53,6 +53,24 @@ branch="$(git symbolic-ref --quiet --short HEAD)" || {
 
 git fetch --quiet origin main
 base="$(git rev-parse origin/main)"
+
+# A successful release deletes its temporary candidate branch. If the process
+# lost power after main moved but before that cleanup, prune only candidates
+# whose exact tip is already reachable from main. An unshipped candidate is
+# never deleted automatically: it may be the only remaining copy of prepared
+# work and needs a human-readable audit first.
+merged_candidates=()
+while IFS=$'\t' read -r candidate_sha candidate_ref; do
+  [ -n "$candidate_sha" ] || continue
+  if git merge-base --is-ancestor "$candidate_sha" "$base" 2>/dev/null; then
+    merged_candidates+=("${candidate_ref#refs/heads/}")
+  fi
+done < <(git ls-remote --heads origin 'refs/heads/release/*')
+if [ "${#merged_candidates[@]}" -gt 0 ]; then
+  git push --quiet origin --delete "${merged_candidates[@]}"
+  echo "pruned ${#merged_candidates[@]} completed release candidate branch(es)"
+fi
+
 head="$(git rev-parse HEAD)"
 test "$head" != "$base" || { echo "nothing to ship"; exit 0; }
 git merge-base --is-ancestor "$base" "$head" || {
@@ -80,6 +98,16 @@ agent_dir=""
 agent_socket=""
 agent_pid=""
 candidate=""
+delete_candidate() {
+  [ -n "$candidate" ] || return 0
+  if git ls-remote --exit-code --heads origin "refs/heads/$candidate" >/dev/null 2>&1; then
+    if ! git push --quiet origin ":refs/heads/$candidate"; then
+      echo "warning: candidate cleanup failed; the release workflow will retry" >&2
+      return 1
+    fi
+  fi
+  candidate=""
+}
 cleanup() {
   if [ -n "$agent_pid" ]; then
     kill "$agent_pid" 2>/dev/null || true
@@ -88,11 +116,9 @@ cleanup() {
   [ -z "$agent_socket" ] || rm -f "$agent_socket"
   [ -z "$agent_dir" ] || rmdir "$agent_dir" 2>/dev/null || true
   rm -f "$message_file"
-  if [ -n "$candidate" ]; then
-    git push --quiet origin ":refs/heads/$candidate" >/dev/null 2>&1 || true
-  fi
+  delete_candidate || true
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT INT TERM HUP
 {
   printf '%s\n\n' "$subject"
   printf '%s\n' "$body"
@@ -173,6 +199,5 @@ GIT_SSH_COMMAND="$release_ssh" git push "$RELEASE_REMOTE" "$signed:refs/heads/ma
 git fetch --quiet origin main
 live="$(git rev-parse origin/main)"
 test "$live" = "$signed" || { echo "error: GitHub main does not match the authorized release" >&2; exit 1; }
-git push --quiet origin ":refs/heads/$candidate" || true
-candidate=""
+delete_candidate || true
 echo "shipped: $signed"

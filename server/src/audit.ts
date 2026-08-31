@@ -7,17 +7,17 @@
  * tampering with a single entry invalidates every entry that came after.
  *
  * Threat model: even a Cloudflare-admin or company insider who accesses
- * R2 directly (bypassing the gate) would still be visible via the R2-side
- * Logpush integration (deferred — needs dashboard work). For application-
- * layer access (the normal path), every gate decision is already logged
+ * R2 directly (bypassing the gate) is not covered until native R2 access
+ * logging is enabled. For application-layer access (the normal path), every
+ * gate decision is already logged
  * via `logEvent('library_protocol_file_view', …)` in library.ts. This
  * module mirrors those events to the audit chain on a 10-minute cron.
  *
- * Why the chain matters: events live in KV with 60-day TTL. The audit
- * repo is long-term tamper-evident storage. Hash chain ensures someone
- * with admin access cannot quietly rewrite a historic entry — they'd
- * have to recompute every downstream hash AND match the publicly-exposed
- * /audit/head, which is observed by anyone polling it.
+ * Why the chain matters: events live in KV with 60-day TTL. The content-addressed R2
+ * batches are the long-term archive; the retired GitHub repo preserves entries
+ * 1-4,242. The hash chain makes any partial rewrite detectable. Because the
+ * operator controls both R2 and the public /audit/head checkpoint, it proves
+ * internal consistency rather than independently witnessing wholesale history.
  *
  * State:
  *   - KV `audit:state` → { last_event_t, head_hash, head_n, last_run_at, last_commit_at }

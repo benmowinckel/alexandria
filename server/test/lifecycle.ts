@@ -12,7 +12,7 @@
 
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 
 const BASE = process.env.TEST_URL || 'https://api.alexandria-library.com';
 const HOME = process.env.HOME || process.env.USERPROFILE || '';

@@ -6,7 +6,7 @@ import { SERVER_URL } from '../lib/config';
 import { checkReferral } from '../lib/referral';
 import { copyText, type CopyState } from '../lib/copy-text';
 import { ArrowIcon } from '../join/DoorIcons';
-import { agentReminderPrompt, agentSetupPrompt } from '../../shared/onboarding-prompts';
+import { agentSetupPrompt } from '../../shared/onboarding-prompts';
 
 type MailState = 'idle' | 'sending' | 'sent' | 'saved' | 'invalid' | 'error';
 
@@ -15,7 +15,7 @@ export default function StartCTA({
   mode,
 }: {
   refCode?: string;
-  mode: 'computer' | 'later';
+  mode: 'computer' | 'cloud';
 }) {
   const [copyState, setCopyState] = useState<CopyState>('idle');
   const [email, setEmail] = useState('');
@@ -40,7 +40,7 @@ export default function StartCTA({
   }, [validRef]);
 
   async function copySetup() {
-    setCopyState(await copyText(mode === 'later' ? agentReminderPrompt() : agentSetupPrompt()));
+    setCopyState(await copyText(agentSetupPrompt()));
     setTimeout(() => setCopyState('idle'), 4000);
   }
 
@@ -62,7 +62,7 @@ export default function StartCTA({
         body: JSON.stringify({
           email: trimmed,
           source: 'start',
-          mode: mode === 'later' ? 'agent-phone' : 'agent-computer',
+          mode: mode === 'cloud' ? 'agent-cloud' : 'agent-computer',
           ...(validRef ? { ref: validRef } : {}),
         }),
       });
@@ -149,17 +149,17 @@ export default function StartCTA({
           type="button"
           className={`door-btn act-box cta-btn setup-copy${copyState === 'copied' ? ' is-copied' : ''}`}
           onClick={copySetup}
-          aria-label={mode === 'later' ? 'copy the reminder' : 'copy the setup'}
+          aria-label="copy the setup"
         >
           {copyState === 'copied'
             ? <>
-                copied<span className="act-why"> — paste into {mode === 'later' ? 'your mobile agent' : 'that local agent'}</span>
+                copied<span className="act-why"> — paste into {mode === 'cloud' ? 'that cloud agent' : 'that local agent'}</span>
               </>
             : copyState === 'error'
               ? 'couldn’t copy — try again'
               : <>
-                  {mode === 'later' ? 'copy the reminder' : 'copy the setup'}
-                  <span className="act-why"> — paste into {mode === 'later' ? 'your mobile agent' : 'that local agent'}</span>
+                  copy the setup
+                  <span className="act-why"> — paste into {mode === 'cloud' ? 'that cloud agent' : 'that local agent'}</span>
                 </>}
         </button>
       </div>

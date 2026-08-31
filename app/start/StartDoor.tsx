@@ -8,7 +8,7 @@ import StartCTA from './StartCTA';
 import { CHAT_HOSTS, isChatHost, type ChatHost } from '../../shared/onboarding-prompts';
 
 const CHAT_HOST_IDS = Object.keys(CHAT_HOSTS) as ChatHost[];
-const STEPS = ['agent', 'computer', 'phone', 'chat', ...CHAT_HOST_IDS] as const;
+const STEPS = ['agent', 'computer', 'cloud', 'phone', 'chat', ...CHAT_HOST_IDS] as const;
 type Step = (typeof STEPS)[number];
 type StagePhase = 'idle' | 'leaving' | 'entering';
 
@@ -17,8 +17,8 @@ const ENTER_MS = 320;
 const REDUCED_EXIT_AND_BREATH_MS = 100;
 const REDUCED_ENTER_MS = 160;
 
-// Agent/chat chooses the product. Actual local execution then changes the
-// action: setup now, or leave a verified cross-device reminder and email copy.
+// Agent/chat chooses the product. Agent users then see the honest fidelity
+// choice: live computer state is preferred; a committed cloud snapshot works.
 export default function StartDoor({ refCode }: { refCode?: string }) {
   const [screen, go] = useDoorStep(STEPS);
   const [phase, setPhase] = useState<StagePhase>('idle');
@@ -87,10 +87,14 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
   if (screen === 'agent') {
     return stage(
       <div className="door-block">
-        <p className="door-q">is your agent running on your computer?</p>
+        <p className="door-q">where is your agent running?</p>
         <div className="door-answers">
-          <button className="door-btn" onClick={() => transitionTo('computer')}>yes — it runs here</button>
-          <button className="door-btn" onClick={() => transitionTo('phone')}>no — not right now</button>
+          <button className="door-btn" onClick={() => transitionTo('computer')}>
+            on my computer<span className="act-why"> — preferred, uses the live files</span>
+          </button>
+          <button className="door-btn" onClick={() => transitionTo('cloud')}>
+            in the cloud<span className="act-why"> — works from the saved github copy</span>
+          </button>
         </div>
       </div>
     );
@@ -100,8 +104,8 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
     return stage(<StartCTA key="computer" refCode={refCode} mode="computer" />);
   }
 
-  if (screen === 'phone') {
-    return stage(<StartCTA key="later" refCode={refCode} mode="later" />);
+  if (screen === 'cloud' || screen === 'phone') {
+    return stage(<StartCTA key="cloud" refCode={refCode} mode="cloud" />);
   }
 
   return stage(
@@ -109,7 +113,7 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
       <p className="door-q">what do you have access to?</p>
       <div className="door-answers">
         <button className="door-btn" onClick={() => transitionTo('agent')}>
-          an agent<span className="act-why"> — eg codex, claude code or cursor on your computer</span>
+          an agent<span className="act-why"> — eg codex, claude code or cursor</span>
         </button>
         <button className="door-btn" onClick={() => transitionTo('chat')}>
           just chat<span className="act-why"> — eg chatgpt, claude, gemini</span>

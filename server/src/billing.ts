@@ -6,11 +6,12 @@
  * Non-Author: instant payment via Stripe Checkout.
  */
 
+import { Buffer } from 'node:buffer';
+import { randomBytes } from 'node:crypto';
 import Stripe from 'stripe';
 import type { Hono } from 'hono';
 import { logEvent } from './analytics.js';
 import { welcomeHandoffUrl } from './templates.js';
-import { randomBytes } from 'crypto';
 import { requireAuth, ACTIVE_AUTHOR_STATUSES, type Account } from './auth.js';
 import { loadAccounts, getKV } from './kv.js';
 import { assignAuthorNumber, getAccountByLogin, updateAccountBilling } from './accounts.js';
@@ -1286,7 +1287,7 @@ export function registerBillingRoutes(app: Hono, onAccountUpdate: AccountUpdater
       // Mint a browser session and route the founding-member page through the
       // welcome handoff so the post-payment cookie is set first-party (Safari
       // drops one set on the api subdomain mid-redirect — WebKit #196375).
-      const sessionToken = randomBytes(24).toString('hex');
+      const sessionToken = Buffer.from(randomBytes(24)).toString('hex');
       await kv.put(`library:session:${sessionToken}`, JSON.stringify({ account_key: accountResult.storeKey, github_login: login }), { expirationTtl: 30 * 24 * 60 * 60 });
       const connectionCode = accountResult.account.connected_at
         ? ''

@@ -1,6 +1,7 @@
 /** Alexandria HTTP routes. */
 
-import { randomBytes } from 'crypto';
+import { Buffer } from 'node:buffer';
+import { randomBytes } from 'node:crypto';
 import type { Context, Hono } from 'hono';
 import { logEvent } from './analytics.js';
 import { countActiveKin, createCheckoutSession, createConnectOnboardingLink, createPortalSession, ensurePayoutsReady, getOrCreateConnectAccount, getStripe, recalculateAllKinPricing, recalculateKinPricing, resolveActiveSubscription, resolveMembership } from './billing.js';
@@ -570,7 +571,7 @@ export function registerRoutes(app: Hono) {
       await setEmailTokenIndex(emailToken, key);
 
       // Browser Library session (for human navigation on /library/*).
-      const librarySessionToken = randomBytes(24).toString('hex');
+      const librarySessionToken = Buffer.from(randomBytes(24)).toString('hex');
       await kv.put(`library:session:${librarySessionToken}`, JSON.stringify({
         account_key: key,
         github_login: user.login,
@@ -584,7 +585,7 @@ export function registerRoutes(app: Hono) {
       // the WEBSITE via a one-time code so the website sets the cookie first-party
       // on its own origin (which Safari honours). Short TTL, single-use, consumed
       // server-side — the token itself never rides the URL.
-      const handoffCode = randomBytes(24).toString('hex');
+      const handoffCode = Buffer.from(randomBytes(24)).toString('hex');
       await kv.put(`handoff:${handoffCode}`, librarySessionToken, { expirationTtl: 120 });
       const handoffUrl = (next: string) => `${getWebsiteUrl()}/auth/handoff?code=${handoffCode}&next=${encodeURIComponent(next)}`;
 
@@ -1538,7 +1539,7 @@ export function registerRoutes(app: Hono) {
     try { kinCompliant = (await countActiveKin(github_login)).compliant; } catch { /* D1 down — show 0 */ }
     // Mint a browser session so the founding-member page lands them signed-in,
     // and route it through the welcome handoff so the cookie sticks (Safari).
-    const sessionToken = randomBytes(24).toString('hex');
+    const sessionToken = Buffer.from(randomBytes(24)).toString('hex');
     await kv.put(`library:session:${sessionToken}`, JSON.stringify({ account_key: accountResult.storeKey, github_login }), { expirationTtl: 30 * 24 * 60 * 60 });
     const connectionCode = accountResult.account.connected_at
       ? ''

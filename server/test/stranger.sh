@@ -302,7 +302,7 @@ bash "$HOME/.local/share/alexandria/scripts/verify-fetch.sh" \
 check "disabled default preserved" [ -s "$HOME/alexandria/system/canon/disabled/methodology.md" ]
 check "disabled default not restored" [ ! -e "$HOME/alexandria/system/canon/methodology.md" ]
 check "core healthy without default" grep -q '^  canon: ok$' "$HOME/alexandria/system/.setup_report"
-check "method reported off" grep -Eq '^  methods:[[:space:]]+skip[[:space:]]*$' "$HOME/alexandria/system/.setup_report"
+check "method reported off" grep -Eq '^  starting methods:[[:space:]]+skip[[:space:]]*$' "$HOME/alexandria/system/.setup_report"
 PULL_DISABLED_OUTPUT=$(bash "$HOME/.local/share/alexandria/.hooks_payload" \
   pull methodology "$HOME/alexandria" 2>&1)
 check_output "disabled update remains off" "updated in disabled/ and remains off" "$PULL_DISABLED_OUTPUT"

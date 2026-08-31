@@ -5,7 +5,8 @@
  * SHA-256 for API key hashing (server never stores raw keys).
  */
 
-import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from 'crypto';
+import { Buffer } from 'node:buffer';
+import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 
@@ -45,7 +46,7 @@ export function hashApiKey(key: string): string {
 
 /** Generate a random token (hex string). */
 export function generateToken(bytes = 12): string {
-  return randomBytes(bytes).toString('hex');
+  return Buffer.from(randomBytes(bytes)).toString('hex');
 }
 
 /**

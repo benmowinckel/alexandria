@@ -1,6 +1,7 @@
 /** Company account management — billing, admin, key generation, account operations. */
 
-import { randomBytes } from 'crypto';
+import { Buffer } from 'node:buffer';
+import { randomBytes } from 'node:crypto';
 import { getAuthIndex, getLoginIndex, setLoginIndex, deleteLoginIndex, loadAccount, loadAccounts, saveAccount } from './kv.js';
 import { hashApiKey } from './crypto.js';
 import { getDB } from './db.js';
@@ -78,7 +79,7 @@ export async function getBillingSummary(): Promise<Record<string, number>> {
 }
 
 export function generateApiKey(): string {
-  return `alex_${randomBytes(16).toString('hex')}`;
+  return `alex_${Buffer.from(randomBytes(16)).toString('hex')}`;
 }
 
 // ---------------------------------------------------------------------------

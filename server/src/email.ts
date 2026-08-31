@@ -241,7 +241,7 @@ export async function sendWeekOneCheckIn(
 // The email is both a recovery copy of the handoff and the durable human
 // relationship. Private files and install state remain outside the server.
 
-export type OnboardingMode = 'agent' | 'agent-computer' | 'agent-phone' | 'chat';
+export type OnboardingMode = 'agent' | 'agent-computer' | 'agent-cloud' | 'agent-phone' | 'chat';
 
 export function onboardEmailContent(
   mode: OnboardingMode,
@@ -253,10 +253,15 @@ export function onboardEmailContent(
         subject: 'alexandria. — your chat setup',
         lead: 'choose the chat you use most, then follow the three short steps.',
       }
-    : {
-        subject: 'alexandria. — your setup',
-        lead: 'use an agent running on your computer. a cloud copy of your GitHub repository is not the same thing. if you already pasted this, keep it here as your backup.',
-      };
+    : mode === 'agent-cloud' || mode === 'agent-phone'
+      ? {
+          subject: 'alexandria. — your setup',
+          lead: 'cloud mode works from the committed GitHub copy you selected. it is useful, but less current than an agent using the live files on your computer.',
+        }
+      : {
+          subject: 'alexandria. — your setup',
+          lead: 'computer mode is preferred because it can use your live files, tools and hooks. the same setup also works in a cloud agent from a committed GitHub copy.',
+        };
   const commands = mode === 'chat'
     ? emailLinkLine(`${WEBSITE_URL}/chat`, 'alexandria-library.com/chat')
     : emailCmd(installPrompt());

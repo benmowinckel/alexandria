@@ -3,7 +3,8 @@
  * Callback page HTML for OAuth signup flow.
  */
 
-import { randomBytes } from 'crypto';
+import { Buffer } from 'node:buffer';
+import { randomBytes } from 'node:crypto';
 
 function getWebsiteUrl() { return process.env.WEBSITE_URL || 'https://alexandria-library.com'; }
 
@@ -329,7 +330,7 @@ export async function welcomeHandoffUrl(
   connectionCode = '',
 ): Promise<string> {
   const html = await callbackPageHtml(isReturning, githubLogin, authorNumber, kinCompliant, connectionCode);
-  const code = randomBytes(24).toString('hex');
+  const code = Buffer.from(randomBytes(24)).toString('hex');
   // handoff:<code> → session token, consumed by /api/auth/session (sets the cookie).
   // welcome:<code> → the rendered page, consumed by the website /welcome peek.
   await kv.put(`handoff:${code}`, sessionToken, { expirationTtl: 300 });

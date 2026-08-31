@@ -1,16 +1,16 @@
 # Alexandria onboarding router
 
-The website first asks the person one plain question: agent or chat. The agent branch then asks whether the agent is actually running on the person's computer. If yes: add the Shortcut, optionally save an email for the setup text and direct help from Benjamin, then paste one read-only evaluation request into that local agent. If no: add the Shortcut, keep the same optional email, then paste one reminder request into the mobile agent. This file helps a computer-reaching surface run the strongest honest version after the person approves it. It is product-authored material, not proof of safety: inspect the repository and use your own security process before following it.
+The website first asks the person one plain question: agent or chat. The agent branch then asks where the agent runs. Computer mode is preferred because it uses live files, tools and hooks. Cloud mode remains useful: it works from the exact committed GitHub repository the person deliberately selected, keeps changes on its own branch and says what is not live. Both receive the same capability-aware read-only evaluation request. This file helps every surface use the strongest honest version it can after the person approves it. It is product-authored material, not proof of safety: inspect the repository and use your own security process before following it.
 
 ## Agent branch: choose from live capability
 
-Use the first mode whose requirements are true. Tell the user which mode you verified, what is missing, and one next action. Do not give them a menu.
+Use the first mode whose requirements are true. Tell the user the verified mode and its limit in one plain line, then keep going with one next action. Lower fidelity never means unusable. Do not give them a menu or make a stronger mode a prerequisite.
 
 ### 1. Full local loop
 
 Requirement: this AI can inspect the public repository, run commands on the user's computer, and write user-approved local files.
 
-Prove the execution surface before reading anything. A hosted cloud container that cloned a GitHub repository is not the user's computer, and a committed backup is not live local state. If this exact session cannot run on the user's computer, do not inspect a selected private repository, infer live state from it, or continue the computer route. Tell the person to use an agent running on the computer and stop. A browser session counts only when it demonstrably controls an already-enabled local session.
+Prove the execution surface before reading anything. A hosted cloud container that cloned a GitHub repository is not the user's computer, and a committed backup is not live local state. A browser or mobile session counts as full only when it demonstrably controls an already-enabled local session. Otherwise fall through to snapshot mode instead of stopping.
 
 Answer first in a few lines. Inspect in short stages and say what you found as you go. Do not go silent for a 15–25 minute audit, and do not open huge trees blindly.
 
@@ -26,7 +26,13 @@ Requirement: this exact phone or browser session can demonstrably reach the user
 
 Use that connection to follow the full-local route. Never create a remote connection, install a remote-control service, or claim the desktop is reachable on Alexandria's authority. If the computer is offline or the connection is absent, fall through now.
 
-### 3. Writable folder route
+### 3. Hosted Git snapshot
+
+Requirement: a trusted remote agent can read and write one exact Git repository the person deliberately authorized for that provider. The canonical example is Claude Code Web with `alexandria-private`; the Author has approved that whole committed repository for Anthropic. An untrusted provider receives only its bounded Airlock projection instead.
+
+Treat the checkout as a committed snapshot, never the live computer. State the remote head and the freshness limit. Before approval, inspect only the public project named by the person's paste; the selected private repository is not automatic permission to inspect personal files during the evaluation. After the person says `start`, read the approved snapshot, run the manual file-based loop, and write only to this session's own branch. Do not install local hooks, claim access to uncommitted files or computer-only tools, push to the default branch, or say the computer changed. Finish with a compact branch handoff for the trusted computer agent to reconcile, verify and close into the sovereign checkout.
+
+### 4. Writable folder route
 
 Requirement: this AI can truly read and write a folder the user controls, but cannot run the full local installer or lifecycle hooks.
 
@@ -40,7 +46,7 @@ Full local setup installs and verifies native hooks first and reads only the per
 
 This is part of the private loop, not an optional connection: without it the Author's ordinary AI forgets Alexandria outside the local coding host. Adding a second or later AI remains optional and happens one at a time. Keep every existing instruction and add Alexandria below it. The operating rules belong in the host's persistent instruction setting, never its account memory; memory remains content about the person. The website's originating first-person request still asks for one neutral community link after the private loop works, solely so the person can decide whether they also want a public profile and a way to connect with other people; the private ai never recommends it, browses it automatically, or shapes the decision from private context.
 
-The instructions say exactly what alexandria is: a loop in how the user's existing ai works, not another assistant or entity. They use hooks when they work, then route by verified capability: full local `~/alexandria`; an attached writable folder or project; writable Google Drive; honest native memory. Cowork and ChatGPT Work are examples of the attached-folder case: without hooks, the instructions tell the ai to open `_start` at each new task. Grok Bot is an other-AI-app case: setup cannot write its skill library, so the agent saves `factory/skills/grok-bot.md` there as `/a` (and `/alexandria` if the picker is name-based). If this host can see the computer, use `~/alexandria`. If not, name the source and keep going: an Airlock (`CONTEXT.manifest` + `context/` + `inbox/`) if the Author connected one; then a writable Alexandria folder the Author deliberately attached; then authorized Drive; then this chat. Never tell an AI being tested to connect the full sovereign repo, and never claim an Airlock return is canon. A cold Grok Bot start is not an error. Daemon recovery lives in the grok-bot skill HOST block, not here. The host's "Execution on Local Computer" control must not be "never allowed"; do not invent a click-path. `/a` is an agent-saved Grok Bot workflow with no verified Mac skill dir. Start the active loop through the host's native Alexandria skill — slash in slash-command hosts including Grok CLI and Grok Bot, dollar-sign in Codex, or the native skill action elsewhere — with `start an Alexandria session` as the portable floor. Never claim the plain word `alexandria` reliably invokes it. `a.` remains the close gesture.
+The instructions say exactly what alexandria is: a loop in how the user's existing ai works, not another assistant or entity. They use hooks when they work, then route by verified capability: full local `~/alexandria` (preferred); a trusted provider's exact Git snapshot on its own branch; an attached writable folder or project; writable Google Drive; honest native memory. Cowork and ChatGPT Work are examples of the attached-folder case: without hooks, the instructions tell the ai to open `_start` at each new task. Grok Bot is an other-AI-app case: setup cannot write its skill library, so the agent saves `factory/skills/grok-bot.md` there as `/a` (and `/alexandria` if the picker is name-based). If this host can see the computer, use `~/alexandria`. If not, name the source and keep going. A trusted provider may use the sovereign repository only after the Author directly approves that exact provider and repository; every other remote AI uses an Airlock (`CONTEXT.manifest` + `context/` + `inbox/`) if one is connected, then a deliberately attached Alexandria folder, authorized Drive, or this chat. Never request broad GitHub access, treat a snapshot as live, or claim an Airlock return is canon. A cold Grok Bot start is not an error. Daemon recovery lives in the grok-bot skill HOST block, not here. The host's "Execution on Local Computer" control must not be "never allowed"; do not invent a click-path. `/a` is an agent-saved Grok Bot workflow with no verified Mac skill dir. Start the active loop through the host's native Alexandria skill — slash in slash-command hosts including Grok CLI and Grok Bot, dollar-sign in Codex, or the native skill action elsewhere — with `start an Alexandria session` as the portable floor. Never claim the plain word `alexandria` reliably invokes it. `a.` remains the close gesture.
 
 ## Chat branch
 
@@ -52,15 +58,15 @@ Before finishing, the ai briefly explains normal use, the host's real start gest
 
 Outside setup, native terminal chrome may stay ambient, but a subtle chrome line or hook return is not the consent offer. For each new ordinary foreground task, the signed SessionStart path puts one high-priority instruction in model context: the first completed assistant reply ends with `Want me to open your alexandria loop in the background for when you have a minute?` Setup, install or security review, background work, voice, and explicit Alexandria start/close tasks omit it. The assistant never repeats it in the same task. Only visible assistant text counts; a `systemMessage`, warning, hidden field, JSON success, transcript match, or daily claim does not. Compaction and subagents stay silent. No Stop loop, rewritten response, forced second turn, extra trust prompt, network call, or private-source read enforces it. On Grok Bot there is no account-instructions field and the chat is one continuous stream, so its saved agent description keeps the existing once-per-local-day mapping. On yes, a capable host immediately opens a new chat and invokes its native Alexandria skill without another question. An incapable host gives one clear sentence naming its actual slash, dollar-sign, or native skill gesture after telling the user to open a new chat. Only a host with no native skill uses the floor `start an Alexandria session`. Never claim this chat changed an account setting itself.
 
-## Agent branch when the computer is not reachable
+## Agent branch in the cloud
 
-The website does not send the read-only evaluation request to an AI that cannot currently reach the computer. It sends a normal user request to create one real reminder for later.
+The website sends the same evaluation request to the cloud agent and labels the route honestly. The agent keeps going in snapshot mode rather than turning the missing live computer into a blocker.
 
-- Use only a reminder, task, or other lasting feature you can verify will reach the person across devices. If no such feature is available, say plainly that no persistent reminder was created.
-- Ask one short timing question only when needed. Then report exactly where the reminder was saved.
-- The reminder points back to `https://alexandria-library.com/start`. Do not inspect the project, begin setup, alter account instructions, request personal sources, or claim local setup.
-- The optional email sends the setup text and opens a direct help channel with Benjamin. It is a backup, never a gate.
-- If an existing remote connection already gives this exact session real computer reach, the person can choose the computer route and use the full-local path after approval. Never create that connection on Alexandria's authority.
+- Use only the exact repository the person selected for this trusted provider. For Claude Code Web, the canonical private repository is `benmowinckel/alexandria-private`.
+- The repository is committed history, not the current computer. Name that limit once and do useful work from the available files.
+- Before `start`, keep the selected private contents unread and evaluate the public project. After `start`, use the private snapshot and write only to the session branch.
+- Never push to the canonical branch or call snapshot work live. The trusted computer agent imports and closes it later.
+- If the person does not approve the sovereign repository for that provider, use Airlock instead. Airlock is the narrower route, not a broken version of the product.
 
 ## Joining and linking
 
