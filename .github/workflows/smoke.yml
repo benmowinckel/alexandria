@@ -230,15 +230,41 @@ jobs:
 
       - name: Founder profile, member listing, and context mirror work live
         run: |
-          PROFILE=$(curl -sf --max-time 20 "$SERVER/library/benmowinckel")
-          printf '%s' "$PROFILE" | jq -e '
-            (.author.location | type == "string" and length > 0) and
-            (.author.contact | type == "string" and length > 0) and
-            .twin.online == true and
-            ([.files[] | select(.category == "works") | .name] == ["droplets-of-grace"]) and
-            ([.files[] | select(.name == "features" or .name == "whitepaper" or .name == "letter") | .category] | all(. == "other")) and
-            (.profile.hidden | index("other") != null)
-          ' >/dev/null || { echo "::error::Founder public profile, identity fields, mirror, or reader artifacts are unavailable"; exit 1; }
+          public_profile_ok() {
+            printf '%s' "$1" | jq -e '
+              (.author.location | type == "string" and length > 0) and
+              (.author.contact | type == "string" and length > 0) and
+              .twin.online == true and
+              ([.files[] | select(.category == "works") | .name] == ["droplets-of-grace"]) and
+              ([.files[] | select(.name == "features" or .name == "whitepaper" or .name == "letter") | .category] | all(. == "other")) and
+              (.profile.hidden | index("other") != null)
+            ' >/dev/null
+          }
+
+          # Profile metadata and twin liveness cross two independently
+          # replicated stores. A just-updated edge may trail briefly, so retry
+          # the assembled live contract rather than accepting one stale read.
+          PROFILE=''
+          for attempt in 1 2 3 4 5 6; do
+            PROFILE=$(curl -sSf --max-time 20 --retry 2 --retry-all-errors \
+              "$SERVER/library/benmowinckel") || true
+            public_profile_ok "$PROFILE" && break
+            echo "profile edge not current (attempt $attempt/6)"
+            [ "$attempt" = 6 ] || sleep 10
+          done
+          public_profile_ok "$PROFILE" || {
+            # Every emitted field is already public; keep the much larger file
+            # bodies and viewer-relative data out of the Actions log.
+            printf '%s' "$PROFILE" | jq -c '{
+              author: { location: .author.location, contact: .author.contact },
+              twin_online: .twin.online,
+              works: [.files[] | select(.category == "works") | .name],
+              reader_artifacts: [.files[] | select(.name == "features" or .name == "whitepaper" or .name == "letter") | { name, category }],
+              hidden: .profile.hidden
+            }' || true
+            echo "::error::Founder public profile, identity fields, mirror, or reader artifacts are unavailable"
+            exit 1
+          }
 
           OWNER_PROFILE=$(curl -sf --max-time 20 "$SERVER/library/benmowinckel" -H "Authorization: Bearer $API_KEY")
           printf '%s' "$OWNER_PROFILE" | jq -e '
