@@ -4,8 +4,11 @@ import {
   CHAT_HOSTS,
   CHAT_INSTRUCTION,
   CHAT_SETUP_PROMPT,
+  GEMINI_CHAT_INSTRUCTION,
+  GEMINI_NUDGE_INSTRUCTION,
   agentSetupPrompt,
   chatInstallPrompt,
+  chatSecondaryInstallPrompt,
   chatSetupPrompt,
 } from '../shared/onboarding-prompts.ts';
 
@@ -150,11 +153,16 @@ assert.doesNotMatch(chatBody, /shortcut|email/i);
 await assertFits('.instruction-copy');
 await assertFits('.setup-copy');
 await page.getByRole('button', { name: 'copy the instructions' }).click();
-assert.equal(await clipboard(), chatInstallPrompt());
+assert.equal(await clipboard(), chatInstallPrompt('chatgpt'));
 await page.getByRole('button', { name: 'copy the setup' }).click();
 assert.equal(await clipboard(), chatSetupPrompt());
 assert.equal(chatSetupPrompt(), CHAT_SETUP_PROMPT);
 assert.equal(chatInstallPrompt(), CHAT_INSTRUCTION);
+assert.equal(chatInstallPrompt('claude'), CHAT_INSTRUCTION);
+assert.equal(chatInstallPrompt('gemini'), GEMINI_CHAT_INSTRUCTION);
+assert.equal(chatSecondaryInstallPrompt('chatgpt'), null);
+assert.equal(chatSecondaryInstallPrompt('claude'), null);
+assert.equal(chatSecondaryInstallPrompt('gemini'), GEMINI_NUDGE_INSTRUCTION);
 assert.doesNotMatch(CHAT_SETUP_PROMPT, new RegExp(CHAT_INSTRUCTION.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 assert.match(CHAT_SETUP_PROMPT, /Be radically simple and very concise/);
 assert.match(CHAT_SETUP_PROMPT, /only one action or question at a time/);
@@ -185,9 +193,14 @@ await page.goto(`${base}/chat`, { waitUntil: 'networkidle' });
 await page.getByRole('button', { name: 'gemini' }).click();
 await page.waitForURL(/#gemini$/);
 const geminiChatBody = await page.locator('body').innerText();
-assert.equal(await page.locator('.act-num').count(), 2);
+assert.equal(await page.locator('.act-num').count(), 3);
 assert.match(geminiChatBody, new RegExp(CHAT_HOSTS.gemini.instructionPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 assert.doesNotMatch(geminiChatBody, /connect google drive/);
+await page.getByRole('button', { name: 'copy the instructions' }).click();
+assert.equal(await clipboard(), chatInstallPrompt('gemini'));
+await page.getByRole('button', { name: 'copy the first-reply rule' }).click();
+assert.equal(await clipboard(), chatSecondaryInstallPrompt('gemini'));
+await assertFits('.secondary-copy');
 
 const visibleText = `${initial}\n${reachBody}\n${computerBody}\n${cloudBody}\n${chatChoiceBody}\n${chatBody}\n${directChatBody}\n${geminiChatBody}`;
 assert.equal(visibleText, visibleText.toLowerCase(), 'visible onboarding copy must stay lowercase');

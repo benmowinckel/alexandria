@@ -283,7 +283,7 @@ The reflex to soften the counter to preserve harmony IS the bias to route around
 
 ### Prove the Rented Surface
 
-Instructions for a third-party chat or app are not true because the vendor documents a feature or the interface once had a button. Prove the exact signed-in path the Author will use: locate the visible setting, paste the exact bytes, save and reload them, exercise every promised behavior, prove persistence in a fresh chat, and clean up the test. Test desktop and mobile separately when both are named. Same-chat obedience proves only that the model followed a prompt once; it does not prove durable onboarding.
+Instructions for a third-party chat or app are not true because the vendor documents a feature or the interface once had a button. Prove the exact signed-in path the Author will use: locate the visible setting, paste the exact bytes, save and reload them, exercise every promised behavior, prove persistence in a fresh chat, and clean up the test. Test desktop and mobile separately when both are named. Some hosts rewrite long account instructions instead of preserving the submitted text; give those hosts the shortest complete host-specific instruction and verify its behavior in a fresh chat rather than treating the save action as proof. Same-chat obedience proves only that the model followed a prompt once; it does not prove durable onboarding.
 
 Describe capabilities, not brands. A connected file home counts only when the current chat can write and read it back. Native personalisation counts only when a fresh chat recurs. If the host cannot do either, say so and return a handoff; never invent a setup detour. Product documentation and remembered UI are useful for finding candidates, but the live user chain is ground truth.
 

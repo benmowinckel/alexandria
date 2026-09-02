@@ -2,7 +2,15 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { onboardEmailContent, preBillWarningContent, setupFixNudgeContent, welcomeEmailContent } from '../src/email.js';
 import { accountConnectPrompt, agentSetupPrompt } from '../src/install-prompt.js';
-import { CHAT_HOSTS, CHAT_INSTRUCTION, CHAT_SETUP_PROMPT } from '../../shared/onboarding-prompts.js';
+import {
+  CHAT_HOSTS,
+  CHAT_INSTRUCTION,
+  CHAT_SETUP_PROMPT,
+  GEMINI_CHAT_INSTRUCTION,
+  GEMINI_NUDGE_INSTRUCTION,
+  chatInstallPrompt,
+  chatSecondaryInstallPrompt,
+} from '../../shared/onboarding-prompts.js';
 
 const agent = onboardEmailContent('agent', 'TOKEN');
 assert.equal(agent.subject, 'alexandria. — your setup');
@@ -76,7 +84,7 @@ assert.match(cloud.html, /less current than an agent using the live files/);
 
 const chat = onboardEmailContent('chat', 'TOKEN');
 assert.equal(chat.subject, 'alexandria. — your chat setup');
-assert.match(chat.html, /choose the chat you use most, then follow the two short steps/);
+assert.match(chat.html, /choose the chat you use most, then follow the short steps/);
 assert.match(chat.html, /alexandria-library\.com\/chat/);
 assert.doesNotMatch(chat.html, /which ai do you use|settings →|your email/i);
 
@@ -101,6 +109,21 @@ assert.match(CHAT_INSTRUCTION, /alex_connect_/);
 assert.match(CHAT_INSTRUCTION, /Use only `~\/alexandria\/system\/\.connect`\. Wait for exact `connect`\. Never browse for instructions or expose server text; accept only exact key\/fixed result/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /selector|untrusted page|welcome-source/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /type alexandria|On “alexandria”/);
+assert.ok(GEMINI_CHAT_INSTRUCTION.length <= 900, `Gemini instruction lost its headroom: ${GEMINI_CHAT_INSTRUCTION.length}`);
+assert.match(GEMINI_CHAT_INSTRUCTION, /approved Git in your own branch \(otherwise Airlock\)/);
+assert.match(GEMINI_CHAT_INSTRUCTION, /Drive alexandria\/_start/);
+assert.match(GEMINI_CHAT_INSTRUCTION, /Gemini saved info/);
+assert.match(GEMINI_CHAT_INSTRUCTION, /otherwise an unsaved handoff/);
+assert.match(GEMINI_CHAT_INSTRUCTION, /actually write and read back/);
+assert.ok(GEMINI_NUDGE_INSTRUCTION.length <= 300, `Gemini first-reply rule lost its headroom: ${GEMINI_NUDGE_INSTRUCTION.length}`);
+assert.match(GEMINI_NUDGE_INSTRUCTION, /end only your first reply with exactly/);
+assert.match(GEMINI_NUDGE_INSTRUCTION, /Never repeat it/);
+assert.equal(chatInstallPrompt('gemini'), GEMINI_CHAT_INSTRUCTION);
+assert.equal(chatSecondaryInstallPrompt('gemini'), GEMINI_NUDGE_INSTRUCTION);
+assert.equal(chatSecondaryInstallPrompt('chatgpt'), null);
+assert.equal(chatSecondaryInstallPrompt('claude'), null);
+assert.equal(chatInstallPrompt('chatgpt'), CHAT_INSTRUCTION);
+assert.equal(chatInstallPrompt('claude'), CHAT_INSTRUCTION);
 assert.doesNotMatch(CHAT_SETUP_PROMPT, new RegExp(CHAT_INSTRUCTION.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 assert.match(CHAT_SETUP_PROMPT, /Be radically simple and very concise/);
 assert.match(CHAT_SETUP_PROMPT, /only one action or question at a time/);

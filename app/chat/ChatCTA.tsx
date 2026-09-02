@@ -5,6 +5,7 @@ import { checkReferral } from '../lib/referral';
 import { copyText, type CopyState } from '../lib/copy-text';
 import {
   chatInstallPrompt,
+  chatSecondaryInstallPrompt,
   chatSetupPrompt,
   CHAT_HOSTS,
   type ChatHost,
@@ -20,6 +21,7 @@ export default function ChatCTA({
   initialCopyState?: CopyState;
 }) {
   const [instructionCopyState, setInstructionCopyState] = useState<CopyState>('idle');
+  const [secondaryCopyState, setSecondaryCopyState] = useState<CopyState>('idle');
   const [setupCopyState, setSetupCopyState] = useState<CopyState>(initialCopyState);
   const [refCheck, setRefCheck] = useState<{ input: string; valid: string | null } | null>(null);
   const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
@@ -38,10 +40,17 @@ export default function ChatCTA({
   }, [validRef]);
 
   const guide = CHAT_HOSTS[host];
+  const secondaryInstruction = chatSecondaryInstallPrompt(host);
 
   async function copyInstructions() {
-    setInstructionCopyState(await copyText(chatInstallPrompt()));
+    setInstructionCopyState(await copyText(chatInstallPrompt(host)));
     setTimeout(() => setInstructionCopyState('idle'), 4000);
+  }
+
+  async function copySecondaryInstructions() {
+    if (!secondaryInstruction) return;
+    setSecondaryCopyState(await copyText(secondaryInstruction));
+    setTimeout(() => setSecondaryCopyState('idle'), 4000);
   }
 
   async function copySetup() {
@@ -67,8 +76,26 @@ export default function ChatCTA({
         </button>
       </div>
 
+      {secondaryInstruction && (
+        <div className="act-row">
+          <span className="act-num">2</span>
+          <button
+            type="button"
+            className={`door-btn act-box cta-btn secondary-copy${secondaryCopyState === 'copied' ? ' is-copied' : ''}`}
+            onClick={copySecondaryInstructions}
+            aria-label="copy the first-reply rule"
+          >
+            {secondaryCopyState === 'copied'
+              ? <>copied<span className="act-rest">add separately in {guide.instructionPath}</span></>
+              : secondaryCopyState === 'error'
+                ? 'couldn’t copy — try again'
+                : <>copy the first-reply rule<span className="act-rest">add separately in the same place</span></>}
+          </button>
+        </div>
+      )}
+
       <div className="act-row">
-        <span className="act-num">2</span>
+        <span className="act-num">{secondaryInstruction ? 3 : 2}</span>
         <button
           type="button"
           className={`door-btn act-box cta-btn setup-copy${setupCopyState === 'copied' ? ' is-copied' : ''}`}
