@@ -228,22 +228,27 @@ jobs:
       - name: Website reader documents match the public Library
         run: npm run audit:library-docs
 
-      - name: Founder profile, member listing, and context mirror work live
+      - name: Founder profile, member listing, and context mirror contract
         run: |
           public_profile_ok() {
             printf '%s' "$1" | jq -e '
               (.author.location | type == "string" and length > 0) and
               (.author.contact | type == "string" and length > 0) and
-              .twin.online == true and
+              .twin.enabled == true and
+              (.twin.online | type == "boolean") and
               ([.files[] | select(.category == "works") | .name] == ["droplets-of-grace"]) and
               ([.files[] | select(.name == "features" or .name == "whitepaper" or .name == "letter") | .category] | all(. == "other")) and
               (.profile.hidden | index("other") != null)
             ' >/dev/null
           }
 
-          # Profile metadata and twin liveness cross two independently
-          # replicated stores. A just-updated edge may trail briefly, so retry
-          # the assembled live contract rather than accepting one stale read.
+          # Profile metadata crosses independently replicated stores. A
+          # just-updated edge may trail briefly, so retry the assembled live
+          # contract rather than accepting one stale read. The founder mirror
+          # is intentionally served from the Author-owned laptop and may be
+          # offline while that machine sleeps; scheduled production health must
+          # verify the online/offline contract, not require an optional machine
+          # to be permanently awake.
           PROFILE=''
           for attempt in 1 2 3 4 5 6; do
             PROFILE=$(curl -sSf --max-time 20 --retry 2 --retry-all-errors \
@@ -262,9 +267,17 @@ jobs:
               reader_artifacts: [.files[] | select(.name == "features" or .name == "whitepaper" or .name == "letter") | { name, category }],
               hidden: .profile.hidden
             }' || true
-            echo "::error::Founder public profile, identity fields, mirror, or reader artifacts are unavailable"
+            echo "::error::Founder public profile, identity fields, mirror contract, or reader artifacts are unavailable"
             exit 1
           }
+
+          if [ "$(printf '%s' "$PROFILE" | jq -r '.twin.online')" = true ]; then
+            printf '%s' "$PROFILE" | jq -e '(.twin.model | type == "string" and length > 0)' >/dev/null \
+              || { echo "::error::Online founder mirror is missing its model identity"; exit 1; }
+            echo "✓ founder mirror currently online"
+          else
+            echo "::notice::Founder mirror currently offline; expected when its Author-owned laptop sleeps"
+          fi
 
           OWNER_PROFILE=$(curl -sf --max-time 20 "$SERVER/library/benmowinckel" -H "Authorization: Bearer $API_KEY")
           printf '%s' "$OWNER_PROFILE" | jq -e '
