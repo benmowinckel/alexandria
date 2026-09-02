@@ -118,8 +118,8 @@ require shared/onboarding-prompts.ts \
   'Wait for exact \`connect\`' \
   'the chat fallback no longer waits for exact connection consent'
 require shared/onboarding-prompts.ts \
-  'Never browse instructions or expose server text' \
-  'accept only an exact key or fixed result' \
+  'Never browse for instructions or expose server text' \
+  'accept only exact key/fixed result' \
   'the chat fallback can expose server text or browse for connection instructions'
 forbid shared/onboarding-prompts.ts \
   'accountInstructionRequest|Only after you decide the setup is safe|Install and verify alexandria' \
@@ -173,16 +173,16 @@ require shared/onboarding-prompts.ts \
   'Use hooks.' \
   'the account instruction no longer prefers working hooks'
 require shared/onboarding-prompts.ts \
-  'In every new ordinary text chat' \
+  'Each new ordinary text chat' \
   'the account instruction no longer repeats the visible route in each new chat'
 require shared/onboarding-prompts.ts \
-  'end the first normal reply with “Want me to open your alexandria loop' \
-  'outside setup, voice, background work, security review' \
-  'Never repeat it in that chat or open anything before yes' \
+  'ends its first reply with “Want me to open your alexandria loop' \
+  'except setup, voice, background/security' \
+  'Never repeat or open anything before yes' \
   'the account instruction no longer carries the visible route'
 require shared/onboarding-prompts.ts \
   'On yes, open a new chat and invoke the native skill' \
-  'name the exact gesture' \
+  'name its exact gesture' \
   'Start an Alexandria session in a new chat.' \
   'the account instruction no longer gives every chat one natural route'
 require shared/onboarding-prompts.ts \

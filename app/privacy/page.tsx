@@ -29,16 +29,16 @@ export default function Privacy() {
         alexandria.
       </Link>
       <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 400 }}>Privacy Policy</h1>
-      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 12, 2026</p>
+      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 31, 2026</p>
 
       <section style={section}>
         <h2 style={heading}>What Alexandria is</h2>
-        <p>Alexandria provides instructions that your own AI uses to build and read a detailed mirror of your thinking. The private mirror is stored as plain files on your computer or documents in your own Google Drive. An optional hosted connector lets compatible loops use the Library, Marketplace, membership, and publishing features.</p>
+        <p>Alexandria provides instructions that your own AI uses to build and read a detailed mirror of your thinking. The strongest available private home may be user-owned Git files, documents in your own Google Drive, or your AI provider’s personalisation. If none is writable, your AI leaves an explicit handoff in the chat instead of claiming it saved anything. An optional hosted connector lets compatible loops use the Library, Marketplace, membership, and publishing features.</p>
       </section>
 
       <section style={section}>
         <h2 style={heading}>Your private mirror stays private</h2>
-        <p>Your private files — including your constitution, vault, marginalia, transcripts, and notes — stay on your device or in your own connected Drive. Alexandria has no endpoint that accepts them and cannot read or retrieve them. Backups are optional and go only to accounts you control if you choose to enable them.</p>
+        <p>Your private mirror stays with the storage or AI provider you chose. Private Git and Drive files remain in accounts you control; native memories remain with your AI provider. Alexandria has no endpoint that accepts this private material and cannot read or retrieve it. Backups and cross-app connections are optional and use only accounts you approve.</p>
         <p style={detail}>This promise covers the private mirror. Information you deliberately publish, feedback you submit, and the connector records described below do reach services we operate.</p>
       </section>
 

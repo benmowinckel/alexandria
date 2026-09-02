@@ -29,11 +29,11 @@ export default function Terms() {
         alexandria.
       </Link>
       <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 400 }}>Terms of Service</h1>
-      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 12, 2026</p>
+      <p style={{ marginBottom: '2rem', fontSize: '0.85rem', opacity: 0.5 }}>Last updated: August 31, 2026</p>
 
       <section style={section}>
         <h2 style={heading}>What this is</h2>
-        <p>Alexandria provides instructions and support files that your own AI can use to build and read a private mirror of your thinking. The free loop runs on your machine or, for the chat version, through your AI provider’s personalisation and documents in your own Google Drive when available. Alexandria also offers an optional hosted connector: accounts, membership, the Library, the Marketplace, publishing, and related payment features.</p>
+        <p>Alexandria provides instructions and support files that your own AI can use to build and read a private mirror of your thinking. The free loop uses the strongest private home your current AI can actually write and retrieve: approved Git files, documents in your own Google Drive, or your AI provider’s personalisation. If none is writable, it returns an explicit unsaved handoff. Alexandria also offers an optional hosted connector: accounts, membership, the Library, the Marketplace, publishing, and related payment features.</p>
         <p style={detail}>These terms govern the website and hosted connector. The public source and files on your own machine remain subject to any notices included with them.</p>
       </section>
 

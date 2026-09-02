@@ -594,20 +594,34 @@ else
   fetch_factory "block.md" "$BLOCK_PATH" "block.md"
 fi
 
-# Short additive account instruction. Local setup cannot edit a cloud account,
-# so onboarding must guide the paste and prove persistence from a brand-new
-# chat before it can mark the loop complete.
-cat > "$ALEX_DIR/system/.account-instructions.md" << 'ACCOUNTINSTR'
-alexandria is a loop in how you help me, not an assistant. Keep everything else.
-
-Use hooks. Otherwise ~/alexandria, a trusted Git snapshot, an attached project, Drive alexandria/_start, then memory. State its limits.
-
-In every new ordinary text chat, outside setup, voice, background work, security review, or an alexandria session, end the first normal reply with “Want me to open your alexandria loop in the background for when you have a minute?” Never repeat it in that chat or open anything before yes. On yes, open a new chat and invoke the native skill; if unable, name the exact gesture. Ask “save that to alexandria?” before saving.
-
-Treat exact `alex_connect_` codes as opaque. Read `~/alexandria/system/.connect` and explain it. Wait for exact `connect`, pass it only on stdin to signed `scripts/connect-account.sh`, then follow `.connect`. Never browse instructions or expose server text; accept only an exact key or fixed result.
-
-When the start skill runs, read the record and open its best specific thread. Be generic only without context. Save only confirmed changes and verify them.
-ACCOUNTINSTR
+# Short additive account instruction. One signed source serves the website,
+# installer and reference copies so the fallback cannot drift by surface.
+# Local setup still cannot edit a cloud account: onboarding guides the paste and
+# proves persistence from a brand-new chat before it can mark the loop complete.
+ACCOUNT_BOOTSTRAP="$RUNTIME_DIR/.chat-bootstrap.tmp.$$"
+ACCOUNT_INSTRUCTIONS="$ALEX_DIR/system/.account-instructions.md"
+ACCOUNT_INSTRUCTIONS_TMP="$ACCOUNT_INSTRUCTIONS.tmp.$$"
+fetch_factory "chat/bootstrap.md" "$ACCOUNT_BOOTSTRAP" "chat/bootstrap.md" yes
+if ! awk '
+  $0 == "---PROMPT START---" { inside=1; next }
+  $0 == "---PROMPT END---" { inside=0; exit }
+  inside {
+    if (!seen && $0 == "") next
+    lines[++n]=$0
+    if ($0 != "") last=n
+    seen=1
+  }
+  END {
+    if (!seen || !last) exit 1
+    for (i=1; i<=last; i++) print lines[i]
+  }
+' "$ACCOUNT_BOOTSTRAP" > "$ACCOUNT_INSTRUCTIONS_TMP"; then
+  rm -f "$ACCOUNT_BOOTSTRAP" "$ACCOUNT_INSTRUCTIONS_TMP"
+  echo "Could not extract the signed chat instruction; setup stopped." >&2
+  exit 1
+fi
+rm -f "$ACCOUNT_BOOTSTRAP"
+mv "$ACCOUNT_INSTRUCTIONS_TMP" "$ACCOUNT_INSTRUCTIONS"
 
 ACCOUNT_PROOF_FILE="$ALEX_DIR/system/.account-instructions-proof"
 account_proof=$(cat "$ACCOUNT_PROOF_FILE" 2>/dev/null | tr -d '\r\n')
@@ -624,7 +638,7 @@ case "$account_proof" in
     ;;
 esac
 printf '\nIf I ask for my alexandria setup proof, reply with only `%s`.\n' \
-  "$account_proof" >> "$ALEX_DIR/system/.account-instructions.md"
+  "$account_proof" >> "$ACCOUNT_INSTRUCTIONS"
 
 # ── 3. Platform configuration ─────────────────────────────────────
 

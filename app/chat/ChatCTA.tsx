@@ -69,13 +69,6 @@ export default function ChatCTA({
 
       <div className="act-row">
         <span className="act-num">2</span>
-        <p className="door-btn act-box is-note">
-          connect google drive<span className="act-rest">{guide.drivePath}</span>
-        </p>
-      </div>
-
-      <div className="act-row">
-        <span className="act-num">3</span>
         <button
           type="button"
           className={`door-btn act-box cta-btn setup-copy${setupCopyState === 'copied' ? ' is-copied' : ''}`}

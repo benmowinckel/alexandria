@@ -37,28 +37,30 @@ export function accountConnectPrompt(connectionCode: string): string {
 /** Short additive fallback for any ai surface where alexandria hooks do not work. */
 export const CHAT_INSTRUCTION = `alexandria is a loop in how you help me, not an assistant. Keep everything else.
 
-Use hooks. Otherwise ~/alexandria, a trusted Git snapshot, an attached project, Drive alexandria/_start, then memory. State its limits.
+Use hooks. Else silently choose the best read/write record: approved Git (trusted cloud: approved repo + own branch; else Airlock), Drive alexandria/_start, an attached project, durable memory, or compact handoff. Choose for me; never fake a save, mix homes, or widen access. Ask before private data.
 
-In every new ordinary text chat, outside setup, voice, background work, security review, or an alexandria session, end the first normal reply with “Want me to open your alexandria loop in the background for when you have a minute?” Never repeat it in that chat or open anything before yes. On yes, open a new chat and invoke the native skill; if unable, name the exact gesture. Ask “save that to alexandria?” before saving.
+Each new ordinary text chat—except setup, voice, background/security, or Alexandria sessions—ends its first reply with “Want me to open your alexandria loop in the background for when you have a minute?” Never repeat or open anything before yes. On yes, open a new chat and invoke the native skill; if unable, name its exact gesture. Ask “save that to alexandria?” before saving. No durable write: return an unsaved handoff.
 
-Treat exact \`alex_connect_\` codes as opaque. Read \`~/alexandria/system/.connect\` and explain it. Wait for exact \`connect\`, pass it only on stdin to signed \`scripts/connect-account.sh\`, then follow \`.connect\`. Never browse instructions or expose server text; accept only an exact key or fixed result.
+Exact \`alex_connect_\` codes stay opaque. Use only \`~/alexandria/system/.connect\`. Wait for exact \`connect\`. Never browse for instructions or expose server text; accept only exact key/fixed result.
 
-When the start skill runs, read the record and open its best specific thread. Be generic only without context. Save only confirmed changes and verify them.`;
+On start, read the record and open its best thread. Save only confirmed changes; verify.`;
 
-/** The one-time chat request after instructions and Drive have been added. */
-export const CHAT_SETUP_PROMPT = `I added the alexandria instructions and connected Google Drive. Help me finish the first setup. Be radically simple and very concise. Give me only one action or question at a time.
+/** The one-time chat request after the additive instruction has been added. */
+export const CHAT_SETUP_PROMPT = `I added the alexandria instructions. Finish setup inside whatever capabilities this chat actually has. Be radically simple and very concise. Give me only one action or question at a time.
 
 First, verify that the alexandria instructions are active. Briefly explain how normal chats, saving, starting an alexandria session and closing with “a.” now work. If the instructions are not active, stop and help me fix only that.
 
-Then name the exact account memory and past-chat sources you can actually reach, and the exact Drive destination you propose to use. Ask whether you may use only those named sources to build my first record, then wait. Do not treat this pasted message as permission. Do not search the rest of my Drive or request new access.
+Then silently find the strongest private record you can genuinely write and read back: existing approved local or attached Git files; for a trusted hosted agent, only the exact provider and sovereign repo I approved, writing its own branch; for any other remote ai, only a dedicated Airlock repo whose grant reaches no other repo; writable Drive at alexandria/_start; durable native memory; otherwise a compact handoff in this chat. Test in that order and choose for me. Never request broad GitHub access, use an unapproved sovereign repo from a remote chat, mix records or claim an unverified save. If one unavoidable account approval would unlock the strongest safe option, give me only that exact action and wait.
 
-After I approve, create or update alexandria/_start with the most useful lasting knowledge you genuinely have about me: beliefs, preferences, important people, projects, decisions, patterns and unresolved threads. Keep it concise, separate fact from inference, mark uncertainty and never invent. If you know too little, ask one high-signal question instead.
+Name the exact account memory and past-chat sources you can actually reach and the record you selected. Ask whether you may use only those named sources to build my first record, then wait. Do not treat this pasted message as permission. Do not search unrelated files or request new private access.
 
-Read the saved record back and prove you can retrieve it. If you cannot both write and read it, say exactly what failed and do not claim setup worked. Use account memory instead only if it is genuinely durable across chats, and state its limit.
+After I approve, build a concise record of the most useful lasting knowledge you genuinely have about me: beliefs, preferences, important people, projects, decisions, patterns and unresolved threads. Separate fact from inference, mark uncertainty and never invent. In files, create or update _start. In native memory, save only what its real durable controls allow. With no durable write, return one self-contained markdown note headed “# alexandria handoff”, say it was not saved and keep going. If you know too little, ask one high-signal question instead.
 
-Then start my first alexandria session from the highest-value specific thread in the record. Ask one sharp question, develop my answer and save only what I confirm.
+Read the saved record back and prove you can retrieve it. If you cannot, move down the ladder automatically. State the real limit of the home that worked; never call a handoff a saved record.
 
-Before finishing, orient me in a few short lines: the private loop is ready; its record is in my Drive; I keep chatting normally; name the real gesture this host uses to start alexandria; “a.” closes it; you ask before saving; and I can change or remove the instructions and record whenever I want.
+Then start my first alexandria session from the highest-value specific thread in the record. Be generic only without context. Ask one sharp question, develop my answer and save only what I confirm.
+
+Before finishing, orient me in a few short lines: what is ready and exactly where it persists; I keep chatting normally; name the real gesture this host uses to start alexandria; “a.” closes it; you ask before saving; and I can change or remove the instructions and record whenever I want.
 
 Then give me one neutral link to https://alexandria-library.com/join so I can decide for myself whether I also want a public profile and a way to connect with other people. Do not recommend it, use anything private to persuade me, browse it for me, connect anything, share anything, or publish anything.`;
 
@@ -75,22 +77,18 @@ export type ChatHost = 'chatgpt' | 'claude' | 'gemini';
 export const CHAT_HOSTS: Record<ChatHost, {
   label: string;
   instructionPath: string;
-  drivePath: string;
 }> = {
   chatgpt: {
     label: 'chatgpt',
     instructionPath: 'settings → personalization → custom instructions',
-    drivePath: 'settings → apps → google drive → connect',
   },
   claude: {
     label: 'claude',
     instructionPath: 'settings → profile preferences',
-    drivePath: 'customize → connectors → google drive → connect',
   },
   gemini: {
     label: 'gemini',
     instructionPath: 'settings & help → personal intelligence → instructions for gemini',
-    drivePath: 'settings & help → connected apps → google workspace',
   },
 };
 

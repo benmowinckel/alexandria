@@ -251,7 +251,7 @@ export function onboardEmailContent(
   const copy = mode === 'chat'
     ? {
         subject: 'alexandria. — your chat setup',
-        lead: 'choose the chat you use most, then follow the three short steps.',
+        lead: 'choose the chat you use most, then follow the two short steps.',
       }
     : mode === 'agent-cloud' || mode === 'agent-phone'
       ? {
