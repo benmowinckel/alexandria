@@ -154,11 +154,6 @@
 
 .join-close a:hover { opacity: .65; }
 
-.join-close-nudge {
-  display: block;
-  margin-top: 10px;
-}
-
 .join-billing-note {
   margin: 10px 0 -4px;
   color: var(--text-secondary);

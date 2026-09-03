@@ -103,26 +103,25 @@ export default function JoinCTA({
           <section className="join-move">
             <h2 className="join-claim">the problem.</h2>
             <p>
-              Your private loop gives every ai a deep understanding of you, but your life happens with other people. Those conversations and relationships sit outside the loop, so without a connection, each person has to carry the missing context back to their own ai by hand, again and again.
+              Your private loop lets every ai understand you deeply. But your life happens with other people, and each ai knows only one side. Your own personal website can show who you are, but on its own it is still an island.
             </p>
           </section>
           <section className="join-move">
             <h2 className="join-claim">the connector.</h2>
             <p>
-              Joining connects what you choose to share with the public work and profiles you already have online. You choose who sees what. You get a complete Library page to start, like <a href={FOUNDER_PROFILE_PATH} target="_blank" rel="noopener noreferrer">the founder&apos;s</a>. Ideally, your own website becomes your main public home, while Alexandria remains the link to the rest of the library. Everything else stays private.
+              Your own personal website stays your home. Put one Alexandria link on it. That link gives people and their ais the public context you approved, while Alexandria handles identity, permissions, discovery, and payments. A personal language model can answer from that context, giving your public footprint the depth of your private mirror without exposing the private files. Until you build your site, your Library page is the complete starting point, like <a href={FOUNDER_PROFILE_PATH} target="_blank" rel="noopener noreferrer">the founder&apos;s</a>.
             </p>
           </section>
           <section className="join-move">
             <h2 className="join-claim">the library.</h2>
             <p>
-              Each loop stays entirely its own, while the shared connector lets the library link them without replacing anyone&apos;s existing networks. Your ai can understand friends and new people from what they share, their ai can understand you, and every connection makes both loops more useful.
+              Every member&apos;s personal website points into the same Library. Without that shared thread, every pair of people would need a separate connection. When people in your life build their own mirrors and publish what they choose, your ai understands them from their context and theirs understands you from yours. Alexandria connects the mirrors, but nobody can build one for somebody else. The people who choose to do the work become unusually easy for other people and ais to understand.
             </p>
           </section>
         </div>
 
         <p className="join-close">
-          Join and use it free for a month. Invite three friends as you go and it stays free while they stay. Otherwise, after the month, it is a dollar a day; if that is too much, <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>message me</a> and I will waive it.
-          <span className="join-close-nudge">Use it first, then bring in the people already in your life and make each other&apos;s loops more useful.</span>
+          The loop and skill are free. You pay only for the shared connection. Try it free for a month. Invite three friends and it stays free while they stay, because their mirrors make your loop more useful. Otherwise, it is a dollar a day. If that is too much, <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>message me</a> and I will cover it.
         </p>
         {billingStatus && (
           <p className="join-billing-note" role="status">
