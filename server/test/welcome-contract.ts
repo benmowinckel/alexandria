@@ -17,6 +17,8 @@ assert.doesNotMatch(firstJoin, /href="https:\/\/alexandria-library\.com\/connect
 
 const fullFirstJoin = await callbackPageHtml(false, 'new-author', 1, 0, code);
 assert.match(fullFirstJoin, new RegExp(code));
+assert.match(fullFirstJoin, /i think you’d like this/);
+assert.doesNotMatch(fullFirstJoin, /i’m using alexandria|join me/);
 assert.doesNotMatch(fullFirstJoin, /factory\/connect\.md|Do nothing until I say `connect`|your agent will inspect it first/);
 
 const returning = main(await callbackPageHtml(true, 'returning-author'));

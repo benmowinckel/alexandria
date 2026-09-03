@@ -271,16 +271,18 @@ function copyConnection(el) {
 // from a real conversation — Messages, WhatsApp, wherever they'd actually send
 // it — instead of parking it on a clipboard they never paste. Desktop browsers
 // without navigator.share fall back to copying the same invitation and link.
+// The text is the send, not the pitch (founder 2026-09-03): a natural vouch,
+// then the link. The invite page does the rest.
 function shareInvite(el) {
   var url = ${jsLiteral(inviteUrl)};
-  var message = 'i’m using alexandria — join me.';
+  var message = 'i think you’d like this';
   if (navigator.share) {
     navigator.share({ title: 'alexandria.', text: message, url: url })
       .then(function() { flash(el, 'shared', 'invite someone else'); })
       .catch(function() {});
     return;
   }
-  copyText(message + ' ' + url, el, 'copied', 'send it to someone');
+  copyText(message + '\\n\\n' + url, el, 'copied', 'send it to someone');
 }
 function effectiveTheme() {
   var t = document.documentElement.dataset.theme;
