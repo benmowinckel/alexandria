@@ -10,6 +10,7 @@ and resolver cannot disagree about whether work is still owed.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -18,6 +19,8 @@ from pathlib import Path
 
 
 URL_RE = re.compile(r"https://[^\s)>\]}]+")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+TIMESTAMP_PREFIX_RE = re.compile(r"^(\d{8}-\d{6})")
 
 
 @dataclass(frozen=True)
@@ -57,6 +60,25 @@ def _legacy_ledger_match(capture: Path, ledger: str) -> bool:
     return any(url in ledger for url in URL_RE.findall(body))
 
 
+def _processed(capture: Path, saved: Path, ledger: str, drained: set[str]) -> str | None:
+    stem = capture.stem
+    if (saved / f"{stem}.analysis.md").exists():
+        return "analysis"
+    if stem in drained:
+        return "drained"
+    if _legacy_ledger_match(capture, ledger):
+        return "legacy_ledger"
+    return None
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _capture_sources(resolved: Path, saved: Path) -> list[Path]:
     """Return every source markdown, including sources already moved to saved."""
     sources: dict[str, Path] = {}
@@ -87,11 +109,12 @@ def inspect(root: Path | None = None) -> CaptureState:
     by_legacy = 0
     for capture in _capture_sources(resolved, saved):
         stem = capture.stem
-        if (saved / f"{stem}.analysis.md").exists():
+        proof = _processed(capture, saved, ledger, drained)
+        if proof == "analysis":
             by_analysis += 1
-        elif stem in drained:
+        elif proof == "drained":
             by_drained += 1
-        elif _legacy_ledger_match(capture, ledger):
+        elif proof == "legacy_ledger":
             by_legacy += 1
         else:
             pending.append(stem)
@@ -117,12 +140,158 @@ def inspect(root: Path | None = None) -> CaptureState:
     )
 
 
+def snapshot(root: Path | None = None) -> dict[str, object]:
+    """Freeze the exact work owed when an active session starts."""
+    alexandria = root or _alexandria_home()
+    state = inspect(alexandria)
+    pending = []
+    for stem, relative in zip(state.pending, state.pending_paths, strict=True):
+        source = alexandria / relative
+        pending.append(
+            {
+                "stem": stem,
+                "path": relative,
+                "sha256": _sha256(source),
+            }
+        )
+    raw = []
+    for name in state.raw:
+        relative = f"files/vault/input/{name}"
+        raw.append(
+            {
+                "name": name,
+                "path": relative,
+                "sha256": _sha256(alexandria / relative),
+            }
+        )
+    return {"version": 1, "pending": pending, "raw": raw}
+
+
+def _snapshot_item(item: object, *, kind: str) -> tuple[str, str, str]:
+    if not isinstance(item, dict):
+        raise ValueError(f"{kind} snapshot entry is not an object")
+    identity_key = "stem" if kind == "pending" else "name"
+    identity = item.get(identity_key)
+    relative = item.get("path")
+    digest = item.get("sha256")
+    if not all(isinstance(value, str) and value for value in (identity, relative, digest)):
+        raise ValueError(f"{kind} snapshot entry has missing fields")
+    path = Path(relative)
+    expected_parent = Path("files/vault/_input") if kind == "pending" else Path("files/vault/input")
+    allowed_parents = {expected_parent}
+    if kind == "pending":
+        allowed_parents.add(Path("files/vault/saved"))
+    if path.is_absolute() or ".." in path.parts or path.parent not in allowed_parents:
+        raise ValueError(f"{kind} snapshot path is outside the capture folders: {relative}")
+    if (kind == "pending" and path.stem != identity) or (
+        kind == "raw" and path.name != identity
+    ):
+        raise ValueError(f"{kind} snapshot identity does not match its path")
+    if not SHA256_RE.fullmatch(digest):
+        raise ValueError(f"{kind} snapshot entry has an invalid sha256")
+    return identity, path.name, digest
+
+
+def _raw_processing_proof(
+    raw_source: Path,
+    raw_name: str,
+    resolved: Path,
+    saved: Path,
+    ledger: str,
+    drained: set[str],
+) -> bool:
+    raw_stem = Path(raw_name).stem
+    timestamp = TIMESTAMP_PREFIX_RE.match(raw_stem)
+    prefix = timestamp.group(1) if timestamp else raw_stem
+    if _legacy_ledger_match(raw_source, ledger):
+        return True
+    if any(stem == raw_stem or stem.startswith(prefix) for stem in drained):
+        return True
+    if any(saved.glob(f"{prefix}*.analysis.md")):
+        return True
+    for capture in _capture_sources(resolved, saved):
+        if (capture.stem == raw_stem or capture.stem.startswith(prefix)) and _processed(
+            capture, saved, ledger, drained
+        ):
+            return True
+    return False
+
+
+def gate_snapshot(document: object, root: Path | None = None) -> dict[str, object]:
+    """Prove the start batch, without allowing later arrivals to move the gate."""
+    if not isinstance(document, dict) or document.get("version") != 1:
+        raise ValueError("capture snapshot must be an object with version 1")
+    pending_items = document.get("pending")
+    raw_items = document.get("raw")
+    if not isinstance(pending_items, list) or not isinstance(raw_items, list):
+        raise ValueError("capture snapshot must contain pending and raw lists")
+
+    alexandria = root or _alexandria_home()
+    resolved = alexandria / "files/vault/_input"
+    saved = alexandria / "files/vault/saved"
+    ledger_path = saved / "ledger.md"
+    ledger = ledger_path.read_text(encoding="utf-8", errors="replace") if ledger_path.exists() else ""
+    drained = _drained_stems(saved / ".drained")
+    unresolved_pending = []
+    unresolved_raw = []
+
+    for item in pending_items:
+        stem, basename, expected_hash = _snapshot_item(item, kind="pending")
+        preserved = saved / basename
+        if not preserved.exists() or _sha256(preserved) != expected_hash:
+            unresolved_pending.append({"stem": stem, "reason": "exact source not preserved in saved"})
+            continue
+        if not _processed(preserved, saved, ledger, drained):
+            unresolved_pending.append({"stem": stem, "reason": "no analysis or exact verdict proof"})
+
+    for item in raw_items:
+        name, basename, expected_hash = _snapshot_item(item, kind="raw")
+        original = alexandria / "files/vault/input" / basename
+        preserved = saved / basename
+        if original.exists():
+            unresolved_raw.append({"name": name, "reason": "raw source still in input"})
+            continue
+        if not preserved.exists() or _sha256(preserved) != expected_hash:
+            unresolved_raw.append({"name": name, "reason": "exact raw source not preserved in saved"})
+            continue
+        if not _raw_processing_proof(preserved, name, resolved, saved, ledger, drained):
+            unresolved_raw.append({"name": name, "reason": "no mapped analysis or exact verdict proof"})
+
+    return {
+        "complete": not unresolved_pending and not unresolved_raw,
+        "pending_total": len(pending_items),
+        "raw_total": len(raw_items),
+        "unresolved_pending": unresolved_pending,
+        "unresolved_raw": unresolved_raw,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--json", action="store_true", help="print the complete state as JSON")
     parser.add_argument("--counts", action="store_true", help="print pending and raw counts, tab-separated")
     parser.add_argument("--gate", action="store_true", help="exit 2 while extraction work remains")
+    parser.add_argument("--snapshot", action="store_true", help="print a hash-pinned start batch as JSON")
+    parser.add_argument("--gate-snapshot", metavar="PATH", help="exit 2 until the exact start batch is complete")
     args = parser.parse_args()
+
+    if (args.snapshot or args.gate_snapshot) and any(
+        (args.json, args.counts, args.gate, args.snapshot and args.gate_snapshot)
+    ):
+        parser.error("snapshot modes cannot be combined with another output or gate mode")
+
+    if args.snapshot:
+        print(json.dumps(snapshot(), indent=2))
+        return 0
+    if args.gate_snapshot:
+        try:
+            document = json.loads(Path(args.gate_snapshot).read_text(encoding="utf-8"))
+            result = gate_snapshot(document)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"capture_state: invalid snapshot: {exc}")
+            return 2
+        print(json.dumps(result, indent=2))
+        return 0 if result["complete"] else 2
 
     state = inspect()
     if args.json:

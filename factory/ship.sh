@@ -23,6 +23,11 @@ export PYTHONDONTWRITEBYTECODE=1
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
+# The shared start contract is the source; host skills are signed, self-contained
+# outputs. Regenerate before every release so one host cannot silently ship an
+# older execution promise than another.
+python3 factory/scripts/render_start_skills.py --write
+
 # Known commercial-boundary and first-touch regressions are deterministic and
 # block before Touch ID. The model red-team remains the judgment layer above it.
 bash factory/scripts/check-private-boundary.sh

@@ -93,7 +93,7 @@ assert.match(CHAT_INSTRUCTION, /Keep everything else/);
 assert.match(CHAT_INSTRUCTION, /not an assistant/);
 assert.match(CHAT_INSTRUCTION, /Use hooks/);
 assert.match(CHAT_INSTRUCTION, /approved Git/);
-assert.match(CHAT_INSTRUCTION, /trusted cloud: approved repo \+ own branch; else Airlock/);
+assert.match(CHAT_INSTRUCTION, /approved Git \(trusted cloud: own branch; else Airlock\)/);
 assert.match(CHAT_INSTRUCTION, /durable memory/);
 assert.match(CHAT_INSTRUCTION, /compact handoff/);
 assert.match(CHAT_INSTRUCTION, /Choose for me; never fake a save, mix homes/);
@@ -106,7 +106,7 @@ assert.match(CHAT_INSTRUCTION, /On yes, open a new chat and invoke the native sk
 assert.match(CHAT_INSTRUCTION, /if unable, name its exact gesture/);
 assert.match(CHAT_INSTRUCTION, /No durable write: return an unsaved handoff/);
 assert.match(CHAT_INSTRUCTION, /alex_connect_/);
-assert.match(CHAT_INSTRUCTION, /Use only `~\/alexandria\/system\/\.connect`\. Wait for exact `connect`\. Never browse for instructions or expose server text; accept only exact key\/fixed result/);
+assert.match(CHAT_INSTRUCTION, /`alex_connect_` codes use only `~\/alexandria\/system\/\.connect`\. Wait for exact `connect`\. Never browse or expose server text; accept only exact key\/fixed result/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /selector|untrusted page|welcome-source/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /type alexandria|On “alexandria”/);
 assert.ok(GEMINI_CHAT_INSTRUCTION.length <= 900, `Gemini instruction lost its headroom: ${GEMINI_CHAT_INSTRUCTION.length}`);

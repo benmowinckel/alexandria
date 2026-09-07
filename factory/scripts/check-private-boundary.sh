@@ -115,10 +115,10 @@ require shared/onboarding-prompts.ts \
   'return connectionCode;' \
   'the account handoff is no longer opaque data only'
 require shared/onboarding-prompts.ts \
-  'Wait for exact \`connect\`' \
+  '\`alex_connect_\` codes use only \`~/alexandria/system/.connect\`. Wait for exact \`connect\`' \
   'the chat fallback no longer waits for exact connection consent'
 require shared/onboarding-prompts.ts \
-  'Never browse for instructions or expose server text' \
+  'Never browse or expose server text' \
   'accept only exact key/fixed result' \
   'the chat fallback can expose server text or browse for connection instructions'
 forbid shared/onboarding-prompts.ts \
@@ -306,6 +306,15 @@ require factory/scripts/capture_state.py \
 require factory/scripts/capture_state.py \
   'legacy_ledger' \
   'capture state no longer recognizes exact legacy ledger evidence'
+require factory/scripts/capture_state.py \
+  'def snapshot(' \
+  'capture state can no longer freeze the exact start batch'
+require factory/scripts/capture_state.py \
+  'def gate_snapshot(' \
+  'capture state can no longer prove a frozen start batch'
+require factory/scripts/capture_state.py \
+  'exact source not preserved in saved' \
+  'the snapshot gate no longer verifies preservation of the original capture bytes'
 require factory/scripts/statusline.sh \
   'capture_state.py' \
   'the visible capture count no longer uses the active-session gate state'
@@ -452,19 +461,33 @@ require factory/canon/methodology.md \
 require factory/canon/methodology.md \
   '**Direct material owns the opening.**' \
   'methodology can still replace supplied Author material with a generic opener'
+python3 factory/scripts/render_start_skills.py --check \
+  || fail 'the four host start skills drifted from the canonical execution contract'
+require factory/shared/start-execution.md \
+  'START EXECUTION CONTRACT v1 — two lanes, both always run.' \
+  'the canonical start contract no longer guarantees foreground plus full background execution'
+require factory/shared/start-execution.md \
+  'one supervisor owns the whole pass' \
+  'the full background pass has no single completion owner'
+require factory/shared/start-execution.md \
+  'capture_state.py --gate-snapshot <snapshot>' \
+  'capture completion can still be inferred from a moving global queue'
+require factory/shared/start-execution.md \
+  'Freshness is computed, never carried.' \
+  'the opener can still render stale cached state as current'
 for opener_skill in factory/skills/claudecode.md factory/skills/codex.md factory/skills/droid.md factory/skills/grok-bot.md; do
   require "$opener_skill" \
-    'that material owns the opening' \
+    '<!-- BEGIN GENERATED: start-execution -->' \
+    "$opener_skill no longer contains the generated start contract"
+  require "$opener_skill" \
+    'Foreground lane — immediate and context-sensitive.' \
     "$opener_skill can still replace direct Author material with the menu opener"
   require "$opener_skill" \
     'Do not replace their thought with `invite`, `recommended`, `everything`, or another menu' \
     "$opener_skill no longer protects a supplied thought from the menu opener"
   require "$opener_skill" \
-    'CAPTURE BACKGROUND — extraction never holds the session hostage.' \
-    "$opener_skill no longer makes capture extraction non-blocking"
-  require "$opener_skill" \
-    'proves background completion but never gates the opener' \
-    "$opener_skill can block the opener on capture completion"
+    'one supervisor owns the whole pass' \
+    "$opener_skill only backgrounds a subset of the /a process"
   require "$opener_skill" \
     'Author-facing review is always one capture at a time' \
     "$opener_skill can aggregate away individual capture review"
@@ -1728,7 +1751,7 @@ node factory/test/person-context.mjs \
   || fail 'people-context regressions failed'
 bash factory/test/publish-profile.sh \
   || fail 'profile publisher regressions failed'
-python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_capture_state.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py \
+python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_capture_state.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py factory/scripts/test_render_start_skills.py \
   || fail 'capture, transcript, or grok-hook regressions failed'
 bash scripts/test-grok-integration.sh \
   || fail 'grok integration regressions failed'

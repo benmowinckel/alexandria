@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import subprocess
 import sys
@@ -115,6 +116,64 @@ class CaptureStateTests(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 0)
+
+    def test_snapshot_gate_tracks_the_exact_start_batch_not_later_arrivals(self):
+        self.capture("start", "original bytes")
+        document = STATE.snapshot(self.root)
+        source = self.root / "files/vault/_input/start.md"
+        preserved = self.root / "files/vault/saved/start.md"
+        source.replace(preserved)
+        (self.root / "files/vault/saved/start.analysis.md").write_text(
+            "analysis", encoding="utf-8"
+        )
+        self.capture("arrived-later", "new work")
+
+        result = STATE.gate_snapshot(document, self.root)
+        self.assertTrue(result["complete"])
+        self.assertEqual(STATE.inspect(self.root).pending, ["arrived-later"])
+
+    def test_snapshot_gate_fails_when_preserved_source_bytes_changed(self):
+        self.capture("changed", "original bytes")
+        document = STATE.snapshot(self.root)
+        source = self.root / "files/vault/_input/changed.md"
+        preserved = self.root / "files/vault/saved/changed.md"
+        source.replace(preserved)
+        preserved.write_text("different bytes", encoding="utf-8")
+        (self.root / "files/vault/saved/changed.analysis.md").write_text(
+            "analysis", encoding="utf-8"
+        )
+
+        result = STATE.gate_snapshot(document, self.root)
+        self.assertFalse(result["complete"])
+        self.assertEqual(result["unresolved_pending"][0]["stem"], "changed")
+
+    def test_raw_snapshot_requires_exact_preservation_and_mapped_processing(self):
+        raw = self.root / "files/vault/input/20260906-090702.html"
+        raw.write_bytes(b"raw html")
+        document = STATE.snapshot(self.root)
+        raw.replace(self.root / "files/vault/saved/20260906-090702.html")
+        derivative = self.root / "files/vault/saved/20260906-090702-source.md"
+        derivative.write_text("resolved", encoding="utf-8")
+        (self.root / "files/vault/saved/20260906-090702-source.analysis.md").write_text(
+            "analysis", encoding="utf-8"
+        )
+
+        result = STATE.gate_snapshot(document, self.root)
+        self.assertTrue(result["complete"])
+
+    def test_gate_snapshot_cli_fails_closed_on_invalid_document(self):
+        snapshot_path = self.root / "bad-snapshot.json"
+        snapshot_path.write_text(json.dumps({"version": 9}), encoding="utf-8")
+        env = {**os.environ, "ALEXANDRIA_HOME": str(self.root)}
+        result = subprocess.run(
+            [sys.executable, str(MODULE_PATH), "--gate-snapshot", str(snapshot_path)],
+            env=env,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("invalid snapshot", result.stdout)
 
 
 if __name__ == "__main__":
