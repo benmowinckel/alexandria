@@ -162,6 +162,33 @@ assert "systemMessage" not in d
 assert "ONE QUIET ALEXANDRIA ROUTE FOR THIS NEW TASK" in d["hookSpecificOutput"]["additionalContext"]
 '
 
+# A changed account instruction reopens only its fresh-chat proof. Once the
+# completion marker carries the required hash, later tasks stay quiet.
+printf '%064d\n' 1 > "$TEST_ROOT/alex/system/.account-instructions-required-hash"
+ACCOUNT_STALE=$(printf '{"session_id":"account-stale","transcript_path":"%s","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}\n' \
+  "$TEST_ROOT/.codex/sessions/source.jsonl" | \
+  HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
+  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-03-01 \
+  bash "$RUNTIME/hooks/shim.sh" session-start)
+printf '%s' "$ACCOUNT_STALE" | python3 -c '
+import json, sys
+ctx = json.load(sys.stdin)["hookSpecificOutput"]["additionalContext"]
+assert "ALEXANDRIA ACCOUNT INSTRUCTIONS UPDATE" in ctx
+assert "Do not rerun the private onboarding" in ctx
+'
+cp "$TEST_ROOT/alex/system/.account-instructions-required-hash" \
+  "$TEST_ROOT/alex/system/.account_instructions_complete"
+ACCOUNT_CURRENT=$(printf '{"session_id":"account-current","transcript_path":"%s","hook_event_name":"SessionStart","model":"gpt-test","source":"startup"}\n' \
+  "$TEST_ROOT/.codex/sessions/source.jsonl" | \
+  HOME="$TEST_ROOT" ALEXANDRIA_DIR="$TEST_ROOT/alex" \
+  ALEXANDRIA_SETUP_PROBE=1 ALEXANDRIA_LOCAL_DATE=2030-03-01 \
+  bash "$RUNTIME/hooks/shim.sh" session-start)
+printf '%s' "$ACCOUNT_CURRENT" | python3 -c '
+import json, sys
+ctx = json.load(sys.stdin)["hookSpecificOutput"]["additionalContext"]
+assert "ALEXANDRIA ACCOUNT INSTRUCTIONS UPDATE" not in ctx
+'
+
 # Interactive Codex can fire SessionStart before the model field exists. Its
 # host-provided transcript path must still select the direct JSON contract.
 START_LOADING=$(printf \
@@ -179,7 +206,8 @@ assert "Want me to open your alexandria loop in the background for when you have
 
 # Codex's persistent instruction and SessionStart context agree that the first
 # actual assistant reply owns the cue.
-grep -Fq 'first completed assistant reply of each new ordinary text task' \
+grep -Fq 'first completed assistant reply of each new ordinary task' \
   "$ROOT/factory/skills/codex-ambient.md"
+! grep -Fq 'background work, voice' "$ROOT/factory/skills/codex-ambient.md"
 
 echo "Codex integration test passed"
