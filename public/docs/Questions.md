@@ -60,15 +60,15 @@ No. Your AI runs the loop. You talk in plain words and it handles the files. If 
 
 ## what do i need to run it.
 
-For the full local version, any compatible AI that can reach files on your computer — Claude Code, Cursor, Codex, Grok CLI, or Claude Desktop’s code tab. Grok Bot can run the same `/a` loop when its computer connection can reach those files. If you use regular ChatGPT, Claude or Gemini, the [chat version](/chat) adds the same habit to that ai and keeps its record in your own Google Drive when the app can write there.
+An AI on your computer — Claude Code, Cursor, Codex, Grok CLI, or Claude Desktop’s code tab — can use your current files. Remote Control can reach those same files through an existing computer session. Claude Code Web sees only committed files in the private GitHub repo you selected and writes its own branch. Other remote AI uses Airlock or storage it can truly write and read back. Regular ChatGPT, Claude or Gemini can add the same habit through the [chat setup](/chat).
 
 ## how do i start.
 
-Choose agent or chat. The agent path asks whether your computer is in reach. If it is, add the Shortcut, optionally email yourself the setup text and open a direct help channel with Benjamin, then paste one request into an agent that can reach the computer. That agent reads the public project, decides how it should fit your existing setup, recommends whether to proceed, and changes nothing until you approve. If the computer is not in reach, paste the page's reminder request into the AI you have now; it must create a lasting reminder it can verify will reach you across devices or say plainly that it cannot. The chat path has three steps: add the instructions, connect Drive, then paste one setup request that creates and verifies the first record and starts from one useful thread.
+Choose agent or chat. The agent path gives one request to the agent you already use. It says what that exact session can reach, reads the public project, recommends whether to proceed, and changes nothing until you approve. The chat path has two steps: add the instructions, then paste one setup request. That chat chooses the best record it can really write and read back, asks before opening personal sources or changing anything, verifies the result, and starts from one useful thread.
 
 ## is my data mine.
 
-Entirely. The private record is plain text on your computer or documents in your own Google Drive; it never reaches our server. We store account and service records for the optional connector, plus only the Library files you deliberately publish. We do not sell your data or train on your private files. Delete your own record to remove the loop; delete your account to remove the hosted copy of what you published.
+Alexandria's server never receives your private record. It stays in files on your computer, the private GitHub repo you chose, writable storage connected to your AI, or that AI app's memory if you accept it as the fallback. Setup tells you exactly which one worked and its limit. We store account and service records for the optional connector, plus only the Library files you deliberately publish. We do not sell your data or train on your private files. Delete your own record to remove the loop; delete your account to remove the hosted copy of what you published.
 
 ## is it safe to install.
 

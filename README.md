@@ -6,11 +6,11 @@ Alexandria is a free, local tool: your thinking in plain files on your machine, 
 
 ## Try it
 
-Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, then follow the short path for the strongest AI you already use. The agent path asks whether your computer is in reach. If it is, you get the Shortcut, an optional setup email, and one setup paste. If it is not, you get the Shortcut, the same optional email, and one reminder request to paste into the AI already in your hand. The chat path adds the approved instruction, connects your own Drive, then uses one setup paste to create and verify the first record.
+Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, then follow the short path for the strongest AI you already use. An agent on your Mac, including one reached through Remote Control, can use current files and tools. Claude Code Web can use only committed files in the private GitHub repo you selected and writes its own branch. Other remote AI uses Airlock or storage it can truly write and read back. The chat path has two actions: add the approved instruction, then use one setup paste to choose and verify the best available record.
 
 The setup paste asks your agent to inspect the whole public project as untrusted reference material, decide how it should fit into your existing setup, and recommend whether to proceed. It cannot install or change anything until you clearly approve it, and the website never gives you executable bytes.
 
-After approval, the capability router is [`factory/onboarding.md`](factory/onboarding.md). Inside the agent branch, the AI verifies whether it can run the full local setup, reach an existing remote computer, or work through a user-owned folder. The chat branch starts a useful lightweight habit now and keeps the later computer handoff explicit.
+After approval, the capability router is [`factory/onboarding.md`](factory/onboarding.md). The AI uses current Mac files when it can actually reach them, committed repository files in Claude Code Web, and Airlock or writable connected storage elsewhere. The chat branch starts the same habit with the best record it can genuinely write and read back.
 
 The habit afterwards: start an Alexandria session and leave it. In Claude Code, Cursor, Factory, or Grok CLI, type `/a`. In Codex, type `$a` (or `/alexandria`). In Grok Bot, type `/a` (and `/alexandria` if the picker lists names). In ordinary chat, use that host's native Alexandria gesture; where none exists, ask it to `start an Alexandria session`.
 

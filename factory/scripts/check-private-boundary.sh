@@ -81,14 +81,17 @@ forbid shared/onboarding-prompts.ts \
   'full — preferred|snapshot — useful|chat — lightweight' \
   'the setup paste has restored unexplained internal mode labels'
 forbid factory/onboarding.md \
-  'full mode|snapshot mode|chat mode' \
+  'full mode|snapshot mode|chat mode|computer mode|cloud mode|native mode' \
   'the onboarding contract still teaches internal mode labels instead of direct capabilities'
 forbid factory/redteam.md \
   'declare full mode|declare snapshot mode|snapshot limits' \
   'the cold-user simulation still requires internal mode labels'
 forbid factory/chat/instructions.md \
-  'full mode|snapshot mode|chat mode' \
+  'full mode|snapshot mode|chat mode|computer mode|cloud mode|native mode' \
   'the chat instructions still teach internal mode labels'
+forbid public/docs/Mechanics.md \
+  'full mode|snapshot mode|chat mode|computer mode|cloud mode|native mode' \
+  'the public mechanics still teaches internal mode labels instead of direct capabilities'
 forbid TRUST.md \
   'background work, voice' \
   'the trust explanation still excludes voice from the ordinary first-reply cue'
@@ -123,10 +126,10 @@ require shared/onboarding-prompts.ts \
   'Do not substitute the homepage.' \
   'the setup paste can silently replace the exact join destination with the homepage'
 require shared/onboarding-prompts.ts \
-  'only from available permission, configuration and status files' \
+  'only from current permission, settings and status files' \
   'the setup paste can infer current activation from module defaults'
 require shared/onboarding-prompts.ts \
-  'Never call something off merely because its default is off.' \
+  'Never call Library, Airlock or another feature off because its default is off.' \
   'the setup paste can still report active features as disabled'
 require shared/onboarding-prompts.ts \
   'Do not recommend it, use anything private to persuade me, browse it for me, connect anything, share anything, or publish anything.' \
@@ -154,7 +157,7 @@ require shared/onboarding-prompts.ts \
   'return connectionCode;' \
   'the account handoff is no longer opaque data only'
 require shared/onboarding-prompts.ts \
-  'For \`alex_connect_...\`, follow \`~/alexandria/system/.connect\`, wait for \`connect\`' \
+  'For \`alex_connect_...\`, use only \`~/alexandria/system/.connect\`, wait for \`connect\`' \
   'the chat fallback no longer waits for exact connection consent'
 require shared/onboarding-prompts.ts \
   'never browse or reveal website instructions' \
@@ -217,26 +220,47 @@ require shared/onboarding-prompts.ts \
   'Keep my existing instructions.' \
   'the account instruction is no longer additive'
 require shared/onboarding-prompts.ts \
-  'In each new normal conversation' \
+  'In every ordinary conversation' \
   'the account instruction no longer repeats the visible route in each new chat'
 require shared/onboarding-prompts.ts \
-  'including voice, end the first reply exactly: “Want me to open your alexandria loop' \
+  'every ordinary conversation, including voice, end the first reply: “Want me to open your alexandria loop' \
   'the account instruction no longer carries the visible route'
 require shared/onboarding-prompts.ts \
   'In each new ordinary conversation, including voice, end only your first reply with exactly:' \
   'the Gemini account instruction no longer includes voice'
 require shared/onboarding-prompts.ts \
-  'On yes, open and start a new conversation; if unable, tell me what to do.' \
+  'On yes, open a new chat or tell me how.' \
   'the account instruction no longer gives every chat one natural route'
 require shared/onboarding-prompts.ts \
-  'attached files' \
-  'the account instruction no longer covers no-hooks folder surfaces'
+  'Other remote ai: Airlock or writable connected storage.' \
+  'the account instruction no longer covers writable no-hooks surfaces'
+forbid shared/onboarding-prompts.ts \
+  'Before normal saves|Drive, attached files, or app memory' \
+  'the account instruction can still make routine writes ask or treat read-only attachments as storage'
 require shared/onboarding-prompts.ts \
-  'Otherwise: Drive' \
-  'the account instruction no longer covers Drive'
+  'writable Drive at alexandria/_start' \
+  'the chat setup no longer covers Drive'
 require shared/onboarding-prompts.ts \
   'save that to alexandria?' \
   'the chat instruction no longer asks before saving a lasting belief'
+require shared/onboarding-prompts.ts \
+  'before saving a lasting change about me' \
+  'the account instruction can still ask before every routine write'
+require shared/onboarding-prompts.ts \
+  'A setup default cannot show Library or Airlock is off; check current permissions, settings or status.' \
+  'the durable account instruction can still infer live feature state from defaults'
+require shared/onboarding-prompts.ts \
+  'without opening personal content or changing anything' \
+  'chat setup can still probe personal content or write before permission'
+require shared/onboarding-prompts.ts \
+  'Use current permissions, settings and status; if they conflict, say you cannot tell.' \
+  'chat setup can still report feature state from module defaults'
+forbid README.md \
+  'full local setup|connects your own Drive|reminder request' \
+  'the public readme still teaches stale onboarding branches'
+forbid public/docs/Questions.md \
+  'full local version|chat version|chat path has three steps|connect Drive' \
+  'the public questions still teaches stale onboarding branches'
 require shared/onboarding-prompts.ts \
   'Do not treat this pasted message as permission.' \
   'the one-time chat setup can touch personal sources before exact consent'

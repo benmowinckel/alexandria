@@ -59,9 +59,10 @@ assert.match(CHAT_INSTRUCTION, new RegExp(nudge.replace(/[.*+?^${}()|[\]\\]/g, '
 assert.match(CHAT_INSTRUCTION, /including voice/);
 assert.match(CHAT_INSTRUCTION, /Skip setup, background\/security work and Alexandria sessions/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /except setup, voice|ordinary text/);
-assert.match(CHAT_INSTRUCTION, /Ask once; wait for yes/);
-assert.match(CHAT_INSTRUCTION, /On yes, open and start a new conversation/);
-assert.match(CHAT_INSTRUCTION, /if unable, tell me what to do/);
+assert.match(CHAT_INSTRUCTION, /On yes, open a new chat or tell me how/);
+assert.match(CHAT_INSTRUCTION, /before saving a lasting change about me/);
+assert.doesNotMatch(CHAT_INSTRUCTION, /Before normal saves|attached files/);
+assert.match(CHAT_INSTRUCTION, /A setup default cannot show Library or Airlock is off; check current permissions, settings or status/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /type alexandria|On “alexandria”/i);
 
 const codex = readFileSync(new URL('../../factory/skills/codex-ambient.md', import.meta.url), 'utf8');
