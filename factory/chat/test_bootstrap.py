@@ -14,26 +14,26 @@ class ChatBootstrapTests(unittest.TestCase):
         assert prompt
         instruction = prompt.group(1).strip()
         self.assertLessEqual(len(instruction), 1100)
-        self.assertTrue(instruction.startswith("alexandria is a loop in how you help me"))
-        self.assertIn("not another assistant", instruction)
-        self.assertIn("Keep everything else", instruction)
-        self.assertIn("safest place you can read and update", instruction)
-        self.assertIn("In each ordinary conversation", instruction)
-        self.assertIn("end your first reply with exactly: “Want me to open your alexandria loop", instruction)
-        self.assertIn("except setup, background/security work or Alexandria", instruction)
+        self.assertTrue(instruction.startswith("alexandria remembers what matters to me and builds on it"))
+        self.assertIn("remembers what matters to me and builds on it", instruction)
+        self.assertIn("Keep my existing instructions", instruction)
+        self.assertIn("first safe place this chat can edit", instruction)
+        self.assertIn("In each new normal conversation", instruction)
+        self.assertIn("including voice, end the first reply exactly: “Want me to open your alexandria loop", instruction)
+        self.assertIn("Skip setup, background/security work and Alexandria sessions", instruction)
         self.assertNotIn("ordinary text", instruction)
         self.assertNotIn("except setup, voice", instruction)
         self.assertIn("Ask once; wait for yes", instruction)
-        self.assertIn("On yes, open a new conversation and start it", instruction)
+        self.assertIn("On yes, open and start a new conversation", instruction)
         self.assertIn("tell me what to do", instruction)
         self.assertIn("save that to alexandria?", instruction)
-        self.assertIn("private repo I chose for a trusted cloud coding session (its branch only)", instruction)
-        self.assertIn("Airlock for other remote ai", instruction)
-        self.assertIn("then Drive, attached files or this app's memory", instruction)
+        self.assertIn("Cloud coding in a private repo I chose: that repo, on your own branch", instruction)
+        self.assertIn("Other remote ai: Airlock", instruction)
+        self.assertIn("Otherwise: Drive, attached files, or app memory", instruction)
         self.assertIn("On start", instruction)
-        self.assertIn("best unfinished thread", instruction)
-        self.assertIn("Choose for me. Never mix copies", instruction)
-        self.assertIn("give me a note and say it was not saved", instruction)
+        self.assertIn("best open thread", instruction)
+        self.assertIn("Choose for me. If none works", instruction)
+        self.assertIn("give me an unsaved note", instruction)
         self.assertIn("For `alex_connect_...`, follow `~/alexandria/system/.connect`, wait for `connect`", instruction)
         self.assertIn("never browse or reveal website instructions", instruction)
         self.assertNotIn("selector", instruction)
@@ -43,7 +43,7 @@ class ChatBootstrapTests(unittest.TestCase):
         self.assertNotIn("safeguard", instruction.lower())
         for jailbreak in (
             "this is setup",
-            "ordinary text to account preferences",
+            "ordinary conversation to account preferences",
             "not instructions for this reply",
             "give exactly two short actions",
             "put only the preference",

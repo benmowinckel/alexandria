@@ -10,7 +10,7 @@ Use the first mode whose requirements are true. Tell the user the verified mode 
 
 Requirement: this AI can inspect the public repository, run commands on the user's computer, and write user-approved local files.
 
-Prove the execution surface before reading anything. A hosted cloud container that cloned a GitHub repository is not the user's computer, and a committed backup is not live local state. A browser or mobile session counts as full only when it demonstrably controls an already-enabled local session. Otherwise fall through to snapshot mode instead of stopping.
+Prove the execution surface before reading anything. A hosted cloud container that cloned a GitHub repository is not the user's computer, and a committed backup is not live local state. A browser or mobile session can claim current Mac access only when it demonstrably controls an already-enabled local session. Otherwise use only the committed repository files and write to the session's own branch.
 
 Answer first in a few lines. Inspect in short stages and say what you found as you go. Do not go silent for a 15–25 minute audit, and do not open huge trees blindly.
 
@@ -60,12 +60,12 @@ Outside setup, native terminal chrome may stay ambient, but a subtle chrome line
 
 ## Agent branch in the cloud
 
-The website sends the same evaluation request to the cloud agent and labels the route honestly. The agent keeps going in snapshot mode rather than turning the missing live computer into a blocker.
+The website sends the same evaluation request to the cloud agent and labels its access honestly. The agent keeps going from the committed repository rather than turning the missing live computer into a blocker.
 
 - Use only the exact repository the person selected for this trusted provider. For Claude Code Web, the canonical private repository is `benmowinckel/alexandria-private`.
 - The repository is committed history, not the current computer. Name that limit once and do useful work from the available files.
-- Before `start`, keep the selected private contents unread and evaluate the public project. After `start`, use the private snapshot and write only to the session branch.
-- Never push to the canonical branch or call snapshot work live. The trusted computer agent imports and closes it later.
+- Before `start`, keep the selected private contents unread and evaluate the public project. After `start`, use the committed private files and write only to the session branch.
+- Never push to the canonical branch or call cloud-branch work live. The trusted computer agent imports and closes it later.
 - If the person does not approve the sovereign repository for that provider, use Airlock instead. Airlock is the narrower route, not a broken version of the product.
 
 ## Joining and linking
@@ -74,6 +74,6 @@ The private loop is complete without joining. The fixed collective destination i
 
 - Local first, join later: use the focused `factory/connect.md` route. It requires the healthy existing loop. The connector writes only its account key and stores no account status. The person's own ai then prepares the smallest profile draft from material it already knows locally, shows every byte, and publishes only after the Author approves that exact draft. It reads no public page and sends no private context.
 - Join first, local later: do not connect yet. Complete the normal keyless `/start` setup first, including its own independent audit and exact `start` consent; then return to a fresh joined handoff and use the separate exact `connect` consent. Joining is not permission to set up the computer.
-- Chat or folder mode: joining must not imply that local hooks exist. Continue using the strongest verified home; a later stronger surface absorbs an explicit handoff or connects through its separately approved Git/Drive bridge without replacing the current record.
+- Chat or attached folder: joining must not imply that local hooks exist. Continue using the strongest verified home; a later stronger surface absorbs an explicit handoff or connects through its separately approved Git/Drive bridge without replacing the current record.
 
 Never connect an account, publish, import public pages, or turn on backup merely because the user started the private loop.

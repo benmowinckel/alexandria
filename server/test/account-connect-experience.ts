@@ -56,10 +56,11 @@ assert.doesNotMatch(profilePublisher, /permissions\/library|system\/permissions/
 
 const nudge = 'Want me to open your alexandria loop in the background for when you have a minute?';
 assert.match(CHAT_INSTRUCTION, new RegExp(nudge.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-assert.match(CHAT_INSTRUCTION, /except setup, background\/security work or Alexandria/);
+assert.match(CHAT_INSTRUCTION, /including voice/);
+assert.match(CHAT_INSTRUCTION, /Skip setup, background\/security work and Alexandria sessions/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /except setup, voice|ordinary text/);
 assert.match(CHAT_INSTRUCTION, /Ask once; wait for yes/);
-assert.match(CHAT_INSTRUCTION, /On yes, open a new conversation and start it/);
+assert.match(CHAT_INSTRUCTION, /On yes, open and start a new conversation/);
 assert.match(CHAT_INSTRUCTION, /if unable, tell me what to do/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /type alexandria|On “alexandria”/i);
 

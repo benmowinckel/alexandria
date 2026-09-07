@@ -29,8 +29,8 @@ Type **a.** or **alexandria.** to close. Briefly say what shifted, save only cha
 ## access ladder
 
 1. Working hooks — use the native loop and commands.
-2. Approved writable Git files — local or attached full mode; a trusted hosted agent uses only the exact approved sovereign repo and its own branch; every other remote ai uses Airlock.
-3. Writable Google Drive — connected chat mode.
+2. Approved writable Git files — local or attached; a trusted hosted agent uses only the exact approved sovereign repo and its own branch; every other remote ai uses Airlock.
+3. Writable Google Drive — for a chat with that Drive folder connected.
 4. Durable host memory — the lightweight floor when writable files are unavailable; name the real persistence limit when it matters.
 5. A compact handoff in the current chat — explicit unsaved floor when no durable write exists.
 

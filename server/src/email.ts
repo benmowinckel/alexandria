@@ -256,11 +256,11 @@ export function onboardEmailContent(
     : mode === 'agent-cloud' || mode === 'agent-phone'
       ? {
           subject: 'alexandria. — your setup',
-          lead: 'cloud mode works from the committed GitHub copy you selected. it is useful, but less current than an agent using the live files on your computer.',
+          lead: 'this cloud agent works from the committed GitHub copy you selected. it is useful, but may be behind the live files on your computer.',
         }
       : {
           subject: 'alexandria. — your setup',
-          lead: 'computer mode is preferred because it can use your live files, tools and hooks. the same setup also works in a cloud agent from a committed GitHub copy.',
+          lead: 'an agent on your computer is best because it can use your current files and tools. the same setup also works in a cloud agent from a committed GitHub copy.',
         };
   const commands = mode === 'chat'
     ? emailLinkLine(`${WEBSITE_URL}/chat`, 'alexandria-library.com/chat')
