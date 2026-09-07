@@ -456,6 +456,12 @@ require factory/canon/methodology.md \
   'Alexandria-owned website surfaces' \
   'methodology no longer keeps membership and invitations on Alexandria-owned surfaces'
 require factory/canon/methodology.md \
+  'with only their direct referral URL beneath it' \
+  'the private opener once again prints the friend-facing message as helper text'
+forbid AGENTS.md \
+  'The invite body is the send' \
+  'the global opener contract once again prints the friend-facing message as helper text'
+require factory/canon/methodology.md \
   'Compare only its local version with `system/.module_guide_seen`; no account handshake or remote metadata is needed.' \
   'module orientation can still depend on remote account state'
 require factory/canon/methodology.md \
