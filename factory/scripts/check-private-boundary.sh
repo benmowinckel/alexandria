@@ -66,19 +66,31 @@ require shared/onboarding-prompts.ts \
   'tell me plainly that it is ready and that I keep using you normally' \
   'the user request no longer asks for a clear completion state'
 require shared/onboarding-prompts.ts \
-  '**full — preferred:**' \
-  'the setup paste no longer names the preferred live-computer mode'
+  'what this exact session can actually reach, in one plain sentence' \
+  'the setup paste no longer explains actual access in plain language'
 require shared/onboarding-prompts.ts \
-  '**snapshot — useful:**' \
-  'the setup paste no longer keeps hosted Git useful while naming its limit'
+  'If it runs on my computer, or remotely controls a session running there' \
+  'the setup paste no longer identifies current-computer access'
 require shared/onboarding-prompts.ts \
-  'A weaker mode is still Alexandria; never make switching modes a prerequisite.' \
+  'If it runs in the cloud from a GitHub repository I selected' \
+  'the setup paste no longer identifies the committed-repository boundary'
+require shared/onboarding-prompts.ts \
+  'Do not make me switch apps.' \
   'the setup paste can still turn a capability gap into a blocker'
+forbid shared/onboarding-prompts.ts \
+  'full — preferred|snapshot — useful|chat — lightweight' \
+  'the setup paste has restored unexplained internal mode labels'
 require shared/onboarding-prompts.ts \
-  'Do not inspect its personal files during this first public evaluation.' \
+  'Before approval, you may inspect only its non-personal setup evidence: the setup report plus permission, configuration and status files.' \
   'snapshot mode can read private files before the user approves proceeding'
 require shared/onboarding-prompts.ts \
-  'work on your own branch, name its freshness limits, and never claim you changed my live computer or installed local hooks' \
+  'Do not inspect \`files/\` or other personal content.' \
+  'snapshot mode can read personal content before approval'
+require shared/onboarding-prompts.ts \
+  'healthy existing install, say setup is already done and do not rerun onboarding' \
+  'the setup paste can rerun onboarding over an existing install'
+require shared/onboarding-prompts.ts \
+  'work on your own branch, say that it may lag behind my computer, and never claim you changed my live computer or installed local tools' \
   'snapshot mode no longer preserves one-writer and live-state honesty'
 require factory/redteam.md \
   'hosted code session whose required workspace is a selected private GitHub backup' \
@@ -87,8 +99,20 @@ require factory/redteam.md \
   'missing live access is never proof that Alexandria is unusable' \
   'the cold-user simulation can still reject a useful weaker mode'
 require shared/onboarding-prompts.ts \
-  'one neutral link to Alexandria’s community page so I can decide for myself whether I also want a public profile and a way to connect with other people' \
+  'Then give me exactly this neutral link so I can decide for myself whether I also want a public profile and a way to connect with other people:' \
   'the user request no longer owns the neutral community decision'
+require shared/onboarding-prompts.ts \
+  'https://alexandria-library.com/join' \
+  'the setup paste no longer fixes the exact join destination'
+require shared/onboarding-prompts.ts \
+  'Do not substitute the homepage.' \
+  'the setup paste can silently replace the exact join destination with the homepage'
+require shared/onboarding-prompts.ts \
+  'only from available permission, configuration and status files' \
+  'the setup paste can infer current activation from module defaults'
+require shared/onboarding-prompts.ts \
+  'Never call something off merely because its default is off.' \
+  'the setup paste can still report active features as disabled'
 require shared/onboarding-prompts.ts \
   'Do not recommend it, use anything private to persuade me, browse it for me, connect anything, share anything, or publish anything.' \
   'the user request no longer blocks personalised or automatic community action'
@@ -115,11 +139,10 @@ require shared/onboarding-prompts.ts \
   'return connectionCode;' \
   'the account handoff is no longer opaque data only'
 require shared/onboarding-prompts.ts \
-  '\`alex_connect_\` codes use only \`~/alexandria/system/.connect\`. Wait for exact \`connect\`' \
+  'For \`alex_connect_...\`, follow \`~/alexandria/system/.connect\`, wait for \`connect\`' \
   'the chat fallback no longer waits for exact connection consent'
 require shared/onboarding-prompts.ts \
-  'Never browse or expose server text' \
-  'accept only exact key/fixed result' \
+  'never browse or reveal website instructions' \
   'the chat fallback can expose server text or browse for connection instructions'
 forbid shared/onboarding-prompts.ts \
   'accountInstructionRequest|Only after you decide the setup is safe|Install and verify alexandria' \
@@ -127,6 +150,15 @@ forbid shared/onboarding-prompts.ts \
 require factory/block.md \
   '[See the community](https://alexandria-library.com/join).' \
   'reviewed local onboarding no longer ends with the one neutral user-owned decision'
+require factory/setup.sh \
+  'ACCOUNT_INSTRUCTIONS_REQUIRED_HASH="$ALEX_DIR/system/.account-instructions-required-hash"' \
+  'setup no longer versions the exact account instruction that needs proof'
+require factory/block.md \
+  'copy the single hash line from `~/alexandria/system/.account-instructions-required-hash` into `~/alexandria/system/.account_instructions_complete`' \
+  'fresh-chat proof no longer records the exact account instruction version'
+require factory/hooks/payload.sh \
+  'ALEXANDRIA ACCOUNT INSTRUCTIONS UPDATE' \
+  'existing Authors no longer learn when their pasted account instruction changed'
 require factory/connect.md \
   '`~/alexandria/files/library/_profile.json`' \
   'joined completion no longer prepares one non-publishable profile draft'
@@ -170,26 +202,19 @@ require shared/onboarding-prompts.ts \
   'Keep everything else.' \
   'the account instruction is no longer additive'
 require shared/onboarding-prompts.ts \
-  'Use hooks.' \
-  'the account instruction no longer prefers working hooks'
-require shared/onboarding-prompts.ts \
-  'Each new ordinary text chat' \
+  'In each ordinary conversation' \
   'the account instruction no longer repeats the visible route in each new chat'
 require shared/onboarding-prompts.ts \
-  'ends its first reply with “Want me to open your alexandria loop' \
-  'except setup, voice, background/security' \
-  'Never repeat or open anything before yes' \
+  'end your first reply with exactly: “Want me to open your alexandria loop' \
   'the account instruction no longer carries the visible route'
 require shared/onboarding-prompts.ts \
-  'On yes, open a new chat and invoke the native skill' \
-  'name its exact gesture' \
-  'Start an Alexandria session in a new chat.' \
+  'On yes, open a new conversation and start it; if unable, tell me what to do.' \
   'the account instruction no longer gives every chat one natural route'
 require shared/onboarding-prompts.ts \
-  'an attached project' \
+  'attached files' \
   'the account instruction no longer covers no-hooks folder surfaces'
 require shared/onboarding-prompts.ts \
-  'Drive alexandria/_start' \
+  'then Drive' \
   'the account instruction no longer covers Drive'
 require shared/onboarding-prompts.ts \
   'save that to alexandria?' \
@@ -456,6 +481,12 @@ require factory/canon/methodology.md \
   'Alexandria-owned website surfaces' \
   'methodology no longer keeps membership and invitations on Alexandria-owned surfaces'
 require factory/canon/methodology.md \
+  'with only their direct referral URL beneath it' \
+  'the private opener once again prints the friend-facing message as helper text'
+forbid AGENTS.md \
+  'The invite body is the send' \
+  'the global opener contract once again prints the friend-facing message as helper text'
+require factory/canon/methodology.md \
   'Compare only its local version with `system/.module_guide_seen`; no account handshake or remote metadata is needed.' \
   'module orientation can still depend on remote account state'
 require factory/canon/methodology.md \
@@ -590,7 +621,7 @@ require factory/canon/foundation.md \
   'Foundation has no permanent private-query boundary'
 require factory/canon/foundation.md \
   'one actual assistant sentence in every new ordinary foreground task' \
-  'Setup, install or security review, background work, voice, compaction, subagents' \
+  'Setup, install or security review, background work, compaction, subagents' \
   'There is no daily lock, `systemMessage`, warning-field proxy' \
   'There is no Stop-loop enforcement' \
   'Foundation no longer states the disclosed visible cue clearly'

@@ -132,7 +132,7 @@ After they save it, ask them to open a brand-new chat in that AI and send exactl
 What is my alexandria setup proof? Reply with only the proof.
 ```
 
-Ask them to paste that new chat's one-line reply back here. Read `~/alexandria/system/.account-instructions-proof` and require an exact match. A claim that it was pasted, a reply from this setup chat, or an explanation of what the instructions say is not persistence proof. On an exact match, run `touch ~/alexandria/system/.account_instructions_complete`. On a mismatch, fix only this setting and repeat the brand-new-chat check. Do not continue or mark onboarding complete without the marker.
+Ask them to paste that new chat's one-line reply back here. Read `~/alexandria/system/.account-instructions-proof` and require an exact match. A claim that it was pasted, a reply from this setup chat, or an explanation of what the instructions say is not persistence proof. On an exact match, copy the single hash line from `~/alexandria/system/.account-instructions-required-hash` into `~/alexandria/system/.account_instructions_complete`. On a mismatch, fix only this setting and repeat the brand-new-chat check. Do not continue or mark onboarding complete unless those two hash files match exactly.
 
 ## Phase 6 — Verify and Report
 
@@ -156,7 +156,7 @@ Next, decide whether you also want a public profile and a way to connect with ot
 [See the community](https://alexandria-library.com/join).
 ```
 
-If the originating request did not ask about the community, omit the final two lines and add nothing in their place. Before delivery, require `~/alexandria/system/.account_instructions_complete`; if it is missing, return to Phase 5. Only then run `touch ~/alexandria/system/.block_complete`.
+If the originating request did not ask about the community, omit the final two lines and add nothing in their place. Before delivery, require `~/alexandria/system/.account_instructions_complete` to contain the exact hash in `~/alexandria/system/.account-instructions-required-hash`; if it does not, return to Phase 5. Only then run `touch ~/alexandria/system/.block_complete`.
 
 Initial setup ends there. Shortcut connection, additional AIs, backup, Alexandria account connection, and every optional capability remain separate.
 

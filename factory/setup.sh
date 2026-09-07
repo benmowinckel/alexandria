@@ -640,6 +640,13 @@ esac
 printf '\nIf I ask for my alexandria setup proof, reply with only `%s`.\n' \
   "$account_proof" >> "$ACCOUNT_INSTRUCTIONS"
 
+# Account instructions live outside the computer, so setup cannot update them.
+# Record the exact currently required bytes and let the fresh-chat proof copy
+# this hash into the completion marker. A later instruction change therefore
+# reopens one honest refresh instead of treating an old paste as current.
+ACCOUNT_INSTRUCTIONS_REQUIRED_HASH="$ALEX_DIR/system/.account-instructions-required-hash"
+runtime_sha256 "$ACCOUNT_INSTRUCTIONS" > "$ACCOUNT_INSTRUCTIONS_REQUIRED_HASH"
+
 # ── 3. Platform configuration ─────────────────────────────────────
 
 # Integration names are shared user space. Ownership is recorded outside the
