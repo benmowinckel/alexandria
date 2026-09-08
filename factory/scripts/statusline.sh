@@ -7,6 +7,7 @@
 # for whether the Author actually saw an assistant reply.
 
 A="${ALEXANDRIA_HOME:-$HOME/alexandria}"
+RUNTIME_DIR="${ALEXANDRIA_RUNTIME_DIR:-$HOME/.local/share/alexandria}"
 MODE="${1:-statusline}"
 CUE='Want me to open your alexandria loop in the background for when you have a minute?'
 
@@ -54,16 +55,9 @@ count_lines() {
   awk 'NF && $1 !~ /^#/ {n++} END {print n+0}' "$1" 2>/dev/null
 }
 
-n_captures=0
-n_raw=0
 capture_state="$RUNTIME_DIR/scripts/capture_state.py"
-if [ -f "$capture_state" ]; then
-  IFS=$'\t' read -r n_captures n_raw < <(
-    ALEXANDRIA_HOME="$A" python3 "$capture_state" --counts 2>/dev/null
-  )
-fi
-case "$n_captures" in ''|*[!0-9]*) n_captures=0 ;; esac
-case "$n_raw" in ''|*[!0-9]*) n_raw=0 ;; esac
+capture_summary=$(ALEXANDRIA_HOME="$A" python3 "$capture_state" --summary 2>/dev/null) \
+  || capture_summary="capture count unavailable"
 
 n_calls=$(count_lines "$A/system/.calls.md")
 n_armed=$(count_lines "$A/system/.armed.md")
@@ -79,10 +73,7 @@ if [ -f "$A/system/.last_a" ]; then
 fi
 
 frames=()
-if [ "$n_captures" -eq 1 ]; then frames+=("1 capture to churn")
-elif [ "$n_captures" -gt 1 ]; then frames+=("$n_captures captures to churn"); fi
-if [ "$n_raw" -eq 1 ]; then frames+=("1 raw drop waiting")
-elif [ "$n_raw" -gt 1 ]; then frames+=("$n_raw raw drops waiting"); fi
+[ "$capture_summary" != "0 to review; 0 to process." ] && frames+=("${capture_summary%.}")
 if [ "$n_calls" -eq 1 ]; then frames+=("1 call waiting")
 elif [ "$n_calls" -gt 1 ]; then frames+=("$n_calls calls waiting"); fi
 [ "$n_armed" -eq 1 ] && frames+=("1 armed, waiting")

@@ -1757,7 +1757,7 @@ node factory/test/person-context.mjs \
   || fail 'people-context regressions failed'
 bash factory/test/publish-profile.sh \
   || fail 'profile publisher regressions failed'
-python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_capture_state.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py factory/scripts/test_render_start_skills.py \
+python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_capture_state.py factory/scripts/test_capture_inventory.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py factory/scripts/test_render_start_skills.py \
   || fail 'capture, transcript, or grok-hook regressions failed'
 bash scripts/test-grok-integration.sh \
   || fail 'grok integration regressions failed'

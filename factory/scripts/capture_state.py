@@ -3,8 +3,8 @@
 
 One capture is extracted when there is either a rich analysis sidecar, a stem
 in ``saved/.drained`` for a ledger-only verdict, or exact legacy evidence in
-the ledger itself.  Every surface uses this helper so the statusline, /a gate,
-and resolver cannot disagree about whether work is still owed.
+the ledger itself.  Extraction gates retain that contract. The separate review inventory powers
+human-facing counts: an analysis without a disposition still needs processing.
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -138,6 +139,94 @@ def inspect(root: Path | None = None) -> CaptureState:
         processed_by_drained=by_drained,
         processed_by_legacy_ledger=by_legacy,
     )
+
+
+def review(root: Path | None = None) -> dict[str, int]:
+    """Count review and disposition separately from extraction proof.
+
+    Copies join by source filename or explicit resolver provenance, never by a
+    shared article URL. An analysis is not a verdict. Read errors propagate so
+    callers cannot turn an unavailable inventory into a reassuring zero.
+    """
+    alexandria = root or _alexandria_home()
+    vault = alexandria / "files/vault"
+    saved = vault / "saved"
+    groups: list[dict] = []
+
+    def merge(ids: set[str], urls: set[str] | None = None) -> None:
+        matches = [group for group in groups if group["ids"] & ids]
+        group = {"ids": set(ids), "urls": set(urls or ())}
+        for other in matches:
+            group["ids"].update(other["ids"])
+            group["urls"].update(other["urls"])
+            groups.remove(other)
+        groups.append(group)
+
+    for capture in _capture_sources(vault / "_input", saved):
+        body = capture.read_text(encoding="utf-8", errors="replace")
+        ids = {"stem:" + capture.stem, "file:" + capture.name}
+        for original in re.findall(r"_Recovered from `([^`]+)`\._\s*$", body):
+            if Path(original).name == original:
+                ids.add("file:" + original)
+        # Explicit source metadata is eligible for unambiguous legacy rows.
+        # Other body links may be quotations, replies or background reading.
+        urls = set(re.findall(r"^(?:source|url):\s*(https://\S+)", body, re.M))
+        status = re.search(r"-(\d{15,})$", capture.stem)
+        if status:
+            urls.update(url for url in URL_RE.findall(body)
+                        if re.search(r"/status/" + status.group(1) + r"(?:[/?#]|$)", url))
+        merge(ids, urls)
+    raw = vault / "input"
+    if raw.exists():
+        for capture in sorted(raw.iterdir()):
+            if capture.is_file() and not capture.name.startswith("."):
+                merge({"file:" + capture.name})
+
+    ledger_path = saved / "ledger.md"
+    ledger = ledger_path.read_text(encoding="utf-8", errors="replace") if ledger_path.exists() else ""
+    open_items: set[str] = set()
+    disposition: set[int] = set()
+    for line in ledger.splitlines():
+        mark = re.match(r"^- \[([ xX-])\](?:\s|$)", line)
+        if not mark:
+            continue
+        refs = set(re.findall(r"`([^`]+)`", line))
+        # Legacy rows sometimes start with an unquoted exact stem.
+        first = line[mark.end():].strip().split(maxsplit=1)
+        if first and any("stem:" + first[0] in group["ids"] for group in groups):
+            refs.add(first[0])
+        for target in re.findall(r"\]\(([^)]+)\)", line):
+            if not target.startswith(("https://", "http://")):
+                refs.add(Path(target).name)
+        ids: set[str] = set()
+        for ref in refs:
+            name = Path(ref).name
+            stem = name.removesuffix(".analysis.md").removesuffix(".md")
+            ids.update(("stem:" + stem, "file:" + name))
+        matches = [i for i, group in enumerate(groups) if group["ids"] & ids]
+        if not matches and not refs:
+            urls = set(URL_RE.findall(line))
+            possible = [i for i, group in enumerate(groups) if group["urls"] & urls]
+            if len(possible) == 1:
+                matches = possible
+        disposition.update(matches)
+        if mark.group(1) == " ":
+            if matches:
+                open_items.update("source:" + str(i) for i in matches)
+            else:
+                # A ledger may outlive its original. Keep its review obligation.
+                key = "|".join(sorted(refs)) or re.sub(r"\s+", " ", line).strip()
+                open_items.add("ledger:" + key)
+    drained = _drained_stems(saved / ".drained")
+    for i, group in enumerate(groups):
+        if any("stem:" + stem in group["ids"] or "file:" + stem in group["ids"]
+               for stem in drained):
+            disposition.add(i)
+    return {"review_count": len(open_items), "processing_count": len(groups) - len(disposition)}
+
+
+def summary(state: dict[str, int]) -> str:
+    return f"{state['review_count']} to review; {state['processing_count']} to process."
 
 
 def snapshot(root: Path | None = None) -> dict[str, object]:
@@ -270,10 +359,23 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--json", action="store_true", help="print the complete state as JSON")
     parser.add_argument("--counts", action="store_true", help="print pending and raw counts, tab-separated")
+    parser.add_argument("--review", action="store_true", help="print review and processing counts as JSON")
+    parser.add_argument("--summary", action="store_true", help="print the shared human-facing count")
     parser.add_argument("--gate", action="store_true", help="exit 2 while extraction work remains")
     parser.add_argument("--snapshot", action="store_true", help="print a hash-pinned start batch as JSON")
     parser.add_argument("--gate-snapshot", metavar="PATH", help="exit 2 until the exact start batch is complete")
     args = parser.parse_args()
+
+    if args.review or args.summary:
+        if any((args.json, args.counts, args.gate, args.snapshot, args.gate_snapshot, args.review and args.summary)):
+            parser.error("review modes cannot be combined with extraction or other output modes")
+        try:
+            state = review()
+        except OSError as exc:
+            print(f"capture count unavailable: {exc}", file=sys.stderr)
+            return 2
+        print(summary(state) if args.summary else json.dumps(state, indent=2))
+        return 0
 
     if (args.snapshot or args.gate_snapshot) and any(
         (args.json, args.counts, args.gate, args.snapshot and args.gate_snapshot)
