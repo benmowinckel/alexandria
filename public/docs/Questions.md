@@ -60,7 +60,7 @@ No. Your AI runs the loop. You talk in plain words and it handles the files. If 
 
 ## what do i need to run it.
 
-An AI on your computer — Claude Code, Cursor, Codex, Grok CLI, or Claude Desktop’s code tab — can use your current files. Remote Control can reach those same files through an existing computer session. Claude Code Web sees only committed files in the private GitHub repo you selected and writes its own branch. Other remote AI uses Airlock or storage it can truly write and read back. Regular ChatGPT, Claude or Gemini can add the same habit through the [chat setup](/chat).
+An AI on your computer — Claude Code, Cursor, Codex, Grok CLI, or Claude Desktop’s code tab — can use your current files. Remote Control can reach those same files through an existing computer session. Claude Code Web sees only committed files in the private GitHub repo you selected and writes its own branch. Other remote AI uses Airlock or storage it can truly write and read back. Regular ChatGPT, Claude, Gemini or another AI can add the same habit through the [chat setup](/chat).
 
 ## how do i start.
 

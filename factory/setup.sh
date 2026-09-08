@@ -624,19 +624,40 @@ rm -f "$ACCOUNT_BOOTSTRAP"
 mv "$ACCOUNT_INSTRUCTIONS_TMP" "$ACCOUNT_INSTRUCTIONS"
 
 ACCOUNT_PROOF_FILE="$ALEX_DIR/system/.account-instructions-proof"
+ACCOUNT_PROOF_BASE_HASH_FILE="$ALEX_DIR/system/.account-instructions-proof-base-hash"
+account_base_hash=$(runtime_sha256 "$ACCOUNT_INSTRUCTIONS")
+if ! [[ "$account_base_hash" =~ ^[0-9a-f]{64}$ ]]; then
+  echo "Could not hash the account instruction; setup stopped." >&2
+  exit 1
+fi
+account_proof_base_hash=$(cat "$ACCOUNT_PROOF_BASE_HASH_FILE" 2>/dev/null | tr -d '\r\n')
 account_proof=$(cat "$ACCOUNT_PROOF_FILE" 2>/dev/null | tr -d '\r\n')
 case "$account_proof" in
   alexandria-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]) ;;
-  *)
-    if command -v python3 >/dev/null 2>&1; then
-      account_proof="alexandria-$(python3 -c 'import secrets; print(secrets.token_hex(8))')"
-    else
-      account_proof=$(printf 'alexandria-%08x%08x' "$(date +%s)" "$$")
-    fi
-    umask 077
-    printf '%s\n' "$account_proof" > "$ACCOUNT_PROOF_FILE"
-    ;;
+  *) account_proof="" ;;
 esac
+
+# A proof certifies one instruction revision, not merely an earlier paste.
+# Reuse it only for identical base bytes. A legacy nonce has no such binding
+# and must rotate once; otherwise an old account setting could prove new text.
+if [ -z "$account_proof" ] || [ "$account_proof_base_hash" != "$account_base_hash" ]; then
+  if command -v python3 >/dev/null 2>&1; then
+    account_nonce=$(python3 -c 'import secrets; print(secrets.token_hex(8))')
+  else
+    account_nonce=$(od -An -N8 -tx1 /dev/urandom 2>/dev/null | tr -d ' \n')
+  fi
+  if ! [[ "$account_nonce" =~ ^[0-9a-f]{16}$ ]]; then
+    echo "Could not generate an account instruction proof; setup stopped." >&2
+    exit 1
+  fi
+  account_proof="alexandria-$account_nonce"
+  umask 077
+  printf '%s\n' "$account_proof" > "$ACCOUNT_PROOF_FILE" && \
+    printf '%s\n' "$account_base_hash" > "$ACCOUNT_PROOF_BASE_HASH_FILE" || {
+      echo "Could not save the account instruction proof; setup stopped." >&2
+      exit 1
+    }
+fi
 printf '\nIf I ask for my alexandria setup proof, reply with only `%s`.\n' \
   "$account_proof" >> "$ACCOUNT_INSTRUCTIONS"
 
