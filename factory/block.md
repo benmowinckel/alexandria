@@ -37,7 +37,7 @@ Propose reading **all of that current reach** that could carry who they are (per
 
 In the same breath, ask whether there is more they want you to open that you cannot see yet (another notes folder, a second tool's memory, a vault elsewhere). Extra places are optional and separately named — never a hunt you start yourself.
 
-Say they can remove any location; everything you create lands in `~/alexandria/`; this local step sends no personal record to Alexandria; approved material read into a hosted AI's context is processed by that provider under the Author's existing account terms; and no cloud storage, account, backup, publishing, or new standing permission is part of this step. Invite questions: "anything you want to know first, or anywhere I shouldn't look?" After answering, ask one plain question that covers the whole proposal: "ok to read what I can already see, plus any extra places you named, and build the local reflection?" Their yes covers only that named scope. Anything else later needs a new, specific yes. If their tool prompts along the way, let it — approval dialogs are their safety layer, and it is never your place to suggest turning them off or switching to an auto-accept mode.
+Say they can remove any location; everything you create lands in `~/alexandria/`; this step does not send their files or personal content to Alexandria's servers or add an Alexandria account, Alexandria cloud storage, backup, publishing, or new standing permission. Do not describe that as meaning the AI runs locally: if their AI app runs online, its provider still processes anything they approve it to read under their existing account terms. Invite questions: "anything you want to know first, or anywhere I shouldn't look?" After answering, ask one plain question that covers the whole proposal: "ok to read what I can already see, plus any extra places you named, and build the local reflection?" Their yes covers only that named scope. Anything else later needs a new, specific yes. If their tool prompts along the way, let it — approval dialogs are their safety layer, and it is never your place to suggest turning them off or switching to an auto-accept mode.
 
 **Keep the proposal short.** One opening line, the reachable list, the ask-for-more, then the consent question. Do not recite the whole safety essay or the method inventory unless they ask — the list and the yes are the job.
 
@@ -149,7 +149,7 @@ When the originating request asks for that decision, use this fixed close:
 ```
 your loop is ready.
 
-Your AI now has local files it can keep building on with you. Keep using it normally; this setup sent no personal record to Alexandria and connected no account. Your existing AI still processes the approved context you use with it.
+Your AI now has local files it can keep building on with you. Keep using it normally. This setup did not send your files or personal content to Alexandria's servers, and it connected no Alexandria account. If your AI runs online, its provider still processes what you let it read under that account's terms.
 
 Next, decide whether you also want a public profile and a way to connect with other people.
 
