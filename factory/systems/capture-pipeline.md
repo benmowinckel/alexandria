@@ -25,22 +25,17 @@ Five stages, two owners. The Author names a source and chooses its boundary at t
 4. **Land (Engine, same session).** Constitution/marginalia deltas flow live where warranted; the Author's absorption surfaces get restocked. Private understanding lands first. Audience-specific Library files are downstream drafts, and the PLM remains restricted to exact approved Library bytes; source access is never publication consent.
 5. **Absorb (Author, their pace).** The ledger (`vault/saved/ledger.md`) is the single absorption surface: one disposition per actual save: `- [ ]` is open review, `- [x]` records genuine Author engagement, and `- [-]` records an Engine verdict with its reason. An analysis alone never closes the review obligation. Pile size is never homework.
 
-### The review card — the one engagement format (locked 2026-07-31, founder directive)
+### The review card — Link · What · New
 
-When the Author engages captures live, every item is surfaced **one at a time** as a fixed card — **100% adherence, unless the Author specifies otherwise in the moment**. Never a batched list, never a prose summary, never an essay opener. The card:
+**Capture review: Link · What · New.** Present one capture at a time in exactly three fields, unless the Author asks otherwise: **Link:** a clickable original source; **What:** plainly what it actually says; **New:** the specific net-new evidence, idea, action or implication against the Author's current canon, or “Nothing substantive; skip.” New must say whether engagement is worthwhile, not repeat the source, invent a question or force a counterargument. A new unsupported assertion is not new evidence. Name any material source-access limit within New. Do not append a title, sequence number, note, verdict menu, running count, draft or footer; requested inventory counts and optional drafting remain separate. Skip records the verdict and immediately presents the next eligible capture. Delay leaves the item open, passes it over for this run and immediately presents the next eligible capture. Engage pauses the queue for dialogue; it is not a closing verdict. Follow the Author's existing local preferences when they differ.
 
 ```
-**#N · @handle/source**
-🔗 [open source](<raw source URL>)
-
-*What it is:* <plain, the real content — what the post/article actually says, never an abstract compression>
-
-*Note:* <honest class — confirmatory / reference / genuine push-back / genuinely new — how it sits against the Author's canon, plus one dead-simple actionable note>
-
-→ **engage / skip / delay?**
+**Link:** [open source](<raw source URL>)
+**What:** <plain source claim or content>
+**New:** <specific marginal value, or “Nothing substantive; skip.”>
 ```
 
-Then a running counter (**"N left."**) so the drain feels like it's draining. Three load-bearing rules, all from Author correction: the Author cannot process an item from handle + title, so the card must carry a rendered clickable source link, the real content, and one actionable note; “real content” means the live-source-expanded item on any platform, not a derivative silently presented as the whole, and a failed expansion names the narrower source scope; and no manufactured tension — state both positions in plain words before calling them opposed, and mark them confirmatory if they reduce to the same mechanism at different scales or entities. Verdicts: **engage** → freeze the queue and let the Author and Engine develop the item together until the Author lands, explicitly finds no delta, or exits; an Engine explanation or file write is persistence, not engagement. **Skip** → one-line ledger check; **delay** → later pass. Optional per-Author rider: a drafted reply in the Author's voice as a second card field (armed, never fired).
+Before selecting a capture, check its actual conclusion against current canon. Rank by expected marginal value, not importance or date. A different topic is not necessarily a new mechanism. Do not manufacture tension: compare the two actual positions before declaring a contradiction. Source expansion and exact preservation still happen in the background; shorter presentation does not lower the evidence bar. A failed expansion means unknown novelty, not proof there is none. An Engine explanation or file write is persistence, not Author engagement. During engage, hold the item until the Author reaches a position, explicitly finds no delta or exits. Preserve raw sources and written verdicts when skipping; never infer a belief change or permission to publish from a review action.
 
 During engage, the Engine carries the activation energy. It opens with a concrete interpretation, contrast, example, or implication grounded in the item and the Author's life, then lets the Author react. Broad recall questions and homework prompts are the wrong shape: engagement is ping-pong, not an interview form.
 
