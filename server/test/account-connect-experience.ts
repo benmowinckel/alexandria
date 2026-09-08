@@ -62,7 +62,7 @@ assert.doesNotMatch(CHAT_INSTRUCTION, /except setup, voice|ordinary text/);
 assert.match(CHAT_INSTRUCTION, /On yes, open a new chat or tell me how/);
 assert.match(CHAT_INSTRUCTION, /before saving a lasting change about me/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /Before normal saves|attached files/);
-assert.match(CHAT_INSTRUCTION, /A setup default cannot show Library or Airlock is off; check current permissions, settings or status/);
+assert.match(CHAT_INSTRUCTION, /Say Library or Airlock is off only from current permissions, settings or status/);
 assert.doesNotMatch(CHAT_INSTRUCTION, /type alexandria|On “alexandria”/i);
 
 const codex = readFileSync(new URL('../../factory/skills/codex-ambient.md', import.meta.url), 'utf8');

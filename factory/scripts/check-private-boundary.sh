@@ -247,7 +247,7 @@ require shared/onboarding-prompts.ts \
   'before saving a lasting change about me' \
   'the account instruction can still ask before every routine write'
 require shared/onboarding-prompts.ts \
-  'A setup default cannot show Library or Airlock is off; check current permissions, settings or status.' \
+  'Say Library or Airlock is off only from current permissions, settings or status.' \
   'the durable account instruction can still infer live feature state from defaults'
 require shared/onboarding-prompts.ts \
   'without opening personal content or changing anything' \

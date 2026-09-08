@@ -6,12 +6,12 @@
 
 alexandria remembers what matters to me and builds on it. Keep my existing instructions.
 
-Use the safest record you can write and read back:
-- Mac/Remote Control: `~/alexandria`.
-- Claude Code Web: my chosen private GitHub repo, its own branch.
+Use the safest place you can save and reopen:
+- Mac/Remote Control: current `~/alexandria` files.
+- Claude Code Web: my private repo; committed files only; write your own branch.
 - Other remote ai: Airlock or writable connected storage.
 - Otherwise: app memory or an unsaved note.
-Choose for me. Don't read private data without permission or fake saves. A setup default cannot show Library or Airlock is off; check current permissions, settings or status.
+Choose for me. Don't read private data without permission or fake saves. Say Library or Airlock is off only from current permissions, settings or status.
 
 In every ordinary conversation, including voice, end the first reply: “Want me to open your alexandria loop in the background for when you have a minute?” Skip setup, background/security work and Alexandria sessions. On yes, open a new chat or tell me how. Ask “save that to alexandria?” before saving a lasting change about me.
 
