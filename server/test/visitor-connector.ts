@@ -86,15 +86,28 @@ for (const path of ['https://attacker.example.com/callback', '//attacker.example
 assert.equal((await req('/connect/site', 'POST', { site: SITE, manifest_path: '/manifest.html' }, auth)).status, 400);
 assert.equal((await req('/connect/site', 'POST', { site: SITE, manifest_path: '/same.json', callback_path: '/same.json' }, auth)).status, 400);
 let dnsAnswer = 'wrong';
+let dnsFailure: 'redirect' | 'http' | 'invalid-json' | 'oversized' | 'network' | null = null;
 const originalFetch = globalThis.fetch;
 globalThis.fetch = async (url, init) => {
   const target = new URL(String(url));
   assert.equal(target.origin + target.pathname, 'https://cloudflare-dns.com/dns-query');
   assert.equal(target.searchParams.get('name'), registration.verification.name);
-  assert.equal(init?.redirect, 'error');
+  assert.equal(init?.redirect, 'manual', 'Workers must not follow a DNS resolver redirect');
+  assert.equal(new Headers(init?.headers).get('accept'), 'application/dns-json');
   assert.equal(new Headers(init?.headers).get('authorization'), null);
+  if (dnsFailure === 'network') throw new TypeError('Resolver unavailable');
+  if (dnsFailure === 'redirect') return new Response('', { status: 302, headers: { Location: 'https://attacker.example.com/proof' } });
+  if (dnsFailure === 'http') return new Response('Unavailable', { status: 503 });
+  if (dnsFailure === 'invalid-json') return new Response('<html>Not DNS JSON</html>');
+  if (dnsFailure === 'oversized') return new Response(' '.repeat(8193));
   return new Response(JSON.stringify({ Status: 0, Answer: [{ type: 16, data: `"${dnsAnswer}"` }] }));
 };
+for (const failure of ['redirect', 'http', 'invalid-json', 'oversized', 'network'] as const) {
+  dnsFailure = failure;
+  assert.equal((await req('/connect/site/verify', 'POST', { site: SITE }, auth)).status, 503, failure);
+  assert.equal(db.prepare("SELECT verified_at FROM visitor_connector_sites WHERE author = 'author'").get()?.verified_at, null, `${failure} never verifies the website`);
+}
+dnsFailure = null;
 assert.equal((await req('/connect/site/verify', 'POST', { site: SITE }, auth)).status, 400);
 dnsAnswer = registration.verification.value;
 assert.equal((await req('/connect/site/verify', 'POST', { site: SITE }, auth)).status, 200);

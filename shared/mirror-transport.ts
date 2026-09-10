@@ -235,7 +235,9 @@ export async function runTwinInference(
       },
       body: JSON.stringify(body),
       signal: ctrl.signal,
-      redirect: 'error',
+      // Manual mode works in both Workers and Node. Rejecting non-2xx below
+      // prevents an adapter redirect from forwarding context or credentials.
+      redirect: 'manual',
     });
 
     if (!res.ok) {

@@ -307,7 +307,9 @@ export function registerVisitorConnectorRoutes(app: Hono): void {
     dns.searchParams.set('type', 'TXT');
     let records: { Status?: number; Answer?: Array<{ type?: number; data?: string }> };
     try {
-      records = await readBoundedJson(await fetch(dns, { headers: { Accept: 'application/dns-json' }, redirect: 'error', signal: AbortSignal.timeout(5000) })) as typeof records;
+      // Workers rejects redirect: 'error' before fetching. Manual mode never
+      // follows another origin; readBoundedJson rejects every non-2xx response.
+      records = await readBoundedJson(await fetch(dns, { headers: { Accept: 'application/dns-json' }, redirect: 'manual', signal: AbortSignal.timeout(5000) })) as typeof records;
     } catch { return c.json({ error: 'Could not verify the DNS record. Try again.' }, 503); }
     const found = records && records.Status === 0 && Array.isArray(records.Answer) && records.Answer.some(record => {
       if (record.type !== 16 || typeof record.data !== 'string') return false;

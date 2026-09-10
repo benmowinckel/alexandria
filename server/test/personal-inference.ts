@@ -31,7 +31,7 @@ try {
     const url = new URL(String(input));
     const headers = new Headers(init.headers);
     if (url.hostname === 'adapter.example') {
-      assert.equal(init.redirect, 'error');
+      assert.equal(init.redirect, url.pathname === '/health' ? 'error' : 'manual');
       assert.equal(headers.get('cookie'), null);
       assert.equal(headers.get('x-alexandria-visitor'), null);
       assert.equal(headers.get('CF-Access-Client-Secret'), null);

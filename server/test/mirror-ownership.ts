@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { Hono } from 'hono';
 import { companyGuideConnection, getCompanyGuideConnection, getSidecar, registerLibraryRoutes } from '../src/library.js';
 import { accessHeaders, authorizeTwinAccess, runTwinInference } from '../src/twin.js';
-import { encrypt } from '../src/crypto.js';
+import { encrypt, hashApiKey } from '../src/crypto.js';
 import { setKV } from '../src/kv.js';
 
 const values = new Map<string, string>();
@@ -69,8 +69,11 @@ assert.equal(authorizeTwinAccess({ visibility: 'invite', authorGithubId: 'owner'
 const originalFetch = globalThis.fetch;
 try {
   const requests: Array<{ url: string; init: RequestInit }> = [];
+  let redirected = false;
   globalThis.fetch = async (input, init = {}) => {
     requests.push({ url: String(input), init });
+    if (redirected) return new Response('', { status: 302, headers: { Location: 'https://attacker.example.com/collect' } });
+    if (String(input).endsWith('/health')) return Response.json({ ok: true, model: 'personal-model' });
     return Response.json({ answer: 'An answer.' });
   };
   const request = { variant: 'context' as const, question: 'A public question', system: 'Public context only', maxTokens: 50, model: 'personal-model' };
@@ -80,7 +83,7 @@ try {
   let headers = new Headers(call.init.headers);
   assert.equal(headers.get('Authorization'), 'Bearer personal-bearer');
   assert.equal(headers.has('CF-Access-Client-Secret'), false);
-  assert.equal(call.init.redirect, 'error', 'an adapter must not redirect published context or credentials');
+  assert.equal(call.init.redirect, 'manual', 'an adapter must not redirect published context or credentials');
 
   await runTwinInference(request, { url: 'https://personal.example/infer', secret: 'personal-bearer', access_client_id: 'personal-id', access_client_secret: 'personal-access' });
   call = requests.pop()!;
@@ -88,9 +91,32 @@ try {
   assert.equal(headers.get('CF-Access-Client-Id'), 'personal-id');
   assert.equal(headers.get('CF-Access-Client-Secret'), 'personal-access');
 
+  redirected = true;
+  const rejected = await runTwinInference(request, { url: 'https://personal.example/infer', secret: 'personal-bearer' });
+  assert.equal(rejected.ok, false, 'redirects cannot produce an answer or forward personal context');
+  if (!rejected.ok) assert.equal(rejected.status, 502);
+  assert.equal(requests.length, 1);
+  assert.equal(requests.pop()!.init.redirect, 'manual');
+  redirected = false;
+
   const app = new Hono();
   registerLibraryRoutes(app);
   values.set('twin_sidecar:benmowinckel', encrypt(JSON.stringify({ url: 'https://personal.example/infer', secret: 'personal-bearer', owner_account: true })));
+  const ownerKey = 'alex_fixture_health_owner';
+  values.set(`auth:${hashApiKey(ownerKey)}`, 'github_1');
+  values.set('login:benmowinckel', 'github_1');
+  values.set('account:github_1', encrypt(JSON.stringify({ github_id: 1, github_login: 'benmowinckel', api_key_hash: hashApiKey(ownerKey) })));
+  const sidecarStatus = () => app.request('/library/benmowinckel/twin/sidecar', { headers: { Authorization: `Bearer ${ownerKey}` } });
+  assert.equal((await (await sidecarStatus()).json()).online, true, 'reachable personal health reports online');
+  call = requests.pop()!;
+  assert.equal(call.url, 'https://personal.example/health');
+  assert.equal(call.init.redirect, 'manual');
+  values.delete('twin_online:benmowinckel');
+  redirected = true;
+  assert.equal((await (await sidecarStatus()).json()).online, false, 'a redirect cannot claim healthy inference');
+  assert.equal(requests.length, 1);
+  assert.equal(requests.pop()!.init.redirect, 'manual');
+  redirected = false;
   const offline = await app.request('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: 'What is Alexandria?' }) });
   assert.equal(offline.status, 503, 'company /ask must not borrow the personal connection');
   assert.equal(requests.length, 0);
@@ -128,8 +154,13 @@ try {
   headers = new Headers(call.init.headers);
   assert.equal(headers.get('Authorization'), 'Bearer company-guide-bearer');
   assert.equal(headers.get('CF-Access-Client-Secret'), 'company-guide-access');
-  assert.equal(call.init.redirect, 'error');
+  assert.equal(call.init.redirect, 'manual');
   assert.deepEqual(JSON.parse(String(call.init.body)), { question: 'What is Alexandria?' });
+  redirected = true;
+  const redirectedGuide = await app.request('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: 'What is Alexandria?' }) });
+  assert.equal(redirectedGuide.status, 502, 'the company guide never follows a credential-bearing redirect');
+  assert.equal(requests.length, 1);
+  assert.equal(requests.pop()!.init.redirect, 'manual');
   console.log('Mirror ownership: ordinary User 0, explicit company continuity, env precedence and credential isolation passed');
 } finally {
   globalThis.fetch = originalFetch;

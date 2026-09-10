@@ -193,11 +193,8 @@ async function twinStatus(authorId: string): Promise<TwinStatus> {
   let status: TwinStatus = OFFLINE;
   if (conn?.url) {
     try {
-      const ctrl = new AbortController();
       // Quick tunnels can be slow to first-byte; be tolerant so we don't flap offline.
-      const t = setTimeout(() => ctrl.abort(), 6000);
-      const res = await fetch(healthEndpointFrom(conn.url), { signal: ctrl.signal, headers: accessHeaders(conn), redirect: 'error' });
-      clearTimeout(t);
+      const res = await fetch(healthEndpointFrom(conn.url), { signal: AbortSignal.timeout(6000), headers: accessHeaders(conn), redirect: 'manual' });
       if (res.ok) {
         // An older sidecar reports only `{ok:true}` — no `inference` field. Absent
         // means unknown, and unknown must not read as broken, so only an explicit
@@ -2105,7 +2102,7 @@ export function registerLibraryRoutes(app: Hono): void {
         },
         body: JSON.stringify({ question }),
         signal: ctrl.signal,
-        redirect: 'error',
+        redirect: 'manual',
       });
       if (!res.ok) {
         logEvent('ask_alexandria', { status: String(res.status), reason: 'upstream' });
