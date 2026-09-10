@@ -18,7 +18,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.colors import HexColor
 from reportlab.platypus import (
     BaseDocTemplate, PageTemplate, Frame, Paragraph, Spacer,
-    PageBreak, Flowable, NextPageTemplate, Table, TableStyle,
+    PageBreak, CondPageBreak, Flowable, NextPageTemplate, Table, TableStyle,
 )
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
@@ -68,7 +68,7 @@ S_BODY = ParagraphStyle(
     "Body",
     fontName="EBGaramond",
     fontSize=10.5,
-    leading=19,
+    leading=18,
     textColor=SECONDARY,
     alignment=TA_LEFT,
     spaceAfter=10,
@@ -343,6 +343,7 @@ def parse_md(path):
         # H2
         if stripped.startswith("## "):
             title = stripped[3:].strip()
+            story.append(CondPageBreak(110))
             story.append(Paragraph(format_inline(title), S_H2))
             i += 1
             continue
@@ -350,6 +351,7 @@ def parse_md(path):
         # H3
         if stripped.startswith("### "):
             title = stripped[4:].strip()
+            story.append(CondPageBreak(90))
             story.append(Paragraph(format_inline(title), S_H3))
             i += 1
             continue

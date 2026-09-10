@@ -1,6 +1,6 @@
 # Alexandria — Memo
 
-> **Most AI investments cannot defend their terminal value. Alexandria's compounds with every model release — especially post-singularity.**
+> **Own your progress. Change your AI. Choose what to share.**
 
 > *The cognitive layer of AI — where human minds remain machine-readable across the transition.*
 
@@ -8,7 +8,7 @@
 
 ## the investment.
 
-Most AI products are transition assets — value decays into the model with each release. Alexandria's asset is a **private, accumulating, machine-readable record of how a specific person thinks** — sovereign to the user, unsynthesizable from outside, *worth more from every better model.* The strategic prize is the canonical write path for those records: same shape as WordPress, GitHub, Hugging Face. Winner-takes-most. Coding throughput is not the constraint. **Benjamin has personal runway through the end of 2026; distribution is the current constraint, and capital is needed before runway ends.** Engineering remains founder-led through coding agents, with more model usage or a bounded specialist engagement only if scale earns it.
+**People should be free to change their AI without starting their personal system over.** They own the persistent data and intent; models, harnesses and tools can change around it. Benjamin built an Alexandria loop for himself and open-sourced it so anyone can adopt the parts that fit. The person's own AI reads, develops and writes their private record. **That record is the person's asset, never the company's.** The company begins at the optional connection between those independently owned systems: people deliberately publish selected Mirrors, and Alexandria maintains discovery, verified identity and current permissions. They can keep their own website, storage and model. **We help you build something you own. We charge for connecting it to other people who own theirs.** Software and a registry are reproducible; a lone individual cannot supply other people's continuing participation, contributions and permission. Coordination and Alexandrian identity could make the service harder to replace as useful participation grows. **There is no moat today, and better AI does not guarantee one.** Coding throughput is not the constraint. **Benjamin has personal runway through the end of 2026; distribution is the current constraint, and capital is needed before runway ends.** *Engineering remains founder-led through coding agents, with more model usage or a bounded specialist engagement only if scale earns it.*
 
 *In April 2026 Andrej Karpathy publicly described this architecture — raw data compiled into structured markdown, incrementally enhanced, queries that compound back into the knowledge base — and said "there is room here for an incredible new product."* **Alexandria had already shipped it.**
 
@@ -16,7 +16,7 @@ Most AI products are transition assets — value decays into the model with each
 
 ## the asset.
 
-A structured record of who each user is — whatever they choose to put in it: worldview, values, mental models, taste, personal thoughts, decisions, blind spots, anything. **The product is the framework; the practice is theirs** (daily Socratic sessions, journals, decision logs, any system works). Local files the user owns. Portable across every AI provider. *The record cannot be back-filled: inbox-scraping reaches what the user does, never what they mean.* **The compounding is the years.**
+The person’s own AI reads, develops and writes a record of their thinking in files they own. Benjamin open-sourced his own Alexandria loop so people can use whichever parts fit their existing setup. **Capture, Loop, Skill and Mirror recipes are free to copy and keep.** The private map supports personalisation. Each person chooses what becomes a Mirror: selected writing on their own website, or an optional live PLM using their own model. Any AI with authorised access can read the owned files; hidden vendor state is outside that promise. **The paid Connector links those selected Mirrors for useful discovery and permissioned access.** That is cross personalisation: your own AI uses your context with another person’s permitted depth.
 
 *The product reached v3; real-user hardening begins now. One paste. The tool is free and yours; membership is $30/month after a 30-day trial, or free while three referred friends remain active.* The live questions are who starts, stays and pays, and what breaks when they do.
 
@@ -24,19 +24,19 @@ A structured record of who each user is — whatever they choose to put in it: w
 
 ## the moat.
 
-*Alexandria is sovereign by design — any individual user can take their files and walk at zero cost. **The defensibility is one layer up: coordination.** Alexandria only works as the read **and** write path for personal thought — writers chase readers, readers chase writers, both terminate on the same place.* Once the network gathers there, displacing Alexandria requires getting everyone to switch at once. That doesn't happen — same as HTTP, SMTP, GitHub, Hugging Face. **The scarce asset in a world of cheap intelligence is not capability; it is coordination.**
+*Alexandria is sovereign by design: people keep their private files, independent websites and model accounts when they leave. Free recipes are theirs to keep.* **The company has two possible sources of defensibility: coordination and brand-identity. Neither is built yet.** Coordination means a useful place to find particular people and access the depth they choose to share; brand-identity means people value being Alexandrian and continuing the practice. A competitor can reproduce the code and published snapshots. It cannot create other people's fresh contributions or permission merely by copying the software. That gives a participating collective potential value, not guaranteed dominance. People can leave, use several networks, or coordinate elsewhere. **The service must keep making permitted connections materially easier.** A directory of shallow biographies and chat wrappers fails that test. The company operates shared discovery, identity and exact current access; it need not host every page, hold private records or relay independent public model calls. **Build for useful participation, not a captive dataset.**
 
-**1. Convention.** *Be the canonical place where people host their cognitive records.* Same shape as *build-it-on-WordPress*, *push-it-to-GitHub*, *host-it-on-Hugging-Face*. **Apple can build the tool; Apple cannot build the cathedral.** *Winner-takes-most. 12–36 month window — move as if 12.*
+**1. Convention.** *Become a useful shared connection underneath independently owned websites.* A hosted profile is an optional starting point. A person can keep their own pages, published files and model; no mandatory company host or private write path is required.
 
-**2. Network.** *Your circle on Alexandria means your AI can read their frames when planning with or about them.* The friend's-mind primitive turns recruitment into self-interest. *A clone starts with no population.*
+**2. Network.** *Your own AI can use your context alongside the parts other people choose to share.* Useful depth, voluntary contribution and current permissions create the value. A software clone begins without those people’s participation.
 
-**3. Integration.** *Every AI tool reading from the user's local Alexandria directory is another terminal point.* Claude Code, Cursor, Codex, Grok CLI today; every personalised app tomorrow. **The user can leave; the ecosystem points back.**
+**3. Integration.** *An existing website can add a public description of selected files, then optionally add the shared Connector or live chat.* The private loop works without the company. Independent public reads and own-model calls need not pass through Alexandria.
 
 ---
 
 ## the business.
 
-**Membership.** *The tool and methodology are free; membership is $30/month after a 30-day trial, or free while three referred friends remain active.* Stands alone. Break-even at 4 paying members.
+**Membership.** *The tool and methodology are free; membership is $30/month after a 30-day trial, or free while three referred friends remain active.* Pays for the maintained connection, not ownership of the free loop. Break-even at 4 paying members.
 
 **Platform.** *Users grant other services permissioned access to their Alexandria record — opt-in, revocable.* AI labs pay for alignment and personalisation data. Consumer apps pay to know users who want to be known (meditation, therapy, dating, productivity). **The user monetises their own frame; Alexandria captures a clearing fee.** *Independent of membership count.*
 
