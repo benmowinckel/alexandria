@@ -19,7 +19,7 @@
     "test:cors": "tsx test/cors-preflight.ts"
   },
   "dependencies": {
-    "hono": "^4.13.0",
+    "hono": "^4.13.5",
     "stripe": "21.0.1"
   },
   "devDependencies": {
