@@ -109,7 +109,7 @@ export default function JoinCTA({
           <section className="join-move">
             <h2 className="join-claim">the connector.</h2>
             <p>
-              Your website stays on your host, in your style. Your ai can add a description of the material you choose to share, then register its address with Alexandria. The connector helps members find each other and checks who can read restricted material. Live answers are optional and can run through a model account you control. If you do not have a website, an Alexandria profile gives you a place to start.
+              Your own personal website is the ideal home for your public mirror. Keep the one you have, or build one in your style. The connector helps people and their ais find you and understand the material you choose to share. If you have not made your website yet, an Alexandria profile is an optional place to start.
             </p>
           </section>
           <section className="join-move">
@@ -121,7 +121,7 @@ export default function JoinCTA({
         </div>
 
         <p className="join-close">
-          Capture, Loop, Skill, and the Mirror recipe are free to keep and adapt. Membership pays for the operated connector: shared discovery, reader identity, and current access. Leaving stops those services; your own files, website, and model keep working. Try it free for a month. Invite three friends and it stays free while they stay, because their mirrors make your loop more useful. Otherwise, it is a dollar a day. If that is too much, <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>message me</a> and I will cover it.
+          The loop and skill are free. You pay only for the shared connection. Try it free for a month. Invite three friends and it stays free while they stay, because their mirrors make your loop more useful. Otherwise, it is a dollar a day. If that is too much, <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>message me</a> and I will cover it.
         </p>
         {billingStatus && (
           <p className="join-billing-note" role="status">
