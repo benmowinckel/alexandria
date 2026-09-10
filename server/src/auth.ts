@@ -4,6 +4,8 @@ import { getAuthIndex, getKV, loadAccount, loadAccounts } from './kv.js';
 import { hashApiKey } from './crypto.js';
 
 export interface Account {
+  /** Request-only delegation marker. Never persisted as account state. */
+  library_reader_only?: true;
   github_id: number;
   github_login: string;
   github_name?: string | null;

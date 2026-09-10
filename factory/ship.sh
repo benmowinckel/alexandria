@@ -27,6 +27,7 @@ cd "$REPO_ROOT"
 # outputs. Regenerate before every release so one host cannot silently ship an
 # older execution promise than another.
 python3 factory/scripts/render_start_skills.py --write
+node scripts/package-website.mjs
 
 # Known commercial-boundary and first-touch regressions are deterministic and
 # block before Touch ID. The model red-team remains the judgment layer above it.

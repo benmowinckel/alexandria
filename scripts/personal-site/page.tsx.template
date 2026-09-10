@@ -1,0 +1,9 @@
+import AuthorPage from './library/[author]/page';
+import { PERSONAL_AUTHOR } from './lib/personal-site';
+
+export const dynamic = 'force-dynamic';
+
+// The same profile page, on the Author's own root domain.
+export default function Home() {
+  return <AuthorPage params={Promise.resolve({ author: PERSONAL_AUTHOR })} />;
+}

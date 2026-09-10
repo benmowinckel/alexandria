@@ -12,6 +12,7 @@ export interface DirectoryAuthor {
   contact: string | null;
   text: string | null;
   files_url: string;
+  connected_site?: { site: string; manifest_url: string; verified: true } | null;
 }
 
 export type LibrarySort = 'number-asc' | 'number-desc' | 'name-asc' | 'name-desc';
@@ -115,11 +116,15 @@ export function LibraryDirectory({
   initialQuery = '',
   initialLocation = '',
   initialSort = 'number-asc',
+  cursor,
+  nextCursor,
 }: {
   authors: DirectoryAuthor[];
   initialQuery?: string;
   initialLocation?: string;
   initialSort?: LibrarySort;
+  cursor?: string;
+  nextCursor?: string | null;
 }) {
   const [query, setQuery] = useState(initialQuery);
   const [location, setLocation] = useState(initialLocation);
@@ -134,8 +139,11 @@ export function LibraryDirectory({
   }, [authors]);
   const locationOptions = useMemo<DirectoryMenuOption<string>[]>(() => [
     { value: '', label: 'everywhere' },
+    // A location selected on another page still filters this one. Keep the
+    // active filter visible even when this page has nobody from that location.
+    ...(location && !locations.some(([value]) => value === location) ? [{ value: location, label: location }] : []),
     ...locations.map(([value, label]) => ({ value, label })),
-  ], [locations]);
+  ], [location, locations]);
   const sortOptions: DirectoryMenuOption<LibrarySort>[] = [
     { value: 'number-asc', label: 'ascending', ariaLabel: 'Alexandria number, lowest first' },
     { value: 'number-desc', label: 'descending', ariaLabel: 'Alexandria number, highest first' },
@@ -161,6 +169,15 @@ export function LibraryDirectory({
     });
   }, [authors, location, query, sort]);
 
+  const pageParams = new URLSearchParams();
+  if (query.trim()) pageParams.set('q', query.trim());
+  if (location) pageParams.set('location', location);
+  if (sort !== 'number-asc') pageParams.set('sort', sort);
+  const firstPageHref = `/library${pageParams.size ? `?${pageParams}` : ''}`;
+  if (nextCursor) pageParams.set('cursor', nextCursor);
+  const nextPageHref = `/library?${pageParams}`;
+  const hasPages = !!(cursor || nextCursor);
+
   return (
     <>
       <div className="directory-tools">
@@ -169,6 +186,7 @@ export function LibraryDirectory({
           <input
             type="search"
             value={query}
+            maxLength={100}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="search people"
             aria-label="Search profiles by name"
@@ -185,12 +203,16 @@ export function LibraryDirectory({
       </div>
 
       {filtered.length === 0 ? (
-        <p className="directory-empty">no matches.</p>
+        <p className="directory-empty">
+          {authors.length === 0
+            ? hasPages ? 'No visible profiles on this page.' : 'No profiles are listed yet.'
+            : hasPages ? 'No matches on this page.' : 'No matches.'}
+        </p>
       ) : (
         <section className="directory-list" aria-live="polite">
           {filtered.map((author) => (
             <article key={author.id} className="directory-row">
-              <Link href={author.files_url} className="directory-link hover:opacity-60">
+              <Link href={author.connected_site?.site || author.files_url} className="directory-link hover:opacity-60">
                 <span className="directory-person">
                   <span className="directory-name">{displayName(author)}</span>
                   {author.location ? <span className="directory-location">{author.location}</span> : null}
@@ -201,6 +223,13 @@ export function LibraryDirectory({
           ))}
         </section>
       )}
+
+      {hasPages ? (
+        <nav className="directory-pages" aria-label="directory pages">
+          {cursor ? <Link href={firstPageHref} prefetch={false}>first page</Link> : null}
+          {nextCursor ? <Link href={nextPageHref} prefetch={false}>next page</Link> : null}
+        </nav>
+      ) : null}
 
       <style>{`
         .directory-tools {
@@ -267,6 +296,11 @@ export function LibraryDirectory({
         .directory-location { color: var(--text-muted); font-size: 0.9rem; line-height: 1.2; }
         .directory-number { flex: none; color: var(--text-muted); font-size: 0.94rem; letter-spacing: 0.02em; }
         .directory-empty { color: var(--text-ghost); font-size: 0.9rem; margin-top: 2rem; }
+        .directory-pages { display: flex; gap: 1.5rem; margin-top: 1.5rem; }
+        .directory-pages a {
+          color: var(--text-secondary); text-decoration: underline; text-decoration-color: var(--text-muted);
+          text-underline-offset: 3px; text-decoration-thickness: 1px;
+        }
         @media (max-width: 640px) {
           .directory-tools { grid-template-columns: 1fr 1fr; gap: 1rem 1.2rem; }
           .directory-search { grid-column: 1 / -1; }

@@ -13,6 +13,7 @@ import { safeUrl } from '../../lib/url';
 import { authorExamples } from '../../lib/useRotatingPlaceholder';
 import { type TwinVariantSummary } from './types';
 import { LIBRARY_LOCATIONS } from '../../../shared/library-locations';
+import { PERSONAL_SITE, PERSONAL_SEAL, alexandriaHref } from '../../lib/personal-site';
 
 interface ProtocolFile {
   scope: string;
@@ -32,7 +33,7 @@ interface ProtocolFile {
   url?: string | null;
 }
 
-interface AuthorData {
+export interface AuthorData {
   author: {
     id: string;
     account_id: string | null;
@@ -165,11 +166,11 @@ function websiteLabel(raw: string): string {
   return href.replace(/^https?:\/\//i, '').replace(/\/$/, '');
 }
 
-export default function AuthorPageClient({ params }: { params: Promise<{ author: string }> }) {
+export default function AuthorPageClient({ params, initialData }: { params: Promise<{ author: string }>; initialData?: AuthorData }) {
   const router = useRouter();
-  const [authorId, setAuthorId] = useState('');
-  const [data, setData] = useState<AuthorData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authorId, setAuthorId] = useState(initialData?.author.id || '');
+  const [data, setData] = useState<AuthorData | null>(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState('');
   // The ask-me door — the question typed here rides to the chat page, which
   // auto-fires it (?q=). The door owns no chat state; the chat is the room.
@@ -230,10 +231,10 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           });
           setLoading(false);
         })
-        .catch(e => { setError(e.name === 'AbortError' ? 'unreachable' : e.message); setLoading(false); })
+        .catch(e => { if (!initialData) setError(e.name === 'AbortError' ? 'unreachable' : e.message); setLoading(false); })
         .finally(() => clearTimeout(timeout));
     });
-  }, [params, router]);
+  }, [params, router, initialData]);
 
   // The door's question rides to the chat page, which auto-fires it (?q=).
   // The profile is always available; only live inference follows the Author's
@@ -326,7 +327,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
   };
 
   const saveProfile = async () => {
-    if (!data?.viewer?.is_owner || !authorId || saving) return;
+    if (PERSONAL_SITE || !data?.viewer?.is_owner || !authorId || saving) return;
     setSaving(true);
     setSaveNote('');
     const socials = identity.socials
@@ -427,7 +428,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
 
   // General account sign-in — lives at the top of the page, not tied to the twin.
   const signedIn = data.viewer?.signed_in === true || data.twin?.signed_in === true;
-  const isOwner = data.viewer?.is_owner === true;
+  const isOwner = !PERSONAL_SITE && data.viewer?.is_owner === true;
   const signInUrl = librarySignInUrlHere();
   // The router — the bio's links out as one first-class block: website leads,
   // socials follow, contact closes. This is the ground-truth pointer set the
@@ -616,11 +617,11 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
       <main className="profile-main" style={{ maxWidth: '820px', margin: '0 auto', padding: '6rem 2.5rem 4rem', fontFamily: 'var(--font-eb-garamond)' }}>
         <header className={editing ? 'profile-edit-header' : undefined} style={{ margin: '0 0 2.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '1.75rem' }}>
-            <Link href="/library" aria-label="back to the library" title="library" style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">
+            {PERSONAL_SITE && PERSONAL_SEAL ? <Link href="/" aria-label={`${author.display_name || author.id} home`}><img src={PERSONAL_SEAL} alt="" width="44" height="44" style={{ display: 'block', objectFit: 'contain' }} /></Link> : <Link href={alexandriaHref('/library')} aria-label="back to the library" title="library" style={{ color: 'var(--text-muted)', display: 'flex', textDecoration: 'none' }} className="hover:opacity-60">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
-            </Link>
+            </Link>}
             <div className="profile-head-actions">
-            {isOwner && editing ? (
+            {!PERSONAL_SITE && (isOwner && editing ? (
               <HeaderAction onClick={saveProfile} busy={saving}>
                 {saving ? 'saving changes' : 'save changes'}
               </HeaderAction>
@@ -634,9 +635,9 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             ) : (
               <HeaderActions
                 left={<HeaderAction href={signInUrl}>sign in</HeaderAction>}
-                right={<HeaderAction href="/start">start</HeaderAction>}
+                right={<HeaderAction href={alexandriaHref('/start')}>start</HeaderAction>}
               />
-            )}
+            ))}
               <ThemeToggle inline />
             </div>
           </div>
@@ -707,7 +708,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
           ) : (author.location && author.location_key) || author.contact ? (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', letterSpacing: '0.02em', margin: '0.72rem 0 0', textTransform: 'lowercase' }}>
               {author.location && author.location_key && (
-                <Link href={`/library?location=${encodeURIComponent(author.location_key)}`} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link>
+                <Link href={alexandriaHref(`/library?location=${encodeURIComponent(author.location_key)}`)} style={{ color: 'inherit', textDecoration: 'none' }} className="hover:opacity-60">{author.location}</Link>
               )}
               {author.contact && (
                 <>
@@ -819,7 +820,7 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
                 <p className="mirror-explainer" style={{ color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.55, margin: '0.75rem 0 0' }}>
                   {data.twin?.online === true
                     ? `Ask ${first}’s mirror about the thinking behind the work.`
-                    : `The mirror is available when ${first}’s computer is on.`}
+                    : PERSONAL_SITE ? 'You can still read the public work.' : `The mirror is available when ${first}’s computer is on.`}
                 </p>
                 <div className={doorShake ? 'twin-door-shake' : undefined} style={{ margin: '0.9rem -0.98rem 0' }}>
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing}
@@ -862,12 +863,12 @@ export default function AuthorPageClient({ params }: { params: Promise<{ author:
             the one CTA — this profile IS the demo; "build your own" is the
             whole pitch). */}
         {!editing && <footer style={{ borderTop: '1px solid var(--border-light)', textAlign: 'center', margin: '4rem 0 0', padding: '1.6rem 0 0' }}>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', margin: 0 }}>
+          {!PERSONAL_SITE && <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', margin: 0 }}>
             want this for yourself?{' '}
-            <Link href="/start" style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">start your loop</Link>
-          </p>
-          <p style={{ margin: '1.4rem 0 0' }}>
-            <Link href="/" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '1rem', letterSpacing: '0.01em', textDecoration: 'none' }} className="hover:opacity-60">
+            <Link href={alexandriaHref('/start')} style={{ color: 'var(--accent)', textDecoration: 'none' }} className="hover:opacity-60">start your loop</Link>
+          </p>}
+          <p style={{ margin: PERSONAL_SITE ? 0 : '1.4rem 0 0' }}>
+            <Link href={alexandriaHref('/')} style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '1rem', letterSpacing: '0.01em', textDecoration: 'none' }} className="hover:opacity-60">
               alexandria<span style={{ fontStyle: 'normal' }}>.</span>
             </Link>
           </p>

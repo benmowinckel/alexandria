@@ -14,6 +14,8 @@ import { registerProtocol } from './protocol.js';
 import { registerRoutes } from './routes.js';
 import { registerBillingRoutes, settleMonthlyTabs, recalculateAllKinPricing, createPatronCheckoutSession } from './billing.js';
 import { registerLibraryRoutes } from './library.js';
+import { registerVisitorConnectorRoutes, resolveConnectorViewer } from './visitor-connector.js';
+import { registerConnectorAccess } from './connector-access.js';
 import { getAnalytics, getEventLog, getDashboard, getUserEvents, logEvent, flushEvents } from './analytics.js';
 import { setKV, getKV } from './kv.js';
 import { getDB } from './db.js';
@@ -47,6 +49,9 @@ app.onError((err, c) => {
       error_name: errorName.slice(0, 80),
     });
     console.error(`[server_error] ${method} ${path}`, err);
+    // A dependency outage is retryable, not a cancelled membership or generic
+    // application failure. Keep its status without exposing internal details.
+    if (status === 503) return c.json({ error: 'Service temporarily unavailable' }, 503);
     return c.json({ error: 'Internal Server Error' }, 500);
   }
 
@@ -142,6 +147,14 @@ const PUBLIC_RATE_LIMITED_ROUTES = [
   { path: '/auth/github', scope: 'auth', limit: 10 },
   { path: '/auth/github/callback', scope: 'auth-callback', limit: 10 },
   { path: '/check-kin', scope: 'check-kin', limit: 10 },
+  { path: '/connect/authorize', scope: 'visitor-authorize', limit: 10 },
+  { path: '/connect/token', scope: 'visitor-token', limit: 30 },
+  // These routes can verify billing or write registration state. Limit them
+  // before visitor resolution so even valid tokens cannot amplify that work.
+  { path: '/connect/site', scope: 'website-registration', limit: 10 },
+  { path: '/connect/site/verify', scope: 'website-proof', limit: 10 },
+  { path: '/connect/site/:author', scope: 'website-resolve', limit: 60 },
+  { path: '/connect/access/:author', scope: 'website-access', limit: 120 },
   { path: '/account/connect/browser', scope: 'account-connect', limit: 5 },
   { path: '/account/connect/handoff', scope: 'account-connect', limit: 5 },
   { path: '/account/connect/exchange', scope: 'account-connect', limit: 5 },
@@ -161,12 +174,23 @@ for (const { path, scope, limit } of PUBLIC_RATE_LIMITED_ROUTES) {
 // Protocol — optional collective plumbing (file, call, library, marketplace)
 // ---------------------------------------------------------------------------
 
+// Validate delegated credentials before ANY route can inspect account state.
+// A visitor token on an owner/mutation route is an error, never anonymous or
+// an excuse to fall back to a separately supplied owner credential.
+app.use('*', async (c, next) => {
+  const visitor = await resolveConnectorViewer(c);
+  if (visitor) c.set('connectorViewer', visitor);
+  await next();
+});
+
 registerProtocol(app);
 
 // ---------------------------------------------------------------------------
 // Company — OAuth, feedback, admin
 // ---------------------------------------------------------------------------
 
+registerVisitorConnectorRoutes(app);
+registerConnectorAccess(app);
 registerRoutes(app);
 
 // ---------------------------------------------------------------------------
@@ -352,6 +376,9 @@ type PublicRateLimitScope =
   | 'waitlist' | 'follow' | 'onboard'          // POST bodies (5/min default)
   | 'auth' | 'auth-callback'                   // OAuth pair (10/min — see middleware above)
   | 'check-kin'                                // unauthenticated membership oracle
+  | 'visitor-authorize' | 'visitor-token'       // bounded website delegation
+  | 'website-registration' | 'website-proof'
+  | 'website-resolve' | 'website-access'       // bounded connected-site operations
   | 'account-connect';                         // one-use connection exchange
 
 async function enforcePublicRateLimit(scope: PublicRateLimitScope, ip: string, limit = PUBLIC_RATE_LIMIT_MAX): Promise<boolean> {

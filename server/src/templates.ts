@@ -5,6 +5,7 @@
 
 import { Buffer } from 'node:buffer';
 import { randomBytes } from 'node:crypto';
+import { websiteConnectorPrompt } from '../../shared/onboarding-prompts.js';
 
 function getWebsiteUrl() { return process.env.WEBSITE_URL || 'https://alexandria-library.com'; }
 
@@ -92,9 +93,9 @@ export async function callbackPageHtml(
   void authorNumber;
   void _kinCompliant;
   const WEBSITE_URL = getWebsiteUrl();
-  // Membership is already complete here. For a first connection, the first
-  // action copies only an opaque, one-use code. The signed local installer owns
-  // every instruction and waits for the person's approval before exchanging it.
+  // Membership is already complete here. Website-first evaluation is a public,
+  // credential-free request. The separate existing-loop action copies only its
+  // opaque code; installed signed instructions own that exact consent flow.
   // A founding number is assigned server-side but is not the pitch.
   // The invite link now opens /invite — the self-contained referral landing
   // (founder 2026-07-17: a cold recipient dropped on /start had "no idea what
@@ -225,6 +226,7 @@ export async function callbackPageHtml(
 <a class="brand-corner" href="${WEBSITE_URL}/">alexandria<span class="brand-dot">.</span></a>
 <main class="wrap">
   <h1 class="welcome">${isReturning ? `welcome back.` : `welcome to alexandria.`}</h1>
+  <button type="button" class="cta-box" onclick="copyWebsiteConnection(this)"><span class="cta-copy"><span class="cta-label">connect your website</span><span class="cta-sep"> &mdash; </span><span class="cta-why">copy for your website’s ai</span></span></button>
   ${connectionCode
     ? `<button type="button" class="cta-box" onclick="copyConnection(this)"><span class="cta-copy"><span class="cta-label">connect your loop</span><span class="cta-sep"> &mdash; </span><span class="cta-why">copy for your computer agent</span></span></button>`
     : `<a class="cta-box" href="${libraryUrl}"><span class="cta-copy"><span class="cta-label">open your library</span><span class="cta-sep"> &mdash; </span><span class="cta-why">see your public page</span></span></a>`}
@@ -266,6 +268,9 @@ function manualCopy(text, el, label, why) {
 }
 function copyConnection(el) {
   copyText(${jsLiteral(connectionCode)}, el, 'copied', 'paste into your computer agent');
+}
+function copyWebsiteConnection(el) {
+  copyText(${jsLiteral(websiteConnectorPrompt())}, el, 'copied', 'paste into the ai that works on your website');
 }
 // Share, not copy (founder 2026-07-27): the native sheet puts the link one tap
 // from a real conversation — Messages, WhatsApp, wherever they'd actually send

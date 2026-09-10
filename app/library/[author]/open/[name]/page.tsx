@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { PERSONAL_SITE, alexandriaHref } from '../../../../lib/personal-site';
 import { useSearchParams } from 'next/navigation';
 import { ThemeToggle } from '../../../../components/ThemeToggle';
-import { SERVER_URL, librarySignInUrl } from '../../../../lib/config';
+import { librarySignInUrl } from '../../../../lib/config';
 
 type Visibility = 'public' | 'authors' | 'invite' | 'paid' | string;
 
@@ -80,7 +81,7 @@ export default function OpenProtocolFileGatePage({
       setFileName(name);
       try {
         const [authorRes, sessionRes] = await Promise.all([
-          fetch(`${SERVER_URL}/library/${encodeURIComponent(author)}`),
+          fetch(`/api/library/${encodeURIComponent(author)}`, { credentials: 'include' }),
           fetch('/api/library/session', { credentials: 'include' }),
         ]);
 
@@ -114,7 +115,7 @@ export default function OpenProtocolFileGatePage({
 
   const signInUrl = useMemo(() => librarySignInUrl(nextPath), [nextPath]);
   const signUpUrl = useMemo(() => (
-    `/join?ref=${encodeURIComponent(authorId)}&ref_source=library`
+    alexandriaHref(`/join?ref=${encodeURIComponent(authorId)}&ref_source=library`)
   ), [authorId]);
   const purchaseSessionId = (searchParams.get('session_id') || '').trim();
   const canceled = searchParams.get('cancel') === '1';
@@ -122,7 +123,7 @@ export default function OpenProtocolFileGatePage({
   const fileExtension = FILE_EXTENSIONS[fileName] || 'md';
   const displayName = fileDisplayName(fileName);
 
-  const canOwnerOpen = signedIn && sessionLogin === authorId;
+  const canOwnerOpen = !PERSONAL_SITE && signedIn && sessionLogin === authorId;
 
   const apiFileUrl = (query?: string) => {
     const path = `/api/library/${encodeURIComponent(authorId)}/file/${encodeURIComponent(fileName)}`;
@@ -154,6 +155,10 @@ export default function OpenProtocolFileGatePage({
   // ---------------------------------------------------------------------------
 
   const startUnauthCheckout = async (): Promise<boolean> => {
+    if (PERSONAL_SITE) {
+      window.location.href = alexandriaHref(nextPath);
+      return true;
+    }
     const checkout = await fetch(
       `/api/library/${encodeURIComponent(authorId)}/checkout/file/${encodeURIComponent(fileName)}${scope ? `?scope=${encodeURIComponent(scope)}` : ''}`,
       {
@@ -178,7 +183,7 @@ export default function OpenProtocolFileGatePage({
     setError('');
     try {
       // Pragmatic shortcut: unauth on a paid file goes straight to Stripe.
-      if (visibility === 'paid' && !signedIn && !purchaseSessionId && !canOwnerOpen) {
+      if (!PERSONAL_SITE && visibility === 'paid' && !signedIn && !purchaseSessionId && !canOwnerOpen) {
         await startUnauthCheckout();
         return;
       }
@@ -644,7 +649,7 @@ export default function OpenProtocolFileGatePage({
           <Link href={`/library/${authorId}`} style={{ fontSize: '0.72rem', color: 'var(--text-whisper)', textDecoration: 'none' }} className="hover:opacity-60">
             back
           </Link>
-          <Link href="/" style={{ fontSize: '0.72rem', color: 'var(--text-whisper)', textDecoration: 'none' }} className="hover:opacity-60">
+          <Link href={alexandriaHref('/')} style={{ fontSize: '0.72rem', color: 'var(--text-whisper)', textDecoration: 'none' }} className="hover:opacity-60">
             alexandria.
           </Link>
         </div>

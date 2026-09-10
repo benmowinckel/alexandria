@@ -151,7 +151,7 @@ your loop is ready.
 
 Your AI now has local files it can keep building on with you. Keep using it normally; no personal data was shared, and no account was connected.
 
-Next, decide whether you also want a public profile and a way to connect with other people.
+Next, decide whether you want to connect with other people through your own website or an optional starting profile.
 
 [See the community](https://alexandria-library.com/join).
 ```

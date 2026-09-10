@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { SERVER_URL, FOUNDER_EMAIL, FOUNDER_PROFILE_PATH } from '../lib/config';
+import { SERVER_URL, FOUNDER_EMAIL } from '../lib/config';
 import { checkReferral, parseReferralInput } from '../lib/referral';
 import { ArrowIcon, TickIcon } from './DoorIcons';
 
@@ -103,25 +103,25 @@ export default function JoinCTA({
           <section className="join-move">
             <h2 className="join-claim">the problem.</h2>
             <p>
-              Your private loop lets every ai understand you deeply. But your life happens with other people, and each ai knows only one side. Your own personal website can show who you are, but on its own it is still an island.
+              Your own ai can build a lasting understanding of you. Other people and their ais need a way to understand the parts you choose to share: your work, your thinking, and how they fit together. That is your public mirror.
             </p>
           </section>
           <section className="join-move">
             <h2 className="join-claim">the connector.</h2>
             <p>
-              Your own personal website stays your home. Put one Alexandria link on it. That link gives people and their ais the public context you approved, while Alexandria handles identity, permissions, discovery, and payments. A personal language model can answer from that context, giving your public footprint the depth of your private mirror without exposing the private files. Until you build your site, your Library page is the complete starting point, like <a href={FOUNDER_PROFILE_PATH} target="_blank" rel="noopener noreferrer">the founder&apos;s</a>.
+              Your website stays on your host, in your style. Your ai can add a description of the material you choose to share, then register its address with Alexandria. The connector helps members find each other and checks who can read restricted material. Live answers are optional and can run through a model account you control. If you do not have a website, an Alexandria profile gives you a place to start.
             </p>
           </section>
           <section className="join-move">
             <h2 className="join-claim">the library.</h2>
             <p>
-              Every member&apos;s personal website points into the same Library. Without that shared thread, every pair of people would need a separate connection. When people in your life build their own mirrors and publish what they choose, your ai understands them from their context and theirs understands you from yours. Alexandria connects the mirrors, but nobody can build one for somebody else. The people who choose to do the work become unusually easy for other people and ais to understand.
+              The Library connects these independently owned mirrors. Your ai can find another member, read the material they allow you to see, and combine it with what it already knows about you. Your private context stays with your ai. That is cross personalisation. Its value grows as people choose to share and keep developing their thinking.
             </p>
           </section>
         </div>
 
         <p className="join-close">
-          The loop and skill are free. You pay only for the shared connection. Try it free for a month. Invite three friends and it stays free while they stay, because their mirrors make your loop more useful. Otherwise, it is a dollar a day. If that is too much, <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>message me</a> and I will cover it.
+          Capture, Loop, Skill, and the Mirror recipe are free to keep and adapt. Membership pays for the operated connector: shared discovery, reader identity, and current access. Leaving stops those services; your own files, website, and model keep working. Try it free for a month. Invite three friends and it stays free while they stay, because their mirrors make your loop more useful. Otherwise, it is a dollar a day. If that is too much, <a href={`mailto:${FOUNDER_EMAIL}?subject=Alexandria%20membership`}>message me</a> and I will cover it.
         </p>
         {billingStatus && (
           <p className="join-billing-note" role="status">

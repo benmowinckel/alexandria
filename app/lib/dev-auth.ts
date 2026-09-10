@@ -7,6 +7,7 @@
  * inert there. Never overrides real incoming auth.
  */
 export function localAuth(incomingAuth?: string | null): Record<string, string> {
+  if (process.env.NODE_ENV !== 'development' || process.env.NEXT_PUBLIC_PERSONAL_AUTHOR) return {};
   if (incomingAuth) return {};
   const key = process.env.ALX_LOCAL_KEY;
   return key ? { Authorization: `Bearer ${key}` } : {};

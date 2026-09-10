@@ -9,7 +9,6 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   acceptsAuthorSidecar,
-  inferenceEnvForAuthor,
   isLibraryCategory,
   libraryLocationOptions,
   libraryCapabilityContract,
@@ -32,17 +31,10 @@ assert.equal(canonicalLibraryLocation('SAN FRANCISCO'), 'San Francisco');
 assert.equal(canonicalLibraryLocation('not a real place'), null);
 assert.equal(new Set(libraryLocationOptions()).size, libraryLocationOptions().length);
 
-const env = {
-  DEFAULT_TWIN_CHECKPOINT: 'tinker://company',
-  DEFAULT_TWIN_BASE: 'company-base',
-  DEFAULT_TWIN_CONTEXT_MODEL: 'company-model',
-};
-
-assert.deepEqual(inferenceEnvForAuthor('someone', env, 'founder'), {});
-assert.deepEqual(inferenceEnvForAuthor('founder', env, 'founder'), env);
-assert.equal(acceptsAuthorSidecar('someone', { url: 'https://own.example', secret: 'x' }, 'founder'), false);
-assert.equal(acceptsAuthorSidecar('someone', { url: 'https://own.example', secret: 'x', owner_account: true }, 'founder'), true);
-assert.equal(acceptsAuthorSidecar('founder', { url: 'https://founder.example', secret: 'x' }, 'founder'), true);
+assert.equal(acceptsAuthorSidecar({ url: 'https://own.example', secret: 'x' }), false);
+assert.equal(acceptsAuthorSidecar({ url: 'https://own.example', secret: 'x', owner_account: true }), true);
+assert.equal(acceptsAuthorSidecar({ url: 'https://own.example', secret: '', owner_account: true }), false);
+assert.equal(acceptsAuthorSidecar({ url: 'https://localhost', secret: 'x', owner_account: true }), false);
 
 const promptBoundary = resolveTwinVariants({
   twin: {
@@ -55,7 +47,7 @@ assert.equal('system' in promptBoundary.context, false);
 assert.deepEqual(promptBoundary.context.scopes, ['invite/friends']);
 
 const contract = libraryCapabilityContract({
-  authorId: 'someone', viewerRole: 'owner', ownInferenceRequired: true,
+  authorId: 'someone', viewerRole: 'owner',
   inferenceConnected: false, twinEnabled: false,
 });
 assert.equal(contract.schema, 'alexandria.library.capabilities.v3');
@@ -65,7 +57,11 @@ assert.equal(isLibraryCategory('Field Notes'), false);
 assert.equal(isLibraryCategory('../private'), false);
 assert.deepEqual(contract.profile.default_sections, ['works', 'projects', 'shadows', 'other']);
 assert.match(contract.profile.custom_sections, /lowercase slug/);
-assert.match(contract.profile.custom_surfaces, /separate surface/);
+assert.match(contract.profile.custom_surfaces, /existing website keeps its own pages/);
+assert.equal(contract.connector.registration.path, '/connect/site');
+assert.equal(contract.connector.registration.body.listed, true);
+assert.equal('callback_path' in contract.connector.registration.body, false, 'public discovery does not require a backend callback');
+assert.equal(contract.inference.hosting, 'optional_library_bridge');
 assert.match(contract.stand.module_id, /factory\/canon\/stand$/);
 assert.match(contract.stand.rule, /starting point, not Library law/);
 assert.equal(contract.inference.ownership, 'author_account_only');

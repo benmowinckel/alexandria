@@ -46,9 +46,9 @@ export default async function ConnectPage() {
         {session.membership_active ? (
           <>
             <h1>connect your ai.</h1>
-            <p>copy the code, then paste it into the AI agent on your computer.</p>
+            <p>copy the code, then paste it into the ai that prepared your loop or website connector.</p>
             <ConnectClient />
-            <p className="connect-private">your computer agent will explain the change first. nothing connects until you say <em>connect</em>.</p>
+            <p className="connect-private">your ai will explain the change first. nothing connects until you say <em>connect</em>. your website stays on your own host; a private loop is optional.</p>
           </>
         ) : (
           <>

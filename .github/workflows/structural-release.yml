@@ -113,6 +113,7 @@ jobs:
         working-directory: candidate
         run: |
           bash factory/scripts/check-private-boundary.sh
+          node factory/test/person-context.mjs
           bash factory/test/connect-account.sh
           bash scripts/test-network-consent.sh
 
@@ -132,7 +133,7 @@ jobs:
         run: |
           npm ci
           npx tsc --noEmit
-          for test in account-connect-contract account-connect-experience audit cors-preflight cron-scanner file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
+          for test in account-connect-contract account-connect-experience audit cors-preflight cron-scanner directory-pagination file-access library-capabilities mirror-ownership visitor-connector connector-access marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
             npx tsx "test/$test.ts"
           done
 
@@ -150,6 +151,9 @@ jobs:
           npm ci
           npm audit --audit-level=high
           npm run test:handoff
+          node --test integration/website-connector/test/*.test.mjs
+          node --import ./server/node_modules/tsx/dist/loader.mjs server/test/personal-website.ts
+          node --import ./server/node_modules/tsx/dist/loader.mjs server/test/personal-inference.ts
           npm run build
           npx playwright install --with-deps chromium
           npm run start >/tmp/alexandria-next.log 2>&1 &

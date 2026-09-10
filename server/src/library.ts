@@ -1,3 +1,4 @@
+import { publicMirrorSystem, publicMirrorUsesFirstPerson } from '../../shared/mirror-context.js';
 /**
  * Library — read-only company layer
  *
@@ -7,6 +8,8 @@
  */
 
 import { Hono, type Context } from 'hono';
+import { Buffer } from 'node:buffer';
+import { HTTPException } from 'hono/http-exception';
 import { canonicalLibraryLocation, LIBRARY_LOCATIONS, libraryLocationKey } from '../../shared/library-locations.js';
 import { getDB, generateId, ensureFilePriceColumn, ensureFileTitleColumn, clampPaidAmount } from './db.js';
 import { logEvent } from './analytics.js';
@@ -19,8 +22,9 @@ import {
 } from './auth.js';
 import { getAllowedOrigins } from './cors.js';
 import { getStripe, ensurePayoutsReady, resolveMembership } from './billing.js';
-import { getKV, loadAccounts } from './kv.js';
+import { getKV, getLoginIndex, loadAccount } from './kv.js';
 import { getAccountByLogin, updateAccountBilling } from './accounts.js';
+import { connectedWebsite, directoryWebsiteCandidates } from './visitor-connector.js';
 import {
   isInternalProtocolFileName,
   readProtocolFile,
@@ -62,7 +66,6 @@ import {
   type TwinVariant,
   type TwinVisibility,
   type TwinConfig,
-  type TwinEnv,
   type TwinInferenceRequest,
   type TwinWork,
 } from './twin.js';
@@ -81,69 +84,83 @@ const DEFAULT_FOUNDER_LOGIN = 'benmowinckel';
 // line of defence; this gate makes the identity boundary deterministic at the
 // rendered surface even when a weights model falls back into its first-person
 // training voice.
-function publicMirrorUsesFirstPerson(answer: string): boolean {
-  return /\b(?:i|i'm|i’ve|i've|i’d|i'd|i’ll|i'll|me|my|mine|myself|we|we’re|we're|we’ve|we've|we’d|we'd|we’ll|we'll|our|ours|ourselves)\b/i.test(answer);
-}
+
 
 function founderLogin(): string {
   return (process.env.ADMIN_GITHUB_LOGIN || DEFAULT_FOUNDER_LOGIN).trim().toLowerCase();
-}
-
-/**
- * Company-funded inference is a founder-only compatibility path. Every other
- * Author must bring a sidecar backed by their own model account. Keeping this
- * decision here — before variant resolution and before network access — means
- * a missing per-Author model/checkpoint can never silently resolve to a company
- * default.
- */
-export function inferenceEnvForAuthor(
-  authorId: string,
-  env: TwinEnv,
-  adminLogin = DEFAULT_FOUNDER_LOGIN,
-): TwinEnv {
-  return authorId.trim().toLowerCase() === adminLogin.trim().toLowerCase() ? env : {};
-}
-
-// Env defaults for both twin variants, founder-only.
-function twinEnv(authorId: string): TwinEnv {
-  return inferenceEnvForAuthor(authorId, {
-    DEFAULT_TWIN_CHECKPOINT: process.env.DEFAULT_TWIN_CHECKPOINT,
-    DEFAULT_TWIN_BASE: process.env.DEFAULT_TWIN_BASE,
-    DEFAULT_TWIN_CONTEXT_MODEL: process.env.DEFAULT_TWIN_CONTEXT_MODEL,
-  }, founderLogin());
 }
 
 // Per-Author inference sidecar. Each Author runs their OWN sidecar with their
 // model account and keys. The Worker brokers exact published Library context. Registration is a dedicated
 // ENCRYPTED KV entry (`twin_sidecar:{author}`) so the query path and the online
 // check read it the same way and the secret never rides in a settings blob.
-// The founder alone may use the Worker env sidecar. Non-founder Authors fail
-// closed when their own connection is absent, malformed, or not explicitly
-// registered as author-owned.
-interface SidecarConn { url: string; secret: string; owner_account?: boolean }
-
-export function acceptsAuthorSidecar(
-  authorId: string,
-  conn: SidecarConn | null,
-  adminLogin = DEFAULT_FOUNDER_LOGIN,
-): boolean {
-  if (!conn?.url) return false;
-  return authorId.trim().toLowerCase() === adminLogin.trim().toLowerCase() || conn.owner_account === true;
+// Every Author, including User 0, fails closed without explicit registration.
+// Transport credentials belong to that adapter; company credentials never ride
+// along to an Author-controlled URL.
+interface SidecarConn {
+  url: string;
+  secret: string;
+  owner_account?: boolean;
+  access_client_id?: string;
+  access_client_secret?: string;
 }
 
-async function getSidecar(authorId: string): Promise<SidecarConn | null> {
+export function acceptsAuthorSidecar(conn: SidecarConn | null): boolean {
+  return !!conn && typeof conn.url === 'string' && !validateSidecarUrl(conn.url)
+    && typeof conn.secret === 'string' && !!conn.secret.trim() && conn.owner_account === true
+    && (!conn.access_client_id && !conn.access_client_secret
+      || typeof conn.access_client_id === 'string' && !!conn.access_client_id.trim()
+        && typeof conn.access_client_secret === 'string' && !!conn.access_client_secret.trim());
+}
+
+export async function getSidecar(authorId: string): Promise<SidecarConn | null> {
   try {
     const raw = await getKV().get(`twin_sidecar:${authorId}`);
     if (raw) {
       const conn = JSON.parse(decrypt(raw)) as SidecarConn;
-      if (acceptsAuthorSidecar(authorId, conn, founderLogin())) {
-        return { url: conn.url, secret: conn.secret || '', owner_account: true };
-      }
+      if (acceptsAuthorSidecar(conn)) return conn;
     }
   } catch { /* fail closed below */ }
-  if (authorId.trim().toLowerCase() !== founderLogin()) return null;
-  const url = process.env.TWIN_INFERENCE_URL;
-  return url ? { url, secret: process.env.TWIN_INFERENCE_SECRET || '', owner_account: true } : null;
+  return null;
+}
+
+// The public company guide has its own operator configuration. It cannot
+// inherit a personal Author's registration, model settings, or credentials.
+export function companyGuideConnection(env: Record<string, string | undefined>): SidecarConn | null {
+  const url = env.GUIDE_INFERENCE_URL?.trim();
+  const secret = env.GUIDE_INFERENCE_SECRET?.trim();
+  if (!url || validateSidecarUrl(url) || !secret) return null;
+  const access_client_id = env.GUIDE_ACCESS_CLIENT_ID?.trim();
+  const access_client_secret = env.GUIDE_ACCESS_CLIENT_SECRET?.trim();
+  if (!!access_client_id !== !!access_client_secret) return null;
+  return { url, secret, access_client_id, access_client_secret };
+}
+
+/** Company-only routing, separate from every per-Author registration. The
+ * dedicated encrypted record can preserve the already operated company guide
+ * during deployment; it does not attest to separate processes or model billing.
+ * Any migration into this key is an explicit operator action, never a read-time
+ * fallback to the founder or another Author. */
+export async function getCompanyGuideConnection(env: Record<string, string | undefined> = process.env): Promise<SidecarConn | null> {
+  const explicitlyConfigured = ['GUIDE_INFERENCE_URL', 'GUIDE_INFERENCE_SECRET', 'GUIDE_ACCESS_CLIENT_ID', 'GUIDE_ACCESS_CLIENT_SECRET']
+    .some(key => !!env[key]?.trim());
+  if (explicitlyConfigured) return companyGuideConnection(env);
+  try {
+    const raw = await getKV().get('company_guide_sidecar');
+    if (!raw) return null;
+    const value = JSON.parse(decrypt(raw)) as unknown;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const conn = value as Record<string, unknown>;
+    if (typeof conn.url !== 'string' || typeof conn.secret !== 'string'
+      || conn.access_client_id !== undefined && typeof conn.access_client_id !== 'string'
+      || conn.access_client_secret !== undefined && typeof conn.access_client_secret !== 'string') return null;
+    return companyGuideConnection({
+      GUIDE_INFERENCE_URL: conn.url,
+      GUIDE_INFERENCE_SECRET: conn.secret,
+      GUIDE_ACCESS_CLIENT_ID: conn.access_client_id as string | undefined,
+      GUIDE_ACCESS_CLIENT_SECRET: conn.access_client_secret as string | undefined,
+    });
+  } catch { return null; }
 }
 
 /**
@@ -179,7 +196,7 @@ async function twinStatus(authorId: string): Promise<TwinStatus> {
       const ctrl = new AbortController();
       // Quick tunnels can be slow to first-byte; be tolerant so we don't flap offline.
       const t = setTimeout(() => ctrl.abort(), 6000);
-      const res = await fetch(healthEndpointFrom(conn.url), { signal: ctrl.signal, headers: accessHeaders() });
+      const res = await fetch(healthEndpointFrom(conn.url), { signal: ctrl.signal, headers: accessHeaders(conn), redirect: 'error' });
       clearTimeout(t);
       if (res.ok) {
         // An older sidecar reports only `{ok:true}` — no `inference` field. Absent
@@ -396,8 +413,6 @@ type LibraryAccessGrant = {
 // a3 § marketplace — 10% add-on fee (a values decision, single source of truth).
 const MARKETPLACE_FEE_RATE = 0.10;
 
-type AccountStore = Record<string, Account>;
-
 interface CompanyAuthorRow {
   id: string;
   display_name?: string | null;
@@ -440,9 +455,10 @@ function textSlot(settings: Record<string, unknown>, profile?: CompanyAuthorRow 
   return value.length > 160 ? `${value.slice(0, 157).trimEnd()}...` : value;
 }
 
-function alexandriaId(account: Account, profile: CompanyAuthorRow | null, fallbackIndex: number): string {
+function alexandriaId(account: Account, profile: CompanyAuthorRow | null): string {
   const settings = librarySettings(profile);
-  return stringSlot(settings, 'library_id') || stringSlot(settings, 'alexandria_id') || `a.${fallbackIndex}`;
+  return stringSlot(settings, 'library_id') || stringSlot(settings, 'alexandria_id')
+    || (typeof account.number === 'number' && Number.isSafeInteger(account.number) && account.number >= 0 ? `a.${account.number}` : '');
 }
 
 function librarySocialLinks(settings: Record<string, unknown>): Array<{ label: string; url: string }> {
@@ -462,7 +478,7 @@ function librarySocialLinks(settings: Record<string, unknown>): Array<{ label: s
   return links;
 }
 
-function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fallbackIndex: number) {
+function directoryAuthor(account: Account, profile: CompanyAuthorRow | null) {
   const settings = librarySettings(profile);
   const location = canonicalLibraryLocation(stringSlot(settings, 'location'));
   const displayName =
@@ -472,7 +488,7 @@ function directoryAuthor(account: Account, profile: CompanyAuthorRow | null, fal
   return {
     id: account.github_login,
     account_id: account.github_id ? String(account.github_id) : null,
-    alexandria_id: alexandriaId(account, profile, fallbackIndex),
+    alexandria_id: alexandriaId(account, profile),
     display_name: displayName,
     location,
     // One source of truth: the directory key always follows the location people
@@ -501,30 +517,68 @@ function compareDirectoryAuthors(
   return (a.display_name || a.id).localeCompare(b.display_name || b.id, undefined, { sensitivity: 'base' });
 }
 
-async function loadDirectoryRoster() {
+const DIRECTORY_PAGE_SIZE = 25;
+const DIRECTORY_CURSOR = /^dc1\.[A-Za-z0-9_-]{40,1024}$/;
+function readDirectoryCursor(raw: string | undefined, viewer: Account): string {
+  if (!raw) return '';
+  try {
+    if (!DIRECTORY_CURSOR.test(raw)) throw new Error('Invalid cursor');
+    if (Buffer.from(raw.slice(4), 'base64url').toString('base64url') !== raw.slice(4)) throw new Error('Invalid cursor');
+    const value = JSON.parse(decrypt(raw.slice(4)));
+    if (value.type !== 'directory-page-v1' || value.viewer !== String(viewer.github_id)
+      || !Number.isSafeInteger(value.expires_at) || value.expires_at <= Date.now()
+      || typeof value.after !== 'string' || !/^[a-z0-9][a-z0-9-]{0,38}$/.test(value.after)) throw new Error('Invalid cursor');
+    return value.after;
+  } catch { throw new HTTPException(400, { message: 'This directory page expired or is invalid. Start from the first page.' }); }
+}
+
+async function loadDirectoryPage(after: string, viewer: Account) {
   const db = getDB();
-  const accounts = await loadAccounts<AccountStore>();
-  const authorRows = await db.prepare('SELECT id, display_name, settings, bio FROM authors')
-    .all<CompanyAuthorRow>()
-    .catch(() => ({ results: [] as CompanyAuthorRow[] }));
+  const rows = await db.prepare(`SELECT id FROM (
+    SELECT id FROM authors UNION SELECT author AS id FROM visitor_connector_sites WHERE verified_at IS NOT NULL AND listed = 1
+    ) WHERE id > ? ORDER BY id LIMIT ?`).bind(after, DIRECTORY_PAGE_SIZE + 1).all<{ id: string }>();
+  const ids = (rows.results || []).slice(0, DIRECTORY_PAGE_SIZE).map(row => row.id);
+  const hasNext = (rows.results || []).length > DIRECTORY_PAGE_SIZE;
+  // Include the current reader only for their own listing status, never to
+  // append them to every page. Every query and account read has a fixed bound.
+  const profileIds = [...new Set([...ids, viewer.github_login])];
+  const authorRows = await db.prepare(`SELECT id, display_name, settings, bio FROM authors WHERE id IN (${profileIds.map(() => '?').join(',')})`)
+    .bind(...profileIds).all<CompanyAuthorRow>();
+  const sites = await directoryWebsiteCandidates(profileIds);
   const profilesById = new Map<string, CompanyAuthorRow>();
   for (const profile of authorRows.results || []) profilesById.set(profile.id, profile);
+  const candidates: Array<{ account: Account; author: ReturnType<typeof directoryAuthor>; site: ReturnType<typeof sites.get> }> = [];
+  for (let offset = 0; offset < ids.length; offset += 5) {
+    const loaded = await Promise.all(ids.slice(offset, offset + 5).map(async id => {
+      // Do not use the legacy lookup's all-account repair path while browsing.
+      // Signing in repairs an old missing index without an unbounded read here.
+      const ownerId = await getLoginIndex(id);
+      const account = id === viewer.github_login ? viewer : ownerId ? await loadAccount(ownerId) as Account | null : null;
+      if (!account || account.github_login !== id || String(account.github_id) !== ownerId) return null;
+      const author = directoryAuthor(account, profilesById.get(id) || null);
+      const registered = sites.get(id);
+      const site = registered?.ownerId === String(account.github_id) ? registered : undefined;
+      return !!author.location && !!author.contact || site?.listed ? { account, author, site } : null;
+    }));
+    for (const candidate of loaded) if (candidate) candidates.push(candidate);
+  }
+  const self = directoryAuthor(viewer, profilesById.get(viewer.github_login) || null);
+  const ownSite = sites.get(viewer.github_login);
+  const youListed = await getLoginIndex(viewer.github_login) === String(viewer.github_id)
+    && (!!self.location && !!self.contact || ownSite?.ownerId === String(viewer.github_id) && ownSite.listed);
+  const nextCursor = hasNext ? `dc1.${encrypt(JSON.stringify({ type: 'directory-page-v1', viewer: String(viewer.github_id), after: ids[ids.length - 1], expires_at: Date.now() + 60 * 60 * 1000 }))}` : null;
+  return { candidates, youListed: !!youListed, nextCursor };
+}
 
-  const accountList = Object.values(accounts)
-    .filter((account) => !!account?.github_id && !!account.github_login)
-    .sort((a, b) => {
-      const ta = a.created_at || '';
-      const tb = b.created_at || '';
-      if (ta !== tb) return ta.localeCompare(tb);
-      return String(a.github_id).localeCompare(String(b.github_id));
-    });
-  const candidates = accountList
-    .map((account, index) => ({
-      account,
-      author: directoryAuthor(account, profilesById.get(account.github_login) || null, index),
-    }))
-    .filter(({ author }) => !!author.location && !!author.contact);
-  return { accountList, candidates };
+async function hasDirectoryProfiles(): Promise<boolean> {
+  // A one-bit public hint is not a reason to scan/decrypt every account or
+  // verify anyone's subscription. Existing hosted profiles and verified
+  // independent websites are enough to establish that other profiles exist.
+  const result = await getDB().prepare(`SELECT 1 AS present FROM authors WHERE id != ?
+    UNION ALL SELECT 1 AS present FROM visitor_connector_sites
+      WHERE author != ? AND verified_at IS NOT NULL LIMIT 1`)
+    .bind(founderLogin(), founderLogin()).first<{ present: number }>().catch(() => null);
+  return !!result;
 }
 
 function fileAccessUrl(authorId: string, name: string, scope: string, visibility: string): string {
@@ -542,7 +596,6 @@ export type LibraryViewerRole = 'owner' | 'author' | 'public';
 export function libraryCapabilityContract(input: {
   authorId: string;
   viewerRole: LibraryViewerRole;
-  ownInferenceRequired: boolean;
   inferenceConnected: boolean;
   twinEnabled: boolean;
 }) {
@@ -586,6 +639,19 @@ export function libraryCapabilityContract(input: {
       rule: 'Benjamin\'s stand is a personalizable starting point, not Library law. Copy its mechanism, never his content; any Author may reshape, replace, externally render, or ignore it.',
       shared_square: 'Alexandria owns stable Author addresses, safe shared rendering, exact access and revocation, invitations and payments, and this capability API.',
     },
+    connector: {
+      module: 'https://github.com/benmowinckel/alexandria/blob/main/factory/canon/connector.md',
+      ownership: 'Keep the existing website, hosting account, files, design and model. A standalone public mirror and own-model answers make no Alexandria request.',
+      service: 'Alexandria operates shared discovery, verified mirror addresses, reader identity and current exact access. It does not host or execute the independent website.',
+      public_minimum: 'A same-origin JSON description points to selected public material. No chat, backend, reader callback or hosted profile is required.',
+      registration: { method: 'POST', path: '/connect/site', body: { site: 'https://your-website.example', manifest_path: '/mirror.json', listed: true }, auth: 'Owner API key, used by the trusted account client only; never installed in the website.' },
+      ownership_proof: 'Register, add the returned short-lived DNS TXT proof at the existing DNS provider, then POST /connect/site/verify. This path requires domain DNS control; a pasted script alone cannot establish ownership.',
+      discovery_consent: 'listed:true plus verified ownership opts an independent site into member discovery without requiring a hosted location or contact. Verification alone does not list it.',
+      reader_connection: 'Only sites requesting shared restricted access add an exact same-origin callback_path and a small backend. The delegated credential is bounded to that author, website, registration and reader session; it grants no owner permission.',
+      access: { method: 'GET', path: `/connect/access/${author}?scope=<exact-scope>`, rule: 'Public material needs no check. Protected reads use a current exact decision before loading content. A reader needs membership for authors scopes; invite and paid scopes require their own exact grant.' },
+      lifecycle: 'Current publisher membership is required for operated discovery and shared protected access. Expiry removes that service; renewal restores the registration and still-valid grants. Public files, copied URLs and own-model answers remain usable independently. Billing uncertainty grants no access.',
+      disconnect: { method: 'DELETE', path: '/connect/site', rule: 'The owner may disconnect even after membership expires. Registration removal invalidates delegated access; it never modifies the independent website.' },
+    },
     profile: {
       shared_renderer: ['identity', 'optional mind', 'links', 'published sections'],
       owner_controls: {
@@ -596,7 +662,7 @@ export function libraryCapabilityContract(input: {
       },
       default_sections: DEFAULT_LIBRARY_CATEGORIES,
       custom_sections: 'Any lowercase slug matching ^[a-z][a-z0-9-]{0,39}$ is accepted. Order, labels, and visibility on the profile are Author-controlled; empty sections disappear.',
-      custom_surfaces: 'The Author may ignore the shared renderer and build a separate surface from the public profile, capability, and file APIs. Author code never runs on Alexandria\'s shared origin.',
+      custom_surfaces: 'An existing website keeps its own pages and source material; connector.module describes the additive path. The hosted profile, capability and file APIs remain optional bridge surfaces. Author code never runs on Alexandria\'s shared origin.',
       formatting: 'Presentation metadata never changes artifact bytes, visibility, or permissions. A new section is not a new audience.',
       owner_page: `${site}/library/${author}`,
     },
@@ -613,13 +679,13 @@ export function libraryCapabilityContract(input: {
       example: 'A grant for invite/friends does not open invite, invite/investors, or a cohort created later.',
     },
     inference: {
-      ownership: input.ownInferenceRequired ? 'author_account_only' : 'founder_compatibility',
+      hosting: 'optional_library_bridge',
+      independent_mirror: 'This adapter contract applies only when the Author chooses the Library relay. A standalone mirror calls the Author\'s own model directly and needs no Alexandria inference registration.',
+      ownership: 'author_account_only',
       company_token_fallback: false,
       connected: input.inferenceConnected,
       enabled: input.twinEnabled,
-      rule: input.ownInferenceRequired
-        ? 'The Author must run and register their own inference sidecar using a model account and token they control. If it is absent, inference is offline.'
-        : 'The founder may use the founder compatibility sidecar. No other Author can inherit it.',
+      rule: 'Every Author, including User 0, must register an inference adapter using a model account and token they control. Without that registration, inference is offline. Company guide configuration is separate.',
       privacy: 'The Worker receives only deliberately published Library bytes selected by the exact scope intersection. It never receives the Author model-provider token or reads local Author files.',
       hidden_context_fields: false,
       context_rule: 'model context = configured PLM scopes ∩ viewer access ∩ active artifact access, plus the bounded current visitor conversation. Within that exact slice, Author-classified shadows are always-loaded unified context and other files remain searchable.',
@@ -675,7 +741,7 @@ export function libraryCapabilityContract(input: {
       file_listings: { method: 'PUT', path: `/library/${author}/file-listings` },
       file_questions: { method: 'PUT', path: `/library/${author}/file-questions` },
       inference_context: { method: 'POST', path: `/library/${author}/twin`, body: { context: { scopes: ['public', 'invite/friends'] } } },
-      inference_sidecar: { method: 'PUT', path: `/library/${author}/twin/sidecar`, body: { url: 'https://author-sidecar.example', secret: '<separate-sidecar-secret>', own_account: true } },
+      inference_sidecar: { method: 'PUT', path: `/library/${author}/twin/sidecar`, body: { url: 'https://author-sidecar.example', secret: '<separate-sidecar-secret>', own_account: true }, optional: { access_client_id: '<Author-controlled tunnel identity>', access_client_secret: '<matching tunnel secret>' } },
       context_preview: { method: 'GET', path: `/library/${author}/twin/context-preview` },
       grants: { create: `/library/${author}/grant`, list: `/library/${author}/grants`, revoke: `/library/${author}/grant/{account_id}` },
     },
@@ -763,6 +829,7 @@ async function fetchTwinWorks(
       scope: f.scope,
       accessorGithubId: accessor?.github_id ?? null,
       context: {
+        allowOwner: !accessor?.library_reader_only,
         inviteValid: exactGranted,
         purchaseValid: exactGranted,
         subscriberValid,
@@ -813,6 +880,16 @@ async function fetchTwinWorks(
 // Route registration
 // ---------------------------------------------------------------------------
 
+async function resolveLibraryViewer(c: Context): Promise<Account | null> {
+  const delegated = c.get('connectorViewer') as Account | undefined;
+  if (delegated) return delegated;
+  const key = extractApiKey(c);
+  const byKey = key ? await findByApiKey(key) : null;
+  if (byKey) return byKey;
+  const token = extractLibrarySessionToken(c);
+  return token ? await findByLibrarySessionToken(token) : null;
+}
+
 export function registerLibraryRoutes(app: Hono): void {
 
   // Validate :author param on all routes (prevent path traversal in R2 keys)
@@ -831,11 +908,7 @@ export function registerLibraryRoutes(app: Hono): void {
   // =========================================================================
 
   app.get('/library/session', async (c) => {
-    const key = extractApiKey(c);
-    const byKey = key ? await findByApiKey(key) : null;
-    const token = extractLibrarySessionToken(c);
-    const bySession = token ? await findByLibrarySessionToken(token) : null;
-    const account = byKey || bySession;
+    const account = await resolveLibraryViewer(c);
 
     // Authentication and membership are separate. A cancelled member keeps
     // account-management access, while every subscriber benefit keys off this
@@ -873,12 +946,11 @@ export function registerLibraryRoutes(app: Hono): void {
 
     const row = await getDB().prepare('SELECT settings FROM authors WHERE id = ?')
       .bind(authorId).first<{ settings: string | null }>().catch(() => null);
-    const variants = resolveTwinVariants(parseJson<Record<string, unknown>>(row?.settings, {}), twinEnv(authorId));
+    const variants = resolveTwinVariants(parseJson<Record<string, unknown>>(row?.settings, {}));
     const conn = await getSidecar(authorId);
     const contract = libraryCapabilityContract({
       authorId,
       viewerRole: owner ? 'owner' : viewer ? 'author' : 'public',
-      ownInferenceRequired: authorId.trim().toLowerCase() !== founderLogin(),
       inferenceConnected: !!conn,
       twinEnabled: variants.weights.enabled || variants.context.enabled,
     });
@@ -895,27 +967,23 @@ export function registerLibraryRoutes(app: Hono): void {
   //      callers get an empty list + signed_in:false. Signed-in reader or
   //      inactive accounts get signed_in:true + membership_active:false, but
   //      never roster bytes. A reader account is not a community member.
-  //   2. Fill-to-appear — an Author is listed only once they have set BOTH a
-  //      location and a contact (the two fields the "find the Alexandrians in
-  //      London and reach them" use case needs). No forced disclosure: you
-  //      appear by choosing to be findable, or you stay unlisted.
+  //   2. Deliberate discovery — hosted profiles opt in by setting location and
+  //      contact. Independently hosted sites opt in with listed:true and prove
+  //      ownership. They need no hosted profile or extra personal disclosure.
   app.get('/library', async (c) => {
     const key = extractApiKey(c);
     const byKey = key ? await findByApiKey(key) : null;
     const token = extractLibrarySessionToken(c);
     const bySession = token ? await findByLibrarySessionToken(token) : null;
     const viewer = byKey || bySession;
-    const { accountList, candidates: directoryCandidates } = await loadDirectoryRoster().catch(() => ({ accountList: [], candidates: [] }));
-    // Public visitors learn only that the collective has depth, never its exact
-    // size. Use accounts rather than fill-to-appear rows so missing public
-    // location/contact does not make the rest of the collective disappear.
-    const hasMoreProfiles = accountList.some((account) => account.github_login !== founderLogin());
     if (!viewer) return c.json({
       signed_in: false,
       membership_active: false,
       authors: [],
       you_listed: false,
-      has_more_profiles: hasMoreProfiles,
+      has_more_profiles: await hasDirectoryProfiles(),
+      next_cursor: null,
+      directory_complete: false,
     });
 
     const viewerMembership = await resolveMembership(viewer);
@@ -934,30 +1002,34 @@ export function registerLibraryRoutes(app: Hono): void {
         ...membershipFields,
         authors: [],
         you_listed: false,
-        has_more_profiles: hasMoreProfiles,
+        has_more_profiles: await hasDirectoryProfiles(),
+        next_cursor: null,
+        directory_complete: false,
       });
     }
 
-    // Fill-to-appear happened before live membership checks: accounts without
-    // the two public directory fields cannot appear, so do not spend a Stripe
-    // lookup on them. Reuse the viewer's result when they are one candidate.
-    const resolvedAccounts = await Promise.all(directoryCandidates.map(async ({ account, author }) => ({
-      account,
-      author,
-      membership: account.github_id === viewer.github_id ? viewerMembership : await resolveMembership(account),
-    })));
+    const after = readDirectoryCursor(c.req.query('cursor'), viewer);
+    const { candidates: admittedCandidates, nextCursor, youListed } = await loadDirectoryPage(after, viewer);
+    // Check each admitted publisher once. Do not require a second billing
+    // check just to attach the already registered destination.
+    const resolvedAccounts: Array<typeof admittedCandidates[number] & { membership: Awaited<ReturnType<typeof resolveMembership>> }> = [];
+    for (let offset = 0; offset < admittedCandidates.length; offset += 5) {
+      resolvedAccounts.push(...await Promise.all(admittedCandidates.slice(offset, offset + 5).map(async candidate => ({
+        ...candidate,
+        membership: candidate.account.github_id === viewer.github_id ? viewerMembership : await resolveMembership(candidate.account),
+      }))));
+    }
+    // Resolve public routing only after the existing reader/publisher admission
+    // gates. An independently hosted website is a destination, never fetched here.
     const authors = resolvedAccounts
-      .map(({ author, membership }) => {
-        if (!membership.available || !membership.active) return null;
-        return author;
-      })
-      .filter((author): author is NonNullable<typeof author> => !!author?.id)
-      .sort(compareDirectoryAuthors);
-
-    const youListed = authors.some((a) => a.id === viewer.github_login);
+      .filter(({ author, membership }) => membership.available && membership.active && !!author?.id)
+      .map(({ author, site }) => ({
+        ...author,
+        connected_site: site?.routes || null,
+      })).sort(compareDirectoryAuthors);
 
     logEvent('library_directory_view', { authors: String(authors.length) });
-    return c.json({ signed_in: true, ...membershipFields, authors, you_listed: youListed, has_more_profiles: hasMoreProfiles });
+    return c.json({ signed_in: true, ...membershipFields, authors, you_listed: youListed, has_more_profiles: await hasDirectoryProfiles(), next_cursor: nextCursor, directory_complete: nextCursor === null });
   });
 
   app.get('/library/:author', async (c) => {
@@ -990,20 +1062,6 @@ export function registerLibraryRoutes(app: Hono): void {
 
     logEvent('library_author_view', { author: authorId });
 
-    // fallback index for directoryAuthor still needs the full account ordering
-    // (alexandria_id assigns by creation order). Single decrypt pass; the lookup
-    // above already cost O(1).
-    const accounts = await loadAccounts<AccountStore>();
-    const accountList = Object.values(accounts)
-      .filter((candidate) => !!candidate?.github_id && !!candidate.github_login)
-      .sort((a, b) => {
-        const ta = a.created_at || '';
-        const tb = b.created_at || '';
-        if (ta !== tb) return ta.localeCompare(tb);
-        return String(a.github_id).localeCompare(String(b.github_id));
-      });
-    const fallbackIndex = Math.max(0, accountList.findIndex(candidate => candidate.github_login === authorId));
-
     const legacyAuthor = await db.prepare('SELECT id, display_name, settings, bio FROM authors WHERE id = ?')
       .bind(authorId)
       .first<CompanyAuthorRow>()
@@ -1017,16 +1075,12 @@ export function registerLibraryRoutes(app: Hono): void {
     // key or library session cookie, if present, decides which gated variants
     // the viewer can reach — so the page can render the right toggle (both /
     // one / none) without a second round-trip.
-    const viewerKey = extractApiKey(c);
-    const viewerFromKey = viewerKey ? await findByApiKey(viewerKey) : null;
-    const viewerToken = extractLibrarySessionToken(c);
-    const viewerFromSession = viewerToken ? await findByLibrarySessionToken(viewerToken) : null;
-    const viewer = viewerFromKey || viewerFromSession;
-    const viewerIsOwner = !!viewer && String(viewer.github_id) === String(account!.github_id);
+    const viewer = await resolveLibraryViewer(c);
+    const viewerIsOwner = !!viewer && !viewer.library_reader_only && String(viewer.github_id) === String(account!.github_id);
     const viewerMembership = viewer ? await resolveMembership(viewer) : null;
     const viewerSubscriber = viewerMembership?.available === true && viewerMembership.active;
 
-    const twinVariants = resolveTwinVariants(librarySettings(legacyAuthor), twinEnv(authorId));
+    const twinVariants = resolveTwinVariants(librarySettings(legacyAuthor));
     // Account-based access: a logged-in viewer with a live grant reaches an
     // invite twin with NO code. So evaluate the grant here — the page can show
     // "ask away" (granted) vs "log in" (anon) vs "not on the list" (signed in,
@@ -1037,6 +1091,7 @@ export function registerLibraryRoutes(app: Hono): void {
       authorGithubId: account!.github_id,
       accessorGithubId: viewer?.github_id ?? null,
       context: {
+        allowOwner: !viewer?.library_reader_only,
         inviteValid: cfg.visibility === 'invite'
           && (cfg.variant === 'context'
             ? cfg.scopes.filter((scope) => visibilityForScope(scope) === 'invite')
@@ -1119,7 +1174,16 @@ export function registerLibraryRoutes(app: Hono): void {
     // is a router over what they published: emergent by default, curatable here.
     const profileCfg = normalizeProfile(librarySettings(legacyAuthor));
     return c.json({
-      author: directoryAuthor(account!, legacyAuthor, fallbackIndex),
+      author: {
+        ...directoryAuthor(account!, legacyAuthor),
+        // Optional routing must not take the Author's public hosted material
+        // offline during a billing outage. The dedicated resolver still returns
+        // unavailable (not an invented route) to independent-site discovery.
+        connected_site: await connectedWebsite(authorId, String(account!.github_id)).catch(error => {
+          if (error instanceof HTTPException && error.status === 503) return null;
+          throw error;
+        }),
+      },
       viewer: {
         signed_in: !!viewer,
         is_owner: viewerIsOwner,
@@ -1317,12 +1381,8 @@ export function registerLibraryRoutes(app: Hono): void {
     if (!fileMeta) return c.json({ error: 'File not found' }, 404);
     const scope = fileMeta.scope;
 
-    // Resolve accessor identity from API key or browser session cookie.
-    const accessorKey = extractApiKey(c);
-    const accessorFromKey = accessorKey ? await findByApiKey(accessorKey) : null;
-    const sessionToken = extractLibrarySessionToken(c);
-    const accessorFromSession = sessionToken ? await findByLibrarySessionToken(sessionToken) : null;
-    const accessor = accessorFromKey || accessorFromSession;
+    // The same reader identity applies on hosted and independent websites.
+    const accessor = await resolveLibraryViewer(c);
 
     // Token validation — the route owns this (it knows where the query params
     // and KV/D1 lookups live); the result flows into the gate as a boolean.
@@ -1357,7 +1417,9 @@ export function registerLibraryRoutes(app: Hono): void {
     }
 
     let purchaseValid = false;
-    if (purchaseSessionId) {
+    // A previously issued checkout URL cannot undo an explicit revocation.
+    // A new owner grant or independently processed purchase must restore access.
+    if (purchaseSessionId && gState !== 'revoked') {
       const raw = await getKV().get(`library:access:${purchaseSessionId}`);
       if (raw) {
         const grant = parseJson<LibraryAccessGrant>(raw, {});
@@ -1391,7 +1453,7 @@ export function registerLibraryRoutes(app: Hono): void {
       purchaseValid = await hasGrantForScope(authorId, accessor.github_id, scope);
     }
 
-    const needsMembership = !!accessor && accessor.github_login !== authorId;
+    const needsMembership = !!accessor && (accessor.library_reader_only || accessor.github_login !== authorId);
     const membership = needsMembership ? await resolveMembership(accessor) : null;
     const result = await readProtocolFile({
       authorGithubId: authorAccount.github_id,
@@ -1399,6 +1461,7 @@ export function registerLibraryRoutes(app: Hono): void {
       scope,
       accessorGithubId: accessor?.github_id ?? null,
       context: {
+        allowOwner: !accessor?.library_reader_only,
         purchaseValid,
         inviteValid,
         subscriberValid: membership?.available === true && membership.active,
@@ -1635,11 +1698,7 @@ export function registerLibraryRoutes(app: Hono): void {
   // Resolve the querier from an API key or the browser library session cookie.
   // Anonymous (null) is allowed by callers that permit the public floor.
   async function resolveTwinAccessor(c: Context): Promise<Account | null> {
-    const key = extractApiKey(c);
-    const byKey = key ? await findByApiKey(key) : null;
-    if (byKey) return byKey;
-    const token = extractLibrarySessionToken(c);
-    return token ? await findByLibrarySessionToken(token) : null;
+    return resolveLibraryViewer(c);
   }
 
   type TwinQueryOutcome =
@@ -1696,7 +1755,7 @@ export function registerLibraryRoutes(app: Hono): void {
     messages?: { role: 'user' | 'assistant'; content: string }[];
     surface: 'library' | 'api';
   }): Promise<TwinQueryOutcome> {
-    const variants = resolveTwinVariants(p.settings, twinEnv(p.authorId));
+    const variants = resolveTwinVariants(p.settings);
 
     // Variant selection. Explicit request must be enabled; otherwise default to
     // the weights FLOOR, falling back to the context ceiling.
@@ -1736,7 +1795,7 @@ export function registerLibraryRoutes(app: Hono): void {
       visibility: cfg.visibility,
       authorGithubId: p.authorAccount.github_id,
       accessorGithubId: p.accessor?.github_id ?? null,
-      context: { inviteValid: inviteGateValid, subscriberValid },
+      context: { allowOwner: !p.accessor?.library_reader_only, inviteValid: inviteGateValid, subscriberValid },
     });
     if (!decision.allowed) {
       logEvent('library_twin_ask', { author: p.authorId, surface: p.surface, variant: cfg.variant, status: String(decision.status), reason: decision.reason });
@@ -1746,7 +1805,7 @@ export function registerLibraryRoutes(app: Hono): void {
     // The context ceiling is the exact intersection of PLM configuration and
     // this viewer's live permissions. No parent, sibling, or future cohort is
     // implied. Owner bypass applies only inside the PLM's configured scopes.
-    const isOwner = !!p.accessor
+    const isOwner = !!p.accessor && !p.accessor.library_reader_only
       && String(p.accessor.github_id) === String(p.authorAccount.github_id);
     const effectiveScopes = effectiveLibraryScopes({
       providerScopes,
@@ -1770,16 +1829,7 @@ export function registerLibraryRoutes(app: Hono): void {
     // thinking and voice, but the public speaker is always the mirror — never
     // the Author themself. There is deliberately no Author-authored system
     // field outside the exact Library scope broker.
-    const system = [
-      `You are the public mirror for ${p.displayName}. You are not ${p.displayName}, do not role-play as ${p.displayName}, and must never claim to be them.`,
-      `Speak as a clear librarian describing ${p.displayName}'s published mind. Every statement about ${p.displayName} must use their name or third-person pronouns.`,
-      `Never use “I”, “me”, “my”, “we”, or “our” for ${p.displayName}'s beliefs, preferences, possessions, memories, projects, or experiences, even when the source material is written in first person. Convert source first person into third person.`,
-      `Answer only from the published material available to this mirror. If that material does not establish a fact, say “${p.displayName} has not shared that here.” Never fill the gap from general knowledge or guesswork.`,
-      `For your own limits, say “this mirror does not know” — never “I do not know.”`,
-      `Lead with the direct answer in plain language. Then use the strongest specific evidence in the published material; name a real tension, change, or connection when one is present instead of flattening the material into a generic summary.`,
-      `Clearly distinguish what ${p.displayName} states from what the mirror is inferring. Keep casual answers brief and give substantive questions only the depth they earn.`,
-      `Prefer one sharp synthesis to a tour of the profile. Do not merely list documents or restate the question.`,
-    ].join(' ');
+    const system = publicMirrorSystem(p.displayName);
     // Build the exact brokered Library view through the same gate as direct reads.
     let bundle: TwinContextBundle | undefined;
     if (cfg.variant === 'context') {
@@ -1840,7 +1890,7 @@ export function registerLibraryRoutes(app: Hono): void {
             contextScopes: effectiveScopes,
           }
     );
-    const inferenceOpts = { url: sidecar?.url, secret: sidecar?.secret };
+    const inferenceOpts = sidecar || {};
     let result = await runTwinInference(inferenceRequest, inferenceOpts);
 
     if (result.ok && publicMirrorUsesFirstPerson(result.answer)) {
@@ -2032,9 +2082,7 @@ export function registerLibraryRoutes(app: Hono): void {
     if (!question) return c.json({ error: 'Ask a question.' }, 400);
     if (question.length > 20000) return c.json({ error: `Question too long — ${question.length} chars, 20000 max. Trim it or paste less.` }, 400);
 
-    // The guide runs on the founder's always-on sidecar (env fallback if not
-    // separately registered). getSidecar → the same relay every other twin uses.
-    const conn = await getSidecar(process.env.ADMIN_GITHUB_LOGIN || 'benmowinckel');
+    const conn = await getCompanyGuideConnection();
     if (!conn?.url) return c.json({ error: 'the guide is offline right now.' }, 503);
 
     const ctrl = new AbortController();
@@ -2045,10 +2093,11 @@ export function registerLibraryRoutes(app: Hono): void {
         headers: {
           'Content-Type': 'application/json',
           ...(conn.secret ? { Authorization: `Bearer ${conn.secret}` } : {}),
-          ...accessHeaders(),
+          ...accessHeaders(conn),
         },
         body: JSON.stringify({ question }),
         signal: ctrl.signal,
+        redirect: 'error',
       });
       if (!res.ok) {
         logEvent('ask_alexandria', { status: String(res.status), reason: 'upstream' });
@@ -2246,7 +2295,7 @@ export function registerLibraryRoutes(app: Hono): void {
        ON CONFLICT(id) DO UPDATE SET settings = excluded.settings, updated_at = excluded.updated_at`
     ).bind(authorId, JSON.stringify(settings), now, now).run();
 
-    const variants = resolveTwinVariants(settings, twinEnv(authorId));
+    const variants = resolveTwinVariants(settings);
     logEvent('library_twin_config', {
       author: authorId,
       weights_enabled: String(variants.weights.enabled),
@@ -2272,20 +2321,25 @@ export function registerLibraryRoutes(app: Hono): void {
     const owner = await resolveOwnerOnly(c, authorId);
     if ('error' in owner) return owner.error;
 
-    const body = await c.req.json().catch(() => ({})) as { url?: unknown; secret?: unknown; own_account?: unknown };
+    const body = await c.req.json().catch(() => ({})) as { url?: unknown; secret?: unknown; own_account?: unknown; access_client_id?: unknown; access_client_secret?: unknown };
     const url = typeof body.url === 'string' ? body.url.trim() : '';
     const secret = typeof body.secret === 'string' ? body.secret.trim() : '';
     if (!url) return c.json({ error: 'sidecar url required' }, 400);
     const urlErr = validateSidecarUrl(url);
     if (urlErr) return c.json({ error: urlErr }, 400);
     if (!secret) return c.json({ error: 'sidecar secret required (same value as the sidecar’s TWIN_INFERENCE_SECRET)' }, 400);
-    if (authorId.trim().toLowerCase() !== founderLogin() && body.own_account !== true) {
+    if (body.own_account !== true) {
       return c.json({
         error: 'own_account must be true: this sidecar must use a model account and token controlled by the Author, not Alexandria',
       }, 400);
     }
 
-    await getKV().put(`twin_sidecar:${authorId}`, encrypt(JSON.stringify({ url, secret, owner_account: true })));
+    const access_client_id = typeof body.access_client_id === 'string' ? body.access_client_id.trim() : '';
+    const access_client_secret = typeof body.access_client_secret === 'string' ? body.access_client_secret.trim() : '';
+    if (!!access_client_id !== !!access_client_secret || access_client_id.length > 512 || access_client_secret.length > 512) {
+      return c.json({ error: 'Optional tunnel identity requires both access_client_id and access_client_secret, at most 512 characters each.' }, 400);
+    }
+    await getKV().put(`twin_sidecar:${authorId}`, encrypt(JSON.stringify({ url, secret, owner_account: true, ...(access_client_id ? { access_client_id, access_client_secret } : {}) })));
     await getKV().delete(`twin_online:${authorId}`).catch(() => {}); // force a fresh online check
     logEvent('twin_sidecar_registered', { author: authorId });
     return c.json({ ok: true, url }); // never echo the secret
@@ -2296,8 +2350,9 @@ export function registerLibraryRoutes(app: Hono): void {
     const authorId = c.req.param('author');
     const owner = await resolveOwnerOnly(c, authorId);
     if ('error' in owner) return owner.error;
-    await getKV().delete(`twin_sidecar:${authorId}`).catch(() => {});
-    await getKV().delete(`twin_online:${authorId}`).catch(() => {});
+    // A failed deletion must not report a successful disconnect.
+    await getKV().delete(`twin_sidecar:${authorId}`);
+    await getKV().delete(`twin_online:${authorId}`);
     logEvent('twin_sidecar_removed', { author: authorId });
     return c.json({ ok: true });
   });
@@ -2375,7 +2430,7 @@ export function registerLibraryRoutes(app: Hono): void {
     if (conn) {
       try {
         const parsed = JSON.parse(decrypt(conn)) as SidecarConn;
-        accepted = acceptsAuthorSidecar(authorId, parsed, founderLogin());
+        accepted = acceptsAuthorSidecar(parsed);
         if (accepted) url = parsed.url;
       } catch { url = null; }
     }
@@ -2383,7 +2438,7 @@ export function registerLibraryRoutes(app: Hono): void {
       configured: accepted,
       url,
       online: accepted ? await twinOnline(authorId) : false,
-      ownership: authorId.trim().toLowerCase() === founderLogin() ? 'founder_compatibility' : 'author_account_only',
+      ownership: 'author_account_only',
       company_token_fallback: false,
     });
   });
@@ -2840,7 +2895,7 @@ export function registerLibraryRoutes(app: Hono): void {
     if (!lookup?.account?.github_id) return c.json({ error: 'Author not found' }, 404);
     const row = await getDB().prepare('SELECT settings FROM authors WHERE id = ?')
       .bind(authorId).first<{ settings: string | null }>().catch(() => null);
-    const cfg = resolveTwinVariants(parseJson<Record<string, unknown>>(row?.settings, {}), twinEnv(authorId)).context;
+    const cfg = resolveTwinVariants(parseJson<Record<string, unknown>>(row?.settings, {})).context;
     const simulate = (c.req.query('scopes') || '').split(',')
       .map((value) => value.trim())
       .filter(Boolean)

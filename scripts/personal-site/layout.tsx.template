@@ -1,0 +1,23 @@
+import type { Metadata, Viewport } from 'next';
+import './globals.css';
+import './personal.css';
+import { ThemeProvider } from './components/ThemeProvider';
+import StyledJsxRegistry from './components/StyledJsxRegistry';
+import { PERSONAL_NAME, PERSONAL_SEAL } from './lib/personal-site';
+import { SITE_URL } from './lib/config';
+
+export const metadata: Metadata = {
+  title: PERSONAL_NAME,
+  description: `${PERSONAL_NAME} — public work and thinking.`,
+  metadataBase: new URL(SITE_URL),
+  alternates: { canonical: SITE_URL, types: { 'application/json': '/mirror/profile.json' } },
+  icons: PERSONAL_SEAL ? { icon: PERSONAL_SEAL } : undefined,
+  openGraph: { title: PERSONAL_NAME, siteName: PERSONAL_NAME, url: SITE_URL, type: 'profile' },
+};
+export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
+    <body><StyledJsxRegistry><ThemeProvider>{children}</ThemeProvider></StyledJsxRegistry></body>
+  </html>;
+}

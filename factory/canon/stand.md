@@ -8,7 +8,7 @@ adaptation: personalizable
 
 *Dormant unless the Author directly asks to set up, copy, or change their Library stand. A stand never publishes, connects a model, creates an invite, charges anyone, or widens an audience by being present on disk.*
 
-This is Benjamin a. Mowinckel's starting shape, not Alexandria law. Copy the mechanism, never his content. Alexandria owns the shared square: stable Author addresses, safe rendering, exact access and revocation, invitations and payments, and the capability API. The Author owns their stand. They may reshape it, replace it, serve it somewhere else, use another model, or ignore this file.
+This is Benjamin a. Mowinckel's optional starting shape, not an entry requirement. If the Author already has a website, use `connector.md` to attach the service there before considering this template. Copy the mechanism, never his content. Alexandria owns the shared square: stable Author addresses, safe rendering, exact access and revocation, invitations and payments, and the capability API. The Author owns their stand. They may reshape it, replace it, serve it somewhere else, use another model, or ignore this file.
 
 ## The useful default
 
@@ -17,7 +17,7 @@ Start with the smallest stand that makes the Author legible:
 - their name and declared links;
 - one to three things they have deliberately chosen to show;
 - the default sections `works`, `projects`, `shadows`, and `other`, used only where they fit;
-- no mirror unless the Author separately asks to connect one.
+- no live model unless the Author separately asks for one; selected published files already form a static mirror.
 
 The four local roots are permission addresses, not page architecture:
 
@@ -40,7 +40,7 @@ Never infer `works` from visibility or file type. A work is something the Author
 1. Read the live capability document at `https://api.alexandria-library.com/library/{author}/capabilities`. It is current authority for routes and controls.
 2. Use only material already in the task's approved reach. Do not search the rest of the computer for publishable content. If there is not enough, make a clean empty stand; never invent a biography, work, project, or position.
 3. Draft the smallest useful version locally. Prefix every draft filename with `_` so reconciliation cannot publish it.
-4. Personalize the structure to the Author. Keep the default sections only when they help. A shadow is optional. A mirror is optional. Empty sections disappear.
+4. Personalize the structure to the Author. Keep the default sections only when they help. A deeper shadow is optional. Live model answers are optional. Empty sections disappear.
 5. Before any outward action, show the exact final bytes, exact destination, exact scope, and what a reader or model will receive. Wait for a separate yes.
 6. After that yes, follow `filter.md`: give the file its final name, record `<sha256> <exact-scope>` in the adjacent `.approved` file, enable Library reconciliation only if the Author separately chose standing sync, and use the owner-authenticated API for presentation metadata.
 7. Read the live result back through the same access gate a real viewer uses. Check the public profile signed out; check every gated cohort with exactly the matching grant; check that a nearby parent and sibling remain closed.
@@ -59,17 +59,11 @@ The PLM is one optional module a stand may add. It is not Alexandria's model and
 
 Read `plm.md` and `twin.md` only after the Author directly asks for this module. A custom runner with wider computer access is outside Alexandria's structural guarantee.
 
-## Optional own-domain profile
+## Existing websites
 
-An Author may ask for an independent copy of their public profile on a domain they control. This is a dormant connection module, not a default export and not a reason to buy a domain.
+Read `connector.md` for the whole existing-site path. The Author keeps their host, domain, framework, pages and styling. A small public description works without a backend; the handler and optional composer add only the capabilities they choose. Shared registration does not require a full website export or a completed hosted profile.
 
-1. Read only the exact material already approved for public Library access: public identity, declared links, public artifacts, and deliberately listed public covers. Never export an inaccessible body or a private profile setting.
-2. Generate a self-contained static site plus a plain `profile.json` into a local export folder. The copy must render without an Alexandria API call, account, or runtime, so the Author keeps a usable public profile if Alexandria is unavailable.
-3. Preview the generated site locally and show the exact output. The Author supplies and pays for any domain and hosting account; Alexandria never purchases or registers one for them.
-4. Deploying, attaching a domain, or changing already-hosted bytes is a separate outward action requiring the Author's exact approval. Local regeneration may follow an already-approved public source change, but changed hosted bytes stay prepared behind the existing deployment gate.
-5. The independent copy may link back to the Library for community discovery while it exists. A live mirror is optional and necessarily depends on the Author's own inference setup; the static profile and published works do not.
-
-The success condition is one owned folder that any ordinary static host can serve, not a branded wrapper around an Alexandria runtime.
+For someone who explicitly wants a **new** site, `scripts/materialize-personal-site.mjs CONFIG.json NEW_OUTPUT_DIRECTORY` remains an optional full Library-UI starter. It is never the existing-site installation path and never overwrites existing pages. A model relay or an Alexandria-hosted profile can be a temporary convenience, but the contract must survive replacing either with the owner's own system.
 
 ## The hard floor
 

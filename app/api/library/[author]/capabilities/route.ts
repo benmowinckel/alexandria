@@ -1,20 +1,23 @@
 import { NextRequest } from 'next/server';
 import { SERVER_URL } from '../../../../lib/config';
-import { localAuth } from '../../../../lib/dev-auth';
+import { libraryFetch, libraryHeaders, personalRequestError, PERSONAL_AUTHOR } from '../../../../lib/library-proxy';
 
 export async function GET(
   req: NextRequest,
   ctx: { params: Promise<{ author: string }> },
 ): Promise<Response> {
   const { author } = await ctx.params;
-  const headers: Record<string, string> = {};
-  const cookie = req.headers.get('cookie');
-  const auth = req.headers.get('authorization');
-  if (cookie) headers.Cookie = cookie;
-  if (auth) headers.Authorization = auth;
-  Object.assign(headers, localAuth(auth));
-
-  const upstream = await fetch(`${SERVER_URL}/library/${encodeURIComponent(author)}/capabilities`, { headers });
+  const denied = personalRequestError(req, author);
+  if (denied) return denied;
+  if (PERSONAL_AUTHOR) return Response.json({
+    schema: 'alexandria.personal-site.v1', author,
+    profile: '/', public_export: '/mirror/profile.json',
+    public_content_host: 'this website',
+    access: 'Exact live membership, invite and paid grants; visitor credentials permit reading and questions only.',
+    sign_in: '/api/connect/sign-in',
+    shared_service: `${SERVER_URL}/connect/site/${encodeURIComponent(author)}`,
+  }, { headers: { 'Cache-Control': 'no-store' } });
+  const upstream = await libraryFetch(`/library/${encodeURIComponent(author)}/capabilities`, { headers: libraryHeaders(req) });
   return new Response(upstream.body, {
     status: upstream.status,
     headers: {

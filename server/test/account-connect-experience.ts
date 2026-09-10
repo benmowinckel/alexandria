@@ -14,10 +14,16 @@ assert.match(connectDoc, /reply in no more than six short lines/i);
 assert.match(connectDoc, /Complete the private verification below before giving the normal consent response/);
 assert.match(connectDoc, /Every required script must appear in the signed manifest at that same revision; if one is absent, refuse/);
 assert.match(connectDoc, /lets the existing loop recognize the person's account and live membership/);
+assert.match(connectDoc, /Website or existing system only/);
+assert.match(connectDoc, /No private loop, local onboarding, private record, hook or hosted profile is required/);
+assert.match(connectDoc, /scripts\/connect-account\.sh --website/);
+assert.match(connectDoc, /If no publication was requested, stop here without drafting or offering a replacement page/);
 assert.match(connectDoc, /check the Library when a named person matters/);
 assert.match(connectDoc, /sends none of their prompt, private files/);
 assert.match(connectDoc, /one account key and one removable `people-context` permission/);
 assert.match(connectDoc, /uses only what their own AI already knows locally/);
+assert.match(connectDoc, /Only if the Author already asked for an Alexandria-hosted starting page/);
+assert.match(connectDoc, /without forwarding the account key or cookies/);
 assert.match(connectDoc, /keeps that draft local and shows every word/);
 assert.match(connectDoc, /writes only `~\/alexandria\/system\/\.api_key` and `~\/alexandria\/system\/permissions\/people-context`/);
 assert.match(connectDoc, /never prints server text or stores account status/);
@@ -70,7 +76,8 @@ assert.match(cursor, /On yes, immediately open a new chat and invoke `\/a`/);
 assert.match(cursor, /If it cannot open a chat, say exactly: `Open a new chat and invoke \/a\.`/);
 
 const page = await callbackPageHtml(false, 'new-author');
-assert.doesNotMatch(page, /connect your existing loop|paste this into your computer agent|connection code/i);
+assert.doesNotMatch(page, /connect your existing loop|paste this into your computer agent/i);
+assert.match(page, /connect your website/);
 const pageWithCode = await callbackPageHtml(false, 'new-author', 1, 0, code);
 assert.match(pageWithCode, /connect your loop/);
 assert.match(pageWithCode, /copy for your computer agent/);
@@ -80,4 +87,4 @@ assert.doesNotMatch(email, /agent that already runs your alexandria loop|nothing
 assert.match(email, /start an Alexandria session in a new chat/);
 assert.doesNotMatch(page + email + paste, /alex_[a-f0-9]{32}/);
 
-console.log('account connect experience: exact consent, fixed connection proof, local profile draft');
+console.log('account connect experience: exact consent, separate website client and optional hosted profile');

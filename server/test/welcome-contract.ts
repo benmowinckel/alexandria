@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { callbackPageHtml } from '../src/templates.js';
+import { websiteConnectorPrompt } from '../../shared/onboarding-prompts.js';
 
 function main(html: string): string {
   const match = html.match(/<main class="wrap">([\s\S]*?)<\/main>/);
@@ -13,6 +14,8 @@ const firstJoin = main(await callbackPageHtml(false, 'new-author', 1, 0, code));
 assert.match(firstJoin, /invite people to alexandria/);
 assert.match(firstJoin, /connect your loop/);
 assert.match(firstJoin, /copy for your computer agent/);
+assert.match(firstJoin, /connect your website/);
+assert.match(firstJoin, /copy for your website’s ai/);
 assert.doesNotMatch(firstJoin, /href="https:\/\/alexandria-library\.com\/connect"/);
 
 const fullFirstJoin = await callbackPageHtml(false, 'new-author', 1, 0, code);
@@ -20,6 +23,14 @@ assert.match(fullFirstJoin, new RegExp(code));
 assert.match(fullFirstJoin, /i think you’d like this/);
 assert.doesNotMatch(fullFirstJoin, /i’m using alexandria|join me/);
 assert.doesNotMatch(fullFirstJoin, /factory\/connect\.md|Do nothing until I say `connect`|your agent will inspect it first/);
+
+const websitePaste = websiteConnectorPrompt();
+assert.match(websitePaste, /Keep my website on its existing host/);
+assert.match(websitePaste, /no Alexandria account, backend or model/);
+assert.match(websitePaste, /The paid Connector is separate/);
+assert.match(websitePaste, /Wait for my clear approval before changing anything/);
+assert.doesNotMatch(websitePaste, /alex_connect_|alex_[a-f0-9]{32}|curl|bash|setup-connector\.sh/);
+assert.ok(fullFirstJoin.includes(JSON.stringify(websitePaste)), 'welcome uses the shared credential-free website evaluation paste');
 
 const returning = main(await callbackPageHtml(true, 'returning-author'));
 assert.match(returning, /invite people to alexandria/);

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
+import { personalProtectedFile } from '../../../../../lib/personal-protected';
 import { SERVER_URL } from '../../../../../lib/config';
-import { localAuth } from '../../../../../lib/dev-auth';
+import { libraryFetch, libraryHeaders, personalPublicFile, personalRequestError } from '../../../../../lib/library-proxy';
 
 /**
  * Same-origin proxy for protocol-backed Library files.
@@ -11,21 +12,26 @@ export async function GET(
   ctx: { params: Promise<{ author: string; name: string }> },
 ): Promise<Response> {
   const { author, name } = await ctx.params;
-  const auth = req.headers.get('authorization');
-  const cookie = req.headers.get('cookie');
+  const denied = personalRequestError(req, author);
+  if (denied) return denied;
+  const scope = req.nextUrl.searchParams.get('scope');
   const sessionId = req.nextUrl.searchParams.get('session_id');
   const invite = req.nextUrl.searchParams.get('invite') || req.nextUrl.searchParams.get('token');
   const upstreamUrl = new URL(`${SERVER_URL}/library/${encodeURIComponent(author)}/file/${encodeURIComponent(name)}`);
   if (sessionId) upstreamUrl.searchParams.set('session_id', sessionId);
   if (invite) upstreamUrl.searchParams.set('invite', invite);
-  const headers: Record<string, string> = {};
-  if (auth) headers.Authorization = auth;
-  if (cookie) headers.Cookie = cookie;
-  Object.assign(headers, localAuth(auth));
-  const upstream = await fetch(
-    upstreamUrl.toString(),
-    { headers },
-  );
+  if (scope) upstreamUrl.searchParams.set('scope', scope);
+  const local = await personalPublicFile(name, scope);
+  const protectedFile = local ? null : await personalProtectedFile(req, name, scope);
+  let upstream: Response;
+  if (local) {
+    upstream = new Response(local.bytes as BodyInit, { headers: { 'Content-Type': local.contentType } });
+  } else if (protectedFile) {
+    upstream = protectedFile;
+  } else {
+    try { upstream = await libraryFetch(upstreamUrl.pathname + upstreamUrl.search, { headers: libraryHeaders(req) }); }
+    catch { return Response.json({ error: 'This file is temporarily unavailable.' }, { status: 503 }); }
+  }
 
   // ?format=text — return the piece as plain text for the PLM's focus. PDFs are
   // extracted server-side (browser-independent, so it works in every browser).

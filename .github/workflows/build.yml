@@ -58,7 +58,7 @@ jobs:
           cd server
           npm ci
           npx tsc --noEmit
-          for test in account-purge audit body-limit cron-scanner feedback-outbox file-access library-capabilities marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
+          for test in account-purge audit body-limit cron-scanner feedback-outbox file-access library-capabilities mirror-ownership visitor-connector connector-access marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
             npx tsx "test/$test.ts"
           done
 
@@ -68,6 +68,7 @@ jobs:
       - name: Factory install, capture, and transcript tests
         run: |
           bash factory/scripts/check-private-boundary.sh
+          node factory/test/person-context.mjs
           bash factory/scripts/test_classify_install.sh
           python3 -m unittest factory/scripts/test_capture_resolver.py factory/scripts/test_capture_state.py factory/scripts/test_capture_inventory.py factory/scripts/test_transcript_path.py factory/scripts/test_configure_grok.py factory/scripts/test_render_start_skills.py
 
@@ -78,7 +79,13 @@ jobs:
         run: bash scripts/test-grok-integration.sh
 
       - name: App build
-        run: npm ci && npm run lint && npm run build && npx playwright install --with-deps chromium
+        run: |
+          npm ci
+          node --import ./server/node_modules/tsx/dist/loader.mjs server/test/personal-website.ts
+          node --import ./server/node_modules/tsx/dist/loader.mjs server/test/personal-inference.ts
+          npm run lint
+          npm run build
+          npx playwright install --with-deps chromium
 
       - name: Rendered metadata contract
         run: |

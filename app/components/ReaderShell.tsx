@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { alexandriaHref, PERSONAL_SITE } from '../lib/personal-site';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ThemeToggle } from './ThemeToggle';
@@ -128,6 +129,7 @@ export type ReaderShellProps = {
   backTitle: string;                              // chevron tooltip ("library" / "alexandria")
   visibility?: string;                            // header tag
   status: 'loading' | 'ok' | 'signin' | 'pay' | 'error';
+  statusMessage?: string;
   pdfUrl?: string;                                // set → render as PDF
   markdown?: string;                              // set → render as markdown
   /** Book setting for long-form docs (the whitepaper). Runs the markdown
@@ -185,7 +187,7 @@ export type ReaderShellProps = {
 };
 
 export default function ReaderShell({
-  name, backHref, backTitle, visibility = 'public', status, pdfUrl, markdown,
+  name, backHref, backTitle, visibility = 'public', status, statusMessage, pdfUrl, markdown,
   numbered = false, plain = false,
   artifactText = '', downloadBlob, downloadName = 'document', downloadExt = 'md',
   signInUrl = '', checkoutUrl = '', who = '', askPlaceholder = 'ask about this piece…', askQuestions, askFn,
@@ -561,11 +563,11 @@ export default function ReaderShell({
               {status === 'signin' && (
                 <div style={{ maxWidth: '32rem' }}>
                   <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.6 }}>
-                    {visibility === 'invite'
+                    {statusMessage || (visibility === 'invite'
                       ? <>“{name}” is open to people {who} has invited. sign in to read it, or enter your invite code.</>
                       : visibility === 'paid'
                         ? <>“{name}” is a paid piece. sign in to unlock it.</>
-                        : <>“{name}” is open to Authors. sign in to read it.</>}
+                        : <>“{name}” is open to Authors. sign in to read it.</>)}
                   </p>
                   {signInUrl && <a href={signInUrl} style={{ display: 'inline-block', marginTop: '1rem', borderRadius: '11px', background: 'var(--accent)', color: 'var(--bg-primary)', padding: '0.6rem 1.25rem', textDecoration: 'none' }}>sign in</a>}
                   {inviteField}
@@ -573,11 +575,11 @@ export default function ReaderShell({
               )}
               {status === 'pay' && (
                 <div style={{ maxWidth: '32rem' }}>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.6 }}>“{name}” is a paid piece.</p>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.6 }}>{statusMessage || <>“{name}” is a paid piece.</>}</p>
                   {checkoutUrl && <a href={checkoutUrl} style={{ display: 'inline-block', marginTop: '1rem', borderRadius: '11px', background: 'var(--accent)', color: 'var(--bg-primary)', padding: '0.6rem 1.25rem', textDecoration: 'none' }}>unlock it</a>}
                 </div>
               )}
-              {status === 'error' && <p style={{ color: 'var(--text-ghost)' }}>couldn’t load this piece.</p>}
+              {status === 'error' && <p style={{ color: 'var(--text-ghost)' }}>{statusMessage || 'couldn’t load this piece.'}</p>}
               {status === 'ok' && (pdfUrl
                 ? <PdfView url={pdfUrl} paper={docPage} />
                 : book ? (
@@ -642,8 +644,8 @@ export default function ReaderShell({
             CTA (build your own) + the wordmark home, matching the profile and
             PLM three-pane pages (founder 2026-07-19). Drops out in full screen. */}
         <footer style={{ flex: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.6rem', padding: '1rem 1.2rem', borderTop: 'none' }}>
-          <Link href="/start" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">{footerCta}</Link>
-          <Link href="/" style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">alexandria<span style={{ fontStyle: 'normal' }}>.</span></Link>
+          {!PERSONAL_SITE && <Link href={alexandriaHref('/start')} style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">{footerCta}</Link>}
+          <Link href={alexandriaHref('/')} style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">alexandria<span style={{ fontStyle: 'normal' }}>.</span></Link>
         </footer>
       </div>
 

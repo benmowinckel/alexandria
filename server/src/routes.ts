@@ -113,6 +113,13 @@ async function purgeAuthorAccount(account: Account, storeKey: string, authKeyHas
       db.prepare('DELETE FROM protocol_files WHERE account_id = ?').bind(String(account.github_id)),
       db.prepare('DELETE FROM protocol_calls WHERE account_id = ?').bind(String(account.github_id)),
       db.prepare('DELETE FROM account_connect_codes WHERE account_key = ?').bind(storeKey),
+      // Remove encrypted visitor contexts for this reader and every website
+      // owned by the deleted account, including sites under an older login.
+      // Codes go first because the alias lookup needs the site rows.
+      db.prepare(`DELETE FROM visitor_connector_codes WHERE reader_id = ? OR author = ?
+        OR author IN (SELECT author FROM visitor_connector_sites WHERE owner_id = ?)`)
+        .bind(String(account.github_id), login, storeKey),
+      db.prepare('DELETE FROM visitor_connector_sites WHERE owner_id = ?').bind(storeKey),
     ];
     await db.batch(statements);
   };

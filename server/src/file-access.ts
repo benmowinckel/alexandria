@@ -51,6 +51,8 @@ export type FileReadDecision =
   | { allowed: false; status: 401 | 402 | 403; reason: DeniedReason; body: Record<string, unknown> };
 
 export interface FileReadContext {
+  /** A delegated visitor has no automatic owner bypass, even on their own site. */
+  allowOwner?: boolean;
   /** Caller has authoritatively verified that the accessor is an active member. */
   subscriberValid?: boolean;
   /** Caller has validated a Stripe checkout session that grants access to THIS file. */
@@ -85,7 +87,7 @@ export function authorizeFileRead(opts: AuthorizeFileReadOpts): FileReadDecision
   const accessorId = opts.accessorGithubId == null ? null : String(opts.accessorGithubId);
   const ownerId = String(opts.authorGithubId);
   const isAuthed = accessorId !== null;
-  const isOwner = isAuthed && accessorId === ownerId;
+  const isOwner = opts.context?.allowOwner !== false && isAuthed && accessorId === ownerId;
 
   if (v === 'public') return { allowed: true, reason: 'public' };
 

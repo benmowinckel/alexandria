@@ -1,0 +1,25 @@
+import type { NextConfig } from 'next';
+const author = process.env.NEXT_PUBLIC_PERSONAL_AUTHOR || '';
+const config: NextConfig = {
+  output: 'standalone',
+  outputFileTracingIncludes: { '/*': ['./data/public-profile.json', './public/mirror/files/**/*', './data/protected-files.json', './data/mirror/**/*'] },
+  async redirects() {
+    return [
+      { source: '/mirror', destination: '/', permanent: false },
+      { source: '/library', destination: 'https://alexandria-library.com/library', permanent: false },
+      { source: '/start', destination: 'https://alexandria-library.com/start', permanent: false },
+      { source: '/join', destination: 'https://alexandria-library.com/join', permanent: false },
+      { source: '/library/:author/checkout/:path*', destination: 'https://alexandria-library.com/library/:author/checkout/:path*', permanent: false },
+      { source: '/ask', destination: `/library/${author}/plm`, permanent: false },
+    ];
+  },
+  async headers() {
+    return [{ source: '/:path*', headers: [
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'X-Frame-Options', value: 'DENY' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline'" + (process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : '') + "; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' blob:; worker-src 'self' blob:; frame-src https://checkout.stripe.com; form-action 'self' https://github.com https://checkout.stripe.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'" },
+    ] }];
+  },
+};
+export default config;

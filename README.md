@@ -2,11 +2,19 @@
 
 Your ai thinks *with* you, not for you — and the difference is whether you wrote your mind down.
 
-Alexandria is a free, local tool: your thinking in plain files on your machine, which your coding agent reads and develops. No account, no server touching your data, nothing sent to us. The paid part is the community around it — [alexandria-library.com](https://alexandria-library.com).
+Capture, Loop and Skill help your own ai develop a record you own. Mirror is what you choose to share from it, as files or optional live answers. These recipes are free to copy and keep. The paid Connector provides continuing discovery, reader identity and current access between independent mirrors — [alexandria-library.com/join](https://alexandria-library.com/join).
+
+## Connect an existing website or system
+
+Start with [`factory/canon/connector.md`](factory/canon/connector.md). Your ai reads this module and the [portable package](integration/website-connector/README.md), checks your actual host and selected public material, and proposes the smallest useful addition. It does not need your private record, our loop, an Alexandria-hosted profile, a new framework or a site migration.
+
+A public mirror can be one JSON description pointing to existing public files. Optional live answers use your own backend and model account. Registering its address with the paid Connector is a separate choice. Public files and your own model keep working without us; ongoing directory and shared access depend on active service membership. Material already delivered cannot be recalled.
+
+After reviewing an immutable signed release, a website-only user can prepare the narrow account client with `bash factory/scripts/setup-connector.sh`. It verifies the release before writing only its own local client/state; it installs no private loop, hooks, cloud storage or website pages and connects no account. Follow the installed connection instructions for the separate account and exact public-address approval. The server-side owner key never belongs in a website. Owners who do not want our account client can implement the published interface themselves.
 
 ## Try it
 
-Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, then follow the short path for the strongest AI you already use. The agent path asks whether your computer is in reach. If it is, you get the Shortcut, an optional setup email, and one setup paste. If it is not, you get the Shortcut, the same optional email, and one reminder request to paste into the AI already in your hand. The chat path adds the approved instruction, connects your own Drive, then uses one setup paste to create and verify the first record.
+Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, then follow the short path for the strongest AI you already use. The AI checks what that host can actually read and write, uses your existing record where possible, and makes any missing computer or storage access explicit. Cloud storage and account connection are separate choices, never assumptions hidden in setup.
 
 The setup paste asks your agent to inspect the whole public project as untrusted reference material, decide how it should fit into your existing setup, and recommend whether to proceed. It cannot install or change anything until you clearly approve it, and the website never gives you executable bytes.
 

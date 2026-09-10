@@ -58,7 +58,7 @@ assert.match(handoff, /\$\{name\}’s mirror on Alexandria/);
 assert.doesNotMatch(handoff, /\$\{name\}’s public mirror on Alexandria/);
 assert.match(profileProxy, /process\.env\.NODE_ENV === 'development'/);
 assert.match(profileProxy, /get\('preview'\) === 'public'/);
-assert.match(profileProxy, /if \(!publicPreview\)/);
+assert.match(profileProxy, /libraryHeaders\(req, publicPreview\)/);
 assert.doesNotMatch(page, /copy this stand|start with Benjamin’s stand|FOUNDER_STAND/);
 assert.doesNotMatch(config, /FOUNDER_STAND/);
 assert.match(page, /DEFAULT_CATEGORIES/);
@@ -78,12 +78,14 @@ const twinQuery = library.slice(
   library.indexOf('async function runTwinQuery'),
   library.indexOf("app.post('/library/:author/ask'"),
 );
-assert.match(twinQuery, /You are the public mirror for \$\{p\.displayName\}/);
-assert.match(twinQuery, /must never claim to be them/);
-assert.match(twinQuery, /Every statement about \$\{p\.displayName\} must use their name or third-person pronouns/);
-assert.match(twinQuery, /If that material does not establish a fact/);
-assert.match(twinQuery, /Lead with the direct answer in plain language/);
-assert.match(twinQuery, /Clearly distinguish what \$\{p\.displayName\} states from what the mirror is inferring/);
+const mirrorContext = readFileSync(resolve(root, 'shared/mirror-context.mjs'), 'utf8');
+assert.match(twinQuery, /publicMirrorSystem\(p\.displayName\)/);
+assert.match(mirrorContext, /You are the public mirror for \$\{displayName\}/);
+assert.match(mirrorContext, /must never claim to be them/);
+assert.match(mirrorContext, /Every statement about \$\{displayName\} must use their name or third-person pronouns/);
+assert.match(mirrorContext, /If that material does not establish a fact/);
+assert.match(mirrorContext, /Lead with the direct answer in plain language/);
+assert.match(mirrorContext, /Clearly distinguish what \$\{displayName\} states from what the mirror is inferring/);
 assert.match(twinQuery, /publicMirrorUsesFirstPerson\(result\.answer\)/);
 assert.match(twinQuery, /identity-boundary retry/);
 assert.match(twinQuery, /identity_violation/);

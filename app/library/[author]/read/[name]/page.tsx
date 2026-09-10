@@ -33,6 +33,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const [pdfUrl, setPdfUrl] = useState('');
   const [status, setStatus] = useState<'loading' | 'ok' | 'signin' | 'pay' | 'error'>('loading');
   const [checkoutUrl, setCheckoutUrl] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
   const [questions, setQuestions] = useState<string[] | undefined>(undefined); // this piece's suggested asks → the rotating ghost text
   const [signedIn, setSignedIn] = useState(false);
   // Invite gate — an invite-restricted piece opened signed-out lands on the
@@ -98,6 +99,8 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
       return `/api/library/${encodeURIComponent(author)}/file/${encodeURIComponent(name)}${qs ? `?${qs}` : ''}`;
     };
     setStatus('loading');
+    setStatusMessage('');
+    setCheckoutUrl('');
     setInviteErr('');
     try {
       const fileRes = await fetch(fileUrl(), { credentials: 'include' });
@@ -125,20 +128,25 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
         setStatus('ok');
         return;
       }
+      const failure = await fileRes.json().catch(() => ({}));
+      if (!fresh()) return;
+      const failureMessage = typeof failure.error === 'string' ? failure.error.slice(0, 300) : '';
       if (fileRes.status === 401) {
         // Invite files require sign-in (a code binds to an account), so a
         // signed-out reader is sent to sign in with the code preserved; a
         // signed-in reader whose code failed is just told it didn't work.
         setStatus('signin');
+        if (String(failure.reason || '').startsWith('connection_')) setStatusMessage(failureMessage);
         if (code) setInviteErr(signedIn ? 'that code didn’t open this piece.' : 'sign in to use your invite code — it binds to your account.');
         return;
       }
       if (fileRes.status === 402) {
-        const b = await fileRes.json().catch(() => ({}));
-        setCheckoutUrl(b?.checkout_url || '');
+        setCheckoutUrl(failure.checkout_url || '');
+        if (failure.reason || failure.checkout_available === false) setStatusMessage(failureMessage);
         setStatus('pay');
         return;
       }
+      setStatusMessage(failureMessage);
       setStatus('error');
     } catch {
       if (fresh()) setStatus('error');
@@ -231,6 +239,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
       backTitle="library"
       visibility={visibility}
       status={status}
+      statusMessage={statusMessage}
       pdfUrl={pdfUrl || undefined}
       markdown={pdfUrl ? undefined : content}
       artifactText={content}

@@ -45,21 +45,27 @@ interface DirectoryResponse {
   authors: DirectoryAuthor[];
   you_listed: boolean;
   has_more_profiles: boolean;
+  next_cursor?: string | null;
+  directory_complete?: boolean;
+  page_error?: string;
 }
 
 // The directory is authors-only. We forward the viewer's library session
 // cookie (set on the parent domain, so it's readable here) to the worker so
 // it can identify a signed-in member; signed-out callers get an empty gate.
-async function loadDirectory(): Promise<DirectoryResponse> {
+async function loadDirectory(cursor?: string): Promise<DirectoryResponse> {
   try {
     const cookieHeader = (await cookies()).toString();
     const headers: Record<string, string> = { ...localAuth(null) };
     if (cookieHeader) headers.cookie = cookieHeader;
-    const res = await fetch(`${SERVER_URL}/library`, {
+    const route = new URL('/library', SERVER_URL);
+    if (cursor) route.searchParams.set('cursor', cursor);
+    const res = await fetch(route, {
       cache: 'no-store',
       headers,
     });
-    if (!res.ok) return { signed_in: false, membership_active: false, authors: [], you_listed: false, has_more_profiles: false };
+    if (!res.ok) return { signed_in: false, membership_active: false, authors: [], you_listed: false, has_more_profiles: false,
+      page_error: res.status === 400 ? 'This directory page expired or is invalid. Open the first page again.' : 'This directory page could not be loaded. Try again.' };
     const data = await res.json() as {
       signed_in?: boolean;
       membership_active?: boolean;
@@ -70,6 +76,8 @@ async function loadDirectory(): Promise<DirectoryResponse> {
       authors?: Partial<DirectoryAuthor>[];
       you_listed?: boolean;
       has_more_profiles?: boolean;
+      next_cursor?: string | null;
+      directory_complete?: boolean;
     };
     const authors = (data.authors || []).map((author) => ({
       id: String(author.id ?? ''),
@@ -80,6 +88,7 @@ async function loadDirectory(): Promise<DirectoryResponse> {
       contact: author.contact ?? null,
       text: author.text ?? null,
       files_url: typeof author.files_url === 'string' ? author.files_url : `/library/${author.id ?? ''}`,
+      connected_site: author.connected_site?.verified === true ? author.connected_site : null,
     }));
     return {
       signed_in: !!data.signed_in,
@@ -91,22 +100,27 @@ async function loadDirectory(): Promise<DirectoryResponse> {
       authors,
       you_listed: !!data.you_listed,
       has_more_profiles: data.has_more_profiles === true,
+      next_cursor: typeof data.next_cursor === 'string' && /^dc1\.[A-Za-z0-9_-]{40,1024}$/.test(data.next_cursor) ? data.next_cursor : null,
+      directory_complete: data.directory_complete === true,
     };
   } catch {
-    return { signed_in: false, membership_active: false, authors: [], you_listed: false, has_more_profiles: false };
+    return { signed_in: false, membership_active: false, authors: [], you_listed: false, has_more_profiles: false, page_error: 'This directory page could not be loaded. Try again.' };
   }
 }
 
 const linkStyle = { color: 'var(--text-secondary)', textDecoration: 'underline', textDecorationColor: 'var(--text-muted)', textUnderlineOffset: '3px', textDecorationThickness: '1px' };
 
-export default async function LibraryPage({ searchParams }: { searchParams?: Promise<{ q?: string; location?: string; sort?: string; preview?: string }> }) {
+export default async function LibraryPage({ searchParams }: { searchParams?: Promise<{ q?: string; location?: string; sort?: string; preview?: string; cursor?: string }> }) {
   const params = await searchParams;
   const initialQuery = (params?.q || '').trim().slice(0, 100);
   const initialLocation = (params?.location || '').trim().slice(0, 80);
   const initialSort: LibrarySort = ['number-asc', 'number-desc', 'name-asc', 'name-desc'].includes(params?.sort || '')
     ? params!.sort as LibrarySort
     : 'number-asc';
-  const loaded = await loadDirectory();
+  const cursor = params?.cursor;
+  const loaded = cursor && !/^dc1\.[A-Za-z0-9_-]{40,1024}$/.test(cursor)
+    ? { signed_in: false, membership_active: false, authors: [], you_listed: false, has_more_profiles: false, page_error: 'This directory page expired or is invalid. Open the first page again.' }
+    : await loadDirectory(cursor);
   // Local review surfaces for the access states. They do not exist in a
   // production build and cannot change real authentication or membership.
   const preview = process.env.NODE_ENV === 'development' ? params?.preview : undefined;
@@ -115,8 +129,7 @@ export default async function LibraryPage({ searchParams }: { searchParams?: Pro
     : preview === 'gate'
       ? { ...loaded, signed_in: true, membership_active: false, membership_available: true, membership_status: 'none', authors: [], you_listed: false }
       : loaded;
-  const { signed_in, membership_active, membership_available, membership_status, authors, you_listed, has_more_profiles } = directory;
-
+  const { signed_in, membership_active, membership_available, membership_status, authors, you_listed, has_more_profiles, next_cursor, page_error } = directory;
   // Sign-in must return you to the directory, signed in — not the signup
   // callback page (which is a dead end for someone who just wanted to browse).
   // intent=library skips the billing funnel; next brings you back here.
@@ -156,7 +169,9 @@ export default async function LibraryPage({ searchParams }: { searchParams?: Pro
           </p>
         </header>
 
-        {!signed_in ? (
+        {page_error ? (
+          <div className="lib-gate"><p>{page_error}</p><Link href={returnPath} style={linkStyle}>first page</Link></div>
+        ) : !signed_in ? (
           <nav className="lib-doors" aria-label="open a mind">
             <Link href={FOUNDER_PROFILE_PATH} className="lib-open">
               <span>Benjamin a. Mowinckel</span>
@@ -194,17 +209,19 @@ export default async function LibraryPage({ searchParams }: { searchParams?: Pro
           <>
             {!you_listed ? (
               <p className="lib-notlisted">
-                You&rsquo;re not listed yet — add a <em>location</em> (your city) and a{' '}
-                <em>contact</em> to your library file to appear here for the others.
+                You&rsquo;re not listed yet — connect your website and choose to be listed, or add a city and contact to your Alexandria profile.
               </p>
             ) : null}
-            {authors.length === 0 ? (
-              <p className="lib-empty">
-                No profiles listed yet — add your city and a contact to appear here.
-              </p>
-            ) : (
-              <LibraryDirectory authors={authors} initialQuery={initialQuery} initialLocation={initialLocation} initialSort={initialSort} />
-            )}
+            {cursor || next_cursor ? <p className="lib-notlisted">Names, locations and order apply to this page. More people may appear on another page.</p> : null}
+            <LibraryDirectory
+              key={JSON.stringify([cursor, initialQuery, initialLocation, initialSort])}
+              authors={authors}
+              initialQuery={initialQuery}
+              initialLocation={initialLocation}
+              initialSort={initialSort}
+              cursor={cursor}
+              nextCursor={next_cursor}
+            />
           </>
         )}
       </main>

@@ -9,6 +9,9 @@ export const FETCH_TIMEOUT_MS = 8000;
 // how the directory page silently dropped intent+next and dead-ended after
 // GitHub. One builder = a new page can't diverge the same way.
 export function librarySignInUrl(nextPath: string): string {
+  if (process.env.NEXT_PUBLIC_PERSONAL_AUTHOR) {
+    return `/api/connect/sign-in?next=${encodeURIComponent(nextPath || '/')}`;
+  }
   return `${SERVER_URL}/auth/github?intent=library&next=${encodeURIComponent(nextPath)}`;
 }
 

@@ -1,21 +1,49 @@
 #!/usr/bin/env bash
-# Narrow account connection for an already-complete local Alexandria loop.
+# Narrow account connection. Website mode has no local-loop dependency.
 set -euo pipefail
 umask 077
 
+MODE="${1:-loop}"
+case "$MODE" in loop|--website) ;; *) echo 'account connection failed: unknown mode' >&2; exit 1 ;; esac
 ALEX_DIR="${ALEX_DIR:-$HOME/alexandria}"
-RUNTIME_DIR="${ALEX_RUNTIME_DIR:-$HOME/.local/share/alexandria}"
+if [ "$MODE" = --website ]; then
+  STATE_DIR="${ALEX_CONNECTOR_DIR:-$HOME/.config/alexandria/connector}"
+  RUNTIME_DIR="${ALEX_RUNTIME_DIR:-$HOME/.local/share/alexandria-connector}"
+else
+  STATE_DIR="$ALEX_DIR/system"
+  RUNTIME_DIR="${ALEX_RUNTIME_DIR:-$HOME/.local/share/alexandria}"
+fi
 SERVER="https://api.alexandria-library.com"
-KEY_FILE="$ALEX_DIR/system/.api_key"
-PEOPLE_CONTEXT_PERMISSION="$ALEX_DIR/system/permissions/people-context"
+KEY_FILE="$STATE_DIR/.api_key"
+PEOPLE_CONTEXT_PERMISSION="$STATE_DIR/permissions/people-context"
 
 fail() { echo "account connection failed: $1" >&2; exit 1; }
 
-[ -f "$RUNTIME_DIR/.setup_complete" ] || fail "the private local loop is not fully set up"
-[ -f "$ALEX_DIR/system/.block_complete" ] || fail "local onboarding is not complete"
-[ -d "$ALEX_DIR/system" ] || fail "the Alexandria system folder is missing"
+if [ "$MODE" = --website ]; then
+  [ -f "$RUNTIME_DIR/.connector_complete" ] && [ -f "$STATE_DIR/.connect" ] || fail "the reviewed website connector is not prepared"
+else
+  [ -f "$RUNTIME_DIR/.setup_complete" ] || fail "the private local loop is not fully set up"
+  [ -f "$ALEX_DIR/system/.block_complete" ] || fail "local onboarding is not complete"
+fi
+[ -d "$STATE_DIR" ] && [ ! -L "$STATE_DIR" ] || fail "the account state folder is missing or linked"
+[ ! -L "$KEY_FILE" ] && [ ! -L "$STATE_DIR/permissions" ] && [ ! -L "$PEOPLE_CONTEXT_PERMISSION" ] || fail "account state must not redirect through symbolic links"
 command -v curl >/dev/null 2>&1 || fail "curl is unavailable"
 command -v node >/dev/null 2>&1 || fail "node is unavailable"
+# Check every ancestor and every capability path, including dangling links.
+# Leaf checks alone allow a replaced parent to redirect account writes.
+node - "$STATE_DIR" "$RUNTIME_DIR" <<'NODE'
+const fs=require('fs'),path=require('path');
+const [state,runtime]=process.argv.slice(2);
+for(const target of [state,runtime,path.join(state,'.api_key'),path.join(state,'.connect'),
+  path.join(state,'permissions','people-context'),path.join(runtime,'.connector_complete'),
+  path.join(runtime,'.payload_verified_sha'),path.join(runtime,'.factory_version')]) {
+  for(let cursor=path.resolve(target);;cursor=path.dirname(cursor)) {
+    try { if(fs.lstatSync(cursor).isSymbolicLink()) throw Error('Linked account path refused: '+cursor); }
+    catch(error) { if(error.code!=='ENOENT') throw error; }
+    if(path.dirname(cursor)===cursor) break;
+  }
+}
+NODE
 
 IFS= read -r connection_code || fail "no connection code was provided"
 [[ "$connection_code" =~ ^alex_connect_[a-f0-9]{48}$ ]] || fail "the connection code is malformed"
@@ -23,10 +51,11 @@ IFS= read -r connection_code || fail "no connection code was provided"
 client_version=$(cat "$RUNTIME_DIR/.payload_verified_sha" 2>/dev/null || cat "$RUNTIME_DIR/.factory_version" 2>/dev/null || true)
 [[ "$client_version" =~ ^[A-Za-z0-9._-]{1,128}$ ]] || fail "the installed client version is unavailable"
 
-work_dir=$(mktemp -d "$ALEX_DIR/system/.account-connect.XXXXXX") || fail "could not create a private temporary directory"
+work_dir=$(mktemp -d "$STATE_DIR/.account-connect.XXXXXX") || fail "could not create a private temporary directory"
 trap 'rm -rf "$work_dir"' EXIT
 exchange_body="$work_dir/exchange.json"
 exchange_response="$work_dir/exchange-response.json"
+exchange_headers="$work_dir/exchange-headers"
 new_key="$work_dir/api-key"
 
 current_key=""
@@ -35,28 +64,22 @@ if [ -s "$KEY_FILE" ]; then
   [[ "$current_key" =~ ^alex_[a-f0-9]{32}$ ]] || fail "the existing account key is malformed; it was not replaced"
 fi
 
-node -e '
+printf '%s' "$connection_code" | node -e '
   const fs=require("fs");
-  fs.writeFileSync(process.argv[1], JSON.stringify({code:process.argv[2]}), {mode:0o600});
-' "$exchange_body" "$connection_code"
+  fs.writeFileSync(process.argv[1], JSON.stringify({code:fs.readFileSync(0,"utf8")}), {mode:0o600});
+' "$exchange_body"
 unset connection_code
 
+printf '%s\n' 'Content-Type: application/json' "X-Alexandria-Client: $client_version" > "$exchange_headers"
 if [ -n "$current_key" ]; then
-  exchange_http=$(curl -sS --max-time 20 --max-filesize 4096 -o "$exchange_response" -w '%{http_code}' \
-    -X POST \
-    -H 'Content-Type: application/json' \
-    -H "X-Alexandria-Client: $client_version" \
-    -H "Authorization: Bearer $current_key" \
-    --data-binary "@$exchange_body" \
-    "$SERVER/account/connect/exchange" || true)
-else
-  exchange_http=$(curl -sS --max-time 20 --max-filesize 4096 -o "$exchange_response" -w '%{http_code}' \
-    -X POST \
-    -H 'Content-Type: application/json' \
-    -H "X-Alexandria-Client: $client_version" \
-    --data-binary "@$exchange_body" \
-    "$SERVER/account/connect/exchange" || true)
+  printf 'Authorization: Bearer %s\n' "$current_key" >> "$exchange_headers"
 fi
+unset current_key
+exchange_http=$(curl -sS --max-time 20 --max-filesize 4096 -o "$exchange_response" -w '%{http_code}' \
+  -X POST \
+  --header "@$exchange_headers" \
+  --data-binary "@$exchange_body" \
+  "$SERVER/account/connect/exchange" || true)
 [ "$exchange_http" = "200" ] || fail "the server rejected the connection request (status $exchange_http)"
 
 # The response is never shown to the agent. This parser accepts only one exact
@@ -88,6 +111,12 @@ mkdir -p "$(dirname "$PEOPLE_CONTEXT_PERMISSION")"
 printf '%s\n' 'on' > "$PEOPLE_CONTEXT_PERMISSION"
 chmod 600 "$PEOPLE_CONTEXT_PERMISSION"
 
+if [ "$MODE" = --website ]; then
+  echo "your website tools are connected to your Alexandria account."
+  echo "your existing website and private files are unchanged."
+  echo "register only the public mirror address you choose to share."
+  exit 0
+fi
 echo "your loop is connected to your Alexandria account."
 echo "your private files stay on this computer; only public files you approve can be sent."
 echo "when a person matters, your ai can now use only what that person allowed you to read in the Library."

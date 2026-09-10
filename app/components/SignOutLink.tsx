@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { HeaderAction } from './HeaderActions';
+import { PERSONAL_SITE } from '../lib/personal-site';
 
 /** Ends the browser Library session and reloads this page signed-out. */
 export async function endLibrarySession(): Promise<boolean> {
   try {
-    const res = await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    const res = await fetch(PERSONAL_SITE ? '/api/connect/sign-out' : '/api/auth/logout', { method: PERSONAL_SITE ? 'GET' : 'POST', credentials: 'include' });
     return res.ok;
   } catch {
     return false;

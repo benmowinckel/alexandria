@@ -2,11 +2,23 @@
 
 *Architecture reference only. It does not activate the Library, marketplace, account, or any Alexandria ask. The private ai leaves those surfaces silent unless the Author directly requests one. It may explain the signed local module map once and surface a later locally installed map-version change as a compact `system` action; that is local orientation, never a pitch or permission to activate anything.*
 
-*The canon is just files on your machine — your `alexandria.md`, the system that develops your mind (the working loop plus how to run it well), like a `design.md` or any script you keep. What it produces is your `mind.md` — your mind itself, the data. Both are yours: edit, replace, or ignore them. Alexandria is an aggregation hub you optionally connect to; it offers strong defaults and aggregates what works across everyone. The only thing that is not a file is the spine (account · file · call) — the connection to the hub itself.*
+*The canon is just files on your machine — your `alexandria.md`, the system that develops your mind (the working loop plus how to run it well), like a `design.md` or any script you keep. What it produces is your `mind.md` — your mind itself, the data. Both are yours: edit, replace, or ignore them. Alexandria is an aggregation hub you optionally connect to; it offers strong defaults and aggregates what works across everyone. The service is the Connector: shared discovery, reader identity and current access across independently owned mirrors. The owner can keep their website, published files and own-model answers working without it.*
 
 *A signed file being available on disk does not mean its feature is active. The product layers below describe what each part is. Consent is a separate question: local and reversible pieces may start on with an off switch; anything that connects outside stays off until exact approval.*
 
 ---
+
+## the five parts
+
+**Capture · Loop · Skill · Mirror · Connector** describe the offering. The internal groups below explain implementation and consent; they are not extra products.
+
+- **Capture** saves material worth returning to, into the Author's own system. The Apple Shortcut is one implementation.
+- **Loop** develops that record with the Author over time.
+- **Skill** lets their existing ai use the record and run the loop.
+- **Mirror** is the deliberately selected representation others may read. Published files are sufficient; a PLM can optionally answer from them. The recipe is free to copy, adapt and run independently.
+- **Connector** is the optional operated service: find other connected people and apply current reader identity and exact permissions across their mirrors. Membership pays for this continuing service, not permission to keep one's own files or recipe.
+
+For an existing website or a direct request to connect, read `connector.md` first. Do not install a private loop, migrate a website, draft a hosted profile or add a model just to satisfy the implementation's defaults. Existing systems are the starting point. A requested job can justify explaining the connector from the signed local module; private cognition never becomes a sales prompt, and explanation is not activation.
 
 ## the loop — incompressible core
 
@@ -45,7 +57,7 @@ Alexandria-built modules are labelled **official** in the marketplace. Most are 
 - **people context** — one removable permission lets the Author's ai use what a named person allowed this account to read when that person materially affects the current task; no prompt or private context leaves.
 - **Library publication** — `library.md` + `filter.md`; exact files and audiences need exact hash-bound approval.
 - **Library stand** — `stand.md`; Benjamin's personalizable starting shape for that connection, installed as a reference, inert until the Author asks, and free to fork or replace.
-- **own-domain profile** — `stand.md § Optional own-domain profile`; a self-contained static copy built from already-public material, dormant until requested, with domain purchase and deployment behind separate approval.
+- **website connector** — `connector.md`; add a public description to an existing website, optionally attach an own-host backend, then separately register with the shared service. Existing pages and hosting remain intact. `stand.md` is only the optional starting profile for people who want one.
 - **marketplace signal** — `marketplace.md`; only the exact approved manifest leaves the machine.
 - **public reading** — general browsing remains deliberate browser or isolated-reader access only; people context is the one narrow standing Library read, with no session-start fetch or live private-loop cache.
 - **Git backup** — the owned Git history may use any private remote; GitHub is the current soft default, never the source of truth.
@@ -53,7 +65,7 @@ Alexandria-built modules are labelled **official** in the marketplace. Most are 
 - **Drive pocket copy** — a narrow chat projection and capture inbox, not canon and not a general trial-agent grant.
 - **iCloud current-file mirror** — easy Apple-side recovery and large-media coverage; not Git history or an immutable archive.
 - **scheduled outbound messages and briefs** — require their own destination, schedule, and off switch.
-- **PLM / twin** — `plm.md` + `twin.md`; simple context connection by default, optional weights compilation only on the Author's separate request.
+- **PLM / twin** — `plm.md` + `twin.md`; optional live implementation of a Mirror, using the Author's chosen model account. An independently hosted mirror can serve its public files and own-model answers with no Alexandria request. Hosted relay and weights compilation are separate choices.
 
 Their signed references may be installed so the Author's ai can explain a direct request without fetching instructions first. They do nothing merely because the files exist.
 

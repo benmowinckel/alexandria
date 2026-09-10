@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - 'server/src/**'
+      - 'server/migrations/**'
+      - 'shared/**'
       - 'server/wrangler.toml'
       - 'server/package.json'
       # Both files are compiled into the Worker. Without these paths, a signed
@@ -27,6 +29,13 @@ jobs:
 
       - name: Type check
         run: cd server && npx tsc --noEmit
+
+      # This release adds new tables only. Existing historical migrations were
+      # applied outside Wrangler's ledger, so do not replay that whole history.
+      - name: Ensure visitor connector schema
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: cd server && npx wrangler d1 execute alexandria-library --remote --file=migrations/0028_visitor_connector.sql
 
       - name: Deploy to Cloudflare
         env:

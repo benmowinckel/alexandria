@@ -6,7 +6,10 @@ ROOT="$(git rev-parse --show-toplevel)"
 CONNECTOR="$ROOT/factory/scripts/connect-account.sh"
 CODE='alex_connect_000000000000000000000000000000000000000000000000'
 tmp=$(mktemp -d)
+tmp=$(cd "$tmp" && pwd -P)
 trap 'rm -rf "$tmp"' EXIT
+export CONNECT_TEST_NODE="$(command -v node)"
+export CONNECT_TEST_ARGV="$tmp/child-argv"
 
 fail() { echo "connect-account test failed: $1" >&2; exit 1; }
 expect_fail() {
@@ -31,15 +34,25 @@ printf '%s\n' 'verified-client' > "$tmp/healthy/runtime/.payload_verified_sha"
 expect_fail env HOME="$tmp/healthy" ALEX_DIR="$tmp/healthy/alexandria" ALEX_RUNTIME_DIR="$tmp/healthy/runtime" PATH="$tmp/bin:$PATH" bash "$CONNECTOR" <<<'not-a-code'
 
 # Mock only the connector exchange; any standing status read fails the test.
+cat > "$tmp/bin/node" <<'MOCK'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\0' node "$@" >> "$CONNECT_TEST_ARGV"
+exec "$CONNECT_TEST_NODE" "$@"
+MOCK
 cat > "$tmp/bin/curl" <<'MOCK'
 #!/usr/bin/env bash
 set -euo pipefail
-out=''; method='GET'; url=''
+printf '%s\0' curl "$@" >> "$CONNECT_TEST_ARGV"
+out=''; method='GET'; url=''; body_file=''; header_file=''
 while [ "$#" -gt 0 ]; do
   case "$1" in
     -o) out="$2"; shift 2 ;;
     -X) method="$2"; shift 2 ;;
-    -H|--data-binary|--max-time|-w) shift 2 ;;
+    --header) [[ "$2" = @* ]] || exit 4; header_file="${2#@}"; shift 2 ;;
+    --data-binary) [[ "$2" = @* ]] || exit 4; body_file="${2#@}"; shift 2 ;;
+    -H) exit 4 ;;
+    --max-time|-w) shift 2 ;;
     -sS) shift ;;
     http*) url="$1"; shift ;;
     *) shift ;;
@@ -48,6 +61,17 @@ done
 [ -n "$out" ] || exit 2
 case "$method:$url" in
   POST:*/account/connect/exchange)
+    node - "$body_file" "$header_file" <<'NODE'
+const fs=require('fs');
+const [body,headers]=process.argv.slice(2);
+for(const file of [body,headers]) if((fs.statSync(file).mode&0o777)!==0o600) process.exit(5);
+const request=JSON.parse(fs.readFileSync(body,'utf8'));
+if(Object.keys(request).join(',')!=='code' || request.code!=='alex_connect_'+'0'.repeat(48)) process.exit(6);
+const lines=fs.readFileSync(headers,'utf8').trimEnd().split('\n');
+if(lines[0]!=='Content-Type: application/json' || !/^X-Alexandria-Client: [A-Za-z0-9._-]+$/.test(lines[1])) process.exit(7);
+if(lines.length!==2 && (lines.length!==3 || lines[2]!=='Authorization: Bearer alex_'+'1'.repeat(32))) process.exit(8);
+if(process.env.MOCK_MODE==='existing' && lines.length!==3) process.exit(9);
+NODE
     case "${MOCK_MODE:-new}" in
       existing) printf '%s' '{"connected":true,"use_existing_key":true}' > "$out"; printf '200' ;;
       different) printf '%s' '{"error":"This computer is connected to a different Alexandria account."}' > "$out"; printf '409' ;;
@@ -59,7 +83,7 @@ case "$method:$url" in
   *) exit 3 ;;
 esac
 MOCK
-chmod 700 "$tmp/bin/curl"
+chmod 700 "$tmp/bin/curl" "$tmp/bin/node"
 
 env HOME="$tmp/healthy" ALEX_DIR="$tmp/healthy/alexandria" ALEX_RUNTIME_DIR="$tmp/healthy/runtime" PATH="$tmp/bin:$PATH" bash "$CONNECTOR" <<<"$CODE" >"$tmp/success"
 [ "$(sed -n '1p' "$tmp/success")" = 'your loop is connected to your Alexandria account.' ] || fail "success did not prove the connection"
@@ -90,3 +114,35 @@ expect_fail env MOCK_MODE=different HOME="$tmp/healthy" ALEX_DIR="$tmp/healthy/a
 [ "$(cat "$tmp/healthy/alexandria/system/.api_key")" = "$old_key" ] || fail "different-account failure replaced the key"
 
 echo "connect-account cold-home and write-scope contract: ok"
+
+# Explicit website mode connects no loop and creates no private record/profile.
+mkdir -p "$tmp/website/runtime" "$tmp/website/state"
+touch "$tmp/website/runtime/.connector_complete"
+printf 'reviewed connection contract\n' > "$tmp/website/state/.connect"
+printf '20260910000000\n' > "$tmp/website/runtime/.factory_version"
+env HOME="$tmp/website" ALEX_CONNECTOR_DIR="$tmp/website/state" ALEX_RUNTIME_DIR="$tmp/website/runtime" PATH="$tmp/bin:$PATH" bash "$CONNECTOR" --website <<<"$CODE" >"$tmp/website-success"
+[ ! -e "$tmp/website/alexandria" ] || fail "website mode installed a local loop"
+[ "$(cat "$tmp/website/state/.api_key")" = 'alex_11111111111111111111111111111111' ] || fail "website account key missing"
+[ "$(sed -n '1p' "$tmp/website-success")" = 'your website tools are connected to your Alexandria account.' ] || fail 'website mode lacks its own proof'
+expect_fail env HOME="$tmp/fresh" ALEX_RUNTIME_DIR="$tmp/fresh/runtime" PATH="$tmp/bin:$PATH" bash "$CONNECTOR" --website <<<"$CODE"
+[ ! -e "$tmp/fresh/.config" ] || fail 'unprepared website mode wrote account state'
+echo 'website-only account connection: ok'
+
+# Observe the arguments seen by both real child-process boundaries. Credentials
+# belong in stdin/private request files, never process listings or diagnostics.
+node - "$CONNECT_TEST_ARGV" "$tmp" <<'NODE'
+const fs=require('fs');
+const [log,root]=process.argv.slice(2);
+const argv=fs.readFileSync(log,'utf8');
+for(const secret of ['alex_connect_'+'0'.repeat(48),'alex_'+'1'.repeat(32)]) {
+  if(argv.includes(secret)) throw Error('Credential leaked into child-process arguments');
+  for(const name of ['success','reuse','website-success','out','err']) {
+    if(fs.existsSync(root+'/'+name) && fs.readFileSync(root+'/'+name,'utf8').includes(secret)) throw Error('Credential leaked into diagnostics');
+  }
+}
+if(!argv.includes('node\0') || !argv.includes('curl\0') || !argv.includes('--header\0@')) throw Error('Both actual argument boundaries must be observed');
+NODE
+for work_dir in "$tmp/healthy/alexandria/system"/.account-connect.* "$tmp/website/state"/.account-connect.*; do
+  [ ! -e "$work_dir" ] || fail 'temporary credential files survived exchange'
+done
+echo 'account connection keeps credentials out of child-process arguments: ok'

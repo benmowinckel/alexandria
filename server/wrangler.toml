@@ -64,25 +64,13 @@ WEBSITE_URL = "https://alexandria-library.com"
 LIBRARY_CUT_PERCENT = "50"
 KIN_THRESHOLD = "3"
 
-# PLM "ask this mind" inference — two variants (plm.md § both-twin arch):
-#   • weights twin (privacy floor, default PUBLIC): a LoRA compiled from the
-#     Author's substrate. DEFAULT_TWIN_CHECKPOINT + DEFAULT_TWIN_BASE.
-#   • context twin: a frontier model receiving only the exact Library scopes
-#     allowed by provider config ∩ reader grant ∩ active artifact. No local files.
-# The Worker is the permission broker and relays the authorized slice to a
-# sidecar that holds model keys, not Author files. Empty TWIN_INFERENCE_URL ⇒ "twin offline"
-# (zero-regret: the surface ships, the engine slots in later). To go live: set
-# TWIN_INFERENCE_URL to the sidecar, `wrangler secret put TWIN_INFERENCE_SECRET`,
-# and set the per-variant defaults here or per-author via POST /library/{id}/twin.
-# Checkpoint/model handles are not secrets; the Tinker/model API keys are.
-TWIN_INFERENCE_URL = ""
-DEFAULT_TWIN_BASE = "Qwen/Qwen3.6-35B-A3B"
-DEFAULT_TWIN_CHECKPOINT = ""
-# Sensible default so enabling a context twin doesn't silently no-op when the
-# Author didn't name a model. The sidecar uses its own TWIN_FRONTIER_MODEL for
-# actual inference; this just satisfies the "has a resolvable model" gate + is
-# the display value. Any Author can still override per-twin.
-# NOT authoritative — the sidecar picks the model it pays for (TWIN_FRONTIER_MODEL
-# there); this value is sent but ignored on the context path. Kept in sync so the
-# config doesn't lie about what's running; read the live model from /health.
-DEFAULT_TWIN_CONTEXT_MODEL = "claude-sonnet-5"
+# Every personal mirror, including User 0, uses explicit Author settings and an
+# encrypted per-Author adapter registration. There are no Worker-wide model or
+# adapter defaults for personal mirrors. Provider tokens stay with each adapter.
+#
+# The public company guide is configured independently. Set its adapter base or
+# /infer URL here and store GUIDE_INFERENCE_SECRET with `wrangler secret put`.
+# Optional Access-protected guide tunnels additionally use GUIDE_ACCESS_CLIENT_ID
+# and GUIDE_ACCESS_CLIENT_SECRET. Never reuse a personal adapter implicitly.
+# Empty URL means only the company guide is offline.
+GUIDE_INFERENCE_URL = ""

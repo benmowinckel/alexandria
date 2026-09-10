@@ -1144,8 +1144,14 @@ require factory/scripts/connect-account.sh \
   '[ -f "$ALEX_DIR/system/.block_complete" ]' \
   'the account connector can run before onboarding completes'
 require factory/scripts/connect-account.sh \
-  'system/permissions/people-context' \
+  'PEOPLE_CONTEXT_PERMISSION="$STATE_DIR/permissions/people-context"' \
   'the account connector no longer records the disclosed people-context permission'
+require factory/scripts/connect-account.sh \
+  'STATE_DIR="$ALEX_DIR/system"' \
+  'loop account state escaped its existing boundary'
+require factory/scripts/connect-account.sh \
+  'STATE_DIR="${ALEX_CONNECTOR_DIR:-$HOME/.config/alexandria/connector}"' \
+  'website account state has no independent local home'
 forbid factory/scripts/connect-account.sh \
   'ALEXANDRIA_SERVER' \
   'an inherited environment variable can redirect account credentials'
@@ -1159,7 +1165,7 @@ require factory/scripts/person-context.mjs \
   "method: 'GET'" \
   'people context is no longer read-only'
 require factory/scripts/person-context.mjs \
-  "'system', 'permissions', 'people-context'" \
+  "join(stateDir, 'permissions', 'people-context')" \
   'people context can run without its local permission marker'
 forbid factory/scripts/person-context.mjs \
   'method: .POST.|method: .PUT.|method: .DELETE.|body:' \
@@ -1753,6 +1759,12 @@ bash factory/scripts/test_classify_install.sh \
   || fail 'classify_install regressions failed'
 bash factory/test/connect-account.sh \
   || fail 'account connector regressions failed'
+node factory/test/website-account.mjs \
+  || fail 'website account client regressions failed'
+python3 factory/test/connector-bootstrap.py \
+  || fail 'signed website client bootstrap regressions failed'
+node scripts/package-website.mjs --check \
+  || fail 'signed website package differs from its sources'
 node factory/test/person-context.mjs \
   || fail 'people-context regressions failed'
 bash factory/test/publish-profile.sh \
