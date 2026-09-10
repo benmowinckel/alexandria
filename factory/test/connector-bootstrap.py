@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Cold proof with a disposable signing key. No live account, key or request.
-Only the public trust root in the copied fixture bootstrap is replaced. The
-fixture manifest and SSH signature are real; verifier behavior is never mocked.
+"""Check the actual shipped public trust root before disposable-key fixtures.
+Cold-install fixtures replace only the public key in a copied bootstrap. Their
+manifest and SSH signature are real; verifier behavior is never mocked. No live
+account, private signing key or network request is needed.
 """
 import hashlib
 import json
@@ -35,6 +36,34 @@ def snapshot(root):
             content = os.readlink(path) if kind == 'link' else path.read_bytes() if kind == 'file' else None
             result[str(path.relative_to(root))] = (kind, stat.S_IMODE(info.st_mode), content)
     return result
+
+
+class ShippedConnectorTrust(unittest.TestCase):
+    """These checks use original source bytes, never the fixture replacement."""
+
+    def signer(self, relative):
+        matches = re.findall(r'^\s*(alexandria-payload-signing ecdsa-sha2-nistp256 [^\n]+)$',
+                             (ROOT / relative).read_text(), flags=re.M)
+        self.assertEqual(len(matches), 1, f'one canonical signer in {relative}')
+        return matches[0].strip()
+
+    def test_original_bootstrap_key_matches_established_trust_roots(self):
+        original = self.signer('factory/scripts/setup-connector.sh')
+        self.assertEqual(original, self.signer('factory/setup.sh'))
+        self.assertEqual(original, self.signer('TRUST.md'))
+
+    def test_original_bootstrap_key_is_valid_ssh_encoding_and_fingerprint(self):
+        original = self.signer('factory/scripts/setup-connector.sh')
+        expected = re.search(r'SHA256:[A-Za-z0-9+/]+', (ROOT / 'TRUST.md').read_text())
+        self.assertIsNotNone(expected, 'published trust fingerprint is required')
+        with tempfile.TemporaryDirectory(prefix='connector-shipped-key-') as directory:
+            public = Path(directory) / 'shipped-key.pub'
+            public.write_text(original.split(' ', 1)[1] + '\n')
+            result = subprocess.run(['ssh-keygen', '-l', '-E', 'sha256', '-f', str(public)],
+                                    capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(expected.group(), result.stdout)
+        self.assertIn('(ECDSA)', result.stdout)
 
 
 class ConnectorBootstrap(unittest.TestCase):

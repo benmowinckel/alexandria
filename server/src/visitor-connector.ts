@@ -21,6 +21,7 @@ const PKCE_CHALLENGE = /^[A-Za-z0-9_-]{43}$/;
 
 interface Site {
   author: string;
+  // Opaque account storage key (normally github_<id>), not the GitHub id.
   owner_id: string;
   site: string;
   manifest_path: string;
@@ -107,11 +108,11 @@ function siteRoutes(site: Site): ConnectedWebsite | null {
 /** Metadata lookup only. No website fetch, content proxy or permission grant.
  * This is a currently operated connection, so expiry removes the listing and
  * resolver together. Previously copied public addresses remain ordinary URLs. */
-export async function connectedWebsite(author: string, ownerId?: string): Promise<ConnectedWebsite | null> {
+export async function connectedWebsite(author: string, ownerGithubId?: string): Promise<ConnectedWebsite | null> {
   const site = await getSite(author);
-  if (!site?.verified_at || ownerId !== undefined && site.owner_id !== ownerId) return null;
-  const publisher = await loadAccount(site.owner_id) as Account | null;
-  if (!publisher) return null;
+  if (!site?.verified_at) return null;
+  const publisher = await sitePublisher(site);
+  if (!publisher || ownerGithubId !== undefined && String(publisher.github_id) !== ownerGithubId) return null;
   const membership = await resolveMembership(publisher);
   if (!membership.available) fail(503, 'The website connection could not be checked. Try again.');
   if (!membership.active) return null;
@@ -120,15 +121,15 @@ export async function connectedWebsite(author: string, ownerId?: string): Promis
 /** One routing query for directory admission. These are candidates, not a
  * public roster: the caller must check reader and publisher membership before
  * returning any row, and match the immutable owner rather than only a slug. */
-export async function directoryWebsiteCandidates(authors: string[]): Promise<Map<string, { ownerId: string; listed: boolean; routes: ConnectedWebsite }>> {
+export async function directoryWebsiteCandidates(authors: string[]): Promise<Map<string, { ownerKey: string; listed: boolean; routes: ConnectedWebsite }>> {
   if (!authors.length) return new Map();
   if (authors.length > 26) throw new Error('Directory routing page exceeds its bound.');
   const rows = await getDB().prepare(`SELECT * FROM visitor_connector_sites WHERE verified_at IS NOT NULL
     AND author IN (${authors.map(() => '?').join(',')})`).bind(...authors).all<Site>();
-  const sites = new Map<string, { ownerId: string; listed: boolean; routes: ConnectedWebsite }>();
+  const sites = new Map<string, { ownerKey: string; listed: boolean; routes: ConnectedWebsite }>();
   for (const row of rows.results || []) {
     const routes = siteRoutes(row);
-    if (routes) sites.set(row.author, { ownerId: row.owner_id, listed: row.listed === 1, routes });
+    if (routes) sites.set(row.author, { ownerKey: row.owner_id, listed: row.listed === 1, routes });
   }
   return sites;
 }
@@ -162,37 +163,45 @@ async function body(c: Context): Promise<Record<string, unknown>> {
 async function getSite(author: string): Promise<Site | null> {
   return getDB().prepare('SELECT * FROM visitor_connector_sites WHERE author = ?').bind(author).first<Site>();
 }
-async function registeredSite(author: string, origin: string): Promise<Site> {
+async function sitePublisher(site: Site): Promise<Account | null> {
+  // Keep renamed aliases bound to their original account; a stale registration
+  // cannot borrow a different account's membership through a recycled handle.
+  if (await getLoginIndex(site.author) !== site.owner_id) return null;
+  return await loadAccount(site.owner_id) as Account | null;
+}
+async function registeredSite(author: string, origin: string): Promise<Site & { publisherId: string }> {
   const site = await getSite(author);
   if (!site || !site.verified_at || site.site !== origin) fail(403, 'This website is not connected.');
   if (!siteRoutes(site)) fail(403, 'This website registration is invalid.');
   if (!site.callback_path) fail(403, 'This public mirror has no reader sign-in connection.');
-  const publisher = await loadAccount(site.owner_id) as Account | null;
+  const publisher = await sitePublisher(site);
   if (!publisher) fail(403, 'This website is not connected.');
   // The paid service is the currently operated connection. Cancellation does
   // not affect independently hosted public content or the owner's files.
   const membership = await resolveMembership(publisher);
   if (!membership.available) fail(503, 'The website connection could not be checked. Try again.');
   if (!membership.active) fail(402, 'This website connection is inactive.');
-  return site;
+  return { ...site, publisherId: String(publisher.github_id) };
 }
-async function owner(c: Context): Promise<Account> {
+async function owner(c: Context): Promise<{ account: Account; storeKey: string }> {
   // Cookie-only requests cannot register or revoke a site. This is a deliberate
   // owner action performed by the Author's trusted CLI, not a visitor privilege.
   const auth = await requireAuth(c);
   if (!auth) fail(401, 'Owner API key required.');
   // A GitHub login can be recycled. Its sticky identity binding must still
   // belong to this account before that slug can acquire a website.
-  const boundOwner = await getLoginIndex(auth.account.github_login);
-  if (boundOwner !== String(auth.account.github_id)) fail(403, 'This Author identity does not belong to the account.');
-  return auth.account;
+  const storeKey = await getLoginIndex(auth.account.github_login);
+  const boundOwner = storeKey ? await loadAccount(storeKey) as Account | null : null;
+  if (!storeKey || !boundOwner || boundOwner.github_id !== auth.account.github_id
+    || boundOwner.github_login !== auth.account.github_login) fail(403, 'This Author identity does not belong to the account.');
+  return { account: auth.account, storeKey };
 }
-async function activeOwner(c: Context): Promise<Account> {
-  const account = await owner(c);
-  const membership = await resolveMembership(account);
+async function activeOwner(c: Context): Promise<{ account: Account; storeKey: string }> {
+  const identity = await owner(c);
+  const membership = await resolveMembership(identity.account);
   if (!membership.available) fail(503, 'Membership could not be checked. Try again.');
   if (!membership.active) fail(402, 'An active Connector membership is needed to connect a website.');
-  return account;
+  return identity;
 }
 function validAuthor(value: unknown): value is string {
   return typeof value === 'string' && AUTHOR.test(value);
@@ -236,7 +245,7 @@ export async function resolveConnectorViewer(c: Context): Promise<ConnectorViewe
   if (!account || account.github_id !== value.account_id) fail(401, 'Sign in again.');
   // Downstream permission decisions can reuse the publisher check already
   // performed for this request; no entitlement is stored in the credential.
-  c.set('connectorPublisherId', registration.owner_id);
+  c.set('connectorPublisherId', registration.publisherId);
   // Return current account status. Existing reader routes still resolve current
   // membership and exact per-artifact grants; this is identity, not permission.
   return { ...account, library_reader_only: true };
@@ -250,7 +259,7 @@ export function registerVisitorConnectorRoutes(app: Hono): void {
   });
 
   app.post('/connect/site', async c => {
-    const account = await activeOwner(c);
+    const { account, storeKey } = await activeOwner(c);
     const input = await body(c);
     const site = canonicalSite(input.site);
     const manifestPath = sitePath(input.manifest_path, MANIFEST_PATH);
@@ -260,7 +269,7 @@ export function registerVisitorConnectorRoutes(app: Hono): void {
     if (!manifestPath?.endsWith('.json') || input.callback_path != null && !callbackPath || manifestPath === callbackPath) fail(400, 'Use a same-origin manifest JSON path and, only for reader sign-in, a distinct callback path.');
     if (input.listed !== undefined && typeof input.listed !== 'boolean') fail(400, 'Choose whether to list this website in the member directory.');
     const existing = await getSite(account.github_login);
-    if (existing?.verified_at && existing.owner_id === String(account.github_id) && existing.site === site
+    if (existing?.verified_at && existing.owner_id === storeKey && existing.site === site
       && existing.manifest_path === manifestPath && existing.callback_path === callbackPath) {
       // Retrying an installation cannot disconnect readers or demand another
       // DNS change. Directory consent alone does not change credential scope.
@@ -281,16 +290,16 @@ export function registerVisitorConnectorRoutes(app: Hono): void {
       manifest_path = excluded.manifest_path, callback_path = excluded.callback_path, listed = excluded.listed,
       version = excluded.version, challenge_hash = excluded.challenge_hash,
       challenge_expires_at = excluded.challenge_expires_at, verified_at = NULL`)
-      .bind(account.github_login, String(account.github_id), site, manifestPath, callbackPath, Number(listed), version, hashApiKey(challenge), expires).run();
+      .bind(account.github_login, storeKey, site, manifestPath, callbackPath, Number(listed), version, hashApiKey(challenge), expires).run();
     return c.json({ author: account.github_login, site, verified: false, listed, manifest_url: new URL(manifestPath, site).toString(), callback_uri: callbackPath ? new URL(callbackPath, site).toString() : null,
       verification: { type: 'dns-txt', name: `_alexandria.${new URL(site).hostname}`, value: `alexandria=${challenge}`, expires_at: new Date(expires).toISOString() } });
   });
 
   app.post('/connect/site/verify', async c => {
-    const account = await activeOwner(c);
+    const { account, storeKey } = await activeOwner(c);
     const input = await body(c);
     const site = await getSite(account.github_login);
-    if (!site || site.owner_id !== String(account.github_id) || canonicalSite(input.site) !== site.site) fail(400, 'Register this website first.');
+    if (!site || site.owner_id !== storeKey || canonicalSite(input.site) !== site.site) fail(400, 'Register this website first.');
     if (site.verified_at) return c.json({ author: site.author, site: site.site, verified: true });
     if (site.challenge_expires_at <= Date.now()) fail(400, 'Register the website again to renew its proof.');
     const dns = new URL(DNS_ENDPOINT);
@@ -315,9 +324,9 @@ export function registerVisitorConnectorRoutes(app: Hono): void {
   });
 
   app.delete('/connect/site', async c => {
-    const account = await owner(c);
+    const { account, storeKey } = await owner(c);
     await getDB().prepare('DELETE FROM visitor_connector_sites WHERE author = ? AND owner_id = ?')
-      .bind(account.github_login, String(account.github_id)).run();
+      .bind(account.github_login, storeKey).run();
     return c.json({ ok: true });
   });
 

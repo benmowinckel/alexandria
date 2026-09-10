@@ -12,7 +12,7 @@ command -v ssh-keygen >/dev/null || fail 'SSH signature verification is unavaila
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 cat > "$work/allowed_signers" <<'SIGNER'
-alexandria-payload-signing ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAABBBETzcr+XjCojo7y6s+JU8UwqkOtzIv3h9kEQI/ef9/nuGolyXvLF8WXkoEDwFc3zkXxTbZ+TVWI5Uq0fgMxHvjM= alexandria-touchid
+alexandria-payload-signing ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBETzcr+XjCojo7y6s+JU8UwqkOtzIv3h9kEQI/ef9/nuGolyXvLF8WXkoEDwFc3zkXxTbZ+TVWI5Uq0fgMxHvjM= alexandria-touchid
 SIGNER
 ssh-keygen -Y verify -f "$work/allowed_signers" -I alexandria-payload-signing -n alexandria \
   -s "$SOURCE/manifest.txt.sig" < "$SOURCE/manifest.txt" >/dev/null 2>&1 || fail 'release signature is invalid'

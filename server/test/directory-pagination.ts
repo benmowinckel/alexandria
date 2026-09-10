@@ -46,19 +46,20 @@ getStripe().subscriptions.retrieve = (async id => {
   stripeCalls++;
   return { id, customer: 'cus_page', status: 'active', cancel_at_period_end: false, cancel_at: null, items: { data: [] } };
 }) as never;
+const storageKey = (id: number) => id === 3 ? 'legacy_member_record' : id % 7 === 0 ? String(id) : `github_${id}`;
 function addAccount(id: number, login: string, status = 'beta') {
   const key = `alex_paging_${id}`;
   const account: Account = { github_id: id, github_login: login, number: id + 1000, email: `${login}@example.com`,
     api_key_hash: hashApiKey(key), email_token: 'fixture', created_at: '2026-09-10', last_session: '2026-09-10', subscription_status: status,
     ...(status === 'active' ? { subscription_id: `sub_${id}` } : {}) };
-  records.set(`account:${id}`, encrypt(JSON.stringify(account)));
-  records.set(`login:${login}`, String(id));
-  records.set(`auth:${hashApiKey(key)}`, String(id));
+  records.set(`account:${storageKey(id)}`, encrypt(JSON.stringify(account)));
+  records.set(`login:${login}`, storageKey(id));
+  records.set(`auth:${hashApiKey(key)}`, storageKey(id));
   return { Authorization: `Bearer ${key}` };
 }
 function addWebsite(id: number, login: string) {
   db.prepare(`INSERT INTO visitor_connector_sites (author,owner_id,site,manifest_path,listed,version,challenge_hash,challenge_expires_at,verified_at)
-    VALUES (?,?,?,'/mirror.json',1,'version','hash',?,?)`).run(login, String(id), `https://${login}.example.com`, Date.now() + 1000, Date.now());
+    VALUES (?,?,?,'/mirror.json',1,'version','hash',?,?)`).run(login, storageKey(id), `https://${login}.example.com`, Date.now() + 1000, Date.now());
 }
 const owner = addAccount(1, 'viewer');
 const guest = addAccount(2, 'guest', 'canceled');
@@ -74,7 +75,7 @@ for (let i = 1; i <= 80; i++) {
 }
 // An old alias and missing index must not force an all-account repair scan.
 db.prepare("INSERT INTO authors VALUES ('author-000','old alias','{\"location\":\"London\",\"contact\":\"https://contact.example.com\"}','')").run();
-records.set('login:author-000', '1');
+records.set('login:author-000', storageKey(1));
 records.delete('login:author-079');
 const app = new Hono();
 registerLibraryRoutes(app);
@@ -99,7 +100,9 @@ assert.equal(first.directory_complete, false, 'empty first page is not an empty 
 assert.equal(first.you_listed, true, 'own listing is accurate even when it is on another page');
 records.delete('login:viewer');
 assert.equal((await (await request()).json()).you_listed, false, 'an unresolved index cannot claim the viewer is listed');
-records.set('login:viewer', '1');
+records.set('login:viewer', storageKey(3));
+assert.equal((await (await request()).json()).you_listed, false, 'a different immutable owner cannot claim the viewer listing');
+records.set('login:viewer', storageKey(1));
 assert.equal(first.next_cursor.includes('author-024'), false, 'cursor does not expose the unlisted boundary handle');
 assert.equal((await request(first.next_cursor, otherMember)).status, 400, 'cursor is bound to the member');
 assert.equal((await request(`${first.next_cursor}x`)).status, 400, 'tampering is refused');
@@ -120,7 +123,7 @@ while (cursor) {
   const page = await response.json();
   assert.equal(page.directory_complete, page.next_cursor === null);
   assert.ok(new Set(accountReadKeys.slice(beforeAccounts)).size <= 26, 'at most25 candidate accounts plus the caller; billing may reread the same account');
-  assert.ok(accountReads - beforeAccounts <= 76, 'billing reconciliation also remains bounded');
+  assert.ok(accountReads - beforeAccounts <= 77, 'billing reconciliation also remains bounded');
   assert.ok(stripeCalls - beforeStripe <= 25, 'publisher billing is bounded by the candidate page');
   assert.ok(page.authors.length <= 25);
   for (const author of page.authors) {

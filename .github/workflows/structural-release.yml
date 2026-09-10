@@ -116,6 +116,7 @@ jobs:
           node factory/test/person-context.mjs
           bash factory/test/connect-account.sh
           bash scripts/test-network-consent.sh
+          node scripts/test-release-signals.mjs
 
       - name: Enforce server access boundaries
         working-directory: candidate
@@ -154,6 +155,7 @@ jobs:
           node --test integration/website-connector/test/*.test.mjs
           node --import ./server/node_modules/tsx/dist/loader.mjs server/test/personal-website.ts
           node --import ./server/node_modules/tsx/dist/loader.mjs server/test/personal-inference.ts
+          npm run lint
           npm run build
           npx playwright install --with-deps chromium
           npm run start >/tmp/alexandria-next.log 2>&1 &

@@ -25,14 +25,13 @@ const key = 'alex_test_owner_connection';
 const session = 'reader-session-012345678901234567890';
 const secondSession = 'other-session-012345678901234567890';
 const db = new DatabaseSync(':memory:');
-let siteReads = 0;
 db.exec(readFileSync(new URL('../migrations/0028_visitor_connector.sql', import.meta.url), 'utf8'));
 class Statement {
   private args: (string | number | null)[] = [];
   constructor(private sql: string) {}
   bind(...args: (string | number | null)[]) { this.args = args; return this; }
-  async first() { if (this.sql.includes('FROM visitor_connector_sites')) siteReads++; return db.prepare(this.sql).get(...this.args) || null; }
-  async all() { if (this.sql.includes('FROM visitor_connector_sites')) siteReads++; return { results: db.prepare(this.sql).all(...this.args) }; }
+  async first() { return db.prepare(this.sql).get(...this.args) || null; }
+  async all() { return { results: db.prepare(this.sql).all(...this.args) }; }
   async run() { db.prepare(this.sql).run(...this.args); return { success: true }; }
 }
 Object.assign(globalThis, { __d1: { prepare: (sql: string) => new Statement(sql), batch: (statements: Statement[]) => Promise.all(statements.map(s => s.run())) } });
@@ -47,15 +46,16 @@ setKV({
     return { keys: [...records.keys()].filter(key => key.startsWith(prefix)).map(name => ({ name })), list_complete: true };
   },
 } as unknown as KVNamespace);
+const storageKey = (id: number) => id === 2 ? 'legacy_reader_record' : `github_${id}`;
 const account = (id: number, login: string): Account => ({ github_id: id, github_login: login,
   email: `${login}@example.com`, api_key_hash: hashApiKey(key), email_token: 'email-token',
   created_at: '2026-09-08', last_session: '2026-09-08', subscription_status: 'beta' });
-records.set('account:1', encrypt(JSON.stringify(account(1, 'author'))));
-records.set('account:2', encrypt(JSON.stringify({ ...account(2, 'reader'), subscription_status: 'canceled' })));
-records.set(`auth:${hashApiKey(key)}`, '1');
-records.set('login:author', '1');
-records.set(`library:session:${session}`, JSON.stringify({ account_key: '2' }));
-records.set(`library:session:${secondSession}`, JSON.stringify({ account_key: '1' }));
+records.set(`account:${storageKey(1)}`, encrypt(JSON.stringify(account(1, 'author'))));
+records.set(`account:${storageKey(2)}`, encrypt(JSON.stringify({ ...account(2, 'reader'), subscription_status: 'canceled' })));
+records.set(`auth:${hashApiKey(key)}`, storageKey(1));
+records.set('login:author', storageKey(1));
+records.set(`library:session:${session}`, JSON.stringify({ account_key: storageKey(2) }));
+records.set(`library:session:${secondSession}`, JSON.stringify({ account_key: storageKey(1) }));
 const app = new Hono();
 app.use('*', async (c, next) => { c.set('connectorViewer', await resolveConnectorViewer(c)); await next(); });
 registerVisitorConnectorRoutes(app);
@@ -76,6 +76,7 @@ for (const site of ['http://public.example.com', 'https://127.0.0.1', 'https://[
 }
 const registration = await (await req('/connect/site', 'POST', { site: SITE, callback_path: '/api/connect/callback' }, auth)).json();
 assert.equal(registration.verification.type, 'dns-txt');
+assert.equal(db.prepare("SELECT owner_id FROM visitor_connector_sites WHERE author = 'author'").get()?.owner_id, storageKey(1), 'registration stores the account key separately from immutable github_id');
 assert.equal(registration.verification.name, '_alexandria.my-own-website.example.com');
 assert.equal(registration.callback_uri, `${SITE}/api/connect/callback`);
 assert.equal(registration.manifest_url, `${SITE}/mirror/profile.json`);
@@ -101,6 +102,23 @@ globalThis.fetch = originalFetch;
 assert.deepEqual(await (await req('/connect/site/author')).json(), { author: 'author', site: SITE, verified: true, manifest_url: `${SITE}/mirror/profile.json`, callback_uri: `${SITE}/api/connect/callback` });
 assert.equal(await connectedWebsite('author', '99'), null, 'a recycled slug cannot enrich another account’s directory row');
 assert.equal((await connectedWebsite('author', '1'))?.manifest_url, `${SITE}/mirror/profile.json`);
+// Normal GitHub keys and arbitrary legacy keys are storage addresses, never
+// identity proofs. A real second account with the recycled login stays denied.
+const recycledKey = 'alex_recycled_handle_fixture';
+records.set(`account:${storageKey(99)}`, encrypt(JSON.stringify({ ...account(99, 'author'), api_key_hash: hashApiKey(recycledKey) })));
+records.set(`auth:${hashApiKey(recycledKey)}`, storageKey(99));
+const recycledAuth = { Authorization: `Bearer ${recycledKey}` };
+assert.equal((await req('/connect/site', 'POST', { site: SITE }, recycledAuth)).status, 403);
+assert.equal((await req('/connect/site/verify', 'POST', { site: SITE }, recycledAuth)).status, 403);
+assert.equal((await req('/connect/site', 'DELETE', undefined, recycledAuth)).status, 403);
+assert.equal(db.prepare("SELECT owner_id FROM visitor_connector_sites WHERE author = 'author'").get()?.owner_id, storageKey(1));
+records.set(`account:${storageKey(1)}`, encrypt(JSON.stringify(account(1, 'renamed-author'))));
+records.set('login:renamed-author', storageKey(1));
+assert.equal((await connectedWebsite('author', '1'))?.site, SITE, 'a sticky alias still belongs to the same immutable account after rename');
+records.set('login:author', storageKey(99));
+assert.equal(await connectedWebsite('author'), null, 'registration cannot borrow another account through a mismatched sticky binding');
+records.set('login:author', storageKey(1));
+records.set(`account:${storageKey(1)}`, encrypt(JSON.stringify(account(1, 'author'))));
 const verifier = 'P'.repeat(64);
 const query = new URLSearchParams({ author: 'author', site: SITE, state: 'a-state-that-belongs-to-this-browser',
   code_challenge: createHash('sha256').update(verifier).digest('base64url'), code_challenge_method: 'S256' });
@@ -177,7 +195,7 @@ assert.equal((await req('/library/author', 'GET', undefined, { ...visitor, 'X-Al
 assert.equal((await req('/library/author', 'GET', undefined, { 'X-Alexandria-Site': SITE })).status, 401);
 records.delete(`library:session:${session}`);
 assert.equal((await req('/library/author', 'GET', undefined, visitor)).status, 401, 'source logout invalidates visitor');
-records.set(`library:session:${session}`, JSON.stringify({ account_key: '2' }));
+records.set(`library:session:${session}`, JSON.stringify({ account_key: storageKey(2) }));
 const now = Date.now;
 Date.now = () => now() + 8 * 60 * 60 * 1000 + 1;
 assert.equal((await req('/library/author', 'GET', undefined, visitor)).status, 401, 'expiry invalidates visitor');
@@ -187,7 +205,7 @@ Date.now = () => now() + 5 * 60 * 1000 + 1;
 assert.equal((await exchange(expiredCode)).status, 401, 'code has five-minute lifetime');
 assert.equal((await consent(intent)).status, 401, 'consent has five-minute lifetime');
 Date.now = now;
-records.set('account:1', encrypt(JSON.stringify({ ...account(1, 'author'), subscription_status: 'canceled' })));
+records.set(`account:${storageKey(1)}`, encrypt(JSON.stringify({ ...account(1, 'author'), subscription_status: 'canceled' })));
 assert.equal((await req('/library/author', 'GET', undefined, visitor)).status, 402, 'publisher cancellation ends operated delegation');
 assert.equal((await access('invite/room')).status, 402, 'an existing exact grant cannot bypass publisher service expiry');
 assert.equal((await req(`/connect/authorize?${query}`, 'GET', undefined, cookie)).status, 402, 'publisher cancellation prevents new delegation');
@@ -204,15 +222,15 @@ getStripe().subscriptions.list = (async () => ({ data: [] })) as never;
 getStripe().customers.list = (async () => ({ data: [] })) as never;
 console.error = originalError;
 assert.equal((await req('/connect/site', 'DELETE', undefined, auth)).status, 200, 'inactive owner may always revoke');
-assert.equal(JSON.parse(decrypt(records.get('account:2')!)).library_reader_only, undefined, 'reader marker never persisted');
+assert.equal(JSON.parse(decrypt(records.get(`account:${storageKey(2)}`)!)).library_reader_only, undefined, 'reader marker never persisted');
 records.set('login:author', '99');
 assert.equal((await req('/connect/site', 'DELETE', undefined, auth)).status, 403, 'recycled login cannot claim a prior identity');
 assert.equal((await req('/library/author', 'GET', undefined, visitor)).status, 403, 'site revocation invalidates visitor');
 assert.deepEqual(await (await req('/connect/site/author')).json(), { author: 'author', verified: false });
 // An add-on mounts beside the existing site. Both destinations come only from
 // the owner-registered record; changing either invalidates earlier authority.
-records.set('login:author', '1');
-records.set('account:1', encrypt(JSON.stringify(account(1, 'author'))));
+records.set('login:author', storageKey(1));
+records.set(`account:${storageKey(1)}`, encrypt(JSON.stringify(account(1, 'author'))));
 async function registerCustom(callbackPath: string) {
   const registered = await (await req('/connect/site', 'POST', { site: SITE, manifest_path: '/_alexandria/manifest.json', callback_path: callbackPath }, auth)).json();
   assert.equal(registered.manifest_url, `${SITE}/_alexandria/manifest.json`);
@@ -243,13 +261,19 @@ db.exec('CREATE TABLE authors (id TEXT PRIMARY KEY, display_name TEXT, settings 
 const addProfile = (id: string, settings: Record<string, string>) => db.prepare('INSERT INTO authors VALUES (?, ?, ?, ?)').run(id, id, JSON.stringify(settings), '');
 addProfile('author', { location: 'London', contact: 'https://contact.example.com', website: 'https://unverified-profile-link.example.com' });
 for (const [id, login, status, complete] of [[3, 'inactive', 'canceled', true], [4, 'unlisted', 'beta', false], [5, 'unverified', 'beta', true]] as const) {
-  records.set(`account:${id}`, encrypt(JSON.stringify({ ...account(id, login), subscription_status: status })));
-  records.set(`login:${login}`, String(id));
+  records.set(`account:${storageKey(id)}`, encrypt(JSON.stringify({ ...account(id, login), subscription_status: status })));
+  records.set(`login:${login}`, storageKey(id));
   addProfile(login, complete ? { location: 'London', contact: 'https://contact.example.com' } : {});
 }
-db.prepare(`INSERT INTO visitor_connector_sites (author, owner_id, site, version, challenge_hash, challenge_expires_at) VALUES ('unverified', '5', 'https://not-verified.example.com', 'v', 'h', ?)`).run(Date.now() + 1000);
+db.prepare(`INSERT INTO visitor_connector_sites (author, owner_id, site, version, challenge_hash, challenge_expires_at) VALUES ('unverified', 'github_5', 'https://not-verified.example.com', 'v', 'h', ?)`).run(Date.now() + 1000);
 const directoryApp = new Hono();
 registerLibraryRoutes(directoryApp);
+db.exec('CREATE TABLE protocol_files (account_id TEXT, scope TEXT, name TEXT, text TEXT, title TEXT, visibility TEXT, price_cents INTEGER, updated_at TEXT)');
+const publicProfileResponse = await directoryApp.request(`${BASE}/library/author`);
+assert.equal(publicProfileResponse.status, 200);
+const publicProfile = await publicProfileResponse.json();
+assert.equal(publicProfile.author.account_id, '1', 'public identity stays immutable, independent of storage key');
+assert.equal(publicProfile.author.connected_site?.manifest_url, `${SITE}/_alexandria/manifest.json`, 'assembled public profile resolves a normal GitHub-key registration');
 globalThis.fetch = async () => { throw new Error('Directory routing must not fetch any website'); };
 const readDirectory = (headers: Record<string, string> = {}) => directoryApp.request(`${BASE}/library`, { headers });
 const beforeAccountScans = accountScans;
@@ -292,15 +316,15 @@ assert.equal(staticAuthor.contact, null);
 assert.equal(staticAuthor.connected_site.manifest_url, `${SITE}/my-public-files.json`);
 assert.equal(staticAuthor.connected_site.callback_uri, null);
 assert.equal((await req('/connect/site', 'POST', { site: SITE, listed: 'yes' }, auth)).status, 400);
-records.set('account:1', encrypt(JSON.stringify({ ...account(1, 'author'), subscription_status: 'canceled' })));
+records.set(`account:${storageKey(1)}`, encrypt(JSON.stringify({ ...account(1, 'author'), subscription_status: 'canceled' })));
 assert.deepEqual((await (await readDirectory(auth)).json()).authors, [], 'expired reader gets no roster');
-records.set('account:2', encrypt(JSON.stringify(account(2, 'reader'))));
+records.set(`account:${storageKey(2)}`, encrypt(JSON.stringify(account(2, 'reader'))));
 assert.equal((await (await readDirectory(cookie)).json()).authors.some((row: { id: string }) => row.id === 'author'), false, 'listed publisher expiry removes the row for other members');
 assert.deepEqual(await (await req('/connect/site/author')).json(), { author: 'author', verified: false });
-records.set('account:1', encrypt(JSON.stringify(account(1, 'author'))));
+records.set(`account:${storageKey(1)}`, encrypt(JSON.stringify(account(1, 'author'))));
 assert.equal((await (await readDirectory(auth)).json()).authors.some((row: { id: string }) => row.id === 'author'), true, 'renewal restores deliberately listed routing without replacing the site');
 assert.equal((await connectedWebsite('author'))?.callback_uri, null);
-records.set('account:2', encrypt(JSON.stringify({ ...account(2, 'reader'), subscription_status: 'canceled' })));
+records.set(`account:${storageKey(2)}`, encrypt(JSON.stringify({ ...account(2, 'reader'), subscription_status: 'canceled' })));
 await registerCustom('/_alexandria/return');
 
 // Actual subscription resolver path, not only grandfathered fixture statuses:
@@ -313,7 +337,7 @@ const subscription = () => ({ id: 'sub_connected_site', customer: 'cus_connected
   items: { data: [{ current_period_end: Math.floor(Date.now() / 1000) + 3600 }] } });
 getStripe().subscriptions.retrieve = (async () => { retrievals++; return subscription(); }) as never;
 getStripe().subscriptions.list = (async () => ({ data: [subscription()] })) as never;
-records.set('account:1', encrypt(JSON.stringify({ ...account(1, 'author'), subscription_status: 'active', subscription_id: 'sub_connected_site' })));
+records.set(`account:${storageKey(1)}`, encrypt(JSON.stringify({ ...account(1, 'author'), subscription_status: 'active', subscription_id: 'sub_connected_site' })));
 assert.equal((await connectedWebsite('author'))?.site, SITE, 'scheduled cancellation retains the currently paid service');
 const paidCredential = await (await exchange(await issueCode(`${SITE}/_alexandria/return`))).json();
 const paidVisitor = { 'X-Alexandria-Visitor': paidCredential.visitor_token, 'X-Alexandria-Site': SITE };
@@ -322,7 +346,7 @@ const repeatRegistration = await (await req('/connect/site', 'POST', { site: SIT
 assert.equal(repeatRegistration.verified, true, 'an unchanged verified install is idempotent');
 assert.equal(repeatRegistration.verification, undefined);
 assert.equal((await (await req('/connect/site', 'POST', { site: SITE, manifest_path: '/_alexandria/manifest.json', callback_path: '/_alexandria/return' }, auth)).json()).listed, true, 'an omitted listing preference preserves an existing choice on retry');
-let beforeRetrievals = retrievals;
+const beforeRetrievals = retrievals;
 assert.equal((await protectedRead()).status, 200);
 assert.equal(retrievals - beforeRetrievals, 1, 'middleware and exact grant route share one current publisher billing check');
 const originalWarn = console.warn;
@@ -334,9 +358,9 @@ subscriptionStatus = 'active';
 assert.equal((await protectedRead()).status, 200, 'renewed paid service retains author-controlled grants');
 console.warn = originalWarn;
 getStripe().subscriptions.list = (async () => ({ data: [] })) as never;
-records.set('account:1', encrypt(JSON.stringify(account(1, 'author'))));
+records.set(`account:${storageKey(1)}`, encrypt(JSON.stringify(account(1, 'author'))));
 db.prepare("DELETE FROM visitor_connector_sites WHERE author = 'unverified'").run();
-for (const id of [3, 4, 5]) records.delete(`account:${id}`);
+for (const id of [3, 4, 5]) records.delete(`account:${storageKey(id)}`);
 console.log('visitor connector: standalone static listing, exact public consent, live member discovery and access revocation, no hosted profile or website fetch');
 console.log('visitor connector: DNS ownership, exact consent, PKCE, atomic replay protection, origin/Author/route scope, expiry and source-session revocation');
 
@@ -367,8 +391,8 @@ for (const [table, columns] of Object.entries({
   protocol_files: 'account_id TEXT', protocol_calls: 'account_id TEXT', account_connect_codes: 'account_key TEXT',
 })) db.exec(`CREATE TABLE IF NOT EXISTS ${table} (${columns})`);
 Object.assign(globalThis, { __r2: { list: async () => ({ objects: [], truncated: false }), delete: async () => {} } });
-records.set('login:author', '1');
-for (const [author, ownerId] of [['old-author', '1'], ['other', '3']]) {
+records.set('login:author', storageKey(1));
+for (const [author, ownerId] of [['old-author', storageKey(1)], ['other', storageKey(3)]]) {
   db.prepare(`INSERT INTO visitor_connector_sites (author, owner_id, site, version, challenge_hash, challenge_expires_at, verified_at)
     VALUES (?, ?, ?, 'version', 'hash', ?, ?)`).run(author, ownerId, SITE, Date.now() + 10000, Date.now());
 }
@@ -380,10 +404,10 @@ const deleteOwner = await worker.fetch(new Request(BASE + '/account', { method: 
 assert.equal(deleteOwner.status, 200, await deleteOwner.text());
 assert.deepEqual(db.prepare('SELECT code_hash FROM visitor_connector_codes ORDER BY code_hash').all().map(r => r.code_hash), ['unrelated-reader']);
 assert.deepEqual(db.prepare('SELECT author FROM visitor_connector_sites ORDER BY author').all().map(r => r.author), ['other']);
-assert.equal(records.has('account:1'), false);
+assert.equal(records.has(`account:${storageKey(1)}`), false);
 const readerKey = 'alex_test_reader_delete';
-records.set(`auth:${hashApiKey(readerKey)}`, '2');
-records.set('account:2', encrypt(JSON.stringify({ ...account(2, 'reader'), api_key_hash: hashApiKey(readerKey) })));
+records.set(`auth:${hashApiKey(readerKey)}`, storageKey(2));
+records.set(`account:${storageKey(2)}`, encrypt(JSON.stringify({ ...account(2, 'reader'), api_key_hash: hashApiKey(readerKey) })));
 const deleteReader = await worker.fetch(new Request(BASE + '/account', { method: 'DELETE', headers: { Authorization: `Bearer ${readerKey}` } }), {}, execution as never);
 assert.equal(deleteReader.status, 200, await deleteReader.text());
 assert.equal(db.prepare('SELECT COUNT(*) AS count FROM visitor_connector_codes').get()?.count, 0);

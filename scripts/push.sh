@@ -118,7 +118,12 @@ cleanup() {
   rm -f "$message_file"
   delete_candidate || true
 }
-trap cleanup EXIT INT TERM HUP
+# Signal handlers must exit: cleanup by itself returns to the release body.
+# EXIT owns cleanup so an interrupted release cannot continue to the next step.
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 {
   printf '%s\n\n' "$subject"
   printf '%s\n' "$body"

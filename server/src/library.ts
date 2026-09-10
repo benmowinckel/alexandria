@@ -548,24 +548,32 @@ async function loadDirectoryPage(after: string, viewer: Account) {
   const profilesById = new Map<string, CompanyAuthorRow>();
   for (const profile of authorRows.results || []) profilesById.set(profile.id, profile);
   const candidates: Array<{ account: Account; author: ReturnType<typeof directoryAuthor>; site: ReturnType<typeof sites.get> }> = [];
-  for (let offset = 0; offset < ids.length; offset += 5) {
-    const loaded = await Promise.all(ids.slice(offset, offset + 5).map(async id => {
+  const indexedAccounts = new Map<string, { storeKey: string; account: Account }>();
+  for (let offset = 0; offset < profileIds.length; offset += 5) {
+    const loaded = await Promise.all(profileIds.slice(offset, offset + 5).map(async id => {
       // Do not use the legacy lookup's all-account repair path while browsing.
       // Signing in repairs an old missing index without an unbounded read here.
-      const ownerId = await getLoginIndex(id);
-      const account = id === viewer.github_login ? viewer : ownerId ? await loadAccount(ownerId) as Account | null : null;
-      if (!account || account.github_login !== id || String(account.github_id) !== ownerId) return null;
-      const author = directoryAuthor(account, profilesById.get(id) || null);
-      const registered = sites.get(id);
-      const site = registered?.ownerId === String(account.github_id) ? registered : undefined;
-      return !!author.location && !!author.contact || site?.listed ? { account, author, site } : null;
+      const storeKey = await getLoginIndex(id);
+      const account = storeKey ? await loadAccount(storeKey) as Account | null : null;
+      if (!storeKey || !account || account.github_login !== id) return null;
+      return { id, storeKey, account };
     }));
-    for (const candidate of loaded) if (candidate) candidates.push(candidate);
+    for (const identity of loaded) if (identity) indexedAccounts.set(identity.id, identity);
+  }
+  for (const id of ids) {
+    const identity = indexedAccounts.get(id);
+    if (!identity) continue;
+    const { account, storeKey } = identity;
+    const author = directoryAuthor(account, profilesById.get(id) || null);
+    const registered = sites.get(id);
+    const site = registered?.ownerKey === storeKey ? registered : undefined;
+    if (!!author.location && !!author.contact || site?.listed) candidates.push({ account, author, site });
   }
   const self = directoryAuthor(viewer, profilesById.get(viewer.github_login) || null);
   const ownSite = sites.get(viewer.github_login);
-  const youListed = await getLoginIndex(viewer.github_login) === String(viewer.github_id)
-    && (!!self.location && !!self.contact || ownSite?.ownerId === String(viewer.github_id) && ownSite.listed);
+  const selfIdentity = indexedAccounts.get(viewer.github_login);
+  const youListed = selfIdentity?.account.github_id === viewer.github_id
+    && (!!self.location && !!self.contact || ownSite?.ownerKey === selfIdentity.storeKey && ownSite.listed);
   const nextCursor = hasNext ? `dc1.${encrypt(JSON.stringify({ type: 'directory-page-v1', viewer: String(viewer.github_id), after: ids[ids.length - 1], expires_at: Date.now() + 60 * 60 * 1000 }))}` : null;
   return { candidates, youListed: !!youListed, nextCursor };
 }
