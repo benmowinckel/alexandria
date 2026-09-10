@@ -87,13 +87,13 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
   if (screen === 'agent') {
     return stage(
       <div className="door-block">
-        <p className="door-q">where is your agent running?</p>
+        <p className="door-q">is your computer in reach?</p>
         <div className="door-answers">
           <button className="door-btn" onClick={() => transitionTo('computer')}>
-            on my computer<span className="act-why"> — preferred, uses the live files</span>
+            yes<span className="act-why"> — i’ll grab it now</span>
           </button>
           <button className="door-btn" onClick={() => transitionTo('cloud')}>
-            in the cloud<span className="act-why"> — works from the saved github copy</span>
+            no<span className="act-why"> — not right now</span>
           </button>
         </div>
       </div>

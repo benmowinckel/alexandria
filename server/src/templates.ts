@@ -229,7 +229,8 @@ export async function callbackPageHtml(
   <button type="button" class="cta-box" onclick="copyWebsiteConnection(this)"><span class="cta-copy"><span class="cta-label">connect your website</span><span class="cta-sep"> &mdash; </span><span class="cta-why">copy for your website’s ai</span></span></button>
   ${connectionCode
     ? `<button type="button" class="cta-box" onclick="copyConnection(this)"><span class="cta-copy"><span class="cta-label">connect your loop</span><span class="cta-sep"> &mdash; </span><span class="cta-why">copy for your computer agent</span></span></button>`
-    : `<a class="cta-box" href="${libraryUrl}"><span class="cta-copy"><span class="cta-label">open your library</span><span class="cta-sep"> &mdash; </span><span class="cta-why">see your public page</span></span></a>`}
+    : ''}
+  <a class="cta-box" href="${libraryUrl}"><span class="cta-copy"><span class="cta-label">open your library</span><span class="cta-sep"> &mdash; </span><span class="cta-why">continue here in your browser</span></span></a>
   ${inviteUrl
     ? `<button type="button" class="cta-box" onclick="shareInvite(this)"><span class="cta-copy"><span class="cta-label">invite people to alexandria</span><span class="cta-sep"> &mdash; </span><span class="cta-why">share it widely</span></span></button>`
     : ''}

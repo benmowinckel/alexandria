@@ -6,6 +6,8 @@
 
 *A signed file being available on disk does not mean its feature is active. The product layers below describe what each part is. Consent is a separate question: local and reversible pieces may start on with an off switch; anything that connects outside stays off until exact approval.*
 
+*The module map records what is available and the consent default for a new install; it is not the Author's current on/off state. To report current state, inspect the live local permission, configuration, and status files. Never call a feature off from `default_state`, from the presence or absence of its reference file, or from recent-use data. If the live signals disagree, say the state is unclear.*
+
 ---
 
 ## the five parts

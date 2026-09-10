@@ -1,9 +1,11 @@
 # onboarding page — /chat
 
-**alexandria — instructions, then one setup paste**
+**alexandria — one setup paste, then personalized instructions**
 
-On `/start`, choosing `just chat` opens the same path as a direct `/chat` visit. The person chooses the chat they use most — ChatGPT, Claude or Gemini — because the real settings differ. It does not show the agent-only Shortcut or email steps.
+On `/start`, `just chat` opens the same path as `/chat`. Choose ChatGPT, Claude, Gemini or other only to include the correct settings location in the setup request. There is one copy button: paste the short setup request into a new chat. No generic instruction paste comes first.
 
-The page gives two actions on ChatGPT and Claude: copy the approved additive instruction into that host's current instruction field, then copy one short setup request into a normal chat. Gemini gives one extra mechanical action because its Saved Info rewrites a combined instruction: add the compact loop instruction, add the first-reply rule separately in the same place, then copy the same setup request. The chat itself discovers the strongest safe live home: approved local or attached Git; the exact sovereign repo and own branch for a separately approved trusted hosted agent; Airlock for every other remote ai; writable Drive; durable native memory; then an explicit handoff. It chooses without making the user compare modes, proves every claimed write by reading it back, asks direct permission for the exact personal sources it can use, begins the first specific thinking thread, and explains normal use and removal in a few short lines. A missing capability moves down the ladder; it never becomes a setup detour or a false success.
+The receiving ai independently reviews the public guide, identifies the strongest available home, and asks approval for the exact personal sources and destination. It preserves existing data and workflows, builds the accurate private map, and verifies read-back. It then follows `block.md` Phase 5: personalize the shared account block with the actual existing map, guidance and approved inbox, copy only if successful, help save it once in the indicated settings field, and check a fresh chat. Preserve unrelated instructions; replace only an older Alexandria block.
 
-The account instructions are additive. Nothing is sent to Alexandria, and every instruction, memory, file, connector, project and workflow already present stays.
+Automatic capture stays within approved access. A writable approved inbox remains useful when the full map cannot be read; verified delivery is not incorporation. No write path means an explicit unsaved handoff. Never create another home or broaden access to make a test pass.
+
+Finish with honest readiness and exactly `https://alexandria-library.com/join`, before optional thinking or further setup. A missing integration does not block local value or joining. Keep useful unfinished setup in the approved record, not a checklist the person must remember.

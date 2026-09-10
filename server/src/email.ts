@@ -256,17 +256,17 @@ export function onboardEmailContent(
     : mode === 'agent-cloud' || mode === 'agent-phone'
       ? {
           subject: 'alexandria. — your setup',
-          lead: 'cloud mode works from the committed GitHub copy you selected. it is useful, but less current than an agent using the live files on your computer.',
+          lead: 'continue with the access your ai has here. remote control can reach your computer; a cloud repository is only a saved copy. the setup text asks your ai to check first.',
         }
       : {
           subject: 'alexandria. — your setup',
-          lead: 'computer mode is preferred because it can use your live files, tools and hooks. the same setup also works in a cloud agent from a committed GitHub copy.',
+          lead: 'use the computer with your notes and files. remote control from your phone counts. the setup text asks your ai to check what it can actually use.',
         };
   const commands = mode === 'chat'
     ? emailLinkLine(`${WEBSITE_URL}/chat`, 'alexandria-library.com/chat')
     : emailCmd(installPrompt());
   const label = (text: string) => `<p style="margin: 0 0 0.55rem; color: #8a8078; font-size: 0.74rem; letter-spacing: 0.12em; font-variant: small-caps;">${text}</p>`;
-  const html = emailShell(`${label('the shortcut')}
+  const html = emailShell(`${label('the shortcut — optional')}
   <p style="margin: 0 0 0.65rem;">share any thought, link, image or voice note to the Shortcut. it saves in your own iCloud Drive at <span style="white-space: nowrap;">alexandria/vault/input</span>.</p>
   <p style="margin: 0 0 2rem; color: #8a8078;">on a Mac using the same iCloud account, tell your ai: “I added the Alexandria capture Shortcut on my phone. Let&rsquo;s connect it to this setup.” until then, anything you save simply waits there.</p>
 

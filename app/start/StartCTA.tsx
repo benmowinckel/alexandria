@@ -85,7 +85,7 @@ export default function StartCTA({
           target="_blank"
           rel="noopener noreferrer"
         >
-          add the shortcut<span className="act-why"> — save anything worth thinking about</span>
+          add the shortcut<span className="act-why"> — optional, save thoughts on your phone</span>
         </a>
       </div>
 
@@ -123,7 +123,7 @@ export default function StartCTA({
                 }}
               />
               {!email.trim() && mailState !== 'invalid' && (
-                <span className="act-why act-email-why"> — get the setup text and ask me anything anytime</span>
+                <span className="act-why act-email-why"> — optional, get the setup text and help</span>
               )}
               {mailState === 'invalid' && <span className="act-why act-email-error">enter a real email</span>}
               {mailState === 'error' && <span className="act-why act-email-error">couldn’t save — try again</span>}
@@ -153,13 +153,13 @@ export default function StartCTA({
         >
           {copyState === 'copied'
             ? <>
-                copied<span className="act-why"> — paste into {mode === 'cloud' ? 'that cloud agent' : 'that local agent'}</span>
+                copied<span className="act-why"> — paste into {mode === 'cloud' ? 'your ai here' : 'your computer agent'}</span>
               </>
             : copyState === 'error'
               ? 'couldn’t copy — try again'
               : <>
                   copy the setup
-                  <span className="act-why"> — paste into {mode === 'cloud' ? 'that cloud agent' : 'that local agent'}</span>
+                  <span className="act-why"> — paste into {mode === 'cloud' ? 'your ai here' : 'your computer agent'}</span>
                 </>}
         </button>
       </div>

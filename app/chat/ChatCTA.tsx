@@ -4,10 +4,7 @@ import { useEffect, useState } from 'react';
 import { checkReferral } from '../lib/referral';
 import { copyText, type CopyState } from '../lib/copy-text';
 import {
-  chatInstallPrompt,
-  chatSecondaryInstallPrompt,
   chatSetupPrompt,
-  CHAT_HOSTS,
   type ChatHost,
 } from '../../shared/onboarding-prompts';
 
@@ -20,8 +17,6 @@ export default function ChatCTA({
   host: ChatHost;
   initialCopyState?: CopyState;
 }) {
-  const [instructionCopyState, setInstructionCopyState] = useState<CopyState>('idle');
-  const [secondaryCopyState, setSecondaryCopyState] = useState<CopyState>('idle');
   const [setupCopyState, setSetupCopyState] = useState<CopyState>(initialCopyState);
   const [refCheck, setRefCheck] = useState<{ input: string; valid: string | null } | null>(null);
   const validRef = refCode && refCheck?.input === refCode ? refCheck.valid : null;
@@ -39,63 +34,14 @@ export default function ChatCTA({
     try { window.localStorage.setItem('alexandria-referrer', validRef); } catch { /* storage is optional */ }
   }, [validRef]);
 
-  const guide = CHAT_HOSTS[host];
-  const secondaryInstruction = chatSecondaryInstallPrompt(host);
-
-  async function copyInstructions() {
-    setInstructionCopyState(await copyText(chatInstallPrompt(host)));
-    setTimeout(() => setInstructionCopyState('idle'), 4000);
-  }
-
-  async function copySecondaryInstructions() {
-    if (!secondaryInstruction) return;
-    setSecondaryCopyState(await copyText(secondaryInstruction));
-    setTimeout(() => setSecondaryCopyState('idle'), 4000);
-  }
-
   async function copySetup() {
-    setSetupCopyState(await copyText(chatSetupPrompt()));
+    setSetupCopyState(await copyText(chatSetupPrompt(host)));
     setTimeout(() => setSetupCopyState('idle'), 4000);
   }
 
   return (
     <section className="cta-section">
       <div className="act-row">
-        <span className="act-num">1</span>
-        <button
-          type="button"
-          className={`door-btn act-box cta-btn instruction-copy${instructionCopyState === 'copied' ? ' is-copied' : ''}`}
-          onClick={copyInstructions}
-          aria-label="copy the instructions"
-        >
-          {instructionCopyState === 'copied'
-            ? <>copied<span className="act-rest">paste into {guide.instructionPath}</span></>
-            : instructionCopyState === 'error'
-              ? 'couldn’t copy — try again'
-              : <>copy the instructions<span className="act-rest">paste into {guide.instructionPath}</span></>}
-        </button>
-      </div>
-
-      {secondaryInstruction && (
-        <div className="act-row">
-          <span className="act-num">2</span>
-          <button
-            type="button"
-            className={`door-btn act-box cta-btn secondary-copy${secondaryCopyState === 'copied' ? ' is-copied' : ''}`}
-            onClick={copySecondaryInstructions}
-            aria-label="copy the first-reply rule"
-          >
-            {secondaryCopyState === 'copied'
-              ? <>copied<span className="act-rest">add separately in {guide.instructionPath}</span></>
-              : secondaryCopyState === 'error'
-                ? 'couldn’t copy — try again'
-                : <>copy the first-reply rule<span className="act-rest">add separately in the same place</span></>}
-          </button>
-        </div>
-      )}
-
-      <div className="act-row">
-        <span className="act-num">{secondaryInstruction ? 3 : 2}</span>
         <button
           type="button"
           className={`door-btn act-box cta-btn setup-copy${setupCopyState === 'copied' ? ' is-copied' : ''}`}
@@ -103,10 +49,10 @@ export default function ChatCTA({
           aria-label="copy the setup"
         >
           {setupCopyState === 'copied'
-            ? <>copied<span className="act-why"> — paste into a normal chat</span></>
+            ? <>copied<span className="act-why"> — paste into a new chat</span></>
             : setupCopyState === 'error'
               ? 'couldn’t copy — try again'
-              : <>copy the setup<span className="act-why"> — paste into a normal chat</span></>}
+              : <>copy the setup<span className="act-why"> — paste into a new chat</span></>}
         </button>
       </div>
     </section>

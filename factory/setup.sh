@@ -597,7 +597,7 @@ fi
 # Short additive account instruction. One signed source serves the website,
 # installer and reference copies so the fallback cannot drift by surface.
 # Local setup still cannot edit a cloud account: onboarding guides the paste and
-# proves persistence from a brand-new chat before it can mark the loop complete.
+# checks instruction loading in a brand-new chat, separately from local readiness.
 ACCOUNT_BOOTSTRAP="$RUNTIME_DIR/.chat-bootstrap.tmp.$$"
 ACCOUNT_INSTRUCTIONS="$ALEX_DIR/system/.account-instructions.md"
 ACCOUNT_INSTRUCTIONS_TMP="$ACCOUNT_INSTRUCTIONS.tmp.$$"
@@ -623,22 +623,18 @@ fi
 rm -f "$ACCOUNT_BOOTSTRAP"
 mv "$ACCOUNT_INSTRUCTIONS_TMP" "$ACCOUNT_INSTRUCTIONS"
 
-ACCOUNT_PROOF_FILE="$ALEX_DIR/system/.account-instructions-proof"
-account_proof=$(cat "$ACCOUNT_PROOF_FILE" 2>/dev/null | tr -d '\r\n')
-case "$account_proof" in
-  alexandria-[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9]) ;;
-  *)
-    if command -v python3 >/dev/null 2>&1; then
-      account_proof="alexandria-$(python3 -c 'import secrets; print(secrets.token_hex(8))')"
-    else
-      account_proof=$(printf 'alexandria-%08x%08x' "$(date +%s)" "$$")
-    fi
-    umask 077
-    printf '%s\n' "$account_proof" > "$ACCOUNT_PROOF_FILE"
-    ;;
-esac
-printf '\nIf I ask for my alexandria setup proof, reply with only `%s`.\n' \
-  "$account_proof" >> "$ACCOUNT_INSTRUCTIONS"
+# Personalize the initial local locator. Phase 5 adds only already-approved
+# cloud or inbox locators, then fingerprints the complete block again.
+umask 077
+printf '\nOur map: %s. Read system/canon/foundation.md for its guidance.\n' \
+  "$ALEX_DIR" >> "$ACCOUNT_INSTRUCTIONS"
+
+# Account instructions live outside the computer, so setup cannot update them.
+# Record the exact currently required bytes and let the verified loading check copy
+# this hash into the completion marker. A later instruction change therefore
+# reopens one honest refresh instead of treating an old paste as current.
+ACCOUNT_INSTRUCTIONS_REQUIRED_HASH="$ALEX_DIR/system/.account-instructions-required-hash"
+runtime_sha256 "$ACCOUNT_INSTRUCTIONS" > "$ACCOUNT_INSTRUCTIONS_REQUIRED_HASH"
 
 # ── 3. Platform configuration ─────────────────────────────────────
 
@@ -2367,26 +2363,28 @@ if [ "$CORE_OK" != "true" ]; then
 elif [ "$KEYLESS" = "true" ] || [ "$STATUS_KEY" = "ok" ]; then
   if [ -n "$EXISTING_AUTHOR" ]; then
     # Re-run over a developed constitution = a sync, not a fresh install.
-    # Pointing the agent at the block here would re-run full onboarding over
-    # an existing Author's mind — say "synced" and stop.
-    echo "Synced — you're up to date. Nothing else to do."
+    # Preserve the existing record; refreshing code does not prove every setup step.
+    echo "Synced — your existing private loop is preserved."
     echo ""
-    echo "AGENT: existing install refreshed — do NOT read the block or start onboarding."
-    echo "Tell the Author they're synced. If you're already mid-session, carry on. If this"
-    echo "paste is the first thing in a fresh tab, offer to start a session right now"
-    echo "(follow Foundation plus any present default method) so they never have to type /a."
+    echo "AGENT: do not reinstall or repopulate the existing record."
+    echo "If the current request is setup, read only Phases 5 and 6 of"
+    echo "~/alexandria/system/.block: finish missing requested account instructions,"
+    echo "then report verified readiness and give the requested join link."
+    echo "Otherwise carry on with the current task; do not restart onboarding."
+    echo "New personal reads still require approval."
     if [ "$KEYLESS" != "true" ] && [ "$STATUS_KEY" = "ok" ]; then
       echo ""
       echo "Your account is connected. No publishing, marketplace reporting, network"
       echo "fetch, telemetry, or feedback send was enabled. Each is a separate opt-in."
     fi
   else
-    echo "Installed — your agent takes it from here. Nothing else to copy or click."
+    echo "Installed — your agent will guide you through the remaining setup."
     echo ""
     if [ "$KEYLESS" = "true" ]; then
       echo "AGENT: read ~/alexandria/system/.block now and follow it end-to-end. Open by"
       echo "proposing the plan in your own words — what you'll read, what you'll write,"
-      echo "that nothing leaves this machine — and get their ok before opening their files."
+      echo "that no personal content goes to Alexandria; your AI provider processes what it reads."
+      echo "Get their ok before opening their personal files."
       echo "Answer first in a few lines, then inspect in short stages with progress beats."
       echo "Do not go silent for a long audit or tell them to step away."
     else

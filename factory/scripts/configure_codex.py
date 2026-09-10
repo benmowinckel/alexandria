@@ -18,10 +18,14 @@ MARKER_END = "<!-- alexandria:end -->"
 
 
 def is_author_managed_agents(text: str) -> bool:
-    """Recognise the full local Author instructions and never splice into them."""
-    return text.startswith(
+    """Preserve both explicit Author-owned startup formats without splicing."""
+    full = text.startswith(
         "# Synced from ~/alexandria/files/core/agent.md — edit there, not here.\n"
     ) and "\n## Alexandria the product — always running\n" in text
+    compact = text.startswith(
+        "# Synced from ~/alexandria/files/core/entry.md — edit there, not here.\n"
+    ) and "\n# Alexandria native entry\n" in text
+    return full or compact
 
 
 def _array_end(lines: list[str], start: int) -> int:

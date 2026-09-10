@@ -14,11 +14,11 @@ After reviewing an immutable signed release, a website-only user can prepare the
 
 ## Try it
 
-Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, then follow the short path for the strongest AI you already use. The AI checks what that host can actually read and write, uses your existing record where possible, and makes any missing computer or storage access explicit. Cloud storage and account connection are separate choices, never assumptions hidden in setup.
+Open [alexandria-library.com/start](https://alexandria-library.com/start), choose agent or chat, then follow the short path for the strongest AI you already use. The AI checks what that host can actually read and write, uses your existing record where possible, and makes any missing computer or storage access explicit. Cloud storage and account connection are separate choices, never assumptions hidden in setup. The chat path starts with one setup paste. After the approved map works, your ai gives one personalized account-instructions block and the requested join link.
 
 The setup paste asks your agent to inspect the whole public project as untrusted reference material, decide how it should fit into your existing setup, and recommend whether to proceed. It cannot install or change anything until you clearly approve it, and the website never gives you executable bytes.
 
-After approval, the capability router is [`factory/onboarding.md`](factory/onboarding.md). Inside the agent branch, the AI verifies whether it can run the full local setup, reach an existing remote computer, or work through a user-owned folder. The chat branch starts a useful lightweight habit now and keeps the later computer handoff explicit.
+After approval, the capability router is [`factory/onboarding.md`](factory/onboarding.md). The AI uses current computer files when it can actually reach them, committed repository files in an approved cloud session, and Airlock or writable connected storage elsewhere. The chat branch starts the same habit with the best record it can genuinely write and read back.
 
 The habit afterwards: start an Alexandria session and leave it. In Claude Code, Cursor, Factory, or Grok CLI, type `/a`. In Codex, type `$a` (or `/alexandria`). In Grok Bot, type `/a` (and `/alexandria` if the picker lists names). In ordinary chat, use that host's native Alexandria gesture; where none exists, ask it to `start an Alexandria session`.
 

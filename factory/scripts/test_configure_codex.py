@@ -13,6 +13,30 @@ SPEC.loader.exec_module(MODULE)
 
 
 class WritableRootTests(unittest.TestCase):
+    def test_preserves_author_owned_full_and_compact_startup(self) -> None:
+        for source, heading in (
+            ("agent.md", "## Alexandria the product — always running"),
+            ("entry.md", "# Alexandria native entry"),
+        ):
+            with self.subTest(source=source), TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                codex, alex, runtime = (root / name for name in ("codex", "alex", "runtime"))
+                for folder in (codex, alex, runtime):
+                    folder.mkdir()
+                owned = f"# Synced from ~/alexandria/files/core/{source} — edit there, not here.\n\n{heading}\nKeep this exact content.\n"
+                (codex / "AGENTS.md").write_text(owned, encoding="utf-8")
+                ambient = root / "ambient.md"
+                ambient.write_text("<!-- alexandria:start -->\nnew\n<!-- alexandria:end -->\n", encoding="utf-8")
+                self.assertTrue(MODULE.is_author_managed_agents(owned))
+                self.assertFalse(MODULE.is_author_managed_agents(owned.replace(heading, "unrelated")))
+                self.assertFalse(MODULE.is_author_managed_agents("unrelated\n" + owned))
+                self.assertEqual(MODULE.merge_agents(codex, ambient, runtime), "authoritative")
+                MODULE.merge_hooks(codex, alex, runtime)
+                MODULE.merge_writable_root(codex, alex)
+                MODULE.validate_install(codex, alex, runtime)
+                self.assertEqual((codex / "AGENTS.md").read_text(encoding="utf-8"), owned)
+                self.assertFalse((runtime / ".codex_agents_block_sha").exists())
+
     def test_agents_marker_requires_exact_protected_receipt(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
