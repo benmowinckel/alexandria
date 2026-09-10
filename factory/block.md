@@ -115,7 +115,7 @@ Commit the generated local files to the local Git repository so the Author can i
 
 ## Phase 5 — Put Alexandria in the Author's ordinary AI
 
-The local coding host is only one surface. Cross-chat setup is not complete until the Author's primary ordinary chat AI carries the same small additive instruction across brand-new chats. Do this now, after the private local loop works; never leave it as an optional later chore. Include the other AIs they actually use in the setup proposal too. Configure approved supported skills and hooks using the existing installer; leave native trust approvals to the user. No new provider gets private access merely because its instructions were installed.
+The local coding host is only one surface. Onboarding is not complete until the Author's ordinary chat AI carries the same small additive instruction across brand-new chats. Do this now, after the private local loop works; never leave it as an optional later chore.
 
 If the ordinary chat AI is not already clear from the conversation, ask one short question: `Which AI app do you use for normal chats?` Then give only the matching next action, not a menu:
 
@@ -126,17 +126,13 @@ If the ordinary chat AI is not already clear from the conversation, ask one shor
 
 Have the Author paste the complete contents of `~/alexandria/system/.account-instructions.md` **below** anything already there and save. Never replace their existing instructions. Give one action at a time.
 
-Also include the exact record this host may use, its approved provider/access boundary, and its real start gesture. For a cloud host, name the repository and working branch, not a Mac path it cannot reach. If that connection is unavailable, keep the home and retain unsaved changes for handoff; do not create a competing personal record. Do not put private record contents or credentials in account instructions. Use supported controls to make approved changes where possible; ask the Author only for steps this session cannot perform.
-
 After they save it, ask them to open a brand-new chat in that AI and send exactly:
 
 ```
 What is my alexandria setup proof? Reply with only the proof.
 ```
 
-Ask them to paste that new chat's one-line reply back here. Read `~/alexandria/system/.account-instructions-proof` and require an exact match. A claim that it was pasted, a reply from this setup chat, or an explanation of what the instructions say is not persistence proof. On an exact match, copy the single hash line from `~/alexandria/system/.account-instructions-required-hash` into `~/alexandria/system/.account_instructions_complete`. On a mismatch, fix only this setting and repeat the brand-new-chat check. Never call cross-chat instructions verified unless those two hash files match exactly. If this host demonstrably lacks persistent instructions, or the Author explicitly defers the manual step, retain that exact limitation in `AI setup` and continue with the working local loop; do not manufacture the proof or completed hash.
-
-The instruction proof is only one half: in that fresh chat, verify actual retrieval of the approved record without copying its contents here. Record the primary host's instruction and record-access results separately. An instruction-only host has a working reminder, not verified file access. In machine.md, keep a short `AI setup` section: each relevant host, its approved record, real start gesture and verified, pending or declined steps. Apply the same setup and proof to the other AIs, one action at a time, wherever the Author can complete them now. Do not hold the working loop or its completion message hostage to another unavailable app. Retain deferred improvements here for a later active session's useful recommendation; do not ask the Author to remember them, and never keep nudging a declined step.
+Ask them to paste that new chat's one-line reply back here. Read `~/alexandria/system/.account-instructions-proof` and require an exact match. A claim that it was pasted, a reply from this setup chat, or an explanation of what the instructions say is not persistence proof. On an exact match, copy the single hash line from `~/alexandria/system/.account-instructions-required-hash` into `~/alexandria/system/.account_instructions_complete`. On a mismatch, fix only this setting and repeat the brand-new-chat check. Do not continue or mark onboarding complete unless those two hash files match exactly.
 
 ## Phase 6 — Verify and Report
 
@@ -155,17 +151,13 @@ your loop is ready.
 
 Your AI now has local files it can keep building on with you. Keep using it normally. This setup did not send your files or personal content to Alexandria's servers, and it connected no Alexandria account. If your AI runs online, its provider still processes what you let it read under that account's terms.
 
-I’ll ask before saving lasting changes about you. For a thinking session, [this host’s real start gesture] in a new chat; “a.” closes it.
-
 Next, decide whether you also want a public profile and a way to connect with other people.
 
 [See the community](https://alexandria-library.com/join).
 ```
 
-If the originating request did not ask about the community, omit the final two lines and add nothing in their place. Before delivery, check `~/alexandria/system/.account_instructions_complete` against the exact hash in `~/alexandria/system/.account-instructions-required-hash`. A mismatch returns to Phase 5 unless the host is unsupported or the Author explicitly deferred that step and `AI setup` records it. In that case say `your local loop is ready; [named host] setup is still pending`, not that cross-chat setup passed. Only after the local loop is verified and Phase 5 is either verified or honestly retained run `touch ~/alexandria/system/.block_complete`.
+If the originating request did not ask about the community, omit the final two lines and add nothing in their place. Before delivery, require `~/alexandria/system/.account_instructions_complete` to contain the exact hash in `~/alexandria/system/.account-instructions-required-hash`; if it does not, return to Phase 5. Only then run `touch ~/alexandria/system/.block_complete`.
 
-Replace the bracketed gesture with the verified native command (for example, `$a` in Codex), or `start an Alexandria session` without a native skill. Never print the placeholder. Name an unverified secondary host briefly if needed, without adding a second task to the completion. Do not automatically open an active session before giving this report and link.
-
-Initial setup ends there. Additional AIs are configured or durably retained in `AI setup`, not forgotten. Shortcut connection, backup, Alexandria account connection, and other optional capabilities keep their separate scoped approvals.
+Initial setup ends there. Shortcut connection, additional AIs, backup, Alexandria account connection, and every optional capability remain separate.
 
 Test: *"I know setup is finished, what changed, and the one thing I can decide next."* A personalised join argument, automatic browsing, a forced insight, or more than one action = fail.

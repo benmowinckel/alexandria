@@ -105,7 +105,7 @@ require shared/onboarding-prompts.ts \
   'Do not inspect \`files/\` or other personal content.' \
   'local or selected-repository setup can read personal content before approval'
 require shared/onboarding-prompts.ts \
-  'healthy existing install, preserve it and skip reinstallation' \
+  'healthy existing install, say setup is already done and do not rerun onboarding' \
   'the setup paste can rerun onboarding over an existing install'
 require shared/onboarding-prompts.ts \
   'work on your own branch, say that it may lag behind my computer, and never claim you changed my live computer or installed local tools' \
@@ -220,19 +220,19 @@ require shared/onboarding-prompts.ts \
   'Keep my existing instructions.' \
   'the account instruction is no longer additive'
 require shared/onboarding-prompts.ts \
-  'In each new ordinary conversation' \
+  'In every ordinary conversation' \
   'the account instruction no longer repeats the visible route in each new chat'
 require shared/onboarding-prompts.ts \
-  'ordinary conversation, including voice, end only your first reply: “Want me to open your alexandria loop' \
+  'every ordinary conversation, including voice, end the first reply: “Want me to open your alexandria loop' \
   'the account instruction no longer carries the visible route'
 require shared/onboarding-prompts.ts \
-  'In each new ordinary conversation, including voice, end only your first reply:' \
+  'In each new ordinary conversation, including voice, end only your first reply with exactly:' \
   'the Gemini account instruction no longer includes voice'
 require shared/onboarding-prompts.ts \
-  'On yes, open a new chat and invoke the native skill; if unable, tell me the exact start gesture.' \
+  'On yes, open a new chat or tell me how.' \
   'the account instruction no longer gives every chat one natural route'
 require shared/onboarding-prompts.ts \
-  'isolated Airlock; connected storage' \
+  'Other remote ai: Airlock or writable connected storage.' \
   'the account instruction no longer covers writable no-hooks surfaces'
 forbid shared/onboarding-prompts.ts \
   'Before normal saves|Drive, attached files, or app memory' \
@@ -247,7 +247,7 @@ require shared/onboarding-prompts.ts \
   'before saving a lasting change about me' \
   'the account instruction can still ask before every routine write'
 require shared/onboarding-prompts.ts \
-  'Report features only from current permissions/settings/status.' \
+  'Say Library or Airlock is off only from current permissions, settings or status.' \
   'the durable account instruction can still infer live feature state from defaults'
 require shared/onboarding-prompts.ts \
   'without opening personal content or changing anything' \
@@ -283,7 +283,7 @@ require shared/onboarding-prompts.ts \
   'Then give me one neutral link to https://alexandria-library.com/join' \
   'the optional public-profile decision is missing from the finished private setup'
 require shared/onboarding-prompts.ts \
-  'Prepare the highest-value specific thread for my first alexandria session' \
+  'Be generic only without context' \
   'the fresh-chat session can ignore an existing personal record'
 forbid shared/onboarding-prompts.ts \
   'first month free|dollar a day|refer-three|pricing|membership|join link' \
@@ -296,13 +296,12 @@ const fs = require('fs');
 const factory = fs.readFileSync('factory/chat/bootstrap.md', 'utf8');
 const shared = fs.readFileSync('shared/onboarding-prompts.ts', 'utf8');
 const factoryMatch = factory.match(/---PROMPT START---\n([\s\S]*?)\n---PROMPT END---/);
-const coreMatch = shared.match(/export const CHAT_CORE_INSTRUCTION = `([\s\S]*?)`;/);
-const nudgeMatch = shared.match(/export const CHAT_NUDGE_INSTRUCTION = `([\s\S]*?)`;/);
-if (!factoryMatch || !coreMatch || !nudgeMatch) {
+const sharedMatch = shared.match(/export const CHAT_INSTRUCTION = `([\s\S]*?)`;/);
+if (!factoryMatch || !sharedMatch) {
   console.error('private-boundary check failed: could not parse the chat handoff sources');
   process.exit(1);
 }
-const sharedPrompt = (coreMatch[1] + '\n\n' + nudgeMatch[1]).replace(/\\`/g, '`');
+const sharedPrompt = sharedMatch[1].replace(/\\`/g, '`');
 if (factoryMatch[1].trim() !== sharedPrompt.trim()) {
   console.error('private-boundary check failed: chat clipboard and factory bootstrap do not carry the exact same request');
   process.exit(1);

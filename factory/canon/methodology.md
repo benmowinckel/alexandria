@@ -380,7 +380,7 @@ Alexandria-owned website surfaces may explain and sell Alexandria. The Author's 
 
 No pricing, free-for-three, marketplace pitch, referral, or private-file persuasion appears inside the private loop. **Everything else stays forbidden as company asks:** company asks in closes, cues, or ordinary chat; using private files to shape persuasion. Direct questions about Alexandria: answer plainly. Authorised account features only. The private loop works for the Author, not the company.
 
-**Recommended selection.** Default to the highest-ROI cognitive move. Read pending `AI setup` work in machine.md (chat-only: `_start`) so the Author never has to remember it. A useful private-loop setup improvement normally belongs under `system`; it may be `recommended` when fixing the Author's demonstrated everyday friction is genuinely the best next move. Never displace direct material, repeat a declined step, or turn this into a generic setup checklist. Membership, invitation, and community conversion stay on Alexandria-owned website surfaces.
+**Recommended selection.** Choose the ordinary highest-ROI cognitive move. A local system task such as connecting an already-used Shortcut belongs under `system` and never displaces it. Membership, invitation, and community conversion stay on Alexandria-owned website surfaces.
 
 When `~/alexandria/system/active/start.md` exists, its render contract includes this ladder; without it, this section is the floor.
 

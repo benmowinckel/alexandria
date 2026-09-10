@@ -89,7 +89,7 @@ jobs:
           awk '$1 !~ /^#/ {print $2}' factory/manifest.txt \
             | LC_ALL=C sort > "$RUNNER_TEMP/manifest_paths"
           diff -u "$RUNNER_TEMP/expected_factory_paths" "$RUNNER_TEMP/manifest_paths"
-          python3 -m unittest factory/chat/test_bootstrap.py factory/scripts/test_account_instruction_proof.py
+          python3 -m unittest factory/chat/test_bootstrap.py
           version="$(awk '$1=="#" && $2=="alexandria-factory-version" {print $3; exit}' factory/manifest.txt)"
           [[ "$version" =~ ^[0-9]{14}$ ]]
 

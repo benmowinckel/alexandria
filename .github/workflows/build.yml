@@ -63,7 +63,7 @@ jobs:
           done
 
       - name: Chat bootstrap contract
-        run: python3 -m unittest factory/chat/test_bootstrap.py factory/scripts/test_account_instruction_proof.py
+        run: python3 -m unittest factory/chat/test_bootstrap.py
 
       - name: Factory install, capture, and transcript tests
         run: |
