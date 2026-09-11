@@ -10,6 +10,7 @@ import { encrypt, decrypt, generateToken, hashApiKey, safeEqual } from './crypto
 import { getDB } from './db.js';
 import { getLoginIndex, loadAccount } from './kv.js';
 import { resolveMembership } from './billing.js';
+import { renderVisitorConnectionPage } from './visitor-connection-page.js';
 
 const INTENT_TTL_MS = 5 * 60 * 1000;
 const VISITOR_TTL_MS = 8 * 60 * 60 * 1000;
@@ -72,9 +73,6 @@ function websiteOrigin(): string {
 }
 function unseal<T>(raw: string): T | null {
   try { return JSON.parse(decrypt(raw)) as T; } catch { return null; }
-}
-function html(raw: string): string {
-  return raw.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 }
 function canonicalSite(value: unknown): string | null {
   if (typeof value !== 'string' || value.length > 512) return null;
@@ -364,35 +362,47 @@ export function registerVisitorConnectorRoutes(app: Hono): void {
     const intent: Intent = { type: 'visitor-intent-v1', author, site, version: registered.version, state,
       challenge, session_hash: hashApiKey(session), expires_at: Date.now() + INTENT_TTL_MS };
     const sealed = encrypt(JSON.stringify(intent));
-    return c.html(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>connect this website</title><style>body{max-width:32rem;margin:12vh auto;padding:1.5rem;background:#fafafa;color:#211e18;font:20px/1.5 Georgia,serif}h1{font-size:1.6em;font-weight:400}button{font:inherit;background:none;border:1px solid #cfc8ba;border-radius:4px;padding:.5rem 1rem;cursor:pointer;margin:.5rem .7rem .5rem 0}button[value=allow]{background:#004996;color:white;border-color:#004996}small{color:#777}a{color:#004996}strong{overflow-wrap:anywhere}</style><h1>connect this website</h1><p>Let <strong>${html(site)}</strong> show you the parts of <strong>${html(author)}</strong>’s mirror you can access, let you ask it questions, and open checkout for a paid piece you choose.</p><p>Your current access still applies. Payment still requires your confirmation at checkout. This website gets no permission to publish, manage your account, or read other Authors.</p><small>Signed in as ${html(account.github_login)}. Lasts up to eight hours; signing out of Alexandria ends this connection.</small><form method="post" action="/connect/authorize"><input type="hidden" name="intent" value="${html(sealed)}"><button name="decision" value="allow">connect</button><button name="decision" value="deny">cancel</button></form></html>`);
+    c.set('visitorFormTarget', registered.site);
+    return c.html(renderVisitorConnectionPage({site: registered.site, readerLogin: account.github_login, intent: sealed}));
   });
 
   app.post('/connect/authorize', async c => {
-    if (c.req.header('Origin') !== serverOrigin()) fail(403, 'Use the connection page to continue.');
-    if (!c.req.header('content-type')?.startsWith('application/x-www-form-urlencoded')) fail(400, 'Invalid consent form.');
-    const bytes = await c.req.text();
-    if (bytes.length > 8192) fail(400, 'Invalid consent form.');
-    const form = new URLSearchParams(bytes);
-    const intent = unseal<Intent>(form.get('intent') || '');
-    const session = extractLibrarySessionToken(c);
-    if (!intent || intent.type !== 'visitor-intent-v1' || typeof intent.expires_at !== 'number' || intent.expires_at <= Date.now()
-      || !session || !safeEqual(intent.session_hash, hashApiKey(session))) fail(401, 'The connection expired. Start again.');
-    const account = await findByLibrarySessionToken(session);
-    if (!account) fail(401, 'Sign in again.');
-    const registered = await registeredSite(intent.author, intent.site);
-    if (!safeEqual(registered.version, intent.version)) fail(401, 'The website connection changed. Start again.');
-    if (form.get('decision') === 'deny') return c.redirect(callback(registered, { error: 'access_denied', state: intent.state }), 303);
-    if (form.get('decision') !== 'allow') fail(400, 'Choose whether to connect.');
-    const code = `avc_${generateToken(32)}`;
-    const now = Date.now();
-    const value: Visitor = { type: 'visitor-v1', author: intent.author, site: intent.site, version: intent.version,
-      account_id: account.github_id, session, expires_at: now + VISITOR_TTL_MS };
-    await getDB().batch([
-      getDB().prepare('DELETE FROM visitor_connector_codes WHERE expires_at <= ?').bind(now),
-      getDB().prepare(`INSERT INTO visitor_connector_codes (code_hash, author, reader_id, site, challenge, context, expires_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(hashApiKey(code), intent.author, String(account.github_id), intent.site, intent.challenge, encrypt(JSON.stringify(value)), now + INTENT_TTL_MS),
-    ]);
-    return c.redirect(callback(registered, { code, state: intent.state }), 303);
+    let registered: Site | undefined;
+    try {
+      if (c.req.header('Origin') !== serverOrigin()) fail(403, 'Use the connection page to continue.');
+      if (!c.req.header('content-type')?.startsWith('application/x-www-form-urlencoded')) fail(400, 'Invalid consent form.');
+      const bytes = await c.req.text();
+      if (bytes.length > 8192) fail(400, 'Invalid consent form.');
+      const form = new URLSearchParams(bytes);
+      const intent = unseal<Intent>(form.get('intent') || '');
+      if (!intent || intent.type !== 'visitor-intent-v1') fail(401, 'The connection expired. Return to the website and try again.');
+      registered = await registeredSite(intent.author, intent.site);
+      const session = extractLibrarySessionToken(c);
+      if (typeof intent.expires_at !== 'number' || intent.expires_at <= Date.now()
+        || !session || !safeEqual(intent.session_hash, hashApiKey(session))) fail(401, 'The connection expired. Start again.');
+      const account = await findByLibrarySessionToken(session);
+      if (!account) fail(401, 'Sign in again.');
+      c.set('visitorFormTarget', registered.site);
+      if (!safeEqual(registered.version, intent.version)) fail(401, 'The website connection changed. Start again.');
+      if (form.get('decision') === 'deny') return c.redirect(callback(registered, { error: 'access_denied', state: intent.state }), 303);
+      if (form.get('decision') !== 'allow') fail(400, 'Choose whether to connect.');
+      const code = `avc_${generateToken(32)}`;
+      const now = Date.now();
+      const value: Visitor = { type: 'visitor-v1', author: intent.author, site: intent.site, version: intent.version,
+        account_id: account.github_id, session, expires_at: now + VISITOR_TTL_MS };
+      await getDB().batch([
+        getDB().prepare('DELETE FROM visitor_connector_codes WHERE expires_at <= ?').bind(now),
+        getDB().prepare(`INSERT INTO visitor_connector_codes (code_hash, author, reader_id, site, challenge, context, expires_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(hashApiKey(code), intent.author, String(account.github_id), intent.site, intent.challenge, encrypt(JSON.stringify(value)), now + INTENT_TTL_MS),
+      ]);
+      return c.redirect(callback(registered, { code, state: intent.state }), 303);
+    } catch (error) {
+      if (!(error instanceof HTTPException) || error.status >= 500) throw error;
+      // A stale form remains a readable page, with a safe route back to the
+      // verified website. Never build a return link from unverified form data.
+      const site = registered?.site || websiteOrigin();
+      return c.html(renderVisitorConnectionPage({ site, error: error.message, restartUrl: site }), error.status);
+    }
   });
 
   app.post('/connect/token', async c => {

@@ -158,6 +158,7 @@ jobs:
           npm run lint
           npm run build
           npx playwright install --with-deps chromium
+          node --import ./server/node_modules/tsx/dist/loader.mjs server/test/visitor-connection-browser.ts
           npm run start >/tmp/alexandria-next.log 2>&1 &
           APP_PID=$!
           trap 'kill $APP_PID' EXIT

@@ -6,6 +6,7 @@
  */
 
 import { Hono } from 'hono';
+import { browserSecurityHeaders } from './browser-security.js';
 import { extractApiKey, findByApiKey } from './auth.js';
 import { updateAccountBilling, getBillingSummary } from './accounts.js';
 import { runHealthDigest } from './cron.js';
@@ -76,19 +77,8 @@ app.use('*', async (c, next) => {
   c.executionCtx.waitUntil(flushEvents());
 });
 
-// Security headers — all responses
-app.use('*', async (c, next) => {
-  await next();
-  c.header('X-Content-Type-Options', 'nosniff');
-  c.header('X-Frame-Options', 'DENY');
-  c.header('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
-  c.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()');
-  c.header('Cross-Origin-Opener-Policy', 'same-origin');
-  const serverUrl = process.env.SERVER_URL || 'https://api.alexandria-library.com';
-  const websiteUrl = process.env.WEBSITE_URL || 'https://alexandria-library.com';
-  c.header('Content-Security-Policy', `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' ${serverUrl} ${websiteUrl}; img-src 'self' ${websiteUrl}; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`);
-});
+// Use the same response policy in production and browser-flow tests.
+app.use('*', browserSecurityHeaders);
 
 // Body size limit. Library JSON PUTs may carry a 25MB PDF as base64 (~33.4MB
 // on the wire); every other route stays at 10MB. The decoded file and account

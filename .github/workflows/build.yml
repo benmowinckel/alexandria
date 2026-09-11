@@ -86,6 +86,7 @@ jobs:
           npm run lint
           npm run build
           npx playwright install --with-deps chromium
+          node --import ./server/node_modules/tsx/dist/loader.mjs server/test/visitor-connection-browser.ts
 
       - name: Rendered metadata contract
         run: |
