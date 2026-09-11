@@ -134,7 +134,7 @@ jobs:
         run: |
           npm ci
           npx tsc --noEmit
-          for test in account-connect-contract account-connect-experience audit cors-preflight cron-scanner directory-pagination file-access library-capabilities mirror-ownership visitor-connector connector-access marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
+          for test in account-connect-contract account-connect-experience audit cors-preflight cron-scanner directory-pagination file-access library-capabilities mirror-ownership visitor-connector visitor-checkout visitor-context connector-access marketplace-catalog membership-contract onboarding-email profile-boundary secret-fingerprint timing-safe-credential-compare welcome-contract; do
             npx tsx "test/$test.ts"
           done
 

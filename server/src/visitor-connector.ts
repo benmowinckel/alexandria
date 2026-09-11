@@ -57,6 +57,7 @@ declare module 'hono' {
   interface ContextVariableMap {
     connectorViewer: ConnectorViewer | null;
     connectorPublisherId: string | undefined;
+    connectorSite: string | undefined;
   }
 }
 
@@ -214,11 +215,13 @@ function callback(site: Site, params: Record<string, string>): string {
 function isReaderRoute(c: Context, author: string): boolean {
   const path = new URL(c.req.url).pathname;
   if (c.req.method === 'GET' && path === '/library/session') return true;
-  if (c.req.method === 'GET' && path === `/connect/access/${author}`) return true;
+  if (c.req.method === 'GET' && (path === `/connect/access/${author}` || path === `/connect/context/${author}`)) return true;
   if (c.req.method === 'GET' && path === `/library/${author}`) return true;
   if (c.req.method === 'POST' && path === `/library/${author}/ask`) return true;
-  if (c.req.method !== 'GET' || !path.startsWith(`/library/${author}/file/`)) return false;
-  const file = path.slice(`/library/${author}/file/`.length);
+  const prefix = c.req.method === 'GET' ? `/library/${author}/file/`
+    : c.req.method === 'POST' ? `/library/${author}/checkout/file/` : null;
+  if (!prefix || !path.startsWith(prefix)) return false;
+  const file = path.slice(prefix.length);
   // One exact file, no decoded slash, path traversal or ambiguous path spelling.
   try { return !!file && !/[\/\\\x00-\x1f]/.test(decodeURIComponent(file)) && !['.', '..'].includes(decodeURIComponent(file)); }
   catch { return false; }
@@ -246,6 +249,7 @@ export async function resolveConnectorViewer(c: Context): Promise<ConnectorViewe
   // Downstream permission decisions can reuse the publisher check already
   // performed for this request; no entitlement is stored in the credential.
   c.set('connectorPublisherId', registration.publisherId);
+  c.set('connectorSite', registration.site);
   // Return current account status. Existing reader routes still resolve current
   // membership and exact per-artifact grants; this is identity, not permission.
   return { ...account, library_reader_only: true };
@@ -360,7 +364,7 @@ export function registerVisitorConnectorRoutes(app: Hono): void {
     const intent: Intent = { type: 'visitor-intent-v1', author, site, version: registered.version, state,
       challenge, session_hash: hashApiKey(session), expires_at: Date.now() + INTENT_TTL_MS };
     const sealed = encrypt(JSON.stringify(intent));
-    return c.html(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>connect this website</title><style>body{max-width:32rem;margin:12vh auto;padding:1.5rem;background:#fafafa;color:#211e18;font:20px/1.5 Georgia,serif}h1{font-size:1.6em;font-weight:400}button{font:inherit;background:none;border:1px solid #cfc8ba;border-radius:4px;padding:.5rem 1rem;cursor:pointer;margin:.5rem .7rem .5rem 0}button[value=allow]{background:#004996;color:white;border-color:#004996}small{color:#777}a{color:#004996}strong{overflow-wrap:anywhere}</style><h1>connect this website</h1><p>Let <strong>${html(site)}</strong> show you the parts of <strong>${html(author)}</strong>’s mirror you can access, and let you ask it questions.</p><p>Your current access still applies. This website gets no permission to publish, manage your account, or read other Authors.</p><small>Signed in as ${html(account.github_login)}. Lasts up to eight hours; signing out of Alexandria ends this connection.</small><form method="post" action="/connect/authorize"><input type="hidden" name="intent" value="${html(sealed)}"><button name="decision" value="allow">connect</button><button name="decision" value="deny">cancel</button></form></html>`);
+    return c.html(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>connect this website</title><style>body{max-width:32rem;margin:12vh auto;padding:1.5rem;background:#fafafa;color:#211e18;font:20px/1.5 Georgia,serif}h1{font-size:1.6em;font-weight:400}button{font:inherit;background:none;border:1px solid #cfc8ba;border-radius:4px;padding:.5rem 1rem;cursor:pointer;margin:.5rem .7rem .5rem 0}button[value=allow]{background:#004996;color:white;border-color:#004996}small{color:#777}a{color:#004996}strong{overflow-wrap:anywhere}</style><h1>connect this website</h1><p>Let <strong>${html(site)}</strong> show you the parts of <strong>${html(author)}</strong>’s mirror you can access, let you ask it questions, and open checkout for a paid piece you choose.</p><p>Your current access still applies. Payment still requires your confirmation at checkout. This website gets no permission to publish, manage your account, or read other Authors.</p><small>Signed in as ${html(account.github_login)}. Lasts up to eight hours; signing out of Alexandria ends this connection.</small><form method="post" action="/connect/authorize"><input type="hidden" name="intent" value="${html(sealed)}"><button name="decision" value="allow">connect</button><button name="decision" value="deny">cancel</button></form></html>`);
   });
 
   app.post('/connect/authorize', async c => {

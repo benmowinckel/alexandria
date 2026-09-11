@@ -1,28 +1,26 @@
 import { NextRequest } from 'next/server';
-import { SERVER_URL } from '../../../../../../lib/config';
+import { libraryFetch, libraryHeaders, personalRequestError } from '../../../../../../lib/library-proxy';
 
 export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ author: string; name: string }> },
 ): Promise<Response> {
   const { author, name } = await ctx.params;
-  const contentType = req.headers.get('content-type') || 'application/json';
-  const cookie = req.headers.get('cookie');
-  const auth = req.headers.get('authorization');
-  const body = await req.text();
-
-  const headers: Record<string, string> = { 'Content-Type': contentType };
-  if (cookie) headers.Cookie = cookie;
-  if (auth) headers.Authorization = auth;
-
-  const upstream = await fetch(
-    `${SERVER_URL}/library/${encodeURIComponent(author)}/checkout/file/${encodeURIComponent(name)}`,
-    {
+  const denied = personalRequestError(req, author);
+  if (denied) return denied;
+  const scope = req.nextUrl.searchParams.get('scope');
+  const path = `/library/${encodeURIComponent(author)}/checkout/file/${encodeURIComponent(name)}`;
+  const query = scope ? `?${new URLSearchParams({ scope })}` : '';
+  let upstream: Response;
+  try {
+    upstream = await libraryFetch(path + query, {
       method: 'POST',
-      headers,
-      body,
-    },
-  );
+      headers: { ...libraryHeaders(req), 'Content-Type': req.headers.get('content-type') || 'application/json' },
+      body: await req.text(),
+    });
+  } catch {
+    return Response.json({ error: 'Checkout is temporarily unavailable.' }, { status: 503 });
+  }
 
   return new Response(upstream.body, {
     status: upstream.status,

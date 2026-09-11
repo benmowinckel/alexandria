@@ -50,6 +50,13 @@ try {
     if (url.pathname === '/library/author') return authFailure
       ? Response.json({ error: 'Connection unavailable' }, { status: authFailure })
       : Response.json({ author: { id: 'author' }, viewer: { is_owner: true, signed_in: true }, twin: { online: true, context_scopes: ['invite/secret'] }, files: [] });
+    if (url.pathname === '/library/author/checkout/file/lesson') {
+      assert.equal(url.searchParams.get('scope'), 'paid/course', 'checkout preserves exact cohort');
+      assert.equal(headers.get('x-alexandria-site'), 'https://person.example');
+      assert.equal(init?.method, 'POST');
+      assert.equal(init?.redirect, 'error');
+      return Response.json({ url: 'https://checkout.stripe.com/fixture' });
+    }
     if (url.pathname === '/library/author/file/hosted') return Response.json({ reason: 'payment_required', checkout_url: 'https://alexandria-library.com/library/author/checkout/file/hosted?scope=paid%2Fcourse' }, { status: 402 });
     return Response.json({ error: 'Denied' }, { status: 403 });
   };
@@ -76,6 +83,16 @@ try {
   }
   response = await read('deep', 'invite/room', { invite: 'invalid-code' });
   assert.equal(response.status, 401);
+  const { POST: checkoutFile } = await import('../../app/api/library/[author]/checkout/file/[name]/route.js');
+  const checkoutRequest = (author = 'author', origin = 'https://person.example') => checkoutFile(new NextRequest(`https://person.example/api/library/${author}/checkout/file/lesson?scope=paid%2Fcourse`, {
+    method: 'POST', headers: { Origin: origin, Cookie: 'alex_mirror_visitor=av1.test; alex_library_session=must-not-leave', Authorization: 'Bearer alex_owner_must_not_leave', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ return_origin: 'https://person.example' }),
+  }), { params: Promise.resolve({ author, name: 'lesson' }) });
+  assert.equal((await checkoutRequest()).status, 200, 'personal checkout uses delegated reader only');
+  const beforeWrongCheckout = calls.length;
+  assert.equal((await checkoutRequest('other')).status, 404);
+  assert.equal((await checkoutRequest('author', 'https://attacker.example.com')).status, 403);
+  assert.equal(calls.length, beforeWrongCheckout, 'wrong author and cross-origin checkout cannot reach shared service');
   const beforeAnonymous = calls.length;
   response = await files.GET(new NextRequest('https://person.example/api/library/author/file/deep?scope=invite%2Froom&invite=valid-code'), { params: Promise.resolve({ author: 'author', name: 'deep' }) });
   assert.equal(response.status, 401);

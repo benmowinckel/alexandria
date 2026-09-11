@@ -155,6 +155,7 @@ const PUBLIC_RATE_LIMITED_ROUTES = [
   { path: '/connect/site/verify', scope: 'website-proof', limit: 10 },
   { path: '/connect/site/:author', scope: 'website-resolve', limit: 60 },
   { path: '/connect/access/:author', scope: 'website-access', limit: 120 },
+  { path: '/connect/context/:author', scope: 'website-access', limit: 120 },
   { path: '/account/connect/browser', scope: 'account-connect', limit: 5 },
   { path: '/account/connect/handoff', scope: 'account-connect', limit: 5 },
   { path: '/account/connect/exchange', scope: 'account-connect', limit: 5 },

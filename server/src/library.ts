@@ -1271,9 +1271,17 @@ export function registerLibraryRoutes(app: Hono): void {
 
     const db = getDB();
     await ensureFilePriceColumn();
+    const scopeQueries = new URL(c.req.url).searchParams.getAll('scope');
     const rawScope = c.req.query('scope')?.trim() || '';
     const requestedScope = rawScope ? normalizeLibraryScope(rawScope, 'paid') : null;
     if (rawScope && !requestedScope) return c.json({ error: 'Invalid scope' }, 400);
+    const delegated = c.get('connectorViewer');
+    // A website must name the exact paid cohort; never infer a same-named file
+    // from another scope or accept normalized/duplicated scope spellings.
+    if (delegated && (scopeQueries.length !== 1 || scopeQueries[0] !== requestedScope
+      || !requestedScope || !/^paid(?:\/[a-z0-9-]+)*$/.test(requestedScope))) {
+      return c.json({ error: 'Choose one exact paid scope.' }, 400);
+    }
     const file = requestedScope
       ? await db.prepare(
           'SELECT account_id, scope, name, visibility, price_cents FROM protocol_files WHERE account_id = ? AND scope = ? AND name = ?'
@@ -1313,8 +1321,16 @@ export function registerLibraryRoutes(app: Hono): void {
     const WEBSITE_URL = process.env.WEBSITE_URL || 'https://alexandria-library.com';
     const requestedOrigin = typeof body.return_origin === 'string' ? body.return_origin.trim() : '';
     const allowedOrigins = new Set(getAllowedOrigins());
-    const returnOrigin = requestedOrigin && allowedOrigins.has(requestedOrigin) ? requestedOrigin : WEBSITE_URL;
-    const scopeParam = file.scope === file.visibility ? '' : `scope=${encodeURIComponent(file.scope)}`;
+    // Middleware has rechecked DNS registration, publisher membership, site
+    // version and the reader's source session. Never trust the raw Site header
+    // or let a connected website redirect checkout to an arbitrary destination.
+    const connectedOrigin = c.get('connectorSite');
+    if (delegated && (!connectedOrigin || requestedOrigin && requestedOrigin !== connectedOrigin)) {
+      return c.json({ error: 'Checkout must return to the connected website.' }, 403);
+    }
+    const returnOrigin = delegated ? connectedOrigin!
+      : requestedOrigin && allowedOrigins.has(requestedOrigin) ? requestedOrigin : WEBSITE_URL;
+    const scopeParam = !delegated && file.scope === file.visibility ? '' : `scope=${encodeURIComponent(file.scope)}`;
     const gatePath = `/library/${encodeURIComponent(authorId)}/open/${encodeURIComponent(name)}${scopeParam ? `?${scopeParam}` : ''}`;
 
     // Creator payout (Stripe Connect) — fail closed: an Author who has not
@@ -1678,26 +1694,25 @@ export function registerLibraryRoutes(app: Hono): void {
   // The invite decision, account-aware. Access is granted if the (logged-in)
   // accessor already holds a grant, OR they present a valid code — in which case
   // the code BINDS to their account (a grant), so they never re-enter it. An
-  // anonymous caller with a valid code passes THIS request but nothing is bound
-  // (no account yet); once they log in, the code binds. This one resolver backs
-  // both the twin and the file gate.
+  // anonymous caller receives no invite context until signing in. This one
+  // resolver backs hosted inference and the independent context decision.
   async function resolveInviteScopes(authorId: string, accessor: Account | null, code: string): Promise<string[]> {
-    const live = accessor
-      ? (await listGrantedScopes(authorId, accessor.github_id)).filter((scope) => visibilityForScope(scope) === 'invite')
-      : [];
+    if (!accessor) return [];
+    await listGrantedScopes(authorId, accessor.github_id); // ensure the shared grant schema
     const codeRow = await lookupCode(authorId, code);
-    if (!codeRow || !accessor) return live;
-    const state = await grantState(authorId, accessor.github_id, codeRow.scope);
-    if (state === 'revoked') return live;
-    if (state === 'none') {
-      await grantAccess(authorId, accessor.github_id, {
-        scope: codeRow.scope,
-        sourceType: 'invite',
-        sourceId: codeRow.id,
-        codeId: codeRow.id,
-      });
+    if (codeRow && visibilityForScope(codeRow.scope) === 'invite') {
+      // Recheck the code in the same SQL statement that creates the grant.
+      // A lookup cannot race a revocation into a fresh access entitlement.
+      await getDB().prepare(
+        `INSERT INTO access_grants
+          (id, author_id, account_github_id, scope, source_type, source_id, code_id, created_at)
+         SELECT ?, author_id, ?, scope, 'invite', id, id, ? FROM access_codes
+          WHERE author_id = ? AND scope = ? AND code = ? AND revoked_at IS NULL
+         ON CONFLICT(author_id, account_github_id, scope) DO NOTHING`,
+      ).bind(generateId(), String(accessor.github_id), new Date().toISOString(), authorId, codeRow.scope, code).run();
     }
-    return Array.from(new Set([...live, codeRow.scope]));
+    return (await listGrantedScopes(authorId, accessor.github_id))
+      .filter(scope => visibilityForScope(scope) === 'invite');
   }
 
   // Resolve the querier from an API key or the browser library session cookie.
@@ -1736,30 +1751,18 @@ export function registerLibraryRoutes(app: Hono): void {
     return isValidFileName(name) && scope ? { name, scope } : undefined;
   }
 
-  // Shared query core — used by BOTH the website `/ask` box and the
-  // programmatic `/v1/twin/:author/query` API. Picks the variant, applies the
-  // (reused) visibility gate, relays to the inference sidecar, and writes the
-  // twin_query credits-ledger row. Rate-limiting stays at the route (the key
-  // differs: IP for the browser, API-key owner for the API).
-  async function runTwinQuery(p: {
-    authorId: string;
+  // One permission evaluator for hosted inference and the independent host's
+  // context decision. This returns addresses only, never configured hidden
+  // scopes, published bytes, model credentials or a cached entitlement.
+  async function resolveTwinContext(p: {
     authorAccount: Account;
-    displayName: string;
     settings: Record<string, unknown>;
-    question: string;
     requestedVariant: TwinVariant | null;
     accessor: Account | null;
-    /** Exact account-bound scopes. A parent is never expanded. */
     grantedScopes: string[];
-    /** Caller-requested DOWNGRADE to the public depth (the free toggle). Only
-     *  ever honored downward — an invited viewer previewing the free mind. The
-     *  structural ceiling (grant/payment) is computed server-side regardless;
-     *  a request can never raise depth. */
     requestedDepth?: 'public' | null;
-    activeArtifact?: { name: string; scope: string };
-    messages?: { role: 'user' | 'assistant'; content: string }[];
-    surface: 'library' | 'api';
-  }): Promise<TwinQueryOutcome> {
+  }): Promise<{ ok: true; cfg: TwinConfig; effectiveScopes: string[]; subscriberValid: boolean }
+    | { ok: false; status: number; body: Record<string, unknown> }> {
     const variants = resolveTwinVariants(p.settings);
 
     // Variant selection. Explicit request must be enabled; otherwise default to
@@ -1803,7 +1806,6 @@ export function registerLibraryRoutes(app: Hono): void {
       context: { allowOwner: !p.accessor?.library_reader_only, inviteValid: inviteGateValid, subscriberValid },
     });
     if (!decision.allowed) {
-      logEvent('library_twin_ask', { author: p.authorId, surface: p.surface, variant: cfg.variant, status: String(decision.status), reason: decision.reason });
       return { ok: false, status: decision.status, body: { ...decision.body, variant: cfg.variant } };
     }
 
@@ -1819,6 +1821,77 @@ export function registerLibraryRoutes(app: Hono): void {
       owner: isOwner,
       publicOnly: p.requestedDepth === 'public',
     });
+    return { ok: true, cfg, effectiveScopes, subscriberValid };
+  }
+
+  app.get('/connect/context/:author', async c => {
+    c.header('Cache-Control', 'private, no-store');
+    const authorId = c.req.param('author');
+    const accessor = c.get('connectorViewer');
+    if (!accessor) return c.json({ error: 'Connect this reader first.', reason: 'sign_in_required' }, 401);
+    const query = new URL(c.req.url).searchParams;
+    const depth = query.get('depth');
+    const invite = query.get('invite') || '';
+    const requiredScope = query.get('scope');
+    if (!isValidAuthorId(authorId) || [...query.keys()].some(key => !['depth', 'invite', 'scope'].includes(key))
+      || ['depth', 'invite', 'scope'].some(key => query.getAll(key).length > 1)
+      || depth !== null && depth !== 'public' || invite.length > 256
+      || requiredScope !== null && (!requiredScope || normalizeLibraryScope(requiredScope, 'public') !== requiredScope)) {
+      return c.json({ error: 'Invalid context request.' }, 400);
+    }
+    const lookup = await getAccountByLogin(authorId);
+    if (!lookup) return c.json({ error: 'Author not found.' }, 404);
+    const profile = await getDB().prepare('SELECT settings FROM authors WHERE id = ?')
+      .bind(lookup.account.github_login).first<{ settings: string | null }>();
+    // Public preview never redeems a code or brings a protected layer along.
+    if (depth !== 'public' && invite) await resolveInviteScopes(authorId, accessor, invite);
+    const outcome = await resolveTwinContext({
+      authorAccount: lookup.account,
+      settings: parseJson<Record<string, unknown>>(profile?.settings, {}),
+      requestedVariant: 'context', accessor,
+      grantedScopes: await listGrantedScopes(authorId, accessor.github_id),
+      requestedDepth: depth === 'public' ? 'public' : null,
+    });
+    if (!outcome.ok) return c.json(outcome.body, outcome.status as 401 | 402 | 403 | 404 | 503);
+    const scopes = outcome.effectiveScopes;
+    const requestedInvite = depth !== 'public' && invite ? await lookupCode(authorId, invite) : null;
+    if (requiredScope && !scopes.includes(requiredScope)
+      || depth !== 'public' && invite && (!requestedInvite || !scopes.includes(requestedInvite.scope))) {
+      return c.json({ error: 'This mirror is not permitted to use the requested context.', reason: 'context_unavailable' }, 403);
+    }
+    return c.json({ author: authorId, scopes, variant: 'context' });
+  });
+
+  // Shared query core — used by BOTH the website `/ask` box and the
+  // programmatic `/v1/twin/:author/query` API. Picks the variant, applies the
+  // (reused) visibility gate, relays to the inference sidecar, and writes the
+  // twin_query credits-ledger row. Rate-limiting stays at the route (the key
+  // differs: IP for the browser, API-key owner for the API).
+  async function runTwinQuery(p: {
+    authorId: string;
+    authorAccount: Account;
+    displayName: string;
+    settings: Record<string, unknown>;
+    question: string;
+    requestedVariant: TwinVariant | null;
+    accessor: Account | null;
+    /** Exact account-bound scopes. A parent is never expanded. */
+    grantedScopes: string[];
+    /** Caller-requested DOWNGRADE to the public depth (the free toggle). Only
+     *  ever honored downward — an invited viewer previewing the free mind. The
+     *  structural ceiling (grant/payment) is computed server-side regardless;
+     *  a request can never raise depth. */
+    requestedDepth?: 'public' | null;
+    activeArtifact?: { name: string; scope: string };
+    messages?: { role: 'user' | 'assistant'; content: string }[];
+    surface: 'library' | 'api';
+  }): Promise<TwinQueryOutcome> {
+    const outcome = await resolveTwinContext(p);
+    if (!outcome.ok) {
+      logEvent('library_twin_ask', { author: p.authorId, surface: p.surface, status: String(outcome.status), reason: String(outcome.body.reason || 'unavailable') });
+      return outcome;
+    }
+    const { cfg, effectiveScopes, subscriberValid } = outcome;
     // A browser may name an artifact, never provide its bytes. If the artifact
     // is outside the exact intersection, fail closed instead of quietly asking
     // the model about some other view.
