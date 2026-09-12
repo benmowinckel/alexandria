@@ -177,10 +177,9 @@ export async function runTwinInference(
 ): Promise<TwinInferenceResult> {
   const url = opts.url?.trim();
   if (!url) {
-    // Offline is NOT "I don't know" — the mirror never ran. Say which, plainly,
-    // because a reader can't tell an unreachable mind from a stumped one and
-    // will read the failure as the answer (founder 2026-07-28, from production).
-    return { ok: false, status: 503, reason: 'offline', error: 'this mirror is offline. your question wasn’t answered.' };
+    // Offline is the computer, not a broken product. The answering model
+    // lives on the Author's machine; a sleeping Mac is the expected miss.
+    return { ok: false, status: 503, reason: 'offline', error: 'This computer is offline, so the personal language model could not answer just now. Try again in a moment.' };
   }
 
   // -----------------------------------------------------------------------
@@ -242,19 +241,19 @@ export async function runTwinInference(
 
     if (!res.ok) {
       if (res.status === 429) return { ok: false, status: 429, reason: 'allowance_spent', error: 'this mirror has reached its question limit. take the conversation with you or try again later.' };
-      return { ok: false, status: 502, reason: 'upstream_error', error: 'the mirror hit an error and couldn’t answer. your question wasn’t answered.' };
+      return { ok: false, status: 502, reason: 'upstream_error', error: 'The mirror could not answer just now. Try again in a moment.' };
     }
     const respBody = await readMirrorJson(res).catch(() => null);
     const answer = typeof respBody?.answer === 'string' ? respBody.answer.trim() : '';
     if (!answer) {
-      return { ok: false, status: 502, reason: 'empty', error: 'the mirror came back empty. your question wasn’t answered.' };
+      return { ok: false, status: 502, reason: 'empty', error: 'The mirror could not answer just now. Try again in a moment.' };
     }
     return { ok: true, answer };
   } catch (e) {
     const aborted = e instanceof Error && e.name === 'AbortError';
     return aborted
-      ? { ok: false, status: 504, reason: 'timeout', error: 'the mirror took too long and the question timed out. it wasn’t answered.' }
-      : { ok: false, status: 502, reason: 'fetch_failed', error: 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.' };
+      ? { ok: false, status: 504, reason: 'timeout', error: 'The mirror could not answer just now. Try again in a moment.' }
+      : { ok: false, status: 502, reason: 'fetch_failed', error: 'This computer is offline, so the personal language model could not answer just now. Try again in a moment.' };
   } finally {
     clearTimeout(timeout);
     opts.signal?.removeEventListener('abort', cancel);

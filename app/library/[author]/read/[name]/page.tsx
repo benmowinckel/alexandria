@@ -49,7 +49,6 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const [invite, setInvite] = useState(readUrlInvite);
   const [inviteDraft, setInviteDraft] = useState(readUrlInvite);
   const [inviting, setInviting] = useState(false);
-  const [inviteErr, setInviteErr] = useState('');
   const [downloadBlob, setDownloadBlob] = useState<Blob | null>(null);
   const [downloadExt, setDownloadExt] = useState('md');
   const attemptRef = useRef(0);       // guards against a stale fetch clobbering a newer unlock
@@ -101,7 +100,6 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
     setStatus('loading');
     setStatusMessage('');
     setCheckoutUrl('');
-    setInviteErr('');
     try {
       const fileRes = await fetch(fileUrl(), { credentials: 'include' });
       if (!fresh()) return;
@@ -137,7 +135,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
         // signed-in reader whose code failed is just told it didn't work.
         setStatus('signin');
         if (String(failure.reason || '').startsWith('connection_')) setStatusMessage(failureMessage);
-        if (code) setInviteErr(signedIn ? 'that code didn’t open this piece.' : 'sign in to use your invite code — it binds to your account.');
+        else if (signedIn) setStatusMessage(code ? 'that code didn’t open this piece.' : 'enter your invite code to open this piece.');
         return;
       }
       if (fileRes.status === 402) {
@@ -168,42 +166,41 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   const submitInvite = () => {
     const code = inviteDraft.trim();
     if (!code || inviting) return;
-    setInviting(true);
-    setInvite(code);
-    // Reflect the code in the URL so the sign-in round-trip (and a refresh)
-    // carries it — librarySignInUrlHere() reads window.location at render time.
     try {
       const u = new URL(window.location.href);
       u.searchParams.set('invite', code);
       window.history.replaceState({}, '', u.pathname + u.search + u.hash);
     } catch { /* */ }
+    if (!signedIn) return;
+    setInviting(true);
+    setInvite(code);
     void attempt(code);
   };
 
-  // The code entry, slotted into ReaderShell's sign-in wall for invite pieces.
+  // Invite pieces keep a hairline for the code on the same paper as sign in.
+  // Typing writes it into the URL so the GitHub round-trip carries it.
+  // Signed-in Enter tries the code; signed-out Enter only keeps it for sign in.
   const inviteField = visibility === 'invite' ? (
-    <div style={{ marginTop: '1.4rem' }}>
-      <div style={{ display: 'flex', gap: '0.5rem', maxWidth: '22rem' }}>
-        <input
-          value={inviteDraft}
-          onChange={(e) => setInviteDraft(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') submitInvite(); }}
-          // Leading en-space keeps the blinking caret clear of the ghost text.
-          placeholder={'\u2002invite code'}
-          spellCheck={false}
-          autoCapitalize="off"
-          style={{ flex: 1, minWidth: 0, border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-secondary)', outline: 'none',
-            color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: '1rem', padding: '0.5rem 0.95rem' }}
-        />
-        <button type="button" onClick={submitInvite} disabled={!inviteDraft.trim() || inviting}
-          style={{ flex: 'none', border: '1px solid var(--border-light)', borderRadius: '11px', background: 'transparent',
-            cursor: inviteDraft.trim() && !inviting ? 'pointer' : 'default', opacity: inviteDraft.trim() && !inviting ? 1 : 0.5, transition: 'opacity 0.15s',
-            color: 'var(--text-muted)', fontFamily: 'inherit', fontSize: '0.95rem', padding: '0.5rem 1rem' }} className="hover:opacity-60">
-          {inviting ? '…' : 'unlock'}
-        </button>
-      </div>
-      {inviteErr && <p style={{ color: 'var(--text-whisper)', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>{inviteErr}</p>}
-    </div>
+    <form className="piece-invite" onSubmit={(e) => { e.preventDefault(); submitInvite(); }}>
+      <input
+        value={inviteDraft}
+        onChange={(e) => {
+          const v = e.target.value;
+          setInviteDraft(v);
+          try {
+            const u = new URL(window.location.href);
+            if (v.trim()) u.searchParams.set('invite', v.trim());
+            else u.searchParams.delete('invite');
+            window.history.replaceState({}, '', u.pathname + u.search + u.hash);
+          } catch { /* */ }
+        }}
+        placeholder="invite code"
+        aria-label="invite code"
+        spellCheck={false}
+        autoCapitalize="off"
+        autoComplete="off"
+      />
+    </form>
   ) : undefined;
 
   const askFn = async (text: string, messages: { role: 'user' | 'assistant'; content: string }[]) => {
@@ -229,7 +226,7 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
     // Throw, don't return: the shell renders a thrown message as a status note
     // rather than as the mirror speaking, so "offline" can't read as "doesn't
     // know" (founder 2026-07-28).
-    throw new Error(b.error || 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.');
+    throw new Error(b.error || 'This computer is offline, so the personal language model could not answer just now. Try again in a moment.');
   };
 
   return (

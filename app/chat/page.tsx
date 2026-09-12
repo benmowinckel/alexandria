@@ -27,12 +27,11 @@ export default async function ChatPage({
 
   return (
     <div className="primer-page">
-      <ThemeToggle />
-
       <header className="primer-header">
         <Link href="/" className="primer-brand">
           alexandria<span className="primer-brand-dot">.</span>
         </Link>
+        <ThemeToggle inline />
       </header>
 
       <main className="primer-main">

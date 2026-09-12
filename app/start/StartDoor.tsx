@@ -113,10 +113,10 @@ export default function StartDoor({ refCode }: { refCode?: string }) {
       <p className="door-q">what do you have access to?</p>
       <div className="door-answers">
         <button className="door-btn" onClick={() => transitionTo('agent')}>
-          an agent<span className="act-why"> — eg codex, claude code or cursor</span>
+          an agent<span className="act-why"> — codex, claude, cursor</span>
         </button>
         <button className="door-btn" onClick={() => transitionTo('chat')}>
-          just chat<span className="act-why"> — eg chatgpt, claude, gemini</span>
+          just chat<span className="act-why"> — chatgpt, claude, gemini</span>
         </button>
       </div>
     </div>

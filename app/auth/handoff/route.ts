@@ -39,7 +39,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>alexandria.</title><meta http-equiv="refresh" content="10;url=${next
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/"/g, '&quot;')}"></head><body style="font-family:'EB Garamond',Georgia,serif;background:#f5f0e8;color:#8a8078;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0"><p>signing you in&hellip;</p><script>(function(){var code=${JSON.stringify(
+    .replace(/"/g, '&quot;')}"><style>:root{color-scheme:light;--paper:#fafafa;--ink:#211e18;--muted:#6f6a63}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:1rem/1.6 Georgia,"Times New Roman",serif;-webkit-font-smoothing:antialiased}header{display:flex;align-items:center;padding:28px 32px 0}.brand{margin:0;font-style:italic;font-size:21px;letter-spacing:.005em}.brand span{font-style:normal}main{width:min(100%,28rem);margin:clamp(3rem,18vh,8rem) auto 3rem;padding:0 1.5rem}p{margin:0;color:var(--muted);font-size:1.05rem;line-height:1.65}</style></head><body><header><p class="brand">alexandria<span>.</span></p></header><main><p>signing you in…</p></main><script>(function(){var code=${JSON.stringify(
     code,
   )},next=${JSON.stringify(
     next,

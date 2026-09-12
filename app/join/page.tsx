@@ -31,9 +31,9 @@ export default async function JoinPage({
 
   return (
     <div className="join-page">
-      <ThemeToggle />
       <header className="join-header">
         <Link href="/" className="join-brand">alexandria<span>.</span></Link>
+        <ThemeToggle inline />
       </header>
       <main className="join-main">
         <JoinCTA urlRef={ref} refSource={refSource} billingStatus={billingStatus} />

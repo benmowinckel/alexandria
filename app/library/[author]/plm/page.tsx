@@ -346,12 +346,13 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
   // offline-vs-timeout-vs-error, and offline is the true shape of all of them
   // from where they stand (founder 2026-07-28). Never a pronoun for the Author.
   const offlineNote = authorName
-    ? `${authorName}’s mirror is offline. Your question wasn’t answered.`
-    : 'This mirror is offline. Your question wasn’t answered.';
+    ? `${authorName}’s computer is offline, so the personal language model could not answer just now. Try again in a moment.`
+    : 'This computer is offline, so the personal language model could not answer just now. Try again in a moment.';
 
   const ask = async (textArg?: string) => {
     const text = (textArg ?? question).trim();
     if (!text) return;
+    if (expanded) setExpanded(false);
     const targetId = activeId;
     const firstMobileQuestion = typeof window !== 'undefined' && window.innerWidth <= 900 && (active?.messages.length ?? 0) === 0;
     if (firstMobileQuestion) {
@@ -493,7 +494,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
         </header>
 
         <nav className="mobile-pane-nav" aria-label="profile panes">
-          <button type="button" data-active={mtab === 'chat'} onClick={() => { setExpanded(false); setMtab('chat'); }} aria-label="open the mirror" title="mirror">{LinesIcon}</button>
+          <button type="button" data-active={mtab === 'chat'} onClick={() => { setExpanded(false); setMtab('chat'); }} aria-label="open the mirror" title="the mirror">{LinesIcon}</button>
+          <span className="mobile-pane-copy">{mtab === 'chat' ? 'the mirror' : (open ? 'the piece' : 'pieces')}</span>
           <button type="button" data-active={mtab === 'pieces'} onClick={() => setMtab('pieces')} aria-label="open pieces" title="pieces">{PaneRightIcon}</button>
         </nav>
 
@@ -523,7 +525,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
             <div style={paneHead}>
               <button type="button" onClick={() => setMidOpen(false)} aria-label="collapse the mirror" title="collapse" style={iconBtn} className="chat-collapse hover:opacity-60">{LinesIcon}</button>
               <span className="pane-words">
-                <span className="chat-label">mirror</span>
+                <span className="chat-label">the mirror</span>
                 <span className="pane-div" aria-hidden>·</span>
                 <span className="depth-toggle">
                   <button type="button" className={sel === 'public' && !showCode ? 'is-on' : undefined} onClick={() => { setSel('public'); setShowCode(false); }}>public</button>
@@ -559,6 +561,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
               )}
             </div>
+            <p className="pane-intro">ask the mirror about this mind.</p>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
               {active?.messages.map((m, i) => (
                 <div key={i} ref={i === (active.messages.length - 1) ? lastMsgRef : undefined} style={{ margin: '0 0 1.1rem' }}>
@@ -608,22 +611,16 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                   </p>
                 ) : (
                   <>
-                    <p style={{ color: 'var(--text-ghost)', fontSize: '0.8rem', margin: '0 0 0.45rem' }}>
-                      this mind is invite-only — {!signedIn ? <><a href={librarySignInUrlHere()} style={{ color: 'var(--text-muted)', textDecoration: 'underline' }} className="hover:opacity-60">sign in</a> and enter your code to unlock.</> : 'enter a code to unlock.'}
+                    <p className="piece-gate-copy" style={{ fontSize: '0.95rem', margin: '0 0 0.45rem' }}>
+                      this mind is invite-only — {!signedIn ? <><a href={librarySignInUrlHere()} className="piece-sign-in">sign in</a> and enter your code.</> : 'enter a code to unlock.'}
                     </p>
-                    {/* Same physics as the composer below it (radius, 1rem font — also the iOS no-zoom floor). */}
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <input value={inviteDraft} onChange={(e) => setInviteDraft(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') applyInvite(); }} placeholder={'\u2002invite code'} spellCheck={false} autoCapitalize="off"
-                        style={{ flex: 1, minWidth: 0, border: '1px solid var(--border-light)', borderRadius: '12px', background: 'var(--bg-secondary)', outline: 'none',
-                          color: 'var(--text-primary)', fontFamily: 'inherit', fontSize: '1rem', padding: '0.5rem 0.95rem' }} />
-                      <button type="button" onClick={applyInvite} disabled={!inviteDraft.trim()}
-                        style={{ flex: 'none', border: '1px solid var(--border-light)', borderRadius: '11px', background: 'transparent',
-                          cursor: inviteDraft.trim() ? 'pointer' : 'default', opacity: inviteDraft.trim() ? 1 : 0.5, transition: 'opacity 0.15s',
-                          color: 'var(--text-muted)', fontFamily: 'inherit', fontSize: '0.95rem', padding: '0.5rem 1rem' }} className="hover:opacity-60">
-                        unlock
-                      </button>
-                    </div>
+                    <form className="piece-invite" style={{ marginTop: 0 }} onSubmit={(e) => { e.preventDefault(); applyInvite(); }}>
+                      <div className="piece-invite-row">
+                        <input value={inviteDraft} onChange={(e) => setInviteDraft(e.target.value)}
+                          placeholder="invite code" aria-label="invite code" spellCheck={false} autoCapitalize="off" autoComplete="off" />
+                        <button type="submit" disabled={!inviteDraft.trim()}>open</button>
+                      </div>
+                    </form>
                   </>
                 )}
               </div>
@@ -679,7 +676,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 ? <button type="button" onClick={() => setOpen(null)} aria-label="back to pieces" title="back" style={iconBtn} className="hover:opacity-60">{ChevronIcon}</button>
                 : <span className="pieces-label" style={{ width: '2.4rem', flex: 'none' }} aria-hidden />}
               {open
-                ? <span className="piece-title" style={{ ...chromeLabel, color: 'var(--text-primary)', fontSize: '0.98rem', letterSpacing: 0 }}>{open.nice}</span>
+                ? <span className="pieces-label" style={chromeLabel}>the piece</span>
                 : <span className="pieces-label" style={chromeLabel}>pieces</span>}
               {open && (
                 <>
@@ -743,7 +740,8 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                       </div>
                     )}
                     {(['works', 'projects', 'shadows'] as const).map((cat) => {
-                      const items = files.filter((f) => (f.category || 'shadows') === cat);
+                      const items = files.filter((f) => (f.category || 'shadows') === cat)
+                        .filter((f) => cat !== 'shadows' || (f.visibility || 'public') !== 'public');
                       if (items.length === 0) return null;
                       return (
                         <div key={cat} style={{ margin: '0 0 1.5rem' }}>
@@ -773,7 +771,7 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
                 <div className="reader-prose" style={{ padding: '2rem clamp(1.4rem, 4vw, 3rem)' }}><ReactMarkdown remarkPlugins={[remarkGfm]}>{open.content}</ReactMarkdown></div>
               )}
             </div>
-            {open && !open.loading && (mtab === 'pieces' || !midOpen) && (
+            {open && !open.loading && !expanded && (mtab === 'pieces' || !midOpen) && (
               <div className="piece-ask">
                 <PromptBox bare value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
                   typeWhileLoading placeholder={readingPlaceholder || 'ask about this piece…'} fillable
@@ -832,6 +830,31 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }
         .mobile-pane-nav { display: none; }
         .mirror-speaker { margin: 0 0 0.35rem 0.9rem; color: var(--text-muted); font-size: 0.78rem; letter-spacing: 0.05em; }
+        .pane-intro {
+          flex: none; color: var(--text-muted); font-style: italic; font-size: 0.95rem;
+          line-height: 1.55; margin: 1.4rem clamp(1.4rem, 4vw, 3rem) 0;
+        }
+        .pane-intro a { color: inherit; text-decoration: underline; text-decoration-color: var(--border-light); text-underline-offset: 0.16em; }
+        .piece-gate-copy a, a.piece-sign-in {
+          color: var(--text-primary);
+          text-decoration: underline; text-decoration-color: var(--border-light);
+          text-underline-offset: 3px;
+        }
+        .piece-invite { margin-top: 1.4rem; }
+        .piece-invite-row { display: flex; align-items: baseline; gap: 0.75rem; max-width: 22rem; }
+        .piece-invite input {
+          min-width: 0; flex: 1; background: transparent; border: none;
+          border-bottom: 1px solid var(--border-light); border-radius: 0;
+          padding: 0.2rem 0; color: var(--text-primary); font: inherit;
+          font-size: 1rem; outline: none;
+        }
+        .piece-invite input:focus { border-bottom-color: var(--text-muted); }
+        .piece-invite button {
+          background: none; border: 0; padding: 0; color: var(--text-muted);
+          cursor: pointer; font: inherit;
+        }
+        .piece-invite button:disabled { opacity: 0.4; cursor: default; }
+        .mobile-pane-copy { min-width: 0; padding: 0 0.4rem; font-size: 0.92rem; letter-spacing: 0.06em; color: var(--text-muted); pointer-events: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         @media (min-width: 901px) {
           .reader-strip { display: none; }
@@ -880,7 +903,11 @@ export default function PlmPage({ params }: { params: Promise<{ author: string }
           min-width: 0 !important; z-index: 120; background: var(--bg-primary);
         }
         .plm-shell:has(main[data-expanded="true"]) > footer { display: none !important; }
-        main[data-expanded="true"] .piece-collapse { display: none !important; }
+        main[data-expanded="true"] .pane-chat,
+        main[data-expanded="true"] .ask-dock,
+        main[data-expanded="true"] .piece-collapse,
+        main[data-expanded="true"] .piece-ask,
+        main[data-expanded="true"] .mobile-pane-nav { display: none !important; }
       `}</style>
     </>
   );

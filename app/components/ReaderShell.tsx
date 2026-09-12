@@ -333,8 +333,8 @@ export default function ReaderShell({
   // where they stand (founder 2026-07-28: "just say its offline. even if it is
   // an error"). Never a pronoun for the Author: a mirror belongs to anyone.
   const offlineNote = who
-    ? `${who}’s mirror is offline. Your question wasn’t answered.`
-    : 'This mirror is offline. Your question wasn’t answered.';
+    ? `${who}’s computer is offline, so the personal language model could not answer just now. Try again in a moment.`
+    : 'This computer is offline, so the personal language model could not answer just now. Try again in a moment.';
 
   // What's left of this reader's allowance, and what has been answering. Both
   // come back with the answers themselves — no extra request, and no number the
@@ -350,6 +350,7 @@ export default function ReaderShell({
   const ask = async () => {
     const text = question.trim();
     if (!text || asking) return;
+    if (expanded) setExpanded(false);
     const mobile = isNarrow();
     const enteringMirror = mobile && tab === 'piece';
     if (enteringMirror) {
@@ -435,6 +436,76 @@ export default function ReaderShell({
     }
   };
 
+  // Before the piece exists, keep the same header and footer as the reader.
+  // The middle is paper: the words, and a hairline for an invite code when
+  // that is the gate. No panes.
+  if (status === 'signin' || status === 'pay' || status === 'loading' || status === 'error') {
+    const line = status === 'loading' ? 'loading…'
+      : status === 'error' ? (statusMessage || 'couldn’t load this piece.')
+      : status === 'pay' ? (statusMessage || (checkoutUrl
+        ? <><a href={checkoutUrl} className="piece-sign-in">unlock</a> this piece.</>
+        : `“${name}” is a paid piece.`))
+      : (statusMessage || (signInUrl
+        ? <a href={signInUrl} className="piece-sign-in">sign in</a>
+        : 'sign in'));
+    return (
+      <>
+        <div className={`reader-shell reader-gate${docPage ? ' doc-page' : ''}`} style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
+          <header className="reader-global-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 0.25rem 0 0.7rem' }}>
+            <Link href={backHref} aria-label={`back to ${backTitle}`} title={backTitle}
+              style={{ color: 'var(--text-muted)', display: 'flex', flex: 'none', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
+            {name ? (
+              <span className="doc-title-row">
+                <span className="doc-title">{name}</span>
+                {!docPage && visibility ? (
+                  <>
+                    <span className="doc-div" aria-hidden>·</span>
+                    <span className="doc-vis">{visibility}</span>
+                  </>
+                ) : null}
+              </span>
+            ) : null}
+            <span style={{ marginLeft: 'auto' }} />
+            <ThemeToggle inline />
+          </header>
+          <main className="reader-invitation-stage">
+            <p>{line}</p>
+            {status === 'signin' && inviteField}
+          </main>
+          <footer style={{ flex: 'none', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1.6rem', padding: '1rem 1.2rem' }}>
+            {!PERSONAL_SITE && <Link href={alexandriaHref('/start')} style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">{footerCta}</Link>}
+            <Link href={alexandriaHref('/')} style={{ fontStyle: 'italic', color: 'var(--text-ghost)', fontSize: '0.85rem', textDecoration: 'none' }} className="hover:opacity-60">alexandria<span style={{ fontStyle: 'normal' }}>.</span></Link>
+          </footer>
+        </div>
+        <style>{`
+          .doc-title-row { display: inline-flex; align-items: baseline; min-width: 0; line-height: 1; }
+          .doc-title { font-style: italic; font-size: 1.05rem; color: var(--text-primary); line-height: 1; }
+          .doc-div { font-style: normal; font-size: 0.72rem; line-height: 1; color: var(--text-ghost); padding: 0 0.55rem; letter-spacing: 0; }
+          .doc-vis { font-style: normal; font-size: 0.72rem; letter-spacing: 0.08em; color: var(--text-ghost); line-height: 1; }
+          .reader-invitation-stage {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 0 1.5rem 8vh; text-align: center;
+          }
+          .reader-invitation-stage p { margin: 0; color: var(--text-muted); font-size: 1.05rem; line-height: 1.65; text-wrap: pretty; }
+          .reader-invitation-stage a, a.piece-sign-in {
+            color: var(--text-primary);
+            text-decoration: underline; text-decoration-color: var(--border-light);
+            text-underline-offset: 3px;
+          }
+          .piece-invite { margin-top: 1.75rem; }
+          .piece-invite input {
+            display: block; width: 13rem; margin: 0 auto; background: transparent; border: none;
+            border-bottom: 1px solid var(--border-light); border-radius: 0;
+            padding: 0.25rem 0; color: var(--text-primary); font: inherit;
+            font-size: 1rem; outline: none; text-align: center;
+          }
+          .piece-invite input:focus { border-bottom-color: var(--text-muted); }
+          .piece-invite input::placeholder { color: var(--text-ghost); }
+        `}</style>
+      </>
+    );
+  }
+
   return (
     <>
       <div className={`reader-shell${docPage ? ' doc-page' : ''}`} style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
@@ -455,8 +526,9 @@ export default function ReaderShell({
         </header>
 
         <nav className="mobile-pane-nav" aria-label="reader panes">
-          <button type="button" data-active={tab === 'ask'} onClick={() => { setMidOpen(true); setTab('ask'); }} aria-label="open the mirror" title="mirror">{LinesIcon}</button>
-          <button type="button" data-active={tab === 'piece'} onClick={() => { setExpanded(false); setTab('piece'); }} aria-label="open the piece" title="read">{PaneRightIcon}</button>
+          <button type="button" data-active={tab === 'ask'} onClick={() => { setMidOpen(true); setTab('ask'); }} aria-label="open the mirror" title="the mirror">{LinesIcon}</button>
+          <span className="mobile-pane-copy">{tab === 'ask' ? 'the mirror' : 'the piece'}</span>
+          <button type="button" data-active={tab === 'piece'} onClick={() => { setExpanded(false); setTab('piece'); }} aria-label="open the piece" title="the piece">{PaneRightIcon}</button>
         </nav>
 
         <main style={{ flex: 1, display: 'flex', minHeight: 0 }} data-tab={tab} data-expanded={expanded ? 'true' : 'false'}
@@ -487,7 +559,7 @@ export default function ReaderShell({
               {/* Not "ask benjamin" — the product is a MIRROR of a mind,
                   never a twin or stand-in (canon; founder 2026-07-25:
                   "this is so key. its the mirror"). One universal label. */}
-              <span style={chromeLabel}>mirror</span>
+              <span style={chromeLabel}>the mirror</span>
               {/* What's left sits immediately left of export, and only once
                   it's worth knowing. At zero, the duplicate count disappears
                   while export keeps the accent. */}
@@ -503,6 +575,7 @@ export default function ReaderShell({
                 <ActionButton icon={CopyIcon} onAction={copyConvo} title="copy conversation" style={iconBtn} className="hover:opacity-60" />
               )}
             </div>
+            <p className="pane-intro">ask the mirror about this piece.</p>
             <div ref={threadRef} style={{ flex: 1, overflow: 'auto', position: 'relative', padding: '0.4rem 1.4rem 1.4rem' }}>
               {intro && (active?.messages.length ?? 0) === 0 && !asking && (
                 <div style={{ padding: '0.6rem 0 0.2rem' }}>{intro}</div>
@@ -544,7 +617,7 @@ export default function ReaderShell({
           <button type="button" className="reader-strip strip-right hover:opacity-60" style={{ order: 3 }} onClick={() => setRightOpen(true)} aria-label="open the piece" title="read">{PaneRightIcon}</button>
           <article className="reader-pane pane-piece" style={{ order: 3, flex: '1 1 0', minWidth: 0, flexDirection: 'column', minHeight: 0, position: 'relative' }}>
             <div className="piece-head" style={paneHead}>
-              <span style={{ marginRight: 'auto' }} />
+              <span className="pieces-label" style={{ ...chromeLabel, marginRight: 'auto' }}>the piece</span>
               {status === 'ok' && (
                 <>
                   <ActionButton icon={CopyIcon} onAction={copyArtifact} title="copy text" style={iconBtn} className="hover:opacity-60" />
@@ -559,28 +632,7 @@ export default function ReaderShell({
                 grey as the ask, so the page ended in fog. Space, then the line. */}
             <div className={dockedAsk && !midOpen && !pdfUrl && !docPage ? 'piece-fade' : undefined}
               style={{ flex: 1, overflow: pdfUrl ? 'hidden' : 'auto', minHeight: 0, padding: pdfUrl ? 0 : (docPage ? '1.35rem clamp(1.1rem, 4vw, 2.2rem)' : '2.2rem clamp(1.4rem, 5vw, 4rem)') }}>
-              {status === 'loading' && <p style={{ color: 'var(--text-ghost)' }}>loading…</p>}
-              {status === 'signin' && (
-                <div style={{ maxWidth: '32rem' }}>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.6 }}>
-                    {statusMessage || (visibility === 'invite'
-                      ? <>“{name}” is open to people {who} has invited. sign in to read it, or enter your invite code.</>
-                      : visibility === 'paid'
-                        ? <>“{name}” is a paid piece. sign in to unlock it.</>
-                        : <>“{name}” is open to Authors. sign in to read it.</>)}
-                  </p>
-                  {signInUrl && <a href={signInUrl} style={{ display: 'inline-block', marginTop: '1rem', borderRadius: '11px', background: 'var(--accent)', color: 'var(--bg-primary)', padding: '0.6rem 1.25rem', textDecoration: 'none' }}>sign in</a>}
-                  {inviteField}
-                </div>
-              )}
-              {status === 'pay' && (
-                <div style={{ maxWidth: '32rem' }}>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: 1.6 }}>{statusMessage || <>“{name}” is a paid piece.</>}</p>
-                  {checkoutUrl && <a href={checkoutUrl} style={{ display: 'inline-block', marginTop: '1rem', borderRadius: '11px', background: 'var(--accent)', color: 'var(--bg-primary)', padding: '0.6rem 1.25rem', textDecoration: 'none' }}>unlock it</a>}
-                </div>
-              )}
-              {status === 'error' && <p style={{ color: 'var(--text-ghost)' }}>{statusMessage || 'couldn’t load this piece.'}</p>}
-              {status === 'ok' && (pdfUrl
+              {pdfUrl
                 ? <PdfView url={pdfUrl} paper={docPage} />
                 : book ? (
                   <>
@@ -618,7 +670,7 @@ export default function ReaderShell({
                     )}
                   </>
                 )
-                : <div className="reader-prose"><ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown || ''}</ReactMarkdown></div>)}
+                : <div className="reader-prose"><ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown || ''}</ReactMarkdown></div>}
             </div>
             {/* The ask, docked under the document, while the mirror is closed.
                 Not a label about the mirror — the mirror itself, one line of it,
@@ -630,7 +682,7 @@ export default function ReaderShell({
                 hairline under the words, the same width as the text column, so
                 it reads as the next line of the page. Typing here opens the pane
                 with the answer, so it doubles as the way in. */}
-            {dockedAsk && status === 'ok' && !midOpen && (
+            {dockedAsk && status === 'ok' && !expanded && !midOpen && (
               <div className="piece-ask">
                 <PromptBox bare value={question} onChange={setQuestion} onSubmit={() => void ask()} loading={asking}
                   typeWhileLoading shakeWhenBusy placeholder={readingPlaceholder || askPlaceholder} fillable
@@ -707,7 +759,28 @@ export default function ReaderShell({
         .piece-fade { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent);
           mask-image: linear-gradient(to bottom, #000 calc(100% - 2.4rem), transparent); }
 
+        .pane-intro {
+          flex: none; color: var(--text-muted); font-style: italic; font-size: 0.95rem;
+          line-height: 1.55; margin: 1.4rem clamp(1.4rem, 4vw, 3rem) 0;
+        }
+        .pane-intro a { color: inherit; text-decoration: underline; text-decoration-color: var(--border-light); text-underline-offset: 0.16em; }
+        .reader-loading { max-width: 28rem; margin: clamp(3rem, 18vh, 8rem) auto; padding: 0 1.5rem; }
+        .reader-loading p { margin: 0; color: var(--text-muted); font-size: 1.05rem; line-height: 1.65; text-wrap: pretty; }
+        .reader-invitation a, a.piece-sign-in {
+          color: var(--text-primary);
+          text-decoration: underline; text-decoration-color: var(--border-light);
+          text-underline-offset: 3px;
+        }
+        .piece-invite { margin-top: 1.4rem; }
+        .piece-invite input {
+          display: block; width: min(100%, 16rem); background: transparent; border: none;
+          border-bottom: 1px solid var(--border-light); border-radius: 0;
+          padding: 0.2rem 0; color: var(--text-primary); font: inherit;
+          font-size: 1rem; outline: none;
+        }
+        .piece-invite input:focus { border-bottom-color: var(--text-muted); }
         .mobile-pane-nav { display: none; }
+        .mobile-pane-copy { min-width: 0; padding: 0 0.4rem; font-size: 0.92rem; letter-spacing: 0.06em; color: var(--text-muted); pointer-events: none; }
         .mirror-speaker { margin: 0 0 0.35rem 0.9rem; color: var(--text-muted); font-size: 0.78rem; letter-spacing: 0.05em; }
         .doc-page .pdoc-longform .pdoc-h1 { margin-top: 2.2rem; }
 
@@ -723,7 +796,7 @@ export default function ReaderShell({
         }
         @media (max-width: 900px) {
           .reader-strip, .pane-history { display: none !important; }
-          .chat-collapse, .piece-collapse { display: none !important; }
+          .chat-collapse, .piece-collapse, .pieces-label { display: none !important; }
           .mobile-pane-nav {
             flex: none; display: flex; align-items: center; justify-content: space-between;
             height: 2.75rem; padding: 0 0.35rem; background: var(--bg-primary); z-index: 25;
@@ -762,7 +835,8 @@ export default function ReaderShell({
            into is hidden here, so the composer goes with it. */
         main[data-expanded="true"] .piece-ask,
         main[data-expanded="true"] .piece-foot,
-        main[data-expanded="true"] .piece-collapse { display: none !important; }
+        main[data-expanded="true"] .piece-collapse,
+        main[data-expanded="true"] .mobile-pane-nav { display: none !important; }
         .reader-shell:has(main[data-expanded="true"]) > footer { display: none !important; }
       `}</style>
     </>

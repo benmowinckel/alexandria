@@ -118,7 +118,7 @@ export default function PublicDocReader({
     // shell renders a thrown message as a status note, so a mirror that is
     // offline can't be mistaken for a mirror that doesn't know (founder
     // 2026-07-28). The server's own reason is the message.
-    throw new Error(b.error || 'couldn’t reach the mirror — it may be offline. your question wasn’t answered.');
+    throw new Error(b.error || 'This computer is offline, so the personal language model could not answer just now. Try again in a moment.');
   };
 
   // The empty state keeps only the two quiet conversion doors.

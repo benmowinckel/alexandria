@@ -148,30 +148,33 @@ assert.equal(next.pathname, '/library/connect');
 assert.equal(next.searchParams.get('site'), SITE);
 assert.equal(next.searchParams.get('code_challenge'), query.get('code_challenge'));
 const cookie = { Cookie: `alex_library_session=${session}` };
-async function consentIntent() {
-  const page = await req(`/connect/authorize?${query}`, 'GET', undefined, cookie);
-  const text = await page.text();
-  assert.equal(page.status, 200, text);
-  assert.ok(text.includes('publish'));
-  assert.equal(page.headers.get('content-security-policy')?.split('form-action ')[1], `'self' ${SITE}`);
-  assert.ok(!text.includes(session) && !text.includes(key));
-  assert.equal(page.headers.get('cache-control'), 'no-store');
-  return /name="intent" value="([^"]+)"/.exec(text)![1];
+function sealedIntent(expiresAt = Date.now() + 60_000) {
+  const row = db.prepare("SELECT version FROM visitor_connector_sites WHERE author = 'author'").get() as { version: string };
+  return encrypt(JSON.stringify({
+    type: 'visitor-intent-v1', author: 'author', site: SITE, version: row.version,
+    state: query.get('state'), challenge: query.get('code_challenge'),
+    session_hash: hashApiKey(session), expires_at: expiresAt,
+  }));
 }
 async function consent(intent: string, decision = 'allow', headers: Record<string, string> = {}) {
   return app.request(`${BASE}/connect/authorize`, { method: 'POST',
     headers: { ...cookie, Origin: BASE, 'Content-Type': 'application/x-www-form-urlencoded', ...headers },
     body: new URLSearchParams({ intent, decision }) });
 }
-const intent = await consentIntent();
-assert.equal((await consent(intent, 'allow', { Origin: 'https://attacker.example.com' })).status, 403);
-assert.equal((await consent(intent, 'allow', { Cookie: `alex_library_session=${secondSession}` })).status, 401);
-assert.equal((await consent(`${intent}bad`)).status, 401);
-const deny = await consent(intent, 'deny');
+const signedIn = await req(`/connect/authorize?${query}`, 'GET', undefined, cookie);
+assert.equal(signedIn.status, 303);
+assert.equal(signedIn.headers.get('content-security-policy')?.split('form-action ')[1], `'self' ${SITE}`);
+assert.equal(signedIn.headers.get('cache-control'), 'no-store');
+assert.ok(!((await signedIn.clone().text()).includes(session)));
+assert.match(new URL(signedIn.headers.get('location')!).searchParams.get('code')!, /^avc_/);
+assert.equal((await consent(sealedIntent(), 'allow', { Origin: 'https://attacker.example.com' })).status, 403);
+assert.equal((await consent(sealedIntent(), 'allow', { Cookie: `alex_library_session=${secondSession}` })).status, 401);
+assert.equal((await consent(`${sealedIntent()}bad`)).status, 401);
+const deny = await consent(sealedIntent(), 'deny');
 assert.equal(deny.headers.get('content-security-policy')?.split('form-action ')[1], `'self' ${SITE}`);
 assert.equal(new URL(deny.headers.get('location')!).searchParams.get('error'), 'access_denied');
 async function issueCode(expectedCallback = `${SITE}/api/connect/callback`) {
-  const allowed = await consent(await consentIntent());
+  const allowed = await req(`/connect/authorize?${query}`, 'GET', undefined, cookie);
   assert.equal(allowed.status, 303);
   assert.equal(allowed.headers.get('content-security-policy')?.split('form-action ')[1], `'self' ${SITE}`);
   const callback = new URL(allowed.headers.get('location')!);
@@ -222,7 +225,7 @@ Date.now = now;
 const expiredCode = await issueCode();
 Date.now = () => now() + 5 * 60 * 1000 + 1;
 assert.equal((await exchange(expiredCode)).status, 401, 'code has five-minute lifetime');
-const expiredConsent = await consent(intent);
+const expiredConsent = await consent(sealedIntent(now() - 1));
 assert.equal(expiredConsent.status, 401, 'consent has five-minute lifetime');
 assert.match(expiredConsent.headers.get('content-type')!, /text\/html/);
 const expiredPage = await expiredConsent.text();
@@ -271,7 +274,7 @@ assert.equal((await connectedWebsite('author'))?.manifest_url, `${SITE}/_alexand
 const customCode = await issueCode(`${SITE}/_alexandria/callback`);
 const customCredential = await (await exchange(customCode)).json();
 const pendingCode = await issueCode(`${SITE}/_alexandria/callback`);
-const pendingIntent = await consentIntent();
+const pendingIntent = sealedIntent();
 await registerCustom('/_alexandria/return');
 assert.equal((await consent(pendingIntent)).status, 401, 'changed routing invalidates consent');
 assert.equal((await exchange(pendingCode)).status, 401, 'changed routing invalidates unused codes');

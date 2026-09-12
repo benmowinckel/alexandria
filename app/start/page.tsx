@@ -39,12 +39,11 @@ export default async function StartPage({
 
   return (
     <div className="primer-page">
-      <ThemeToggle />
-
       <header className="primer-header">
         <Link href="/" className="primer-brand">
           alexandria<span className="primer-brand-dot">.</span>
         </Link>
+        <ThemeToggle inline />
       </header>
 
       <main className="primer-main">
@@ -75,7 +74,11 @@ export default async function StartPage({
           0% { opacity: 0; transform: translateY(6px); }
           100% { opacity: 1; transform: translateY(0); }
         }
-        .primer-header { padding: 28px 32px 0; }
+        .primer-header {
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 28px 32px 0;
+        }
+        .primer-header button { margin-right: -10px; }
         .primer-brand {
           font-family: var(--font-serif), ui-serif, Georgia, serif;
           font-style: italic; font-weight: 400; font-size: 21px;
@@ -373,10 +376,10 @@ export default async function StartPage({
         }
         .act-box {
           width: 100%; max-width: none; text-decoration: none; display: block;
-          font-size: 14px; white-space: normal; text-wrap: pretty; line-height: 1.4;
+          font-size: 16px; white-space: normal; text-wrap: pretty; line-height: 1.4;
           max-inline-size: 100%; overflow-wrap: anywhere;
         }
-        .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
+        .act-why { color: var(--text-muted, rgba(26, 19, 24, 0.55)); font-size: inherit; }
         .act-rest {
           display: block; margin-top: 3px;
           color: var(--text-muted, rgba(26, 19, 24, 0.55));
@@ -384,10 +387,10 @@ export default async function StartPage({
           max-inline-size: 100%; overflow-wrap: anywhere;
         }
         .setup-copy {
-          white-space: nowrap; text-wrap: nowrap; overflow-wrap: normal; letter-spacing: 0;
+          white-space: normal; text-wrap: pretty; overflow-wrap: anywhere; letter-spacing: 0;
         }
         .shortcut-add {
-          white-space: nowrap; text-wrap: nowrap; overflow-wrap: normal; letter-spacing: 0;
+          white-space: normal; text-wrap: pretty; overflow-wrap: anywhere; letter-spacing: 0;
         }
         .act-sub {
           margin: -2px 0 14px 46px; max-width: 420px;
@@ -397,12 +400,13 @@ export default async function StartPage({
         }
         .act-email { display: flex; align-items: center; gap: 0; cursor: text; white-space: nowrap; }
         .act-email input {
-          flex: none; width: 5.5em; min-width: 0; background: transparent; border: none; outline: none;
+          flex: none; width: 10ch; min-width: 0; max-width: 14em;
+          background: transparent; border: none; outline: none;
           font-family: var(--font-serif), ui-serif, Georgia, serif;
-          font-size: inherit; letter-spacing: 0.01em; color: var(--text-primary);
-          padding: 0;
+          font-size: 16px; letter-spacing: 0.01em; color: var(--text-primary);
+          padding: 0; -webkit-text-size-adjust: 100%;
         }
-        .act-email input.has-val { flex: 1; }
+        .act-email input.has-val { width: 14em; }
         .act-email .join-door-go { margin-left: auto; }
         .act-email-error { margin-left: 8px; color: var(--text-muted, rgba(26, 19, 24, 0.55)); }
         .act-email input::placeholder { color: var(--text-muted, rgba(26, 19, 24, 0.42)); }
@@ -511,16 +515,16 @@ export default async function StartPage({
           .install-cmd { font-size: 12.5px; }
           .primer-coda { font-size: 18px; margin-top: 52px; }
           .act-num { left: -18px; }
-          .act-box { font-size: 14px; padding-left: 12px; padding-right: 12px; }
-          .shortcut-add { font-size: clamp(10.5px, 3.25vw, 14px); }
+          .act-box { font-size: 16px; padding-left: 12px; padding-right: 12px; }
           .act-email { flex-wrap: wrap; white-space: normal; overflow: visible; }
           .act-email-why {
-            flex: none; flex-basis: 100%; max-width: 100%; margin-top: 3px;
+            flex: none; flex-basis: 100%; max-width: 100%; margin-top: 2px;
             white-space: normal; overflow: visible;
           }
-          .act-email.is-focused { flex-wrap: nowrap; }
-          .act-email.is-focused .act-email-why { flex-basis: 0; margin-top: 0; }
-          .act-email input { font-size: 16px; }
+          .act-email.is-focused .act-email-why {
+            opacity: 0; max-width: 0; flex-basis: 0; pointer-events: none;
+          }
+          .act-email input.has-val { width: min(14em, calc(100% - 2.8rem)); }
         }
         @media (prefers-reduced-motion: reduce) {
           .door-stage {

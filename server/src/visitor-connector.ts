@@ -210,6 +210,19 @@ function callback(site: Site, params: Record<string, string>): string {
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   return url.toString();
 }
+async function issueVisitorCode(c: Context, registered: Site, account: Account, session: string, state: string, challenge: string) {
+  c.set('visitorFormTarget', registered.site);
+  const code = `avc_${generateToken(32)}`;
+  const now = Date.now();
+  const value: Visitor = { type: 'visitor-v1', author: registered.author, site: registered.site, version: registered.version,
+    account_id: account.github_id, session, expires_at: now + VISITOR_TTL_MS };
+  await getDB().batch([
+    getDB().prepare('DELETE FROM visitor_connector_codes WHERE expires_at <= ?').bind(now),
+    getDB().prepare(`INSERT INTO visitor_connector_codes (code_hash, author, reader_id, site, challenge, context, expires_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(hashApiKey(code), registered.author, String(account.github_id), registered.site, challenge, encrypt(JSON.stringify(value)), now + INTENT_TTL_MS),
+  ]);
+  return c.redirect(callback(registered, { code, state }), 303);
+}
 function isReaderRoute(c: Context, author: string): boolean {
   const path = new URL(c.req.url).pathname;
   if (c.req.method === 'GET' && path === '/library/session') return true;
@@ -359,11 +372,9 @@ export function registerVisitorConnectorRoutes(app: Hono): void {
       login.searchParams.set('next', next.pathname + next.search);
       return c.redirect(login.toString(), 303);
     }
-    const intent: Intent = { type: 'visitor-intent-v1', author, site, version: registered.version, state,
-      challenge, session_hash: hashApiKey(session), expires_at: Date.now() + INTENT_TTL_MS };
-    const sealed = encrypt(JSON.stringify(intent));
-    c.set('visitorFormTarget', registered.site);
-    return c.html(renderVisitorConnectionPage({site: registered.site, readerLogin: account.github_login, intent: sealed}));
+    // They already chose sign-in on the author's site. GitHub is the identity
+    // proof; a second consent page only repeated that choice.
+    return issueVisitorCode(c, registered, account, session, state, challenge);
   });
 
   app.post('/connect/authorize', async c => {
@@ -386,16 +397,7 @@ export function registerVisitorConnectorRoutes(app: Hono): void {
       if (!safeEqual(registered.version, intent.version)) fail(401, 'The website connection changed. Start again.');
       if (form.get('decision') === 'deny') return c.redirect(callback(registered, { error: 'access_denied', state: intent.state }), 303);
       if (form.get('decision') !== 'allow') fail(400, 'Choose whether to connect.');
-      const code = `avc_${generateToken(32)}`;
-      const now = Date.now();
-      const value: Visitor = { type: 'visitor-v1', author: intent.author, site: intent.site, version: intent.version,
-        account_id: account.github_id, session, expires_at: now + VISITOR_TTL_MS };
-      await getDB().batch([
-        getDB().prepare('DELETE FROM visitor_connector_codes WHERE expires_at <= ?').bind(now),
-        getDB().prepare(`INSERT INTO visitor_connector_codes (code_hash, author, reader_id, site, challenge, context, expires_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(hashApiKey(code), intent.author, String(account.github_id), intent.site, intent.challenge, encrypt(JSON.stringify(value)), now + INTENT_TTL_MS),
-      ]);
-      return c.redirect(callback(registered, { code, state: intent.state }), 303);
+      return issueVisitorCode(c, registered, account, session, intent.state, intent.challenge);
     } catch (error) {
       if (!(error instanceof HTTPException) || error.status >= 500) throw error;
       // A stale form remains a readable page, with a safe route back to the

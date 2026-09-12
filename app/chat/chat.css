@@ -16,7 +16,13 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 
-.primer-header { padding: 28px 32px 0; }
+.primer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28px 32px 0;
+}
+.primer-header button { margin-right: -10px; }
 
 .primer-brand {
   font-family: var(--font-serif), ui-serif, Georgia, serif;

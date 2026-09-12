@@ -813,14 +813,14 @@ export default function AuthorPageClient({ params, initialData }: { params: Prom
                   {sectionHead('mind', 'what’s behind the work')}
                   {data.twin?.online !== true && (
                     <span className="twin-offline-note" style={{ color: 'var(--text-ghost)', fontStyle: 'italic', fontSize: '0.85rem', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-                      offline for now
+                      computer is off
                     </span>
                   )}
                 </div>
                 <p className="mirror-explainer" style={{ color: 'var(--text-muted)', fontSize: '0.98rem', lineHeight: 1.55, margin: '0.75rem 0 0' }}>
                   {data.twin?.online === true
                     ? `Ask ${first}’s mirror about the thinking behind the work.`
-                    : PERSONAL_SITE ? 'You can still read the public work.' : `The mirror is available when ${first}’s computer is on.`}
+                    : PERSONAL_SITE ? `${first}’s computer is offline, so the personal language model could not answer just now.` : `The personal language model is available when ${first}’s computer is on.`}
                 </p>
                 <div className={doorShake ? 'twin-door-shake' : undefined} style={{ margin: '0.9rem -0.98rem 0' }}>
                   <PromptBox value={doorQ} onChange={setDoorQ} onSubmit={goAsk} loading={doorGoing}

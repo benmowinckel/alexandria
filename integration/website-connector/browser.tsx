@@ -65,14 +65,14 @@ function Mirror({ element }: { element: HTMLElement }) {
           ? 'The answering model is not connected yet. You can still read the published work below.'
           : response.status === 401 ? 'Connect your reader identity to continue.'
           : response.status === 429 ? 'The mirror is busy. Please try again shortly.'
-          : 'The mirror could not answer just now. Your question is still here to retry.');
+          : 'This computer is offline, so the personal language model could not answer just now. Try again in a moment.');
         return;
       }
       if (typeof result.answer !== 'string' || !result.answer.trim() || result.answer.length > 100_000) throw new Error('Invalid answer');
       setMessages(previous => [...previous, { role: 'user', content: question }, { role: 'assistant', content: result.answer }].slice(-40) as Message[]);
       setDraft('');
     } catch {
-      if (controller.current === abort) setStatus('The mirror could not answer just now. Your question is still here to retry.');
+      if (controller.current === abort) setStatus('This computer is offline, so the personal language model could not answer just now. Try again in a moment.');
     } finally {
       clearTimeout(timeout); setPending(false);
       requestAnimationFrame(() => composer.current?.focus());

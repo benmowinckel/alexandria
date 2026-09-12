@@ -85,7 +85,7 @@ export default function StartCTA({
           target="_blank"
           rel="noopener noreferrer"
         >
-          add the shortcut<span className="act-why"> — optional, save thoughts on your phone</span>
+          add the shortcut<span className="act-why"> — save thoughts on your phone</span>
         </a>
       </div>
 
@@ -113,7 +113,7 @@ export default function StartCTA({
                 aria-label="your email"
                 aria-invalid={mailState === 'invalid' || mailState === 'error'}
                 data-shake={shakeKey > 0 ? 'on' : 'off'}
-                className={email.trim() || emailFocused ? 'has-val' : ''}
+                className={email.trim() ? 'has-val' : ''}
                 value={email}
                 onFocus={() => setEmailFocused(true)}
                 onBlur={() => setEmailFocused(false)}
@@ -123,7 +123,7 @@ export default function StartCTA({
                 }}
               />
               {!email.trim() && mailState !== 'invalid' && (
-                <span className="act-why act-email-why"> — optional, get the setup text and help</span>
+                <span className="act-why act-email-why"> — get the setup text and help</span>
               )}
               {mailState === 'invalid' && <span className="act-why act-email-error">enter a real email</span>}
               {mailState === 'error' && <span className="act-why act-email-error">couldn’t save — try again</span>}

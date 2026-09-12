@@ -7,7 +7,13 @@
   font-family: var(--font-serif), ui-serif, Georgia, serif;
 }
 
-.join-header { padding: 28px 32px 0; }
+.join-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28px 32px 0;
+}
+.join-header button { margin-right: -10px; }
 
 .join-brand {
   display: inline-block;
