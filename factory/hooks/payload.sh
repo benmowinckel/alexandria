@@ -361,6 +361,8 @@ To apply it, tell me to pull $module. To keep your version, do nothing."
       check_drift "$HOME/.grok/skills/alexandria/SKILL.md" "skills/claudecode.md" "  grok /alexandria skill (~/.grok/skills/alexandria/SKILL.md)" "rename-alexandria"
     fi
     check_drift "$RUNTIME_DIR/hooks/shim.sh" "hooks/shim.sh" "  hook shim (~/.local/share/alexandria/hooks/shim.sh)"
+    check_drift "$RUNTIME_DIR/scripts/capture_resolver.py" "scripts/capture_resolver.py" "  capture resolver (~/.local/share/alexandria/scripts/capture_resolver.py)"
+    check_drift "$RUNTIME_DIR/scripts/capture_state.py" "scripts/capture_state.py" "  capture state (~/.local/share/alexandria/scripts/capture_state.py)"
     check_drift "$ALEX_DIR/system/modules.json" "module-system.json" "  module map (~/alexandria/system/modules.json)"
 
     # Codex case — only compare the compact block Alexandria owns in the

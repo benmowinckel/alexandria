@@ -87,7 +87,7 @@
 
 ## capture-link-resolution — fetch links the Author deliberately saved
 
-- **Does:** turns X/Twitter, YouTube, and ordinary links already placed in `~/alexandria/files/vault/input/` into locally readable text, titles, and media at session start.
+- **Does:** turns X/Twitter, YouTube, and ordinary links already placed in `~/alexandria/files/vault/input/` into locally readable text, titles, and media at session start. Safari/Instagram share-sheet folders already on disk resolve from local HTML (title, canonical URL, description) with no extra fetch. An X share inside a folder still uses the tweet API only when this permission exists.
 - **Touches:** one local permission file and local derivatives under `~/alexandria/files/vault/_input/`.
 - **Leaves the machine:** the exact saved URL or tweet ID goes to that site; X/Twitter captures use `api.fxtwitter.com`, YouTube captures use YouTube's oEmbed endpoint, and ordinary links contact the saved site. Those services also see the Author's IP. Nothing is sent to Alexandria. The resolver refuses private, loopback, link-local, reserved, multicast, and metadata addresses, follows redirects only after re-checking, pins DNS to a public address, allows only `https`, and caps response and media size. FXTwitter photos must be twimg hosts.
 - **Enable:** only after showing this exact disclosure and receiving a separate yes: `touch ~/alexandria/system/permissions/capture-network && chmod 600 ~/alexandria/system/permissions/capture-network`.

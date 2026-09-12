@@ -22,6 +22,8 @@ from pathlib import Path
 URL_RE = re.compile(r"https://[^\s)>\]}]+")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 TIMESTAMP_PREFIX_RE = re.compile(r"^(\d{8}-\d{6})")
+CAPTURE_FOLDER_RE = re.compile(r"^\d{8}-\d{6}$")
+SKIP_DIRS = {"chat", ".claude"}
 
 
 @dataclass(frozen=True)
@@ -55,9 +57,14 @@ def _legacy_ledger_match(capture: Path, ledger: str) -> bool:
     """Recognize pre-.drained verdicts without guessing from filenames."""
     if not ledger:
         return False
-    if capture.stem in ledger:
+    if capture.stem in ledger or capture.name in ledger:
         return True
-    body = capture.read_text(encoding="utf-8", errors="replace")
+    if capture.is_dir():
+        return False
+    try:
+        body = capture.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
     return any(url in ledger for url in URL_RE.findall(body))
 
 
@@ -72,12 +79,45 @@ def _processed(capture: Path, saved: Path, ledger: str, drained: set[str]) -> st
     return None
 
 
-def _sha256(path: Path) -> str:
+def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as source:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _sha256_tree(path: Path) -> str:
+    digest = hashlib.sha256()
+    for dirpath, dirnames, filenames in os.walk(path, followlinks=False):
+        dirnames[:] = sorted(name for name in dirnames if not name.startswith("."))
+        for name in sorted(filenames):
+            if name.startswith("."):
+                continue
+            child = Path(dirpath) / name
+            if child.is_symlink() or not child.is_file():
+                continue
+            relative = child.relative_to(path).as_posix().encode()
+            digest.update(len(relative).to_bytes(4, "big"))
+            digest.update(relative)
+            digest.update(bytes.fromhex(_sha256_file(child)))
+    return digest.hexdigest()
+
+
+def _sha256(path: Path) -> str:
+    if path.is_dir():
+        return _sha256_tree(path)
+    return _sha256_file(path)
+
+
+def _is_raw_item(item: Path) -> bool:
+    if item.name.startswith("."):
+        return False
+    if item.is_file():
+        return True
+    if item.is_symlink() or not item.is_dir() or item.name in SKIP_DIRS:
+        return False
+    return bool(CAPTURE_FOLDER_RE.fullmatch(item.name))
 
 
 def _capture_sources(resolved: Path, saved: Path) -> list[Path]:
@@ -123,11 +163,7 @@ def inspect(root: Path | None = None) -> CaptureState:
 
     raw = []
     if raw_dir.exists():
-        raw = sorted(
-            item.name
-            for item in raw_dir.iterdir()
-            if item.is_file() and not item.name.startswith(".")
-        )
+        raw = sorted(item.name for item in raw_dir.iterdir() if _is_raw_item(item))
 
     return CaptureState(
         pending_count=len(pending),

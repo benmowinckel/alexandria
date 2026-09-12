@@ -412,6 +412,21 @@ require factory/scripts/capture_state.py \
 require factory/scripts/capture_state.py \
   'exact source not preserved in saved' \
   'the snapshot gate no longer verifies preservation of the original capture bytes'
+require factory/scripts/capture_resolver.py \
+  'def process_folder(' \
+  'share-sheet folders are still invisible to the resolver'
+require factory/scripts/capture_resolver.py \
+  'def is_capture_folder(' \
+  'the resolver can treat arbitrary input directories as captures'
+require factory/scripts/capture_state.py \
+  'def _is_raw_item(' \
+  'capture state still ignores timestamped share-sheet folders'
+require factory/scripts/capture_state.py \
+  'def _sha256_tree(' \
+  'capture state cannot hash a share-sheet folder without reading it as a file'
+require factory/hooks/payload.sh \
+  'check_drift "$RUNTIME_DIR/scripts/capture_resolver.py"' \
+  'installed capture resolver drift is no longer surfaced'
 require factory/scripts/statusline.sh \
   'capture_state.py' \
   'the visible capture count no longer uses the active-session gate state'

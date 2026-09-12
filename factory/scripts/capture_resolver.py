@@ -11,8 +11,13 @@ derivatives out of iCloud per the dependency-alarm principle), and moves the
 source `.html` alongside it so iCloud isn't left holding processed files.
 
 Non-HTML files (audio, images, etc) stay in `input/` — they're raw, awaiting
-engagement, surfaced by the opener directly. The waitlist count = unprocessed
-items in `input/` + resolved markdown in `_input/`.
+engagement, surfaced by the opener directly. Safari/Instagram share-to-Files
+saves can also land as timestamped folders (`YYYYMMDD-HHMMSS`) holding page
+HTML plus an optional PDF and RTF pointer; those resolve locally to one
+`_input/<folder>-link.md` bundle without fetching the page. An X share wrapped
+in a folder still uses the tweet path when `capture-network` is on. `chat/` and
+`.claude/` are never captures. The waitlist count = unprocessed items in
+`input/` + resolved markdown in `_input/`.
 
 For each X HTML: pick a focal tweet id (soft default — entity flagged as a
 quote tweet or reply, else first), fetch, render markdown. Verify the
@@ -43,12 +48,15 @@ from datetime import datetime, timezone
 from http.client import HTTPSConnection
 from pathlib import Path
 from typing import Callable
+import html as html_lib
 
 os.umask(0o077)
 
 INPUT = Path.home() / "alexandria/files/vault/input"       # raw, iCloud-synced
 OUTPUT = Path.home() / "alexandria/files/vault/_input"     # resolved, local-only derivative
 NETWORK_PERMISSION = Path.home() / "alexandria/system/permissions/capture-network"
+SKIP_DIRS = {"chat", ".claude"}
+CAPTURE_FOLDER_RE = re.compile(r"^\d{8}-\d{6}$")
 RUNTIME_MARKER = Path.home() / ".local/share/alexandria/.setup_complete"
 AIRLOCK_CONTROLLER = Path.home() / ".local/share/alexandria/scripts/airlock.py"
 
@@ -590,6 +598,177 @@ def process_txt(f: Path, stats: dict) -> None:
         print(f"  ⚠ {f.name}: source move failed ({e})", file=sys.stderr)
 
 
+def is_capture_folder(path: Path) -> bool:
+    """Share-sheet bundles are timestamped dirs; chat/ and hidden dirs are not."""
+    if path.name.startswith(".") or path.name in SKIP_DIRS:
+        return False
+    if path.is_symlink() or not path.is_dir():
+        return False
+    return bool(CAPTURE_FOLDER_RE.fullmatch(path.name))
+
+
+def _bundle_files(folder: Path, suffix: str) -> list[Path]:
+    files = []
+    try:
+        entries = sorted(folder.iterdir())
+    except OSError:
+        return files
+    for item in entries:
+        if item.name.startswith(".") or item.is_symlink() or not item.is_file():
+            continue
+        if item.suffix.lower() == suffix:
+            files.append(item)
+    return files
+
+
+def _read_text_capped(path: Path, limit: int = MAX_TEXT_BYTES) -> str:
+    with path.open("rb") as handle:
+        data = handle.read(limit)
+    return data.decode("utf-8", "ignore")
+
+
+def _move_bundle(folder: Path) -> None:
+    dest = OUTPUT / folder.name
+    if dest.exists():
+        print(
+            f"  ⚠ {folder.name}: counterpart exists in _input/, leaving in input/",
+            file=sys.stderr,
+        )
+        return
+    try:
+        shutil.move(str(folder), str(dest))
+    except Exception as e:
+        print(f"  ⚠ {folder.name}: source move failed ({e})", file=sys.stderr)
+
+
+def page_meta(html: str) -> dict[str, str]:
+    """Title + canonical/og URL + og description from a Safari-saved page."""
+
+    def _clean(value: str) -> str:
+        return re.sub(r"\s+", " ", html_lib.unescape(value)).strip()
+
+    def _one(pat: str) -> str:
+        match = re.search(pat, html, re.S | re.I)
+        return _clean(match.group(1)) if match else ""
+
+    url = _one(r'<link[^>]+rel=["\']canonical["\'][^>]*href=["\']([^"\']+)')
+    if not url:
+        url = _one(r'<meta[^>]+property=["\']og:url["\'][^>]*content=["\']([^"\']+)')
+    if not url:
+        url = _one(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]*property=["\']og:url["\']')
+    return {
+        "title": _clean(_one(r"<title[^>]*>(.*?)</title>")[:300]),
+        "url": url,
+        "og_title": _one(
+            r'<meta[^>]+property=["\']og:title["\'][^>]*content=["\']([^"\']+)'
+        )[:300],
+        "og_desc": _one(
+            r'<meta[^>]+property=["\']og:description["\'][^>]*content=["\']([^"\']+)'
+        )[:500],
+    }
+
+
+def rtf_pointer(folder: Path) -> str:
+    """The iOS share-sheet pointer ("See this Instagram post by @x")."""
+    for rtf in _bundle_files(folder, ".rtf"):
+        try:
+            raw = _read_text_capped(rtf, 65536)
+        except OSError:
+            continue
+        match = re.search(r"See this [^}]+?by @[\w.]+", raw)
+        if match:
+            return match.group(0).strip()
+    return ""
+
+
+def process_folder(folder: Path, stats: dict, *, network_approved: bool) -> None:
+    """Share-sheet bundles — a timestamped folder with page HTML (+ PDF, RTF).
+
+    Safari/Instagram shares land as folders, not loose files, so a loose-file
+    loop never saw them (2026-09-11). One bundle derivative per folder:
+    `_input/<folder>-link.md`. Local HTML meta is enough; do not fetch the
+    page URL. An X share wrapped in a folder still takes the tweet path when
+    network permission is on. The folder then moves next to its derivative.
+    """
+    htmls = _bundle_files(folder, ".html")
+    pdfs = _bundle_files(folder, ".pdf")
+    pointer = rtf_pointer(folder)
+    out = OUTPUT / f"{folder.name}-link.md"
+    if out.exists():
+        stats["skipped"] += 1
+        _move_bundle(folder)
+        return
+    if not htmls and not pdfs and not pointer:
+        stats["in_place"] += 1
+        return
+    if network_approved:
+        for html_path in htmls:
+            try:
+                html = _read_text_capped(html_path)
+            except OSError:
+                continue
+            if not (ENTITIES_BLOCK.search(html) or TWEET_URL_FALLBACK.search(html)):
+                continue
+            tid = focal_tweet_id(html)
+            tweet = fetch(tid) if tid else None
+            if not tweet:
+                continue
+            stem = f"{folder.name}-{tweet['author']['screen_name']}-{tid}"
+            dest = OUTPUT / f"{stem}.md"
+            if dest.exists():
+                stats["skipped"] += 1
+            else:
+                dest.write_text(
+                    render(tweet, f"{folder.name}/{html_path.name}", fetch_media(tweet, stem)),
+                    encoding="utf-8",
+                )
+                stats["resolved"] += 1
+                print(f"  ✓ {dest.name}", file=sys.stderr)
+            _move_bundle(folder)
+            return
+    seen: set[str] = set()
+    lines = [f"# Page capture — {folder.name}", ""]
+    lines += [
+        f"- source: phone share bundle `{folder.name}` "
+        f"({len(htmls)} HTML, {len(pdfs)} PDF)",
+        f"- pointer: {pointer}" if pointer else "- pointer: —",
+        "",
+    ]
+    for html_path in htmls:
+        try:
+            meta = page_meta(_read_text_capped(html_path, 200_000))
+        except OSError:
+            continue
+        key = meta["url"] or meta["title"] or html_path.name
+        if key in seen:
+            continue
+        seen.add(key)
+        lines += [f"## {meta['title'] or html_path.name}", ""]
+        if meta["url"]:
+            lines += [f"- url: {meta['url']}"]
+        if meta["og_title"] and meta["og_title"] != meta["title"]:
+            lines += [f"- shared as: {meta['og_title']}"]
+        if meta["og_desc"]:
+            lines += [f"- summary: {meta['og_desc']}"]
+        lines += [f"- file: `{html_path.name}`", ""]
+    for pdf in pdfs:
+        try:
+            mb = pdf.stat().st_size / 1e6
+        except OSError:
+            mb = 0
+        lines += [
+            f"- companion PDF: `{pdf.name}` "
+            f"({mb:.1f} MB, on disk alongside derivative)"
+        ]
+    if pdfs:
+        lines += [""]
+    lines += [f"_Recovered from `{folder.name}/`._", ""]
+    out.write_text(UNTRUSTED_HEADER + "\n".join(lines), encoding="utf-8")
+    stats["resolved"] += 1
+    print(f"  ✓ {out.name}", file=sys.stderr)
+    _move_bundle(folder)
+
+
 def drain_airlocks(stats: dict) -> None:
     if not AIRLOCK_CONTROLLER.is_file():
         return
@@ -676,6 +855,12 @@ def main() -> int:
         else:
             # Non-HTML (audio, images, etc) — raw, stays in input/ until engaged.
             stats["in_place"] += 1
+    for folder in sorted(p for p in INPUT.iterdir() if is_capture_folder(p)):
+        try:
+            process_folder(folder, stats, network_approved=network_approved)
+        except Exception as e:
+            stats["error"] = stats.get("error", 0) + 1
+            print(f"  ✗ {folder.name}/: {type(e).__name__}: {e}", file=sys.stderr)
     print(f"\nSummary: {stats}", file=sys.stderr)
 
     # Awareness marker — proves the resolver ran, lets the founder check last

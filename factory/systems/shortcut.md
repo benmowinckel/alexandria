@@ -71,6 +71,10 @@ syncs it. That is Apple's transport, not ours.
   mirror).
 - **Formats:** X/Twitter shares arrive as `.html`; ordinary links as `.txt` or
   `.url`; photos, screenshots, and audio stay as the original media bytes.
+  Safari and Instagram share-to-Files can also land as a timestamped folder
+  (`YYYYMMDD-HHMMSS`) containing page HTML, sometimes `PDF document.pdf`, and
+  an RTF share pointer. The Shortcut's own saves remain named files; the
+  resolver treats both shapes as intake.
 - **Filenames:** a timestamp plus a short source hint, for example
   `2026-08-17_21-04-11-x.html`. The Shortcut must not overwrite an existing
   name: if the computed name exists, append `-2`, `-3`, and so on.

@@ -175,6 +175,39 @@ class CaptureStateTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("invalid snapshot", result.stdout)
 
+    def test_timestamped_folders_are_raw_and_chat_is_not(self):
+        bundle = self.root / "files/vault/input/20260911-072507"
+        bundle.mkdir()
+        (bundle / "page.html").write_text("<html></html>", encoding="utf-8")
+        (self.root / "files/vault/input/chat").mkdir()
+        (self.root / "files/vault/input/chat/note.md").write_text("chat", encoding="utf-8")
+        (self.root / "files/vault/input/Photos").mkdir()
+        (self.root / "files/vault/input/voice.m4a").write_bytes(b"voice")
+        state = STATE.inspect(self.root)
+        self.assertEqual(state.raw, ["20260911-072507", "voice.m4a"])
+
+    def test_raw_folder_snapshot_hashes_the_tree_and_gate_requires_mapped_proof(self):
+        bundle = self.root / "files/vault/input/20260911-072507"
+        bundle.mkdir()
+        (bundle / "page.html").write_text("<html>saved</html>", encoding="utf-8")
+        document = STATE.snapshot(self.root)
+        preserved = self.root / "files/vault/saved/20260911-072507"
+        bundle.replace(preserved)
+        derivative = self.root / "files/vault/saved/20260911-072507-link.md"
+        derivative.write_text("resolved", encoding="utf-8")
+        (self.root / "files/vault/saved/20260911-072507-link.analysis.md").write_text(
+            "analysis", encoding="utf-8"
+        )
+        result = STATE.gate_snapshot(document, self.root)
+        self.assertTrue(result["complete"])
+
+    def test_legacy_ledger_match_does_not_read_a_directory_as_text(self):
+        bundle = self.root / "files/vault/saved/20260911-072507"
+        bundle.mkdir()
+        (bundle / "page.html").write_text("https://example.com/item\n", encoding="utf-8")
+        self.assertFalse(STATE._legacy_ledger_match(bundle, "- [-] https://example.com/other\n"))
+        self.assertTrue(STATE._legacy_ledger_match(bundle, "- [-] 20260911-072507 skip\n"))
+
 
 if __name__ == "__main__":
     unittest.main()
