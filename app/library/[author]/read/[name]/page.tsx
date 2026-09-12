@@ -180,26 +180,40 @@ export default function ReaderPage({ params }: { params: Promise<{ author: strin
   // Invite pieces keep a hairline for the code on the same paper as sign in.
   // Typing writes it into the URL so the GitHub round-trip carries it.
   // Signed-in Enter tries the code; signed-out Enter only keeps it for sign in.
+  const inviteReady = !!inviteDraft.trim();
   const inviteField = visibility === 'invite' ? (
     <form className="piece-invite" onSubmit={(e) => { e.preventDefault(); submitInvite(); }}>
-      <input
-        value={inviteDraft}
-        onChange={(e) => {
-          const v = e.target.value;
-          setInviteDraft(v);
-          try {
-            const u = new URL(window.location.href);
-            if (v.trim()) u.searchParams.set('invite', v.trim());
-            else u.searchParams.delete('invite');
-            window.history.replaceState({}, '', u.pathname + u.search + u.hash);
-          } catch { /* */ }
-        }}
-        placeholder="invite code"
-        aria-label="invite code"
-        spellCheck={false}
-        autoCapitalize="off"
-        autoComplete="off"
-      />
+      <span className="piece-invite-line">
+        <input
+          value={inviteDraft}
+          onChange={(e) => {
+            const v = e.target.value;
+            setInviteDraft(v);
+            try {
+              const u = new URL(window.location.href);
+              if (v.trim()) u.searchParams.set('invite', v.trim());
+              else u.searchParams.delete('invite');
+              window.history.replaceState({}, '', u.pathname + u.search + u.hash);
+            } catch { /* */ }
+          }}
+          placeholder="invite code"
+          aria-label="invite code"
+          spellCheck={false}
+          autoCapitalize="off"
+          autoComplete="off"
+        />
+        <button
+          type="submit"
+          className="piece-invite-go"
+          aria-label="enter"
+          tabIndex={-1}
+          disabled={!inviteReady}
+        >
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M2.5 8h10M8.5 4l4 4-4 4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </span>
     </form>
   ) : undefined;
 

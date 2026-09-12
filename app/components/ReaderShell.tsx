@@ -448,19 +448,24 @@ export default function ReaderShell({
       : (statusMessage || (signInUrl
         ? <a href={signInUrl} className="piece-sign-in">sign in</a>
         : 'sign in'));
+    // An invite wall is the invitation, not the unread piece. The piece name
+    // in the header names something they cannot see yet; "invite" names the door.
+    const inviteWall = visibility === 'invite' && (status === 'signin' || status === 'loading');
+    const gateTitle = inviteWall ? 'invite' : name;
+    const gateVis = inviteWall || docPage ? '' : visibility;
     return (
       <>
         <div className={`reader-shell reader-gate${docPage ? ' doc-page' : ''}`} style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: 'var(--font-eb-garamond)', background: 'var(--bg-primary)' }}>
           <header className="reader-global-head" style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem', height: 48, padding: '0 0.25rem 0 0.7rem' }}>
             <Link href={backHref} aria-label={`back to ${backTitle}`} title={backTitle}
               style={{ color: 'var(--text-muted)', display: 'flex', flex: 'none', textDecoration: 'none' }} className="hover:opacity-60">{ChevronIcon}</Link>
-            {name ? (
+            {gateTitle ? (
               <span className="doc-title-row">
-                <span className="doc-title">{name}</span>
-                {!docPage && visibility ? (
+                <span className="doc-title">{gateTitle}</span>
+                {gateVis ? (
                   <>
                     <span className="doc-div" aria-hidden>·</span>
-                    <span className="doc-vis">{visibility}</span>
+                    <span className="doc-vis">{gateVis}</span>
                   </>
                 ) : null}
               </span>
@@ -492,15 +497,29 @@ export default function ReaderShell({
             text-decoration: underline; text-decoration-color: var(--border-light);
             text-underline-offset: 3px;
           }
-          .piece-invite { margin-top: 1.75rem; }
+          .piece-invite { margin-top: 2.4rem; display: flex; justify-content: center; }
+          .piece-invite-line { position: relative; display: block; width: 5.4rem; }
           .piece-invite input {
-            display: block; width: 13rem; margin: 0 auto; background: transparent; border: none;
-            border-bottom: 1px solid var(--border-light); border-radius: 0;
-            padding: 0.25rem 0; color: var(--text-primary); font: inherit;
-            font-size: 1rem; outline: none; text-align: center;
+            display: block; width: 100%; background: transparent; border: none;
+            border-bottom: 1px solid color-mix(in srgb, var(--text-ghost) 32%, transparent); border-radius: 0;
+            padding: 0.15rem 0 0.2rem; color: var(--text-ghost); font: inherit;
+            font-size: 0.82rem; line-height: 1.2; outline: none; text-align: center;
           }
-          .piece-invite input:focus { border-bottom-color: var(--text-muted); }
-          .piece-invite input::placeholder { color: var(--text-ghost); }
+          .piece-invite input:focus { border-bottom-color: color-mix(in srgb, var(--text-ghost) 55%, transparent); }
+          .piece-invite input::placeholder { color: var(--text-ghost); opacity: 0.72; }
+          .piece-invite-go {
+            position: absolute; left: 100%; top: 0.08rem; height: 1.2em;
+            margin: 0 0 0 0.22rem; display: flex; align-items: center; justify-content: center;
+            width: 1.15rem; padding: 0; background: none; border: 0;
+            color: var(--text-ghost); cursor: pointer;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.22s ease;
+          }
+          .piece-invite-line:focus-within .piece-invite-go { opacity: 0.4; pointer-events: auto; }
+          .piece-invite-line:focus-within .piece-invite-go:hover { opacity: 0.7; }
+          .piece-invite-go:disabled { cursor: default; }
+          .piece-invite-go svg { display: block; }
+          @media (prefers-reduced-motion: reduce) { .piece-invite-go { transition: none; } }
         `}</style>
       </>
     );
@@ -771,14 +790,27 @@ export default function ReaderShell({
           text-decoration: underline; text-decoration-color: var(--border-light);
           text-underline-offset: 3px;
         }
-        .piece-invite { margin-top: 1.4rem; }
+        .piece-invite { margin-top: 2.4rem; display: flex; justify-content: center; }
+        .piece-invite-line { position: relative; display: block; width: 5.4rem; }
         .piece-invite input {
-          display: block; width: min(100%, 16rem); background: transparent; border: none;
-          border-bottom: 1px solid var(--border-light); border-radius: 0;
-          padding: 0.2rem 0; color: var(--text-primary); font: inherit;
-          font-size: 1rem; outline: none;
+          display: block; width: 100%; background: transparent; border: none;
+          border-bottom: 1px solid color-mix(in srgb, var(--text-ghost) 32%, transparent); border-radius: 0;
+          padding: 0.15rem 0 0.2rem; color: var(--text-ghost); font: inherit;
+          font-size: 0.82rem; line-height: 1.2; outline: none; text-align: center;
         }
-        .piece-invite input:focus { border-bottom-color: var(--text-muted); }
+        .piece-invite input:focus { border-bottom-color: color-mix(in srgb, var(--text-ghost) 55%, transparent); }
+        .piece-invite-go {
+          position: absolute; left: 100%; top: 0.08rem; height: 1.2em;
+          margin: 0 0 0 0.22rem; display: flex; align-items: center; justify-content: center;
+          width: 1.15rem; padding: 0; background: none; border: 0;
+          color: var(--text-ghost); cursor: pointer;
+          opacity: 0; pointer-events: none;
+          transition: opacity 0.22s ease;
+        }
+        .piece-invite-line:focus-within .piece-invite-go { opacity: 0.4; pointer-events: auto; }
+        .piece-invite-line:focus-within .piece-invite-go:hover { opacity: 0.7; }
+        .piece-invite-go:disabled { cursor: default; }
+        .piece-invite-go svg { display: block; }
         .mobile-pane-nav { display: none; }
         .mobile-pane-copy { min-width: 0; padding: 0 0.4rem; font-size: 0.92rem; letter-spacing: 0.06em; color: var(--text-muted); pointer-events: none; }
         .mirror-speaker { margin: 0 0 0.35rem 0.9rem; color: var(--text-muted); font-size: 0.78rem; letter-spacing: 0.05em; }
